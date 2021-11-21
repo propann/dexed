@@ -1,0 +1,84 @@
+Voice
+	Select
+	Audio
+        	Voice Level
+        	Panorama
+		Effects
+			Chorus
+				Waveform
+				Depth
+				Level
+			Delay
+				Time
+				Feedback
+				Level
+			Filter
+				Cutoff
+				Resonance
+			Reverb
+				Roomsize
+				Damping
+				Level
+				Reverb Send
+			EQ
+				Bass
+				Treble
+        Controller
+        	Pitchbend
+        		PB Range
+        		PB Step
+        	Mod Wheel
+        		MW Range
+        		MW Assign
+        		MW Mode
+        	Aftertouch
+        		AT Range
+        		AT Assign
+        		AT Mode
+        	Foot Ctrl
+        		FC Range
+        		FC Assign
+        		FC Mode
+        	Breath Ctrl
+        		BC Range
+        		BC Assign
+        		BC Mode
+	MIDI
+        	MIDI Channel
+        	Lowest Note
+        	Highest Note
+		Send Voice
+	Setup
+        	Portamento
+        		Port. Mode
+        		Port. Gliss
+        		Port. Time
+        	Polyphony
+        	Transpose
+        	Fine Tune
+        	Mono/Poly
+	Internal
+        	Note Refresh
+        	Velocity Lvl
+        	Engine
+        Operator
+	Save Voice
+Load/Save
+	Performance
+		Load Perf.
+		Save Perf.
+	Voice Config
+		Load Voice Cfg
+		Save Voice Cfg
+	Effects
+		Load Effects Cfg
+		Save Effects Cfg
+	MIDI
+		MIDI Recv Bank
+		MIDI Snd Bank
+		MIDI Snd Voice
+System
+        Stereo/Mono
+        MIDI Soft THRU
+	EEPROM Reset
+Info

@@ -1,0 +1,13 @@
+// get the ID of the current menu function
+uint8_t FUNC_getID(void);
+
+// jumpTo a defined function based on the function id
+void OTHER_jumpToID(uint8_t p_search, uint8_t p_para = 0);
+
+// set the cursor to a defined function based on the id
+void OTHER_setCursorToID(uint8_t p_search);
+
+// set the cursor to a defined function based on the function name
+void OTHER_setCursorToFunc(LCDML_FuncPtr_pu8 p_search);
+
+LCDML.MENU_goRoot()

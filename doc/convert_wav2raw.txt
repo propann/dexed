@@ -1,0 +1,11 @@
+Convert WAV to RAW:
+for i in *.wav
+do
+	sox $i -c 1 -b 16 -L `basename $i .wav`.raw
+done
+
+Convert RAW to WAV:
+for i in *.raw
+do
+	sox -r 44100 -c 1 -b 16 -L -e signed $i `basename $i .raw`.wav
+done

@@ -1,0 +1,75 @@
+THIS DOCUMENT HAS TO BE FIXED!!!!
+
+
+
+EXTENDED SYSEX FORMAT FOR MICRODEXED
+====================================
+
+SYSEX Message Controller-Set
+----------------------------
+
+     11110000  F0   Status byte - start sysex
+     0iiiiiii  67   ID # (i=103; unofficial SYSEX-ID for MicroDexed)
+     0fffffff  **   format number (f=66 MicroDexed voice config)
+     0ddddddd  **   data byte 1 setup config
+
+        |       |       |
+
+     0ddddddd  **   data byte 35
+     0eeeeeee  **   checksum (masked 2's complement of sum of 155 bytes)
+     11110111  F7   Status - end sysex
+
+Data Structure: MicroDexed Setup Dump
+-------------------------------------
+ Number    Parameter                     Value Range
+---------  ---------                     -----------
+01         DEXED LOWEST NOTE           21-108
+02         DEXED HIGHEST NOTE          21-108
+03         DEXED REVERB SEND           0-100
+04         DEXED CHORUS SEND           0-100
+05         DEXED DELAY SEND            0-100
+06         DEXED FILTER-CUTOFF         0-100
+07         DEXED FILTER-RESONANCE      0-100
+08         DEXED TRANSPOSE             0-48
+09         DEXED TUNE                  0-100
+10         DEXED SOUND INTENSITY       0-100
+11         DEXED PANORAMA	         0-40    (20 is middle)
+12         DEXED POLYPHONY             0-32    (depends on CPU and FX)
+13         DEXED VELOCITY LEVEL        100-127
+14         DEXED ENGINE                0-2     1=Modern, 2=Mark1, 2=OPL
+15         DEXED MONO/POLY MODE CHANGE 0-1     O=POLY
+16         DEXED NOTE REFRESH MODE     0-2
+17         DEXED PITCH BEND RANGE      0-12
+18         DEXED  "     "   STEP       0-12
+19         DEXED MOD WHEEL RANGE       0-99
+20         DEXED  "    "   ASSIGN      0-7     b0: pitch,  b1:amp, b2: EG bias
+21         DEXED  "    "   MODE        0-2     1=linear, 2=reverse, 3=direct
+22         DEXED FOOT CONTROL RANGE    0-99
+23         DEXED  "     "     ASSIGN   0-7           "
+24         DEXED  "     "     MODE     0-2     1=linear, 2=reverse, 3=direct
+25         DEXED BREATH CONT RANGE     0-99
+26         DEXED   "     "   ASSIGN    0-7           "
+27         DEXED   "     "   MODE      0-2     1=linear, 2=reverse, 3=direct
+28         DEXED AFTERTOUCH RANGE      0-99
+29         DEXED     "      ASSIGN     0-7           "
+30         DEXED     "      MODE       0-2     1=linear, 2=reverse, 3=direct
+31         DEXED PORTAMENTO MODE       0-1     0=RETAIN 1=FOLLOW
+32         DEXED      "     GLISS      0-1
+33         DEXED      "     TIME       0-99
+34         DEXED OP_ENABLE             0-31
+35         DEXED MIDI-CHANNEL          0-16    0=OMNI
+
+---------
+ Number    Parameter                     Value Range
+---------  ---------                     -----------
+ 0         GLOBAL STERO/MONO             0-3  (0=stereo, 1=mono, 2=mono-r, 3=mono-l)
+ 1         GLOBAL REVERB-ROOMSIZE        0-100
+ 2         GLOBAL REVERB-DAMPING         0-100
+ 3         GLOBAL REVERB-LEVEL           0-100
+ 4         GLOBAL CHORUS-FREQUENCY       0-100 (multiplied by 1/10 Hz)
+ 5         GLOBAL CHORUS-WAVEFORM        0-1   (0=triangle, 1=sine)
+ 6         GLOBAL CHORUS-DEPTH           0-100
+ 7         GLOBAL CHORUS-LEVEL           0-100
+ 8         GLOBAL DELAY-TIME             0-50  (multiplied by 10ms)
+ 9         GLOBAL DELAY-FEEDBACK         0-100
+10         GLOBAL DELAY-LEVEL            0-100
