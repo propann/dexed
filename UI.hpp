@@ -5849,29 +5849,28 @@ void seq_sub_display_menu_logic()
       else if (LCDML.BT_checkUp())
         seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] - 1, 0, 2);
     }
-  } else
-    if (seq_active_function == 1 && seq.menu == 20) // edit chain length
+  } else if (seq_active_function == 1 && seq.menu == 20) // edit chain length
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.chain_lenght = constrain(seq.chain_lenght + 1, 0, 3);
-        else if (LCDML.BT_checkUp())
-          seq.chain_lenght = constrain(seq.chain_lenght - 1, 0, 3);
-      }
-    } else
-      for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++)  // select track type
+      if (LCDML.BT_checkDown())
+        seq.chain_lenght = constrain(seq.chain_lenght + 1, 0, 3);
+      else if (LCDML.BT_checkUp())
+        seq.chain_lenght = constrain(seq.chain_lenght - 1, 0, 3);
+    }
+  } else
+    for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++)  // select track type
 
-        if (seq_active_function == 1 && seq.menu == 21 + i) // edit
+      if (seq_active_function == 1 && seq.menu == 21 + i) // edit
+      {
+        if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
         {
-          if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-          {
-            if (LCDML.BT_checkDown())
-              seq.track_type[i] = constrain(seq.track_type[i] + 1, 0, 3);
-            else if (LCDML.BT_checkUp())
-              seq.track_type[i] = constrain(seq.track_type[i] - 1, 0, 3);
-          }
+          if (LCDML.BT_checkDown())
+            seq.track_type[i] = constrain(seq.track_type[i] + 1, 0, 3);
+          else if (LCDML.BT_checkUp())
+            seq.track_type[i] = constrain(seq.track_type[i] - 1, 0, 3);
         }
+      }
   for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++)  // assign patterns to pattern chain
   {
     for (uint8_t j = 0; j < seq.chain_lenght + 1; j++)
@@ -5901,7 +5900,7 @@ void UI_func_seq_vel_editor(uint8_t param)
     // tracktype               21 track 1   22 track 2  23 track 3   24 track 4   25 track 5   26 track 6
     // 27-50 assign patterns
     // 51 performance select
-    
+
     // setup function
     encoderDir[ENC_R].reset();
     print_edit_mode();
@@ -8795,7 +8794,7 @@ void UI_func_file_manager(uint8_t param)
           strcpy(fm.full_name, fm.new_name);
           strcat(fm.full_name, "/");
           strcat(fm.full_name, fm.temp_name);
-          //playWAVFile(fm.full_name);
+          playWAVFile(fm.full_name);
         }
         else if (fm.mode == 1) //delete file
         {
@@ -8808,10 +8807,8 @@ void UI_func_file_manager(uint8_t param)
     }
     if (fm.new_name[0] != 0x2f)
       fm.new_name[0] = 0x2f;
-    AudioNoInterrupts();
     fm.currentDirectoy = SD.open(fm.new_name);
     sd_printDirectory(fm.currentDirectoy);
-    AudioInterrupts();
     display.setTextColor(DX_ORANGE, BLACK);
     display.show_smallfont_noGrid(2 * CHAR_height + 5 , CHAR_width * 4 , 31, fm.new_name  );
     if (fm.is_folder)

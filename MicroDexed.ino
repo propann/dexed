@@ -91,7 +91,7 @@ AudioMixer<4>                   audio_thru_mixer_l;
 // Drumset
 
 //AudioPlayMemory*              Drum[NUM_DRUMS];
-//AudioPlaySdWav*               Drum[NUM_DRUMS];
+AudioPlaySdWav*                 sd_WAV[2];
 //AudioPlaySdResmp*             Drum[NUM_DRUMS];
 AudioPlayArrayResmp*            Drum[NUM_DRUMS];
 
@@ -259,7 +259,7 @@ void create_audio_dexed_chain(uint8_t instance_id)
 //
 // Dynamic patching of Drum objects
 //
-#if NUM_DRUMS > 0
+
 void create_audio_drum_chain(uint8_t instance_id)
 {
   //Drum[instance_id] = new AudioPlayMemory();
@@ -283,7 +283,16 @@ void create_audio_drum_chain(uint8_t instance_id)
   Serial.println(nDynamic);
 #endif
 }
-#endif
+
+void create_audio_sd_wav_chain(uint8_t instance_id)
+{
+  sd_WAV[instance_id] = new AudioPlaySdWav();
+  if (instance_id==0)
+  dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_r, instance_id);
+  else
+   if (instance_id==1)
+  dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_l, instance_id);
+}
 
 uint8_t sd_card = 0;
 Sd2Card card;
@@ -371,7 +380,7 @@ void setup()
 
 #ifdef DEBUG
   Serial.println(CrashReport);
-  setup_debug_message();
+  //setup_debug_message();
 
   generate_version_string(version_string, sizeof(version_string));
   Serial.println(F("MicroDexed based on https://github.com/asb2m10/dexed"));
@@ -494,6 +503,16 @@ void setup()
   }
 #endif
 
+  //Setup SD WAV play
+  for (uint8_t instance_id = 0; instance_id < 2; instance_id++)
+  {
+#ifdef DEBUG
+    Serial.print(F("Creating WAV playback instance "));
+    Serial.println(instance_id, DEC);
+#endif
+     create_audio_sd_wav_chain(instance_id);
+  }
+  
   // Setup effects
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
@@ -628,13 +647,11 @@ void setup()
     strcpy(seq.name, "INIT Perf");
   //Menu Startup
   //LCDML.OTHER_jumpToFunc(UI_func_voice_select);
-  // LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
+  //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   LCDML.OTHER_jumpToFunc(UI_func_file_manager);
   timer1.begin(sequencer, seq.tempo_ms / 2, false);
   //timer1.begin(sequencer, seq.tempo_ms / 2, true);
-  //seq_running = true;
-
 
 }
 
@@ -762,10 +779,24 @@ void loop()
   MIDI MESSAGE HANDLER
 ******************************************************************************/
 
-//void playWAVFile(const char *filename)
-//{
-//  Drum[1]->playWav(filename);
-//}
+void playWAVFile(const char *filename)
+{
+ 
+    sd_WAV[fm.preview_slot]->play(filename);
+    
+    if (fm.preview_slot == 0)
+  {
+    
+     fm.preview_slot = 1;
+  }
+ else
+  fm.preview_slot = 0;
+  
+
+#ifdef DEBUG
+  Serial.println(F("play wav"));
+#endif
+}
 
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 {

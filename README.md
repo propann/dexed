@@ -2,7 +2,7 @@
 
 ## This is a development fork of MicroDexed with TFT Touch Display, "nextgen" UI and advanced sequencer
 
-### This fork requires a Teensy 4.1,  Audio Shield, 480x320 TFT Display ( ILI9486, pseudo SPI),  XPT2046 Touchscreen and serial Flash.
+### This fork requires a Teensy 4.1,  Audio Shield, 480x320 TFT Display (pseudo SPI),  XPT2046 Touchscreen and serial Flash.
 
 
 This is a port of the original Dexed/msfa engine (see https://github.com/asb2m10/dexed and https://github.com/google/music-synthesizer-for-android) to be used on a Teensy-3.6 or Teensy-4.x.

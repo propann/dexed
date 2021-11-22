@@ -16,6 +16,8 @@ extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
 extern sequencer_t seq;
 
+extern void playWAVFile(const char *filename);
+
 ts_t ts; //touch screen
 fm_t fm; //file manager
 
@@ -358,6 +360,24 @@ void handle_touchscreen_file_manager()
     else if (   ts.p.x > CHAR_width + 114 && ts.p.y > 240   &&  ts.p.x < CHAR_width + 114 + 100 && ts.p.y < 240 + 25)
     {
       fm.mode = 2;
+
+      if (fm.mode == 2)
+      {
+        if (fm.is_folder == false)
+        {
+          if (fm.mode == 2 && ts.block_screen_update==false) //preview
+          {
+            strcpy(fm.full_name, fm.new_name);
+            strcat(fm.full_name, "/");
+            strcat(fm.full_name, fm.temp_name);
+            playWAVFile(fm.full_name);
+            ts.slowdown_keyboard=0;
+             ts.block_screen_update = true;
+          }
+
+        }
+      }
+
     }
     else  if (  ts.p.x > 15               && ts.p.y > 280   &&  ts.p.x < 15 + 100              && ts.p.y < 280 + 25)
     {
@@ -367,6 +387,7 @@ void handle_touchscreen_file_manager()
     {
       fm.mode = 4;
     }
+
   }
   if (fm.mode == 1)
     display.setTextColor(WHITE, BLUE);
@@ -392,4 +413,10 @@ void handle_touchscreen_file_manager()
     display.setTextColor(GREY1, BLUE);
   display.setCursor(CHAR_width + 114 + 32, 280 + 8);
   display.print("-----");
+  
+ts.slowdown_keyboard++;
+  if (ts.slowdown_keyboard > 5)
+ts.block_screen_update=false;
+
+
 }

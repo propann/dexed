@@ -32,7 +32,8 @@ typedef struct fm_s
   char temp_name[52];
   char new_name[52];
   char full_name[52];
-  uint8_t mode = 1;
+  uint8_t mode = 4;
+  uint8_t preview_slot;
 } fm_t;
 
 #endif
