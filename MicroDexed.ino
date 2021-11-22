@@ -287,11 +287,10 @@ void create_audio_drum_chain(uint8_t instance_id)
 void create_audio_sd_wav_chain(uint8_t instance_id)
 {
   sd_WAV[instance_id] = new AudioPlaySdWav();
-  if (instance_id==0)
-  dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_r, instance_id);
-  else
-   if (instance_id==1)
-  dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_l, instance_id);
+  if (instance_id == 0)
+    dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_r, instance_id);
+  else if (instance_id == 1)
+    dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_l, instance_id);
 }
 
 uint8_t sd_card = 0;
@@ -510,9 +509,9 @@ void setup()
     Serial.print(F("Creating WAV playback instance "));
     Serial.println(instance_id, DEC);
 #endif
-     create_audio_sd_wav_chain(instance_id);
+    create_audio_sd_wav_chain(instance_id);
   }
-  
+
   // Setup effects
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
@@ -781,18 +780,14 @@ void loop()
 
 void playWAVFile(const char *filename)
 {
- 
-    sd_WAV[fm.preview_slot]->play(filename);
-    
-    if (fm.preview_slot == 0)
+  sd_WAV[fm.preview_slot]->play(filename);
+  if (fm.preview_slot == 0)
   {
-    
-     fm.preview_slot = 1;
+    fm.preview_slot = 1;
   }
- else
-  fm.preview_slot = 0;
-  
-
+  else
+    fm.preview_slot = 0;
+    
 #ifdef DEBUG
   Serial.println(F("play wav"));
 #endif
