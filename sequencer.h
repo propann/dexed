@@ -25,13 +25,24 @@
 #ifndef _SEQUENCER_H
 #define _SEQUENCER_H
 #include <XPT2046_Touchscreen.h>
-extern XPT2046_Touchscreen touch ; 
+extern XPT2046_Touchscreen touch ;
+#include "ILI9486_Teensy.h" 
+
+
 #include <SD.h>
 extern Sd2Card card;
 typedef struct sequencer_s {
- 
+ uint8_t tracker_scrollpos;
+  int tracker_cursor_scroll;
+ uint8_t tracker_selected_track;
+ uint8_t tracker_active_step;
   uint8_t tracker_data_cache[NUM_SEQ_TRACKS][16];
   char tracker_names_cache[NUM_SEQ_TRACKS][16];
+
+ uint8_t data_cache_editor[NUM_SEQ_TRACKS][16];
+  char name_cache_editor[NUM_SEQ_TRACKS][16];
+  
+  
   float drums_volume;
   uint8_t menu_status; // 0= normal jump
                        // 1= jump from pattern edit to vel edit

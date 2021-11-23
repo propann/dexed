@@ -29,6 +29,9 @@
 #include <MIDI.h>
 #include <EEPROM.h>
 #include <SD.h>
+
+#include <LittleFS.h>
+
 #include <SPI.h>
 #include "Adafruit_GFX.h"
 #include "ILI9486_Teensy.h"
@@ -53,6 +56,10 @@ using namespace TeensyTimerTool;
 
 ILI9486_Teensy display;
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
+
+LittleFS_QSPIFlash  myfs;
+char szDiskMem[] = "QSPI_DISK";
+
 
 // Audio engines
 AudioSynthDexed*                MicroDexed[NUM_DEXED];
@@ -533,6 +540,17 @@ void setup()
 #endif
 #endif
 
+  // Serial (QSPI) Flash Init
+#ifdef DEBUG
+  Serial.println("Initializing Flash Chip");
+#endif
+  if (!myfs.begin()) {
+#ifdef DEBUG
+    Serial.printf("Error starting %s\n", szDiskMem);
+#endif
+    while ( 1 );
+  }
+
   // Start SD card
 
   sd_card = check_sd_cards();
@@ -646,7 +664,7 @@ void setup()
     strcpy(seq.name, "INIT Perf");
   //Menu Startup
   //LCDML.OTHER_jumpToFunc(UI_func_voice_select);
-  //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
+  //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   LCDML.OTHER_jumpToFunc(UI_func_file_manager);
   timer1.begin(sequencer, seq.tempo_ms / 2, false);
@@ -780,14 +798,14 @@ void loop()
 
 void playWAVFile(const char *filename)
 {
-  sd_WAV[fm.preview_slot]->play(filename);
-  if (fm.preview_slot == 0)
+  sd_WAV[fm.sd_preview_slot]->play(filename);
+  if (fm.sd_preview_slot == 0)
   {
-    fm.preview_slot = 1;
+    fm.sd_preview_slot = 1;
   }
   else
-    fm.preview_slot = 0;
-    
+    fm.sd_preview_slot = 0;
+
 #ifdef DEBUG
   Serial.println(F("play wav"));
 #endif

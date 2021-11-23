@@ -21,19 +21,35 @@ typedef struct ts_s
 
 typedef struct fm_s
 {
-  File currentDirectoy;
-  File entry;
-  uint8_t cap_rows;
-  bool is_folder;
-  bool parent_folder = false;
-  uint8_t folder_depth = 0;
-  uint8_t selected_file = 0;
-  uint8_t skip_files = 0;
-  char temp_name[52];
-  char new_name[52];
-  char full_name[52];
-  uint8_t mode = 4;
-  uint8_t preview_slot;
+  File sd_currentDirectoy;
+  File sd_entry;
+  uint8_t sd_cap_rows;
+  uint8_t sd_folder_depth = 0;
+  uint8_t sd_selected_file = 0;
+  uint8_t sd_skip_files = 0;
+  uint8_t sd_mode = 4;
+  uint8_t sd_preview_slot;
+  bool sd_is_folder;
+  bool sd_parent_folder = false;
+  char sd_temp_name[52];
+  char sd_new_name[52];
+  char sd_full_name[52];
+
+  File flash_currentDirectoy;
+  File flash_entry;
+  uint8_t flash_cap_rows;
+  uint8_t flash_folder_depth = 0;
+  uint8_t flash_selected_file = 0;
+  uint8_t flash_skip_files = 0;
+  uint8_t flash_mode = 4;
+  uint8_t flash_preview_slot;
+  bool flash_is_folder;
+  bool flash_parent_folder = false;
+  char flash_temp_name[52];
+  char flash_new_name[52];
+  char flash_full_name[52];
+
+
 } fm_t;
 
 #endif
