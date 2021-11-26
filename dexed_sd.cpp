@@ -38,6 +38,7 @@ using namespace TeensyTimerTool;
 #include "drums.h"
 extern void set_drums_volume(float vol);
 extern drum_config_t drum_config[];
+extern drum_custom_map_t drum_custom_map[NUM_CUSTOM_MIDI_MAPPINGS];
 #endif
 
 extern void init_MIDI_send_CC(void);
@@ -430,6 +431,148 @@ bool save_sd_bank(const char* bank_filename, uint8_t* data)
 
   return (true);
 }
+
+/******************************************************************************
+   SD DRUM CUSTOM MAPPINGS
+ ******************************************************************************/
+
+bool load_sd_drummappings_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+
+  number = constrain(number, DRUMS_CONFIG_MIN, DRUMS_CONFIG_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      Serial.print(F("Found drum mapping ["));
+      Serial.print(filename);
+      Serial.println(F("]... loading..."));
+#endif
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+        json.close();
+        AudioInterrupts();
+#ifdef DEBUG
+        Serial.println(F("Read JSON data:"));
+        serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+
+        for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS - 1; i++)
+        {
+          drum_custom_map[i].type = data_json["type"][i];
+          drum_custom_map[i].in = data_json["in"][i];
+          drum_custom_map[i].out = data_json["out"][i];
+          drum_custom_map[i].channel = data_json["channel"][i];
+        }
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E : Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+  return (false);
+}
+
+bool save_sd_drummappings_json(uint8_t number)
+{
+  char filename[CONFIG_FILENAME_LEN];
+  number = constrain(number, 0, 99);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+
+    if (check_performance_directory(number))
+    {
+      sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
+
+#ifdef DEBUG
+      Serial.print(F("Saving drum mapping "));
+      Serial.print(number);
+      Serial.print(F(" to "));
+      Serial.println(filename);
+#endif
+      AudioNoInterrupts();
+      if (SD.exists(filename)) {
+        Serial.println("remove old drum mapping file");
+        SD.begin();
+        SD.remove(filename);
+      }
+      json = SD.open(filename, FILE_WRITE);
+      if (json)
+      {
+        for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS - 1; i++)
+        {
+          data_json["type"][i] = drum_custom_map[i].type;
+          data_json["in"][i] = drum_custom_map[i].in;
+          data_json["out"][i] = drum_custom_map[i].out;
+          data_json["channel"][i] = drum_custom_map[i].channel;
+        }
+#ifdef DEBUG
+        Serial.println(F("Write JSON data:"));
+        serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+        serializeJsonPretty(data_json, json);
+        json.close();
+        AudioInterrupts();
+        return (true);
+      }
+      else
+      {
+#ifdef DEBUG
+        Serial.print(F("E : Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+#endif
+        AudioInterrupts();
+        return (false);
+      }
+    }
+    else
+    {
+      AudioInterrupts();
+      return (false);
+    }
+  }
+#ifdef DEBUG
+  else
+  {
+    Serial.println(F("E: SD card not available"));
+  }
+#endif
+  return (false);
+}
+
 
 /******************************************************************************
    SD DRUMSETTINGS
@@ -1197,6 +1340,7 @@ bool save_sd_performance_json(uint8_t seq_number)
 
   save_sd_seq_sub_vel_json(seq_number);
   save_sd_seq_sub_patterns_json(seq_number);
+  save_sd_drummappings_json(seq_number);
 
 #ifdef DEBUG
   Serial.print(F("Write performance config "));
@@ -1529,6 +1673,7 @@ bool load_sd_performance_json(uint8_t seq_number)
   load_sd_seq_sub_patterns_json(seq_number);
   load_sd_seq_sub_vel_json(seq_number);
   load_sd_fx_json(seq_number);
+  load_sd_drummappings_json(seq_number);
   configuration.sys.performance_number = seq_number;
   if (sd_card > 0)
   {

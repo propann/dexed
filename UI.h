@@ -106,7 +106,7 @@ LCDML_add(72, LCDML_0_1, 8, "Save Voice", UI_func_save_voice);
 LCDML_add(73, LCDML_0, 2, "Load/Save", NULL);
 LCDML_add(74, LCDML_0_2, 1, "Load Perf.", UI_func_load_performance);
 LCDML_add(75, LCDML_0_2, 2, "Save Perf.", UI_func_save_performance);
-LCDML_add(76, LCDML_0_2, 3, "Name Perf.", UI_func_set_performance_name); 
+LCDML_add(76, LCDML_0_2, 3, "Name Perf.", UI_func_set_performance_name);
 LCDML_add(77, LCDML_0_2, 4, "MIDI", NULL);
 LCDML_add(78, LCDML_0_2_4, 1, "MIDI Recv Bank", UI_func_sysex_receive_bank);
 LCDML_add(79, LCDML_0_2_4, 2, "MIDI Snd Bank", UI_func_sysex_send_bank);
@@ -116,8 +116,8 @@ LCDML_add(82, LCDML_0_3, 1, "Drums Main Vol", UI_func_drums_main_volume);
 LCDML_add(83, LCDML_0_3, 2, "Drum Volumes", UI_func_drum_volume);
 LCDML_add(84, LCDML_0_3, 3, "Drum Pan", UI_func_drum_pan);
 LCDML_add(85, LCDML_0_3, 4, "Drum Rev.Send", UI_func_drum_reverb_send);
-LCDML_add(86, LCDML_0_3, 5, "Drum Pitch",  UI_func_drum_pitch); 
-LCDML_add(87, LCDML_0_3, 6, "Drum Tune",  UI_func_drum_tune_offset); 
+LCDML_add(86, LCDML_0_3, 5, "Drum Pitch",  UI_func_drum_pitch);
+LCDML_add(87, LCDML_0_3, 6, "Drum Tune",  UI_func_drum_tune_offset);
 LCDML_add(88, LCDML_0_3, 7, "MIDI Channel", UI_func_drum_midi_channel);
 LCDML_add(89, LCDML_0_3, 8, "Smart Filter", UI_func_smart_filter);
 LCDML_add(90, LCDML_0, 4, "Sequencer", NULL);
@@ -146,8 +146,10 @@ LCDML_add(112, LCDML_0_5, 3, "Favorites", UI_func_favorites);
 LCDML_add(113, LCDML_0_5, 4, "Startup", UI_func_startup);
 LCDML_add(114, LCDML_0, 6, "Sample Editor", UI_func_sample_editor);
 LCDML_add(115, LCDML_0, 7, "File Manager", UI_func_file_manager);
-LCDML_add(116, LCDML_0, 8, "Info", UI_func_information);
-LCDML_addAdvanced(117, LCDML_0, 9, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced (118 , LCDML_0   , 10  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);   
-#define _LCDML_DISP_cnt 118
+LCDML_add(116, LCDML_0, 8, "phPiano", UI_func_phPiano);
+LCDML_add(117, LCDML_0, 9, "Custom Map", UI_func_custom_mappings);
+LCDML_add(118, LCDML_0, 10, "Info", UI_func_information);
+LCDML_addAdvanced(119, LCDML_0, 11, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced (120 , LCDML_0   , 12  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 120
 #endif

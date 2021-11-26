@@ -111,6 +111,7 @@
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
+#define NUM_CUSTOM_MIDI_MAPPINGS 32  //Number of Key, CC and Button Custom Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
 
@@ -193,7 +194,7 @@
 #define ORANGE      0xFD20      /* 255, 165,   0 */
 #define PINK        0xF81F
 
-#define BLUE    0x0012    
+#define BLUE    0x0012
 #define YELLOW  0xFFEB
 #define DARKGREEN   0x0AE0
 #define MIDDLEGREEN   0x1500
@@ -286,6 +287,7 @@
 #define PERFORMANCE_CONFIG_PATH "PERFORMANCE"
 #define SEQUENCER_CONFIG_NAME "sequencer"
 #define DRUMS_CONFIG_NAME "drums"
+#define DRUMS_MAPPING_NAME "drmmap"
 #define PATTERN_CONFIG_NAME "patterns"
 #define VELOCITY_CONFIG_NAME "velocity"
 #define FX_CONFIG_NAME "fx"
@@ -311,7 +313,7 @@
 // MAX_NOTES SETTINGS
 // Teensy-4.x settings
 #ifdef TEENSY4
-#define MAX_NOTES 32
+#define MAX_NOTES 16 //32
 #define MIDI_DECAY_LEVEL_TIME 500
 #endif
 

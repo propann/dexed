@@ -15,6 +15,7 @@ typedef struct ts_s
   bool update_virtual_keyboard_octave;
   bool switch_active_instance;
   bool block_screen_update;
+  bool midi_learn_active = false;
 } ts_t;
 
 // (Touch)File Manager

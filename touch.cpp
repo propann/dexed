@@ -458,14 +458,14 @@ void handle_touchscreen_file_manager()
       {
         if (fm.sd_is_folder == false)
         {
-          if (fm.sd_mode == 2 && ts.block_screen_update==false) //preview
+          if (fm.sd_mode == 2 && ts.block_screen_update == false) //preview
           {
             strcpy(fm.sd_full_name, fm.sd_new_name);
             strcat(fm.sd_full_name, "/");
             strcat(fm.sd_full_name, fm.sd_temp_name);
             playWAVFile(fm.sd_full_name);
-            ts.slowdown_keyboard=0;
-             ts.block_screen_update = true;
+            ts.slowdown_keyboard = 0;
+            ts.block_screen_update = true;
           }
 
         }
@@ -506,10 +506,64 @@ void handle_touchscreen_file_manager()
     display.setTextColor(GREY1, BLUE);
   display.setCursor(CHAR_width + 114 + 32, 280 + 8);
   display.print("-----");
-  
-ts.slowdown_keyboard++;
-  if (ts.slowdown_keyboard > 5)
-ts.block_screen_update=false;
 
+  ts.slowdown_keyboard++;
+  if (ts.slowdown_keyboard > 5)
+    ts.block_screen_update = false;
+
+}
+
+void update_midi_learn_button()
+{
+  if (ts.midi_learn_active == true)
+  {
+    display.setTextColor(WHITE, RED);
+    display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, RED);
+    display.setCursor(240 + CHAR_width * 12 + 4, 2 * CHAR_height);
+    display.setTextSize(2);
+    display.print("TOUCH");
+    display.setCursor(240 + CHAR_width * 12 + 3, CHAR_height * 4 - 12 );
+    display.setTextSize(1);
+    display.print("MIDI LEARN");
+  }
+  else
+  {
+    display.setTextColor(WHITE, BLUE);
+    display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, BLUE);
+    display.setCursor(240 + CHAR_width * 12 + 4, 2 * CHAR_height);
+    display.setTextSize(2);
+    display.print("TOUCH");
+    display.setCursor(240 + CHAR_width * 12 + 3, CHAR_height * 4 - 12 );
+    display.setTextSize(1);
+    display.print("MIDI LEARN");
+    // ts.midi_learn_active = false;
+  }
+}
+
+void handle_touchscreen_custom_mappings()
+
+{
+  if (touch.touched() && ts.block_screen_update == false)
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    // Scale from ~0->4000 to tft
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+
+    if (  ts.p.x > 240 + CHAR_width + CHAR_width * 10 - 2   && ts.p.y > CHAR_height  &&
+          ts.p.x < 240 + CHAR_width + CHAR_width * 18       && ts.p.y < 5 * CHAR_height )
+    {
+      ts.midi_learn_active = !ts.midi_learn_active;
+      ts.block_screen_update = true;
+      ts.slowdown_keyboard = 0;
+
+      update_midi_learn_button();
+
+    }
+  }
+  ts.slowdown_keyboard++;
+  if (ts.slowdown_keyboard > 7115)
+    ts.block_screen_update = false;
 
 }

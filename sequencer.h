@@ -26,47 +26,48 @@
 #define _SEQUENCER_H
 #include <XPT2046_Touchscreen.h>
 extern XPT2046_Touchscreen touch ;
-#include "ILI9486_Teensy.h" 
+#include "ILI9486_Teensy.h"
 
 
 #include <SD.h>
 extern Sd2Card card;
 typedef struct sequencer_s {
- uint8_t tracker_scrollpos;
+  uint8_t tracker_scrollpos;
   int tracker_cursor_scroll;
- uint8_t tracker_selected_track;
- uint8_t tracker_active_step;
+  uint8_t tracker_selected_track;
+  uint8_t tracker_active_step;
   uint8_t tracker_data_cache[NUM_SEQ_TRACKS][16];
   char tracker_names_cache[NUM_SEQ_TRACKS][16];
 
- uint8_t data_cache_editor[NUM_SEQ_TRACKS][16];
+  uint8_t data_cache_editor[NUM_SEQ_TRACKS][16];
   char name_cache_editor[NUM_SEQ_TRACKS][16];
-  
-  
+
+  uint8_t test_counter;
+
   float drums_volume;
   uint8_t menu_status; // 0= normal jump
-                       // 1= jump from pattern edit to vel edit
-                       // 2= jump from vel edit to pattern edit
-                       // 3= ...
+  // 1= jump from pattern edit to vel edit
+  // 2= jump from vel edit to pattern edit
+  // 3= ...
   uint8_t active_pattern = 0;
   uint8_t active_track = 0;
   uint8_t pianoroll_octave = 0;
-  uint8_t pianoroll_last_valid_note=254;
+  uint8_t pianoroll_last_valid_note = 254;
   uint8_t menu;
   uint8_t UI_last_seq_step;
-  uint8_t note_editor_view=99; // 0 = list/tracker view, 1 = pianoroll
+  uint8_t note_editor_view = 99; // 0 = list/tracker view, 1 = pianoroll
   bool noteoffsent[NUM_SEQ_TRACKS] = {false, false,  false, false, false, false};
   uint8_t inst_dexed[NUM_SEQ_TRACKS] = { 0, 0, 1, 1 , 1, 1 };
   uint8_t step = 0;
   bool running = false;
   bool recording = false;
-  bool smartfilter = true;
+  bool smartfilter = false;
   uint8_t state_last_loadsave = 200;
   char name[FILENAME_LEN];
   char name_temp[FILENAME_LEN];
   uint8_t note_in;
   uint8_t note_in_velocity;
-  int transpose=0;
+  int transpose = 0;
   uint8_t last_drawn_sample = 99;
   uint8_t chord_dexed_inst = 0;
   uint8_t chord_velocity = 60;
@@ -171,7 +172,7 @@ typedef struct sequencer_s {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
   };
-  uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0}; 
+  uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0};
   // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
 
   uint8_t patternchain[4][NUM_SEQ_TRACKS] = {

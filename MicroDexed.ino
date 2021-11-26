@@ -360,11 +360,14 @@ extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 uint8_t drum_counter;
 uint8_t drum_type[NUM_DRUMS];
 extern void sequencer(void);
-
+drum_custom_map_t drum_custom_map[NUM_CUSTOM_MIDI_MAPPINGS];
+extern void print_custom_mappings(void);
 uint8_t drum_midi_channel = DRUM_MIDI_CHANNEL;
 extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
 extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_file_manager(void);
+extern void handle_touchscreen_custom_mappings(void);
+extern void update_midi_learn_button(void);
 #endif
 
 extern LCDMenuLib2 LCDML;
@@ -666,7 +669,10 @@ void setup()
   //LCDML.OTHER_jumpToFunc(UI_func_voice_select);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-  LCDML.OTHER_jumpToFunc(UI_func_file_manager);
+  //LCDML.OTHER_jumpToFunc(UI_func_file_manager);
+  //LCDML.OTHER_jumpToFunc(UI_func_phPiano);
+  LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
+
   timer1.begin(sequencer, seq.tempo_ms / 2, false);
   //timer1.begin(sequencer, seq.tempo_ms / 2, true);
 
@@ -685,17 +691,27 @@ void loop()
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
     handle_touchscreen_voice_select();
-
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
     handle_touchscreen_mute_matrix();
-
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
     handle_touchscreen_file_manager();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
+    handle_touchscreen_custom_mappings();
 
   if (seq.running && seq.step != seq.UI_last_seq_step )
   {
     update_display_functions_while_seq_running();
   }
+
+  //  //DEBUG DRUM VOICE ALLOCATION
+  //  for (uint8_t i = 0; i < NUM_DRUMS; i++)
+  //  {
+  //    if (!Drum[i]->isPlaying())
+  //      display.fillRect(10 + i * 10, 100, 8, 8, RED);
+  //    else
+  //      display.fillRect(10 + i * 10, 100, 8, 8, GREY1);
+  //  }
+  //  //DEBUG END
 
   // CONTROL-RATE-EVENT-HANDLING
   if (control_rate > CONTROL_RATE_MS)
@@ -811,132 +827,260 @@ void playWAVFile(const char *filename)
 #endif
 }
 
-void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
+//void pianotest(byte inNumber, byte inVelocity)
+//{
+//    if (drum_counter >= NUM_DRUMS)
+//      drum_counter = 0;
+//    uint8_t slot = drum_get_slot(5);
+//
+//    float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
+//    drum_mixer_r.gain(slot, (1.0 - pan)  * volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.5)));
+//    drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.5)));
+//#ifdef USE_FX
+//    drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(0.3));
+//    drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(0.3));
+//#endif
+//
+//    Drum[slot]->enableInterpolation(true);
+//
+//    if (inNumber <= 24 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C1.wav");
+//    }
+//    else if (inNumber < 36 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C2.wav");
+//    }
+//    else if (inNumber < 48 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C3.wav");
+//    }
+//    else if (inNumber < 60 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C4.wav");
+//    }
+//    else if (inNumber < 72 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C5.wav");
+//    }
+//    else if (inNumber < 84 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C6.wav");
+//    }
+//    else if (inNumber < 96 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 96) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C7.wav");
+//    }
+//    else if (inNumber < 108 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 108) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->playWav("/Piano.ff.C8.wav");
+//    }
+//}
+
+
+void learn_key(byte inChannel, byte inNumber)
 {
-#if NUM_DRUMS > 0
-  if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) // live play pitched sample
+  uint8_t found = 199;
+
+  if (inChannel == DRUM_MIDI_CHANNEL)
   {
-    if (drum_counter >= NUM_DRUMS)
-      drum_counter = 0;
-    uint8_t slot = drum_get_slot(drum_config[activesample].drum_class);
-    float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
-    drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
-    drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
-#ifdef USE_FX
-    drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
-    drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
-#endif
-    if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
+    for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
     {
-      Drum[slot]->enableInterpolation(true);
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
-      Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
+      if (inNumber == drum_custom_map[c].in)
+      {
+        found = c;
+        break;
+      }
+    }
+    if (found != 199) //remap to new destination if it was already mapped before
+    {
+      drum_custom_map[found].in = inNumber;
+      drum_custom_map[found].out = drum_config[activesample].midinote;
+      drum_custom_map[found].type = 1;
+      drum_custom_map[found].channel = DRUM_MIDI_CHANNEL;
+    }
+    else
+    {
+      found = 199;
+      for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
+      {
+        if (drum_custom_map[c].in == 0)
+        {
+          found = c;
+          break;
+        }
+      }
+      if (found != 199) // else map to next empty slot if it was not mapped before
+      {
+        drum_custom_map[found].in = inNumber;
+        drum_custom_map[found].out = drum_config[activesample].midinote;
+        drum_custom_map[found].type = 1;
+        drum_custom_map[found].channel = DRUM_MIDI_CHANNEL;
+      }
+      else
+        ; // can not be mapped, no empty slot left
     }
   }
-  else
-#endif
-    //Ignore the note when playing & recording the same note into the sequencer
-    if (seq.recording == false || (seq.recording && inNumber != seq.note_in ))
-    {
-      // Check for MicroDexed
-      for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-      {
-        if (checkMidiChannel(inChannel, instance_id))
-        {
-          if (inNumber >= configuration.dexed[instance_id].lowest_note && inNumber <= configuration.dexed[instance_id].highest_note)
-          {
-            if (configuration.dexed[instance_id].polyphony > 0)
-              MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
-
-            midi_voices[instance_id]++;
-#ifdef TEENSY4
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
-            {
-              midi_decay_timer = 0;
-              midi_decay[instance_id] = min(inVelocity / 5, 7);
-            }
-#endif
-#ifdef DEBUG
-            char note_name[4];
-            getNoteName(note_name, inNumber);
-            Serial.print(F("Keydown "));
-            Serial.print(note_name);
-            Serial.print(F(" instance "));
-            Serial.print(instance_id, DEC);
-            Serial.print(F(" MIDI-channel "));
-            Serial.print(inChannel, DEC);
-            Serial.println();
-#endif
-            return;
-          }
-        }
-      }
-
-#if NUM_DRUMS > 0
-      // Check for Drum
-      if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI)
-      {
-        if (drum_counter >= NUM_DRUMS)
-          drum_counter = 0;
-
-#ifdef DEBUG
-        char note_name[4];
-        getNoteName(note_name, inNumber);
-        Serial.print(F("=> Drum["));
-        Serial.print(drum_counter, DEC);
-        Serial.print(F("]: "));
-        Serial.println(note_name);
-#endif
-
-        for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
-        {
-          if (inNumber == drum_config[d].midinote)
-          {
-            uint8_t slot = drum_get_slot(drum_config[d].drum_class);
-            float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
-
-            drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-            drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-#ifdef USE_FX
-            drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
-            drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-#endif
-            if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
-            {
-              //Drum[slot]->play(drum_config[d].drum_data);
-              if (drum_config[d].pitch != 0.0)
-              {
-                Drum[slot]->enableInterpolation(true);
-                Drum[slot]->setPlaybackRate(drum_config[d].pitch);
-              }
-              Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
-            }
-
-#ifdef DEBUG
-            Serial.print(F("Drum "));
-            Serial.print(drum_config[d].shortname);
-            Serial.print(F(" ["));
-            Serial.print(drum_config[d].name);
-            Serial.print(F("], Slot "));
-            Serial.print(slot);
-            Serial.print(F(": V"));
-            Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
-            Serial.print(F(" P"));
-            Serial.print(drum_config[d].pan, 2);
-            Serial.print(F(" PAN"));
-            Serial.print(pan, 2);
-            Serial.print(F(" RS"));
-            Serial.println(drum_config[d].reverb_send, 2);
-#endif
-            break;
-          }
-        }
-      }
-#endif
-    }
+  ts.midi_learn_active = false;
+  update_midi_learn_button();
+  print_custom_mappings();
 }
 
+void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
+{
+
+  //  if (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_phPiano) )
+  //  {
+  //    pianotest(inNumber, inVelocity);
+  //  }
+  //  else
+  //  {
+
+  if (ts.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
+    learn_key(inChannel, inNumber);
+  else
+  {
+    if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) // live play pitched sample
+    {
+      if (drum_counter >= NUM_DRUMS)
+        drum_counter = 0;
+      uint8_t slot = drum_get_slot(drum_config[activesample].drum_class);
+      float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
+      drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
+      drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
+#ifdef USE_FX
+      drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
+      drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
+#endif
+      if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
+      {
+        Drum[slot]->enableInterpolation(true);
+        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+        Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
+      }
+    }
+    else
+
+      //Ignore the note when playing & recording the same note into the sequencer
+      if (seq.recording == false || (seq.recording && inNumber != seq.note_in ))
+      {
+        // Check for MicroDexed
+        for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+        {
+          if (checkMidiChannel(inChannel, instance_id))
+          {
+            if (inNumber >= configuration.dexed[instance_id].lowest_note && inNumber <= configuration.dexed[instance_id].highest_note)
+            {
+              if (configuration.dexed[instance_id].polyphony > 0)
+                MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
+
+              midi_voices[instance_id]++;
+#ifdef TEENSY4
+              if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+              {
+                midi_decay_timer = 0;
+                midi_decay[instance_id] = min(inVelocity / 5, 7);
+              }
+#endif
+#ifdef DEBUG
+              char note_name[4];
+              getNoteName(note_name, inNumber);
+              Serial.print(F("Keydown "));
+              Serial.print(note_name);
+              Serial.print(F(" instance "));
+              Serial.print(instance_id, DEC);
+              Serial.print(F(" MIDI-channel "));
+              Serial.print(inChannel, DEC);
+              Serial.println();
+#endif
+              return;
+            }
+          }
+        }
+
 #if NUM_DRUMS > 0
+        // Check for Drum
+        if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI)
+        {
+          if (drum_counter >= NUM_DRUMS)
+            drum_counter = 0;
+
+          //check custom midi mapping
+          for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
+          {
+            if (inNumber == drum_custom_map[c].in)
+            {
+              inNumber = drum_custom_map[c].out;
+              break;
+            }
+          }
+
+#ifdef DEBUG
+          char note_name[4];
+          getNoteName(note_name, inNumber);
+          Serial.print(F("=> Drum["));
+          Serial.print(drum_counter, DEC);
+          Serial.print(F("]: "));
+          Serial.println(note_name);
+#endif
+
+          for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
+          {
+            if (inNumber == drum_config[d].midinote)
+            {
+              uint8_t slot = drum_get_slot(drum_config[d].drum_class);
+              float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
+
+              drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+              drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+#ifdef USE_FX
+              drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
+              drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
+#endif
+              if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+              {
+                //Drum[slot]->play(drum_config[d].drum_data);
+                if (drum_config[d].pitch != 0.0)
+                {
+                  Drum[slot]->enableInterpolation(true);
+                  Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+                }
+                Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+              }
+
+#ifdef DEBUG
+              Serial.print(F("Drum "));
+              Serial.print(drum_config[d].shortname);
+              Serial.print(F(" ["));
+              Serial.print(drum_config[d].name);
+              Serial.print(F("], Slot "));
+              Serial.print(slot);
+              Serial.print(F(": V"));
+              Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
+              Serial.print(F(" P"));
+              Serial.print(drum_config[d].pan, 2);
+              Serial.print(F(" PAN"));
+              Serial.print(pan, 2);
+              Serial.print(F(" RS"));
+              Serial.println(drum_config[d].reverb_send, 2);
+#endif
+              break;
+            }
+          }
+        }
+#endif
+      }
+  }
+}
+
 uint8_t drum_get_slot(uint8_t dt)
 {
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
@@ -947,6 +1091,7 @@ uint8_t drum_get_slot(uint8_t dt)
       Drum[i]->enableInterpolation(false);
       Drum[i]->setPlaybackRate(1.0);
     }
+
     //    else
     //    {
     //      if (drum_type[i] == dt)
@@ -962,6 +1107,7 @@ uint8_t drum_get_slot(uint8_t dt)
     //        return (i);
     //      }
     //    }
+
   }
 #ifdef DEBUG
   Serial.print(F("Using next free Drum slot "));
@@ -971,7 +1117,6 @@ uint8_t drum_get_slot(uint8_t dt)
   drum_counter++;
   return (drum_counter - 1 % NUM_DRUMS);
 }
-#endif
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
 {
