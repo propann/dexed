@@ -38,7 +38,7 @@ using namespace TeensyTimerTool;
 #include "drums.h"
 extern void set_drums_volume(float vol);
 extern drum_config_t drum_config[];
-extern drum_custom_map_t drum_custom_map[NUM_CUSTOM_MIDI_MAPPINGS];
+extern custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 #endif
 
 extern void init_MIDI_send_CC(void);
@@ -475,10 +475,10 @@ bool load_sd_drummappings_json(uint8_t number)
 
         for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS - 1; i++)
         {
-          drum_custom_map[i].type = data_json["type"][i];
-          drum_custom_map[i].in = data_json["in"][i];
-          drum_custom_map[i].out = data_json["out"][i];
-          drum_custom_map[i].channel = data_json["channel"][i];
+          custom_midi_map[i].type = data_json["type"][i];
+          custom_midi_map[i].in = data_json["in"][i];
+          custom_midi_map[i].out = data_json["out"][i];
+          custom_midi_map[i].channel = data_json["channel"][i];
         }
         return (true);
       }
@@ -532,10 +532,10 @@ bool save_sd_drummappings_json(uint8_t number)
       {
         for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS - 1; i++)
         {
-          data_json["type"][i] = drum_custom_map[i].type;
-          data_json["in"][i] = drum_custom_map[i].in;
-          data_json["out"][i] = drum_custom_map[i].out;
-          data_json["channel"][i] = drum_custom_map[i].channel;
+          data_json["type"][i] = custom_midi_map[i].type;
+          data_json["in"][i] = custom_midi_map[i].in;
+          data_json["out"][i] = custom_midi_map[i].out;
+          data_json["channel"][i] = custom_midi_map[i].channel;
         }
 #ifdef DEBUG
         Serial.println(F("Write JSON data:"));

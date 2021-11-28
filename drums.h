@@ -46,12 +46,12 @@ typedef struct drum_config_s {
 
 enum {DRUM_NONE, DRUM_BASS, DRUM_SNARE, DRUM_HIHAT, DRUM_HANDCLAP, DRUM_RIDE, DRUM_CRASH, DRUM_LOWTOM, DRUM_MIDTOM, DRUM_HIGHTOM, DRUM_PERCUSSION, DRUM_POLY};
 
-typedef struct drum_custom_map_s {
+typedef struct custom_midi_map_s {
   uint8_t type;      // 0 = empty, 1 = Key/Pad, 2 = CC / Values, 3 = Button push on/off
   uint8_t channel;   // Midi Channel
   uint8_t in;        // Midi Input Key/Pad / Value
   uint8_t out;       // Destination Key / Value
 
-} drum_custom_map_t;
+} custom_midi_map_t;
 
 #endif

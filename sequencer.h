@@ -31,6 +31,7 @@ extern XPT2046_Touchscreen touch ;
 
 #include <SD.h>
 extern Sd2Card card;
+
 typedef struct sequencer_s {
   uint8_t tracker_scrollpos;
   int tracker_cursor_scroll;

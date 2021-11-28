@@ -48,6 +48,8 @@ boolean interrupt_swapper = false;
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 sequencer_t seq;
 
+
+
 void seq_live_recording(void)
 {
   //record to sequencer if sequencer menu is active and recording is active

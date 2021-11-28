@@ -435,6 +435,33 @@ void handle_touchscreen_voice_select()
   }
 }
 
+void print_file_manager_buttons()
+{
+  if (fm.sd_mode == 1)
+    display.setTextColor(WHITE, BLUE);
+  else
+    display.setTextColor(GREY1, BLUE);
+  display.setCursor(CHAR_width + 16,       240 + 8);
+  display.print("DELETE FILE");
+  if (fm.sd_mode == 2)
+    display.setTextColor(WHITE, BLUE);
+  else
+    display.setTextColor(GREY1, BLUE);
+  display.setCursor(CHAR_width + 114 + 30, 240 + 8);
+  display.print("PREVIEW");
+  if (fm.sd_mode == 3)
+    display.setTextColor(WHITE, BLUE);
+  else
+    display.setTextColor(GREY1, BLUE);
+  display.setCursor(CHAR_width + 11,       280 + 8);
+  display.print("COPY TO FLASH");
+  if (fm.sd_mode == 4)
+    display.setTextColor(WHITE, BLUE);
+  else
+    display.setTextColor(GREY1, BLUE);
+  display.setCursor(CHAR_width + 114 + 32, 280 + 8);
+  display.print("-----");
+}
 void handle_touchscreen_file_manager()
 
 {
@@ -481,32 +508,8 @@ void handle_touchscreen_file_manager()
       fm.sd_mode = 4;
     }
 
+print_file_manager_buttons();
   }
-  if (fm.sd_mode == 1)
-    display.setTextColor(WHITE, BLUE);
-  else
-    display.setTextColor(GREY1, BLUE);
-  display.setCursor(CHAR_width + 16,       240 + 8);
-  display.print("DELETE FILE");
-  if (fm.sd_mode == 2)
-    display.setTextColor(WHITE, BLUE);
-  else
-    display.setTextColor(GREY1, BLUE);
-  display.setCursor(CHAR_width + 114 + 30, 240 + 8);
-  display.print("PREVIEW");
-  if (fm.sd_mode == 3)
-    display.setTextColor(WHITE, BLUE);
-  else
-    display.setTextColor(GREY1, BLUE);
-  display.setCursor(CHAR_width + 11,       280 + 8);
-  display.print("COPY TO FLASH");
-  if (fm.sd_mode == 4)
-    display.setTextColor(WHITE, BLUE);
-  else
-    display.setTextColor(GREY1, BLUE);
-  display.setCursor(CHAR_width + 114 + 32, 280 + 8);
-  display.print("-----");
-
   ts.slowdown_keyboard++;
   if (ts.slowdown_keyboard > 5)
     ts.block_screen_update = false;
@@ -541,6 +544,34 @@ void update_midi_learn_button()
 }
 
 void handle_touchscreen_custom_mappings()
+
+{
+  if (touch.touched() && ts.block_screen_update == false)
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    // Scale from ~0->4000 to tft
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+
+    if (  ts.p.x > 240 + CHAR_width + CHAR_width * 10 - 2   && ts.p.y > CHAR_height  &&
+          ts.p.x < 240 + CHAR_width + CHAR_width * 18       && ts.p.y < 5 * CHAR_height )
+    {
+      ts.midi_learn_active = !ts.midi_learn_active;
+      ts.block_screen_update = true;
+      ts.slowdown_keyboard = 0;
+
+      update_midi_learn_button();
+
+    }
+  }
+  ts.slowdown_keyboard++;
+  if (ts.slowdown_keyboard > 7115)
+    ts.block_screen_update = false;
+
+}
+
+void handle_touchscreen_cc_mappings()
 
 {
   if (touch.touched() && ts.block_screen_update == false)
