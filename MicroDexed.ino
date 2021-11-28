@@ -360,13 +360,14 @@ extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 uint8_t drum_counter;
 uint8_t drum_type[NUM_DRUMS];
 extern void sequencer(void);
-drum_custom_map_t drum_custom_map[NUM_CUSTOM_MIDI_MAPPINGS];
+custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 extern void print_custom_mappings(void);
 uint8_t drum_midi_channel = DRUM_MIDI_CHANNEL;
 extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
 extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_file_manager(void);
 extern void handle_touchscreen_custom_mappings(void);
+extern void handle_touchscreen_cc_mappings(void);
 extern void update_midi_learn_button(void);
 #endif
 
@@ -669,9 +670,11 @@ void setup()
   //LCDML.OTHER_jumpToFunc(UI_func_voice_select);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-  //LCDML.OTHER_jumpToFunc(UI_func_file_manager);
+  //CDML.OTHER_jumpToFunc(UI_func_file_manager);
   //LCDML.OTHER_jumpToFunc(UI_func_phPiano);
-  LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
+  //LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
+  LCDML.OTHER_jumpToFunc( UI_func_cc_mappings);
+
 
   timer1.begin(sequencer, seq.tempo_ms / 2, false);
   //timer1.begin(sequencer, seq.tempo_ms / 2, true);
@@ -697,6 +700,8 @@ void loop()
     handle_touchscreen_file_manager();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
     handle_touchscreen_custom_mappings();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
+    handle_touchscreen_cc_mappings();
 
   if (seq.running && seq.step != seq.UI_last_seq_step )
   {
@@ -829,60 +834,64 @@ void playWAVFile(const char *filename)
 
 //void pianotest(byte inNumber, byte inVelocity)
 //{
-//    if (drum_counter >= NUM_DRUMS)
-//      drum_counter = 0;
-//    uint8_t slot = drum_get_slot(5);
+//  if (drum_counter >= NUM_DRUMS)
+//    drum_counter = 0;
+//  uint8_t slot = drum_get_slot(3);
 //
-//    float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
-//    drum_mixer_r.gain(slot, (1.0 - pan)  * volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.5)));
-//    drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.5)));
+//  float pan = 0.0;
+//  drum_mixer_r.gain(slot, (1.0 - pan)  * 0.5);
+//  drum_mixer_l.gain(slot, pan * 0.5);
 //#ifdef USE_FX
-//    drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(0.3));
-//    drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(0.3));
+//  drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(0.3));
+//  drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(0.3));
 //#endif
+//
+//  if (!Drum[slot]->isPlaying())
+//  {
 //
 //    Drum[slot]->enableInterpolation(true);
 //
 //    if (inNumber <= 24 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
 //      Drum[slot]->playWav("/Piano.ff.C1.wav");
 //    }
 //    else if (inNumber < 36 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
 //      Drum[slot]->playWav("/Piano.ff.C2.wav");
 //    }
 //    else if (inNumber < 48 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
 //      Drum[slot]->playWav("/Piano.ff.C3.wav");
 //    }
 //    else if (inNumber < 60 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
 //      Drum[slot]->playWav("/Piano.ff.C4.wav");
 //    }
 //    else if (inNumber < 72 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
 //      Drum[slot]->playWav("/Piano.ff.C5.wav");
 //    }
 //    else if (inNumber < 84 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
 //      Drum[slot]->playWav("/Piano.ff.C6.wav");
 //    }
 //    else if (inNumber < 96 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 96) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 96) / 12.00)   );
 //      Drum[slot]->playWav("/Piano.ff.C7.wav");
 //    }
 //    else if (inNumber < 108 + 6)
 //    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 108) / 12.00) * drum_config[activesample].p_offset   );
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 108) / 12.00)   );
 //      Drum[slot]->playWav("/Piano.ff.C8.wav");
 //    }
+//  }
 //}
 
 
@@ -894,7 +903,7 @@ void learn_key(byte inChannel, byte inNumber)
   {
     for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
     {
-      if (inNumber == drum_custom_map[c].in)
+      if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1)
       {
         found = c;
         break;
@@ -902,17 +911,17 @@ void learn_key(byte inChannel, byte inNumber)
     }
     if (found != 199) //remap to new destination if it was already mapped before
     {
-      drum_custom_map[found].in = inNumber;
-      drum_custom_map[found].out = drum_config[activesample].midinote;
-      drum_custom_map[found].type = 1;
-      drum_custom_map[found].channel = DRUM_MIDI_CHANNEL;
+      custom_midi_map[found].in = inNumber;
+      custom_midi_map[found].out = drum_config[activesample].midinote;
+      custom_midi_map[found].type = 1;
+      custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
     }
     else
     {
       found = 199;
       for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
       {
-        if (drum_custom_map[c].in == 0)
+        if (custom_midi_map[c].in == 0)
         {
           found = c;
           break;
@@ -920,10 +929,10 @@ void learn_key(byte inChannel, byte inNumber)
       }
       if (found != 199) // else map to next empty slot if it was not mapped before
       {
-        drum_custom_map[found].in = inNumber;
-        drum_custom_map[found].out = drum_config[activesample].midinote;
-        drum_custom_map[found].type = 1;
-        drum_custom_map[found].channel = DRUM_MIDI_CHANNEL;
+        custom_midi_map[found].in = inNumber;
+        custom_midi_map[found].out = drum_config[activesample].midinote;
+        custom_midi_map[found].type = 1;
+        custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
       }
       else
         ; // can not be mapped, no empty slot left
@@ -934,10 +943,55 @@ void learn_key(byte inChannel, byte inNumber)
   print_custom_mappings();
 }
 
+void learn_cc(byte inChannel, byte inNumber)
+{
+  uint8_t found = 199;
+  for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
+  {
+    if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 2)
+    {
+      found = c;
+      break;
+    }
+  }
+  if (found != 199) //remap to new destination if it was already mapped before
+  {
+    custom_midi_map[found].in = inNumber;
+    custom_midi_map[found].out = cc_dest_values[seq.temp_select_menu];
+    custom_midi_map[found].type = 2;
+    custom_midi_map[found].channel = configuration.dexed[selected_instance_id].midi_channel;
+  }
+  else
+  {
+    found = 199;
+    for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
+    {
+      if (custom_midi_map[c].in == 0)
+      {
+        found = c;
+        break;
+      }
+    }
+    if (found != 199) // else map to next empty slot if it was not mapped before
+    {
+      custom_midi_map[found].in = inNumber;
+      custom_midi_map[found].out = cc_dest_values[seq.temp_select_menu];
+      custom_midi_map[found].type = 2;
+      custom_midi_map[found].channel = configuration.dexed[selected_instance_id].midi_channel;
+    }
+    else
+      ; // can not be mapped, no empty slot left
+  }
+
+  ts.midi_learn_active = false;
+  update_midi_learn_button();
+  print_custom_mappings();
+}
+
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 {
 
-  //  if (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_phPiano) )
+  //  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_phPiano) )
   //  {
   //    pianotest(inNumber, inVelocity);
   //  }
@@ -1016,9 +1070,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
           //check custom midi mapping
           for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
           {
-            if (inNumber == drum_custom_map[c].in)
+            if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1)
             {
-              inNumber = drum_custom_map[c].out;
+              inNumber = custom_midi_map[c].out;
               break;
             }
           }
@@ -1079,6 +1133,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 #endif
       }
   }
+  // }
 }
 
 uint8_t drum_get_slot(uint8_t dt)
@@ -1092,21 +1147,21 @@ uint8_t drum_get_slot(uint8_t dt)
       Drum[i]->setPlaybackRate(1.0);
     }
 
-    //    else
-    //    {
-    //      if (drum_type[i] == dt)
-    //      {
-    //#ifdef DEBUG
-    //        Serial.print(F("Stopping Drum "));
-    //        Serial.print(i);
-    //        Serial.print(F(" type "));
-    //        Serial.println(dt);
-    //#endif
-    //        Drum[i]->stop();
+    //        else
+    //        {
+    //          if (drum_type[i] == dt)
+    //          {
+    //    #ifdef DEBUG
+    //            Serial.print(F("Stopping Drum "));
+    //            Serial.print(i);
+    //            Serial.print(F(" type "));
+    //            Serial.println(dt);
+    //    #endif
+    //            Drum[i]->stop();
     //
-    //        return (i);
-    //      }
-    //    }
+    //            return (i);
+    //          }
+    //        }
 
   }
 #ifdef DEBUG
@@ -1151,212 +1206,229 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
   inCtrl = constrain(inCtrl, 0, 127);
   inValue = constrain(inValue, 0, 127);
 
-  for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+  if (ts.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings) )
+    learn_cc(inChannel, inCtrl);
+  else
   {
-    if (checkMidiChannel(inChannel, instance_id))
+
+    //check custom midi mapping
+    for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
     {
+      if (inCtrl == custom_midi_map[c].in && custom_midi_map[c].type == 2)
+      {
+        inCtrl = custom_midi_map[c].out;
+        inChannel = custom_midi_map[c].channel;
+        break;
+      }
+    }
+
+    for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+    {
+      if (checkMidiChannel(inChannel, instance_id))
+      {
 #ifdef DEBUG
-      Serial.print(F("INSTANCE "));
-      Serial.print(instance_id, DEC);
-      Serial.print(F(": CC#"));
-      Serial.print(inCtrl, DEC);
-      Serial.print(F(":"));
-      Serial.println(inValue, DEC);
+        Serial.print(F("INSTANCE "));
+        Serial.print(instance_id, DEC);
+        Serial.print(F(": CC#"));
+        Serial.print(inCtrl, DEC);
+        Serial.print(F(":"));
+        Serial.println(inValue, DEC);
 #endif
 
-      switch (inCtrl) {
-        case 0: // BankSelect MSB
+        switch (inCtrl) {
+          case 0: // BankSelect MSB
 #ifdef DEBUG
-          Serial.println(F("BANK-SELECT MSB CC"));
+            Serial.println(F("BANK-SELECT MSB CC"));
 #endif
-          configuration.dexed[instance_id].bank = constrain((inValue << 7)&configuration.dexed[instance_id].bank, 0, MAX_BANKS - 1);
-          /* load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
-            {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-            } */
-          break;
-        case 1:
-#ifdef DEBUG
-          Serial.println(F("MODWHEEL CC"));
-#endif
-          MicroDexed[instance_id]->setModWheel(inValue);
-          MicroDexed[instance_id]->ControllersRefresh();
-          break;
-        case 2:
-#ifdef DEBUG
-          Serial.println(F("BREATH CC"));
-#endif
-          MicroDexed[instance_id]->setBreathController(inValue);
-          MicroDexed[instance_id]->ControllersRefresh();
-          break;
-        case 4:
-#ifdef DEBUG
-          Serial.println(F("FOOT CC"));
-#endif
-          MicroDexed[instance_id]->setFootController(inValue);
-          MicroDexed[instance_id]->ControllersRefresh();
-          break;
-        case 5: // Portamento time
-          configuration.dexed[instance_id].portamento_time = inValue;
-          MicroDexed[instance_id]->setPortamentoMode(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
-          break;
-        case 7: // Instance Volume
-#ifdef DEBUG
-          Serial.println(F("VOLUME CC"));
-#endif
-          configuration.dexed[instance_id].sound_intensity = map(inValue, 0, 127, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-          MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sound_intensity))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 10: // Pan
-#ifdef DEBUG
-          Serial.println(F("PANORAMA CC"));
-#endif
-          configuration.dexed[instance_id].pan = map(inValue, 0, 0x7f, PANORAMA_MIN, PANORAMA_MAX);
-          mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_panorama))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 32: // BankSelect LSB
-#ifdef DEBUG
-          Serial.println(F("BANK-SELECT LSB CC"));
-#endif
-          configuration.dexed[instance_id].bank = constrain(inValue, 0, MAX_BANKS - 1);
-          /*load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
-            {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-            }*/
-          break;
-        case 64:
-          MicroDexed[instance_id]->setSustain(inValue > 63);
-          if (!MicroDexed[instance_id]->getSustain())
-          {
-            for (uint8_t note = 0; note < MicroDexed[instance_id]->getMaxNotes(); note++)
-            {
-              if (MicroDexed[instance_id]->voices[note].sustained && !MicroDexed[instance_id]->voices[note].keydown)
+            configuration.dexed[instance_id].bank = constrain((inValue << 7)&configuration.dexed[instance_id].bank, 0, MAX_BANKS - 1);
+            /* load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
+              if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
               {
-                MicroDexed[instance_id]->voices[note].dx7_note->keyup();
-                MicroDexed[instance_id]->voices[note].sustained = false;
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+              } */
+            break;
+          case 1:
+#ifdef DEBUG
+            Serial.println(F("MODWHEEL CC"));
+#endif
+            MicroDexed[instance_id]->setModWheel(inValue);
+            MicroDexed[instance_id]->ControllersRefresh();
+            break;
+          case 2:
+#ifdef DEBUG
+            Serial.println(F("BREATH CC"));
+#endif
+            MicroDexed[instance_id]->setBreathController(inValue);
+            MicroDexed[instance_id]->ControllersRefresh();
+            break;
+          case 4:
+#ifdef DEBUG
+            Serial.println(F("FOOT CC"));
+#endif
+            MicroDexed[instance_id]->setFootController(inValue);
+            MicroDexed[instance_id]->ControllersRefresh();
+            break;
+          case 5: // Portamento time
+            configuration.dexed[instance_id].portamento_time = inValue;
+            MicroDexed[instance_id]->setPortamentoMode(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
+            break;
+          case 7: // Instance Volume
+#ifdef DEBUG
+            Serial.println(F("VOLUME CC"));
+#endif
+            configuration.dexed[instance_id].sound_intensity = map(inValue, 0, 127, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sound_intensity))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 10: // Pan
+#ifdef DEBUG
+            Serial.println(F("PANORAMA CC"));
+#endif
+            configuration.dexed[instance_id].pan = map(inValue, 0, 0x7f, PANORAMA_MIN, PANORAMA_MAX);
+            mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_panorama))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 32: // BankSelect LSB
+#ifdef DEBUG
+            Serial.println(F("BANK-SELECT LSB CC"));
+#endif
+            configuration.dexed[instance_id].bank = constrain(inValue, 0, MAX_BANKS - 1);
+            /*load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
+              if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+              {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+              }*/
+            break;
+          case 64:
+            MicroDexed[instance_id]->setSustain(inValue > 63);
+            if (!MicroDexed[instance_id]->getSustain())
+            {
+              for (uint8_t note = 0; note < MicroDexed[instance_id]->getMaxNotes(); note++)
+              {
+                if (MicroDexed[instance_id]->voices[note].sustained && !MicroDexed[instance_id]->voices[note].keydown)
+                {
+                  MicroDexed[instance_id]->voices[note].dx7_note->keyup();
+                  MicroDexed[instance_id]->voices[note].sustained = false;
+                }
               }
             }
-          }
-          break;
-        case 65:
-          MicroDexed[instance_id]->setPortamentoMode(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_portamento_mode))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 94:  // CC 94: (de)tune
-          configuration.dexed[selected_instance_id].tune = map(inValue, 0, 0x7f, TUNE_MIN, TUNE_MAX);
-          MicroDexed[selected_instance_id]->setMasterTune((int((configuration.dexed[selected_instance_id].tune - 100) / 100.0 * 0x4000) << 11) * (1.0 / 12));
-          MicroDexed[selected_instance_id]->doRefreshVoice();
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_tune))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
+            break;
+          case 65:
+            MicroDexed[instance_id]->setPortamentoMode(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_portamento_mode))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 94:  // CC 94: (de)tune
+            configuration.dexed[selected_instance_id].tune = map(inValue, 0, 0x7f, TUNE_MIN, TUNE_MAX);
+            MicroDexed[selected_instance_id]->setMasterTune((int((configuration.dexed[selected_instance_id].tune - 100) / 100.0 * 0x4000) << 11) * (1.0 / 12));
+            MicroDexed[selected_instance_id]->doRefreshVoice();
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_tune))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
 #if defined(USE_FX)
-        case 91:  // CC 91: reverb send
-          configuration.fx.reverb_send[selected_instance_id] = map(inValue, 0, 0x7f, REVERB_SEND_MIN, REVERB_SEND_MAX);
-          reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-          reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_reverb_send))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 93:  // CC 93: chorus level
-          configuration.fx.chorus_level[selected_instance_id] = map(inValue, 0, 0x7f, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
-          chorus_mixer[selected_instance_id]->gain(1, volume_transform(mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5)));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_chorus_level))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 103:  // CC 103: filter resonance
-          configuration.fx.filter_resonance[instance_id] = map(inValue, 0, 0x7f, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
-          MicroDexed[instance_id]->setFilterResonance(mapfloat(configuration.fx.filter_resonance[instance_id], FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_filter_resonance))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 104:  // CC 104: filter cutoff
-          configuration.fx.filter_cutoff[instance_id] = map(inValue, 0, 0x7f, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
-          MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.filter_cutoff[instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));;
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_filter_cutoff))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 105:  // CC 105: delay time
-          configuration.fx.delay_time[instance_id] = map(inValue, 0, 0x7f, DELAY_TIME_MIN, DELAY_TIME_MAX);
-          delay_fx[instance_id]->delay(0, constrain(configuration.fx.delay_time[instance_id] * 10, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_time))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 106:  // CC 106: delay feedback
-          configuration.fx.delay_feedback[instance_id] = map(inValue, 0, 0x7f, DELAY_FEEDBACK_MIN , DELAY_FEEDBACK_MAX);
-          delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127))); // amount of feedback
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_feedback))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
-        case 107:  // CC 107: delay volume
-          configuration.fx.delay_level[instance_id] = map(inValue, 0, 0x7f, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-          delay_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_level))
-          {
-            LCDML.OTHER_updateFunc();
-            LCDML.loop_menu();
-          }
-          break;
+          case 91:  // CC 91: reverb send
+            configuration.fx.reverb_send[selected_instance_id] = map(inValue, 0, 0x7f, REVERB_SEND_MIN, REVERB_SEND_MAX);
+            reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+            reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_reverb_send))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 93:  // CC 93: chorus level
+            configuration.fx.chorus_level[selected_instance_id] = map(inValue, 0, 0x7f, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
+            chorus_mixer[selected_instance_id]->gain(1, volume_transform(mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5)));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_chorus_level))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 103:  // CC 103: filter resonance
+            configuration.fx.filter_resonance[instance_id] = map(inValue, 0, 0x7f, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
+            MicroDexed[instance_id]->setFilterResonance(mapfloat(configuration.fx.filter_resonance[instance_id], FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_filter_resonance))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 104:  // CC 104: filter cutoff
+            configuration.fx.filter_cutoff[instance_id] = map(inValue, 0, 0x7f, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
+            MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.filter_cutoff[instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));;
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_filter_cutoff))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 105:  // CC 105: delay time
+            configuration.fx.delay_time[instance_id] = map(inValue, 0, 0x7f, DELAY_TIME_MIN, DELAY_TIME_MAX);
+            delay_fx[instance_id]->delay(0, constrain(configuration.fx.delay_time[instance_id] * 10, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_time))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 106:  // CC 106: delay feedback
+            configuration.fx.delay_feedback[instance_id] = map(inValue, 0, 0x7f, DELAY_FEEDBACK_MIN , DELAY_FEEDBACK_MAX);
+            delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127))); // amount of feedback
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_feedback))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
+          case 107:  // CC 107: delay volume
+            configuration.fx.delay_level[instance_id] = map(inValue, 0, 0x7f, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            delay_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_level))
+            {
+              LCDML.OTHER_updateFunc();
+              LCDML.loop_menu();
+            }
+            break;
 #endif
-        case 120:
-          MicroDexed[instance_id]->panic();
-          break;
-        case 121:
-          MicroDexed[instance_id]->resetControllers();
-          break;
-        case 123:
-          MicroDexed[instance_id]->notesOff();
-          break;
-        case 126:
-          if (inValue > 0)
-            MicroDexed[instance_id]->setMonoMode(true);
-          else
-            MicroDexed[instance_id]->setMonoMode(false);
-          break;
-        case 127:
-          if (inValue > 0)
-            MicroDexed[instance_id]->setMonoMode(true);
-          else
-            MicroDexed[instance_id]->setMonoMode(false);
-          break;
+          case 120:
+            MicroDexed[instance_id]->panic();
+            break;
+          case 121:
+            MicroDexed[instance_id]->resetControllers();
+            break;
+          case 123:
+            MicroDexed[instance_id]->notesOff();
+            break;
+          case 126:
+            if (inValue > 0)
+              MicroDexed[instance_id]->setMonoMode(true);
+            else
+              MicroDexed[instance_id]->setMonoMode(false);
+            break;
+          case 127:
+            if (inValue > 0)
+              MicroDexed[instance_id]->setMonoMode(true);
+            else
+              MicroDexed[instance_id]->setMonoMode(false);
+            break;
+        }
       }
     }
   }
