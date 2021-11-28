@@ -7,7 +7,7 @@ extern XPT2046_Touchscreen touch;
 
 typedef struct ts_s
 {
-  int slowdown_keyboard;
+  int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
   TS_Point p;
   uint8_t virtual_keyboard_state_white[11];

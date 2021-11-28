@@ -413,8 +413,8 @@ void handle_touchscreen_voice_select()
       ts.switch_active_instance = false;
     }
   }
-  ts.slowdown_keyboard++;
-  if (ts.slowdown_keyboard > 30)
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 30)
   {
     for (uint8_t x = 0; x < 10; x++)
     {
@@ -431,7 +431,7 @@ void handle_touchscreen_voice_select()
       if (ts.virtual_keyboard_state_black[x] == 1)
         virtual_keyboard_key_off_black(220 , x);
     }
-    ts.slowdown_keyboard = 0;
+    ts.slowdown_UI_input = 0;
   }
 }
 
@@ -491,7 +491,7 @@ void handle_touchscreen_file_manager()
             strcat(fm.sd_full_name, "/");
             strcat(fm.sd_full_name, fm.sd_temp_name);
             playWAVFile(fm.sd_full_name);
-            ts.slowdown_keyboard = 0;
+            ts.slowdown_UI_input = 0;
             ts.block_screen_update = true;
           }
 
@@ -510,8 +510,8 @@ void handle_touchscreen_file_manager()
 
 print_file_manager_buttons();
   }
-  ts.slowdown_keyboard++;
-  if (ts.slowdown_keyboard > 5)
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 5)
     ts.block_screen_update = false;
 
 }
@@ -559,14 +559,14 @@ void handle_touchscreen_custom_mappings()
     {
       ts.midi_learn_active = !ts.midi_learn_active;
       ts.block_screen_update = true;
-      ts.slowdown_keyboard = 0;
+      ts.slowdown_UI_input = 0;
 
       update_midi_learn_button();
 
     }
   }
-  ts.slowdown_keyboard++;
-  if (ts.slowdown_keyboard > 7115)
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 7115)
     ts.block_screen_update = false;
 
 }
@@ -587,14 +587,14 @@ void handle_touchscreen_cc_mappings()
     {
       ts.midi_learn_active = !ts.midi_learn_active;
       ts.block_screen_update = true;
-      ts.slowdown_keyboard = 0;
+      ts.slowdown_UI_input = 0;
 
       update_midi_learn_button();
 
     }
   }
-  ts.slowdown_keyboard++;
-  if (ts.slowdown_keyboard > 7115)
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 7115)
     ts.block_screen_update = false;
 
 }

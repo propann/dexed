@@ -1235,6 +1235,8 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
         Serial.println(inValue, DEC);
 #endif
 
+        ts.slowdown_UI_input++;
+
         switch (inCtrl) {
           case 0: // BankSelect MSB
 #ifdef DEBUG
@@ -1341,7 +1343,6 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
               LCDML.loop_menu();
             }
             break;
-#if defined(USE_FX)
           case 91:  // CC 91: reverb send
             configuration.fx.reverb_send[selected_instance_id] = map(inValue, 0, 0x7f, REVERB_SEND_MIN, REVERB_SEND_MAX);
             reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
@@ -1406,7 +1407,6 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
               LCDML.loop_menu();
             }
             break;
-#endif
           case 120:
             MicroDexed[instance_id]->panic();
             break;
@@ -1427,6 +1427,32 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
               MicroDexed[instance_id]->setMonoMode(true);
             else
               MicroDexed[instance_id]->setMonoMode(false);
+            break;
+          case 200:  // CC 200: seq start/stop
+            if (ts.slowdown_UI_input > 8000)
+            {
+              ts.slowdown_UI_input = 0;
+              if (!seq.running)
+                handleStart();
+              else
+                handleStop();
+            }
+            break;
+          case 201:  // CC 201: seq stop
+            if (seq.running)
+              handleStop();
+            break;
+          case 202:  // CC 202: seq record
+            if (seq.running)
+              seq.running = true;
+            seq.recording = true;
+            seq.note_in = 0;
+            break;
+          case 203:  // CC 203: dexed panic
+            MicroDexed[0]->panic();
+#if NUM_DEXED > 1
+            MicroDexed[1]->panic();
+#endif
             break;
         }
       }
