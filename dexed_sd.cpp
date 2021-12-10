@@ -45,9 +45,12 @@ extern void init_MIDI_send_CC(void);
 extern void check_configuration_dexed(uint8_t instance_id);
 extern void check_configuration_performance(void);
 extern void check_configuration_fx(void);
+extern void check_configuration_epiano(void);
 extern void sequencer();
 extern sequencer_t seq;
-extern PeriodicTimer timer1;
+#ifdef USE_SEQUENCER
+extern PeriodicTimer sequencer_timer;
+#endif
 extern float midi_volume_transform(uint8_t midi_amp);
 extern void set_sample_note(uint8_t sample, uint8_t note);
 extern void set_sample_pitch(uint8_t sample, float playbackspeed);
@@ -440,9 +443,9 @@ bool load_sd_drummappings_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-
-  number = constrain(number, DRUMS_CONFIG_MIN, DRUMS_CONFIG_MAX);
-
+    
+ number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+ 
   if (sd_card > 0)
   {
     File json;
@@ -582,7 +585,7 @@ bool load_sd_drumsettings_json(uint8_t number)
   if (number < 0)
     return (false);
 
-  number = constrain(number, DRUMS_CONFIG_MIN, DRUMS_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (sd_card > 0)
   {
@@ -653,7 +656,7 @@ bool load_sd_drumsettings_json(uint8_t number)
 bool save_sd_drumsettings_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
-  number = constrain(number, 0, 99);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (sd_card > 0)
   {
@@ -733,7 +736,7 @@ bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
   char filename[CONFIG_FILENAME_LEN];
 
-  vc = constrain(vc, VOICE_CONFIG_MIN, VOICE_CONFIG_MAX);
+  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (sd_card > 0)
   {
@@ -827,7 +830,7 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
   char filename[CONFIG_FILENAME_LEN];
 
-  vc = constrain(vc, VOICE_CONFIG_MIN, VOICE_CONFIG_MAX);
+  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (sd_card > 0)
   {
@@ -913,18 +916,18 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 /******************************************************************************
    SD FX
  ******************************************************************************/
-bool load_sd_fx_json(uint8_t fx)
+bool load_sd_fx_json(uint8_t number)
 {
-  fx = constrain(fx, FX_CONFIG_MIN, FX_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
-  load_sd_drumsettings_json(fx);
+  load_sd_drumsettings_json(number);
 
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     char filename[CONFIG_FILENAME_LEN];
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, fx, FX_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
     // first check if file exists...
     AudioNoInterrupts();
@@ -981,6 +984,11 @@ bool load_sd_fx_json(uint8_t fx)
         configuration.fx.eq_5 = data_json["eq_5"];
         configuration.fx.eq_6 = data_json["eq_6"];
         configuration.fx.eq_7 = data_json["eq_7"];
+        configuration.fx.ep_chorus_frequency = data_json["ep_chorus_frequency"];
+        configuration.fx.ep_chorus_waveform = data_json["ep_chorus_waveform"];
+        configuration.fx.ep_chorus_depth = data_json["ep_chorus_dept"];
+        configuration.fx.ep_chorus_level = data_json["ep_chorus_level"];
+        configuration.fx.ep_reverb_send = data_json["ep_reverb_send"];
 
         check_configuration_fx();
         set_fx_params();
@@ -1008,22 +1016,22 @@ bool load_sd_fx_json(uint8_t fx)
   return (false);
 }
 
-bool save_sd_fx_json(uint8_t fx)
+bool save_sd_fx_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
 
-  fx = constrain(fx, FX_CONFIG_MIN, FX_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
-  save_sd_drumsettings_json(fx);
+  save_sd_drumsettings_json(number);
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, fx, FX_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
 #ifdef DEBUG
     Serial.print(F("Saving fx config "));
-    Serial.print(fx);
+    Serial.print(number);
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
@@ -1062,6 +1070,163 @@ bool save_sd_fx_json(uint8_t fx)
       data_json["eq_5"] = configuration.fx.eq_5;
       data_json["eq_6"] = configuration.fx.eq_6;
       data_json["eq_7"] = configuration.fx.eq_7;
+      data_json["ep_chorus_frequency"] = configuration.fx.ep_chorus_frequency;
+      data_json["ep_chorus_waveform"] = configuration.fx.ep_chorus_waveform;
+      data_json["ep_chorus_dept"] = configuration.fx.ep_chorus_depth;
+      data_json["ep_chorus_level"] = configuration.fx.ep_chorus_level;
+      data_json["ep_reverb_send"] = configuration.fx.ep_reverb_send;
+
+#ifdef DEBUG
+      Serial.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      Serial.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+/******************************************************************************
+   SD EPIANO
+ ******************************************************************************/
+bool load_sd_epiano_json(uint8_t number)
+{
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      Serial.print(F("Found epiano configuration ["));
+      Serial.print(filename);
+      Serial.println(F("]... loading..."));
+#endif
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+
+        json.close();
+        AudioInterrupts();
+
+#ifdef DEBUG
+        Serial.println(F("Read JSON data:"));
+        serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+        configuration.epiano.decay = data_json["decay"];
+        configuration.epiano.release = data_json["release"];
+        configuration.epiano.hardness = data_json["hardness"];
+        configuration.epiano.treble = data_json["trebl"];
+        configuration.epiano.pan_tremolo = data_json["pan_tremolo"];
+        configuration.epiano.pan_lfo = data_json["pan_lf"];
+        configuration.epiano.velocity_sense = data_json["velocity"];
+        configuration.epiano.stereo = data_json["stereo"];
+        configuration.epiano.polyphony = data_json["polyphony"];
+        configuration.epiano.tune = data_json["tune"];
+        configuration.epiano.detune = data_json["detune"];
+        configuration.epiano.overdrive = data_json["overdrive"];
+        configuration.epiano.lowest_note = data_json["lowest_note"];
+        configuration.epiano.highest_note = data_json["highest_note"];
+        configuration.epiano.transpose = data_json["transpose"];
+        configuration.epiano.sound_intensity = data_json["sound_intensity"];
+        configuration.epiano.pan = data_json["pan"];
+        configuration.epiano.midi_channel = data_json["midi_channel"];
+
+        check_configuration_epiano();
+        set_epiano_params();
+
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E : Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+bool save_sd_epiano_json(uint8_t number)
+{
+  char filename[CONFIG_FILENAME_LEN];
+
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
+
+#ifdef DEBUG
+    Serial.print(F("Saving epiano config "));
+    Serial.print(number);
+    Serial.print(F(" to "));
+    Serial.println(filename);
+#endif
+
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      data_json["decay"] = configuration.epiano.decay;
+      data_json["release"] = configuration.epiano.release;
+      data_json["hardness"] = configuration.epiano.hardness;
+      data_json["treble"] = configuration.epiano.treble;
+      data_json["pan_tremolo"] = configuration.epiano.pan_tremolo;
+      data_json["pan_lfo"] = configuration.epiano.pan_lfo;
+      data_json["velocity_sense"] = configuration.epiano.velocity_sense;
+      data_json["stereo"] = configuration.epiano.stereo;
+      data_json["polyphony"] = configuration.epiano.polyphony;
+      data_json["tune"] = configuration.epiano.tune;
+      data_json["detune"] = configuration.epiano.detune;
+      data_json["overdrive"] = configuration.epiano.overdrive;
+      data_json["lowest_note"] = configuration.epiano.lowest_note;
+      data_json["highest_note"] = configuration.epiano.highest_note;
+      data_json["transpose"] = configuration.epiano.transpose;
+      data_json["sound_intensity"] = configuration.epiano.sound_intensity;
+      data_json["pan"] = configuration.epiano.pan;
+      data_json["midi_channel"] = configuration.epiano.midi_channel;
+
 #ifdef DEBUG
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
@@ -1211,20 +1376,20 @@ bool save_sd_sys_json(void)
 /******************************************************************************
    SD SEQUENCER
  ******************************************************************************/
-bool save_sd_seq_sub_vel_json(uint8_t seq_number)
+bool save_sd_seq_sub_vel_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
   int count = 0;
-  seq_number = constrain(seq_number, VELOCITY_CONFIG_MIN, VELOCITY_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, VELOCITY_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer velocity "));
-    Serial.print(seq_number);
+    Serial.print(number);
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
@@ -1267,20 +1432,20 @@ bool save_sd_seq_sub_vel_json(uint8_t seq_number)
   return (false);
 }
 
-bool save_sd_seq_sub_patterns_json(uint8_t seq_number)
+bool save_sd_seq_sub_patterns_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
   int count = 0;
-  seq_number = constrain(seq_number, VELOCITY_CONFIG_MIN, VELOCITY_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, PATTERN_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer patterns "));
-    Serial.print(seq_number);
+    Serial.print(number);
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
@@ -1323,12 +1488,12 @@ bool save_sd_seq_sub_patterns_json(uint8_t seq_number)
   return (false);
 }
 
-bool save_sd_performance_json(uint8_t seq_number)
+bool save_sd_performance_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
   int count = 0;
   bool seq_was_running = false;
-  seq_number = constrain(seq_number, VELOCITY_CONFIG_MIN, VELOCITY_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   if (seq.running == true ) {
     seq_was_running = true;
@@ -1338,33 +1503,37 @@ bool save_sd_performance_json(uint8_t seq_number)
 
   AudioNoInterrupts();
 
-  save_sd_seq_sub_vel_json(seq_number);
-  save_sd_seq_sub_patterns_json(seq_number);
-  save_sd_drummappings_json(seq_number);
+check_performance_directory(number);
+
+  save_sd_seq_sub_vel_json(number);
+  save_sd_seq_sub_patterns_json(number);
+  save_sd_drummappings_json(number);
 
 #ifdef DEBUG
   Serial.print(F("Write performance config "));
-  Serial.println(seq_number);
+  Serial.println(number);
 #endif
 
-  save_sd_fx_json(seq_number);
+  save_sd_fx_json(number);
+  save_sd_epiano_json(number);
+
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
-    sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, seq_number, VOICE_CONFIG_NAME, i);
+    sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, number, VOICE_CONFIG_NAME, i);
 #ifdef DEBUG
     Serial.print(F("Write Voice-Config for sequencer"));
     Serial.println(filename);
 #endif
-    save_sd_voiceconfig_json(seq_number, i);
+    save_sd_voiceconfig_json(number, i);
   }
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, SEQUENCER_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer config "));
-    Serial.print(seq_number);
+    Serial.print(number);
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
@@ -1429,6 +1598,7 @@ bool save_sd_performance_json(uint8_t seq_number)
       return (true);
     }
     json.close();
+    AudioInterrupts();
   }
 #ifdef DEBUG
   else
@@ -1436,19 +1606,20 @@ bool save_sd_performance_json(uint8_t seq_number)
     Serial.print(F("E : Cannot open "));
     Serial.print(filename);
     Serial.println(F(" on SD."));
+     AudioInterrupts();
   }
 #endif
 
   return (false);
 }
 
-bool check_performance_directory(uint8_t seq_number)
+bool check_performance_directory(uint8_t number)
 {
   char dir[CONFIG_FILENAME_LEN];
 
   if (sd_card > 0)
   {
-    sprintf(dir, "/%s/%d", PERFORMANCE_CONFIG_PATH, seq_number);
+    sprintf(dir, "/%s/%d", PERFORMANCE_CONFIG_PATH, number);
 
     AudioNoInterrupts();
     SD.begin();
@@ -1483,9 +1654,9 @@ bool check_performance_directory(uint8_t seq_number)
   return (false);
 }
 
-void get_sd_performance_name_json(uint8_t seq_number)
+void get_sd_performance_name_json(uint8_t number)
 {
-  seq_number = constrain(seq_number, 0, 99);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   memset(seq.name_temp, 0, FILENAME_LEN);
   if (sd_card > 0)
   {
@@ -1493,7 +1664,7 @@ void get_sd_performance_name_json(uint8_t seq_number)
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     char filename[CONFIG_FILENAME_LEN];
 
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, SEQUENCER_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 
     // first check if file exists...
     AudioNoInterrupts();
@@ -1513,24 +1684,38 @@ void get_sd_performance_name_json(uint8_t seq_number)
         for (uint8_t i = 0; i < FILENAME_LEN; i++) {
           seq.name_temp[i] = data_json["seq_name"][i];
         }
+#ifdef DEBUG
+        Serial.print(F("Get performance name for "));
+        Serial.print(number);
+        Serial.print(F(": "));
+        Serial.print(seq.name_temp);
+        Serial.println();
+#endif
       }
-
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("Cannot get performance name for "));
+        Serial.print(number);
+        Serial.println();
+      }
+#endif
     }
   }
 }
 
-bool load_sd_seq_sub_vel_json(uint8_t seq_number)
+bool load_sd_seq_sub_vel_json(uint8_t number)
 {
-  if (seq_number < 0)
+  if (number < 0)
     return (false);
-  seq_number = constrain(seq_number, SEQUENCE_CONFIG_MIN, SEQUENCE_CONFIG_MAX);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     char filename[CONFIG_FILENAME_LEN];
 
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, VELOCITY_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 
     // first check if file exists...
     AudioNoInterrupts();
@@ -1571,7 +1756,7 @@ bool load_sd_seq_sub_vel_json(uint8_t seq_number)
 #ifdef DEBUG
       else
       {
-        Serial.print(F("E : Cannot open "));
+        Serial.print(F("E: Cannot open "));
         Serial.print(filename);
         Serial.println(F(" on SD."));
       }
@@ -1587,18 +1772,18 @@ bool load_sd_seq_sub_vel_json(uint8_t seq_number)
   return (false);
 }
 
-bool load_sd_seq_sub_patterns_json(uint8_t seq_number)
+bool load_sd_seq_sub_patterns_json(uint8_t number)
 {
-  if (seq_number < 0)
+  if (number < 0)
     return (false);
-  seq_number = constrain(seq_number, 0, 99);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     char filename[CONFIG_FILENAME_LEN];
 
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, PATTERN_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 
     // first check if file exists...
     AudioNoInterrupts();
@@ -1657,8 +1842,9 @@ bool load_sd_seq_sub_patterns_json(uint8_t seq_number)
   return (false);
 }
 
-bool load_sd_performance_json(uint8_t seq_number)
+bool load_sd_performance_json(uint8_t number)
 {
+#ifdef USE_SEQUENCER
   bool seq_was_running = false;
 
   if (seq.running)
@@ -1666,21 +1852,26 @@ bool load_sd_performance_json(uint8_t seq_number)
     seq_was_running = true;
     seq.running = false;
   }
+#endif
+
   dac_mute();
   handleStop();
-  seq_number = constrain(seq_number, 0, 99);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   AudioNoInterrupts();
-  load_sd_seq_sub_patterns_json(seq_number);
-  load_sd_seq_sub_vel_json(seq_number);
-  load_sd_fx_json(seq_number);
-  load_sd_drummappings_json(seq_number);
-  configuration.sys.performance_number = seq_number;
+  load_sd_seq_sub_patterns_json(number);
+  load_sd_seq_sub_vel_json(number);
+  load_sd_fx_json(number);
+  load_sd_epiano_json(number);
+  load_sd_drummappings_json(number);
+
+  configuration.sys.performance_number = number;
+
   if (sd_card > 0)
   {
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     char filename[CONFIG_FILENAME_LEN];
-    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, seq_number, SEQUENCER_CONFIG_NAME);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
     // first check if file exists...
     if (SD.exists(filename))
     {
@@ -1755,7 +1946,7 @@ bool load_sd_performance_json(uint8_t seq_number)
           Serial.print(instance_id + 1);
           Serial.print(F(" for sequencer"));
 #endif
-          load_sd_voiceconfig_json(seq_number, instance_id);
+          load_sd_voiceconfig_json(number, instance_id);
           load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
           MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
           MicroDexed[instance_id]->panic();
@@ -1768,13 +1959,17 @@ bool load_sd_performance_json(uint8_t seq_number)
         dac_unmute();
         seq.step = 0;
         seq.chain_active_step = 0;
+#ifdef USE_SEQUENCER
         if (seq_was_running)
         {
-          timer1.begin(sequencer, seq.tempo_ms / 2);
+          sequencer_timer.begin(sequencer, seq.tempo_ms / 2);
           seq.running = true;
         }
         else
-          timer1.begin(sequencer, seq.tempo_ms / 2, false);
+          sequencer_timer.begin(sequencer, seq.tempo_ms / 2, false);
+#else
+        seq.running = false;
+#endif
         return (true);
       }
 #ifdef DEBUG
@@ -1802,7 +1997,7 @@ bool check_sd_performance_exists(uint8_t number)
   if (number < 0)
     return (false);
 
-  number = constrain(number, 0, 99);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   AudioNoInterrupts();
   if (sd_card > 0)
   {

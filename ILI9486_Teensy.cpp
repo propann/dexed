@@ -20,8 +20,8 @@ void writedata16(uint16_t c)
 {
   CD_DATA;
   CS_ACTIVE;
-  SPI.transfer(c >> 8);
-  SPI.transfer(c & 0xFF);
+  SPI1.transfer(c >> 8);
+  SPI1.transfer(c & 0xFF);
   CS_IDLE;
 }
 /*****************************************************************************/
@@ -32,11 +32,11 @@ void writedata16(uint16_t c, uint32_t num)
   CS_ACTIVE;
   while (num-- > 0) // >= ??? RP RP RP
   {
-    SPI.transfer16(c);
+    SPI1.transfer16(c);
     if (counter++ > SPIBLOCKMAX)
     { // transcations can be long - up to h * w * 16 bit words, so allow other SPI after a reasonable block
-      SPI.endTransaction();
-      SPI.beginTransaction(SPISET);
+      SPI1.endTransaction();
+      SPI1.beginTransaction(SPISET);
       counter = 0;
     }
   }
@@ -47,7 +47,7 @@ void writecommand(uint8_t c)
 {
   CD_COMMAND;
   CS_ACTIVE;
-  SPI.transfer(c);
+  SPI1.transfer(c);
   CS_IDLE;
 }
 /*****************************************************************************/
@@ -55,7 +55,7 @@ void writedata(uint8_t c)
 {
   CD_DATA;
   CS_ACTIVE;
-  SPI.transfer(c);
+  SPI1.transfer(c);
   CS_IDLE;
 }
 /*****************************************************************************/
@@ -126,15 +126,16 @@ void ILI9486_Teensy::begin(void)
     digitalWrite(TFT_RST, HIGH);
     delay(200);
   }
-  SPI.beginTransaction(SPISET); //SPISettings(36000000,MSBFIRST,MODE0))
+  SPI1.beginTransaction(SPISET); //SPISettings(36000000,MSBFIRST,MODE0))
+  
   // init registers
   commandList(ili9486_init_sequence);
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*****************************************************************************/
 void ILI9486_Teensy::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
-  SPI.beginTransaction(SPISET);
+  SPI1.beginTransaction(SPISET);
   writecommand(ILI9486_CASET); // Column addr set
   writedata(x0 >> 8);
   writedata(x0 & 0xFF);     // XSTART
@@ -146,14 +147,14 @@ void ILI9486_Teensy::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16
   writedata(y1 >> 8);
   writedata(y1);     // YEND
   writecommand(ILI9486_RAMWR); // write to RAM
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*****************************************************************************/
 void ILI9486_Teensy::pushColor(uint16_t color)
 {
-  SPI.beginTransaction(SPISET);
+  SPI1.beginTransaction(SPISET);
   writedata16(color);
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*****************************************************************************/
 void ILI9486_Teensy::drawPixel(int16_t x, int16_t y, uint16_t color)
@@ -175,9 +176,9 @@ void ILI9486_Teensy::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t col
     return;
   }
   setAddrWindow(x, y, x, y + h - 1);
-  SPI.beginTransaction(SPISET);
+  SPI1.beginTransaction(SPISET);
   writedata16(color, h);
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*****************************************************************************/
 void ILI9486_Teensy::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
@@ -193,18 +194,18 @@ void ILI9486_Teensy::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t col
   }
 
   setAddrWindow(x, y, x + w - 1, y);
-  SPI.beginTransaction(SPISET);
+  SPI1.beginTransaction(SPISET);
 
   writedata16(color, w);
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*****************************************************************************/
 void ILI9486_Teensy::fillScreen(uint16_t color)
 {
   setAddrWindow(0, 0,  _width, _height);
-  SPI.beginTransaction(SPISET);
+  SPI1.beginTransaction(SPISET);
   writedata16(color, (_width * _height));
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*****************************************************************************/
 void ILI9486_Teensy::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
@@ -223,10 +224,10 @@ void ILI9486_Teensy::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16
   }
 
   setAddrWindow(x, y, x + w - 1, y + h - 1);
-  SPI.beginTransaction(SPISET);
+  SPI1.beginTransaction(SPISET);
 
   writedata16(color, (w * h));
-  SPI.endTransaction();
+  SPI1.endTransaction();
 }
 /*
   Draw lines faster by calculating straight sections and drawing them with fastVline and fastHline.

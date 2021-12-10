@@ -7,7 +7,7 @@
 
    (c)2018-2021 M. Koslowski <positionhigh@gmx.de>
                 H. Wirtz <wirtz@parasitstudio.de>
-                
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    (at your option) any later version.
@@ -47,8 +47,6 @@ boolean interrupt_swapper = false;
 
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 sequencer_t seq;
-
-
 
 void seq_live_recording(void)
 {
@@ -104,7 +102,10 @@ void sequencer_part1(void)
           {
             if (seq.note_data[seq.patternchain[seq.chain_active_step][d]][seq.step] != 130 )
             {
-              handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step], seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step]);
+              if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step], seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step]);
+              else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                handleNoteOn(configuration.epiano.midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step], seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step]);
               seq.prev_note[d] = seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step];
               seq.prev_vel[d] = seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step];
             }
@@ -118,7 +119,10 @@ void sequencer_part1(void)
 
               for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
               {
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] + (seq.oct_shift * 12) + seq.arps[seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200][x], seq.chord_velocity);
+                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] + (seq.oct_shift * 12) + seq.arps[seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200][x], seq.chord_velocity);
+                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                  handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] + (seq.oct_shift * 12) + seq.arps[seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200][x], seq.chord_velocity);
               }
               seq.prev_note[d] = seq.note_data[seq.patternchain[seq.chain_active_step][d]][seq.step] + (seq.oct_shift * 12);
               seq.prev_vel[d] = seq.vel[seq.patternchain[seq.chain_active_step][d]][seq.step];
@@ -131,33 +135,55 @@ void sequencer_part1(void)
             seq.arp_chord = seq.vel[seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200;
           }
         }
-
         // after here not triggered by a key input -  arp only
         if (seq.track_type[d] == 3)
         { //Arp
-          if (seq.arp_speed == 0 || (seq.arp_speed == 1 && seq.arp_counter == 0) ) {
+          if (seq.arp_speed == 0 || (seq.arp_speed == 1 && seq.arp_counter == 0) )
+          {
+            { if (seq.arp_style == 0)
+              { //arp up
+                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity);
+                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity);
 
-          { if (seq.arp_style == 0) { //arp up
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity);
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] ;
               }
-              else if (seq.arp_style == 1) { //arp down
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
+              else if (seq.arp_style == 1)
+              { //arp down
+                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
+                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] ;
               }
-              else if (seq.arp_style == 2) { //arp up & down
-                if (seq.arp_step <= seq.arp_lenght) {
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
+              else if (seq.arp_style == 2)
+              { //arp up & down
+                if (seq.arp_step <= seq.arp_lenght)
+                {
+                  if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                    handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
+                  else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                    handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
                   seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] ;
                 }
-                else {
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
+                else
+                {
+                  if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                    handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
+                  else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                    handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
                   seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] ;
                 }
               }
-              else if (seq.arp_style == 3) { //arp random
+              else if (seq.arp_style == 3)
+              { //arp random
+
                 uint8_t rnd1 = random(seq.arp_lenght);
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity);
+                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity);
+                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity);
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12);
               }
             }
@@ -225,21 +251,30 @@ void sequencer_part2(void)
       {
         if (seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] != 130)
         {
-          handleNoteOff(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.prev_note[d] , 0);
+          if (seq.inst_dexed[d] < 2)
+            handleNoteOff(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.prev_note[d] , 0);
+          else if (seq.inst_dexed[d] == 2)
+            handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] , 0);
           seq.noteoffsent[d] = true;
         }
         if (seq.track_type[d] == 2) {  //Chords
           if ( seq.prev_vel[d] > 199)  {
             for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
             {
-              handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0);
+              if (seq.inst_dexed[d] < 2) //dexed
+                handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0);
+              else if (seq.inst_dexed[d] == 2)
+                handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0);
               seq.noteoffsent[d] = true;
             }
           }
         }
         else if (seq.track_type[d] == 3)
         { //Arp
-          handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note_prev, 0);
+          if (seq.inst_dexed[d] < 2) //dexed
+            handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note_prev, 0);
+          else if (seq.inst_dexed[d] == 2)  //epiano
+            handleNoteOff(configuration.epiano.midi_channel, seq.arp_note_prev, 0);
           seq.noteoffsent[d] = true;
         }
       }
@@ -257,22 +292,22 @@ void sequencer(void)
 
 void reset_tracker_edit_cache_single_track()
 {
-  memset(seq.data_cache_editor[seq.tracker_selected_track], 254, 16);
-  memset(seq.name_cache_editor[seq.tracker_selected_track], 254, 16);
+  memset(seq.tracker_data_cache[seq.tracker_selected_track], 254, 16);
+  memset(seq.tracker_names_cache[seq.tracker_selected_track], 254, 16);
 }
 
 void reset_tracker_edit_cache()
 {
-  memset(seq.data_cache_editor, 254, sizeof(seq.data_cache_editor));
-  memset(seq.name_cache_editor, 254, sizeof(seq.name_cache_editor));
+  memset(seq.tracker_data_cache, 254, sizeof(seq.tracker_data_cache));
+  memset(seq.tracker_names_cache, 254, sizeof(seq.tracker_names_cache));
 }
 
 void reset_tracker_edit_cache_current_step()
 {
   for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)
   {
-    seq.data_cache_editor[t][seq.tracker_active_step] = 254;
-    seq.name_cache_editor[t][seq.tracker_active_step] = 254;
+    seq.tracker_data_cache[t][seq.tracker_active_step] = 254;
+    seq.tracker_names_cache[t][seq.tracker_active_step] = 254;
   }
 }
 
@@ -629,25 +664,25 @@ void print_merged_pattern_for_editor(int xpos, int ypos, uint8_t track_number)
     }
 
     if (seq.tracker_selected_track == track_number && y == seq.tracker_scrollpos + 6 + seq.tracker_cursor_scroll)
-     {
+    {
       display.setTextColor(WHITE, BLACK);
-      seq.tracker_active_step=y - yoffset;
-     }
+      seq.tracker_active_step = y - yoffset;
+    }
     else
       set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
 
-    if (seq.name_cache_editor[track_number][ycount] != seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0])
+    if (seq.tracker_names_cache[track_number][ycount] != seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0])
     {
       display.setCursor(xpos, ypos + ycount * yspacer);
       display.print( seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0]);
-      seq.name_cache_editor[track_number][ycount] = seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0];
+      seq.tracker_names_cache[track_number][ycount] = seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0];
     }
 
-    if ( seq.data_cache_editor[track_number][ycount] != seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] )
+    if ( seq.tracker_data_cache[track_number][ycount] != seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] )
     {
       display.setCursor(xpos + 24, ypos + ycount * yspacer);
       seq_print_formatted_number(  seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] , 3);
-      seq.data_cache_editor[track_number][ycount] = seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset];
+      seq.tracker_data_cache[track_number][ycount] = seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset];
     }
 
     ycount++;

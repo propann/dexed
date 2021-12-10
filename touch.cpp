@@ -12,9 +12,20 @@ extern void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inV
 extern void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity);
 extern void display_active_instance_number(uint8_t instance_id);
 extern void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh);
+extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
 extern sequencer_t seq;
+extern void border3_large_clear();
+extern void border3_large();
+extern void border3();
+extern void border4();
+extern void border3_white();
+extern void border4_white();
+extern void flash_printDirectory();
+extern void sd_printDirectory(File currentDirectory);
+
+extern void seq_pattern_editor_update_dynamic_elements();
 
 extern void playWAVFile(const char *filename);
 
@@ -211,7 +222,7 @@ void virtual_keyboard_key_off_black ( int ypos, uint8_t note)
   display.setTextColor(WHITE, BLACK);
 }
 
-void virtual_keyboard (  int ypos)
+void virtual_keyboard (int ypos)
 {
   uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
 
@@ -219,7 +230,11 @@ void virtual_keyboard (  int ypos)
   uint8_t oct_count = 0;
   display.setTextColor(BLACK, WHITE);
   display.setTextSize(1);
-  display.drawLine(1, ypos - 7, 480 - 2, ypos - 7, GREY1);
+  display.drawLine(1, ypos - 4, 480 - 2, ypos - 4, GREY1);
+
+  display.drawLine(0, ypos - 3, 0 , ypos , BLACK);
+  display.drawLine(239, ypos - 3, 239 , ypos , BLACK);
+  display.drawLine(479, ypos - 3, 479 , ypos , BLACK);
   //draw white keys
   for (uint8_t x = 0; x < 10; x++)
   {
@@ -245,32 +260,17 @@ void virtual_keyboard (  int ypos)
 
 void print_virtual_keyboard_octave (  int ypos)
 {
-  uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
-
-  int offcount = 0;
   uint8_t oct_count = 0;
   display.setTextColor(BLACK, WHITE);
   display.setTextSize(1);
-  display.drawLine(1, ypos - 7, 480 - 2, ypos - 7, GREY1);
   //draw white keys
   for (uint8_t x = 0; x < 10; x++)
   {
-
     if ( x == 0 || x == 7 || x == 14) {
-      display.fillRect(  x * 48.34, ypos , 44, 98, WHITE); // white key
       display.setCursor ( x * 48.34 + 17 , ypos + 77   );
       display.print("C");
       display.print(ts.virtual_keyboard_octave + oct_count);
       oct_count++;
-    }
-  }
-  for (uint8_t x = 0; x < 16; x++)
-  {
-    if (piano[x] == 1)
-    {
-      display.fillRect( x * 27.7 , ypos   , 32, 46, BLACK);  // BLACK key
-      offcount++;
-      if (offcount == 5)offcount = 0;
     }
   }
   display.setTextSize(2);
@@ -435,6 +435,80 @@ void handle_touchscreen_voice_select()
   }
 }
 
+void handle_touchscreen_pattern_editor()
+{
+  if (touch.touched())
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    // Scale from ~0->4000 to tft
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    if ( ts.p.y > 168  && ts.p.y < 168 + 42  &&  ts.update_virtual_keyboard_octave == false)
+    {
+      if (ts.p.x < 60)
+      {
+        ts.virtual_keyboard_octave--;
+        if (ts.virtual_keyboard_octave < 1)ts.virtual_keyboard_octave = 1;
+        ts.update_virtual_keyboard_octave = true;
+        print_virtual_keyboard_octave(220);
+      }
+      else if (ts.p.x > 480 - 60)
+      {
+        ts.virtual_keyboard_octave++;
+        if (ts.virtual_keyboard_octave > 8)ts.virtual_keyboard_octave = 8;
+        ts.update_virtual_keyboard_octave = true;
+        print_virtual_keyboard_octave(220);
+      }
+    }
+    else if (ts.p.x > 430 && ts.p.y < CHAR_height * 3  && ts.update_virtual_keyboard_octave == false)
+    {
+      if (seq.cycle_touch_element == 0)
+      {
+        seq.cycle_touch_element = 1;
+      }
+      else if (seq.cycle_touch_element == 1)
+      {
+        seq.cycle_touch_element = 0;
+      }
+      ts.update_virtual_keyboard_octave = true;
+      seq_pattern_editor_update_dynamic_elements();
+    }
+    else if (ts.p.x > 1 && ts.p.y > 190 && seq.cycle_touch_element == 1)
+    {
+      virtual_keyboard_key_on(220 );
+    }
+  }
+  if (touch.touched() == false)
+  {
+    if ( ts.update_virtual_keyboard_octave)
+    {
+      //print_virtual_keyboard_octave(220);
+      ts.update_virtual_keyboard_octave = false;
+    }
+  }
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 30 && seq.cycle_touch_element == 1)
+  {
+    for (uint8_t x = 0; x < 10; x++)
+    {
+      if (ts.virtual_keyboard_state_white[x] > 0)
+        ts.virtual_keyboard_state_white[x] --;
+      if (ts.virtual_keyboard_state_white[x] == 1)
+        virtual_keyboard_key_off_white(220 , x);
+    }
+    for (uint8_t x = 0; x < 16; x++)
+    {
+      if (ts.virtual_keyboard_state_black[x] > 0)
+        ts.virtual_keyboard_state_black[x] --;
+
+      if (ts.virtual_keyboard_state_black[x] == 1)
+        virtual_keyboard_key_off_black(220 , x);
+    }
+    ts.slowdown_UI_input = 0;
+  }
+}
+
 void print_file_manager_buttons()
 {
   if (fm.sd_mode == 1)
@@ -461,6 +535,23 @@ void print_file_manager_buttons()
     display.setTextColor(GREY1, BLUE);
   display.setCursor(CHAR_width + 114 + 32, 280 + 8);
   display.print("-----");
+
+  // active_window   0 = left window (SDCARD) , 1 = FLASH
+
+  if ( fm.active_window == 0)
+  {
+    border4();
+    border3_white();
+
+  }
+
+  else
+  {
+    border3();
+    border4_white();
+  }
+
+
 }
 void handle_touchscreen_file_manager()
 
@@ -494,10 +585,8 @@ void handle_touchscreen_file_manager()
             ts.slowdown_UI_input = 0;
             ts.block_screen_update = true;
           }
-
         }
       }
-
     }
     else  if (  ts.p.x > 15               && ts.p.y > 280   &&  ts.p.x < 15 + 100              && ts.p.y < 280 + 25)
     {
@@ -507,13 +596,22 @@ void handle_touchscreen_file_manager()
     {
       fm.sd_mode = 4;
     }
-
-print_file_manager_buttons();
+    // active_window   0 = left window (SDCARD) , 1 = FLASH
+    else if (   ts.p.x > 1  && ts.p.y > CHAR_height * 5   &&  ts.p.x < 480 / 2 && ts.p.y < 200 )
+    {
+      fm.active_window = 0;
+    }
+    else if (   ts.p.x > 480 / 2  && ts.p.y > CHAR_height * 5   &&  ts.p.x < 480 && ts.p.y < 200 )
+    {
+      fm.active_window = 1;
+    }
+    print_file_manager_buttons();
+    sd_printDirectory(fm.sd_currentDirectoy);
+    flash_printDirectory();
   }
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 5)
     ts.block_screen_update = false;
-
 }
 
 void update_midi_learn_button()
