@@ -338,6 +338,7 @@ void Dexed::setMaxNotes(uint8_t new_max_notes)
   Serial.print("Allocating memory for ");
   Serial.print(max_notes,DEC);
   Serial.println(" notes.");
+  Serial.println();
 #endif
 
   if(voices)
@@ -355,10 +356,10 @@ void Dexed::setMaxNotes(uint8_t new_max_notes)
 
   if(max_notes>0)
   {
-    voices=new ProcessorVoice[max_notes];
+    voices=new ProcessorVoice[max_notes]; // sizeof(ProcessorVoice) = 20
     for (i = 0; i < max_notes; i++)
     {
-      voices[i].dx7_note = new Dx7Note;
+      voices[i].dx7_note = new Dx7Note; // sizeof(Dx7Note) = 692
       voices[i].keydown = false;
       voices[i].sustained = false;
       voices[i].live = false;
@@ -385,8 +386,10 @@ void Dexed::getSamples(uint16_t n_samples, int16_t* buffer)
   uint16_t i, j;
   uint8_t note;
   float sumbuf[n_samples];
+#ifdef USE_SIMPLE_COMPRESSOR
   float s;
   const double decayFactor = 0.99992;
+#endif
 
   if (refreshVoice)
   {
@@ -439,6 +442,7 @@ void Dexed::getSamples(uint16_t n_samples, int16_t* buffer)
 
   fx.process(sumbuf, n_samples); // Needed for fx.Gain()!!!
 
+#ifdef USE_SIMPLE_COMPRESSOR
   // mild compression
   for (i = 0; i < n_samples; i++)
   {
@@ -451,6 +455,7 @@ void Dexed::getSamples(uint16_t n_samples, int16_t* buffer)
     else
       vuSignal = 0.0;
   }
+#endif
 
   //arm_scale_f32(sumbuf, 0.00015, sumbuf, AUDIO_BLOCK_SAMPLES);
   arm_float_to_q15(sumbuf, buffer, AUDIO_BLOCK_SAMPLES);
@@ -1886,7 +1891,8 @@ int32_t logfreq_round2semi(int freq) {
   return freq - rem;
 }
 
-const int32_t coarsemul[] = {
+//const int32_t coarsemul[] = {
+int32_t PROGMEM coarsemul[] = {
   -16777216, 0, 16777216, 26591258, 33554432, 38955489, 43368474, 47099600,
   50331648, 53182516, 55732705, 58039632, 60145690, 62083076, 63876816,
   65546747, 67108864, 68576247, 69959732, 71268397, 72509921, 73690858,
@@ -1922,7 +1928,8 @@ int32_t osc_freq(int midinote, int mode, int coarse, int fine, int detune) {
   return logfreq;
 }
 
-const uint8_t velocity_data[64] = {
+//const uint8_t velocity_data[64] = {
+uint8_t PROGMEM velocity_data[64] = {
   0, 70, 86, 97, 106, 114, 121, 126, 132, 138, 142, 148, 152, 156, 160, 163,
   166, 170, 173, 174, 178, 181, 184, 186, 189, 190, 194, 196, 198, 200, 202,
   205, 206, 209, 211, 214, 216, 218, 220, 222, 224, 225, 227, 229, 230, 232,
@@ -1952,7 +1959,8 @@ int ScaleRate(int midinote, int sensitivity) {
   return qratedelta;
 }
 
-const uint8_t exp_scale_data[] = {
+//const uint8_t exp_scale_data[] = {
+uint8_t PROGMEM exp_scale_data[] = {
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 16, 19, 23, 27, 33, 39, 47, 56, 66,
   80, 94, 110, 126, 142, 158, 174, 190, 206, 222, 238, 250
 };
@@ -1984,12 +1992,14 @@ int ScaleLevel(int midinote, int break_pt, int left_depth, int right_depth,
   }
 }
 
-static const uint8_t pitchmodsenstab[] = {
+//static const uint8_t pitchmodsenstab[] = {
+uint8_t PROGMEM pitchmodsenstab[] = {
   0, 10, 20, 33, 55, 92, 153, 255
 };
 
 // 0, 66, 109, 255
-static const uint32_t ampmodsenstab[] = {
+//static const uint32_t ampmodsenstab[] = {
+uint32_t PROGMEM ampmodsenstab[] = {
   0, 4342338, 7171437, 16777216
 };
 
@@ -2253,12 +2263,14 @@ void Dx7Note::oscSync() {
 
 uint32_t Env::sr_multiplier = (1 << 24);
 
-const int levellut[] = {
+//const int levellut[] = {
+int PROGMEM levellut[] = {
   0, 5, 9, 13, 17, 20, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 42, 43, 45, 46
 };
 
 #ifdef ACCURATE_ENVELOPE
-const int statics[] = {
+//const int statics[] = {
+int PROGMEM statics[] = {
   1764000, 1764000, 1411200, 1411200, 1190700, 1014300, 992250,
   882000, 705600, 705600, 584325, 507150, 502740, 441000, 418950,
   352800, 308700, 286650, 253575, 220500, 220500, 176400, 145530,
@@ -3050,7 +3062,8 @@ void PitchEnv::init(FRAC_NUM sample_rate) {
   unit_ = _N_ * (1 << 24) / (21.3 * sample_rate) + 0.5;
 }
 
-const uint8_t pitchenv_rate[] = {
+//const uint8_t pitchenv_rate[] = {
+uint8_t PROGMEM pitchenv_rate[] = {
   1, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,
   12, 13, 13, 14, 14, 15, 16, 16, 17, 18, 18, 19, 20, 21, 22, 23, 24,
   25, 26, 27, 28, 30, 31, 33, 34, 36, 37, 38, 39, 41, 42, 44, 46, 47,
@@ -3059,7 +3072,8 @@ const uint8_t pitchenv_rate[] = {
   153, 159, 165, 171, 178, 185, 193, 202, 211, 232, 243, 254, 255
 };
 
-const int8_t pitchenv_tab[] = {
+//const int8_t pitchenv_tab[] = {
+int8_t PROGMEM pitchenv_tab[] = {
   -128, -116, -104, -95, -85, -76, -68, -61, -56, -52, -49, -46, -43,
   -41, -39, -37, -35, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24,
   -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10,

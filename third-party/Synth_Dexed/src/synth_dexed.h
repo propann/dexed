@@ -59,6 +59,8 @@
 #define PORTAMENTO_GLISSANDO_DEFAULT 0
 #define PORTAMENTO_TIME_DEFAULT 0
 
+//#define USE_SIMPLE_COMPRESSOR 1
+
 /*****************************************************
    CODE: orig_code/synth.h
  *****************************************************/
@@ -548,8 +550,10 @@ class PitchEnv {
     void advance(int newix);
 };
 
-extern const uint8_t pitchenv_rate[];
-extern const int8_t pitchenv_tab[];
+//extern const uint8_t pitchenv_rate[];
+//extern const int8_t pitchenv_tab[];
+extern uint8_t pitchenv_rate[];
+extern int8_t pitchenv_tab[];
 
 
 //=====================================================
