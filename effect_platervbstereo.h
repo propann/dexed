@@ -49,7 +49,7 @@
 #include "arm_math.h"
 
 
-// if uncommented will place all the buffers in the DMAMEM section ofd the memory
+// if uncommented will place all the buffers in the DMAMEM section of the memory
 // works with single instance of the reverb only
 #define REVERB_USE_DMAMEM
 

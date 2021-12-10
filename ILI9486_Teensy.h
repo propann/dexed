@@ -10,8 +10,6 @@
 #include "Adafruit_GFX.h"
 #include <SPI.h>
 
-
-
 #define SPISET SPISettings(36000000,MSBFIRST,SPI_MODE0)  //DEFAULT 36000000
 //#define SPIBLOCKMAX 320 // one ROW is a good value to avoid really long SPI transfers
 #define SPIBLOCKMAX TFT_HEIGHT*8 // one ROW is a good value to avoid really long SPI transfers
@@ -42,6 +40,7 @@
 #define CD_COMMAND   digitalWrite(TFT_RS, LOW);
 #define CD_DATA     digitalWrite(TFT_RS, HIGH);
 
+    
 #define swapvalue(a, b) { int16_t t = a; a = b; b = t; }
 /*****************************************************************************/
 class ILI9486_Teensy : public Adafruit_GFX

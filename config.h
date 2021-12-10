@@ -54,7 +54,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.1.2"
+#define VERSION "1.2.0a"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -63,7 +63,7 @@
 //*************************************************************************************************
 //* MIDI HARDWARE SETTINGS
 //*************************************************************************************************
-#define MIDI_DEVICE_DIN Serial1
+#define MIDI_DEVICE_DIN Serial4
 #define MIDI_DEVICE_USB 1
 #define MIDI_DEVICE_USB_HOST 1
 
@@ -76,9 +76,6 @@
 #define TEENSY_AUDIO_BOARD
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
-//#define TEENSY_DAC
-//#define TEENSY_DAC_SYMMETRIC
-//#define I2S_AUDIO_ONLY
 
 //*************************************************************************************************
 //* MIDI SOFTWARE SETTINGS
@@ -90,13 +87,13 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-//#define DEBUG 1
+#define DEBUG 1
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
 
 //*************************************************************************************************
-//* DEXED AND EFFECTS SETTINGS
+//* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
 //*************************************************************************************************
 // Number of Dexed instances
 
@@ -111,7 +108,7 @@
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
-#define NUM_CUSTOM_MIDI_MAPPINGS 20  //Number of Key, CC and Button Custom Mappings
+#define NUM_CUSTOM_MIDI_MAPPINGS 10  //Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
 
@@ -121,6 +118,16 @@
 
 #define NUM_SEQ_PATTERN 24
 #define NUM_SEQ_TRACKS 6
+#ifdef TEENSY4
+#define USE_SEQUENCER
+#endif
+
+// EPIANO
+#define USE_EPIANO
+#ifdef USE_EPIANO
+#define NUM_EPIANO_VOICES 16
+#define DEFAULT_EP_MIDI_CHANNEL 3
+#endif
 
 // CHORUS parameters
 #define MOD_DELAY_SAMPLE_BUFFER int32_t(TIME_MS2SAMPLES(20.0)) // 20.0 ms delay buffer. 
@@ -147,9 +154,17 @@
 #define SAMPLE_RATE 44100
 
 #ifdef USE_FX
+#if defined(USE_EPIANO)
+#define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 
+#else
 #define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36
+#endif
+#else
+#if defined(USE_EPIANO)
+#define AUDIO_MEM NUM_DEXED * 15 + 14
 #else
 #define AUDIO_MEM NUM_DEXED * 15
+#endif
 #endif
 
 #ifdef TEENSY_AUDIO_BOARD
@@ -198,9 +213,7 @@
 #define YELLOW  0xFFEB
 #define DARKGREEN   0x0AE0
 #define MIDDLEGREEN   0x1500
-//#define LIGHTBLUE 0x6D5F
 #define LIGHTBLUE 0x7BBD
-
 
 #define GREY1   0x52AA
 #define GREY2   0xC638
@@ -217,8 +230,8 @@
 
 #define TFT_RST 35
 #define TFT_RS 34 // DC
-#define TFT_CS 38
-#define TFT_TOUCH_CS 37
+#define TFT_CS 0  //38
+#define TFT_TOUCH_CS 38 //37  
 #define TFT_TOUCH_IRQ 33
 #define TFT_WIDTH  320
 #define TFT_HEIGHT 480
@@ -251,7 +264,8 @@
 #define SDCARD_TEENSY_SCK_PIN   13
 #endif
 
-// Encoder with button
+//#define FlashChipSelect 6  // digital pin for flash chip CS pin (on Audio Shield)
+const int FlashChipSelect = 6;
 
 // Encoder with button
 //#define ENCODER_USE_INTERRUPTS
@@ -262,7 +276,7 @@
 
 #define ENC_R_PIN_A  28
 #define ENC_R_PIN_B  29
-#define BUT_R_PIN    27
+#define BUT_R_PIN    25  //27 moved away to 25 to free up spi1
 
 #define BUT_DEBOUNCE_MS 20
 #define LONG_BUTTON_PRESS 500
@@ -293,6 +307,7 @@
 #define FX_CONFIG_NAME "fx"
 #define VOICE_CONFIG_NAME "voice"
 #define SYS_CONFIG_NAME "sys"
+#define EPIANO_CONFIG_NAME "epiano"
 
 #define MAX_PERF_MOD 30
 
@@ -313,38 +328,8 @@
 // MAX_NOTES SETTINGS
 // Teensy-4.x settings
 #ifdef TEENSY4
-#define MAX_NOTES 16 //32
+#define MAX_NOTES 32
 #define MIDI_DECAY_LEVEL_TIME 500
-#endif
-
-// Teensy-3.6 settings
-#if defined(TEENSY3_6)
-# if defined(USE_FX)
-#    warning >>> With enabled FX a maximum of 13 voices is possible (due to RAM and CPU limitations)
-#    define MAX_NOTES 12
-#    if F_CPU > 180000000
-#        error >>> Enabled FX with clockrate more than 180MHz is not useful due to RAM limitations.
-#    endif
-# else
-#   if F_CPU == 256000000
-#    warning >>> Maximum of 22 voices.
-#    define MAX_NOTES 22
-#   elif F_CPU == 240000000
-#    warning >>> Maximum of 20 voices. You should consider to use 256MHz overclocking to get a maximum of 22 voices.
-#    define MAX_NOTES 20
-#   elif F_CPU == 216000000
-#    warning >>> Maximum of 20 voices. You should consider to use 256MHz overclocking to get a maximum of 22 voices.
-#    define MAX_NOTES 18
-#   elif F_CPU == 192000000
-#    warning >>> Maximum of 18 voices. You should consider to use 256MHz overclocking to get a maximum of 22 voices.
-#    define MAX_NOTES 16
-#   elif F_CPU == 180000000
-#    warning >>> Maximum of 16 voices. You should consider to use 256MHz overclocking to get a maximum of 24 voices.
-#    define MAX_NOTES 14
-#   else
-#    error >>> CPU Clock below 180MHz is not supported
-#   endif
-# endif
 #endif
 
 // MIDI
@@ -591,25 +576,23 @@
 #define PERFORMANCE_NUM_MAX 99
 #define PERFORMANCE_NUM_DEFAULT 0
 
-#define FX_CONFIG_MIN 0
-#define FX_CONFIG_MAX 99
-#define FX_CONFIG_DEFAULT 0
+/*
+  #define VELOCITY_CONFIG_MIN 0
+  #define VELOCITY_CONFIG_MAX 99
+  #define VELOCITY_CONFIG_DEFAULT 0
 
-#define VELOCITY_CONFIG_MIN 0
-#define VELOCITY_CONFIG_MAX 99
-#define VELOCITY_CONFIG_DEFAULT 0
+  #define VOICE_CONFIG_MIN 0
+  #define VOICE_CONFIG_MAX 99
+  #define VOICE_CONFIG_DEFAULT -1
 
-#define VOICE_CONFIG_MIN 0
-#define VOICE_CONFIG_MAX 99
-#define VOICE_CONFIG_DEFAULT -1
+  #define DRUMS_CONFIG_MIN 0
+  #define DRUMS_CONFIG_MAX 99
+  #define DRUMS_CONFIG_DEFAULT 0
 
-#define DRUMS_CONFIG_MIN 0
-#define DRUMS_CONFIG_MAX 99
-#define DRUMS_CONFIG_DEFAULT 0
-
-#define SEQUENCE_CONFIG_MIN 0
-#define SEQUENCE_CONFIG_MAX 99
-#define SEQUENCE_CONFIG_DEFAULT 0
+  #define SEQUENCE_CONFIG_MIN 0
+  #define SEQUENCE_CONFIG_MAX 99
+  #define SEQUENCE_CONFIG_DEFAULT 0
+*/
 
 #define EQ_1_MIN 15
 #define EQ_1_MAX 250
@@ -638,6 +621,115 @@
 #define EQ_7_MIN 8
 #define EQ_7_MAX 18
 #define EQ_7_DEFAULT 15
+
+#define EP_CHORUS_FREQUENCY_MIN 0
+#define EP_CHORUS_FREQUENCY_MAX 100
+#define EP_CHORUS_FREQUENCY_DEFAULT 0
+
+#define EP_CHORUS_WAVEFORM_MIN 0
+#define EP_CHORUS_WAVEFORM_MAX 1
+#define EP_CHORUS_WAVEFORM_DEFAULT 0
+
+#define EP_CHORUS_DEPTH_MIN 0
+#define EP_CHORUS_DEPTH_MAX 100
+#define EP_CHORUS_DEPTH_DEFAULT 0
+
+#define EP_CHORUS_LEVEL_MIN 0
+#define EP_CHORUS_LEVEL_MAX 100
+#define EP_CHORUS_LEVEL_DEFAULT 0
+
+#define EP_REVERB_SEND_MIN 0
+#define EP_REVERB_SEND_MAX 100
+#define EP_REVERB_SEND_DEFAULT 0
+
+#define EP_DECAY_MIN 0
+#define EP_DECAY_MAX 100
+#define EP_DECAY_DEFAULT 50
+
+#define EP_RELEASE_MIN 0
+#define EP_RELEASE_MAX 100
+#define EP_RELEASE_DEFAULT 50
+
+#define EP_HARDNESS_MIN 0
+#define EP_HARDNESS_MAX 100
+#define EP_HARDNESS_DEFAULT 50
+
+#define EP_TREBLE_MIN 0
+#define EP_TREBLE_MAX 100
+#define EP_TREBLE_DEFAULT 50
+
+#define EP_PAN_TREMOLO_MIN 0
+#define EP_PAN_TREMOLO_MAX 100
+#define EP_PAN_TREMOLO_DEFAULT 50
+
+#define EP_PAN_LFO_MIN 0
+#define EP_PAN_LFO_MAX 100
+#define EP_PAN_LFO_DEFAULT 65
+
+#define EP_VELOCITY_SENSE_MIN 0
+#define EP_VELOCITY_SENSE_MAX 100
+#define EP_VELOCITY_SENSE_DEFAULT 25
+
+#define EP_PANORAMA_MIN 0
+#define EP_PANORAMA_MAX 40
+#define EP_PANORAMA_DEFAULT 20
+
+#define EP_STEREO_MIN 0
+#define EP_STEREO_MAX 100
+#define EP_STEREO_DEFAULT 50
+
+#define EP_POLYPHONY_MIN 0
+#if defined(USE_EPIANO)
+#define EP_POLYPHONY_MAX NUM_EPIANO_VOICES
+#define EP_POLYPHONY_DEFAULT NUM_EPIANO_VOICES
+#else
+#define EP_POLYPHONY_MAX 16
+#define EP_POLYPHONY_DEFAULT 16
+#endif
+
+#define EP_TUNE_MIN 1
+#define EP_TUNE_MAX 199
+#define EP_TUNE_DEFAULT 100
+
+#define EP_DETUNE_MIN 0
+#define EP_DETUNE_MAX 100
+#define EP_DETUNE_DEFAULT 15
+
+#define EP_OVERDRIVE_MIN 0
+#define EP_OVERDRIVE_MAX 100
+#define EP_OVERDRIVE_DEFAULT 0
+
+#define EP_REVERB_SEND_MIN 0
+#define EP_REVERB_SEND_MAX 100
+#define EP_REVERB_SEND_DEFAULT 0
+
+#define EP_LOWEST_NOTE_MIN 21
+#define EP_LOWEST_NOTE_MAX 108
+#define EP_LOWEST_NOTE_DEFAULT EP_LOWEST_NOTE_MIN
+
+#define EP_HIGHEST_NOTE_MIN 21
+#define EP_HIGHEST_NOTE_MAX 108
+#define EP_HIGHEST_NOTE_DEFAULT EP_HIGHEST_NOTE_MAX
+
+#define EP_TRANSPOSE_MIN 0
+#define EP_TRANSPOSE_MAX 48
+#define EP_TRANSPOSE_DEFAULT 24
+
+#define EP_SOUND_INTENSITY_MIN 0
+#define EP_SOUND_INTENSITY_MAX 100
+#define EP_SOUND_INTENSITY_DEFAULT 100
+
+#define EP_MONOPOLY_MIN 0
+#define EP_MONOPOLY_MAX 1
+#define EP_MONOPOLY_DEFAULT 0
+
+#define EP_MIDI_CHANNEL_MIN MIDI_CHANNEL_OMNI
+#define EP_MIDI_CHANNEL_MAX 16
+#if defined(USE_EPIANO)
+#define EP_MIDI_CHANNEL_DEFAULT DEFAULT_EP_MIDI_CHANNEL
+#else
+#define EP_MIDI_CHANNEL_DEFAULT 3
+#endif
 
 #define FAVORITES_NUM_MIN 0
 #define FAVORITES_NUM_MAX 100
@@ -713,7 +805,33 @@ typedef struct fx_s {
   int8_t eq_5;
   int8_t eq_6;
   uint8_t eq_7;
+  uint8_t ep_chorus_frequency;
+  uint8_t ep_chorus_waveform;
+  uint8_t ep_chorus_depth;
+  uint8_t ep_chorus_level;
+  uint8_t ep_reverb_send;
 } fx_t;
+
+typedef struct epiano_s {
+  uint8_t decay;
+  uint8_t release;
+  uint8_t hardness;
+  uint8_t treble;
+  uint8_t pan_tremolo;
+  uint8_t pan_lfo;
+  uint8_t velocity_sense;
+  uint8_t stereo;
+  uint8_t polyphony;
+  uint8_t tune;
+  uint8_t detune;
+  uint8_t overdrive;
+  uint8_t lowest_note;
+  uint8_t highest_note;
+  uint8_t transpose;
+  uint8_t sound_intensity;
+  uint8_t pan;
+  uint8_t midi_channel;
+} epiano_t;
 
 typedef struct sys_s {
   uint8_t vol;
@@ -727,9 +845,25 @@ typedef struct sys_s {
 typedef struct configuration_s {
   sys_t sys;
   dexed_t dexed[MAX_DEXED];
+  epiano_t epiano;
   fx_t fx;
 } config_t;
 
+
+enum master_mixer_ports {
+  MASTER_MIX_CH_DEXED2,
+  MASTER_MIX_CH_DEXED1,
+  MASTER_MIX_CH_REVERB,
+  MASTER_MIX_CH_DRUMS,
+  MASTER_MIX_CH_EPIANO
+};
+
+enum reverb_mixer_ports {
+  REVERB_MIX_CH_DEXED2,
+  REVERB_MIX_CH_DEXED1,
+  REVERB_MIX_CH_DRUMS,
+  REVERB_MIX_CH_EPIANO
+};
 #if !defined(_MAPFLOAT)
 #define _MAPFLOAT
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)

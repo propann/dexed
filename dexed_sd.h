@@ -44,6 +44,7 @@ extern uint32_t crc32(byte * calc_start, uint16_t calc_bytes);
 extern void set_fx_params(void);
 extern void set_voiceconfig_params(uint8_t instance_id);
 extern void set_sys_params(void);
+extern void set_epiano_params(void);
 
 bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id);
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id);

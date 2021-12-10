@@ -24,24 +24,24 @@
 
 #ifndef _SEQUENCER_H
 #define _SEQUENCER_H
-#include <XPT2046_Touchscreen.h>
+#include "XPT2046_Touchscreen.h"
 extern XPT2046_Touchscreen touch ;
 #include "ILI9486_Teensy.h"
 
+#include <avr/pgmspace.h>
 
 #include <SD.h>
 extern Sd2Card card;
 
 typedef struct sequencer_s {
+  uint8_t cycle_touch_element=1;  // 0 = editor, 1 = touch keyboard, 2...
   uint8_t tracker_scrollpos;
   int tracker_cursor_scroll;
   uint8_t tracker_selected_track;
   uint8_t tracker_active_step;
+  
   uint8_t tracker_data_cache[NUM_SEQ_TRACKS][16];
   char tracker_names_cache[NUM_SEQ_TRACKS][16];
-
-  uint8_t data_cache_editor[NUM_SEQ_TRACKS][16];
-  char name_cache_editor[NUM_SEQ_TRACKS][16];
 
   uint8_t test_counter;
 
@@ -58,7 +58,7 @@ typedef struct sequencer_s {
   uint8_t UI_last_seq_step;
   uint8_t note_editor_view = 99; // 0 = list/tracker view, 1 = pianoroll
   bool noteoffsent[NUM_SEQ_TRACKS] = {false, false,  false, false, false, false};
-  uint8_t inst_dexed[NUM_SEQ_TRACKS] = { 0, 0, 1, 1 , 1, 1 };
+  uint8_t inst_dexed[NUM_SEQ_TRACKS] = { 0, 0, 1, 1 , 1, 1 }; //dexed instance 0+1,  2 = epiano
   uint8_t step = 0;
   bool running = false;
   bool recording = false;
@@ -77,7 +77,7 @@ typedef struct sequencer_s {
   int oct_shift = 0;
   uint8_t arp_style = 0; // up, down, up&down, random
 
-  uint8_t arps[6][23] = {
+   uint8_t arps[6][23] = {
     { 0, 4, 7, 12, 16, 19, 24, 28, 31, 36, 40, 43, 48, 52, 55, 60, 64, 67, 72, 76, 79, 84, 0}, //major
     { 0, 3, 7, 12, 15, 19, 24, 27, 31, 36, 39, 43, 48, 51, 55, 60, 63, 67, 72, 75, 79, 84, 0}, //minor
     { 0, 4, 7, 10, 12, 16, 19, 22, 24, 28, 31, 34, 36, 40, 43, 46, 48, 52, 55, 58, 60, 64, 0}, //seventh
@@ -96,7 +96,7 @@ typedef struct sequencer_s {
     {'N', 'o', 'C', 'h', 'o', 'r', 'd'}
   };
 
-  char arp_style_names[4][3] = {
+   const char arp_style_names[4][3] = {
     { 'u', 'p', ' '},
     {'d', 'w', 'n'},
     {'u', '&', 'd'},
@@ -173,6 +173,8 @@ typedef struct sequencer_s {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
   };
+
+  
   uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0};
   // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
 

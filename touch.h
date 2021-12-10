@@ -1,7 +1,7 @@
 
 #ifndef _TOUCH_H
 #define _TOUCH_H
-#include <XPT2046_Touchscreen.h>
+#include "XPT2046_Touchscreen.h"
 #include <SD.h>
 extern XPT2046_Touchscreen touch;
 
@@ -24,6 +24,7 @@ typedef struct fm_s
 {
   File sd_currentDirectoy;
   File sd_entry;
+  uint8_t active_window=0; // 0 = left window (SDCARD) , 1 = FLASH
   uint8_t sd_cap_rows;
   uint8_t sd_folder_depth = 0;
   uint8_t sd_selected_file = 0;
@@ -36,19 +37,19 @@ typedef struct fm_s
   char sd_new_name[52];
   char sd_full_name[52];
 
-  File flash_currentDirectoy;
-  File flash_entry;
+  //File flash_currentDirectory;
+  //File flash_entry;
   uint8_t flash_cap_rows;
-  uint8_t flash_folder_depth = 0;
+  //uint8_t flash_folder_depth = 0;
   uint8_t flash_selected_file = 0;
   uint8_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
-  bool flash_is_folder;
-  bool flash_parent_folder = false;
-  char flash_temp_name[52];
-  char flash_new_name[52];
-  char flash_full_name[52];
+  //bool flash_is_folder;
+  //bool flash_parent_folder = false;
+//  char flash_temp_name[52];
+//  char flash_new_name[52];
+//  char flash_full_name[52];
 
 
 } fm_t;
