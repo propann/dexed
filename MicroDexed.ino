@@ -2677,6 +2677,7 @@ uint8_t find_drum_number_from_note(uint8_t note)
 
 void set_fx_params(void)
 {
+ 
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
@@ -2693,9 +2694,10 @@ void set_fx_params(void)
         chorus_modulator[instance_id]->begin(WAVEFORM_TRIANGLE);
     }
     chorus_modulator[instance_id]->phase(0);
-    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
-    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
+//    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
+//    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
     chorus_modulator[instance_id]->offset(0.0);
+
 #if MOD_FILTER_OUTPUT == MOD_BUTTERWORTH_FILTER_OUTPUT
     // Butterworth filter, 12 db/octave
     modchorus_filter[instance_id]->setLowpass(0, MOD_FILTER_CUTOFF_HZ, 0.707);
@@ -2806,7 +2808,7 @@ void set_fx_params(void)
   }
 #endif
 
-  init_MIDI_send_CC();
+ init_MIDI_send_CC();
 }
 
 void set_voiceconfig_params(uint8_t instance_id)

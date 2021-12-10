@@ -521,7 +521,7 @@ void print_file_manager_buttons()
     display.setTextColor(WHITE, BLUE);
   else
     display.setTextColor(GREY1, BLUE);
-  display.setCursor(CHAR_width + 114 + 30, 240 + 8);
+  display.setCursor(CHAR_width + 114 + 28, 240 + 8);
   display.print("PREVIEW");
   if (fm.sd_mode == 3)
     display.setTextColor(WHITE, BLUE);
@@ -533,8 +533,8 @@ void print_file_manager_buttons()
     display.setTextColor(WHITE, BLUE);
   else
     display.setTextColor(GREY1, BLUE);
-  display.setCursor(CHAR_width + 114 + 32, 280 + 8);
-  display.print("-----");
+  display.setCursor(CHAR_width + 127, 280 + 8);
+  display.print("COPY PRESETS");
 
   // active_window   0 = left window (SDCARD) , 1 = FLASH
 
@@ -666,11 +666,9 @@ void handle_touchscreen_custom_mappings()
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 7115)
     ts.block_screen_update = false;
-
 }
 
 void handle_touchscreen_cc_mappings()
-
 {
   if (touch.touched() && ts.block_screen_update == false)
   {
@@ -694,5 +692,4 @@ void handle_touchscreen_cc_mappings()
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 7115)
     ts.block_screen_update = false;
-
 }

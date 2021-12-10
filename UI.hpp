@@ -10250,7 +10250,127 @@ void UI_func_file_manager(uint8_t param)
 
     if (LCDML.BT_checkEnter() && fm.active_window == 0) // left window, SDCARD
     {
-      if (fm.sd_is_folder)
+      if (fm.sd_mode == 4) //copy presets dir from SD to flash
+      {
+        border3_large_clear();
+        encoderDir[ENC_R].reset();
+        uint8_t screenline = 0;
+
+        File rootdir = SD.open("/DRUMS");
+        while (1)
+        {
+          // open a file from the SD card
+
+          File f = rootdir.openNextFile();
+          if (!f) break;
+          const char *filename = f.name();
+
+          if (screenline > 10)
+            screenline = 0;
+          display.setCursor_textGrid(1, 6 + screenline);
+
+          display.setTextColor(WHITE, BLACK);
+          if (filename[0] != 46 && filename[1] != 95)
+          {
+            display.print(filename);
+            display.print("       ");
+            screenline++;
+          }
+          unsigned long length = f.size();
+          //Serial.println(length);
+
+          // check if this file is already on the Flash chip
+          if (SerialFlash.exists(filename))
+          {
+#ifdef DEBUG
+            Serial.println(F("  already exists on the Flash chip"));
+#endif
+            SerialFlashFile ff = SerialFlash.open(filename);
+            if (ff && ff.size() == f.size())
+            {
+#ifdef DEBUG
+              Serial.println(F("  size is the same, comparing data..."));
+#endif
+              if (compareFiles(f, ff) == true)
+              {
+#ifdef DEBUG
+                Serial.println(F("  files are identical :)"));
+#endif
+                f.close();
+                ff.close();
+                continue;  // advance to next file
+              } else
+              {
+#ifdef DEBUG
+                Serial.println(F("  files are different"));
+#endif
+              }
+            } else
+            {
+#ifdef DEBUG
+              Serial.print(F("  size is different, "));
+              Serial.print(ff.size());
+              Serial.println(F(" bytes"));
+#endif
+            }
+            // delete the copy on the Flash chip, if different
+#ifdef DEBUG
+            Serial.println(F("  delete file from Flash chip"));
+#endif
+            SerialFlash.remove(filename);
+          }
+          if (filename[0] != 46 && filename[1] != 95)
+          {
+            // create the file on the Flash chip and copy data
+            if (SerialFlash.create(filename, length))
+            {
+              SerialFlashFile ff = SerialFlash.open(filename);
+              if (ff)
+              {
+#ifdef DEBUG
+                Serial.print(F("  copying"));
+#endif
+                // copy data loop
+                unsigned long count = 0;
+                while (count < length)
+                {
+                  char buf[256];
+                  unsigned int n;
+                  n = f.read(buf, 256);
+                  ff.write(buf, n);
+                  count = count + n;
+                  if (count % 5120 == 0)
+                    display.fillRect(241, 80, count / (f.size() / 240) - 2, 8, RED);
+                }
+                ff.close();
+                display.fillRect(241, 80, 238, 8, BLACK);
+                print_flash_stats();
+                flash_printDirectory();
+              } else
+              {
+#ifdef DEBUG
+                Serial.println(F("  error opening freshly created file!"));
+#endif
+              }
+            } else
+            {
+#ifdef DEBUG
+              Serial.println(F("  unable to create file"));
+#endif
+            }
+          }
+          f.close();
+          display.fillRect(241, 80, 238, 8, BLACK);
+        }
+        rootdir.close();
+        border3_large_clear();
+        print_flash_stats();
+        flash_printDirectory();
+#ifdef DEBUG
+        Serial.println(F("Finished All Files"));
+#endif
+      }
+      else if (fm.sd_is_folder)
       {
         if  (fm.sd_temp_name[0] == 0x2E && fm.sd_temp_name[1] == 0x2E ) // return to parent folder
         {
@@ -10306,37 +10426,47 @@ void UI_func_file_manager(uint8_t param)
           strcpy(fm.sd_full_name, fm.sd_new_name);
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
-
           File f = SD.open(fm.sd_full_name);
           const char *filename = f.name();
           unsigned long length = f.size();
-
           // check if this file is already on the Flash chip
           if (SerialFlash.exists(filename))
           {
+#ifdef DEBUG
             Serial.println(F("  already exists on the Flash chip"));
+#endif
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff && ff.size() == f.size())
             {
+#ifdef DEBUG
               Serial.println(F("  size is the same, comparing data..."));
+#endif
               if (compareFiles(f, ff) == true)
               {
+#ifdef DEBUG
                 Serial.println(F("  files are identical :)"));
+#endif
                 f.close();
                 ff.close();
 
               } else
               {
+#ifdef DEBUG
                 Serial.println(F("  files are different"));
+#endif
               }
             } else
             {
+#ifdef DEBUG
               Serial.print(F("  size is different, "));
               Serial.print(ff.size());
               Serial.println(F(" bytes"));
+#endif
             }
             // delete the copy on the Flash chip, if different
+#ifdef DEBUG
             Serial.println(F("  delete file from Flash chip"));
+#endif
             SerialFlash.remove(filename);
           }
           else
@@ -10345,7 +10475,9 @@ void UI_func_file_manager(uint8_t param)
               SerialFlashFile ff = SerialFlash.open(filename);
               if (ff)
               {
+#ifdef DEBUG
                 Serial.print(F("  copying"));
+#endif
                 // copy data loop
                 unsigned long count = 0;
                 while (count < length) {
@@ -10356,14 +10488,14 @@ void UI_func_file_manager(uint8_t param)
                   count = count + n;
                   if (count % 5120 == 0)
                     display.fillRect(241, 80, count / (f.size() / 240) - 2, 8, RED);
-
                 }
                 ff.close();
               } else
               {
+#ifdef DEBUG
                 Serial.println(F("  error opening freshly created file!"));
+#endif
               }
-
               f.close();
               display.fillRect(241, 80, 238, 8, BLACK);
               print_flash_stats();
@@ -10372,13 +10504,10 @@ void UI_func_file_manager(uint8_t param)
         }
       }
     }
-
-
     if (fm.active_window == 0)
     {
       if (fm.sd_new_name[0] != 0x2f)
         fm.sd_new_name[0] = 0x2f;
-
       fm.sd_currentDirectoy = SD.open(fm.sd_new_name);
       sd_printDirectory(fm.sd_currentDirectoy);
     }
