@@ -34,7 +34,14 @@
 #include "Adafruit_GFX.h"
 #include "ILI9486_Teensy.h"
 #include "XPT2046_Touchscreen.h"
+
+#ifdef COMPILE_FOR_PROGMEM
 #include <TeensyVariablePlayback.h>
+#endif
+#ifdef COMPILE_FOR_FLASH
+#include <TeensyVariablePlaybackFlash.h>
+#endif
+
 #include <TeensyTimerTool.h>
 using namespace TeensyTimerTool;
 #include "midi_devices.hpp"
@@ -58,6 +65,92 @@ using namespace TeensyTimerTool;
 
 ILI9486_Teensy display;
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
+
+#ifndef Realtime_Scope_h_
+#define Realtime_Scope_h_
+
+class Realtime_Scope : public AudioStream {
+  public:
+    Realtime_Scope(void) : AudioStream(1, inputQueueArray) {
+    }
+    virtual void update(void);
+    void FillArray(void);
+    void AddtoBuffer(int16_t*);
+
+  private:
+    audio_block_t *inputQueueArray[2];
+    int16_t buffer[AUDIO_BLOCK_SAMPLES];
+    int16_t buffer_old[AUDIO_BLOCK_SAMPLES];
+    uint32_t count = 0;
+    elapsedMillis msecs;
+};
+#endif
+
+void Realtime_Scope::FillArray() {
+  __disable_irq();
+  uint16_t i = 0;
+  do {
+    int16_t wave_data = buffer[i];
+    int16_t y = map(wave_data, 32767, -32768, -170, 170) + 50;
+    ts.scopebuffer[i] = y;
+    i = i + 1;
+  } while (i < (AUDIO_BLOCK_SAMPLES) );
+  __enable_irq();
+}
+
+void Realtime_Scope::AddtoBuffer(int16_t *audio)
+{
+  const int16_t *end = audio + AUDIO_BLOCK_SAMPLES;
+  __disable_irq();
+  do
+  {
+    buffer[count++] = *audio;
+    audio++;
+  } while (audio < end);
+  if (count > (AUDIO_BLOCK_SAMPLES) - 1)
+  {
+    count = 0;
+  }
+  __enable_irq();
+  if (ts.scope_is_drawing == false)
+    FillArray();
+
+}
+
+void Realtime_Scope::update(void)
+{
+  if (msecs < 7000) return;
+  audio_block_t *block;
+  block = receiveReadOnly(0);
+  if (block)
+  {
+    AddtoBuffer(block->data);
+    release(block);
+  }
+}
+
+void draw_scope() {
+  if (ts.scope_delay > 250)
+  {
+    uint16_t x = 240;
+    uint16_t i = 0;
+    ts.scope_is_drawing = true;
+    do {
+      if (ts.scopebuffer_old[i] > 0)
+      {
+        if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
+          display.drawPixel( x + i , ts.scopebuffer_old[i], BLACK);
+
+        display.drawPixel( x + i , ts.scopebuffer[i], WHITE);
+      }
+      ts.scopebuffer_old[i] = ts.scopebuffer[i];
+      i = i + 1;
+    } while (i < ((AUDIO_BLOCK_SAMPLES) - 8));
+    ts.scope_delay = 0;
+    ts.scope_is_drawing = false;
+  }
+  ts.scope_delay++;
+}
 
 // Audio engines
 AudioSynthDexed*                MicroDexed[NUM_DEXED];
@@ -91,8 +184,9 @@ AudioMixer<2>                   ep_chorus_mixer_r;
 AudioMixer<2>                   ep_chorus_mixer_l;
 #endif
 
-AudioMixer<2>                   microdexed_peak_mixer;
-AudioAnalyzePeak                microdexed_peak;
+//AudioMixer<2>                   microdexed_peak_mixer;
+AudioAnalyzePeak                microdexed_peak_0;
+AudioAnalyzePeak                microdexed_peak_1;
 #if defined(USE_FX)
 #if defined(USE_EPIANO)
 AudioMixer<4>                   reverb_mixer_r;
@@ -104,6 +198,7 @@ AudioMixer<3>                   reverb_mixer_l;
 #endif
 
 AudioEffectPlateReverb          reverb;
+Realtime_Scope                  scope;
 
 #if defined(USE_FX) && defined(USE_EPIANO)
 AudioMixer<5>                   master_mixer_r;
@@ -126,14 +221,30 @@ AudioMixer<2>                   audio_thru_mixer_l;
 #if NUM_DRUMS > 0
 //AudioPlayMemory*              Drum[NUM_DRUMS];
 AudioPlaySdWav*                 sd_WAV[2];
-AudioPlaySdResmp*               Drum[NUM_DRUMS];
-//AudioPlayArrayResmp*            Drum[NUM_DRUMS];
+#ifdef COMPILE_FOR_FLASH
+AudioPlayFlashResmp*            Drum[NUM_DRUMS];
+#endif
+//AudioPlaySdResmp*            Drum[NUM_DRUMS];
+#ifdef COMPILE_FOR_PROGMEM
+AudioPlayArrayResmp*            Drum[NUM_DRUMS];
+#endif
 
 AudioMixer<NUM_DRUMS>           drum_mixer_r;
 AudioMixer<NUM_DRUMS>           drum_mixer_l;
 
+AudioAnalyzePeak                drum_mixer_peak_r;
+AudioAnalyzePeak                drum_mixer_peak_l;
+
 AudioMixer<8>                     drum_reverb_send_mixer_r;
 AudioMixer<8>                     drum_reverb_send_mixer_l;
+
+//AudioAnalyzePeak                reverb_mixer_peak_r;
+//AudioAnalyzePeak                reverb_mixer_peak_l;
+
+AudioAnalyzePeak                reverb_return_peak_r;
+AudioAnalyzePeak                reverb_return_peak_l;
+
+
 #endif
 
 // Outputs
@@ -185,6 +296,9 @@ AudioConnection patchCord[] = {
   {stereo2mono, 0, master_peak_r, 0},
   {stereo2mono, 0, master_peak_l, 0},
 
+  //Realtime Scope
+  {stereo2mono, 0, scope, 0},
+
   // Outputs
 #if defined(TEENSY_AUDIO_BOARD)
 #ifndef SGTL5000_AUDIO_THRU
@@ -222,17 +336,20 @@ AudioConnection patchCord[] = {
   {audio_thru_mixer_l, 0, i2s1, 1},
 #endif
 
-#if NUM_DRUMS > 0
-#ifdef USE_FX
   {drum_reverb_send_mixer_r, 0, reverb_mixer_r, REVERB_MIX_CH_DRUMS},
   {drum_reverb_send_mixer_l, 0, reverb_mixer_l, REVERB_MIX_CH_DRUMS},
   {drum_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_DRUMS},
   {drum_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_DRUMS},
-#else
-  {drum_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_DRUMS},
-  {drum_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_DRUMS},
-#endif
-#endif
+
+  //  { reverb_mixer_r,0, reverb_return_peak_r, 0},
+  //   { reverb_mixer_l,0, reverb_return_peak_l, 0},
+
+  { reverb, 0, reverb_return_peak_r, 0},
+  { reverb, 1, reverb_return_peak_l, 0},
+
+  {drum_mixer_r, 0, drum_mixer_peak_r, 0},
+  {drum_mixer_l, 0, drum_mixer_peak_l, 0},
+
 
 #if defined(USE_EPIANO)
   {ep, 0, ep_stereo_panorama , 0},
@@ -291,7 +408,12 @@ void create_audio_dexed_chain(uint8_t instance_id)
   delay_mixer[instance_id] = new AudioMixer<2>();
 #endif
 
-  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_mixer, instance_id);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_mixer, instance_id);
+  if (instance_id == 0)
+    dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_0, 0);
+  else
+    dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_1, 0);
+
 #if defined(USE_FX)
   dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *chorus_mixer[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *modchorus[instance_id], 0); //////////////////////
@@ -330,8 +452,13 @@ void create_audio_drum_chain(uint8_t instance_id)
 {
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
-  Drum[instance_id] = new AudioPlaySdResmp();
-  //Drum[instance_id] = new AudioPlayArrayResmp();
+#ifdef COMPILE_FOR_FLASH
+  Drum[instance_id] = new AudioPlayFlashResmp();
+#endif
+  //Drum[instance_id] = new AudioPlaySdResmp();
+#ifdef COMPILE_FOR_PROGMEM
+  Drum[instance_id] = new AudioPlayArrayResmp();
+#endif
   Drum[instance_id]->enableInterpolation(false);
   Drum[instance_id]->setPlaybackRate(1.0);
 
@@ -436,6 +563,10 @@ extern void handle_touchscreen_cc_mappings(void);
 extern void update_midi_learn_button(void);
 #endif
 
+////debug remove later
+//extern uint8_t get_chain_length_from_track(uint8_t ch);
+//extern uint8_t find_longest_chain(void);
+
 extern LCDMenuLib2 LCDML;
 
 extern void getNoteName(char* noteName, uint8_t noteNumber);
@@ -443,6 +574,8 @@ extern void getNoteName(char* noteName, uint8_t noteNumber);
 #ifdef USE_SEQUENCER
 PeriodicTimer sequencer_timer;
 #endif
+
+
 
 /***********************************************************************
    SETUP
@@ -454,6 +587,9 @@ void setup()
 #else
   delay(1300); // seems to be needed when no serial debugging is enabled // 900 working for external USB power bank
 #endif
+
+  Serial.begin(SERIAL_SPEED);
+  delay(2300);
 
 #ifdef DEBUG
   Serial.println(CrashReport);
@@ -785,11 +921,12 @@ void setup()
   if ( seq.name[0] == 0 )
     strcpy(seq.name, "INIT Perf");
   //Menu Startup
-  //LCDML.OTHER_jumpToFunc(UI_func_voice_select);
+  // LCDML.OTHER_jumpToFunc(UI_func_voice_select);
+  LCDML.OTHER_jumpToFunc(UI_func_song);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-  LCDML.OTHER_jumpToFunc(UI_func_file_manager);
-  //LCDML.OTHER_jumpToFunc(UI_func_phPiano);
+  //LCDML.OTHER_jumpToFunc(UI_func_file_manager);
+  //LCDML.OTHER_jumpToFunc(UI_func_phSampler);
   //LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
   //LCDML.OTHER_jumpToFunc( UI_func_cc_mappings);
 
@@ -797,6 +934,65 @@ void setup()
   //timer1.begin(sequencer, seq.tempo_ms / 2, true);
 
 }
+
+void draw_volmeter(int x, int y, uint8_t arr, float value)
+{
+  // draw bar
+  //int height = value * 610;
+  int height = mapfloat(value, 0.0, 0.13, 0, 100);
+  if (height > 101)
+    height = 101;
+
+  if (height > ts.displayed_peak[arr])
+  {
+    int z = 0;
+    do {
+      display.drawLine ( x, y - height + z, x + 19,  y - height + z, ColorHSV(( (y - height + z) * 260 ) , 244, 254)   );
+      z++;
+    } while (z < height - ts.displayed_peak[arr] );
+    ts.displayed_peak[arr] = height;
+  }
+  else
+  {
+    if (ts.displayed_peak[arr] > 1)
+    {
+      display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 1, BLACK);
+      ts.displayed_peak[arr] = ts.displayed_peak[arr] - 1;
+    }
+  }
+  //draw text
+  display.setCursor(x, y + 4);
+  display.print(value);
+  // display.print(height);
+}
+
+void handle_touchscreen_mixer()
+{
+  if (ts.scope_delay % 60 == 0)
+  {
+    float dr, dl;
+    dr = drum_mixer_peak_l.read() / 6;
+    dl = drum_mixer_peak_r.read() / 6;
+    display.setTextSize(1);
+    display.setTextColor(WHITE, BLACK);
+
+    draw_volmeter(CHAR_width * 32, 220, 0, master_peak_l.read() );
+    draw_volmeter(CHAR_width * 36, 220, 1, master_peak_r.read() );
+
+    draw_volmeter(CHAR_width, 220, 2, microdexed_peak_0.read() );
+    draw_volmeter(CHAR_width * 4, 220, 3, microdexed_peak_1.read() );
+
+    if (dr < 0.2) {
+      draw_volmeter(CHAR_width * 7, 220, 4, dr );
+      draw_volmeter(CHAR_width * 10, 220, 5, dl );
+    }
+
+    draw_volmeter(CHAR_width * 13, 220, 6, reverb_return_peak_l.read() );
+    draw_volmeter(CHAR_width * 16, 220, 7, reverb_return_peak_r.read() );
+
+  }
+}
+
 
 void loop()
 {
@@ -809,10 +1005,18 @@ void loop()
 
   LCDML.loop();
 
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+  if (LCDML.FUNC_getID() > _LCDML_DISP_cnt)
+    draw_scope();
+  else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+  {
     handle_touchscreen_voice_select();
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+    draw_scope();
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+  {
     handle_touchscreen_pattern_editor();
+    draw_scope();
+  }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
     handle_touchscreen_mute_matrix();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
@@ -821,11 +1025,42 @@ void loop()
     handle_touchscreen_custom_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
     handle_touchscreen_cc_mappings();
-
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
+  {
+    handle_touchscreen_mixer();
+    draw_scope();
+  }
+  
+  
   if (seq.running && seq.step != seq.UI_last_seq_step )
   {
     update_display_functions_while_seq_running();
   }
+
+
+//  //DEBUG 
+//  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
+//  {
+//    display.setTextColor(WHITE, BLUE);
+//    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+//    {
+//     // display.setCursor_textGrid(5 + 4 * d, 10);
+//
+//      //seq_print_formatted_number( seq.chain_reached_end[d], 2 );
+//      display.setCursor_textGrid(5 + 4 * d, 11);
+//      seq_print_formatted_number (seq.chain_counter[d], 2 );
+//      display.setCursor_textGrid(5 + 4 * d, 12);
+//   //   seq_print_formatted_number( seq.current_pattern[d], 2 );
+//    //   display.setCursor_textGrid(5 + 4 * d, 14);
+//      seq_print_formatted_number( get_chain_length_from_track(d) , 2 );
+//       display.setCursor_textGrid(3, 15);
+//      seq_print_formatted_number( find_longest_chain() , 2 );
+//
+//        display.setCursor_textGrid(6, 15);
+//      seq_print_formatted_number( seq.current_song_step , 2 );
+//    }
+//  }
+
 
   // CONTROL-RATE-EVENT-HANDLING
   if (control_rate > CONTROL_RATE_MS)
@@ -904,18 +1139,18 @@ void loop()
 #if defined (DEBUG) && defined (SHOW_CPU_LOAD_MSEC)
   if (cpu_mem_millis >= SHOW_CPU_LOAD_MSEC)
   {
-    if (master_peak_r.available())
-      if (master_peak_r.read() == 1.0)
-        peak_r++;
-    if (master_peak_l.available())
-      if (master_peak_l.read() == 1.0)
-        peak_l++;
-    if (microdexed_peak.available())
-    {
-      peak_dexed_value = microdexed_peak.read();
-      if (peak_dexed_value > 0.99)
-        peak_dexed++;
-    }
+    //    if (master_peak_r.available())
+    //      if (master_peak_r.read() == 1.0)
+    //        peak_r++;
+    //    if (master_peak_l.available())
+    //      if (master_peak_l.read() == 1.0)
+    //        peak_l++;
+    //    if (microdexed_peak.available())
+    //    {
+    //      peak_dexed_value = microdexed_peak.read();
+    //      if (peak_dexed_value > 0.99)
+    //        peak_dexed++;
+    //    }
     cpu_mem_millis -= SHOW_CPU_LOAD_MSEC;
     show_cpu_and_mem_usage();
   }
@@ -941,13 +1176,14 @@ void playWAVFile(const char *filename)
 #endif
 }
 
-void pianotest(byte inNumber, byte inVelocity)
+#ifdef COMPILE_FOR_FLASH
+void sampleplayertest(byte inNumber, byte inVelocity)
 {
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(1);
 
-  float pan = 0.0;
+  //float pan = 0.0;
 
   drum_mixer_r.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
   drum_mixer_l.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
@@ -959,38 +1195,59 @@ void pianotest(byte inNumber, byte inVelocity)
 
   Drum[slot]->enableInterpolation(true);
 
-  if (inNumber <= 24 + 6)
+  if (temp_int == 0 )
   {
-    Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
-    Drum[slot]->playWav("Piano N C1.wav");
+    if (inNumber <= 24 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
+      Drum[slot]->playWav("Piano N C1.wav");
+    }
+    else if (inNumber < 36 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
+      Drum[slot]->playWav("Piano N C2.wav");
+    }
+    else if (inNumber < 48 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
+      Drum[slot]->playWav("Piano N C3.wav");
+    }
+    else if (inNumber < 60 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
+      Drum[slot]->playWav("Piano N C4.wav");
+    }
+    else if (inNumber < 72 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
+      Drum[slot]->playWav("Piano N C5.wav");
+    }
+    else if (inNumber < 84 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
+      Drum[slot]->playWav("Piano N C6.wav");
+    }
   }
-  else if (inNumber < 36 + 6)
+  else if (temp_int == 1)
   {
-    Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-    Drum[slot]->playWav("Piano N C2.wav");
+    if (inNumber < 36 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
+      Drum[slot]->playWav("STRINGS-Low.wav");
+    }
+    else if (inNumber < 48 + 6)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
+      Drum[slot]->playWav("STRINGS-Mid.wav");
+    }
+    else if (inNumber < 60 + 6 + 12)
+    {
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
+      Drum[slot]->playWav("STRINGS-High.wav");
+    }
   }
-  else if (inNumber < 48 + 6)
-  {
-    Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-    Drum[slot]->playWav("Piano N C3.wav");
-  }
-  else if (inNumber < 60 + 6)
-  {
-    Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-    Drum[slot]->playWav("Piano N C4.wav");
-  }
-  else if (inNumber < 72 + 6)
-  {
-    Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
-    Drum[slot]->playWav("Piano N C5.wav");
-  }
-  else if (inNumber < 84 + 6)
-  {
-    Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
-    Drum[slot]->playWav("Piano N C6.wav");
-  }
- 
 }
+#endif
 
 void learn_key(byte inChannel, byte inNumber)
 {
@@ -1088,12 +1345,14 @@ void learn_cc(byte inChannel, byte inNumber)
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 {
 
-  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_phPiano) )
+#ifdef COMPILE_FOR_FLASH
+  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_phSampler) )
   {
-    pianotest(inNumber, inVelocity);
+    sampleplayertest(inNumber, inVelocity);
   }
   else
   {
+#endif
     if (ts.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
       learn_key(inChannel, inNumber);
     else
@@ -1140,17 +1399,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
                   midi_decay[instance_id] = min(inVelocity / 5, 7);
                 }
 #endif
-#ifdef DEBUG
-                char note_name[4];
-                getNoteName(note_name, inNumber);
-                Serial.print(F("Keydown "));
-                Serial.print(note_name);
-                Serial.print(F(" instance "));
-                Serial.print(instance_id, DEC);
-                Serial.print(F(" MIDI-channel "));
-                Serial.print(inChannel, DEC);
-                Serial.println();
-#endif
+                //#ifdef DEBUG
+                //                char note_name[4];
+                //                getNoteName(note_name, inNumber);
+                //                Serial.print(F("Keydown "));
+                //                Serial.print(note_name);
+                //                Serial.print(F(" instance "));
+                //                Serial.print(instance_id, DEC);
+                //                Serial.print(F(" MIDI-channel "));
+                //                Serial.print(inChannel, DEC);
+                //                Serial.println();
+                //#endif
                 return;
               }
             }
@@ -1186,8 +1445,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
             {
               if (inNumber == drum_config[d].midinote)
               {
+#ifdef COMPILE_FOR_FLASH
                 char temp_name[16];
-
+#endif
                 uint8_t slot = drum_get_slot(drum_config[d].drum_class);
                 float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
 
@@ -1197,23 +1457,28 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
                 drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
                 drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
 #endif
-                //   if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
-                //   {
-                //Drum[slot]->play(drum_config[d].drum_data);
-                if (drum_config[d].pitch != 0.0)
+#ifdef COMPILE_FOR_PROGMEM
+                if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
                 {
-                  Drum[slot]->enableInterpolation(true);
-                  Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+#endif
+
+                  if (drum_config[d].pitch != 0.0)
+                  {
+                    Drum[slot]->enableInterpolation(true);
+                    Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+                  }
+#ifdef COMPILE_FOR_PROGMEM
+                  Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+#endif
+#ifdef COMPILE_FOR_FLASH
+                  strcpy(temp_name, drum_config[d].name);
+                  strcat(temp_name, ".wav");
+                  Drum[slot]->playWav(temp_name);
+#endif
+
+#ifdef COMPILE_FOR_PROGMEM
                 }
-                // Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
-                
-                strcpy(temp_name, drum_config[d].name);
-                strcat(temp_name, ".wav");
-
-                Drum[slot]->playWav(temp_name);
-
-                //   }
-
+#endif
                 //#ifdef DEBUG
                 //                Serial.print(F("Drum "));
                 //                Serial.print(drum_config[d].shortname);
@@ -1244,22 +1509,24 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
             if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
             {
               ep.noteOn(inNumber + configuration.epiano.transpose, inVelocity);
-#ifdef DEBUG
-              char note_name[4];
-              getNoteName(note_name, inNumber);
-              Serial.print(F("KeyDown "));
-              Serial.print(note_name);
-              Serial.print(F(" EPIANO "));
-              Serial.print(F(" MIDI-channel "));
-              Serial.print(inChannel, DEC);
-              Serial.println();
-#endif
+              //#ifdef DEBUG
+              //              char note_name[4];
+              //              getNoteName(note_name, inNumber);
+              //              Serial.print(F("KeyDown "));
+              //              Serial.print(note_name);
+              //              Serial.print(F(" EPIANO "));
+              //              Serial.print(F(" MIDI-channel "));
+              //              Serial.print(inChannel, DEC);
+              //              Serial.println();
+              //#endif
             }
           }
 #endif
         }
     }
-  } //
+#ifdef COMPILE_FOR_FLASH
+  }
+#endif
 }
 
 uint8_t drum_get_slot(uint8_t dt)
@@ -1273,21 +1540,21 @@ uint8_t drum_get_slot(uint8_t dt)
       Drum[i]->setPlaybackRate(1.0);
     }
 
-//            else
-//            {
-//              if (drum_type[i] == dt)
-//              {
-//        #ifdef DEBUG
-//                Serial.print(F("Stopping Drum "));
-//                Serial.print(i);
-//                Serial.print(F(" type "));
-//                Serial.println(dt);
-//        #endif
-//                Drum[i]->stop();
-//    
-//                return (i);
-//              }
-//            }
+    //            else
+    //            {
+    //              if (drum_type[i] == dt)
+    //              {
+    //        #ifdef DEBUG
+    //                Serial.print(F("Stopping Drum "));
+    //                Serial.print(i);
+    //                Serial.print(F(" type "));
+    //                Serial.println(dt);
+    //        #endif
+    //                Drum[i]->stop();
+    //
+    //                return (i);
+    //              }
+    //            }
 
   }
 #ifdef DEBUG
@@ -1311,17 +1578,19 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
           MicroDexed[instance_id]->keyup(inNumber);
 
         midi_voices[instance_id]--;
-#ifdef DEBUG
-        char note_name[4];
-        getNoteName(note_name, inNumber);
-        Serial.print(F("KeyUp "));
-        Serial.print(note_name);
-        Serial.print(F(" instance "));
-        Serial.print(instance_id, DEC);
-        Serial.print(F(" MIDI-channel "));
-        Serial.print(inChannel, DEC);
-        Serial.println();
-#endif
+
+        //#ifdef DEBUG
+        //        char note_name[4];
+        //        getNoteName(note_name, inNumber);
+        //        Serial.print(F("KeyUp "));
+        //        Serial.print(note_name);
+        //        Serial.print(F(" instance "));
+        //        Serial.print(instance_id, DEC);
+        //        Serial.print(F(" MIDI-channel "));
+        //        Serial.print(inChannel, DEC);
+        //        Serial.println();
+        //#endif
+
       }
     }
   }
@@ -2146,7 +2415,13 @@ void handleStart(void)
   midi_bpm_counter = 0;
   _midi_bpm = -1;
   seq.step = 0;
-  seq.chain_active_step = 0;
+  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  {
+    seq.chain_counter[d] = 0;
+    seq.current_pattern[d] = 99;
+  }
+  seq.current_song_step = 0;
+
   seq.running = true;
 #ifdef USE_SEQUENCER
   sequencer_timer.start();
@@ -2169,8 +2444,12 @@ void handleStop(void)
   seq.recording = false;
   seq.note_in = 0;
   seq.step = 0;
-  seq.chain_active_step = 0;
-
+   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  {
+    seq.chain_counter[d] = 0;
+    seq.current_pattern[d] = 99;
+  }
+  seq.current_song_step = 0;
   MicroDexed[0]->panic();
 #if NUM_DEXED > 1
   MicroDexed[1]->panic();
@@ -2677,7 +2956,7 @@ uint8_t find_drum_number_from_note(uint8_t note)
 
 void set_fx_params(void)
 {
- 
+
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
@@ -2694,8 +2973,8 @@ void set_fx_params(void)
         chorus_modulator[instance_id]->begin(WAVEFORM_TRIANGLE);
     }
     chorus_modulator[instance_id]->phase(0);
-//    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
-//    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
+    //    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
+    //    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
     chorus_modulator[instance_id]->offset(0.0);
 
 #if MOD_FILTER_OUTPUT == MOD_BUTTERWORTH_FILTER_OUTPUT
@@ -2808,13 +3087,14 @@ void set_fx_params(void)
   }
 #endif
 
- init_MIDI_send_CC();
+  init_MIDI_send_CC();
 }
 
 void set_voiceconfig_params(uint8_t instance_id)
 {
   // INIT PEAK MIXER
-  microdexed_peak_mixer.gain(instance_id, 1.0);
+  // microdexed_peak_mixer.gain(instance_id, 1.0);
+
 
   // Controller
   MicroDexed[instance_id]->setMaxNotes(configuration.dexed[instance_id].polyphony);
@@ -3147,38 +3427,41 @@ void check_and_create_directories(void)
       SD.mkdir(tmp);
     }
 
-    //check if updated Fav-System is ready or if setup has to run once.
-    sprintf(tmp, "/%s/fav-v2", FAV_CONFIG_PATH);
-    if (!SD.exists(tmp)) {
+    //    //check if updated Fav-System is ready or if setup has to run once.
+    //    sprintf(tmp, "/%s/fav-v2", FAV_CONFIG_PATH);
+    //    if (!SD.exists(tmp))
+    //    {
+    //
+    //      // Clear now obsolte marker files from Favs.
+    //      // Only needs to run once.
+    //      for (uint8_t i = 0; i < MAX_BANKS; i++)
+    //      {
+    //        sprintf(tmp, "/%s/%d/hasfav", FAV_CONFIG_PATH, i);
+    //#ifdef DEBUG
+    //        Serial.print(F("Delete Marker File"));
+    //        Serial.println(tmp);
+    //#endif
+    //        if (SD.exists(tmp))
+    //          SD.remove(tmp);
+    //      }
+    //      // Remove empty Folders. rmdir will only remove strictly emtpy folders, which is the desired result.
+    //      // Only needs to run once.
+    //      for (uint8_t i = 0; i < MAX_BANKS; i++)
+    //      {
+    //        sprintf(tmp, "/%s/%d", FAV_CONFIG_PATH, i);
+    //#ifdef DEBUG
+    //        Serial.print(F("Delete empty folder "));
+    //        Serial.println(tmp);
+    //#endif
+    //        if (SD.exists(tmp))
+    //          SD.rmdir(tmp);
+    //      }
+    //      sprintf(tmp, "/%s/fav-v2", FAV_CONFIG_PATH);
+    //      if (!SD.exists(tmp))
+    //        SD.mkdir(tmp);  // Set Marker so that the Cleanup loops only run once.
+    //    }
 
-      // Clear now obsolte marker files from Favs.
-      // Only needs to run once.
-      for (uint8_t i = 0; i < MAX_BANKS; i++)
-      {
-        sprintf(tmp, "/%s/%d/hasfav", FAV_CONFIG_PATH, i);
-#ifdef DEBUG
-        Serial.print(F("Delete Marker File"));
-        Serial.println(tmp);
-#endif
-        if (SD.exists(tmp))
-          SD.remove(tmp);
-      }
-      // Remove empty Folders. rmdir will only remove strictly emtpy folders, which is the desired result.
-      // Only needs to run once.
-      for (uint8_t i = 0; i < MAX_BANKS; i++)
-      {
-        sprintf(tmp, "/%s/%d", FAV_CONFIG_PATH, i);
-#ifdef DEBUG
-        Serial.print(F("Delete empty folder "));
-        Serial.println(tmp);
-#endif
-        if (SD.exists(tmp))
-          SD.rmdir(tmp);
-      }
-      sprintf(tmp, "/%s/fav-v2", FAV_CONFIG_PATH);
-      if (!SD.exists(tmp))
-        SD.mkdir(tmp);  // Set Marker so that the Cleanup loops only run once.
-    }
+
     /* #ifdef DEBUG
         else
           Serial.println(F("No SD card for directory check available."));
@@ -3233,14 +3516,14 @@ void show_cpu_and_mem_usage(void)
   Serial.print(sum_render_time_max, DEC);
   Serial.print(F("|XRUN:"));
   Serial.print(sum_xrun, DEC);
-  Serial.print(F("|PEAKR:"));
-  Serial.print(peak_r, DEC);
-  Serial.print(F("|PEAKL:"));
-  Serial.print(peak_l, DEC);
-  Serial.print(F("|PEAKMD:"));
-  Serial.print(peak_dexed, DEC);
-  Serial.print(F("|ACTPEAKMD:"));
-  Serial.print(peak_dexed_value, 1);
+  //  Serial.print(F("|PEAKR:"));
+  //  Serial.print(peak_r, DEC);
+  //  Serial.print(F("|PEAKL:"));
+  //  Serial.print(peak_l, DEC);
+  //  Serial.print(F("|PEAKMD:"));
+  //  Serial.print(peak_dexed, DEC);
+  //  Serial.print(F("|ACTPEAKMD:"));
+  //  Serial.print(peak_dexed_value, 1);
   Serial.print(F("|BLOCKSIZE:"));
   Serial.print(AUDIO_BLOCK_SAMPLES, DEC);
   Serial.print(F("|RAM:"));
