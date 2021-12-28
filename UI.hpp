@@ -6578,11 +6578,11 @@ void print_edit_mode()
       display.setTextColor(GREY1, BLACK);
       display.print(")");
     }
-//    else if (seq.menu == 20)
-//    {
-//      display.setTextColor(WHITE, BLUE);
-//      display.print(F("SEQ. LENGHT"));
-//    }
+    //    else if (seq.menu == 20)
+    //    {
+    //      display.setTextColor(WHITE, BLUE);
+    //      display.print(F("SEQ. LENGHT"));
+    //    }
     else if (seq.menu > 20 && seq.menu < 27)
     {
       display.setTextColor(WHITE, BLUE);
@@ -6593,11 +6593,11 @@ void print_edit_mode()
       display.setTextColor(WHITE, BLUE);
       display.print(F("DEXED/EP A."));
     }
-//    else if (seq.menu > 26 + 6)
-//    {
-//      display.setTextColor(WHITE, BLUE);
-//      display.print(F("SELECT PAT."));
-//    }
+    //    else if (seq.menu > 26 + 6)
+    //    {
+    //      display.setTextColor(WHITE, BLUE);
+    //      display.print(F("SELECT PAT."));
+    //    }
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
   {
@@ -9122,6 +9122,9 @@ void UI_func_song(uint8_t param)
         }
         else  if (seq.edit_state == true && seq.cycle_touch_element == 5)
         {
+            if (temp_int == NUM_CHAINS)
+            temp_int = 0;
+          else
           temp_int = constrain( temp_int + ENCODER[ENC_R].speed(), 0, NUM_CHAINS );  // not -1: last element is for empty step
         }
         else  if ( (  seq.edit_state == true && seq.cycle_touch_element == 6) ||  (seq.edit_state == true && seq.cycle_touch_element == 8 )  )
@@ -9130,6 +9133,9 @@ void UI_func_song(uint8_t param)
         }
         else  if ( (seq.edit_state == true && seq.cycle_touch_element == 7 ) || (seq.edit_state == true && seq.cycle_touch_element == 9 ) )
         {
+           if (seq.sub_menu == NUM_CHAINS)
+            seq.sub_menu = 0;
+          else
           seq.sub_menu = constrain(  seq.sub_menu + ENCODER[ENC_R].speed(), 0, NUM_CHAINS );// not -1:last element is for empty step
         }
 
@@ -9146,6 +9152,9 @@ void UI_func_song(uint8_t param)
         }
         else  if (seq.edit_state == true && seq.cycle_touch_element == 5)
         {
+           if (temp_int == 0)
+            temp_int = NUM_CHAINS;
+          else
           temp_int = constrain( temp_int - ENCODER[ENC_R].speed(), 0, NUM_CHAINS ); // not -1:last element is for empty step
         }
         else  if ( ( seq.edit_state == true && seq.cycle_touch_element == 6) || (seq.edit_state == true && seq.cycle_touch_element == 8 ) )
@@ -9154,7 +9163,10 @@ void UI_func_song(uint8_t param)
         }
         else  if ( ( seq.edit_state == true && seq.cycle_touch_element == 7) || (seq.edit_state == true && seq.cycle_touch_element == 9 ) )
         {
-          seq.sub_menu = constrain(  seq.sub_menu - ENCODER[ENC_R].speed(), 0, NUM_CHAINS );// not -1:last element is for empty step
+          if (seq.sub_menu == 0)
+            seq.sub_menu = NUM_CHAINS;
+          else
+            seq.sub_menu = constrain(  seq.sub_menu - ENCODER[ENC_R].speed(), 0, NUM_CHAINS );// not -1:last element is for empty step
         }
       }
       else  if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
