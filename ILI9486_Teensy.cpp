@@ -7,7 +7,7 @@
   Note: SPI pins are set in Library .h file, rather than using the constructor
 
   modified for Teensy 3.1 by Richard Palmer 2017
-  modified, stripped down and customized drawing functions, custom font for Teensy 4.1 by positionhigh@gmx.de 2021 
+  modified, stripped down and customized drawing functions by positionhigh@gmx.de 2021
 */
 #include "ILI9486_Teensy.h"
 uint16_t lineBuffer[1];
@@ -127,7 +127,7 @@ void ILI9486_Teensy::begin(void)
     delay(200);
   }
   SPI1.beginTransaction(SPISET); //SPISettings(36000000,MSBFIRST,MODE0))
-  
+
   // init registers
   commandList(ili9486_init_sequence);
   SPI1.endTransaction();
@@ -160,6 +160,20 @@ void ILI9486_Teensy::pushColor(uint16_t color)
 void ILI9486_Teensy::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
   if ((x < 0) || (x >= _width) || (y < 0) || (y >= _height)) return;
+
+#ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(90);
+  Serial.write(highByte(x) );
+  Serial.write(lowByte(x) );
+  Serial.write(highByte(y));
+  Serial.write(lowByte(y));
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+#endif
+
   setAddrWindow(x, y, x + 1, y + 1);
   pushColor(color);
 }
@@ -175,6 +189,20 @@ void ILI9486_Teensy::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t col
     drawPixel(x, y, color);
     return;
   }
+#ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(91);
+  Serial.write(highByte(x) );
+  Serial.write(lowByte(x) );
+  Serial.write(highByte(y));
+  Serial.write(lowByte(y));
+  Serial.write(highByte(h));
+  Serial.write(lowByte(h));
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+#endif
   setAddrWindow(x, y, x, y + h - 1);
   SPI1.beginTransaction(SPISET);
   writedata16(color, h);
@@ -192,7 +220,20 @@ void ILI9486_Teensy::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t col
     drawPixel(x, y, color);
     return;
   }
-
+#ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(92);
+  Serial.write(highByte(x) );
+  Serial.write(lowByte(x) );
+  Serial.write(highByte(y));
+  Serial.write(lowByte(y));
+  Serial.write(highByte(w));
+  Serial.write(lowByte(w));
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+#endif
   setAddrWindow(x, y, x + w - 1, y);
   SPI1.beginTransaction(SPISET);
 
@@ -202,6 +243,14 @@ void ILI9486_Teensy::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t col
 /*****************************************************************************/
 void ILI9486_Teensy::fillScreen(uint16_t color)
 {
+#ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(93);
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+#endif
   setAddrWindow(0, 0,  _width, _height);
   SPI1.beginTransaction(SPISET);
   writedata16(color, (_width * _height));
@@ -222,7 +271,22 @@ void ILI9486_Teensy::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16
     drawPixel(x, y, color);
     return;
   }
-
+  #ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(94);
+  Serial.write(highByte(x) );
+  Serial.write(lowByte(x) );
+  Serial.write(highByte(y));
+  Serial.write(lowByte(y));
+  Serial.write(highByte(w));
+  Serial.write(lowByte(w));
+  Serial.write(highByte(h));
+  Serial.write(lowByte(h));
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+#endif
   setAddrWindow(x, y, x + w - 1, y + h - 1);
   SPI1.beginTransaction(SPISET);
 

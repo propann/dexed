@@ -87,10 +87,18 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-#define DEBUG 1
+//#define DEBUG 1
+//#define REMOTE_CONSOLE
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
+
+//*************************************************************************************************
+//* PROGMEM AND FLASH COMPILE MODES
+//*************************************************************************************************
+
+//#define COMPILE_FOR_FLASH
+#define COMPILE_FOR_PROGMEM
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -118,6 +126,9 @@
 
 #define NUM_SEQ_PATTERN 24
 #define NUM_SEQ_TRACKS 6
+#define SONG_LENGHT 64
+#define NUM_CHAINS 32
+
 #ifdef TEENSY4
 #define USE_SEQUENCER
 #endif
@@ -230,8 +241,8 @@
 
 #define TFT_RST 35
 #define TFT_RS 34 // DC
-#define TFT_CS 0  //38
-#define TFT_TOUCH_CS 38 //37  
+#define TFT_CS 0  //was 38
+#define TFT_TOUCH_CS 38 //was 37  
 #define TFT_TOUCH_IRQ 33
 #define TFT_WIDTH  320
 #define TFT_HEIGHT 480
@@ -304,6 +315,9 @@ const int FlashChipSelect = 6;
 #define DRUMS_MAPPING_NAME "drmmap"
 #define PATTERN_CONFIG_NAME "patterns"
 #define VELOCITY_CONFIG_NAME "velocity"
+#define CHAIN_CONFIG_NAME "chain"
+#define TRANSPOSE_CONFIG_NAME "transp"
+#define SONG_CONFIG_NAME "song"
 #define FX_CONFIG_NAME "fx"
 #define VOICE_CONFIG_NAME "voice"
 #define SYS_CONFIG_NAME "sys"

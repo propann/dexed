@@ -65,74 +65,130 @@ void seq_live_recording(void)
     seq.note_in_velocity = 0;
   }
 }
+
+uint8_t get_song_length()
+{
+  uint8_t best = 254;
+  uint8_t stepcounter = 0;
+
+  for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)  //loop tracks
+  {
+    stepcounter = 0;
+    for (uint8_t s = SONG_LENGHT-1; s > 0; s--)  //search song lenght from back to front
+    {
+      if (seq.song[t][s] == 99)
+        stepcounter++;
+    }
+    if (stepcounter < best)
+      best = stepcounter;
+  }
+  return SONG_LENGHT-best+1;
+}
+
+uint8_t get_chain_length_from_track(uint8_t tr)
+{
+  uint8_t stepcounter = 0;
+
+  for (uint8_t s = 0; s < 16; s++)
+  {
+    if ( seq.current_chain[tr] == 99)
+      break;
+    if ( seq.chain[  seq.current_chain[tr] ] [ s ] == 99)
+      break;
+    else
+      stepcounter++;
+  }
+
+  return stepcounter;
+}
+
+uint8_t find_longest_chain()
+{
+  uint8_t longest = 0;
+  uint8_t stepcounter = 0;
+
+  for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)  //loop tracks
+  {
+    stepcounter = 0;
+    for (uint8_t c = 0; c < 16; c++)
+    {
+      if ( seq.current_chain[t] == 99)
+        break;
+
+      if ( seq.chain[  seq.current_chain[t] ] [ c ] == 99)
+        break;
+      else
+        stepcounter++;
+    }
+    if (stepcounter > longest)
+      longest = stepcounter;
+  }
+  return longest;
+}
+
 void sequencer_part1(void)
 {
-  //if (seq.note_in > 0 && seq.note_in < 62 && seq.recording == false ) {
-  //handleNoteOff(configuration.dexed[0].midi_channel, seq.note_data[3][seq.step] + seq.transpose , 0);
-  //handleNoteOff(configuration.dexed[0].midi_channel, seq.note_data[3][seq.step - 1] + seq.transpose , 0);
-  //if (seq.note_in>65)seq.note_in=seq.note_in-12;
-  //seq.transpose = seq.note_in % 12 ;
-  //seq.transpose=seq.transpose-12;
-  //seq.note_in = 0;
-  //}
 
-  seq_live_recording();
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
-    if (seq.patternchain[seq.chain_active_step][d] < NUM_SEQ_PATTERN )  // sequence not empty or muted
+    uint8_t tr[NUM_SEQ_TRACKS]={0,0,0,0,0,0};
+    seq.current_chain[d] = seq.song[d][seq.current_song_step];
+    seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
+    
+if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] <32 )
+tr[d]=seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
+
+    if ( seq.current_pattern[d] < NUM_SEQ_PATTERN  && seq.current_chain[d] != 99)  // sequence not empty or muted
     {
       if ( seq.track_type[d] == 0)
       { // drum track (drum samples and pitched one-shot samples)
-        if (seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] > 0 )
+        if (seq.note_data[  seq.current_pattern[d] ][seq.step] > 0 )
         {
-          if (seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] > 209)  // it is a pitched sample
+          if (seq.vel[  seq.current_pattern[d] ][seq.step] > 209)  // it is a pitched sample
           {
             // Drum[slot]->setPlaybackRate( pow (2, (inNote - 72) / 12.00) * drum_config[sample].pitch ); get_sample_vol_max(sample)
-            set_sample_pitch(seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 210 , (float)pow (2, (seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 72) / 12.00) * get_sample_p_offset( seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 210 ) );
-            handleNoteOn(drum_midi_channel, seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] , 90 );
+            set_sample_pitch(seq.vel[  seq.current_pattern[d] ][seq.step] - 210 , (float)pow (2, (seq.note_data[  seq.current_pattern[d] ][seq.step] - 72) / 12.00) * get_sample_p_offset( seq.vel[  seq.current_pattern[d] ][seq.step] - 210 ) );
+            handleNoteOn(drum_midi_channel, seq.vel[  seq.current_pattern[d] ][seq.step] , 90 );
           }
           else // else play normal drum sample
-            handleNoteOn(drum_midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] , seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step]);
+            handleNoteOn(drum_midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] , seq.vel[  seq.current_pattern[d] ][seq.step]);
         }
       }
       else {
-        if (seq.note_data[seq.patternchain[seq.chain_active_step][d]][seq.step] > 0 )  // instrument track
+        if (seq.note_data[ seq.current_pattern[d]][seq.step] > 0 )  // instrument track
         {
           if (seq.track_type[d] == 1 || (seq.track_type[d] == 3 && seq.arp_play_basenote) )
           {
-            if (seq.note_data[seq.patternchain[seq.chain_active_step][d]][seq.step] != 130 )
+            if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 )
             {
               if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step], seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step]);
+                handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
               else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step], seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step]);
-              seq.prev_note[d] = seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step];
-              seq.prev_vel[d] = seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step];
+                handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
+              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]  ;
+              seq.prev_vel[d] = seq.vel[  seq.current_pattern[d] ][seq.step];
             }
           }
           else if (seq.track_type[d] == 2  ) //Chords
           {
-            if (seq.vel[ seq.patternchain[seq.chain_active_step][d]][seq.step] > 199)
+            if (seq.vel[  seq.current_pattern[d]][seq.step] > 199)
             {
-
-              //handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step], seq.chord_velocity);  // basenote
-
               for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
               {
                 if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] + (seq.oct_shift * 12) + seq.arps[seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200][x], seq.chord_velocity);
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_velocity);
                 else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                  handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] + (seq.oct_shift * 12) + seq.arps[seq.vel[ seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200][x], seq.chord_velocity);
+                  handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_velocity);
               }
-              seq.prev_note[d] = seq.note_data[seq.patternchain[seq.chain_active_step][d]][seq.step] + (seq.oct_shift * 12);
-              seq.prev_vel[d] = seq.vel[seq.patternchain[seq.chain_active_step][d]][seq.step];
+              seq.prev_note[d] = seq.note_data[ seq.current_pattern[d]][seq.step] +tr[d]   + (seq.oct_shift * 12);
+              seq.prev_vel[d] = seq.vel[ seq.current_pattern[d]][seq.step];
             }
           }
           if (seq.track_type[d] == 3) {  //Arp
             seq.arp_step = 0;
             seq.arp_counter = 0;
-            seq.arp_note = seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] + (seq.oct_shift * 12);
-            seq.arp_chord = seq.vel[seq.patternchain[seq.chain_active_step][d] ][seq.step] - 200;
+            seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]   + (seq.oct_shift * 12);
+            seq.arp_chord = seq.vel[ seq.current_pattern[d] ][seq.step] - 200;
           }
         }
         // after here not triggered by a key input -  arp only
@@ -207,7 +263,6 @@ void sequencer_part1(void)
       seq.arp_step++;
     }
   }
-
   if (seq.arp_style != 2) {
 
     if ( (seq.arp_step > 1 && seq.arps[seq.arp_chord][seq.arp_step] == 0) || seq.arp_step == seq.arp_lenght)
@@ -218,7 +273,6 @@ void sequencer_part1(void)
   if (seq.arp_style == 1 || seq.arp_style == 2  )
   {
     if (seq.arp_lenght == 0)seq.arp_lenght = 9;
-
   }
   if ( seq.arp_style == 2  )  //only for up&down
   {
@@ -226,30 +280,48 @@ void sequencer_part1(void)
     {
       seq.arp_step = 0;
     }
-
   }
   if (seq.step > 15)
   {
     seq.step = 0;
-    if (seq.chain_lenght > 0) {
-      seq.chain_active_step++;
-      if (seq.chain_active_step > seq.chain_lenght)
+    bool songstep_increased = false;
+
+    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+    {
+      if (  get_chain_length_from_track(d) >  seq.chain_counter[d]  )
+        seq.chain_counter[d]++;
+
+      if (get_chain_length_from_track(d) > 0 && get_chain_length_from_track(d) == seq.chain_counter[d] && seq.chain_counter[d] < find_longest_chain())
+        seq.chain_counter[d] = 0;
+
+      if (seq.current_song_step == get_song_length() )
       {
-        seq.chain_active_step = 0;
+        seq.current_song_step = 0;
+        seq.chain_counter[d] = 0;
       }
+      if ( seq.chain_counter[d]  == find_longest_chain() && songstep_increased == false )
+      {
+        seq.current_song_step++;
+        seq.chain_counter[d] = 0;
+        songstep_increased = true;
+      }
+      if (songstep_increased == true )
+        seq.chain_counter[d] = 0;
     }
   }
 }
 
 void sequencer_part2(void)
 {
+
   seq_live_recording();
+
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     if (seq.noteoffsent[d] == false) {
       if ( seq.prev_note[d] > 0 && seq.track_type[d] > 0)
       {
-        if (seq.note_data[ seq.patternchain[seq.chain_active_step][d] ][seq.step] != 130)
+        if (seq.note_data[  seq.current_pattern[d] ][seq.step] != 130)
         {
           if (seq.inst_dexed[d] < 2)
             handleNoteOff(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.prev_note[d] , 0);
@@ -281,6 +353,8 @@ void sequencer_part2(void)
     }
   }
 }
+
+
 void sequencer(void)
 { // Runs in Interrupt Timer. Switches between the Noteon and Noteoff Task, each cycle
 
@@ -292,8 +366,8 @@ void sequencer(void)
 
 void reset_tracker_edit_cache_single_track()
 {
-  memset(seq.tracker_data_cache[seq.tracker_selected_track], 254, 16);
-  memset(seq.tracker_names_cache[seq.tracker_selected_track], 254, 16);
+  memset(seq.tracker_data_cache[seq.selected_track], 254, 16);
+  memset(seq.tracker_names_cache[seq.selected_track], 254, 16);
 }
 
 void reset_tracker_edit_cache()
@@ -370,9 +444,9 @@ void seq_print_step_numbers(int xpos, int ypos)
 {
   uint8_t buffer[35] = {10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
   uint8_t step = seq.step;
-  uint8_t yspacer = 16;
+  uint8_t yspacer = 18;
   uint8_t count = 0;
-  while ( count < 13 )
+  while ( count < 12 )
   {
     display.setCursor(xpos, ypos + count * yspacer);
     if (count == 6 )
@@ -456,59 +530,63 @@ void update_pianoroll (int xpos, int ypos, uint8_t track_number, uint8_t cur_ste
   uint8_t lowest_note = 127;
   int notes_display_shift = 0;
 
-  if (seq.patternchain[0][track_number] < NUM_SEQ_PATTERN && seq.patternchain[1][track_number] < NUM_SEQ_PATTERN
-      && seq.patternchain[2][track_number] < NUM_SEQ_PATTERN && seq.patternchain[3][track_number] < NUM_SEQ_PATTERN)
-  {
-    for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
-    {
-      notes[f] = seq.note_data[ seq.patternchain[0][track_number] ][f];
-      notes[f + 16] = seq.note_data[ seq.patternchain[1][track_number] ][f];
-      notes[f + 32] = seq.note_data[ seq.patternchain[2][track_number] ][f];
-      notes[f + 48] = seq.note_data[ seq.patternchain[3][track_number] ][f];
-    }
-    //find lowest note
-    for (uint8_t f = 0; f < 64; f++)
-    {
-      if (notes[f] < lowest_note && notes[f] > 0)
-      {
-        lowest_note = notes[f];
-      }
-    }
-    if (lowest_note == 127)
-      lowest_note = 24;
-    notes_display_shift = lowest_note % 12;
-    update_keyboard_current_step(ypos, lowest_note / 12 , cur_step);
-    if (cur_step - 1 >= 0)
-    {
-      if (notes[cur_step - 1] > 0)
-      {
-        if (notes[cur_step - 1] == 130)
-        {
-          display.fillRect ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
-        }
-        else
-        {
-          display.fillRect  ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[cur_step - 1] - lowest_note) ) , 5, 5, WHITE  );
-          seq.pianoroll_last_valid_note = notes[cur_step - 1];
-        }
-      }
-    }
-    else
-    {
-      if (notes[63] > 0)
-      {
-        if (notes[63] == 130)
-        {
-          display.fillRect ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
-        }
-        else
-        {
-          display.fillRect  ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[63] - lowest_note) ) , 5, 5, WHITE  );
-          seq.pianoroll_last_valid_note = notes[63];
-        }
-      }
-    }
-  }
+  // SEQUENCER REWRITE
+
+  //  if (seq.patternchain[0][track_number] < NUM_SEQ_PATTERN && seq.patternchain[1][track_number] < NUM_SEQ_PATTERN
+  //      && seq.patternchain[2][track_number] < NUM_SEQ_PATTERN && seq.patternchain[3][track_number] < NUM_SEQ_PATTERN)
+  //  {
+  //    for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
+  //    {
+  //      notes[f] = seq.note_data[ seq.patternchain[0][track_number] ][f];
+  //      notes[f + 16] = seq.note_data[ seq.patternchain[1][track_number] ][f];
+  //      notes[f + 32] = seq.note_data[ seq.patternchain[2][track_number] ][f];
+  //      notes[f + 48] = seq.note_data[ seq.patternchain[3][track_number] ][f];
+  //    }
+  //
+  //
+  //    //find lowest note
+  //    for (uint8_t f = 0; f < 64; f++)
+  //    {
+  //      if (notes[f] < lowest_note && notes[f] > 0)
+  //      {
+  //        lowest_note = notes[f];
+  //      }
+  //    }
+  //    if (lowest_note == 127)
+  //      lowest_note = 24;
+  //    notes_display_shift = lowest_note % 12;
+  //    update_keyboard_current_step(ypos, lowest_note / 12 , cur_step);
+  //    if (cur_step - 1 >= 0)
+  //    {
+  //      if (notes[cur_step - 1] > 0)
+  //      {
+  //        if (notes[cur_step - 1] == 130)
+  //        {
+  //          display.fillRect ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+  //        }
+  //        else
+  //        {
+  //          display.fillRect  ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[cur_step - 1] - lowest_note) ) , 5, 5, WHITE  );
+  //          seq.pianoroll_last_valid_note = notes[cur_step - 1];
+  //        }
+  //      }
+  //    }
+  //    else
+  //    {
+  //      if (notes[63] > 0)
+  //      {
+  //        if (notes[63] == 130)
+  //        {
+  //          display.fillRect ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+  //        }
+  //        else
+  //        {
+  //          display.fillRect  ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[63] - lowest_note) ) , 5, 5, WHITE  );
+  //          seq.pianoroll_last_valid_note = notes[63];
+  //        }
+  //      }
+  //    }
+  //  }
 }
 
 void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
@@ -517,67 +595,67 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
   uint8_t lowest_note = 127;
   int notes_display_shift = 0;
   uint8_t last_valid_note = 254;
-  display.setTextSize(2);
-  display.setCursor (0, 320 - CHAR_height);
-  display.setTextColor(WHITE, DX_MAGENTA);
-  display.print("MOVE Y");
-  display.setCursor(480 - CHAR_width * 6, 320 - CHAR_height);
-  display.print("MOVE X");
-  display.setCursor (0, 0);
-  display.print("TRACK: [");
-  display.print(track_number + 1);
-  display.print("] ");
-  display.setTextColor(WHITE, BLACK);
-  display.print(" ");
-  display.setTextColor(WHITE, BLUE);
-  display.print(" PATTERN CHAIN: ");
 
-  seq_print_formatted_number( seq.patternchain[0][track_number]  , 2);
-  display.write (0xf8);
-  seq_print_formatted_number( seq.patternchain[1][track_number]  , 2);
-  display.write (0xf8);
-  seq_print_formatted_number( seq.patternchain[2][track_number]  , 2);
-  display.write (0xf8);
-  seq_print_formatted_number( seq.patternchain[3][track_number]  , 2);
-  display.print(" ");
-  if (seq.patternchain[0][track_number] < NUM_SEQ_PATTERN && seq.patternchain[1][track_number] < NUM_SEQ_PATTERN
-      && seq.patternchain[2][track_number] < NUM_SEQ_PATTERN && seq.patternchain[3][track_number] < NUM_SEQ_PATTERN)
-  {
-    for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
-    {
-      notes[f] = seq.note_data[ seq.patternchain[0][track_number] ][f];
-      notes[f + 16] = seq.note_data[ seq.patternchain[1][track_number] ][f];
-      notes[f + 32] = seq.note_data[ seq.patternchain[2][track_number] ][f];
-      notes[f + 48] = seq.note_data[ seq.patternchain[3][track_number] ][f];
-    }
-    //find lowest note
-    for (uint8_t f = 0; f < 64; f++)
-    {
-      if (notes[f] < lowest_note && notes[f] > 0)
-      {
-        lowest_note = notes[f];
-      }
-    }
-    if (lowest_note > 120)
-      lowest_note = 24;
-    notes_display_shift = lowest_note % 12;
-    print_keyboard(ypos, lowest_note / 12 );
-    for (uint8_t xcount = 0; xcount < 64; xcount++)
-    {
-      if (notes[xcount] > 0)
-      {
-        if (notes[xcount] == 130)
-        {
-          display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
-        }
-        else
-        {
-          display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY2  );
-          last_valid_note = notes[xcount];
-        }
-      }
-    }
-  }
+  // SEQUENCER REWRITE
+
+  //  display.setTextSize(2);
+  //  helptext_l("MOVE Y");
+  //  helptext_r("MOVE X");
+  //  display.setCursor (0, 0);
+  //  display.print("TRACK: [");
+  //  display.print(track_number + 1);
+  //  display.print("] ");
+  //  display.setTextColor(WHITE, BLACK);
+  //  display.print(" ");
+  //  display.setTextColor(WHITE, BLUE);
+  //  display.print(" PATTERN CHAIN: ");
+  //
+  //  seq_print_formatted_number( seq.patternchain[0][track_number]  , 2);
+  //  display.write (0xf8);
+  //  seq_print_formatted_number( seq.patternchain[1][track_number]  , 2);
+  //  display.write (0xf8);
+  //  seq_print_formatted_number( seq.patternchain[2][track_number]  , 2);
+  //  display.write (0xf8);
+  //  seq_print_formatted_number( seq.patternchain[3][track_number]  , 2);
+  //  display.print(" ");
+  //  if (seq.patternchain[0][track_number] < NUM_SEQ_PATTERN && seq.patternchain[1][track_number] < NUM_SEQ_PATTERN
+  //      && seq.patternchain[2][track_number] < NUM_SEQ_PATTERN && seq.patternchain[3][track_number] < NUM_SEQ_PATTERN)
+  //  {
+  //    for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
+  //    {
+  //      notes[f] = seq.note_data[ seq.patternchain[0][track_number] ][f];
+  //      notes[f + 16] = seq.note_data[ seq.patternchain[1][track_number] ][f];
+  //      notes[f + 32] = seq.note_data[ seq.patternchain[2][track_number] ][f];
+  //      notes[f + 48] = seq.note_data[ seq.patternchain[3][track_number] ][f];
+  //    }
+  //    //find lowest note
+  //    for (uint8_t f = 0; f < 64; f++)
+  //    {
+  //      if (notes[f] < lowest_note && notes[f] > 0)
+  //      {
+  //        lowest_note = notes[f];
+  //      }
+  //    }
+  //    if (lowest_note > 120)
+  //      lowest_note = 24;
+  //    notes_display_shift = lowest_note % 12;
+  //    print_keyboard(ypos, lowest_note / 12 );
+  //    for (uint8_t xcount = 0; xcount < 64; xcount++)
+  //    {
+  //      if (notes[xcount] > 0)
+  //      {
+  //        if (notes[xcount] == 130)
+  //        {
+  //          display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+  //        }
+  //        else
+  //        {
+  //          display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY2  );
+  //          last_valid_note = notes[xcount];
+  //        }
+  //      }
+  //    }
+  //  }
 }
 
 void seq_print_current_note_from_step(uint8_t step)
@@ -611,152 +689,157 @@ void seq_print_current_note_from_step(uint8_t step)
 
 void print_merged_pattern_for_editor(int xpos, int ypos, uint8_t track_number)
 {
-  //uint8_t step = seq.step;
-  uint8_t yspacer = 16;
-  uint8_t ycount = 0;
-  uint8_t yoffset = 0;
-  uint8_t cstep = 0;
 
-  for (uint8_t y = seq.tracker_scrollpos; y < seq.tracker_scrollpos + 13; y++) {
+  // SEQUENCER REWRITE
 
-    if (y >= 0 && y < 16)
-    {
-      yoffset = 0;
-      cstep = 0;
-    }
-    else if (y >= 16 && y < 32)
-    {
-      yoffset = 16;
-      cstep = 1;
-    }
-    else if (y >= 32 && y < 48)
-    {
-      yoffset = 32;
-      cstep = 2;
-    }
-    else if (y >= 48 && y < 64)
-    {
-      yoffset = 48;
-      cstep = 3;
-    }
-
-    display.setCursor(0, ypos + ycount * yspacer);
-    if (y % 16 == 0)
-      display.setTextColor(GREEN, BLACK);
-    else
-      display.setTextColor(DARKGREEN, BLACK);
-
-    if (seq.tracker_selected_track == 6 && y == seq.tracker_scrollpos + 6 + seq.tracker_cursor_scroll )
-      display.setTextColor(WHITE, BLACK);
-
-
-    seq_print_formatted_number(y, 2);
-    set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
-
-    if (y == seq.tracker_scrollpos)
-    {
-      display.setTextSize(1);
-      display.setCursor_textGrid(7 + 6 * track_number, 4);
-      display.setCursor(display.getCursorX(), display.getCursorY() + 9);
-      set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
-      seq_print_formatted_number( seq.patternchain[cstep][track_number], 2);
-      display.setTextSize(2);
-    }
-
-    if (seq.tracker_selected_track == track_number && y == seq.tracker_scrollpos + 6 + seq.tracker_cursor_scroll)
-    {
-      display.setTextColor(WHITE, BLACK);
-      seq.tracker_active_step = y - yoffset;
-    }
-    else
-      set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
-
-    if (seq.tracker_names_cache[track_number][ycount] != seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0])
-    {
-      display.setCursor(xpos, ypos + ycount * yspacer);
-      display.print( seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0]);
-      seq.tracker_names_cache[track_number][ycount] = seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0];
-    }
-
-    if ( seq.tracker_data_cache[track_number][ycount] != seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] )
-    {
-      display.setCursor(xpos + 24, ypos + ycount * yspacer);
-      seq_print_formatted_number(  seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] , 3);
-      seq.tracker_data_cache[track_number][ycount] = seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset];
-    }
-
-    ycount++;
-  }
-
+  //  uint8_t yspacer = 19;
+  //  uint8_t ycount = 0;
+  //  uint8_t yoffset = 0;
+  //  uint8_t cstep = 0;
+  //
+  //  for (uint8_t y = seq.scrollpos; y < seq.scrollpos + 12; y++) {
+  //
+  //    if (y >= 0 && y < 16)
+  //    {
+  //      yoffset = 0;
+  //      cstep = 0;
+  //    }
+  //    else if (y >= 16 && y < 32)
+  //    {
+  //      yoffset = 16;
+  //      cstep = 1;
+  //    }
+  //    else if (y >= 32 && y < 48)
+  //    {
+  //      yoffset = 32;
+  //      cstep = 2;
+  //    }
+  //    else if (y >= 48 && y < 64)
+  //    {
+  //      yoffset = 48;
+  //      cstep = 3;
+  //    }
+  //
+  //    display.setCursor(0, ypos + ycount * yspacer);
+  //    if (y % 16 == 0)
+  //      display.setTextColor(GREEN, BLACK);
+  //    else
+  //      display.setTextColor(DARKGREEN, BLACK);
+  //
+  //    if (seq.selected_track == 6 && y == seq.scrollpos + 6 + seq.cursor_scroll )
+  //      display.setTextColor(WHITE, BLACK);
+  //
+  //
+  //    seq_print_formatted_number(y, 2);
+  //    set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
+  //
+  //    if (y == seq.scrollpos)
+  //    {
+  //      display.setTextSize(1);
+  //      display.setCursor_textGrid(7 + 6 * track_number, 4);
+  //      display.setCursor(display.getCursorX(), display.getCursorY() + 9);
+  //      set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
+  //      seq_print_formatted_number( seq.patternchain[cstep][track_number], 2);
+  //      display.setTextSize(2);
+  //    }
+  //
+  //    if (seq.selected_track == track_number && y == seq.scrollpos + 6 + seq.cursor_scroll)
+  //    {
+  //      display.setTextColor(WHITE, BLACK);
+  //      seq.tracker_active_step = y - yoffset;
+  //    }
+  //    else
+  //      set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
+  //
+  //    if (seq.tracker_names_cache[track_number][ycount] != seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0])
+  //    {
+  //      display.setCursor(xpos, ypos + ycount * yspacer);
+  //      display.print( seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0]);
+  //      seq.tracker_names_cache[track_number][ycount] = seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0];
+  //    }
+  //
+  //    if ( seq.tracker_data_cache[track_number][ycount] != seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] )
+  //    {
+  //      display.setCursor(xpos + 24, ypos + ycount * yspacer);
+  //      seq_print_formatted_number(  seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] , 3);
+  //      seq.tracker_data_cache[track_number][ycount] = seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset];
+  //    }
+  //
+  //    ycount++;
+  //  }
+  //
 
 }
 
 void print_merged_pattern_fast_play_only(int xpos, int ypos, uint8_t track_number)
 {
-  char names[48];
-  uint8_t data[48];
-  uint8_t step = seq.step;
-  uint8_t yspacer = 16;
-  uint8_t next_chain_step = 0;
-  uint8_t last_chain_step = 0;
-  if (seq.chain_active_step == 0)
-  {
-    next_chain_step = 1;
-    last_chain_step = 3;
-  }
-  else if (seq.chain_active_step == 1)
-  {
-    next_chain_step = 2;
-    last_chain_step = 0;
-  }
-  else if (seq.chain_active_step == 2)
-  {
-    next_chain_step = 3;
-    last_chain_step = 1;
-  }
-  else if (seq.chain_active_step == 3) {
-    next_chain_step = 0;
-    last_chain_step = 2;
-  }
-  display.setTextSize(1);
-  for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
-  {
-    display.setCursor_textGrid(7 + 6 * x, 4);
-    display.setCursor(display.getCursorX(), display.getCursorY() + 9);
-    set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][x] );
-    seq_print_formatted_number( seq.patternchain[seq.chain_active_step][x], 2);
-  }
-  display.setTextSize(2);
-  for (uint8_t f = 0; f < 16; f++)
-  {
-    names[f] = seq_find_shortname_in_track( f , seq.patternchain[last_chain_step][track_number] )[0];
-    names[f + 16] = seq_find_shortname_in_track( f , seq.patternchain[seq.chain_active_step][track_number] )[0];
-    names[f + 32] = seq_find_shortname_in_track( f , seq.patternchain[next_chain_step][track_number] )[0];
-    data[f] = seq.note_data[ seq.patternchain[last_chain_step][track_number] ][f];
-    data[f + 16] = seq.note_data[ seq.patternchain[seq.chain_active_step][track_number] ][f];
-    data[f + 32] = seq.note_data[ seq.patternchain[next_chain_step][track_number] ][f];
-  }
-  for (uint8_t ycount = 0; ycount < 13; ycount++)
-  {
-    if ( ycount == 6)
-      display.setTextColor(WHITE, BLACK);
-    else
-      set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][track_number] );
-    {
-      if (seq.tracker_names_cache[ track_number ][ycount  ] != names[ycount + step + 10 ])
-      {
-        display.setCursor(xpos, ypos + ycount * yspacer);
-        display.print( names[ycount + step + 10] );
-        seq.tracker_names_cache[ track_number ][ycount  ] = names[ycount + step + 10 ];
-      }
-      if  (seq.tracker_data_cache[ track_number ][ycount  ] != data[ycount + step + 10] )
-      {
-        display.setCursor(xpos + 24, ypos + ycount * yspacer);
-        seq_print_formatted_number( data[ycount + step + 10], 3);
-        seq.tracker_data_cache[ track_number ][ycount  ] = data[ycount + step + 10 ];
-      }
-    }
-  }
+
+  // SEQUENCER REWRITE
+
+  //  char names[48];
+  //  uint8_t data[48];
+  //  uint8_t step = seq.step;
+  //  uint8_t yspacer = 18;
+  //  uint8_t next_chain_step = 0;
+  //  uint8_t last_chain_step = 0;
+  //  if (seq.chain_active_step == 0)
+  //  {
+  //    next_chain_step = 1;
+  //    last_chain_step = 3;
+  //  }
+  //  else if (seq.chain_active_step == 1)
+  //  {
+  //    next_chain_step = 2;
+  //    last_chain_step = 0;
+  //  }
+  //  else if (seq.chain_active_step == 2)
+  //  {
+  //    next_chain_step = 3;
+  //    last_chain_step = 1;
+  //  }
+  //  else if (seq.chain_active_step == 3) {
+  //    next_chain_step = 0;
+  //    last_chain_step = 2;
+  //  }
+  //  display.setTextSize(1);
+  //  for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
+  //  {
+  //    display.setCursor_textGrid(7 + 6 * x, 4);
+  //    display.setCursor(display.getCursorX(), display.getCursorY() + 9);
+  //    set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][x] );
+  //    seq_print_formatted_number( seq.patternchain[seq.chain_active_step][x], 2);
+  //  }
+  //  display.setTextSize(2);
+  //  for (uint8_t f = 0; f < 16; f++)
+  //  {
+  //    names[f] = seq_find_shortname_in_track( f , seq.patternchain[last_chain_step][track_number] )[0];
+  //    names[f + 16] = seq_find_shortname_in_track( f , seq.patternchain[seq.chain_active_step][track_number] )[0];
+  //    names[f + 32] = seq_find_shortname_in_track( f , seq.patternchain[next_chain_step][track_number] )[0];
+  //    data[f] = seq.note_data[ seq.patternchain[last_chain_step][track_number] ][f];
+  //    data[f + 16] = seq.note_data[ seq.patternchain[seq.chain_active_step][track_number] ][f];
+  //    data[f + 32] = seq.note_data[ seq.patternchain[next_chain_step][track_number] ][f];
+  //  }
+  //  for (uint8_t ycount = 0; ycount < 12; ycount++)
+  //  {
+  //    if ( ycount == 6)
+  //      display.setTextColor(WHITE, BLACK);
+  //    else
+  //      set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][track_number] );
+  //    {
+  //      if (seq.tracker_names_cache[ track_number ][ycount  ] != names[ycount + step + 10 ])
+  //      {
+  //        display.setCursor(xpos, ypos + ycount * yspacer);
+  //        display.print( names[ycount + step + 10] );
+  //        seq.tracker_names_cache[ track_number ][ycount  ] = names[ycount + step + 10 ];
+  //      }
+  //      if  (seq.tracker_data_cache[ track_number ][ycount  ] != data[ycount + step + 10] )
+  //      {
+  //        display.setCursor(xpos + 24, ypos + ycount * yspacer);
+  //        seq_print_formatted_number( data[ycount + step + 10], 3);
+  //        seq.tracker_data_cache[ track_number ][ycount  ] = data[ycount + step + 10 ];
+  //      }
+  //    }
+  //  }
 }
 
 void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, bool fullredraw)

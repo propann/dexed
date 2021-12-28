@@ -40,7 +40,6 @@
 #define CD_COMMAND   digitalWrite(TFT_RS, LOW);
 #define CD_DATA     digitalWrite(TFT_RS, HIGH);
 
-    
 #define swapvalue(a, b) { int16_t t = a; a = b; b = t; }
 /*****************************************************************************/
 class ILI9486_Teensy : public Adafruit_GFX

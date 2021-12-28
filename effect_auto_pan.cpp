@@ -61,7 +61,6 @@ void AudioEffectAutoPan::update(void)
   audio_block_t *in;
   audio_block_t *mod;
   audio_block_t *out[2];
-
   in = receiveReadOnly(0);
   if (!in)
     in = (audio_block_t*)&zeroblock;

@@ -16,6 +16,13 @@ typedef struct ts_s
   bool switch_active_instance;
   bool block_screen_update;
   bool midi_learn_active = false;
+
+  int16_t scopebuffer[AUDIO_BLOCK_SAMPLES];
+  int16_t scopebuffer_old[AUDIO_BLOCK_SAMPLES];
+  bool scope_is_drawing;
+  uint8_t scope_delay;
+  uint8_t displayed_peak[12];
+  uint8_t old_helptext_lenght[2];
 } ts_t;
 
 // (Touch)File Manager
@@ -24,7 +31,7 @@ typedef struct fm_s
 {
   File sd_currentDirectoy;
   File sd_entry;
-  uint8_t active_window=0; // 0 = left window (SDCARD) , 1 = FLASH
+  uint8_t active_window = 0; // 0 = left window (SDCARD) , 1 = FLASH
   uint8_t sd_cap_rows;
   uint8_t sd_folder_depth = 0;
   uint8_t sd_selected_file = 0;
@@ -47,10 +54,9 @@ typedef struct fm_s
   uint8_t flash_preview_slot;
   //bool flash_is_folder;
   //bool flash_parent_folder = false;
-//  char flash_temp_name[52];
-//  char flash_new_name[52];
-//  char flash_full_name[52];
-
+  //  char flash_temp_name[52];
+  //  char flash_new_name[52];
+  //  char flash_full_name[52];
 
 } fm_t;
 

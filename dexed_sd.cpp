@@ -443,9 +443,9 @@ bool load_sd_drummappings_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-    
- number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
- 
+
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
     File json;
@@ -1376,6 +1376,311 @@ bool save_sd_sys_json(void)
 /******************************************************************************
    SD SEQUENCER
  ******************************************************************************/
+
+bool load_sd_chain_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+        json.close();
+        AudioInterrupts();
+        int total = sizeof(seq.chain);
+        int columns = sizeof(seq.chain[0]);
+        int rows = total / columns;
+        int count = 0;
+        for (uint8_t i = 0; i < rows; i++)
+        {
+          for (uint8_t j = 0; j < columns; j++) {
+            seq.chain[i][j] = data_json["c"][count];
+            count++;
+          }
+        }
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E: Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+  return (false);
+}
+
+
+bool save_sd_chain_json(uint8_t number)
+{
+  char filename[CONFIG_FILENAME_LEN];
+  int count = 0;
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
+
+    int total = sizeof(seq.chain);
+    int columns = sizeof(seq.chain[0]);
+    int rows = total / columns;
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      for (uint8_t i = 0; i < rows; i++)
+      {
+        for (uint8_t j = 0; j < columns; j++) {
+          data_json["c"][count] = seq.chain[i][j];
+          count++;
+        }
+      }
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+  return (false);
+}
+
+bool load_sd_transpose_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+        json.close();
+        AudioInterrupts();
+        int total = sizeof(seq.chain_transpose);
+        int columns = sizeof(seq.chain_transpose[0]);
+        int rows = total / columns;
+        int count = 0;
+        for (uint8_t i = 0; i < rows; i++)
+        {
+          for (uint8_t j = 0; j < columns; j++) {
+            seq.chain_transpose[i][j] = data_json["t"][count];
+            count++;
+          }
+        }
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E: Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+  return (false);
+}
+
+
+bool save_sd_transpose_json(uint8_t number)
+{
+  char filename[CONFIG_FILENAME_LEN];
+  int count = 0;
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
+
+    int total = sizeof(seq.chain_transpose);
+    int columns = sizeof(seq.chain_transpose[0]);
+    int rows = total / columns;
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      for (uint8_t i = 0; i < rows; i++)
+      {
+        for (uint8_t j = 0; j < columns; j++) {
+          data_json["t"][count] = seq.chain_transpose[i][j];
+          count++;
+        }
+      }
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+  return (false);
+}
+
+
+bool load_sd_song_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+        json.close();
+        AudioInterrupts();
+        int total = sizeof(seq.song);
+        int columns = sizeof(seq.song[0]);
+        int rows = total / columns;
+        int count = 0;
+        for (uint8_t i = 0; i < rows; i++)
+        {
+          for (uint8_t j = 0; j < columns; j++) {
+            seq.song[i][j] = data_json["s"][count];
+            count++;
+          }
+        }
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E: Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+  return (false);
+}
+
+
+bool save_sd_song_json(uint8_t number)
+{
+  char filename[CONFIG_FILENAME_LEN];
+  int count = 0;
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
+
+    int total = sizeof(seq.song);
+    int columns = sizeof(seq.song[0]);
+    int rows = total / columns;
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      for (uint8_t i = 0; i < rows; i++)
+      {
+        for (uint8_t j = 0; j < columns; j++) {
+          data_json["s"][count] = seq.song[i][j];
+          count++;
+        }
+      }
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+  return (false);
+}
+
 bool save_sd_seq_sub_vel_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
@@ -1503,11 +1808,15 @@ bool save_sd_performance_json(uint8_t number)
 
   AudioNoInterrupts();
 
-check_performance_directory(number);
+  check_performance_directory(number);
 
   save_sd_seq_sub_vel_json(number);
   save_sd_seq_sub_patterns_json(number);
   save_sd_drummappings_json(number);
+  save_sd_song_json(number);
+  save_sd_transpose_json(number);
+  save_sd_chain_json(number);
+
 
 #ifdef DEBUG
   Serial.print(F("Write performance config "));
@@ -1537,28 +1846,31 @@ check_performance_directory(number);
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
-    int total = sizeof(seq.patternchain);
-    int columns = sizeof(seq.patternchain[0]);
-    int rows = total / columns;
+
+// SEQUENCER REWRITE 
+
+//    int total = sizeof(seq.patternchain);
+//    int columns = sizeof(seq.patternchain[0]);
+//    int rows = total / columns;
     Serial.print(F("  "));
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
-      Serial.print(F("Chain Rows: "));
-      Serial.print(rows);
-      Serial.print("  Chain Columns: ");
-      Serial.print(columns);
-      Serial.print(F("  "));
-      count = 0;
-      for (uint8_t i = 0; i < rows; i++)
-      {
-        for (uint8_t j = 0; j < columns; j++) {
-          data_json["seq_patternchain"][count] = seq.patternchain[i][j];
-          count++;
-        }
-      }
-      count = 0;
+//      Serial.print(F("Chain Rows: "));
+//      Serial.print(rows);
+//      Serial.print("  Chain Columns: ");
+//      Serial.print(columns);
+//      Serial.print(F("  "));
+//      count = 0;
+//      for (uint8_t i = 0; i < rows; i++)
+//      {
+//        for (uint8_t j = 0; j < columns; j++) {
+//          data_json["seq_patternchain"][count] = seq.patternchain[i][j];
+//          count++;
+//        }
+//      }
+//      count = 0;
       data_json["seq_tempo_ms"] = seq.tempo_ms ;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_play_basenote"] = seq.arp_play_basenote;
@@ -1567,7 +1879,6 @@ check_performance_directory(number);
       data_json["arp_style"] = seq.arp_style;
       data_json["seq_chord_velocity"] = seq.chord_velocity;
       data_json["seq_chord_dexed_inst"] = seq.chord_dexed_inst;
-      data_json["seq_chain_lenght"] = seq.chain_lenght;
       data_json["seq_transpose"] = seq.transpose;
       data_json["chord_key_ammount"] = seq.chord_key_ammount;
       data_json["seq_oct_shift"] = seq.oct_shift;
@@ -1606,7 +1917,7 @@ check_performance_directory(number);
     Serial.print(F("E : Cannot open "));
     Serial.print(filename);
     Serial.println(F(" on SD."));
-     AudioInterrupts();
+    AudioInterrupts();
   }
 #endif
 
@@ -1863,6 +2174,9 @@ bool load_sd_performance_json(uint8_t number)
   load_sd_fx_json(number);
   load_sd_epiano_json(number);
   load_sd_drummappings_json(number);
+  load_sd_song_json(number);
+ load_sd_transpose_json(number);
+  load_sd_chain_json(number);
 
   configuration.sys.performance_number = number;
 
@@ -1893,18 +2207,21 @@ bool load_sd_performance_json(uint8_t number)
         serializeJsonPretty(data_json, Serial);
         Serial.println();
 #endif
-        int total = sizeof(seq.patternchain);
-        int columns = sizeof(seq.patternchain[0]);
-        int rows = total / columns;
-        int count = 0;
-        for (uint8_t i = 0; i < rows; i++)
-        {
-          for (uint8_t j = 0; j < columns; j++)
-          {
-            seq.patternchain[i][j] = data_json["seq_patternchain"][count];
-            count++;
-          }
-        }
+
+// SEQUENCER REWRITE 
+
+//        int total = sizeof(seq.patternchain);
+//        int columns = sizeof(seq.patternchain[0]);
+//        int rows = total / columns;
+//        int count = 0;
+//        for (uint8_t i = 0; i < rows; i++)
+//        {
+//          for (uint8_t j = 0; j < columns; j++)
+//          {
+//            seq.patternchain[i][j] = data_json["seq_patternchain"][count];
+//            count++;
+//          }
+//        }
         for (uint8_t i = 0; i < sizeof(seq.track_type); i++)
         {
           seq.track_type[i] = data_json["track_type"][i];
@@ -1925,7 +2242,7 @@ bool load_sd_performance_json(uint8_t number)
             seq.name[i] = data_json["seq_name"][i];
           }
         }
-        count = 0;
+        //count = 0;
         seq.tempo_ms = data_json["seq_tempo_ms"] ;
         seq.bpm = data_json["seq_bpm"];
         seq.arp_play_basenote = data_json["arp_play_basenote"];
@@ -1934,7 +2251,6 @@ bool load_sd_performance_json(uint8_t number)
         seq.arp_style = data_json["arp_style"];
         seq.chord_velocity = data_json["seq_chord_velocity"];
         seq.chord_dexed_inst = data_json["seq_chord_dexed_inst"] ;
-        seq.chain_lenght = data_json["seq_chain_lenght"];
         seq.transpose = data_json["seq_transpose"];
         seq.chord_key_ammount = data_json["chord_key_ammount"];
         seq.oct_shift = data_json["seq_oct_shift"];
@@ -1958,7 +2274,10 @@ bool load_sd_performance_json(uint8_t number)
 
         dac_unmute();
         seq.step = 0;
-        seq.chain_active_step = 0;
+        
+  // SEQUENCER REWRITE       
+      //  seq.chain_active_step = 0;
+        
 #ifdef USE_SEQUENCER
         if (seq_was_running)
         {
