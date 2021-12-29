@@ -106,7 +106,7 @@ typedef struct sequencer_s {
   uint8_t temp_select_menu;
   uint8_t temp_active_menu = 99;
   
-  int8_t current_song_step;
+  int8_t current_song_step=0;
   int8_t current_chain[NUM_SEQ_TRACKS] =  { 99,99,99,99,99,99 };
   int8_t current_pattern[NUM_SEQ_TRACKS] =  { 99,99,99,99,99,99 };
   int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0,0,0,0,0,0 };

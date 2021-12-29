@@ -23,12 +23,12 @@ extern void border3_white();
 extern void border4_white();
 extern void flash_printDirectory();
 extern void sd_printDirectory(File currentDirectory);
+extern uint8_t find_longest_chain();
+extern void seq_print_formatted_number(uint8_t v, uint8_t l);
 
 extern void seq_pattern_editor_update_dynamic_elements();
 
 extern void playWAVFile(const char *filename);
-
-
 
 ts_t ts; //touch screen
 fm_t fm; //file manager
@@ -53,10 +53,10 @@ void helptext_l (const char *str)
 void helptext_r (const char *str)
 {
   uint8_t l = strlen(str);
-display.setCursor(480 - CHAR_width * l, 320 - CHAR_height);
- display.setTextColor(WHITE, DX_MAGENTA);
+  display.setCursor(480 - CHAR_width * l, 320 - CHAR_height);
+  display.setTextColor(WHITE, DX_MAGENTA);
   display.print(str);
-if (l < ts.old_helptext_lenght[1])
+  if (l < ts.old_helptext_lenght[1])
   {
     display.setCursor(480 - CHAR_width * (ts.old_helptext_lenght[1]), 320 - CHAR_height);
     display.setTextColor(WHITE, BLACK);
@@ -313,95 +313,119 @@ void handle_touchscreen_mute_matrix()
 {
 
   // SEQUENCER REWRITE
+  uint8_t ar[NUM_SEQ_TRACKS][4]={99,99,99,99, 99,99,99,99, 99,99,99,99, 99,99,99,99, 99,99,99,99, 99,99,99,99,  };
+  uint8_t chain[NUM_SEQ_TRACKS]{99,99,99,99,99,99};
+  uint8_t pattern[NUM_SEQ_TRACKS]{99,99,99,99,99,99};
+  uint8_t chain_counter[NUM_SEQ_TRACKS]={0,0,0,0,0,0};
 
-    if (touch.touched())
+  for (uint8_t y = 0; y < 4; y++)
+  {
+    for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
     {
-      LCDML.SCREEN_resetTimer();
-      ts.p = touch.getPoint();
-  
-      // Scale from ~0->4000 to tft
-      ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-      ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
-      // seq.p.z = map(seq.p.z, 500, 2200 , 1, 127); //touch force == velocity
-  
-   //   for (uint8_t y = 0; y < 4; y++)
-   //   {
-   uint8_t y =0;
-        for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
-        {
-          if (ts.block_screen_update == false)
-          {
-            if ( ts.p.x > CHAR_width + x * (480 / 6 - 3) && ts.p.y > 2 * CHAR_height + y * (320 / 4 - 7) &&
-                 ts.p.x < CHAR_width + x * (480 / 6 - 3) + 68 && ts.p.y < 2 * CHAR_height + y * (320 / 4 - 7) + 62)
-            {
-              if (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] < NUM_SEQ_PATTERN)
-              {
-                seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] = seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] + (NUM_SEQ_PATTERN + 10);
-                display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY4);
-              }
-              else
-              {
-                if (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] > NUM_SEQ_PATTERN  && seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] != 99 )
-                {
-                  seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] = seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] - (NUM_SEQ_PATTERN + 10);
-                  display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, BLUE);
-                }
-              }
-  
-            }
-          }
-        }
-     ///// }
-      ts.block_screen_update = true;
+      chain[x] = seq.song[x][seq.current_song_step];
+      pattern[x] = seq.chain[  chain[x] ] [ chain_counter[x] ];
+      if ( pattern[x] != 99 )
+      {
+        ar[x][y] = pattern[x];
+        if (seq.chain[  chain[x] ] [ chain_counter[x]+1 ] !=99)
+         chain_counter[x]++;
+      }
+       if ( chain_counter[x]  == find_longest_chain()  )
+        chain_counter[x] = 0;
+
     }
-    else
-      ts.block_screen_update = false;
+  }
+
+  //  if (touch.touched())
+  //  {
+  //    LCDML.SCREEN_resetTimer();
+  //    ts.p = touch.getPoint();
+  //
+  //    // Scale from ~0->4000 to tft
+  //    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+  //    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+  //    // seq.p.z = map(seq.p.z, 500, 2200 , 1, 127); //touch force == velocity
+  //
+  //    for (uint8_t y = 0; y < 4; y++)
+  //    {
+  //
+  //      for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
+  //      {
+  //        if (ts.block_screen_update == false)
+  //        {
+  //          if ( ts.p.x > CHAR_width + x * (480 / 6 - 3) && ts.p.y > 2 * CHAR_height + y * (320 / 4 - 7) &&
+  //               ts.p.x < CHAR_width + x * (480 / 6 - 3) + 68 && ts.p.y < 2 * CHAR_height + y * (320 / 4 - 7) + 62)
+  //          {
+  //            if (ar[x][y] < NUM_SEQ_PATTERN)
+  //            {
+  //              ar[x][y] = ar[x][y] + (NUM_SEQ_PATTERN + 10);
+  //              display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY4);
+  //            }
+  //            else
+  //            {
+  //              if (ar[x][y] > NUM_SEQ_PATTERN  && ar[x][y] != 99 )
+  //              {
+  //                ar[x][y] = ar[x][y] - (NUM_SEQ_PATTERN + 10);
+  //                display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY1);
+  //              }
+  //            }
+  //
+  //          }
+  //        }
+  //      }
+  //    }
+  //    ts.block_screen_update = true;
+  //  }
+  //  else
+  //    ts.block_screen_update = false;
 
 
- uint8_t y =0;
-        for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
-        {
-            display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 3  );
-              display.setTextSize(2);
+  for (uint8_t y = 0; y < 4; y++)
+  {
+    for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
+    {
+      display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 3  );
+      display.setTextSize(2);
+
+      if (ar[x][y] < NUM_SEQ_PATTERN)
+        display.setTextColor(WHITE, GREY1);
+      else
+        display.setTextColor(GREY4, GREY1);
+      display.print ("P");
+      if (ar[x][y] < NUM_SEQ_PATTERN || ar[x][y] == 99 )
+         seq_print_formatted_number( ar[x][y], 2 );
+      else if (ar[x][y] != 99)
+     seq_print_formatted_number(  ar[x][y] - (NUM_SEQ_PATTERN + 10), 2 );
+      display.setTextSize(1);
+      if (ar[x][y] < NUM_SEQ_PATTERN  )
+      {
+        display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 51  );
+        if (seq.content_type[ar[x][y]] == 0) //Drumpattern
+          display.setTextColor(DX_ORANGE, GREY1);
+        else if (seq.content_type[ar[x][y]] == 1) //Instrument Pattern
+          display.setTextColor(LIGHTBLUE, GREY1);
+        else if (seq.content_type[ar[x][y]] == 2 || seq.content_type[ar[x][y]] == 3) //  chord or arp pattern
+          display.setTextColor(DX_MAGENTA, GREY1);
+        if (seq.content_type[ar[x][y]] == 0)
+          display.print("DRUM ");
+        else if (seq.content_type[ar[x][y]] == 1)
+          display.print("INSTR");
+        else if (seq.content_type[ar[x][y]] == 2  )
+          display.print("CHORD");
+      }
+    }
+  }
+
   
-              if (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] < NUM_SEQ_PATTERN)
-                display.setTextColor(WHITE, BLUE);
-              else
-                display.setTextColor(GREY1, GREY4);
-              display.print ("P");
-              if (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] < NUM_SEQ_PATTERN || seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] == 99 )
-                display.print (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]);
-              else if (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] != 99)
-                display.print ( seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] - (NUM_SEQ_PATTERN + 10) );
-              display.print (" ");
-              display.setTextSize(1);
-              if (seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ] < NUM_SEQ_PATTERN  )
-              {
-                display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 51  );
-                if (seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 0) //Drumpattern
-                  display.setTextColor(DX_ORANGE, BLUE);
-                else if (seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 1) //Instrument Pattern
-                  display.setTextColor(LIGHTBLUE, BLUE);
-                else if (seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 2 || seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 3) //  chord or arp pattern
-                  display.setTextColor(DX_MAGENTA, BLUE);
-  
-                if (seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 0)
-                  display.print("DRUM");
-                else if (seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 1)
-                  display.print("INSTR");
-                else if (seq.content_type[seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ]] == 2  )
-                  display.print("CHORD/ARP");
-              }
-   }
-//    if (seq.step == 1) {
-//      for (uint8_t y = 0; y < 4; y++)
-//      {
-//        if ( seq.chain_active_step == y)
-//  
-//          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, WHITE  ); else
-//          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, BLACK  );
-//      }
-//    }
+  //    if (seq.step == 1) {
+  //      for (uint8_t y = 0; y < 4; y++)
+  //      {
+  //        if ( seq.chain_active_step == y)
+  //
+  //          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, WHITE  ); else
+  //          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, BLACK  );
+  //      }
+  //    }
 }
 
 void handle_touchscreen_voice_select()
