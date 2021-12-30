@@ -922,13 +922,15 @@ void setup()
     strcpy(seq.name, "INIT Perf");
   //Menu Startup
   // LCDML.OTHER_jumpToFunc(UI_func_voice_select);
-  LCDML.OTHER_jumpToFunc(UI_func_song);
+  //LCDML.OTHER_jumpToFunc(UI_func_song);
+  LCDML.OTHER_jumpToFunc( UI_func_seq_mute_matrix);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   //LCDML.OTHER_jumpToFunc(UI_func_file_manager);
   //LCDML.OTHER_jumpToFunc(UI_func_phSampler);
   //LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
   //LCDML.OTHER_jumpToFunc( UI_func_cc_mappings);
+  
 
   sequencer_timer.begin(sequencer, seq.tempo_ms / 2, false);
   //timer1.begin(sequencer, seq.tempo_ms / 2, true);

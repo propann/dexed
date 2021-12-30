@@ -324,12 +324,15 @@ void handle_touchscreen_mute_matrix()
     {
       chain[x] = seq.song[x][seq.current_song_step];
       pattern[x] = seq.chain[  chain[x] ] [ chain_counter[x] ];
-      if ( pattern[x] != 99 )
-      {
+     // if ( pattern[x] != 99 )
+     // {
         ar[x][y] = pattern[x];
         if (seq.chain[  chain[x] ] [ chain_counter[x]+1 ] !=99)
          chain_counter[x]++;
-      }
+     // }
+     // else
+     // ar[x][y] = 99;
+      
        if ( chain_counter[x]  == find_longest_chain()  )
         chain_counter[x] = 0;
 
@@ -359,6 +362,7 @@ void handle_touchscreen_mute_matrix()
   //            if (ar[x][y] < NUM_SEQ_PATTERN)
   //            {
   //              ar[x][y] = ar[x][y] + (NUM_SEQ_PATTERN + 10);
+//  seq.chain[  chain[x] ] [ chain_counter[x] ]  = ar[x][y] + (NUM_SEQ_PATTERN + 10);
   //              display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY4);
   //            }
   //            else
@@ -387,15 +391,23 @@ void handle_touchscreen_mute_matrix()
       display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 3  );
       display.setTextSize(2);
 
-      if (ar[x][y] < NUM_SEQ_PATTERN)
+      if (ar[x][y] < NUM_SEQ_PATTERN && ar[x][y]!=99)
+      {
         display.setTextColor(WHITE, GREY1);
-      else
-        display.setTextColor(GREY4, GREY1);
-      display.print ("P");
-      if (ar[x][y] < NUM_SEQ_PATTERN || ar[x][y] == 99 )
+         display.print ("P");
+      }
+//      else
+//      {
+//        display.setTextColor(GREY4, GREY1);
+//      display.print (" ");
+//      }
+      if (ar[x][y] < NUM_SEQ_PATTERN  )
+          //  if (ar[x][y] < NUM_SEQ_PATTERN || ar[x][y] == 99 )
          seq_print_formatted_number( ar[x][y], 2 );
-      else if (ar[x][y] != 99)
-     seq_print_formatted_number(  ar[x][y] - (NUM_SEQ_PATTERN + 10), 2 );
+      //else if (ar[x][y] != 99)
+      else 
+       display.print("   ");
+     //seq_print_formatted_number(  ar[x][y] - (NUM_SEQ_PATTERN + 10), 2 );
       display.setTextSize(1);
       if (ar[x][y] < NUM_SEQ_PATTERN  )
       {
@@ -422,7 +434,7 @@ void handle_touchscreen_mute_matrix()
   //      {
   //        if ( seq.chain_active_step == y)
   //
-  //          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, WHITE  ); else
+  //         else
   //          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, BLACK  );
   //      }
   //    }

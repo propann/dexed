@@ -44,6 +44,8 @@ extern void set_sample_pitch (uint8_t, float);  //float32_t not working
 extern float get_sample_vol_max(uint8_t);
 extern float get_sample_p_offset(uint8_t);
 boolean interrupt_swapper = false;
+extern void helptext_l (const char *str);
+extern void helptext_r (const char *str);
 
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 sequencer_t seq;
@@ -74,7 +76,7 @@ uint8_t get_song_length()
   for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)  //loop tracks
   {
     stepcounter = 0;
-    for (uint8_t s = SONG_LENGHT-1; s > 0; s--)  //search song lenght from back to front
+    for (uint8_t s = SONG_LENGHT - 1; s > 0; s--) //search song lenght from back to front
     {
       if (seq.song[t][s] == 99)
         stepcounter++;
@@ -82,7 +84,7 @@ uint8_t get_song_length()
     if (stepcounter < best)
       best = stepcounter;
   }
-  return SONG_LENGHT-best+1;
+  return SONG_LENGHT - best + 1;
 }
 
 uint8_t get_chain_length_from_track(uint8_t tr)
@@ -131,12 +133,12 @@ void sequencer_part1(void)
 
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
-    uint8_t tr[NUM_SEQ_TRACKS]={0,0,0,0,0,0};
+    uint8_t tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
     seq.current_chain[d] = seq.song[d][seq.current_song_step];
     seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
-    
-if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] <32 )
-tr[d]=seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
+
+    if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] < 32 )
+      tr[d] = seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
 
     if ( seq.current_pattern[d] < NUM_SEQ_PATTERN  && seq.current_chain[d] != 99)  // sequence not empty or muted
     {
@@ -162,10 +164,10 @@ tr[d]=seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
             if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 )
             {
               if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
+                handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
               else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
-              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]  ;
+                handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
+              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  ;
               seq.prev_vel[d] = seq.vel[  seq.current_pattern[d] ][seq.step];
             }
           }
@@ -176,18 +178,18 @@ tr[d]=seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
               for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
               {
                 if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_velocity);
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_velocity);
                 else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                  handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_velocity);
+                  handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_velocity);
               }
-              seq.prev_note[d] = seq.note_data[ seq.current_pattern[d]][seq.step] +tr[d]   + (seq.oct_shift * 12);
+              seq.prev_note[d] = seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d]   + (seq.oct_shift * 12);
               seq.prev_vel[d] = seq.vel[ seq.current_pattern[d]][seq.step];
             }
           }
           if (seq.track_type[d] == 3) {  //Arp
             seq.arp_step = 0;
             seq.arp_counter = 0;
-            seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] +tr[d]   + (seq.oct_shift * 12);
+            seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
             seq.arp_chord = seq.vel[ seq.current_pattern[d] ][seq.step] - 200;
           }
         }
@@ -596,66 +598,93 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
   int notes_display_shift = 0;
   uint8_t last_valid_note = 254;
 
+  //int8_t current_song_step=0;
+  // int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0,0,0,0,0,0 };
+  int8_t current_chain = 99;
+  int8_t pattern[4] =  { 99, 99, 99, 99 };
+
   // SEQUENCER REWRITE
 
-  //  display.setTextSize(2);
-  //  helptext_l("MOVE Y");
-  //  helptext_r("MOVE X");
-  //  display.setCursor (0, 0);
-  //  display.print("TRACK: [");
-  //  display.print(track_number + 1);
-  //  display.print("] ");
-  //  display.setTextColor(WHITE, BLACK);
-  //  display.print(" ");
-  //  display.setTextColor(WHITE, BLUE);
-  //  display.print(" PATTERN CHAIN: ");
-  //
-  //  seq_print_formatted_number( seq.patternchain[0][track_number]  , 2);
-  //  display.write (0xf8);
-  //  seq_print_formatted_number( seq.patternchain[1][track_number]  , 2);
-  //  display.write (0xf8);
-  //  seq_print_formatted_number( seq.patternchain[2][track_number]  , 2);
-  //  display.write (0xf8);
-  //  seq_print_formatted_number( seq.patternchain[3][track_number]  , 2);
-  //  display.print(" ");
-  //  if (seq.patternchain[0][track_number] < NUM_SEQ_PATTERN && seq.patternchain[1][track_number] < NUM_SEQ_PATTERN
-  //      && seq.patternchain[2][track_number] < NUM_SEQ_PATTERN && seq.patternchain[3][track_number] < NUM_SEQ_PATTERN)
-  //  {
-  //    for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
+  current_chain = seq.song[track_number][0];  //so far only step 0 of chain is displayed
+
+  for (uint8_t d = 0; d < 4; d++)
+  {
+    pattern[d] = seq.chain[  current_chain ] [ d ];
+  }
+
+  display.setTextSize(2);
+  helptext_l("MOVE Y");
+  helptext_r("MOVE X");
+
+  display.setTextColor(WHITE, DX_MAGENTA);
+  display.setCursor (CHAR_width * 2, 0);
+
+  display.print("[");
+  display.print(0);
+  display.print("]");
+
+  display.setTextColor(WHITE, BLUE);
+
+  display.print(" TRK:[");
+  display.print(track_number + 1);
+  display.print("] ");
+  display.setTextColor(WHITE, BLACK);
+  display.print(" ");
+  display.setTextColor(WHITE, BLUE);
+  display.print(" CHAIN: ");
+  display.print(current_chain);
+  display.print("  ");
+
+  seq_print_formatted_number( pattern[0] , 2);
+  display.write (0xf8);
+  seq_print_formatted_number( pattern[1] , 2);
+  display.write (0xf8);
+  seq_print_formatted_number( pattern[2] , 2);
+  display.write (0xf8);
+  seq_print_formatted_number( pattern[3]  , 2);
+  display.print(" ");
+
+  //    if (pattern[0] < NUM_SEQ_PATTERN && pattern[1] < NUM_SEQ_PATTERN
+  //        && pattern[2] < NUM_SEQ_PATTERN && pattern[3] < NUM_SEQ_PATTERN)
   //    {
-  //      notes[f] = seq.note_data[ seq.patternchain[0][track_number] ][f];
-  //      notes[f + 16] = seq.note_data[ seq.patternchain[1][track_number] ][f];
-  //      notes[f + 32] = seq.note_data[ seq.patternchain[2][track_number] ][f];
-  //      notes[f + 48] = seq.note_data[ seq.patternchain[3][track_number] ][f];
-  //    }
-  //    //find lowest note
-  //    for (uint8_t f = 0; f < 64; f++)
-  //    {
-  //      if (notes[f] < lowest_note && notes[f] > 0)
-  //      {
-  //        lowest_note = notes[f];
-  //      }
-  //    }
-  //    if (lowest_note > 120)
-  //      lowest_note = 24;
-  //    notes_display_shift = lowest_note % 12;
-  //    print_keyboard(ypos, lowest_note / 12 );
-  //    for (uint8_t xcount = 0; xcount < 64; xcount++)
-  //    {
-  //      if (notes[xcount] > 0)
-  //      {
-  //        if (notes[xcount] == 130)
-  //        {
-  //          display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
-  //        }
-  //        else
-  //        {
-  //          display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY2  );
-  //          last_valid_note = notes[xcount];
-  //        }
-  //      }
-  //    }
+
+  for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
+  {
+    notes[f] = seq.note_data[ pattern[0] ][f];
+    notes[f + 16] = seq.note_data[ pattern[1]][f];
+    notes[f + 32] = seq.note_data[ pattern[2] ][f];
+    notes[f + 48] = seq.note_data[ pattern[3] ][f];
+  }
+  //find lowest note
+  for (uint8_t f = 0; f < 64; f++)
+  {
+    if (notes[f] < lowest_note && notes[f] > 0)
+    {
+      lowest_note = notes[f];
+    }
+  }
+  if (lowest_note > 120)
+    lowest_note = 24;
+  notes_display_shift = lowest_note % 12;
+  print_keyboard(ypos, lowest_note / 12 );
+  for (uint8_t xcount = 0; xcount < 64; xcount++)
+  {
+    if (notes[xcount] > 0)
+    {
+      if (notes[xcount] == 130)
+      {
+        display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+      }
+      else
+      {
+        display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY2  );
+        last_valid_note = notes[xcount];
+      }
+    }
+  }
+
   //  }
+
 }
 
 void seq_print_current_note_from_step(uint8_t step)

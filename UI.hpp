@@ -9550,7 +9550,13 @@ void UI_func_seq_pianoroll(uint8_t param)
     // setup function
     display.fillScreen(BLACK);
     encoderDir[ENC_R].reset();
-    display.setTextSize(2);
+   
+    display.setTextColor(WHITE, DX_MAGENTA);
+    display.setTextSize(1);
+    display.setCursor (0, 0);
+    display.print("SONG");
+    display.setCursor (0, CHAR_height / 2);
+    display.print("STEP");
     display.fillRect(1, 72, 480, 320 - 72, BLACK);
     print_merged_pattern_pianoroll( 1 * CHAR_width , 320 - CHAR_height,  seq.active_track);
   }
@@ -9762,6 +9768,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
     display.setCursor_textGrid(1, 0);
     display.setTextColor(WHITE);
     display.print ("MUTE MATRIX");
+    display.drawRect( 11, 2 * CHAR_height - 1, 455, 64, WHITE  );
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -9769,7 +9776,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
     {
       for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
       {
-          display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY1);
+        display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY1);
       }
     }
   }
