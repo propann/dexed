@@ -138,9 +138,13 @@ void draw_scope() {
     do {
       if (ts.scopebuffer_old[i] > 0)
       {
+        if (ts.scopebuffer[i]<2)
+        ts.scopebuffer[i]=2;
+        else
+        if (ts.scopebuffer[i]>96)
+         ts.scopebuffer[i]=96;
         if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
           display.drawPixel( x + i , ts.scopebuffer_old[i], BLACK);
-
         display.drawPixel( x + i , ts.scopebuffer[i], WHITE);
       }
       ts.scopebuffer_old[i] = ts.scopebuffer[i];

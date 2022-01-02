@@ -201,7 +201,7 @@ void sequencer_part1(void)
         // after here not triggered by a key input -  arp only
         if (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max)
         { //Arp
-          if (seq.arp_speed == 0 ||  seq.arp_speed == 2  || seq.arp_speed == 3  || seq.arp_speed == 1 && seq.arp_counter == 0)
+          if (seq.arp_speed == 0 ||  seq.arp_speed == 2  || seq.arp_speed == 3  || (seq.arp_speed == 1 && seq.arp_counter == 0 ) )
           {
             if (seq.arp_style == 0)
             { //arp up
