@@ -829,7 +829,7 @@ void setup()
 
 #ifdef USE_SEQUENCER
   // Start timer (to avoid a crash when loading the performance data)
-  sequencer_timer.begin(sequencer, seq.tempo_ms / 2, false);
+  sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 #endif
 
   // Load initial Performance or the last used one
@@ -923,17 +923,17 @@ void setup()
   //Menu Startup
   // LCDML.OTHER_jumpToFunc(UI_func_voice_select);
   //LCDML.OTHER_jumpToFunc(UI_func_song);
-  LCDML.OTHER_jumpToFunc( UI_func_seq_mute_matrix);
+  //LCDML.OTHER_jumpToFunc( UI_func_seq_mute_matrix);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
-  //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+  LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   //LCDML.OTHER_jumpToFunc(UI_func_file_manager);
   //LCDML.OTHER_jumpToFunc(UI_func_phSampler);
   //LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
   //LCDML.OTHER_jumpToFunc( UI_func_cc_mappings);
-  
 
-  sequencer_timer.begin(sequencer, seq.tempo_ms / 2, false);
-  //timer1.begin(sequencer, seq.tempo_ms / 2, true);
+
+  sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+  //timer1.begin(sequencer, seq.tempo_ms / 8, true);
 
 }
 
@@ -1032,36 +1032,36 @@ void loop()
     handle_touchscreen_mixer();
     draw_scope();
   }
-  
-  
+
+
   if (seq.running && seq.step != seq.UI_last_seq_step )
   {
     update_display_functions_while_seq_running();
   }
 
 
-//  //DEBUG 
-//  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
-//  {
-//    display.setTextColor(WHITE, BLUE);
-//    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-//    {
-//     // display.setCursor_textGrid(5 + 4 * d, 10);
-//
-//      //seq_print_formatted_number( seq.chain_reached_end[d], 2 );
-//      display.setCursor_textGrid(5 + 4 * d, 11);
-//      seq_print_formatted_number (seq.chain_counter[d], 2 );
-//      display.setCursor_textGrid(5 + 4 * d, 12);
-//   //   seq_print_formatted_number( seq.current_pattern[d], 2 );
-//    //   display.setCursor_textGrid(5 + 4 * d, 14);
-//      seq_print_formatted_number( get_chain_length_from_track(d) , 2 );
-//       display.setCursor_textGrid(3, 15);
-//      seq_print_formatted_number( find_longest_chain() , 2 );
-//
-//        display.setCursor_textGrid(6, 15);
-//      seq_print_formatted_number( seq.current_song_step , 2 );
-//    }
-//  }
+  //  //DEBUG
+  //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
+  //  {
+  //    display.setTextColor(WHITE, BLUE);
+  //    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  //    {
+  //     // display.setCursor_textGrid(5 + 4 * d, 10);
+  //
+  //      //seq_print_formatted_number( seq.chain_reached_end[d], 2 );
+  //      display.setCursor_textGrid(5 + 4 * d, 11);
+  //      seq_print_formatted_number (seq.chain_counter[d], 2 );
+  //      display.setCursor_textGrid(5 + 4 * d, 12);
+  //   //   seq_print_formatted_number( seq.current_pattern[d], 2 );
+  //    //   display.setCursor_textGrid(5 + 4 * d, 14);
+  //      seq_print_formatted_number( get_chain_length_from_track(d) , 2 );
+  //       display.setCursor_textGrid(3, 15);
+  //      seq_print_formatted_number( find_longest_chain() , 2 );
+  //
+  //        display.setCursor_textGrid(6, 15);
+  //      seq_print_formatted_number( seq.current_song_step , 2 );
+  //    }
+  //  }
 
 
   // CONTROL-RATE-EVENT-HANDLING
@@ -1394,13 +1394,13 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
                   MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
 
                 midi_voices[instance_id]++;
-#ifdef TEENSY4
+
                 if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
                 {
                   midi_decay_timer = 0;
                   midi_decay[instance_id] = min(inVelocity / 5, 7);
                 }
-#endif
+
                 //#ifdef DEBUG
                 //                char note_name[4];
                 //                getNoteName(note_name, inNumber);
@@ -1542,21 +1542,25 @@ uint8_t drum_get_slot(uint8_t dt)
       Drum[i]->setPlaybackRate(1.0);
     }
 
-    //            else
-    //            {
-    //              if (drum_type[i] == dt)
-    //              {
-    //        #ifdef DEBUG
-    //                Serial.print(F("Stopping Drum "));
-    //                Serial.print(i);
-    //                Serial.print(F(" type "));
-    //                Serial.println(dt);
-    //        #endif
-    //                Drum[i]->stop();
-    //
-    //                return (i);
-    //              }
-    //            }
+    //phtodo
+
+    else
+    {
+      if (drum_type[i] == dt)
+      {
+#ifdef DEBUG
+        Serial.print(F("Stopping Drum "));
+        Serial.print(i);
+        Serial.print(F(" type "));
+        Serial.println(dt);
+#endif
+        Drum[i]->stop();
+
+        return (i);
+      }
+    }
+
+
 
   }
 #ifdef DEBUG
@@ -2417,6 +2421,7 @@ void handleStart(void)
   midi_bpm_counter = 0;
   _midi_bpm = -1;
   seq.step = 0;
+
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     seq.chain_counter[d] = 0;
@@ -2446,7 +2451,7 @@ void handleStop(void)
   seq.recording = false;
   seq.note_in = 0;
   seq.step = 0;
-   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     seq.chain_counter[d] = 0;
     seq.current_pattern[d] = 99;

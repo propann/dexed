@@ -34,7 +34,8 @@ extern XPT2046_Touchscreen touch ;
 extern Sd2Card card;
 
 typedef struct sequencer_s {
-  uint8_t cycle_touch_element = 1; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
+  uint8_t ticks;
+  uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
   uint8_t scrollpos;
   int cursor_scroll;
   uint8_t selected_track;
@@ -42,7 +43,6 @@ typedef struct sequencer_s {
   bool edit_state;
   uint8_t tracker_data_cache[NUM_SEQ_TRACKS][16];
   char tracker_names_cache[NUM_SEQ_TRACKS][16];
-
   float drums_volume;
   uint8_t menu_status; // 0= normal jump
   // 1= jump from pattern edit to vel edit
@@ -123,6 +123,9 @@ typedef struct sequencer_s {
   uint8_t arp_speed = 0;
   uint8_t arp_counter = 0;
   uint8_t arp_lenght = 8;
+  uint8_t arp_num_notes_max = 20;
+  uint8_t arp_num_notes_count = 0;
+  float arp_volume_fade = 90;
   uint8_t data_buffer[16] = { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 };
   
   uint8_t note_data[NUM_SEQ_PATTERN][16] = {
@@ -268,7 +271,7 @@ typedef struct sequencer_s {
 //    { 1 , 2 , 5 , 7 , 99, 99 }
 //  };
 
-  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 }; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
+  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 }; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp , 4=Tables
 
 } sequencer_t;
 

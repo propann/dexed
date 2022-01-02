@@ -675,7 +675,9 @@ bool save_sd_drumsettings_json(uint8_t number)
 #endif
       AudioNoInterrupts();
       if (SD.exists(filename)) {
+#ifdef DEBUG
         Serial.println("remove old drumsettings file");
+#endif
         SD.begin();
         SD.remove(filename);
       }
@@ -1847,35 +1849,36 @@ bool save_sd_performance_json(uint8_t number)
     Serial.println(filename);
 #endif
 
-// SEQUENCER REWRITE 
+    // SEQUENCER REWRITE
 
-//    int total = sizeof(seq.patternchain);
-//    int columns = sizeof(seq.patternchain[0]);
-//    int rows = total / columns;
+    //    int total = sizeof(seq.patternchain);
+    //    int columns = sizeof(seq.patternchain[0]);
+    //    int rows = total / columns;
     Serial.print(F("  "));
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
-//      Serial.print(F("Chain Rows: "));
-//      Serial.print(rows);
-//      Serial.print("  Chain Columns: ");
-//      Serial.print(columns);
-//      Serial.print(F("  "));
-//      count = 0;
-//      for (uint8_t i = 0; i < rows; i++)
-//      {
-//        for (uint8_t j = 0; j < columns; j++) {
-//          data_json["seq_patternchain"][count] = seq.patternchain[i][j];
-//          count++;
-//        }
-//      }
-//      count = 0;
+      //      Serial.print(F("Chain Rows: "));
+      //      Serial.print(rows);
+      //      Serial.print("  Chain Columns: ");
+      //      Serial.print(columns);
+      //      Serial.print(F("  "));
+      //      count = 0;
+      //      for (uint8_t i = 0; i < rows; i++)
+      //      {
+      //        for (uint8_t j = 0; j < columns; j++) {
+      //          data_json["seq_patternchain"][count] = seq.patternchain[i][j];
+      //          count++;
+      //        }
+      //      }
+      //      count = 0;
       data_json["seq_tempo_ms"] = seq.tempo_ms ;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_play_basenote"] = seq.arp_play_basenote;
       data_json["arp_speed"] = seq.arp_speed;
       data_json["arp_lenght"] = seq.arp_lenght;
+      data_json["arp_volume_fade"] = seq.arp_volume_fade;
       data_json["arp_style"] = seq.arp_style;
       data_json["seq_chord_velocity"] = seq.chord_velocity;
       data_json["seq_chord_dexed_inst"] = seq.chord_dexed_inst;
@@ -2175,7 +2178,7 @@ bool load_sd_performance_json(uint8_t number)
   load_sd_epiano_json(number);
   load_sd_drummappings_json(number);
   load_sd_song_json(number);
- load_sd_transpose_json(number);
+  load_sd_transpose_json(number);
   load_sd_chain_json(number);
 
   configuration.sys.performance_number = number;
@@ -2208,20 +2211,20 @@ bool load_sd_performance_json(uint8_t number)
         Serial.println();
 #endif
 
-// SEQUENCER REWRITE 
+        // SEQUENCER REWRITE
 
-//        int total = sizeof(seq.patternchain);
-//        int columns = sizeof(seq.patternchain[0]);
-//        int rows = total / columns;
-//        int count = 0;
-//        for (uint8_t i = 0; i < rows; i++)
-//        {
-//          for (uint8_t j = 0; j < columns; j++)
-//          {
-//            seq.patternchain[i][j] = data_json["seq_patternchain"][count];
-//            count++;
-//          }
-//        }
+        //        int total = sizeof(seq.patternchain);
+        //        int columns = sizeof(seq.patternchain[0]);
+        //        int rows = total / columns;
+        //        int count = 0;
+        //        for (uint8_t i = 0; i < rows; i++)
+        //        {
+        //          for (uint8_t j = 0; j < columns; j++)
+        //          {
+        //            seq.patternchain[i][j] = data_json["seq_patternchain"][count];
+        //            count++;
+        //          }
+        //        }
         for (uint8_t i = 0; i < sizeof(seq.track_type); i++)
         {
           seq.track_type[i] = data_json["track_type"][i];
@@ -2248,6 +2251,7 @@ bool load_sd_performance_json(uint8_t number)
         seq.arp_play_basenote = data_json["arp_play_basenote"];
         seq.arp_speed = data_json["arp_speed"] ;
         seq.arp_lenght = data_json["arp_lenght"];
+        seq.arp_volume_fade = data_json["arp_volume_fade"];
         seq.arp_style = data_json["arp_style"];
         seq.chord_velocity = data_json["seq_chord_velocity"];
         seq.chord_dexed_inst = data_json["seq_chord_dexed_inst"] ;
@@ -2274,18 +2278,18 @@ bool load_sd_performance_json(uint8_t number)
 
         dac_unmute();
         seq.step = 0;
-        
-  // SEQUENCER REWRITE       
-      //  seq.chain_active_step = 0;
-        
+
+        // SEQUENCER REWRITE
+        //  seq.chain_active_step = 0;
+
 #ifdef USE_SEQUENCER
         if (seq_was_running)
         {
-          sequencer_timer.begin(sequencer, seq.tempo_ms / 2);
+          sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
           seq.running = true;
         }
         else
-          sequencer_timer.begin(sequencer, seq.tempo_ms / 2, false);
+          sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 #else
         seq.running = false;
 #endif

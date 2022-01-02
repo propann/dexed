@@ -25,6 +25,7 @@
 #include "config.h"
 #include "sequencer.h"
 #include <LCDMenuLib2.h>
+#include "synth_dexed.h"
 
 extern ILI9486_Teensy display;
 extern LCDMenuLib2 LCDML;
@@ -46,6 +47,7 @@ extern float get_sample_p_offset(uint8_t);
 boolean interrupt_swapper = false;
 extern void helptext_l (const char *str);
 extern void helptext_r (const char *str);
+extern AudioSynthDexed*  MicroDexed[NUM_DEXED];
 
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 sequencer_t seq;
@@ -84,7 +86,7 @@ uint8_t get_song_length()
     if (stepcounter < best)
       best = stepcounter;
   }
-  return SONG_LENGHT - best + 1;
+  return SONG_LENGHT - best;
 }
 
 uint8_t get_chain_length_from_track(uint8_t tr)
@@ -142,7 +144,7 @@ void sequencer_part1(void)
 
     if ( seq.current_pattern[d] < NUM_SEQ_PATTERN  && seq.current_chain[d] != 99)  // sequence not empty or muted
     {
-      if ( seq.track_type[d] == 0)
+      if ( seq.track_type[d] == 0  && seq.ticks == 0 )
       { // drum track (drum samples and pitched one-shot samples)
         if (seq.note_data[  seq.current_pattern[d] ][seq.step] > 0 )
         {
@@ -161,7 +163,7 @@ void sequencer_part1(void)
         {
           if (seq.track_type[d] == 1 || (seq.track_type[d] == 3 && seq.arp_play_basenote) )
           {
-            if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 )
+            if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 && seq.ticks == 0)
             {
               if (seq.inst_dexed[d] < 2) // track is assigned for dexed
                 handleNoteOn(configuration.dexed[seq.inst_dexed[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
@@ -171,7 +173,7 @@ void sequencer_part1(void)
               seq.prev_vel[d] = seq.vel[  seq.current_pattern[d] ][seq.step];
             }
           }
-          else if (seq.track_type[d] == 2  ) //Chords
+          else if (seq.track_type[d] == 2 && seq.ticks == 0 ) //Chords
           {
             if (seq.vel[  seq.current_pattern[d]][seq.step] > 199)
             {
@@ -186,85 +188,117 @@ void sequencer_part1(void)
               seq.prev_vel[d] = seq.vel[ seq.current_pattern[d]][seq.step];
             }
           }
-          if (seq.track_type[d] == 3) {  //Arp
+          else if (seq.track_type[d] == 3 && seq.ticks == 0 ) //Arp
+          { 
             seq.arp_step = 0;
+            seq.arp_num_notes_count = 0;
             seq.arp_counter = 0;
+            seq.arp_volume_fade = seq.chord_velocity;
             seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
             seq.arp_chord = seq.vel[ seq.current_pattern[d] ][seq.step] - 200;
           }
         }
         // after here not triggered by a key input -  arp only
-        if (seq.track_type[d] == 3)
+        if (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max)
         { //Arp
-          if (seq.arp_speed == 0 || (seq.arp_speed == 1 && seq.arp_counter == 0) )
+          if (seq.arp_speed == 0 ||  seq.arp_speed == 2  || seq.arp_speed == 3  || seq.arp_speed == 1 && seq.arp_counter == 0)
           {
-            { if (seq.arp_style == 0)
-              { //arp up
-                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity);
-                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity);
-
-                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] ;
+            if (seq.arp_style == 0)
+            { //arp up
+              if (seq.arp_speed == 2 || seq.arp_speed == 3)  // 1/32 + 1/64 arps, SID style
+              {
+                seq.arp_volume_fade = seq.chord_velocity -  ( (seq.chord_velocity / seq.arp_num_notes_max)  * seq.arp_num_notes_count );
+                set_sample_pitch(6, (float)pow (2, (seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] - 72) / 12.00) * get_sample_p_offset( 6 ) );
+                handleNoteOn(drum_midi_channel, 216 , seq.arp_volume_fade );
               }
-              else if (seq.arp_style == 1)
-              { //arp down
-                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
-                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
-                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] ;
+              else  if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+              {
+                //configuration.dexed[seq.chord_dexed_inst].sound_intensity=seq.arp_volume_fade;
+                MicroDexed[seq.chord_dexed_inst]->setGain(seq.arp_volume_fade);
+                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity);
               }
-              else if (seq.arp_style == 2)
-              { //arp up & down
-                if (seq.arp_step <= seq.arp_lenght)
-                {
-                  if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                    handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
-                  else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                    handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
-                  seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] ;
-                }
-                else
-                {
-                  if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                    handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
-                  else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                    handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
-                  seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] ;
-                }
+              else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_velocity );
+              seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] ;
+            }
+            else if (seq.arp_style == 1)
+            { //arp down
+              if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+              {
+                //configuration.dexed[seq.chord_dexed_inst].sound_intensity=seq.arp_volume_fade;
+                MicroDexed[seq.chord_dexed_inst]->setGain(seq.arp_volume_fade);
+                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
               }
-              else if (seq.arp_style == 3)
-              { //arp random
-
-                uint8_t rnd1 = random(seq.arp_lenght);
+              else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_velocity);
+              seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] ;
+            }
+            else if (seq.arp_style == 2)
+            { //arp up & down
+              if (seq.arp_step <= seq.arp_lenght)
+              {
                 if (seq.inst_dexed[d] < 2) // track is assigned for dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity);
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
                 else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
-                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity);
-                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12);
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_velocity);
+                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] ;
+              }
+              else
+              {
+                if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
+                else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_velocity);
+                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] ;
               }
             }
+            else if (seq.arp_style == 3)
+            { //arp random
+
+              uint8_t rnd1 = random(seq.arp_lenght);
+              if (seq.inst_dexed[d] < 2) // track is assigned for dexed
+                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity );
+              else if (seq.inst_dexed[d] == 2) // track is assigned for epiano
+                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_velocity);
+              seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12);
+            }
+            seq.arp_num_notes_count++;
           }
+
+          // seq.arp_volume_fade = seq.chord_velocity -  ( (seq.chord_velocity / seq.arp_num_notes_max)  * seq.arp_num_notes_count );
         }
       }
     }
     seq.noteoffsent[d] = false;
   }
+
   seq.arp_counter++;
-  seq.step++;
+
+  if (seq.ticks == 0)
+    seq.step++;
+
   if (seq.arp_speed == 0)  // Arp Speed 1/16
   {
     seq.arp_step++;
   }
-  else
+  else if (seq.arp_speed == 1) // Arp Speed 1/8
   {
-    // Arp Speed 1/8
     if (seq.arp_counter > 1)  {
       seq.arp_counter = 0;
       seq.arp_step++;
     }
   }
+  else if (seq.arp_speed == 2) // Arp Speed 1/32
+  {
+    ;
+  }
+
+  else if (seq.arp_speed == 3) // Arp Speed 1/64
+  {
+    ;
+  }
+
+
   if (seq.arp_style != 2) {
 
     if ( (seq.arp_step > 1 && seq.arps[seq.arp_chord][seq.arp_step] == 0) || seq.arp_step == seq.arp_lenght)
@@ -286,6 +320,7 @@ void sequencer_part1(void)
   if (seq.step > 15)
   {
     seq.step = 0;
+
     bool songstep_increased = false;
 
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
@@ -320,7 +355,8 @@ void sequencer_part2(void)
 
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
-    if (seq.noteoffsent[d] == false) {
+    if (seq.noteoffsent[d] == false)
+    {
       if ( seq.prev_note[d] > 0 && seq.track_type[d] > 0)
       {
         if (seq.note_data[  seq.current_pattern[d] ][seq.step] != 130)
@@ -331,8 +367,10 @@ void sequencer_part2(void)
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] , 0);
           seq.noteoffsent[d] = true;
         }
-        if (seq.track_type[d] == 2) {  //Chords
-          if ( seq.prev_vel[d] > 199)  {
+        if (seq.track_type[d] == 2) //Chords
+        {
+          if ( seq.prev_vel[d] > 199)
+          {
             for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
             {
               if (seq.inst_dexed[d] < 2) //dexed
@@ -364,6 +402,10 @@ void sequencer(void)
 
   if (interrupt_swapper) sequencer_part1();
   else sequencer_part2();
+
+  seq.ticks++;
+  if (seq.ticks > 7)
+    seq.ticks = 0;
 }
 
 void reset_tracker_edit_cache_single_track()
