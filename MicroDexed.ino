@@ -5,7 +5,7 @@
    Dexed ist heavily based on https://github.com/google/music-synthesizer-for-android
 
    (c)2018-2021 H. Wirtz <wirtz@parasitstudio.de>
-   (c)2021      M. Koslowski <positionhigh@gmx.de>
+   (c)2021      H. Wirtz <wirtz@parasitstudio.de>, M. Koslowski <positionhigh@gmx.de>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -181,9 +181,7 @@ AudioSynthWaveform              ep_chorus_modulator;
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioFilterBiquad               ep_modchorus_filter;
 #endif
-AudioEffectModulatedDelay       ep_modchorus_r;
-AudioEffectModulatedDelay       ep_modchorus_l;
-AudioAmplifier                  ep_chorus_inverter;
+AudioEffectModulatedDelayStereo ep_modchorus;
 AudioMixer<2>                   ep_chorus_mixer_r;
 AudioMixer<2>                   ep_chorus_mixer_l;
 #endif
@@ -361,23 +359,20 @@ AudioConnection patchCord[] = {
 #if defined(USE_FX)
   {ep_stereo_panorama, 0, ep_chorus_mixer_r, 0},
   {ep_stereo_panorama, 1, ep_chorus_mixer_l, 0},
-  {ep_stereo_panorama, 0, ep_modchorus_r, 0},
-  {ep_stereo_panorama, 1, ep_modchorus_l, 0},
+  {ep_stereo_panorama, 0, ep_modchorus, 0},
+  {ep_stereo_panorama, 1, ep_modchorus, 1},
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
   {ep_chorus_modulator, 0, ep_modchorus_filter, 0},
-  {ep_modchorus_filter, 0, ep_modchorus_r, 1},
-  {ep_modchorus_filter, 0, ep_chorus_inverter, 0},
+  {ep_modchorus_filter, 0, ep_modchorus, 2},
 #else
-  {ep_chorus_modulator, 0, ep_modchorus_r, 1},
-  {ep_chorus_modulator, 0, ep_chorus_inverter, 0},
+  {ep_chorus_modulator, 0, ep_modchorus, 2},
 #endif
-  {ep_chorus_inverter, 0, ep_modchorus_l, 1},
-  {ep_modchorus_r, 0, ep_chorus_mixer_r, 1},
-  {ep_modchorus_l, 0, ep_chorus_mixer_l, 1},
+  {ep_modchorus, 0, ep_chorus_mixer_r, 1},
+  {ep_modchorus, 1, ep_chorus_mixer_l, 1},
   {ep_chorus_mixer_r, 0, reverb_mixer_r, REVERB_MIX_CH_EPIANO},
   {ep_chorus_mixer_l, 0, reverb_mixer_l, REVERB_MIX_CH_EPIANO},
-  {ep_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_EPIANO},
-  {ep_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_EPIANO},
+  {ep_chorus_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_EPIANO},
+  {ep_chorus_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_EPIANO},
 #else
   {ep_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_EPIANO},
   {ep_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_EPIANO},
@@ -494,7 +489,7 @@ void create_audio_sd_wav_chain(uint8_t instance_id)
 uint8_t sd_card = 0;
 Sd2Card card;
 SdVolume volume;
-float midi_ticks_factor[10] = {0.0, 0.25, 0.375, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0 , 4.0};
+const float midi_ticks_factor[10] = {0.0, 0.25, 0.375, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0 , 4.0};
 uint8_t midi_bpm_counter = 0;
 uint8_t midi_bpm = 0;
 int16_t _midi_bpm = -1;
@@ -541,10 +536,10 @@ int perform_release_mod[NUM_DEXED] = { 0 };
 #endif
 #if defined(USE_FX)
 // Allocate the delay lines for chorus
-int16_t delayline[NUM_DEXED][MOD_DELAY_SAMPLE_BUFFER];
+int16_t* delayline[NUM_DEXED];
 #ifdef USE_EPIANO
-int16_t ep_delayline_r[MOD_DELAY_SAMPLE_BUFFER];
-int16_t ep_delayline_l[MOD_DELAY_SAMPLE_BUFFER];
+int16_t* ep_delayline_r;
+int16_t* ep_delayline_l;
 #endif
 #endif
 
@@ -707,7 +702,7 @@ void setup()
   }
 #endif
 
-  //Setup (PROGMEM-) sample drums
+  // Setup (PROGMEM) sample drums
 #if NUM_DRUMS > 0
   // create dynamic Drum instances
   for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
@@ -731,19 +726,27 @@ void setup()
 #if defined(USE_FX)
 #if defined(USE_EPIANO)
   // EP_CHORUS
-  memset(ep_delayline_r, 0, sizeof(ep_delayline_r));
-  if (!ep_modchorus_r.begin(ep_delayline_r, MOD_DELAY_SAMPLE_BUFFER))
+  ep_delayline_r = (int16_t*)malloc(MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
+  if (ep_delayline_r == NULL)
   {
 #ifdef DEBUG
-    Serial.println(F("AudioEffectModulatedDelay R - begin failed EP"));
+    Serial.println(F("AudioEffectModulatedDelay R - memory allocation failed EP"));
 #endif
     while (1);
   }
-  memset(ep_delayline_l, 0, sizeof(ep_delayline_l));
-  if (!ep_modchorus_l.begin(ep_delayline_l, MOD_DELAY_SAMPLE_BUFFER))
+  ep_delayline_l = (int16_t*)malloc(MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
+  if (ep_delayline_l == NULL)
   {
 #ifdef DEBUG
-    Serial.println(F("AudioEffectModulatedDelay L - begin failed EP"));
+    Serial.println(F("AudioEffectModulatedDelay L - memory allocation failed EP"));
+#endif
+    while (1);
+  }
+
+  if (!ep_modchorus.begin(ep_delayline_r, ep_delayline_l, MOD_DELAY_SAMPLE_BUFFER))
+  {
+#ifdef DEBUG
+    Serial.println(F("AudioEffectModulatedDelayStereo - begin failed EP"));
 #endif
     while (1);
   }
@@ -760,10 +763,9 @@ void setup()
 #endif
   ep_chorus_mixer_r.gain(0, 1.0);
   ep_chorus_mixer_l.gain(0, 1.0);
-  ep_chorus_mixer_r.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
-  ep_chorus_mixer_l.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
-  ep_chorus_inverter.gain(-1.0);
-  ep_stereo_panorama.panorama(0.0);
+  ep_chorus_mixer_r.gain(1, mapfloat(EP_CHORUS_LEVEL_DEFAULT, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
+  ep_chorus_mixer_l.gain(1, mapfloat(EP_CHORUS_LEVEL_DEFAULT, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
+  ep_stereo_panorama.panorama(mapfloat(EP_PANORAMA_DEFAULT, EP_PANORAMA_MIN, EP_PANORAMA_MAX, -1.0, 1.0));
 #endif
 #endif
 
@@ -771,10 +773,24 @@ void setup()
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
-    memset(delayline[instance_id], 0, sizeof(delayline[instance_id]));
-    if (!modchorus[instance_id]->begin(delayline[instance_id], MOD_DELAY_SAMPLE_BUFFER)) {
+    delayline[instance_id] = (int16_t*)malloc(MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
+    if (delayline[instance_id] != NULL)
+    {
+      memset(delayline[instance_id], 0, MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
+      if (!modchorus[instance_id]->begin(delayline[instance_id], MOD_DELAY_SAMPLE_BUFFER))
+      {
 #ifdef DEBUG
-      Serial.print(F("AudioEffectModulatedDelay - begin failed ["));
+        Serial.print(F("AudioEffectModulatedDelay - begin failed ["));
+        Serial.print(instance_id);
+        Serial.println(F("]"));
+#endif
+        while (1);
+      }
+    }
+    else
+    {
+#ifdef DEBUG
+      Serial.print(F("AudioEffectModulatedDelay - memory allocation failed ["));
       Serial.print(instance_id);
       Serial.println(F("]"));
 #endif
@@ -917,6 +933,7 @@ void setup()
   Serial.println(F("<setup end>"));
 #endif
 
+  //ep_modchorus.set_bypass(true);
   if ( seq.name[0] == 0 )
     strcpy(seq.name, "INIT Perf");
   LCDML.OTHER_jumpToFunc(UI_func_voice_select);
@@ -1514,7 +1531,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
           {
             if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
             {
-              ep.noteOn(inNumber + configuration.epiano.transpose, inVelocity);
+              ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
               //#ifdef DEBUG
               //              char note_name[4];
               //              getNoteName(note_name, inNumber);
@@ -1610,7 +1627,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
   {
     if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
     {
-      ep.noteOff(inNumber + configuration.epiano.transpose);
+      ep.noteOff(inNumber + configuration.epiano.transpose - 24);
 #ifdef DEBUG
       char note_name[4];
       getNoteName(note_name, inNumber);
@@ -1920,7 +1937,8 @@ void handleProgramChange(byte inChannel, byte inProgram)
     if (checkMidiChannel(inChannel, instance_id))
     {
       configuration.dexed[instance_id].voice = constrain(inProgram, 0, MAX_VOICES - 1);
-      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+      load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);      
+if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
       {
         LCDML.OTHER_updateFunc();
         LCDML.loop_menu();
@@ -2606,7 +2624,7 @@ void initial_values(bool init)
       Serial.println(F("Found wrong EEPROM marker, initializing EEPROM..."));
 #endif
       init_configuration();
-      load_sd_performance_json(PERFORMANCE_NUM_MIN);
+      //load_sd_performance_json(PERFORMANCE_NUM_MIN);
     }
     else
     {
@@ -2706,10 +2724,10 @@ void check_configuration_fx(void)
 
 #if defined(USE_EPIANO)
   configuration.fx.ep_chorus_frequency = constrain(configuration.fx.ep_chorus_frequency, EP_CHORUS_FREQUENCY_MIN, EP_CHORUS_FREQUENCY_MAX);
-  configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_FREQUENCY_MAX);
-  configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_FREQUENCY_MAX);
-  configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_FREQUENCY_MAX);
-  configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_CHORUS_FREQUENCY_MAX);
+  configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_WAVEFORM_MAX);
+  configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX);
+  configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX);
+  configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX);
 #endif
 }
 
@@ -2763,7 +2781,6 @@ void check_configuration_epiano(void)
   configuration.epiano.detune = constrain(configuration.epiano.detune, EP_DETUNE_MIN, EP_DETUNE_MAX);
   configuration.epiano.overdrive = constrain(configuration.epiano.overdrive, EP_OVERDRIVE_MIN, EP_OVERDRIVE_MAX);
   configuration.epiano.lowest_note = constrain(configuration.epiano.lowest_note, EP_LOWEST_NOTE_MIN, EP_LOWEST_NOTE_MAX);
-  configuration.epiano.highest_note = 108; // TODO!
   configuration.epiano.highest_note = constrain(configuration.epiano.highest_note, EP_HIGHEST_NOTE_MIN, EP_HIGHEST_NOTE_MAX);
   configuration.epiano.transpose = constrain(configuration.epiano.transpose, EP_TRANSPOSE_MIN, EP_TRANSPOSE_MAX);
   configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX);
@@ -2967,7 +2984,6 @@ uint8_t find_drum_number_from_note(uint8_t note)
 
 void set_fx_params(void)
 {
-
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
@@ -2984,10 +3000,14 @@ void set_fx_params(void)
         chorus_modulator[instance_id]->begin(WAVEFORM_TRIANGLE);
     }
     chorus_modulator[instance_id]->phase(0);
-    //    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
-    //    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
-    chorus_modulator[instance_id]->offset(0.0);
 
+// phtodo test if working now:
+// chorus_modulator[instance_id]->frequency
+// chorus_modulator[instance_id]->amplitude
+
+    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
+    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
+    chorus_modulator[instance_id]->offset(0.0);
 #if MOD_FILTER_OUTPUT == MOD_BUTTERWORTH_FILTER_OUTPUT
     // Butterworth filter, 12 db/octave
     modchorus_filter[instance_id]->setLowpass(0, MOD_FILTER_CUTOFF_HZ, 0.707);
@@ -3015,6 +3035,7 @@ void set_fx_params(void)
       uint16_t midi_sync_delay_time = uint16_t(60000.0 *  midi_ticks_factor[configuration.fx.delay_sync[instance_id]] / seq.bpm);
       delay_fx[instance_id]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     }
+
     // REVERB SEND
     reverb_mixer_r.gain(instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
     reverb_mixer_l.gain(instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
@@ -3074,7 +3095,6 @@ void set_fx_params(void)
   ep_chorus_mixer_l.gain(0, 1.0);
   ep_chorus_mixer_r.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
   ep_chorus_mixer_l.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
-  ep_chorus_inverter.gain(-1.0);
 #endif
 
   master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
@@ -3104,8 +3124,7 @@ void set_fx_params(void)
 void set_voiceconfig_params(uint8_t instance_id)
 {
   // INIT PEAK MIXER
-  // microdexed_peak_mixer.gain(instance_id, 1.0);
-
+  //microdexed_peak_mixer.gain(instance_id, 1.0);
 
   // Controller
   MicroDexed[instance_id]->setMaxNotes(configuration.dexed[instance_id].polyphony);
@@ -3132,16 +3151,16 @@ void set_epiano_params(void)
 #ifdef DEBUG
   Serial.print(F("Setting EPiano parameters... "));
 #endif
-  ep.setDecay(mapfloat(configuration.epiano.decay, EP_DECAY_MIN, EP_DECAY_MAX, 0, 1.0));
-  ep.setRelease(mapfloat(configuration.epiano.release, EP_RELEASE_MIN, EP_RELEASE_MAX, 0, 1.0));
-  ep.setHardness(mapfloat(configuration.epiano.hardness, EP_HARDNESS_MIN, EP_HARDNESS_MAX, 0, 1.0));
-  ep.setTreble(mapfloat(configuration.epiano.treble, EP_TREBLE_MIN, EP_TREBLE_MAX, 0, 1.0));
-  ep.setPanTremolo(mapfloat(configuration.epiano.pan_tremolo, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX, 0, 1.0));
-  ep.setPanLFO(mapfloat(configuration.epiano.pan_lfo, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX, 0, 1.0));
-  ep.setVelocitySense(mapfloat(configuration.epiano.velocity_sense, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX, 0, 1.0));
-  ep.setStereo(mapfloat(configuration.epiano.stereo, EP_STEREO_MIN, EP_STEREO_MAX, 0, 1.0));
+  ep.setDecay(mapfloat(configuration.epiano.decay, EP_DECAY_MIN, EP_DECAY_MAX, 0.0, 1.0));
+  ep.setRelease(mapfloat(configuration.epiano.release, EP_RELEASE_MIN, EP_RELEASE_MAX, 0.0, 1.0));
+  ep.setHardness(mapfloat(configuration.epiano.hardness, EP_HARDNESS_MIN, EP_HARDNESS_MAX, 0.0, 1.0));
+  ep.setTreble(mapfloat(configuration.epiano.treble, EP_TREBLE_MIN, EP_TREBLE_MAX, 0.0, 1.0));
+  ep.setPanTremolo(mapfloat(configuration.epiano.pan_tremolo, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX, 0.0, 1.0));
+  ep.setPanLFO(mapfloat(configuration.epiano.pan_lfo, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX, 0.0, 1.0));
+  ep.setVelocitySense(mapfloat(configuration.epiano.velocity_sense, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX, 0.0, 1.0));
+  ep.setStereo(mapfloat(configuration.epiano.stereo, EP_STEREO_MIN, EP_STEREO_MAX, 0.0, 1.0));
   ep.setPolyphony(configuration.epiano.polyphony);
-  ep.setTune((configuration.epiano.tune - 100) / 100.0);
+  ep.setTune(mapfloat(configuration.epiano.tune, EP_TUNE_MIN, EP_TUNE_MAX, 0.0, 1.0));
   ep.setDetune(mapfloat(configuration.epiano.detune, EP_DETUNE_MIN, EP_DETUNE_MAX, 0, 1.0));
   ep.setOverdrive(mapfloat(configuration.epiano.overdrive, EP_OVERDRIVE_MIN, EP_OVERDRIVE_MAX, 0, 1.0));
   ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
@@ -3742,6 +3761,7 @@ void show_patch(uint8_t instance_id)
 void SerialPrintFormatInt3(uint8_t num)
 {
   char buf[4];
+  memset(buf, 0, 4);
   sprintf(buf, "%3d", num);
   Serial.print(buf);
 }

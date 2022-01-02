@@ -71,7 +71,7 @@ public:
     {
         n = constrain(n, 0.0f, 1.0f);
         n = map (n, 0.0f, 1.0f, 0.2f, rv_time_k_max);
-        float32_t attn = 0.5f * map(n, 0.0f, rv_time_k_max, 0.5f, 1.0f);
+        float32_t attn = map(n, 0.0f, rv_time_k_max, 0.5f, 0.25f);
         __disable_irq();
         rv_time_k = n;
         input_attn = attn;
@@ -125,9 +125,9 @@ private:
 #endif
     float32_t input_attn;
 
-    float32_t in_allp_k; // input allpass coeff (default 0.6)
+    float32_t in_allp_k;            // input allpass coeff 
 #ifndef REVERB_USE_DMAMEM
-    float32_t in_allp1_bufL[224]; // input allpass buffers
+    float32_t in_allp1_bufL[224];   // input allpass buffers
     float32_t in_allp2_bufL[420];
     float32_t in_allp3_bufL[856];
     float32_t in_allp4_bufL[1089];
@@ -158,7 +158,7 @@ private:
     uint16_t lp_allp2_idx;
     uint16_t lp_allp3_idx;
     uint16_t lp_allp4_idx;
-    float32_t loop_allp_k;         // loop allpass coeff (default 0.6)
+    float32_t loop_allp_k;         // loop allpass coeff
     float32_t lp_allp_out;
 #ifndef REVERB_USE_DMAMEM
     float32_t lp_dly1_buf[3423];
@@ -171,7 +171,7 @@ private:
     uint16_t lp_dly3_idx;
     uint16_t lp_dly4_idx;
 
-    const uint16_t lp_dly1_offset_L = 201;
+    const uint16_t lp_dly1_offset_L = 201;      // delay line tap offets
     const uint16_t lp_dly2_offset_L = 145;
     const uint16_t lp_dly3_offset_L = 1897;
     const uint16_t lp_dly4_offset_L = 280;

@@ -58,7 +58,7 @@ static const audio_block_t zeroblock = {
   }
 };
 
-#if !defined(_MAPFLOAT)
+#ifndef _MAPFLOAT
 #define _MAPFLOAT
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)
 {
@@ -68,18 +68,7 @@ inline float mapfloat(float val, float in_min, float in_max, float out_min, floa
 
 void AudioEffectStereoPanorama::panorama(float p)
 {
-  if (p == 0.5)
-    pan_l = pan_r = 1.0;
-  else if (p > 0.5)
-  {
-    pan_r = 0.5 - abs(0.5 - p);
-    pan_l = 1.0 - pan_r;
-  }
-  else
-  {
-    pan_l = 0.5 - abs(0.5 - p);
-    pan_r = 1.0 - p;
-  }
+  pan = constrain(p, -1.0, 1.0);
 }
 
 void AudioEffectStereoPanorama::update(void)
@@ -105,10 +94,25 @@ void AudioEffectStereoPanorama::update(void)
 
     for (uint16_t n = 0; n < AUDIO_BLOCK_SAMPLES; n++)
     {
-      out_f[0][n] = in_f[0][n] * pan_r;
-      out_f[0][n] += in_f[1][n] * pan_l;
-      out_f[1][n] = in_f[1][n] * pan_r;
-      out_f[1][n] += in_f[0][n] * pan_l;
+      if (pan != 0.0)
+      {
+        if (pan > 0.0)
+        {
+          out_f[1][n] = (pan * in_f[0][n]) + ((1.0 - pan) * in_f[1][n]);
+          out_f[0][n] = (1.0 - pan) * in_f[0][n];
+        }
+        else
+        {
+          float _pan_ = fabs(pan);
+          out_f[0][n] = (_pan_ * in_f[1][n]) + ((1.0 - _pan_) * in_f[0][n]);
+          out_f[1][n] = (1.0 - _pan_) * in_f[1][n];
+        }
+      }
+      else
+      {
+        out_f[0][n] = in_f[0][n];
+        out_f[1][n] = in_f[1][n];
+      }
     }
 
     arm_float_to_q15(out_f[0], out[0]->data, AUDIO_BLOCK_SAMPLES);

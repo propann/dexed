@@ -6,6 +6,7 @@
    Dexed ist heavily based on https://github.com/google/music-synthesizer-for-android
 
    (c)2018-2021 H. Wirtz <wirtz@parasitstudio.de>
+   (c)2021      H. Wirtz <wirtz@parasitstudio.de>, M. Koslowski <positionhigh@gmx.de>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -144,9 +145,7 @@ extern AudioSynthWaveform              ep_chorus_modulator;
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 extern AudioFilterBiquad               ep_modchorus_filter;
 #endif
-extern AudioEffectModulatedDelay       ep_modchorus_r;
-extern AudioEffectModulatedDelay       ep_modchorus_l;
-extern AudioAmplifier                  ep_chorus_inverter;
+extern AudioEffectModulatedDelayStereo ep_modchorus;
 extern AudioMixer<2>                   ep_chorus_mixer_r;
 extern AudioMixer<2>                   ep_chorus_mixer_l;
 extern AudioMixer<2>                   ep_delay_fb_mixer_r;
@@ -173,7 +172,7 @@ extern char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 extern char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
 extern int perform_attack_mod[NUM_DEXED];
 extern int perform_release_mod[NUM_DEXED];
-extern float midi_ticks_factor[10];
+extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern bool save_sys_flag;
 extern elapsedMillis save_sys;
@@ -2830,7 +2829,6 @@ void UI_func_epiano_midi_channel(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3044,7 +3042,6 @@ void UI_func_epiano_decay(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3054,8 +3051,6 @@ void UI_func_epiano_release(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Release", configuration.epiano.release, 1.0, EP_RELEASE_MIN, EP_RELEASE_MAX, 3, false, false, true);
   }
 
@@ -3093,8 +3088,6 @@ void UI_func_epiano_hardness(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Hardness", configuration.epiano.hardness, 1.0, EP_HARDNESS_MIN, EP_HARDNESS_MAX, 3, false, false, true);
   }
 
@@ -3122,7 +3115,6 @@ void UI_func_epiano_hardness(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3133,7 +3125,6 @@ void UI_func_epiano_treble(uint8_t param)
   {
     encoderDir[ENC_R].reset();
 
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Treble", configuration.epiano.treble, 1.0, EP_TREBLE_MIN, EP_TREBLE_MAX, 3, false, false, true);
   }
 
@@ -3161,7 +3152,6 @@ void UI_func_epiano_treble(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3171,8 +3161,6 @@ void UI_func_epiano_stereo(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Stereo", configuration.epiano.stereo, 1.0, EP_STEREO_MIN, EP_STEREO_MAX, 3, false, false, true);
   }
 
@@ -3200,7 +3188,6 @@ void UI_func_epiano_stereo(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3210,8 +3197,6 @@ void UI_func_epiano_tune(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(METERBAR);
     display_meter_int("EP Tune", configuration.epiano.tune, 1.0, -100.0, EP_TUNE_MIN, EP_TUNE_MAX, 3, false, true, true);
   }
 
@@ -3239,7 +3224,6 @@ void UI_func_epiano_tune(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3249,8 +3233,6 @@ void UI_func_epiano_detune(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Detune", configuration.epiano.detune, 1.0, EP_DETUNE_MIN, EP_DETUNE_MAX, 3, false, false, true);
   }
 
@@ -3278,7 +3260,6 @@ void UI_func_epiano_detune(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3288,8 +3269,6 @@ void UI_func_epiano_pan_tremolo(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Trem. Width", configuration.epiano.pan_tremolo, 1.0, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX, 3, false, false, true);
   }
 
@@ -3311,13 +3290,15 @@ void UI_func_epiano_pan_tremolo(uint8_t param)
 
     display_bar_int("EP Trem. Width", configuration.epiano.pan_tremolo, 1.0, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX, 3, false, false, false);
 #if defined(USE_EPIANO)
-    ep.setPanTremolo(mapfloat(configuration.epiano.pan_tremolo, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX, 0, 1.0));
+    if (configuration.epiano.pan_tremolo == 0)
+      ep.setPanTremolo(0.0);
+    else
+      ep.setPanTremolo(mapfloat(configuration.epiano.pan_tremolo, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX, 0.0, 1.0));
 #endif
   }
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3327,8 +3308,6 @@ void UI_func_epiano_pan_lfo(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP LFO", configuration.epiano.pan_lfo, 1.0, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX, 3, false, false, true);
   }
 
@@ -3350,13 +3329,15 @@ void UI_func_epiano_pan_lfo(uint8_t param)
 
     display_bar_int("EP LFO", configuration.epiano.pan_lfo, 1.0, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX, 3, false, false, false);
 #if defined(USE_EPIANO)
-    ep.setPanLFO(mapfloat(configuration.epiano.pan_lfo, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX, 0, 1.0));
+    if (configuration.epiano.pan_lfo == 0)
+      ep.setPanLFO(0.0);
+    else
+      ep.setPanLFO(mapfloat(configuration.epiano.pan_lfo, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX, 0.0, 1.0));
 #endif
   }
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3467,7 +3448,6 @@ void UI_func_epiano_polyphony(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3477,8 +3457,6 @@ void UI_func_epiano_velocity_sense(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Vel. Sense", configuration.epiano.velocity_sense, 1.0, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX, 3, false, false, true);
   }
 
@@ -3506,7 +3484,6 @@ void UI_func_epiano_velocity_sense(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3517,8 +3494,6 @@ void UI_func_epiano_reverb_send(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Reverb Send", configuration.fx.ep_reverb_send, 1.0, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 3, false, false, true);
   }
 
@@ -3644,7 +3619,7 @@ void UI_func_epiano_chorus_depth(uint8_t param)
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
       if (LCDML.BT_checkDown())
         configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth + ENCODER[ENC_R].speed(), EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX);
@@ -3654,13 +3629,12 @@ void UI_func_epiano_chorus_depth(uint8_t param)
 
     display_bar_int("EP Ch. Depth", configuration.fx.ep_chorus_depth, 1.0, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX, 3, false, false, false);
 #if defined(USE_EPIANO)
-    ep_chorus_modulator.amplitude(configuration.fx.ep_chorus_depth / 100.0);
+    ep_chorus_modulator.amplitude(mapfloat(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX, 0.0, 1.0));
 #endif
   }
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }
@@ -3670,8 +3644,6 @@ void UI_func_epiano_chorus_level(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
-    //lcd_special_chars(BLOCKBAR);
     display_bar_int("EP Ch. Level", configuration.fx.ep_chorus_level, 1.0, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 3, false, false, true);
   }
 
@@ -3700,7 +3672,6 @@ void UI_func_epiano_chorus_level(uint8_t param)
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    //lcd_special_chars(SCROLLBAR);
     encoderDir[ENC_R].reset();
   }
 }

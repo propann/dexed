@@ -6,6 +6,7 @@
    Dexed ist heavily based on https://github.com/google/music-synthesizer-for-android
 
    (c)2018-2021 H. Wirtz <wirtz@parasitstudio.de>
+   (c)2021      H. Wirtz <wirtz@parasitstudio.de>, M. Koslowski <positionhigh@gmx.de>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -611,7 +612,7 @@ bool load_sd_drumsettings_json(uint8_t number)
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -695,7 +696,7 @@ bool save_sd_drumsettings_json(uint8_t number)
           data_json["vol_min"][i] = get_sample_vol_min(i);
           data_json["reverb_send"][i] = get_sample_reverb_send(i);
         }
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Write JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -765,7 +766,7 @@ bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
         json.close();
         AudioInterrupts();
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -889,7 +890,7 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
       data_json["op_enabled"] = configuration.dexed[instance_id].op_enabled;
       data_json["midi_channel"] = configuration.dexed[instance_id].midi_channel;
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -949,7 +950,7 @@ bool load_sd_fx_json(uint8_t number)
         json.close();
         AudioInterrupts();
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -988,7 +989,7 @@ bool load_sd_fx_json(uint8_t number)
         configuration.fx.eq_7 = data_json["eq_7"];
         configuration.fx.ep_chorus_frequency = data_json["ep_chorus_frequency"];
         configuration.fx.ep_chorus_waveform = data_json["ep_chorus_waveform"];
-        configuration.fx.ep_chorus_depth = data_json["ep_chorus_dept"];
+        configuration.fx.ep_chorus_depth = data_json["ep_chorus_depth"];
         configuration.fx.ep_chorus_level = data_json["ep_chorus_level"];
         configuration.fx.ep_reverb_send = data_json["ep_reverb_send"];
 
@@ -1074,11 +1075,11 @@ bool save_sd_fx_json(uint8_t number)
       data_json["eq_7"] = configuration.fx.eq_7;
       data_json["ep_chorus_frequency"] = configuration.fx.ep_chorus_frequency;
       data_json["ep_chorus_waveform"] = configuration.fx.ep_chorus_waveform;
-      data_json["ep_chorus_dept"] = configuration.fx.ep_chorus_depth;
+      data_json["ep_chorus_depth"] = configuration.fx.ep_chorus_depth;
       data_json["ep_chorus_level"] = configuration.fx.ep_chorus_level;
       data_json["ep_reverb_send"] = configuration.fx.ep_reverb_send;
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -1135,7 +1136,7 @@ bool load_sd_epiano_json(uint8_t number)
         json.close();
         AudioInterrupts();
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -1143,7 +1144,7 @@ bool load_sd_epiano_json(uint8_t number)
         configuration.epiano.decay = data_json["decay"];
         configuration.epiano.release = data_json["release"];
         configuration.epiano.hardness = data_json["hardness"];
-        configuration.epiano.treble = data_json["trebl"];
+        configuration.epiano.treble = data_json["treble"];
         configuration.epiano.pan_tremolo = data_json["pan_tremolo"];
         configuration.epiano.pan_lfo = data_json["pan_lf"];
         configuration.epiano.velocity_sense = data_json["velocity"];
@@ -1229,7 +1230,7 @@ bool save_sd_epiano_json(uint8_t number)
       data_json["pan"] = configuration.epiano.pan;
       data_json["midi_channel"] = configuration.epiano.midi_channel;
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -1282,7 +1283,7 @@ bool load_sd_sys_json(void)
         json.close();
         AudioInterrupts();
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -1349,7 +1350,7 @@ bool save_sd_sys_json(void)
       data_json["favorites"] = configuration.sys.favorites;
       data_json["load_at_startup"] = configuration.sys.load_at_startup;
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -1716,7 +1717,8 @@ bool save_sd_seq_sub_vel_json(uint8_t number)
           count++;
         }
       }
-#ifdef DEBUG
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -1772,7 +1774,8 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
           count++;
         }
       }
-#ifdef DEBUG
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -1812,19 +1815,17 @@ bool save_sd_performance_json(uint8_t number)
 
   check_performance_directory(number);
 
+#ifdef DEBUG
+  Serial.print(F("Write performance config "));
+  Serial.println(number);
+#endif
+
   save_sd_seq_sub_vel_json(number);
   save_sd_seq_sub_patterns_json(number);
   save_sd_drummappings_json(number);
   save_sd_song_json(number);
   save_sd_transpose_json(number);
   save_sd_chain_json(number);
-
-
-#ifdef DEBUG
-  Serial.print(F("Write performance config "));
-  Serial.println(number);
-#endif
-
   save_sd_fx_json(number);
   save_sd_epiano_json(number);
 
@@ -1849,30 +1850,11 @@ bool save_sd_performance_json(uint8_t number)
     Serial.println(filename);
 #endif
 
-    // SEQUENCER REWRITE
-
-    //    int total = sizeof(seq.patternchain);
-    //    int columns = sizeof(seq.patternchain[0]);
-    //    int rows = total / columns;
     Serial.print(F("  "));
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
-    {
-      //      Serial.print(F("Chain Rows: "));
-      //      Serial.print(rows);
-      //      Serial.print("  Chain Columns: ");
-      //      Serial.print(columns);
-      //      Serial.print(F("  "));
-      //      count = 0;
-      //      for (uint8_t i = 0; i < rows; i++)
-      //      {
-      //        for (uint8_t j = 0; j < columns; j++) {
-      //          data_json["seq_patternchain"][count] = seq.patternchain[i][j];
-      //          count++;
-      //        }
-      //      }
-      //      count = 0;
+    { 
       data_json["seq_tempo_ms"] = seq.tempo_ms ;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_play_basenote"] = seq.arp_play_basenote;
@@ -1898,7 +1880,8 @@ bool save_sd_performance_json(uint8_t number)
       for (uint8_t i = 0; i < FILENAME_LEN; i++) {
         data_json["seq_name"][i] = seq.name[i];
       }
-#ifdef DEBUG
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
       Serial.println();
@@ -2049,7 +2032,7 @@ bool load_sd_seq_sub_vel_json(uint8_t number)
         json.close();
         AudioInterrupts();
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -2118,7 +2101,7 @@ bool load_sd_seq_sub_patterns_json(uint8_t number)
         json.close();
         AudioInterrupts();
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
@@ -2205,26 +2188,13 @@ bool load_sd_performance_json(uint8_t number)
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
-#ifdef DEBUG
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         Serial.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
         Serial.println();
 #endif
 
-        // SEQUENCER REWRITE
-
-        //        int total = sizeof(seq.patternchain);
-        //        int columns = sizeof(seq.patternchain[0]);
-        //        int rows = total / columns;
-        //        int count = 0;
-        //        for (uint8_t i = 0; i < rows; i++)
-        //        {
-        //          for (uint8_t j = 0; j < columns; j++)
-        //          {
-        //            seq.patternchain[i][j] = data_json["seq_patternchain"][count];
-        //            count++;
-        //          }
-        //        }
         for (uint8_t i = 0; i < sizeof(seq.track_type); i++)
         {
           seq.track_type[i] = data_json["track_type"][i];
@@ -2245,7 +2215,7 @@ bool load_sd_performance_json(uint8_t number)
             seq.name[i] = data_json["seq_name"][i];
           }
         }
-        //count = 0;
+
         seq.tempo_ms = data_json["seq_tempo_ms"] ;
         seq.bpm = data_json["seq_bpm"];
         seq.arp_play_basenote = data_json["arp_play_basenote"];
@@ -2278,9 +2248,6 @@ bool load_sd_performance_json(uint8_t number)
 
         dac_unmute();
         seq.step = 0;
-
-        // SEQUENCER REWRITE
-        //  seq.chain_active_step = 0;
 
 #ifdef USE_SEQUENCER
         if (seq_was_running)

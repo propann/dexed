@@ -6,6 +6,7 @@
    Dexed ist heavily based on https://github.com/google/music-synthesizer-for-android
 
    (c)2018-2021 H. Wirtz <wirtz@parasitstudio.de>
+   (c)2021      H. Wirtz <wirtz@parasitstudio.de>, M. Koslowski <positionhigh@gmx.de>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -88,6 +89,7 @@
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
 //#define DEBUG 1
+//#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
@@ -145,6 +147,7 @@
 #define MOD_WAVEFORM WAVEFORM_TRIANGLE // WAVEFORM_SINE WAVEFORM_TRIANGLE WAVEFORM_SAWTOOTH WAVEFORM_SAWTOOTH_REVERSE
 #define MOD_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT // MOD_LINKWITZ_RILEY_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT MOD_NO_FILTER_OUTPUT
 #define MOD_FILTER_CUTOFF_HZ 2000
+
 // SGTL5000
 #ifdef TEENSY_AUDIO_BOARD
 #define SGTL5000_AUDIO_ENHANCE 1
@@ -166,7 +169,7 @@
 
 #ifdef USE_FX
 #if defined(USE_EPIANO)
-#define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 
+#define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 + 14
 #else
 #define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36
 #endif
@@ -670,7 +673,7 @@ const int FlashChipSelect = 6;
 
 #define EP_PAN_TREMOLO_MIN 0
 #define EP_PAN_TREMOLO_MAX 100
-#define EP_PAN_TREMOLO_DEFAULT 50
+#define EP_PAN_TREMOLO_DEFAULT 20
 
 #define EP_PAN_LFO_MIN 0
 #define EP_PAN_LFO_MAX 100
@@ -874,7 +877,8 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_DRUMS,
   REVERB_MIX_CH_EPIANO
 };
-#if !defined(_MAPFLOAT)
+
+#ifndef _MAPFLOAT
 #define _MAPFLOAT
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)
 {

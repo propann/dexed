@@ -33,10 +33,9 @@ class AudioEffectStereoPanorama : public AudioStream
 {
   public:
     AudioEffectStereoPanorama(void):
-      AudioStream(1, inputQueueArray)
+      AudioStream(2, inputQueueArray)
     {
-      pan_l = 1.0;
-      pan_r = 1.0;
+      pan = 0.0;
     }
 
     virtual void update(void);
@@ -47,9 +46,7 @@ class AudioEffectStereoPanorama : public AudioStream
     audio_block_t *out[2];
     float in_f[2][AUDIO_BLOCK_SAMPLES];
     float out_f[2][AUDIO_BLOCK_SAMPLES];
-    float pan_l;
-    float pan_r;
-    const float _pseudo_log = 1048575 / (float)(1 << 20);
+    float pan;
 };
 
 #endif

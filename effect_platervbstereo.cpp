@@ -31,15 +31,13 @@
 
 #include <Arduino.h>
 #include "effect_platervbstereo.h"
-#include "utility/dspinst.h"
-#include "synth_waveform.h"
 
-#define INP_ALLP_COEFF      (0.65f)
-#define LOOP_ALLOP_COEFF    (0.65f)
+#define INP_ALLP_COEFF      (0.65f)                         // default input allpass coeff
+#define LOOP_ALLOP_COEFF    (0.65f)                         // default loop allpass coeff
 
-#define HI_LOSS_FREQ        (0.3f)
-#define HI_LOSS_FREQ_MAX    (0.08f)
-#define LO_LOSS_FREQ        (0.06f)
+#define HI_LOSS_FREQ        (0.3f)                          // scaled center freq for the treble loss filter 
+// #define HI_LOSS_FREQ_MAX    (0.08f)
+#define LO_LOSS_FREQ        (0.06f)                         // scaled center freq for the bass loss filter 
 
 #define LFO_AMPL_BITS       (5)                             // 2^LFO_AMPL_BITS will be the LFO amplitude 
 #define LFO_AMPL            ((1<<LFO_AMPL_BITS) + 1)        // lfo amplitude
@@ -224,6 +222,15 @@ void AudioEffectPlateReverb::update()
 
             cleanup_done = true;
         }
+        blockL = receiveReadOnly(0);
+        blockR = receiveReadOnly(1);
+        if (!blockL) blockL = &zeroblock;
+        if (!blockR) blockR = &zeroblock;
+        transmit((audio_block_t *)blockL,0);
+        transmit((audio_block_t *)blockR,1);
+        if (blockL != &zeroblock) release((audio_block_t *)blockL);
+        if (blockR != &zeroblock) release((audio_block_t *)blockR);
+
         return;
     }
     cleanup_done = false;

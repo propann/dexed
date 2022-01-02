@@ -57,7 +57,7 @@ static const audio_block_t zeroblock = {
   }
 };
 
-#if !defined(_MAPFLOAT)
+#ifndef _MAPFLOAT
 #define _MAPFLOAT
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)
 {
