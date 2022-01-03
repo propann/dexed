@@ -116,7 +116,6 @@ typedef struct sequencer_s {
   uint8_t arp_step;
   uint8_t arp_note;
   uint8_t arp_chord = 6;
-  bool arp_play_basenote = true;
   uint8_t arp_note_prev;
   uint8_t arp_octave;
   uint8_t arp_prev_oct;

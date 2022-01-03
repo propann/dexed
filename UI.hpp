@@ -5770,31 +5770,31 @@ void set_track_type_color_inverted(uint8_t track)
 void print_color_map(int x, int y)
 {
   display.setTextSize(1);
-  display.setCursor(CHAR_width * 30,  15 * (CHAR_height - 5) + 2 );
+  display.setCursor(CHAR_width * 29,  15 * (CHAR_height - 5) + 2 );
   display.setTextColor(GREY2, BLACK);
-  display.print(F( "STD.CHORDS:"));
-
-  display.setCursor(CHAR_width * 30,  16 * (CHAR_height - 5) + 2 );
+  display.print(F( "DEF.CHRD SND:"));
+  display.setCursor(CHAR_width * 29,  16 * (CHAR_height - 5) + 2 );
   display.setTextColor(GREY2, BLACK);
-  display.print(F( "CHRD STACK:"));
-
-  display.setCursor(CHAR_width * 30,  17 * (CHAR_height - 5) + 2 );
+  display.print(F( "CHORD N. STK:"));
+  display.setCursor(CHAR_width * 29,  17 * (CHAR_height - 5) + 2 );
   display.setTextColor(GREY2, BLACK);
-  display.print(F( "ARPEG BASS:"));
-
-   display.setCursor(CHAR_width * 30,  18 * (CHAR_height - 5) + 2 );
+  display.print(F( "CHRD/ARP VEL:"));
+  display.setCursor(CHAR_width * 29,  18 * (CHAR_height - 5) + 2 );
   display.setTextColor(GREY2, BLACK);
-  display.print(F( "ARP MAX NT:"));
-  
-
-  display.setCursor(CHAR_width * 30,  13 * (CHAR_height - 5) + 2 );
+  display.print(F( "ARP NOTE MAX:"));
+  display.setCursor(CHAR_width * 29,  13 * (CHAR_height - 5) + 2 );
   display.setTextColor(DX_PURPLE, BLACK);
   display.print(F( "PERF#"));
   display.setTextColor(DX_CYAN, BLACK);
   seq_print_formatted_number(configuration.sys.performance_number, 2);
-  display.print( " ");
-  display.setTextColor(WHITE, GREY3);
+  display.print( ": ");
+  display.setTextColor(DX_CYAN, BLACK);
+   display.print( "[");
+  display.setTextColor(WHITE, BLACK);
   display.print(seq.name);
+  
+   display.setTextColor(DX_CYAN, BLACK);
+  display.print( "]");
   display.setCursor(x, y +  2 * (CHAR_height - 5));
 
   display.drawLine(TFT_HEIGHT / 2, y +  2 * (CHAR_height - 5) + 2 , TFT_HEIGHT, y +  2 * (CHAR_height - 5) + 2 , GREY4);
@@ -5846,13 +5846,25 @@ void seq_sub_pat_chain(int x, int y, bool init)
       display.print ("dexedI");
       display.print (seq.inst_dexed[track] + 1);
     }
-    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] > 1) //epiano
+    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 2) //epiano
     {
       display.print ("ElPiano");
     }
-    else
+    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 3) 
     {
-      display.print ("Drm/Smp");
+      display.print ("SID Saw");
+    }
+    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 4) 
+    {
+      display.print ("SID Sqr");
+    }
+     else if (seq.track_type[track] == 0 ) //drums/samples
+    {
+      display.print ("DRM/SMP");
+    }
+    else 
+    {
+      display.print ("- - - -");
     }
   }
   display.setCursor(CHAR_width * 36,  15 * (CHAR_height - 5) + 2 );
@@ -5883,16 +5895,13 @@ void seq_sub_pat_chain(int x, int y, bool init)
     display.setTextColor(BLACK, DX_ORANGE);
   else
     display.setTextColor(WHITE, BLACK);
-  if (seq.arp_play_basenote)
-    display.print(F( "ON "));
-  else
-    display.print(F( "OFF"));
-    display.setCursor(CHAR_width * 36,  18 * (CHAR_height - 5) + 2 );
+  seq_print_formatted_number(seq.chord_velocity, 3);
+  display.setCursor(CHAR_width * 36,  18 * (CHAR_height - 5) + 2 );
   if (seq.menu == 36)
     display.setTextColor(BLACK, DX_ORANGE);
   else
     display.setTextColor(WHITE, BLACK);
-    seq_print_formatted_number(seq.arp_num_notes_max, 2);
+  seq_print_formatted_number(seq.arp_num_notes_max, 2);
   if (init)
     print_color_map(CHAR_width * 21, 266);
   display.setTextSize(2);
@@ -6658,9 +6667,9 @@ void seq_sub_display_menu_logic()
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] + 1, 0, 2);
+          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] + 1, 0, 4);
         else if (LCDML.BT_checkUp())
-          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] - 1, 0, 2);
+          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] - 1, 0, 4);
       }
     }
   }
@@ -6685,17 +6694,17 @@ void seq_sub_display_menu_logic()
         seq.arp_chord = constrain(seq.arp_chord - 1, 1, 6);
     }
   }
-  else if (seq_active_function == 1 && seq.menu == 35) // edit bass on/off in arpegeggios
+  else if (seq_active_function == 1 && seq.menu == 35) // edit chord velocity
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
       if (LCDML.BT_checkDown())
-        seq.arp_play_basenote = !seq.arp_play_basenote;
+        seq.chord_velocity = constrain(seq.chord_velocity + 1, 10, 120);
       else if (LCDML.BT_checkUp())
-        seq.arp_play_basenote = !seq.arp_play_basenote;
+        seq.chord_velocity = constrain(seq.chord_velocity - 1, 10, 120);
     }
   }
-   else if (seq_active_function == 1 && seq.menu == 36) // edit max arp notes in 1/32 1/64 arps
+  else if (seq_active_function == 1 && seq.menu == 36) // edit max arp notes in 1/32 1/64 arps
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
@@ -7189,14 +7198,16 @@ void UI_func_seq_vel_editor(uint8_t param)
       } else
       {
         display.setTextColor(GREEN, BLACK);
-        display.print("SET TRACK TYPE = ");
+        display.print("ASSIGN TRACK TYPE = ");
 
         set_track_type_color(seq.menu - 21);
 
-        if (seq.track_type[seq.menu - 21] == 0 )   display.print(F("Drums    "));
-        else if (seq.track_type[seq.menu - 21] == 1 ) display.print(F("Instr.   "));
-        else if (seq.track_type[seq.menu - 21] == 2 ) display.print(F("Chord    "));
-        else if (seq.track_type[seq.menu - 21] == 3 ) display.print(F("Arpeggio "));
+        if (seq.track_type[seq.menu - 21] == 0 )   display.print(F("Drums"));
+        else if (seq.track_type[seq.menu - 21] == 1 ) display.print(F("Instr."));
+        else if (seq.track_type[seq.menu - 21] == 2 ) display.print(F("Chord"));
+        else if (seq.track_type[seq.menu - 21] == 3 ) display.print(F("Arpeggio"));
+           display.setTextColor(GREEN, BLACK);
+        display.print(" ?    ");
         display.setTextSize(2);
       }
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
@@ -7234,19 +7245,28 @@ void UI_func_seq_vel_editor(uint8_t param)
       else
       {
         display.setTextColor(WHITE, BLACK);
-        display.print("SET TRACK TO: ");
+        display.print(F("SET TRACK TO INSTR: "));
         display.setTextColor(GREEN, BLACK);
         if (seq.inst_dexed[seq.menu - 21 - 6] < 2)
         {
-          display.print("DEXED ");
+          display.print(F("DEXED "));
           display.print(seq.inst_dexed[seq.menu - 21 - 6] + 1);
         }
-        else
-          display.print("EPIANO");
-        display.print(F(" "));
-        display.setTextSize(2);
+        else if (seq.inst_dexed[seq.menu - 21 - 6] == 2)
+        {
+          display.print(F("EPIANO"));
+        }
+        else if (seq.inst_dexed[seq.menu - 21 - 6] == 3)
+        {
+          display.print(F("SID saw"));
+        }
+        else if (seq.inst_dexed[seq.menu - 21 - 6] == 4)
+        {
+          display.print(F("SID sqr"));
+        }
+         display.setTextColor(WHITE, BLACK);
+         display.print(F(" ?  "));
       }
-
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
     }
 
@@ -7259,25 +7279,24 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         display.setTextColor(GREEN, BLACK);
         display.setTextSize(1);
-        display.print(F("CHANGE STD. CHORD INSTR. ?   "));
+        display.print(F("CHANGE DEFAULT CHORD INSTR. ?  "));
         display.setTextColor(WHITE, BLACK);
         display.setTextSize(2);
       } else
       {
         display.setTextSize(1);
         display.setTextColor(GREEN, BLACK);
-        display.print(F("INSTR. FOR CHORDS = "));
+        display.print(F("ASSIGN CHORD INSTR. = "));
         display.setTextColor(WHITE, BLACK);
         if (seq.chord_dexed_inst == 0)
-          display.print(F( "DEXED1 "));
+          display.print(F( "DEXED1"));
         else if (seq.chord_dexed_inst == 1)
-          display.print(F( "DEXED2 "));
+          display.print(F( "DEXED2"));
         else if (seq.chord_dexed_inst == 2)
-          display.print(F( "EPIANO "));
-
+          display.print(F( "EPIANO"));
+  display.print(F( "  "));
         display.setTextSize(2);
       }
-
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
     }
     else if (seq.menu == 34) // sub menus function: arp chord size
@@ -7288,14 +7307,14 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         display.setTextColor(GREEN, BLACK);
         display.setTextSize(1);
-        display.print(F("CHANGE NUMBER OF CHORD NOTES?   "));
+        display.print(F("CHANGE NUMBER OF CHORD NOTES ?  "));
         display.setTextColor(WHITE, BLACK);
         display.setTextSize(2);
       } else
       {
         display.setTextSize(1);
         display.setTextColor(GREEN, BLACK);
-        display.print(F("NUMBER OF CHORD NOTES = "));
+        display.print(F("SET NUMBER OF CHORD NOTES = "));
         display.setTextColor(WHITE, BLACK);
         seq_print_formatted_number(seq.arp_chord, 2);
         display.print(F("   "));
@@ -7303,7 +7322,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       }
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
     }
-    else if (seq.menu == 35) // sub menus function: arp bass note on / off
+    else if (seq.menu == 35) // sub menus function: arp / chord velocity
     {
       print_edit_mode();
       display.setCursor(1 * CHAR_width, 4 * CHAR_height + 17);
@@ -7311,25 +7330,22 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         display.setTextColor(GREEN, BLACK);
         display.setTextSize(1);
-        display.print(F("SET ARP BASS NOTE ON/OFF ?   "));
+        display.print(F("SET ARP/CHORD VELOCITY ?       "));
         display.setTextColor(WHITE, BLACK);
         display.setTextSize(2);
       } else
       {
         display.setTextSize(1);
         display.setTextColor(GREEN, BLACK);
-        display.print(F("PLAY ARP WITH BASSNOTE = "));
+        display.print(F("ASSIGN ARP/CHORD VELOCITY = "));
         display.setTextColor(WHITE, BLACK);
-        if (seq.arp_play_basenote)
-          display.print(F( "ON "));
-        else
-          display.print(F( "OFF"));
+        seq_print_formatted_number(seq.chord_velocity, 3);
         display.print(F(" "));
         display.setTextSize(2);
       }
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
     }
-     else if (seq.menu == 36) // sub menus function: max notes in fast arps
+    else if (seq.menu == 36) // sub menus function: max notes in fast arps
     {
       print_edit_mode();
       display.setCursor(1 * CHAR_width, 4 * CHAR_height + 17);
@@ -7337,14 +7353,14 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         display.setTextColor(GREEN, BLACK);
         display.setTextSize(1);
-        display.print(F("SET MAX FAST ARP NOTES ? "));
+        display.print(F("SET MAX. ARP/CHORD NOTES ?    "));
         display.setTextColor(WHITE, BLACK);
         display.setTextSize(2);
       } else
       {
         display.setTextSize(1);
         display.setTextColor(GREEN, BLACK);
-        display.print(F("MAX FAST ARP NOTES = "));
+        display.print(F("MAX ARP NOTES STEPS/EVENT = "));
         display.setTextColor(WHITE, BLACK);
         display.print(seq.arp_num_notes_max);
         display.print(F(" "));
@@ -7365,7 +7381,6 @@ void UI_func_seq_vel_editor(uint8_t param)
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
     }
   }
-
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
@@ -9758,9 +9773,9 @@ void UI_func_dexed_assign(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.inst_dexed[seq.temp_active_menu] = constrain(seq.inst_dexed[seq.temp_active_menu] + 1, 0, 2);
+          seq.inst_dexed[seq.temp_active_menu] = constrain(seq.inst_dexed[seq.temp_active_menu] + 1, 0, 4);
         else if (LCDML.BT_checkUp())
-          seq.inst_dexed[seq.temp_active_menu] = constrain(seq.inst_dexed[seq.temp_active_menu] - 1, 0, 2);
+          seq.inst_dexed[seq.temp_active_menu] = constrain(seq.inst_dexed[seq.temp_active_menu] - 1, 0, 4);
       }
     }
     if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -9797,6 +9812,8 @@ void UI_func_dexed_assign(uint8_t param)
     if (seq.inst_dexed[seq.temp_select_menu] == 0 ) display.print("dexed0");
     else if (seq.inst_dexed[seq.temp_select_menu] == 1 ) display.print("dexed1");
     else if (seq.inst_dexed[seq.temp_select_menu] == 2 ) display.print("ePiano");
+    else if (seq.inst_dexed[seq.temp_select_menu] == 3 ) display.print("SIDsaw");
+    else if (seq.inst_dexed[seq.temp_select_menu] == 4 ) display.print("SIDsqr");
     else display.print("??????");
 
   }
