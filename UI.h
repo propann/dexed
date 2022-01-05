@@ -176,14 +176,15 @@ LCDML_add(142, LCDML_0_8, 1, "Stereo/Mono", UI_func_stereo_mono);
 LCDML_add(143, LCDML_0_8, 2, "MIDI Soft THRU", UI_func_midi_soft_thru);
 LCDML_add(144, LCDML_0_8, 3, "Favorites", UI_func_favorites);
 LCDML_add(145, LCDML_0_8, 4, "Startup", UI_func_startup);
-LCDML_add(146, LCDML_0_8, 5, "FORMAT FLASH", UI_func_format_flash);
-LCDML_add(147, LCDML_0, 9, "Sample Editor", UI_func_sample_editor);
-LCDML_add(148, LCDML_0, 10, "File Manager", UI_func_file_manager);
-LCDML_add(149, LCDML_0, 11, "Sampler", UI_func_phSampler);
-LCDML_add(150, LCDML_0, 12, "Cust.DrumMap", UI_func_custom_mappings);
-LCDML_add(151, LCDML_0, 13, "Cust. cc Map", UI_func_cc_mappings);
-LCDML_add(152, LCDML_0, 14, "Info", UI_func_information);
-LCDML_addAdvanced(153, LCDML_0, 15, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced (154 , LCDML_0   , 16  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 154
+LCDML_add(146, LCDML_0_8, 5, "Colors", UI_func_colors);
+LCDML_add(147, LCDML_0_8, 6, "FORMAT FLASH", UI_func_format_flash);
+LCDML_add(148, LCDML_0, 9, "Sample Editor", UI_func_sample_editor);
+LCDML_add(149, LCDML_0, 10, "File Manager", UI_func_file_manager);
+LCDML_add(150, LCDML_0, 11, "Sampler", UI_func_phSampler);
+LCDML_add(151, LCDML_0, 12, "Cust.DrumMap", UI_func_custom_mappings);
+LCDML_add(152, LCDML_0, 13, "Cust. cc Map", UI_func_cc_mappings);
+LCDML_add(153, LCDML_0, 14, "Info", UI_func_information);
+LCDML_addAdvanced(154, LCDML_0, 15, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced (155 , LCDML_0   , 16  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 155
 #endif

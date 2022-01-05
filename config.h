@@ -241,8 +241,8 @@
 
 #define TFT_RST 35
 #define TFT_RS 34 // DC
-#define TFT_CS 0  //was 38
-#define TFT_TOUCH_CS 38 //was 37  
+#define TFT_CS 0
+#define TFT_TOUCH_CS 38
 #define TFT_TOUCH_IRQ 33
 #define TFT_WIDTH  320
 #define TFT_HEIGHT 480
@@ -287,7 +287,7 @@ const int FlashChipSelect = 6;
 
 #define ENC_R_PIN_A  28
 #define ENC_R_PIN_B  29
-#define BUT_R_PIN    25  //27 moved away to 25 to free up spi1
+#define BUT_R_PIN    25
 
 #define BUT_DEBOUNCE_MS 20
 #define LONG_BUTTON_PRESS 500

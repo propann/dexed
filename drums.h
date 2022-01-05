@@ -32,6 +32,7 @@
 
 typedef struct drum_config_s {
   uint8_t drum_class; // Type of drum
+  //uint8_t id;         // ID for reference in sequencer
   uint8_t midinote;   // Triggered by note
   char name[DRUM_NAME_LEN];
 #ifdef COMPILE_FOR_PROGMEM
