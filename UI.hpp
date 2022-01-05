@@ -360,6 +360,7 @@ void UI_func_eq_5(uint8_t param);
 void UI_func_eq_6(uint8_t param);
 void UI_func_eq_7(uint8_t param);
 void UI_func_startup(uint8_t param);
+void UI_func_colors(uint8_t param);
 void UI_function_not_enabled(void);
 void UI_function_not_implemented(uint8_t param);
 void UI_func_favorites(uint8_t param);
@@ -643,8 +644,7 @@ void smart_filter(uint8_t dir)
 
 void border0()  //main Border
 {
-  // display.drawRect(0, 0, 480, 320, GREY1);  //Main Border
-  ;
+   display.drawRect(0, 0, 480, 320, GREY2);  //Main Border
 }
 
 void border1() //upper left
@@ -928,14 +928,14 @@ void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, ui
     if (i == currentstep)
       display.setTextColor(WHITE, BLUE);
     else
-      display.setTextColor(GREY1, BLACK);
+      display.setTextColor(GREY2, BLACK);
     display.setCursor(x + CHAR_width * 5, y);
     seq_print_formatted_number (seq.note_data[seq.active_pattern][i] , 3);
     // Velocity values
     if (i == currentstep)
       display.setTextColor(WHITE, BLUE);
     else
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
     display.setCursor(x + CHAR_width * 8, y);
     seq_print_formatted_number (seq.vel[seq.active_pattern][i] , 3);
     // Long Name / Note
@@ -991,7 +991,7 @@ void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, ui
       if (i == currentstep)
         display.setTextColor(WHITE, BLUE);
       else
-        display.setTextColor(GREY1, BLACK);
+        display.setTextColor(GREY2, BLACK);
       display.print(" ");
     }
   }
@@ -1587,7 +1587,7 @@ void lcdml_menu_display(void)
             if (n == LCDML.MENU_getCursorPos())
               display.setTextColor(WHITE, DX_CYAN);
             else
-              display.setTextColor(GREY1, BLACK);
+              display.setTextColor(GREY2, BLACK);
             display.show(n + 1, 1, display_cols - 3, content_text);
           }
           else
@@ -1667,6 +1667,163 @@ void lcdml_menu_display(void)
 /***********************************************************************
    MENU
  ***********************************************************************/
+
+void UI_func_colors(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    encoderDir[ENC_R].reset();
+     display.setTextColor(GREY2, BLACK);
+    border0();
+    display.fillScreen(BLACK);
+    display.setTextSize(2);
+
+helptext_l("BACK");
+helptext_r("SELECT");
+
+    display.setTextColor(WHITE, BLACK);
+    display.setCursor_textGrid(1, 1);
+    display.print(F("COLORS"));
+
+    display.setTextColor(WHITE, BLACK);
+    display.setCursor_textGrid(1, 3);
+    display.print(F("SYSTEM TEXT"));
+
+    display.setTextColor(BLACK, WHITE);
+    display.setCursor_textGrid(1, 4);
+    display.print(F("SYS BACKGRND"));
+
+    display.setTextColor(WHITE, DX_CYAN);
+    display.setCursor_textGrid(1, 5);
+    display.print(F("MENU TEXT"));
+
+    display.setTextColor(WHITE, DX_CYAN);
+    display.setCursor_textGrid(1, 6);
+    display.print(F("MENU SELECT"));
+
+    display.setTextColor(GREY1, BLACK);
+    display.setCursor_textGrid(1, 8);
+    display.print(F("GREY1"));
+
+    display.setTextColor(GREY2, BLACK);
+    display.setCursor_textGrid(1, 9);
+    display.print(F("GREY2"));
+
+    display.setTextColor(GREY3, BLACK);
+    display.setCursor_textGrid(1, 10);
+    display.print(F("GREY3"));
+
+    display.setTextColor(GREY4, BLACK);
+    display.setCursor_textGrid(1, 11);
+    display.print(F("GREY4"));
+
+    display.setTextColor(DX_ORANGE, BLACK);
+    display.setCursor_textGrid(1, 13);
+    display.print(F("DRUMS"));
+
+    display.setTextColor(DX_CYAN, BLACK);
+    display.setCursor_textGrid(1, 14);
+    display.print(F("PITCHED SMP"));
+
+    display.setTextColor(DX_MAGENTA, BLACK);
+    display.setCursor_textGrid(1, 15);
+    display.print(F("CHORD/ARP"));
+    
+    display.setTextColor(LIGHTBLUE, BLACK);
+    display.setCursor_textGrid(1, 16);
+    display.print(F("INSTR"));
+
+    display.setTextColor(RED, BLACK);
+    display.setCursor_textGrid(14, 1);
+    display.print(F("RED"));
+    display.setTextColor(PINK, BLACK);
+    display.setCursor_textGrid(14, 2);
+    display.print(F("PINK"));
+
+    display.setTextColor(BLUE, BLACK);
+    display.setCursor_textGrid(14, 3);
+    display.print(F("BLUE"));
+
+    display.setTextColor(LIGHTBLUE, BLACK);
+    display.setCursor_textGrid(14, 4);
+    display.print(F("LIGHT BLUE"));
+
+    display.setTextColor(DX_DARKCYAN, BLACK);
+    display.setCursor_textGrid(14, 5);
+    display.print(F("DARK CYAN"));
+
+    display.setTextColor(YELLOW, BLACK);
+    display.setCursor_textGrid(14, 6);
+    display.print(F("YELLOW"));
+
+    display.setTextColor(DX_PURPLE, BLACK);
+    display.setCursor_textGrid(14, 7);
+    display.print(F("PURPLE"));
+
+    display.setTextColor(GREEN, BLACK);
+    display.setCursor_textGrid(14, 9);
+    display.print(F("GREEN"));
+
+    display.setTextColor(MIDDLEGREEN, BLACK);
+    display.setCursor_textGrid(14, 10);
+    display.print(F("MIDDLE GREEN"));
+
+    display.setTextColor(DARKGREEN, BLACK);
+    display.setCursor_textGrid(14, 11);
+    display.print(F("DARK GREEN"));
+    
+    display.setTextColor(BLACK, DX_ORANGE);
+    display.setCursor_textGrid(14, 13);
+    display.print(F("DRUMS"));
+
+    display.setTextColor(BLACK, DX_CYAN);
+    display.setCursor_textGrid(14, 14);
+    display.print(F("PITCHED SMP"));
+
+    display.setTextColor(BLACK, DX_MAGENTA);
+    display.setCursor_textGrid(14, 15);
+    display.print(F("CHORD/ARP"));
+    
+    display.setTextColor(BLACK, LIGHTBLUE);
+    display.setCursor_textGrid(14, 16);
+    display.print(F("INSTR"));
+
+
+    int y = CHAR_height;
+    int incr = 65536/(TFT_WIDTH-(CHAR_height*2));
+    
+    do
+    {
+      display.drawLine ( 340, y ,380, y,  ColorHSV( y*incr , 244, 254)   );
+      display.drawLine ( 390, y ,430, y,  ColorHSV( 1 , 0, 255-(y-CHAR_height)*0.92 ));
+      y++;
+    } while (y < TFT_WIDTH-CHAR_height*2 );
+    
+ 
+  
+  }
+
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+    {
+      if (LCDML.BT_checkDown())
+        ;
+      // configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize + ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
+      else if (LCDML.BT_checkUp())
+        ;
+      // configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize - ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
+    }
+
+
+  }
+
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+  }
+}
+
 
 #ifdef USE_FX
 void UI_func_reverb_roomsize(uint8_t param)
@@ -5245,7 +5402,7 @@ void print_custom_mappings()
 
     if (custom_midi_map[y].type == 0)
     {
-      display.setTextColor(GREY1, BLACK);
+      display.setTextColor(GREY2, BLACK);
       display.show(y + 8, 4, 5,  "NONE"  );
     }
     else if (custom_midi_map[y].type == 1)
@@ -5324,7 +5481,7 @@ void UI_func_custom_mappings(uint8_t param)
 
     //scrollbar
     display.fillRect (480 - 28, 8 * CHAR_height, 14, 10 * CHAR_height, WHITE);
-    display.fillRect (480 - 27, 8 * CHAR_height + 1, 12, 4 * CHAR_height, GREY1);
+    display.fillRect (480 - 27, 8 * CHAR_height + 1, 12, 4 * CHAR_height, GREY2);
 
     display.setTextSize(2);
     display.setTextColor(WHITE, BLACK);
@@ -5367,7 +5524,7 @@ void UI_func_custom_mappings(uint8_t param)
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    ts.midi_learn_active = false;
+    seq.midi_learn_active = false;
     encoderDir[ENC_R].reset();
   }
 }
@@ -5404,7 +5561,7 @@ void UI_func_cc_mappings(uint8_t param)
 
     //scrollbar
     display.fillRect (480 - 28, 8 * CHAR_height, 14, 10 * CHAR_height, WHITE);
-    display.fillRect (480 - 27, 8 * CHAR_height + 1, 12, 4 * CHAR_height, GREY1);
+    display.fillRect (480 - 27, 8 * CHAR_height + 1, 12, 4 * CHAR_height, GREY2);
 
     display.setTextSize(2);
     display.setTextColor(WHITE, BLACK);
@@ -5442,7 +5599,7 @@ void UI_func_cc_mappings(uint8_t param)
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
-    ts.midi_learn_active = false;
+    seq.midi_learn_active = false;
     encoderDir[ENC_R].reset();
   }
 }
@@ -5771,16 +5928,16 @@ void print_color_map(int x, int y)
 {
   display.setTextSize(1);
   display.setCursor(CHAR_width * 29,  15 * (CHAR_height - 5) + 2 );
-  display.setTextColor(GREY2, BLACK);
+  display.setTextColor(GREY1, BLACK);
   display.print(F( "DEF.CHRD SND:"));
   display.setCursor(CHAR_width * 29,  16 * (CHAR_height - 5) + 2 );
-  display.setTextColor(GREY2, BLACK);
+  display.setTextColor(GREY1, BLACK);
   display.print(F( "CHORD N. STK:"));
   display.setCursor(CHAR_width * 29,  17 * (CHAR_height - 5) + 2 );
-  display.setTextColor(GREY2, BLACK);
+  display.setTextColor(GREY1, BLACK);
   display.print(F( "CHRD/ARP VEL:"));
   display.setCursor(CHAR_width * 29,  18 * (CHAR_height - 5) + 2 );
-  display.setTextColor(GREY2, BLACK);
+  display.setTextColor(GREY1, BLACK);
   display.print(F( "ARP NOTE MAX:"));
   display.setCursor(CHAR_width * 29,  13 * (CHAR_height - 5) + 2 );
   display.setTextColor(DX_PURPLE, BLACK);
@@ -5789,11 +5946,11 @@ void print_color_map(int x, int y)
   seq_print_formatted_number(configuration.sys.performance_number, 2);
   display.print( ": ");
   display.setTextColor(DX_CYAN, BLACK);
-   display.print( "[");
+  display.print( "[");
   display.setTextColor(WHITE, BLACK);
   display.print(seq.name);
-  
-   display.setTextColor(DX_CYAN, BLACK);
+
+  display.setTextColor(DX_CYAN, BLACK);
   display.print( "]");
   display.setCursor(x, y +  2 * (CHAR_height - 5));
 
@@ -5826,7 +5983,7 @@ void seq_printAllSeqSteps()
 void seq_sub_pat_chain(int x, int y, bool init)
 {
   display.setTextSize(1);
-  display.setTextColor(GREY1, BLACK);
+  display.setTextColor(GREY2, BLACK);
   for (uint8_t track = 0; track < NUM_SEQ_TRACKS; track++)
   {
     display.setCursor(x,   13 * (CHAR_height - 5)  +   track * (CHAR_height - 5) + 2   );
@@ -5850,19 +6007,19 @@ void seq_sub_pat_chain(int x, int y, bool init)
     {
       display.print ("ElPiano");
     }
-    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 3) 
+    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 3)
     {
       display.print ("SID Saw");
     }
-    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 4) 
+    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 4)
     {
       display.print ("SID Sqr");
     }
-     else if (seq.track_type[track] == 0 ) //drums/samples
+    else if (seq.track_type[track] == 0 ) //drums/samples
     {
       display.print ("DRM/SMP");
     }
-    else 
+    else
     {
       display.print ("- - - -");
     }
@@ -5913,9 +6070,9 @@ void seq_printVelGraphBar()
   for (uint8_t i = 0; i < 16; i++)
   {
     if ( seq.vel[seq.active_pattern][i] < 130) {
-      display.drawLine (CHAR_width + i * CHAR_width + 3 , CHAR_height * 4 - 3  , CHAR_width + i * CHAR_width + 3 , CHAR_height * 4 - 3 - (seq.vel[seq.active_pattern][i] / 10)   , GREY2);
-      display.drawLine (CHAR_width + i * CHAR_width + 4 , CHAR_height * 4 - 3  , CHAR_width + i * CHAR_width + 4 , CHAR_height * 4 - 3 - (seq.vel[seq.active_pattern][i] / 10)   , GREY2);
-      display.drawLine (CHAR_width + i * CHAR_width + 5 , CHAR_height * 4 - 3  , CHAR_width + i * CHAR_width + 5 , CHAR_height * 4 - 3 - (seq.vel[seq.active_pattern][i] / 10)   , GREY2);
+      display.drawLine (CHAR_width + i * CHAR_width + 3 , CHAR_height * 4 - 3  , CHAR_width + i * CHAR_width + 3 , CHAR_height * 4 - 3 - (seq.vel[seq.active_pattern][i] / 10)   , GREY1);
+      display.drawLine (CHAR_width + i * CHAR_width + 4 , CHAR_height * 4 - 3  , CHAR_width + i * CHAR_width + 4 , CHAR_height * 4 - 3 - (seq.vel[seq.active_pattern][i] / 10)   , GREY1);
+      display.drawLine (CHAR_width + i * CHAR_width + 5 , CHAR_height * 4 - 3  , CHAR_width + i * CHAR_width + 5 , CHAR_height * 4 - 3 - (seq.vel[seq.active_pattern][i] / 10)   , GREY1);
     }
     else
     {
@@ -6108,12 +6265,12 @@ void UI_draw_waveform(uint8_t samplenumber)
   //
   //      if (drum_config[samplenumber].drum_data[i * scale + 1] < 128)
   //      {
-  //        display.drawLine(xspace, old_y,  xspace, samplevalue + 50  , GREY2 );
+  //        display.drawLine(xspace, old_y,  xspace, samplevalue + 50  , GREY1 );
   //        old_y = samplevalue + 50;
   //      }
   //      else
   //      {
-  //        display.drawLine(xspace, old_y,  xspace, samplevalue - 32 , GREY2 );
+  //        display.drawLine(xspace, old_y,  xspace, samplevalue - 32 , GREY1 );
   //        old_y = samplevalue - 32 ;
   //      }
   //      xspace = xspace + 1;
@@ -6147,12 +6304,12 @@ void UI_draw_waveform(uint8_t samplenumber)
 //
 //      if (drum_config[samplenumber].drum_data[i * scale + 1] < 128)
 //      {
-//        display.drawLine(xspace, old_y,  xspace, samplevalue + 50  , GREY2 );
+//        display.drawLine(xspace, old_y,  xspace, samplevalue + 50  , GREY1 );
 //        old_y = samplevalue + 50;
 //      }
 //      else
 //      {
-//        display.drawLine(xspace, old_y,  xspace, samplevalue - 32 , GREY2 );
+//        display.drawLine(xspace, old_y,  xspace, samplevalue - 32 , GREY1 );
 //        old_y = samplevalue - 32 ;
 //      }
 //      xspace = xspace + 1;
@@ -6237,7 +6394,7 @@ void UI_print_voice_info()
   display.print("01");
   display.setTextColor(BLACK, BLACK);
   display.print(" ");
-  display.setTextColor(WHITE, GREY1);
+  display.setTextColor(WHITE, GREY2);
   display.print("SQBASS");
 
 
@@ -6451,7 +6608,7 @@ void print_content_type ()
   else if (seq.content_type[seq.active_pattern] == 2  )
     display.print(F("Chord/Arp"));
 
-  display.setTextColor(GREY2, BLACK);
+  display.setTextColor(GREY1, BLACK);
 }
 
 void print_edit_mode()
@@ -6469,11 +6626,11 @@ void print_edit_mode()
     }
     else if (seq.menu == 19)
     {
-      display.setTextColor(GREY1, BLACK);
-      display.print(F("(PATTERN "));
       display.setTextColor(GREY2, BLACK);
-      display.print(seq.active_pattern);
+      display.print(F("(PATTERN "));
       display.setTextColor(GREY1, BLACK);
+      display.print(seq.active_pattern);
+      display.setTextColor(GREY2, BLACK);
       display.print(")");
     }
     else if (seq.menu > 20 && seq.menu < 27)
@@ -6543,7 +6700,7 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
     { //only needs to be drawn at first run
 
       if (i % 4 == 0)
-        display.setTextColor(GREY2, BLACK);
+        display.setTextColor(GREY1, BLACK);
       else
         display.setTextColor(MIDDLEGREEN, BLACK);
       display.setCursor(x, y);
@@ -6567,7 +6724,7 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
     if (i == currentstep)
       display.setTextColor(WHITE, BLUE);
     else
-      display.setTextColor(GREY1, BLACK);
+      display.setTextColor(GREY2, BLACK);
     display.setCursor(x + CHAR_width * 5, y);
     seq_print_formatted_number (seq.note_data[seq.active_pattern][i] , 3);
 
@@ -6575,7 +6732,7 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
     if (i == currentstep)
       display.setTextColor(WHITE, BLUE);
     else
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
     display.setCursor(x + CHAR_width * 8, y);
     seq_print_formatted_number (seq.vel[seq.active_pattern][i] , 3);
     // Long Name / Note
@@ -6629,7 +6786,7 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
       if (i == currentstep)
         display.setTextColor(WHITE, BLUE);
       else
-        display.setTextColor(GREY1, BLACK);
+        display.setTextColor(GREY2, BLACK);
       display.print(" ");
     }
     i++;
@@ -6741,7 +6898,7 @@ void UI_func_seq_vel_editor(uint8_t param)
     //clear "Insert xyz ?"  message
     display.fillRect(1 * CHAR_width, 4 * CHAR_height + 17, 222, 8, BLACK);
     display.setCursor_textGrid(15, 1);
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
     display.print("[");
     display.setCursor_textGrid(16, 1);
     seq_print_formatted_number(seq.active_pattern, 2);
@@ -6751,7 +6908,7 @@ void UI_func_seq_vel_editor(uint8_t param)
     {
       display.setCursor(CHAR_width, CHAR_height * 4 + 3);
       display.setTextSize(1);
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
       display.print(F("CONT.TYPE:"));
       display.setCursor(CHAR_width * 6, CHAR_height * 4 + 3);
       print_content_type();
@@ -7112,18 +7269,18 @@ void UI_func_seq_vel_editor(uint8_t param)
         }
         seq_printVelGraphBar_single_step(seq.menu - 1, GREEN);
         if (seq.menu - 1 > 0)
-          seq_printVelGraphBar_single_step(seq.menu - 2, GREY2); //previous
+          seq_printVelGraphBar_single_step(seq.menu - 2, GREY1); //previous
         if (seq.menu - 1 < 15)
-          seq_printVelGraphBar_single_step(seq.menu, GREY2 ); //next
+          seq_printVelGraphBar_single_step(seq.menu, GREY1 ); //next
       }
       else
       {
         display.setCursor_textGrid(1, 1);
         display.print("              ");
         if (seq.menu - 1 > 0)
-          seq_printVelGraphBar_single_step(seq.menu - 2, GREY2); //previous
+          seq_printVelGraphBar_single_step(seq.menu - 2, GREY1); //previous
         if (seq.menu - 1 < 15)
-          seq_printVelGraphBar_single_step(seq.menu, GREY2 ); //next
+          seq_printVelGraphBar_single_step(seq.menu, GREY1 ); //next
 
         //clear "Insert xyz ?"  message
         display.fillRect(1 * CHAR_width, 4 * CHAR_height + 17, 222, 8, BLACK);
@@ -7135,7 +7292,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         //fix last step of sequence when switching to sub menus functions
         print_track_steps_detailed(CHAR_width, CHAR_height * 5 + 3, seq.menu - 1, false, true);
-        seq_printVelGraphBar_single_step(15, GREY2);
+        seq_printVelGraphBar_single_step(15, GREY1);
         set_pattern_content_type_color(seq.active_pattern);
         display.setTextSize(2);
         display.setCursor_textGrid(16 , 2);
@@ -7173,7 +7330,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       //disable menu 19
       display.setCursor(CHAR_width, CHAR_height * 4 + 3);
       display.setTextSize(1);
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
       display.print("CONT.TYPE:");
       display.setCursor(CHAR_width * 6, CHAR_height * 4 + 3);
       print_content_type();
@@ -7206,7 +7363,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         else if (seq.track_type[seq.menu - 21] == 1 ) display.print(F("Instr."));
         else if (seq.track_type[seq.menu - 21] == 2 ) display.print(F("Chord"));
         else if (seq.track_type[seq.menu - 21] == 3 ) display.print(F("Arpeggio"));
-           display.setTextColor(GREEN, BLACK);
+        display.setTextColor(GREEN, BLACK);
         display.print(" ?    ");
         display.setTextSize(2);
       }
@@ -7264,8 +7421,8 @@ void UI_func_seq_vel_editor(uint8_t param)
         {
           display.print(F("SID sqr"));
         }
-         display.setTextColor(WHITE, BLACK);
-         display.print(F(" ?  "));
+        display.setTextColor(WHITE, BLACK);
+        display.print(F(" ?  "));
       }
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
     }
@@ -7294,7 +7451,7 @@ void UI_func_seq_vel_editor(uint8_t param)
           display.print(F( "DEXED2"));
         else if (seq.chord_dexed_inst == 2)
           display.print(F( "EPIANO"));
-  display.print(F( "  "));
+        display.print(F( "  "));
         display.setTextSize(2);
       }
       seq_sub_pat_chain(CHAR_width * 21, CHAR_height * 7, false);
@@ -7371,7 +7528,7 @@ void UI_func_seq_vel_editor(uint8_t param)
     else if (seq.menu == 16 )
     {
       display.setTextSize(1);
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
       display.setCursor(CHAR_width, CHAR_height * 4 + 3);
       display.print(F("CONT.TYPE:"));
       display.setCursor(CHAR_width * 6, CHAR_height * 4 + 3);
@@ -7964,7 +8121,7 @@ void print_current_sample_and_pitch_buffer()
   display.setCursor(CHAR_width * 21, CHAR_height * 5 + 23 + CHAR_height - 5);
   display.setTextColor(DX_PURPLE);
   display.print(F("SAMPLE TYPE: "));
-  display.setTextColor(GREY1, BLACK);
+  display.setTextColor(GREY2, BLACK);
   print_sample_type();
   display.setTextColor(DX_PURPLE, BLACK);
   display.setCursor(CHAR_width * 21, CHAR_height * 5 + 23 + 2 * CHAR_height - 10);
@@ -8123,7 +8280,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
 
       display.setCursor(CHAR_width, CHAR_height * 4 + 3);
       display.setTextSize(1);
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
       display.print(F("CONT.TYPE:"));
       display.setCursor(CHAR_width * 6, CHAR_height * 4 + 3);
       print_content_type ();
@@ -8139,7 +8296,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
     display.setTextSize(2);
     seq_refresh_display_play_status();
     display.setCursor_textGrid(16, 1);
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
     seq_print_formatted_number(seq.active_pattern, 2);
 
     if (seq.menu_status != 2)
@@ -8456,7 +8613,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
     }
     else if (seq.menu == 1)
     {
-      display.setTextColor(GREY1, BLACK);
+      display.setTextColor(GREY2, BLACK);
       display.setCursor_textGrid(16, 1);
       seq_print_formatted_number(seq.active_pattern, 2);
       display.setTextColor(WHITE, BLACK);
@@ -8562,7 +8719,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
     }
     if (seq.menu == 3)
     {
-      display.setTextColor(GREY1, BLACK);
+      display.setTextColor(GREY2, BLACK);
       display.setCursor_textGrid(16, 1);
       seq_print_formatted_number(seq.active_pattern, 2);
 
@@ -8719,7 +8876,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
         {
           display.setCursor_textGrid(1, 1);
           display.print(" ");
-          display.setTextColor(GREY1, BLACK);
+          display.setTextColor(GREY2, BLACK);
           display.show(1, 2, 9, "--EMPTY--");
           display.setTextColor(WHITE, BLACK);
           display.setCursor(1 * CHAR_width, 4 * CHAR_height + 17);
@@ -8854,7 +9011,7 @@ void UI_toplineInfoText(uint8_t ypos)
   display.show(ypos, 28, 11, seq.name);
   display.setTextSize(1);
   display.setCursor(108, CHAR_height + CHAR_height * ypos + 1);
-  display.setTextColor(GREY1);
+  display.setTextColor(GREY2);
   display.print(F("COLOR CODES "));
   display.setTextColor(LIGHTBLUE);
   display.print(F("INSTR "));
@@ -8938,7 +9095,7 @@ void pattern_preview_in_song(uint8_t patternno)
   display.setTextColor(WHITE, DX_MAGENTA);
   display.print("PAT:");
   seq_print_formatted_number( patternno , 2);
-  display.setTextColor(GREY2, GREY4);
+  display.setTextColor(GREY1, GREY4);
   display.print("[");
 
   for (uint8_t i = 0; i < 16; i++)
@@ -8956,7 +9113,7 @@ void pattern_preview_in_song(uint8_t patternno)
     }
     display.print(seq_find_shortname(i)[0]);
   }
-  display.setTextColor(GREY2, GREY4);
+  display.setTextColor(GREY1, GREY4);
   display.print("]");
 
 }
@@ -8988,13 +9145,13 @@ void UI_func_song(uint8_t param)
       display.print (x + 1);
     }
     display.setCursor_textGrid(30, 3);
-    display.setTextColor(GREY2, BLACK);
+    display.setTextColor(GREY1, BLACK);
     display.print (F("CHAIN:"));
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(CHAR_width * 10 - 3, CHAR_height + 4);
     display.print (F("LENGTH"));
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
     display.setCursor_textGrid(30, 4);
     display.print (F("ST"));
     display.setCursor_textGrid(32, 4);
@@ -9003,7 +9160,7 @@ void UI_func_song(uint8_t param)
     display.print (F("TRANSP"));
     display.setTextColor(WHITE);
 
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
     for (uint8_t y = 0; y < 16; y++)  // chain
     {
       display.setCursor(CHAR_width * 30, CHAR_height * 5 + y * 13);
@@ -9211,7 +9368,7 @@ void UI_func_song(uint8_t param)
         if (seq.edit_state && seq.cycle_touch_element == 6)
           display.setTextColor(WHITE, BLACK);
         else
-          display.setTextColor(GREY2, BLACK);
+          display.setTextColor(GREY1, BLACK);
         display.setCursor(CHAR_width * 33, CHAR_height * 5 + y * 13);
         if ( seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] < 99 &&
              seq.chain[  seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]    ][y]  < 99)
@@ -9226,7 +9383,7 @@ void UI_func_song(uint8_t param)
         if (seq.edit_state && seq.cycle_touch_element == 8)
           display.setTextColor(WHITE, BLACK);
         else
-          display.setTextColor(GREY2, BLACK);
+          display.setTextColor(GREY1, BLACK);
         if ( seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] != 99 &&
              seq.chain_transpose[  seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos ]     ][y] < 99 )
         {
@@ -9325,7 +9482,7 @@ void UI_func_song(uint8_t param)
     if (seq.edit_state && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 9)
       display.setTextColor(WHITE, BLACK);
     else
-      display.setTextColor(GREY2, BLACK);
+      display.setTextColor(GREY1, BLACK);
 
     if ( seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] < 99 )
       seq_print_formatted_number(seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] , 2);
@@ -9662,7 +9819,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
     {
       for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
       {
-        display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY1);
+        display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY2);
       }
     }
   }
@@ -10116,7 +10273,7 @@ void sd_printDirectory(File currentDirectory)
         display.setTextColor(DX_CYAN, BLACK);
       display.show_smallfont_noGrid( f * 11  + 11 * 11, CHAR_width * 2 , 18, fm.sd_entry.name() );
       display.setCursor (CHAR_width * 12, f * 11  + 11 * 11  );
-      display.setTextColor(DARKCYAN, BLACK);
+      display.setTextColor(DX_DARKCYAN, BLACK);
       display.print("DIR    ");
     } else
     {
@@ -10238,14 +10395,14 @@ void print_flash_stats()
   }
   display.setTextSize(1);
   display.setCursor (CHAR_width * 21 , 2 * CHAR_height + 5  );
-  display.setTextColor(GREY1, BLACK);
+  display.setTextColor(GREY2, BLACK);
   display.print("USED: ");
   display.setTextColor(DX_CYAN, BLACK);
   display.print(sum_used );
   display.setTextColor(DX_MAGENTA, BLACK);
   display.print(" KB");
   display.setCursor (CHAR_width * 31 , 1 * CHAR_height + 7  );
-  display.setTextColor(GREY1, BLACK);
+  display.setTextColor(GREY2, BLACK);
   display.print("TOTAL: ");
   display.setTextColor(DX_CYAN, BLACK);
   chipsize = SerialFlash.capacity(buf);
@@ -10253,12 +10410,12 @@ void print_flash_stats()
   display.setTextColor(DX_MAGENTA, BLACK);
   display.print(" KB");
   display.setCursor (CHAR_width * 31 , 0 * CHAR_height + 11  );
-  display.setTextColor(GREY1, BLACK);
+  display.setTextColor(GREY2, BLACK);
   display.print("FILES: ");
   display.setTextColor(DX_CYAN, BLACK);
   display.print(sum_files );
   display.setCursor (CHAR_width * 31 + 6 , 2 * CHAR_height + 5  );
-  display.setTextColor(GREY1, BLACK);
+  display.setTextColor(GREY2, BLACK);
   display.print("FREE: ");
   display.setTextColor(DX_CYAN, BLACK);
   display.print(chipsize / 1024 - sum_used );
@@ -10345,7 +10502,7 @@ void UI_func_file_manager(uint8_t param)
     display.setCursor (CHAR_width * 11 , 1 * CHAR_height   );
     display.setTextSize(1);
     // print the type of card
-    display.setTextColor(GREY1);
+    display.setTextColor(GREY2);
     display.print(F("CARD TYPE: "));
     display.setTextColor(DX_CYAN);
     switch (card.type())
@@ -10365,7 +10522,7 @@ void UI_func_file_manager(uint8_t param)
     display.setCursor (CHAR_width * 11 , 1 * CHAR_height + 8  );
     volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
     volumesize *= volume.clusterCount();       // we'll have a lot of clusters
-    display.setTextColor(GREY1);
+    display.setTextColor(GREY2);
     display.print("TOTAL: ");
     display.setTextColor(DX_CYAN);
     volumesize /= 1024;
@@ -10382,7 +10539,7 @@ void UI_func_file_manager(uint8_t param)
     display.setTextColor(DX_MAGENTA, BLACK);
     display.print(F("PATH:"));
     display.setCursor (CHAR_width, 3 * CHAR_height + 3 );
-    display.setTextColor(GREY1);
+    display.setTextColor(GREY2);
     display.print(F("CURRENT FILE/FOLDER :"));
     //fm_mode
 
@@ -10718,7 +10875,7 @@ void UI_func_file_manager(uint8_t param)
       display.setTextColor(GREEN);
       display.print(F("FOLDER"));
       display.setCursor (CHAR_width + 8 * 6, 3 * CHAR_height + 3 );
-      display.setTextColor(GREY1);
+      display.setTextColor(GREY2);
       display.print(F("FILE"));
     }
     else
@@ -10727,7 +10884,7 @@ void UI_func_file_manager(uint8_t param)
       display.setTextColor(GREEN);
       display.print(F("FILE"));
       display.setCursor (CHAR_width + 13 * 6 , 3 * CHAR_height + 3 );
-      display.setTextColor(GREY1);
+      display.setTextColor(GREY2);
       display.print(F("FOLDER"));
     }
     if (fm.sd_is_folder)
@@ -11003,12 +11160,12 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   if (selected_instance_id == instance_id)
     display.setTextColor(WHITE, BLACK);
   else
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
   display.print("INSTANCE"); display.setTextColor(DX_CYAN, BLACK);
   if (selected_instance_id == instance_id)
     display.setTextColor(GREEN, BLACK);
   else
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
   display.setCursor(x + 101, y);
   display.print(instance_id + 1);
   display.setTextSize(1);
@@ -11016,7 +11173,7 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   if (selected_instance_id == instance_id)
     display.setTextColor(DX_CYAN, BLACK);
   else
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
   display.setCursor(x + 118, y - 1);
   seq_print_formatted_number(configuration.dexed[instance_id].bank, 2);
   display.setCursor(x + 118, y + 7);
@@ -11024,7 +11181,7 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   if (selected_instance_id == instance_id)
     display.setTextColor(WHITE, BLACK);
   else
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
   display.setCursor(x + 120 + 16, y - 1);
   string_toupper(bank_name);
   display.print( bank_name);
@@ -11037,10 +11194,10 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   {
     display.setCursor(x + 140, y + 7 );
     display.setTextSize(1);
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
     yspacer = yspacer + 16;
     display.setCursor(x, y + yspacer);
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
     display.print(F("VOLUME "));
     display.setCursor(x + 118, y + yspacer);
     display.print(F("CHORUS LEVEL "));
@@ -11073,7 +11230,7 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   if (selected_instance_id == instance_id)
     display.setTextColor(DX_CYAN, BLACK);
   else
-    display.setTextColor(GREY1, BLACK);
+    display.setTextColor(GREY2, BLACK);
   yspacer = 16;
   yspacer = yspacer + 16;
   display.setCursor(x + 7 * CHAR_width,  y + yspacer);
@@ -13357,12 +13514,12 @@ void UI_func_format_flash(uint8_t param)
         display.setTextColor(RED, BLACK);
         display.print(F("Erasing ALL Flash Memory"));
         display.setCursor_textGrid(1, 9);
-        display.setTextColor(GREY2, BLACK);
+        display.setTextColor(GREY1, BLACK);
         display.print(F("Estimated time: "));
         int seconds = (float)size / eraseBytesPerSecond(id) + 0.5;
         display.setTextColor(WHITE, BLACK);
         display.print(seconds);
-        display.setTextColor(GREY2, BLACK);
+        display.setTextColor(GREY1, BLACK);
         display.print(F(" seconds."));
         SerialFlash.eraseAll();
         unsigned long dotMillis = millis();
@@ -13421,8 +13578,8 @@ void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id)
     }
     else
     { // it is not a favorite
-      // display.drawBitmap(16 * CHAR_width + 11, 5, special_chars[18], 8, 8, GREY1); //fav symbol
-      display.fillRect(16 * CHAR_width + 11, 5, 9, 9, GREY1);
+      // display.drawBitmap(16 * CHAR_width + 11, 5, special_chars[18], 8, 8, GREY2); //fav symbol
+      display.fillRect(16 * CHAR_width + 11, 5, 9, 9, GREY2);
       display.setCursor(16 * CHAR_width + 13, 6);
       display.setTextColor(BLACK);
       display.print(F("F"));
@@ -13527,7 +13684,7 @@ void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id)
 
       // display.fillRect(16 * CHAR_width + 11, 5, 8, 8, BLACK); ////remove fav symbol
       display.setTextSize(1);
-      display.fillRect(16 * CHAR_width + 11, 5, 9, 9, GREY1);
+      display.fillRect(16 * CHAR_width + 11, 5, 9, 9, GREY2);
       display.setCursor(16 * CHAR_width + 13, 6);
       display.setTextColor(BLACK);
       display.print(F("F"));
