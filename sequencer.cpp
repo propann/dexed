@@ -26,7 +26,6 @@
 #include "sequencer.h"
 #include <LCDMenuLib2.h>
 #include "synth_dexed.h"
-
 extern ILI9486_Teensy display;
 extern LCDMenuLib2 LCDML;
 extern config_t configuration;
@@ -151,7 +150,7 @@ void sequencer_part1(void)
           if (seq.vel[  seq.current_pattern[d] ][seq.step] > 209)  // it is a pitched sample
           {
             // Drum[slot]->setPlaybackRate( pow (2, (inNote - 72) / 12.00) * drum_config[sample].pitch ); get_sample_vol_max(sample)
-            set_sample_pitch(seq.vel[  seq.current_pattern[d] ][seq.step] - 210 , (float)pow (2, (seq.note_data[  seq.current_pattern[d] ][seq.step] - 72) / 12.00) * get_sample_p_offset( seq.vel[  seq.current_pattern[d] ][seq.step] - 210 ) );
+            set_sample_pitch(seq.vel[  seq.current_pattern[d] ][seq.step] - 210 , (float)pow (2, (seq.note_data[  seq.current_pattern[d] ][seq.step] - 72 + tr[d] ) / 12.00) * get_sample_p_offset( seq.vel[  seq.current_pattern[d] ][seq.step] - 210 ) );
             handleNoteOn(drum_midi_channel, seq.vel[  seq.current_pattern[d] ][seq.step] , 90 );
           }
           else // else play normal drum sample
@@ -373,7 +372,7 @@ void sequencer_part2(void)
   {
     if (seq.noteoffsent[d] == false)
     {
-      if ( seq.prev_note[d] > 0 && seq.track_type[d] > 0)
+      if ( seq.prev_note[d] > 0 && seq.track_type[d] >0  )
       {
         if (seq.note_data[  seq.current_pattern[d] ][seq.step] != 130)
         {
@@ -383,7 +382,7 @@ void sequencer_part2(void)
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] , 0);
           seq.noteoffsent[d] = true;
         }
-        if (seq.track_type[d] == 2 ) //Chords
+         if (seq.track_type[d] == 2 ) //Chords
         {
           if ( seq.prev_vel[d] > 199)
           {
@@ -397,7 +396,7 @@ void sequencer_part2(void)
             }
           }
         }
-        else if (seq.track_type[d] == 3)
+         if (seq.track_type[d] == 3  )
         { //Arp
           if (seq.inst_dexed[d] < 2) //dexed
             handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note_prev, 0);
@@ -735,7 +734,7 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
       }
       else
       {
-        display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY2  );
+        display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY1  );
         last_valid_note = notes[xcount];
       }
     }

@@ -263,7 +263,7 @@ void virtual_keyboard (int ypos)
   uint8_t oct_count = 0;
   display.setTextColor(BLACK, WHITE);
   display.setTextSize(1);
-  display.drawLine(1, ypos - 4, 480 - 2, ypos - 4, GREY1);
+  display.drawLine(1, ypos - 4, 480 - 2, ypos - 4, GREY2);
 
   display.drawLine(0, ypos - 3, 0 , ypos , BLACK);
   display.drawLine(239, ypos - 3, 239 , ypos , BLACK);
@@ -370,7 +370,7 @@ void handle_touchscreen_mute_matrix()
   //              if (ar[x][y] > NUM_SEQ_PATTERN  && ar[x][y] != 99 )
   //              {
   //                ar[x][y] = ar[x][y] - (NUM_SEQ_PATTERN + 10);
-  //                display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY1);
+  //                display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY2);
   //              }
   //            }
   //
@@ -393,12 +393,12 @@ void handle_touchscreen_mute_matrix()
 
       if (ar[x][y] < NUM_SEQ_PATTERN && ar[x][y]!=99)
       {
-        display.setTextColor(WHITE, GREY1);
+        display.setTextColor(WHITE, GREY2);
          display.print ("P");
       }
 //      else
 //      {
-//        display.setTextColor(GREY4, GREY1);
+//        display.setTextColor(GREY4, GREY2);
 //      display.print (" ");
 //      }
       if (ar[x][y] < NUM_SEQ_PATTERN  )
@@ -413,11 +413,11 @@ void handle_touchscreen_mute_matrix()
       {
         display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 51  );
         if (seq.content_type[ar[x][y]] == 0) //Drumpattern
-          display.setTextColor(DX_ORANGE, GREY1);
+          display.setTextColor(DX_ORANGE, GREY2);
         else if (seq.content_type[ar[x][y]] == 1) //Instrument Pattern
-          display.setTextColor(LIGHTBLUE, GREY1);
+          display.setTextColor(LIGHTBLUE, GREY2);
         else if (seq.content_type[ar[x][y]] == 2 || seq.content_type[ar[x][y]] == 3) //  chord or arp pattern
-          display.setTextColor(DX_MAGENTA, GREY1);
+          display.setTextColor(DX_MAGENTA, GREY2);
         if (seq.content_type[ar[x][y]] == 0)
           display.print("DRUM ");
         else if (seq.content_type[ar[x][y]] == 1)
@@ -600,25 +600,25 @@ void print_file_manager_buttons()
   if (fm.sd_mode == 1)
     display.setTextColor(WHITE, BLUE);
   else
-    display.setTextColor(GREY1, BLUE);
+    display.setTextColor(GREY2, BLUE);
   display.setCursor(CHAR_width + 16,       240 + 8);
   display.print("DELETE FILE");
   if (fm.sd_mode == 2)
     display.setTextColor(WHITE, BLUE);
   else
-    display.setTextColor(GREY1, BLUE);
+    display.setTextColor(GREY2, BLUE);
   display.setCursor(CHAR_width + 114 + 28, 240 + 8);
   display.print("PREVIEW");
   if (fm.sd_mode == 3)
     display.setTextColor(WHITE, BLUE);
   else
-    display.setTextColor(GREY1, BLUE);
+    display.setTextColor(GREY2, BLUE);
   display.setCursor(CHAR_width + 11,       280 + 8);
   display.print("COPY TO FLASH");
   if (fm.sd_mode == 4)
     display.setTextColor(WHITE, BLUE);
   else
-    display.setTextColor(GREY1, BLUE);
+    display.setTextColor(GREY2, BLUE);
   display.setCursor(CHAR_width + 127, 280 + 8);
   display.print("COPY PRESETS");
 
@@ -702,7 +702,7 @@ void handle_touchscreen_file_manager()
 
 void update_midi_learn_button()
 {
-  if (ts.midi_learn_active == true)
+  if (seq.midi_learn_active == true)
   {
     display.setTextColor(WHITE, RED);
     display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, RED);
@@ -723,7 +723,7 @@ void update_midi_learn_button()
     display.setCursor(240 + CHAR_width * 12 + 3, CHAR_height * 4 - 12 );
     display.setTextSize(1);
     display.print("MIDI LEARN");
-    // ts.midi_learn_active = false;
+    // seq.midi_learn_active = false;
   }
 }
 
@@ -741,7 +741,7 @@ void handle_touchscreen_custom_mappings()
     if (  ts.p.x > 240 + CHAR_width + CHAR_width * 10 - 2   && ts.p.y > CHAR_height  &&
           ts.p.x < 240 + CHAR_width + CHAR_width * 18       && ts.p.y < 5 * CHAR_height )
     {
-      ts.midi_learn_active = !ts.midi_learn_active;
+      seq.midi_learn_active = !seq.midi_learn_active;
       ts.block_screen_update = true;
       ts.slowdown_UI_input = 0;
 
@@ -767,7 +767,7 @@ void handle_touchscreen_cc_mappings()
     if (  ts.p.x > 240 + CHAR_width + CHAR_width * 10 - 2   && ts.p.y > CHAR_height  &&
           ts.p.x < 240 + CHAR_width + CHAR_width * 18       && ts.p.y < 5 * CHAR_height )
     {
-      ts.midi_learn_active = !ts.midi_learn_active;
+      seq.midi_learn_active = !seq.midi_learn_active;
       ts.block_screen_update = true;
       ts.slowdown_UI_input = 0;
 

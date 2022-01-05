@@ -15,8 +15,7 @@ typedef struct ts_s
   bool update_virtual_keyboard_octave;
   bool switch_active_instance;
   bool block_screen_update;
-  bool midi_learn_active = false;
-
+ 
   int16_t scopebuffer[AUDIO_BLOCK_SAMPLES];
   int16_t scopebuffer_old[AUDIO_BLOCK_SAMPLES];
   bool scope_is_drawing;
@@ -44,19 +43,19 @@ typedef struct fm_s
   char sd_new_name[52];
   char sd_full_name[52];
 
-  //File flash_currentDirectory;
-  //File flash_entry;
   uint8_t flash_cap_rows;
-  //uint8_t flash_folder_depth = 0;
   uint8_t flash_selected_file = 0;
   uint8_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
+  //uint8_t flash_folder_depth = 0;
+  //File flash_currentDirectory;
+  //File flash_entry;
   //bool flash_is_folder;
   //bool flash_parent_folder = false;
-  //  char flash_temp_name[52];
-  //  char flash_new_name[52];
-  //  char flash_full_name[52];
+  //char flash_temp_name[52];
+  //char flash_new_name[52];
+  //char flash_full_name[52];
 
 } fm_t;
 

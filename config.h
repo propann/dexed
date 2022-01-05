@@ -118,7 +118,7 @@
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
-#define NUM_CUSTOM_MIDI_MAPPINGS 10  //Number of Custom Key, CC and Button Mappings
+#define NUM_CUSTOM_MIDI_MAPPINGS 20  //Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
 
@@ -143,7 +143,7 @@
 #endif
 
 // CHORUS parameters
-#define MOD_DELAY_SAMPLE_BUFFER int32_t(TIME_MS2SAMPLES(20.0)) // 20.0 ms delay buffer. 
+#define MOD_DELAY_SAMPLE_BUFFER int32_t(TIME_MS2SAMPLES(15.0)) // 15.0 ms delay buffer. 
 #define MOD_WAVEFORM WAVEFORM_TRIANGLE // WAVEFORM_SINE WAVEFORM_TRIANGLE WAVEFORM_SAWTOOTH WAVEFORM_SAWTOOTH_REVERSE
 #define MOD_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT // MOD_LINKWITZ_RILEY_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT MOD_NO_FILTER_OUTPUT
 #define MOD_FILTER_CUTOFF_HZ 2000
@@ -212,31 +212,28 @@
 
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
-#define BLACK       0x0000      /*   0,   0,   0 */
-#define WHITE       0xFFFF      /* 255, 255, 255 */
-#define DARKCYAN    0x03EF      /*   0, 128, 128 */
-#define PURPLE      0x780F      /* 128,   0, 128 */
-#define GREEN       0x07E0      /*   0, 255,   0 */
-#define CYAN        0x07FF      /*   0, 255, 255 */
-#define RED         0xF9A7      /* 255,   0,   0 */
-#define MAGENTA     0xF81F      /* 255,   0, 255 */
-#define ORANGE      0xFD20      /* 255, 165,   0 */
-#define PINK        0xF81F
+#define BLACK  0x0000
+#define WHITE  0xFFFF
 
-#define BLUE    0x0012
+#define RED     0xF9A7
+#define PINK    0xF81F
 #define YELLOW  0xFFEB
-#define DARKGREEN   0x0AE0
-#define MIDDLEGREEN   0x1500
+
+#define BLUE      0x0012
 #define LIGHTBLUE 0x7BBD
 
-#define GREY1   0x52AA
-#define GREY2   0xC638
+#define GREEN        0x07E0
+#define MIDDLEGREEN  0x1500
+#define DARKGREEN    0x0AE0
+
+#define GREY1   0xC638
+#define GREY2   0x52AA
 #define GREY3   0x2104
 #define GREY4   0x10A2
 
 #define DX_ORANGE 0xFE4F
-//#define DX_CYAN 0x061B
 #define DX_CYAN 0x159A
+#define DX_DARKCYAN 0x03EF
 #define DX_PURPLE 0x83F3
 #define DX_MAGENTA 0xE2FA
 

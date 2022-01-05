@@ -138,11 +138,10 @@ void draw_scope() {
     do {
       if (ts.scopebuffer_old[i] > 0)
       {
-        if (ts.scopebuffer[i]<2)
-        ts.scopebuffer[i]=2;
-        else
-        if (ts.scopebuffer[i]>96)
-         ts.scopebuffer[i]=96;
+        if (ts.scopebuffer[i] < 2)
+          ts.scopebuffer[i] = 2;
+        else if (ts.scopebuffer[i] > 96)
+          ts.scopebuffer[i] = 96;
         if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
           display.drawPixel( x + i , ts.scopebuffer_old[i], BLACK);
         display.drawPixel( x + i , ts.scopebuffer[i], WHITE);
@@ -946,11 +945,12 @@ void setup()
   //LCDML.OTHER_jumpToFunc(UI_func_song);
   //LCDML.OTHER_jumpToFunc( UI_func_seq_mute_matrix);
   //LCDML.OTHER_jumpToFunc(UI_func_seq_tracker_edit);
-  LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+  //LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   //LCDML.OTHER_jumpToFunc(UI_func_file_manager);
   //LCDML.OTHER_jumpToFunc(UI_func_phSampler);
   //LCDML.OTHER_jumpToFunc(UI_func_custom_mappings);
   //LCDML.OTHER_jumpToFunc( UI_func_cc_mappings);
+  LCDML.OTHER_jumpToFunc(UI_func_colors);
 
 
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
@@ -1315,7 +1315,7 @@ void learn_key(byte inChannel, byte inNumber)
         ; // can not be mapped, no empty slot left
     }
   }
-  ts.midi_learn_active = false;
+  seq.midi_learn_active = false;
   update_midi_learn_button();
   print_custom_mappings();
 }
@@ -1360,7 +1360,7 @@ void learn_cc(byte inChannel, byte inNumber)
       ; // can not be mapped, no empty slot left
   }
 
-  ts.midi_learn_active = false;
+  seq.midi_learn_active = false;
   update_midi_learn_button();
   print_custom_mappings();
 }
@@ -1376,7 +1376,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
   else
   {
 #endif
-    if (ts.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
+    if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
       learn_key(inChannel, inNumber);
     else
     {
@@ -1565,21 +1565,21 @@ uint8_t drum_get_slot(uint8_t dt)
 
     //phtodo
 
-    else
-    {
-      if (drum_type[i] == dt)
-      {
-#ifdef DEBUG
-        Serial.print(F("Stopping Drum "));
-        Serial.print(i);
-        Serial.print(F(" type "));
-        Serial.println(dt);
-#endif
-        Drum[i]->stop();
-
-        return (i);
-      }
-    }
+//    else
+//    {
+//      if (drum_type[i] == dt)
+//      {
+//#ifdef DEBUG
+//        Serial.print(F("Stopping Drum "));
+//        Serial.print(i);
+//        Serial.print(F(" type "));
+//        Serial.println(dt);
+//#endif
+//        Drum[i]->stop();
+//
+//        return (i);
+//      }
+//    }
 
 
 
@@ -1648,7 +1648,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
   inCtrl = constrain(inCtrl, 0, 127);
   inValue = constrain(inValue, 0, 127);
 
-  if (ts.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings) )
+  if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings) )
     learn_cc(inChannel, inCtrl);
   else
   {
@@ -1937,8 +1937,9 @@ void handleProgramChange(byte inChannel, byte inProgram)
     if (checkMidiChannel(inChannel, instance_id))
     {
       configuration.dexed[instance_id].voice = constrain(inProgram, 0, MAX_VOICES - 1);
-      load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);      
-if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+      load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
+
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
       {
         LCDML.OTHER_updateFunc();
         LCDML.loop_menu();
@@ -3001,9 +3002,9 @@ void set_fx_params(void)
     }
     chorus_modulator[instance_id]->phase(0);
 
-// phtodo test if working now:
-// chorus_modulator[instance_id]->frequency
-// chorus_modulator[instance_id]->amplitude
+    // phtodo test if working now:
+    // chorus_modulator[instance_id]->frequency
+    // chorus_modulator[instance_id]->amplitude
 
     chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
     chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));

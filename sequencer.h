@@ -34,6 +34,7 @@ extern XPT2046_Touchscreen touch ;
 extern Sd2Card card;
 
 typedef struct sequencer_s {
+  bool midi_learn_active = false;
   uint8_t ticks;
   uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
   uint8_t scrollpos;

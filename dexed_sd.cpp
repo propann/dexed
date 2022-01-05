@@ -1801,7 +1801,6 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
 bool save_sd_performance_json(uint8_t number)
 {
   char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
   bool seq_was_running = false;
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 

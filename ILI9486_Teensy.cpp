@@ -11,6 +11,7 @@
 */
 #include "ILI9486_Teensy.h"
 uint16_t lineBuffer[1];
+
 /*****************************************************************************/
 // Constructor uses hardware SPI, the pins being specific to each device
 /*****************************************************************************/
