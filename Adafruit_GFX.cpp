@@ -50,6 +50,7 @@
 #define pgm_read_dword(addr) (*(const unsigned long *)(addr))
 #endif
 
+
 // Pointers are a peculiar case...typically 16-bit on AVR boards,
 // 32 bits elsewhere.  Try to accommodate both...
 
@@ -67,6 +68,14 @@
     b = t;                                                                     \
   }
 #endif
+
+uint16_t COLOR_BACKGROUND = 0x0000;
+uint16_t COLOR_SYSTEXT = 0xFFFF;
+uint16_t COLOR_SYSTEXT_ACCENT = 0x159A;
+uint16_t COLOR_INSTR = 0x7BBD;
+uint16_t COLOR_CHORDS = 0xE2FA;
+uint16_t COLOR_DRUMS = 0xFE4F;
+uint16_t COLOR_PITCHSMP = 0x159A;
 
 /**************************************************************************/
 /*!

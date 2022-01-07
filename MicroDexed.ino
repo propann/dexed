@@ -143,8 +143,8 @@ void draw_scope() {
         else if (ts.scopebuffer[i] > 96)
           ts.scopebuffer[i] = 96;
         if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
-          display.drawPixel( x + i , ts.scopebuffer_old[i], BLACK);
-        display.drawPixel( x + i , ts.scopebuffer[i], WHITE);
+          display.drawPixel( x + i , ts.scopebuffer_old[i], COLOR_BACKGROUND);
+        display.drawPixel( x + i , ts.scopebuffer[i], COLOR_SYSTEXT);
       }
       ts.scopebuffer_old[i] = ts.scopebuffer[i];
       i = i + 1;
@@ -558,12 +558,9 @@ extern void handle_touchscreen_pattern_editor(void);
 extern void handle_touchscreen_file_manager(void);
 extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
+extern void handle_touchscreen_color_edit(void);
 extern void update_midi_learn_button(void);
 #endif
-
-////debug remove later
-//extern uint8_t get_chain_length_from_track(uint8_t ch);
-//extern uint8_t find_longest_chain(void);
 
 extern LCDMenuLib2 LCDML;
 
@@ -979,7 +976,7 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
   {
     if (ts.displayed_peak[arr] > 1)
     {
-      display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 1, BLACK);
+      display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 1, COLOR_BACKGROUND);
       ts.displayed_peak[arr] = ts.displayed_peak[arr] - 1;
     }
   }
@@ -997,7 +994,7 @@ void handle_touchscreen_mixer()
     dr = drum_mixer_peak_l.read() / 6;
     dl = drum_mixer_peak_r.read() / 6;
     display.setTextSize(1);
-    display.setTextColor(WHITE, BLACK);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     draw_volmeter(CHAR_width * 32, 220, 0, master_peak_l.read() );
     draw_volmeter(CHAR_width * 36, 220, 1, master_peak_r.read() );
@@ -1028,7 +1025,7 @@ void loop()
 
   LCDML.loop();
 
-  if (LCDML.FUNC_getID() > _LCDML_DISP_cnt)
+  if (LCDML.FUNC_getID() > _LCDML_DISP_cnt && seq.running)
     draw_scope();
   else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
@@ -1042,6 +1039,8 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
     handle_touchscreen_mute_matrix();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
+    handle_touchscreen_color_edit();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
     handle_touchscreen_file_manager();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
@@ -1064,7 +1063,7 @@ void loop()
   //  //DEBUG
   //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
   //  {
-  //    display.setTextColor(WHITE, BLUE);
+  //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   //    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   //    {
   //     // display.setCursor_textGrid(5 + 4 * d, 10);
@@ -1105,12 +1104,12 @@ void loop()
         if (midi_decay_timer > MIDI_DECAY_TIMER && midi_decay[instance_id] > 0)
         {
           midi_decay[instance_id]--;
-          display.drawBitmap(212 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay[instance_id])], 8, 8, DX_CYAN, BLACK);
+          display.drawBitmap(212 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         }
         else if (midi_voices[instance_id] == 0 && midi_decay[instance_id] == 0 && !MicroDexed[instance_id]->getSustain())
         {
           midi_decay[instance_id]--;
-          display.fillRect(215 + (instance_id * 12), 23, 5, 1, BLACK); // blank
+          display.fillRect(215 + (instance_id * 12), 23, 5, 1, COLOR_BACKGROUND); // blank
         }
       }
       if (midi_decay_timer > MIDI_DECAY_LEVEL_TIME)

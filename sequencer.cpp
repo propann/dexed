@@ -37,9 +37,7 @@ extern void handleNoteOff(byte , byte , byte );
 extern void UI_func_seq_pattern_editor(uint8_t);
 extern void UI_func_arpeggio(uint8_t);
 extern const char* seq_find_shortname(uint8_t);
-
 extern const char* seq_find_shortname_in_track(uint8_t sstep, uint8_t track);
-
 extern void set_sample_pitch (uint8_t, float);  //float32_t not working
 extern float get_sample_vol_max(uint8_t);
 extern float get_sample_p_offset(uint8_t);
@@ -47,8 +45,14 @@ boolean interrupt_swapper = false;
 extern void helptext_l (const char *str);
 extern void helptext_r (const char *str);
 extern AudioSynthDexed*  MicroDexed[NUM_DEXED];
-
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+extern uint16_t COLOR_SYSTEXT;
+extern uint16_t COLOR_SYSTEXT_ACCENT;
+extern uint16_t COLOR_BACKGROUND;
+extern uint16_t COLOR_INSTR;
+extern uint16_t COLOR_CHORDS;
+extern uint16_t COLOR_DRUMS;
+extern uint16_t COLOR_PITCHSMP;
 sequencer_t seq;
 
 void seq_live_recording(void)
@@ -449,11 +453,11 @@ void reset_tracker_edit_cache_current_step()
 void set_pattern_content_type_color(uint8_t pattern)
 {
   if (seq.content_type[pattern] == 0) //Drumpattern
-    display.setTextColor(DX_ORANGE, BLACK);
+    display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
   else if (seq.content_type[pattern] == 1) //Instrument Pattern
-    display.setTextColor(LIGHTBLUE, BLACK);
+    display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
   else if (seq.content_type[pattern] == 2 || seq.content_type[pattern] == 3) //  chord or arp pattern
-    display.setTextColor(DX_MAGENTA, BLACK);
+    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
 }
 
 int get_pattern_content_type_color(uint8_t pattern)
@@ -461,11 +465,11 @@ int get_pattern_content_type_color(uint8_t pattern)
   int col = 0;
 
   if (seq.content_type[pattern] == 0) //Drumpattern
-    col = DX_ORANGE;
+    col = COLOR_DRUMS;
   else if (seq.content_type[pattern] == 1) //Instrument Pattern
-    col = LIGHTBLUE;
+    col = COLOR_INSTR;
   else
-    col = DX_MAGENTA;
+    col = COLOR_CHORDS;
   return col;
 }
 
@@ -509,9 +513,9 @@ void seq_print_step_numbers(int xpos, int ypos)
   {
     display.setCursor(xpos, ypos + count * yspacer);
     if (count == 6 )
-      display.setTextColor(WHITE, BLACK);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     else
-      display.setTextColor(GREEN, BLACK);
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
     seq_print_formatted_number (buffer[step + count] , 2);
     count++;
   }
@@ -523,7 +527,7 @@ void update_keyboard_current_step ( int ypos, uint8_t octave, uint8_t current_st
   // draw grid
   for (uint8_t y = 0; y < 34; y++)
   {
-    display.fillRect(34 + current_step * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, WHITE); // active step
+    display.fillRect(34 + current_step * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, COLOR_SYSTEXT); // active step
     if (current_step > 0)
     {
       if (piano[y] == 0 ) // is a white key
@@ -547,12 +551,12 @@ void print_keyboard ( int ypos, uint8_t octave)
   uint8_t offset[5] = {12, 12, 14, 12, 11 }; //+ is up
   int offcount = 0;
   uint8_t oct_count = 0;
-  display.setTextColor(BLACK, WHITE);
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
   //draw white keys
   for (uint8_t y = 0; y < 20; y++)
   {
-    display.fillRect(0, ypos - CHAR_height - (y * 14 ), 30, 13, WHITE); // pianoroll white key
+    display.fillRect(0, ypos - CHAR_height - (y * 14 ), 30, 13, COLOR_SYSTEXT); // pianoroll white key
     if ( y == 0 || y == 7 || y == 14) {
       display.setCursor (17, ypos - 14 - (y * 14 )   );
       display.print("C");
@@ -564,7 +568,7 @@ void print_keyboard ( int ypos, uint8_t octave)
   {
     if (piano[y] == 1)
     {
-      display.fillRect(0, ypos - (y * 8.15 ) - offset[offcount] , 12, 8, BLACK);  // BLACK key
+      display.fillRect(0, ypos - (y * 8.15 ) - offset[offcount] , 12, 8, COLOR_BACKGROUND);  // BLACK key
       offcount++;
       if (offcount == 5)offcount = 0;
     }
@@ -621,11 +625,11 @@ void update_pianoroll (int xpos, int ypos, uint8_t track_number, uint8_t cur_ste
   //      {
   //        if (notes[cur_step - 1] == 130)
   //        {
-  //          display.fillRect ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+  //          display.fillRect ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, COLOR_PITCHSMP  );
   //        }
   //        else
   //        {
-  //          display.fillRect  ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[cur_step - 1] - lowest_note) ) , 5, 5, WHITE  );
+  //          display.fillRect  ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[cur_step - 1] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
   //          seq.pianoroll_last_valid_note = notes[cur_step - 1];
   //        }
   //      }
@@ -636,11 +640,11 @@ void update_pianoroll (int xpos, int ypos, uint8_t track_number, uint8_t cur_ste
   //      {
   //        if (notes[63] == 130)
   //        {
-  //          display.fillRect ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+  //          display.fillRect ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, COLOR_PITCHSMP  );
   //        }
   //        else
   //        {
-  //          display.fillRect  ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[63] - lowest_note) ) , 5, 5, WHITE  );
+  //          display.fillRect  ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[63] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
   //          seq.pianoroll_last_valid_note = notes[63];
   //        }
   //      }
@@ -673,21 +677,21 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
   helptext_l("MOVE Y");
   helptext_r("MOVE X");
 
-  display.setTextColor(WHITE, DX_MAGENTA);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
   display.setCursor (CHAR_width * 2, 0);
 
   display.print("[");
   display.print(0);
   display.print("]");
 
-  display.setTextColor(WHITE, BLUE);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
 
   display.print(" TRK:[");
   display.print(track_number + 1);
   display.print("] ");
-  display.setTextColor(WHITE, BLACK);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(" ");
-  display.setTextColor(WHITE, BLUE);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   display.print(" CHAIN: ");
   display.print(current_chain);
   display.print("  ");
@@ -730,7 +734,7 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
     {
       if (notes[xcount] == 130)
       {
-        display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, DX_CYAN  );
+        display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_PITCHSMP  );
       }
       else
       {
@@ -748,7 +752,7 @@ void seq_print_current_note_from_step(uint8_t step)
 {
   if (seq.note_data[seq.active_pattern][step] == 130) //it is a latched note
   {
-    display.setTextColor(GREEN, BLACK);
+    display.setTextColor(GREEN, COLOR_BACKGROUND);
     display.write (0x7E);
     display.print(" ");
     //display.print("LATCH "); //Tilde Symbol for latched note
@@ -808,12 +812,12 @@ void print_merged_pattern_for_editor(int xpos, int ypos, uint8_t track_number)
   //
   //    display.setCursor(0, ypos + ycount * yspacer);
   //    if (y % 16 == 0)
-  //      display.setTextColor(GREEN, BLACK);
+  //      display.setTextColor(GREEN, COLOR_BACKGROUND);
   //    else
-  //      display.setTextColor(DARKGREEN, BLACK);
+  //      display.setTextColor(DARKGREEN, COLOR_BACKGROUND);
   //
   //    if (seq.selected_track == 6 && y == seq.scrollpos + 6 + seq.cursor_scroll )
-  //      display.setTextColor(WHITE, BLACK);
+  //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   //
   //
   //    seq_print_formatted_number(y, 2);
@@ -831,7 +835,7 @@ void print_merged_pattern_for_editor(int xpos, int ypos, uint8_t track_number)
   //
   //    if (seq.selected_track == track_number && y == seq.scrollpos + 6 + seq.cursor_scroll)
   //    {
-  //      display.setTextColor(WHITE, BLACK);
+  //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   //      seq.tracker_active_step = y - yoffset;
   //    }
   //    else
@@ -908,7 +912,7 @@ void print_merged_pattern_fast_play_only(int xpos, int ypos, uint8_t track_numbe
   //  for (uint8_t ycount = 0; ycount < 12; ycount++)
   //  {
   //    if ( ycount == 6)
-  //      display.setTextColor(WHITE, BLACK);
+  //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   //    else
   //      set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][track_number] );
   //    {
@@ -937,11 +941,11 @@ void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, 
   uint8_t to_step = 16;
   if (fullredraw || seq.pianoroll_octave != octave) {
     seq.pianoroll_octave = octave;
-    display.setTextColor(BLACK, WHITE);
+    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     //draw white keys
     for (uint8_t y = 0; y < 15; y++)
     {
-      display.fillRect(xpos, ypos - CHAR_height - (y * 14 ), 30, 13, WHITE); // pianoroll white key
+      display.fillRect(xpos, ypos - CHAR_height - (y * 14 ), 30, 13, COLOR_SYSTEXT); // pianoroll white key
       if ( y == 0 || y == 7 || y == 14) {
         display.setCursor (xpos + 17, ypos - 14 - (y * 14 )   );
         display.print("C"); display.print(octave - 1 + oct_count);
@@ -952,7 +956,7 @@ void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, 
     {
       if (piano[y] == 1)
       {
-        display.fillRect(xpos, ypos - (y * 8.15 ) - offset[offcount] , 12, 8, BLACK);  // BLACK key
+        display.fillRect(xpos, ypos - (y * 8.15 ) - offset[offcount] , 12, 8, COLOR_BACKGROUND);  // BLACK key
         offcount++;
         if (offcount == 5)offcount = 0;
       }
@@ -984,7 +988,7 @@ void print_single_pattern_pianoroll (int xpos, int ypos, uint8_t pattern,  uint8
   uint8_t from_step = 0;
   uint8_t to_step = 16;
   display.setTextSize(1);
-  display.setTextColor(WHITE, BLACK);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   //find lowest note
   for (uint8_t f = 0; f < 16; f++)
   {
@@ -997,7 +1001,7 @@ void print_single_pattern_pianoroll (int xpos, int ypos, uint8_t pattern,  uint8
   if (lowest_note > 120)
     lowest_note = 24;
   print_keyboard_small(xpos, ypos, lowest_note / 12 ,  actstep, fullredraw);
-  display.setTextColor(WHITE);
+  display.setTextColor(COLOR_SYSTEXT);
   for (from_step = 0; from_step < to_step; from_step++)
   {
     if (seq.note_data[pattern][from_step] > 0 &&  (ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note))) > 5 * CHAR_height + 10 )
@@ -1005,14 +1009,14 @@ void print_single_pattern_pianoroll (int xpos, int ypos, uint8_t pattern,  uint8
       if (seq.note_data[pattern][from_step] == 130)
       {
         if (actstep == from_step)
-          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, WHITE  );
+          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
         else
           display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREEN  );
       }
       else
       {
         if (actstep == from_step)
-          display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, WHITE  );
+          display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
         else
           display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, get_pattern_content_type_color(pattern)  );
         last_valid_note = seq.note_data[pattern][from_step];
@@ -1020,5 +1024,5 @@ void print_single_pattern_pianoroll (int xpos, int ypos, uint8_t pattern,  uint8
     }
   }
   display.setTextSize(2);
-  display.setTextColor(WHITE, BLACK);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }

@@ -7,6 +7,10 @@ extern XPT2046_Touchscreen touch;
 
 typedef struct ts_s
 {
+
+  uint16_t temp_col_hue=1; 
+  uint8_t  temp_col_sat=240, temp_col_bright=240;
+  
   int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
   TS_Point p;

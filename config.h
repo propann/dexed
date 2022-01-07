@@ -99,8 +99,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-//#define COMPILE_FOR_FLASH
-#define COMPILE_FOR_PROGMEM
+#define COMPILE_FOR_FLASH
+//#define COMPILE_FOR_PROGMEM
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -212,15 +212,10 @@
 
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
-#define BLACK  0x0000
-#define WHITE  0xFFFF
 
 #define RED     0xF9A7
 #define PINK    0xF81F
 #define YELLOW  0xFFEB
-
-#define BLUE      0x0012
-#define LIGHTBLUE 0x7BBD
 
 #define GREEN        0x07E0
 #define MIDDLEGREEN  0x1500
@@ -230,12 +225,7 @@
 #define GREY2   0x52AA
 #define GREY3   0x2104
 #define GREY4   0x10A2
-
-#define DX_ORANGE 0xFE4F
-#define DX_CYAN 0x159A
 #define DX_DARKCYAN 0x03EF
-#define DX_PURPLE 0x83F3
-#define DX_MAGENTA 0xE2FA
 
 // Display
 

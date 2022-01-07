@@ -19,30 +19,39 @@ extern void border3_large_clear();
 extern void border3_large();
 extern void border3();
 extern void border4();
-extern void border3_white();
-extern void border4_white();
+extern void border3_systext();
+extern void border4_systext();
 extern void flash_printDirectory();
 extern void sd_printDirectory(File currentDirectory);
 extern uint8_t find_longest_chain();
 extern void seq_print_formatted_number(uint8_t v, uint8_t l);
 
 extern void seq_pattern_editor_update_dynamic_elements();
+extern void colors_screen_update();
 
 extern void playWAVFile(const char *filename);
 
 ts_t ts; //touch screen
 fm_t fm; //file manager
 
+extern uint16_t COLOR_BACKGROUND;
+extern uint16_t COLOR_SYSTEXT;
+extern uint16_t COLOR_SYSTEXT_ACCENT;
+extern uint16_t COLOR_INSTR;
+extern uint16_t COLOR_CHORDS;
+extern uint16_t COLOR_DRUMS;
+extern uint16_t COLOR_PITCHSMP;
+
 void helptext_l (const char *str)
 {
   uint8_t l = strlen(str);
   display.setCursor (0, 320 - CHAR_height);
-  display.setTextColor(WHITE, DX_MAGENTA);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_SYSTEXT_ACCENT);
   display.print(str);
 
   if (l < ts.old_helptext_lenght[0])
   {
-    display.setTextColor(WHITE, BLACK);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     for (uint8_t x = 0; x < ts.old_helptext_lenght[0] - l; x++)
       display.print(" ");
   }
@@ -54,12 +63,12 @@ void helptext_r (const char *str)
 {
   uint8_t l = strlen(str);
   display.setCursor(480 - CHAR_width * l, 320 - CHAR_height);
-  display.setTextColor(WHITE, DX_MAGENTA);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_SYSTEXT_ACCENT);
   display.print(str);
   if (l < ts.old_helptext_lenght[1])
   {
     display.setCursor(480 - CHAR_width * (ts.old_helptext_lenght[1]), 320 - CHAR_height);
-    display.setTextColor(WHITE, BLACK);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     for (uint8_t x = 0; x < ts.old_helptext_lenght[1] - l; x++)
       display.print(" ");
   }
@@ -71,83 +80,58 @@ uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b)
   return ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
 }
 
-uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val) {
-
-  uint8_t r, g, b;
-
-  // Remap 0-65535 to 0-1529. Pure red is CENTERED on the 64K rollover;
-  // 0 is not the start of pure red, but the midpoint...a few values above
-  // zero and a few below 65536 all yield pure red (similarly, 32768 is the
-  // midpoint, not start, of pure cyan). The 8-bit RGB hexcone (256 values
-  // each for red, green, blue) really only allows for 1530 distinct hues
-  // (not 1536, more on that below), but the full unsigned 16-bit type was
-  // chosen for hue so that one's code can easily handle a contiguous color
-  // wheel by allowing hue to roll over in either direction.
-  hue = (hue * 1530L + 32768) / 65536;
-  // Because red is centered on the rollover point (the +32768 above,
-  // essentially a fixed-point +0.5), the above actually yields 0 to 1530,
-  // where 0 and 1530 would yield the same thing. Rather than apply a
-  // costly modulo operator, 1530 is handled as a special case below.
-  // So you'd think that the color "hexcone" (the thing that ramps from
-  // pure red, to pure yellow, to pure green and so forth back to red,
-  // yielding six slices), and with each color component having 256
-  // possible values (0-255), might have 1536 possible items (6*256),
-  // but in reality there's 1530. This is because the last element in
-  // each 256-element slice is equal to the first element of the next
-  // slice, and keeping those in there this would create small
-  // discontinuities in the color wheel. So the last element of each
-  // slice is dropped...we regard only elements 0-254, with item 255
-  // being picked up as element 0 of the next slice. Like this:
-  // Red to not-quite-pure-yellow is:        255,   0, 0 to 255, 254,   0
-  // Pure yellow to not-quite-pure-green is: 255, 255, 0 to   1, 255,   0
-  // Pure green to not-quite-pure-cyan is:     0, 255, 0 to   0, 255, 254
-  // and so forth. Hence, 1530 distinct hues (0 to 1529), and hence why
-  // the constants below are not the multiples of 256 you might expect.
-
-  // Convert hue to R,G,B (nested ifs faster than divide+mod+switch):
-  if (hue < 510) {        // Red to Green-1
-    b = 0;
-    if (hue < 255) {      //   Red to Yellow-1
-      r = 255;
-      g = hue;            //     g = 0 to 254
-    } else {              //   Yellow to Green-1
-      r = 510 - hue;      //     r = 255 to 1
-      g = 255;
-    }
-  } else if (hue < 1020) { // Green to Blue-1
-    r = 0;
-    if (hue <  765) {     //   Green to Cyan-1
-      g = 255;
-      b = hue - 510;      //     b = 0 to 254
-    } else {              //   Cyan to Blue-1
-      g = 1020 - hue;     //     g = 255 to 1
-      b = 255;
-    }
-  } else if (hue < 1530) { // Blue to Red-1
-    g = 0;
-    if (hue < 1275) {     //   Blue to Magenta-1
-      r = hue - 1020;     //     r = 0 to 254
-      b = 255;
-    } else {              //   Magenta to Red-1
-      r = 255;
-      b = 1530 - hue;     //     b = 255 to 1
-    }
-  } else {                // Last 0.5 Red (quicker than % operator)
-    r = 255;
-    g = b = 0;
+uint16_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val )
+{
+  // hue: 0-359, sat: 0-255, val (lightness): 0-255
+  int r = 0, g = 0, b = 0, base;
+  //  if (sat == 0)
+  //  { // Achromatic color (gray).
+  //    colors[0] = val;
+  //    colors[1] = val;
+  //    colors[2] = val;
+  //  }
+  //  else
+  //  {
+  base = ((255 - sat) * val) >> 8;
+  switch (hue / 60)
+  {
+    case 0:
+      r = val;
+      g = (((val - base) * hue) / 60) + base;
+      b = base;
+      break;
+    case 1:
+      r = (((val - base) * (60 - (hue % 60))) / 60) + base;
+      g = val;
+      b = base;
+      break;
+    case 2:
+      r = base;
+      g = val;
+      b = (((val - base) * (hue % 60)) / 60) + base;
+      break;
+    case 3:
+      r = base;
+      g = (((val - base) * (60 - (hue % 60))) / 60) + base;
+      b = val;
+      break;
+    case 4:
+      r = (((val - base) * (hue % 60)) / 60) + base;
+      g = base;
+      b = val;
+      break;
+    case 5:
+      r = val;
+      g = base;
+      b = (((val - base) * (60 - (hue % 60))) / 60) + base;
+      break;
   }
-  // Apply saturation and value to R,G,B, pack into 32-bit result:
-  uint32_t v1 =   1 + val; // 1 to 256; allows >>8 instead of /255
-  uint16_t s1 =   1 + sat; // 1 to 256; same reason
-  uint8_t  s2 = 255 - sat; // 255 to 0
-
-  //  return ((((((r * s1) >> 8) + s2) * v1) & 0xff00) << 8) |
-  //          (((((g * s1) >> 8) + s2) * v1) & 0xff00)       |
-  //         ( ((((b * s1) >> 8) + s2) * v1)           >> 8);
-
-  return RGB24toRGB565( ((((r * s1) >> 8) + s2) * v1),  ((((g * s1) >> 8) + s2) * v1),  ( (((b * s1) >> 8) + s2) * v1)    );
+  //    colors[0] = r;
+  //    colors[1] = g;
+  //    colors[2] = b;
+  return  RGB24toRGB565( r, g,  b);
+  //  }
 }
-
 
 void print_current_chord()
 {
@@ -157,7 +141,6 @@ void print_current_chord()
   }
 }
 
-
 void virtual_keyboard_key_on (int ypos)
 {
   uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
@@ -165,7 +148,7 @@ void virtual_keyboard_key_on (int ypos)
 
   int offcount = 0;
   uint8_t halftones = 0;
-  display.setTextColor(WHITE);
+  display.setTextColor(COLOR_SYSTEXT);
   display.setTextSize(1);
   //draw white keys
   if ( ts.p.y > ypos + 42)
@@ -208,12 +191,12 @@ void virtual_keyboard_key_on (int ypos)
     }
   }
   display.setTextSize(2);
-  display.setTextColor(WHITE, BLACK);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
 void virtual_keyboard_key_off_white ( int ypos, uint8_t note)
 {
-  display.setTextColor(BLACK, WHITE);
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
   //draw white keys
 
@@ -223,7 +206,7 @@ void virtual_keyboard_key_off_white ( int ypos, uint8_t note)
     {
       handleNoteOff_MIDI_DEVICE_DIN(configuration.dexed[selected_instance_id].midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
 
-      display.fillRect( x * 48.34, ypos + 50 , 44, 48, WHITE   ); // white key
+      display.fillRect( x * 48.34, ypos + 50 , 44, 48, COLOR_SYSTEXT   ); // white key
       if ( x == 0 || x == 7 ) {
         display.setCursor (x * 48.34 + 17 , ypos + 77   );
         display.print("C");
@@ -235,12 +218,12 @@ void virtual_keyboard_key_off_white ( int ypos, uint8_t note)
     }
   }
   display.setTextSize(2);
-  display.setTextColor(WHITE, BLACK);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
 void virtual_keyboard_key_off_black ( int ypos, uint8_t note)
 {
-  display.setTextColor(BLACK, WHITE);
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
 
   for (uint8_t x = 0; x < 16; x++)
@@ -248,11 +231,11 @@ void virtual_keyboard_key_off_black ( int ypos, uint8_t note)
     if (x == note )
     {
       handleNoteOff_MIDI_DEVICE_DIN(configuration.dexed[selected_instance_id].midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
-      display.fillRect(x * 27.7 , ypos   , 32, 45,  BLACK   ); // BLACK key
+      display.fillRect(x * 27.7 , ypos , 32, 45,  COLOR_BACKGROUND  ); // BLACK key
     }
   }
   display.setTextSize(2);
-  display.setTextColor(WHITE, BLACK);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
 void virtual_keyboard (int ypos)
@@ -261,17 +244,17 @@ void virtual_keyboard (int ypos)
 
   int offcount = 0;
   uint8_t oct_count = 0;
-  display.setTextColor(BLACK, WHITE);
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
   display.drawLine(1, ypos - 4, 480 - 2, ypos - 4, GREY2);
 
-  display.drawLine(0, ypos - 3, 0 , ypos , BLACK);
-  display.drawLine(239, ypos - 3, 239 , ypos , BLACK);
-  display.drawLine(479, ypos - 3, 479 , ypos , BLACK);
+  display.drawLine(0, ypos - 3, 0 , ypos , COLOR_BACKGROUND);
+  display.drawLine(239, ypos - 3, 239 , ypos , COLOR_BACKGROUND);
+  display.drawLine(479, ypos - 3, 479 , ypos , COLOR_BACKGROUND);
   //draw white keys
   for (uint8_t x = 0; x < 10; x++)
   {
-    display.fillRect(  x * 48.34, ypos , 44, 98, WHITE); // white key
+    display.fillRect(  x * 48.34, ypos , 44, 98, COLOR_SYSTEXT); // white key
     if ( x == 0 || x == 7 || x == 14) {
       display.setCursor ( x * 48.34 + 17 , ypos + 77   );
       display.print("C");
@@ -283,7 +266,7 @@ void virtual_keyboard (int ypos)
   {
     if (piano[x] == 1)
     {
-      display.fillRect( x * 27.7 , ypos   , 32, 46, BLACK);  // BLACK key
+      display.fillRect( x * 27.7 , ypos   , 32, 46, COLOR_BACKGROUND);  // BLACK key
       offcount++;
       if (offcount == 5)offcount = 0;
     }
@@ -294,7 +277,7 @@ void virtual_keyboard (int ypos)
 void print_virtual_keyboard_octave (  int ypos)
 {
   uint8_t oct_count = 0;
-  display.setTextColor(BLACK, WHITE);
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
   //draw white keys
   for (uint8_t x = 0; x < 10; x++)
@@ -313,10 +296,10 @@ void handle_touchscreen_mute_matrix()
 {
 
   // SEQUENCER REWRITE
-  uint8_t ar[NUM_SEQ_TRACKS][4]={99,99,99,99, 99,99,99,99, 99,99,99,99, 99,99,99,99, 99,99,99,99, 99,99,99,99,  };
-  uint8_t chain[NUM_SEQ_TRACKS]{99,99,99,99,99,99};
-  uint8_t pattern[NUM_SEQ_TRACKS]{99,99,99,99,99,99};
-  uint8_t chain_counter[NUM_SEQ_TRACKS]={0,0,0,0,0,0};
+  uint8_t ar[NUM_SEQ_TRACKS][4] = {99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,  };
+  uint8_t chain[NUM_SEQ_TRACKS] {99, 99, 99, 99, 99, 99};
+  uint8_t pattern[NUM_SEQ_TRACKS] {99, 99, 99, 99, 99, 99};
+  uint8_t chain_counter[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
 
   for (uint8_t y = 0; y < 4; y++)
   {
@@ -324,16 +307,16 @@ void handle_touchscreen_mute_matrix()
     {
       chain[x] = seq.song[x][seq.current_song_step];
       pattern[x] = seq.chain[  chain[x] ] [ chain_counter[x] ];
-     // if ( pattern[x] != 99 )
-     // {
-        ar[x][y] = pattern[x];
-        if (seq.chain[  chain[x] ] [ chain_counter[x]+1 ] !=99)
-         chain_counter[x]++;
-     // }
-     // else
-     // ar[x][y] = 99;
-      
-       if ( chain_counter[x]  == find_longest_chain()  )
+      // if ( pattern[x] != 99 )
+      // {
+      ar[x][y] = pattern[x];
+      if (seq.chain[  chain[x] ] [ chain_counter[x] + 1 ] != 99)
+        chain_counter[x]++;
+      // }
+      // else
+      // ar[x][y] = 99;
+
+      if ( chain_counter[x]  == find_longest_chain()  )
         chain_counter[x] = 0;
 
     }
@@ -362,7 +345,7 @@ void handle_touchscreen_mute_matrix()
   //            if (ar[x][y] < NUM_SEQ_PATTERN)
   //            {
   //              ar[x][y] = ar[x][y] + (NUM_SEQ_PATTERN + 10);
-//  seq.chain[  chain[x] ] [ chain_counter[x] ]  = ar[x][y] + (NUM_SEQ_PATTERN + 10);
+  //  seq.chain[  chain[x] ] [ chain_counter[x] ]  = ar[x][y] + (NUM_SEQ_PATTERN + 10);
   //              display.fillRect( CHAR_width + x * (480 / 6 - 3)  , 2 * CHAR_height + y * (320 / 4 - 7),  68, 62, GREY4);
   //            }
   //            else
@@ -391,33 +374,33 @@ void handle_touchscreen_mute_matrix()
       display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 3  );
       display.setTextSize(2);
 
-      if (ar[x][y] < NUM_SEQ_PATTERN && ar[x][y]!=99)
+      if (ar[x][y] < NUM_SEQ_PATTERN && ar[x][y] != 99)
       {
-        display.setTextColor(WHITE, GREY2);
-         display.print ("P");
+        display.setTextColor(COLOR_SYSTEXT, GREY2);
+        display.print ("P");
       }
-//      else
-//      {
-//        display.setTextColor(GREY4, GREY2);
-//      display.print (" ");
-//      }
+      //      else
+      //      {
+      //        display.setTextColor(GREY4, GREY2);
+      //      display.print (" ");
+      //      }
       if (ar[x][y] < NUM_SEQ_PATTERN  )
-          //  if (ar[x][y] < NUM_SEQ_PATTERN || ar[x][y] == 99 )
-         seq_print_formatted_number( ar[x][y], 2 );
+        //  if (ar[x][y] < NUM_SEQ_PATTERN || ar[x][y] == 99 )
+        seq_print_formatted_number( ar[x][y], 2 );
       //else if (ar[x][y] != 99)
-      else 
-       display.print("   ");
-     //seq_print_formatted_number(  ar[x][y] - (NUM_SEQ_PATTERN + 10), 2 );
+      else
+        display.print("   ");
+      //seq_print_formatted_number(  ar[x][y] - (NUM_SEQ_PATTERN + 10), 2 );
       display.setTextSize(1);
       if (ar[x][y] < NUM_SEQ_PATTERN  )
       {
         display.setCursor(  CHAR_width + x * (480 / 6 - 3) + 3  , 2 * CHAR_height + y * (320 / 4 - 7) + 51  );
         if (seq.content_type[ar[x][y]] == 0) //Drumpattern
-          display.setTextColor(DX_ORANGE, GREY2);
+          display.setTextColor(COLOR_DRUMS, GREY2);
         else if (seq.content_type[ar[x][y]] == 1) //Instrument Pattern
-          display.setTextColor(LIGHTBLUE, GREY2);
+          display.setTextColor(COLOR_INSTR, GREY2);
         else if (seq.content_type[ar[x][y]] == 2 || seq.content_type[ar[x][y]] == 3) //  chord or arp pattern
-          display.setTextColor(DX_MAGENTA, GREY2);
+          display.setTextColor(COLOR_CHORDS, GREY2);
         if (seq.content_type[ar[x][y]] == 0)
           display.print("DRUM ");
         else if (seq.content_type[ar[x][y]] == 1)
@@ -428,14 +411,14 @@ void handle_touchscreen_mute_matrix()
     }
   }
 
-  
+
   //    if (seq.step == 1) {
   //      for (uint8_t y = 0; y < 4; y++)
   //      {
   //        if ( seq.chain_active_step == y)
   //
   //         else
-  //          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, BLACK  );
+  //          display.drawRect( 11, 2 * CHAR_height + y * 73 - 1, 455, 64, COLOR_BACKGROUND  );
   //      }
   //    }
 }
@@ -516,9 +499,6 @@ void handle_touchscreen_voice_select()
     }
     ts.slowdown_UI_input = 0;
   }
-
-
-
 }
 
 void handle_touchscreen_pattern_editor()
@@ -598,27 +578,27 @@ void handle_touchscreen_pattern_editor()
 void print_file_manager_buttons()
 {
   if (fm.sd_mode == 1)
-    display.setTextColor(WHITE, BLUE);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   else
-    display.setTextColor(GREY2, BLUE);
+    display.setTextColor(GREY2, COLOR_PITCHSMP);
   display.setCursor(CHAR_width + 16,       240 + 8);
   display.print("DELETE FILE");
   if (fm.sd_mode == 2)
-    display.setTextColor(WHITE, BLUE);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   else
-    display.setTextColor(GREY2, BLUE);
+    display.setTextColor(GREY2, COLOR_PITCHSMP);
   display.setCursor(CHAR_width + 114 + 28, 240 + 8);
   display.print("PREVIEW");
   if (fm.sd_mode == 3)
-    display.setTextColor(WHITE, BLUE);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   else
-    display.setTextColor(GREY2, BLUE);
+    display.setTextColor(GREY2, COLOR_PITCHSMP);
   display.setCursor(CHAR_width + 11,       280 + 8);
   display.print("COPY TO FLASH");
   if (fm.sd_mode == 4)
-    display.setTextColor(WHITE, BLUE);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   else
-    display.setTextColor(GREY2, BLUE);
+    display.setTextColor(GREY2, COLOR_PITCHSMP);
   display.setCursor(CHAR_width + 127, 280 + 8);
   display.print("COPY PRESETS");
 
@@ -627,14 +607,14 @@ void print_file_manager_buttons()
   if ( fm.active_window == 0)
   {
     border4();
-    border3_white();
+    border3_systext();
 
   }
 
   else
   {
     border3();
-    border4_white();
+    border4_systext();
   }
 
 
@@ -704,7 +684,7 @@ void update_midi_learn_button()
 {
   if (seq.midi_learn_active == true)
   {
-    display.setTextColor(WHITE, RED);
+    display.setTextColor(COLOR_SYSTEXT, RED);
     display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, RED);
     display.setCursor(240 + CHAR_width * 12 + 4, 2 * CHAR_height);
     display.setTextSize(2);
@@ -715,8 +695,8 @@ void update_midi_learn_button()
   }
   else
   {
-    display.setTextColor(WHITE, BLUE);
-    display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, BLUE);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+    display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, COLOR_PITCHSMP);
     display.setCursor(240 + CHAR_width * 12 + 4, 2 * CHAR_height);
     display.setTextSize(2);
     display.print("TOUCH");
@@ -778,4 +758,36 @@ void handle_touchscreen_cc_mappings()
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 7115)
     ts.block_screen_update = false;
+}
+
+void handle_touchscreen_color_edit()
+{
+  if (touch.touched())
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+
+    if ( ts.p.x > 260  && ts.p.x < 300  && ts.p.y < TFT_WIDTH - CHAR_height )
+      ts.temp_col_hue = ts.p.y;
+
+    else if ( ts.p.x > 350  && ts.p.x < 390 && ts.p.y < TFT_WIDTH - CHAR_height)
+    {
+      if (ts.p.y>254)
+      ts.temp_col_sat=255;
+      else
+      ts.temp_col_sat = ts.p.y / 1.20;
+      
+    }
+    else if ( ts.p.x > 440  && ts.p.x < 480 && ts.p.y < TFT_WIDTH - CHAR_height )
+    {
+       if (ts.p.y>254)
+      ts.temp_col_bright=255;
+      else
+      ts.temp_col_bright = ts.p.y / 1.20;
+    }
+    
+    colors_screen_update();
+  }
 }

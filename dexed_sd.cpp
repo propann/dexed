@@ -73,6 +73,13 @@ extern float get_sample_vol_max(uint8_t sample);
 extern float get_sample_vol_min(uint8_t sample);
 extern float get_sample_reverb_send(uint8_t sample);
 extern uint8_t find_drum_number_from_note(uint8_t note);
+extern uint16_t COLOR_SYSTEXT;
+extern uint16_t COLOR_SYSTEXT_ACCENT;
+extern uint16_t COLOR_BACKGROUND;
+extern uint16_t COLOR_INSTR;
+extern uint16_t COLOR_CHORDS;
+extern uint16_t COLOR_DRUMS;
+extern uint16_t COLOR_PITCHSMP;
 extern bool save_sys_flag;
 
 /******************************************************************************
@@ -1853,7 +1860,7 @@ bool save_sd_performance_json(uint8_t number)
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
-    { 
+    {
       data_json["seq_tempo_ms"] = seq.tempo_ms ;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_speed"] = seq.arp_speed;
@@ -1866,6 +1873,13 @@ bool save_sd_performance_json(uint8_t number)
       data_json["chord_key_ammount"] = seq.chord_key_ammount;
       data_json["seq_oct_shift"] = seq.oct_shift;
       data_json["seq_element_shift"] = seq.element_shift;
+      data_json["COLOR_SYSTEXT"] = COLOR_SYSTEXT;
+      data_json["COLOR_SYSTEXT_ACCENT"] = COLOR_SYSTEXT_ACCENT;
+      data_json["COLOR_BACKGROUND"] = COLOR_BACKGROUND;
+      data_json["COLOR_INSTR"] = COLOR_INSTR;
+      data_json["COLOR_CHORDS"] = COLOR_CHORDS;
+      data_json["COLOR_DRUMS"] = COLOR_DRUMS;
+      data_json["COLOR_PITCHSMP"] = COLOR_PITCHSMP;
       for (uint8_t i = 0; i < sizeof(seq.track_type); i++) {
         data_json["track_type"][i] = seq.track_type[i];
       }
@@ -2226,6 +2240,18 @@ bool load_sd_performance_json(uint8_t number)
         seq.chord_key_ammount = data_json["chord_key_ammount"];
         seq.oct_shift = data_json["seq_oct_shift"];
         seq.element_shift = data_json["seq_element_shift"];
+        
+        if (data_json["COLOR_SYSTEXT"] != data_json["COLOR_BACKGROUND"])
+        {
+          COLOR_SYSTEXT = data_json["COLOR_SYSTEXT"];
+          COLOR_SYSTEXT_ACCENT = data_json["COLOR_SYSTEXT_ACCENT"];
+          COLOR_BACKGROUND = data_json["COLOR_BACKGROUND"];
+          COLOR_INSTR = data_json["COLOR_INSTR"];
+          COLOR_CHORDS = data_json["COLOR_CHORDS"];
+          COLOR_DRUMS = data_json["COLOR_DRUMS"];
+          COLOR_PITCHSMP = data_json["COLOR_PITCHSMP"];
+        }
+        
         for (uint8_t instance_id = 0;  instance_id < NUM_DEXED; instance_id++)
         {
 #ifdef DEBUG
