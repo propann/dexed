@@ -1116,7 +1116,7 @@ int const qix_num = 20;
 
 typedef struct qix_s
 {
-  double counthue;
+  int counthue;
   int x0s[qix_num], y0s[qix_num], x1s[qix_num], y1s[qix_num];
   int dx0 = 2, dx1 = 3, dy0 = 3, dy1 = 2;
 } qix_t;
@@ -1131,8 +1131,8 @@ void mFunc_screensaver(uint8_t param) //qix screensaver
   {
     // remmove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
-    display.fillScreen(COLOR_BACKGROUND);
-    qix.counthue = random(60000);
+    display.fillScreen(0);
+    qix.counthue = random(358);
     // setup function
     LCDML.FUNC_setLoopInterval(20);  // starts a trigger event for the loop function every 20 milliseconds
   }
@@ -1142,15 +1142,17 @@ void mFunc_screensaver(uint8_t param) //qix screensaver
     {
       LCDML.FUNC_goBackToMenu();  // leave this function
     }
-    qix.counthue = qix.counthue + 30;
+    qix.counthue = qix.counthue + 1;
+    if (qix.counthue > 359 - (qix_num * 3))
+      qix.counthue = qix_num * 3;
 
     // Move lines around
 
     // draw each line
-    display.drawLine (qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1] , COLOR_BACKGROUND );
+    display.drawLine (qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1] , 0 );
     for (uint8_t j = 0; j < qix_num - 1; j++)
     {
-      display.drawLine (qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(qix.counthue - j * 400, 254, 254)    );
+      display.drawLine (qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(qix.counthue - (qix_num * 3) + j * 3 , 254, 254)    );
     }
     // move down
     for (uint8_t j = qix_num - 1; j >= 1; j--)
@@ -1190,7 +1192,6 @@ void setup_ui(void)
   SPI.begin();
   display.begin();
   display.setRotation(1);
-  //font
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.fillScreen(COLOR_BACKGROUND);
@@ -1202,6 +1203,7 @@ void setup_ui(void)
   //Enable Screensaver (screensaver menu function, time to activate in ms)
 
   LCDML.SCREEN_enable(mFunc_screensaver, 200000);
+  //LCDML.SCREEN_enable(mFunc_screensaver, 7000); //quick test time
 }
 
 void toggle_sequencer_play_status()
@@ -1670,90 +1672,132 @@ void lcdml_menu_display(void)
  ***********************************************************************/
 
 
+void colors_screen_update_text_preview()
+{
+  display.setTextSize(2);
+  helptext_l("BACK");
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 1);
+  display.print(F("COLORS"));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 4);
+  display.print(F("SYSTEM TEXT"));
+  display.setTextColor(COLOR_SYSTEXT_ACCENT, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 6);
+  display.print(F("SYSTEM ACCENT"));
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+  display.setCursor_textGrid(1, 8);
+  display.print(F("SYS BACKGRND"));
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 10);
+  display.print(F("DRUMS"));
+  display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
+  display.setCursor_textGrid(11, 10);
+  display.print(F("DRUMS"));
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 12);
+  display.print(F("PITCH SMP"));
+  display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+  display.setCursor_textGrid(11, 12);
+  display.print(F("PITCH SMP"));
+  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 14);
+  display.print(F("CHORD/ARP"));
+  display.setTextColor(COLOR_BACKGROUND, COLOR_CHORDS);
+  display.setCursor_textGrid(11, 14);
+  display.print(F("CHORD/ARP"));
+  display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
+  display.setCursor_textGrid(1, 16);
+  display.print(F("INSTR"));
+  display.setTextColor(COLOR_BACKGROUND, COLOR_INSTR);
+  display.setCursor_textGrid(11, 16);
+  display.print(F("INSTR"));
+}
+
 void colors_screen_update()
 {
   int y = CHAR_height;
+
+  if ( seq.temp_select_menu == 2)
+  {
+    display.fillRect(0, 0, 251, 320, COLOR_BACKGROUND );
+    colors_screen_update_text_preview();
+  }
   do
   {
-    display.drawLine ( 350, y , 390, y, ColorHSV( ts.temp_col_hue * 1.15, (y - CHAR_height) * 0.95, 245)  );
-    display.drawLine ( 440, y , 480, y, ColorHSV( ts.temp_col_hue * 1.15, 245, (y - CHAR_height) * 0.95)   );
+    display.drawLine ( 355, y , 395, y, ColorHSV( ts.temp_col_hue , (y - CHAR_height) * 0.95, 245)  );
+    display.drawLine ( 440, y , 480, y, ColorHSV( ts.temp_col_hue , 245, (y - CHAR_height) * 0.95)   );
     y++;
   } while (y < TFT_WIDTH - CHAR_height * 2 );
 
+  display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) );
+
+  display.setTextSize(2);
 
   if (seq.temp_select_menu == 0)
   {
-    COLOR_SYSTEXT = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
-    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_SYSTEXT);
+    COLOR_SYSTEXT = ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) ;
+
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.setCursor_textGrid(1, 4);
     display.print(F("SYSTEM TEXT"));
   }
   else if (seq.temp_select_menu == 1)
   {
-    COLOR_SYSTEXT_ACCENT = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
-    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_SYSTEXT_ACCENT);
+    COLOR_SYSTEXT_ACCENT = ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) ;
     display.setTextColor(COLOR_SYSTEXT_ACCENT, COLOR_BACKGROUND);
     display.setCursor_textGrid(1, 6);
     display.print(F("SYSTEM ACCENT"));
     helptext_l("BACK");
-    helptext_r("SELECT COLOR");
-
   }
   else if (seq.temp_select_menu == 2)
   {
-    COLOR_BACKGROUND = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
+    COLOR_BACKGROUND = ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) ;
     display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_BACKGROUND);
     display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    display.setCursor_textGrid(1, 6);
+    display.setCursor_textGrid(1, 8);
     display.print(F("SYS BACKGRND"));
-
   }
   else if (seq.temp_select_menu == 3)
   {
-    COLOR_DRUMS = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
-    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_DRUMS);
+    COLOR_DRUMS = ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) ;
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 8);
+    display.setCursor_textGrid(1, 10);
     display.print(F("DRUMS"));
     display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
-    display.setCursor_textGrid(11, 8);
+    display.setCursor_textGrid(11, 10);
     display.print(F("DRUMS"));
   }
   else if (seq.temp_select_menu == 4)
   {
-    COLOR_PITCHSMP = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
-    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_PITCHSMP);
+    COLOR_PITCHSMP = ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) ;
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 10);
+    display.setCursor_textGrid(1, 12);
     display.print(F("PITCH SMP"));
     display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-    display.setCursor_textGrid(11, 10);
+    display.setCursor_textGrid(11, 12);
     display.print(F("PITCH SMP"));
   }
   else if (seq.temp_select_menu == 5)
   {
-    COLOR_CHORDS = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
-    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_CHORDS);
+    COLOR_CHORDS = ColorHSV( ts.temp_col_hue , ts.temp_col_sat, ts.temp_col_bright) ;
     display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 12);
+    display.setCursor_textGrid(1, 14);
     display.print(F("CHORD/ARP"));
     display.setTextColor(COLOR_BACKGROUND, COLOR_CHORDS);
-    display.setCursor_textGrid(11, 12);
+    display.setCursor_textGrid(11, 14);
     display.print(F("CHORD/ARP"));
   }
   else if (seq.temp_select_menu == 6)
   {
-    COLOR_INSTR = ColorHSV( ts.temp_col_hue * 1.15, ts.temp_col_sat, ts.temp_col_bright) ;
-    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_INSTR);
+    COLOR_INSTR = ColorHSV( ts.temp_col_hue, ts.temp_col_sat, ts.temp_col_bright) ;
     display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 14);
+    display.setCursor_textGrid(1, 16);
     display.print(F("INSTR"));
     display.setTextColor(COLOR_BACKGROUND, COLOR_INSTR);
-    display.setCursor_textGrid(11, 14);
+    display.setCursor_textGrid(11, 16);
     display.print(F("INSTR"));
   }
-
 }
 
 void UI_func_colors(uint8_t param)
@@ -1761,75 +1805,31 @@ void UI_func_colors(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
     border0();
-    display.fillScreen(COLOR_BACKGROUND);
+    seq.temp_active_menu = 0;
+    display.fillRect(0, 0, 251, 320, COLOR_BACKGROUND );
+    display.fillRect(0, 320 - CHAR_height, 480, CHAR_height, COLOR_BACKGROUND );
+    display.fillRect(251, 0, 480 - 249, 320 - CHAR_height - 3, GREY4 );
     display.setTextSize(2);
-
-    helptext_l("BACK");
+    display.fillRect(CHAR_width * 11, CHAR_height, 60, CHAR_height, COLOR_SYSTEXT );
+    //helptext_l("BACK");
     helptext_r("SELECT COLOR");
-
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 1);
-    display.print(F("COLORS"));
-
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 4);
-    display.print(F("SYSTEM TEXT"));
-
-    display.setTextColor(COLOR_SYSTEXT_ACCENT, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 6);
-    display.print(F("SYSTEM ACCENT"));
-
-    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    display.setCursor_textGrid(1, 8);
-    display.print(F("SYS BACKGRND"));
-
-    display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 10);
-    display.print(F("DRUMS"));
-    display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
-    display.setCursor_textGrid(11, 10);
-    display.print(F("DRUMS"));
-
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 12);
-    display.print(F("PITCH SMP"));
-    display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-    display.setCursor_textGrid(11, 12);
-    display.print(F("PITCH SMP"));
-
-    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 14);
-    display.print(F("CHORD/ARP"));
-    display.setTextColor(COLOR_BACKGROUND, COLOR_CHORDS);
-    display.setCursor_textGrid(11, 14);
-    display.print(F("CHORD/ARP"));
-
-    display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-    display.setCursor_textGrid(1, 16);
-    display.print(F("INSTR"));
-    display.setTextColor(COLOR_BACKGROUND, COLOR_INSTR);
-    display.setCursor_textGrid(11, 16);
-    display.print(F("INSTR"));
-
+    colors_screen_update_text_preview();
     display.setTextSize(1);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(260, TFT_WIDTH - CHAR_height * 2 + 3);
+    display.setTextColor(COLOR_SYSTEXT, GREY4);
+    display.setCursor(270, TFT_WIDTH - CHAR_height * 2 + 3);
     display.print(F("HUE"));
-    display.setCursor(350, TFT_WIDTH - CHAR_height * 2 + 3);
+    display.setCursor(355, TFT_WIDTH - CHAR_height * 2 + 3);
     display.print(F("SAT"));
     display.setCursor(440, TFT_WIDTH - CHAR_height * 2 + 3);
     display.print(F("BRIGHT"));
-
     display.setTextSize(2);
-
 
     int y = CHAR_height;
     do
     {
-      display.drawLine ( 260, y , 300, y,  ColorHSV( (y - CHAR_height) * 1.34 , 235, 235)   );
-      display.drawLine ( 350, y , 390, y,  ColorHSV( 1 , 235, (y - CHAR_height) * 0.95) );
+      display.drawLine ( 270, y , 310, y,  ColorHSV( (y - CHAR_height) * 1.34 , 235, 235)   );
+      display.drawLine ( 355, y , 395, y,  ColorHSV( 1 , 235, (y - CHAR_height) * 0.95) );
       display.drawLine ( 440, y , 480, y,  ColorHSV( 1 , (y - CHAR_height) * 0.95, 235) );
       y++;
     } while (y < TFT_WIDTH - CHAR_height * 2 );
@@ -1838,29 +1838,71 @@ void UI_func_colors(uint8_t param)
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter())
     {
       if (LCDML.BT_checkDown())
-        if (seq.temp_select_menu == 6)
-          seq.temp_select_menu = 0;
-        else
-          seq.temp_select_menu = constrain(seq.temp_select_menu + ENCODER[ENC_R].speed(), 0, 6);
+      {
+        if (seq.temp_active_menu == 0)
+        {
+          if (seq.temp_select_menu == 6)
+            seq.temp_select_menu = 0;
+          else
+            seq.temp_select_menu = constrain(seq.temp_select_menu + ENCODER[ENC_R].speed(), 0, 6);
+        }
+        else  if (seq.temp_active_menu == 1)
+          ts.temp_col_hue = constrain(ts.temp_col_hue + ENCODER[ENC_R].speed(), 0, 359);
+        else  if (seq.temp_active_menu == 2)
+          ts.temp_col_sat = constrain(ts.temp_col_sat + ENCODER[ENC_R].speed(), 0, 254);
+        else  if (seq.temp_active_menu == 3)
+          ts.temp_col_bright = constrain(ts.temp_col_bright + ENCODER[ENC_R].speed(), 0, 254);
+      }
       else if (LCDML.BT_checkUp())
-        seq.temp_select_menu = constrain(seq.temp_select_menu - ENCODER[ENC_R].speed(), 0, 6);
+      {
+        if (seq.temp_active_menu == 0)
+        {
+          seq.temp_select_menu = constrain(seq.temp_select_menu - ENCODER[ENC_R].speed(), 0, 6);
+        }
+        else  if (seq.temp_active_menu == 1)
+          ts.temp_col_hue = constrain(ts.temp_col_hue - ENCODER[ENC_R].speed(), 0, 359);
+        else  if (seq.temp_active_menu == 2)
+          ts.temp_col_sat = constrain(ts.temp_col_sat - ENCODER[ENC_R].speed(), 0, 254);
+        else  if (seq.temp_active_menu == 3)
+          ts.temp_col_bright = constrain(ts.temp_col_bright - ENCODER[ENC_R].speed(), 0, 254);
+      }
+      if (LCDML.BT_checkEnter())
+      {
+        seq.temp_active_menu++;
+        if (seq.temp_active_menu > 3)
+          seq.temp_active_menu = 0;
+      }
+      if (seq.temp_active_menu > 0)
+      {
+        colors_screen_update();
+        if (seq.temp_active_menu == 1)
+          helptext_r("ADJUST HUE");
+        else if (seq.temp_active_menu == 2)
+          helptext_r("ADJUST SATURATION");
+        else  if (seq.temp_active_menu == 3)
+          helptext_r("ADJUST BRIGHTNESS");
+      }
+      else if (seq.temp_active_menu == 0)
+      {
+        helptext_r("SELECT COLOR");
+      }
     }
-
     uint8_t y = 0;
-    do
+    if (seq.temp_active_menu == 0)
     {
-      if (y == seq.temp_select_menu)
-        display.drawRect ( 7, 62 + y * (CHAR_height * 2), 237, 25, COLOR_SYSTEXT_ACCENT );
-      else
-        display.drawRect ( 7, 62 + y * (CHAR_height * 2), 237, 25, COLOR_BACKGROUND  );
-      y++;
-    } while (y < 7 );
-
+      do
+      {
+        if (y == seq.temp_select_menu)
+          display.drawRect ( 7, 62 + y * (CHAR_height * 2), 237, 25, COLOR_SYSTEXT_ACCENT );
+        else
+          display.drawRect ( 7, 62 + y * (CHAR_height * 2), 237, 25, COLOR_BACKGROUND  );
+        y++;
+      } while (y < 7 );
+    }
   }
-
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();

@@ -75,6 +75,7 @@ void helptext_r (const char *str)
   ts.old_helptext_lenght[1] = l;
 }
 
+
 uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b)
 {
   return ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
@@ -769,10 +770,13 @@ void handle_touchscreen_color_edit()
     ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
     ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
 
-    if ( ts.p.x > 260  && ts.p.x < 300  && ts.p.y < TFT_WIDTH - CHAR_height )
-      ts.temp_col_hue = ts.p.y;
+    if ( ts.p.x > 270  && ts.p.x < 310  && ts.p.y < TFT_WIDTH - CHAR_height )
+    if (ts.p.y*1.22>359)
+    ts.temp_col_hue=359;
+    else
+      ts.temp_col_hue = ts.p.y*1.22;
 
-    else if ( ts.p.x > 350  && ts.p.x < 390 && ts.p.y < TFT_WIDTH - CHAR_height)
+    else if ( ts.p.x > 355  && ts.p.x < 395 && ts.p.y < TFT_WIDTH - CHAR_height)
     {
       if (ts.p.y>254)
       ts.temp_col_sat=255;
