@@ -224,6 +224,7 @@ AudioMixer<2>                   audio_thru_mixer_l;
 AudioPlaySdWav*                 sd_WAV[2];
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp*            Drum[NUM_DRUMS];
+//AudioPlaySerialflashRaw*          Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
 //AudioPlaySdResmp*            Drum[NUM_DRUMS];
 #ifdef COMPILE_FOR_PROGMEM
@@ -452,6 +453,7 @@ void create_audio_drum_chain(uint8_t instance_id)
   //Drum[instance_id] = new AudioPlaySdWav();
 #ifdef COMPILE_FOR_FLASH
   Drum[instance_id] = new AudioPlayFlashResmp();
+  //Drum[instance_id] = new AudioPlaySerialflashRaw();
 #endif
   //Drum[instance_id] = new AudioPlaySdResmp();
 #ifdef COMPILE_FOR_PROGMEM
@@ -1496,6 +1498,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
                   strcpy(temp_name, drum_config[d].name);
                   strcat(temp_name, ".wav");
                   Drum[slot]->playWav(temp_name);
+                 //     Drum[slot]->play(temp_name);
+                 
 #endif
 
 #ifdef COMPILE_FOR_PROGMEM
@@ -3003,10 +3007,11 @@ void set_fx_params(void)
 
     // phtodo test if working now:
     // chorus_modulator[instance_id]->frequency
-    // chorus_modulator[instance_id]->amplitude
+    // chorus_modulator[instance_id]->amplitude 
+    // 8.1.2022 it is not, check with HW
 
-    chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
-    chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
+  //  chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
+  //  chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
     chorus_modulator[instance_id]->offset(0.0);
 #if MOD_FILTER_OUTPUT == MOD_BUTTERWORTH_FILTER_OUTPUT
     // Butterworth filter, 12 db/octave
