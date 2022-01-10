@@ -5,7 +5,6 @@
 #ifndef TEENSYAUDIOLIBRARY_RESAMPLINGFLASHREADER_H
 #define TEENSYAUDIOLIBRARY_RESAMPLINGFLASHREADER_H
 
-//#include "SD.h"
 #include <SerialFlash.h>
 #include <cstdint>
 #include "spi_interrupt.h"
@@ -21,7 +20,6 @@ public:
     }
 
     void begin(void);
-    bool playRaw(const char *filename, uint16_t numChannels);
     bool playWav(const char *filename);
 
     bool play();
@@ -136,7 +134,7 @@ private:
         }
     }
 
-    bool play(const char *filename, bool isWave, uint16_t numChannelsIfRaw = 0);
+    bool play(const char *filename);
     void initializeInterpolationPoints(void);
     void deleteInterpolationPoints(void);
 };

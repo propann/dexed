@@ -245,20 +245,13 @@ void ResamplingFlashReader::begin(void)
     _file_size = 0;
 }
 
-bool ResamplingFlashReader::playRaw(const char *filename, uint16_t numChannels) {
-    return play(filename, false, numChannels); 
-}
-
 bool ResamplingFlashReader::playWav(const char *filename) {
-    return play(filename, true); 
+    return play(filename);
 }
 
-bool ResamplingFlashReader::play(const char *filename, bool isWave, uint16_t numChannelsIfRaw)
+bool ResamplingFlashReader::play(const char *filename)
 {
     stop();
-    
-    if (!isWave) // if raw file, then hardcode the numChannels as per the parameter
-        setNumChannels(numChannelsIfRaw);
 
     if (_sourceBuffer) {
         //Serial.printf("closing %s\n", _filename);
@@ -288,7 +281,6 @@ bool ResamplingFlashReader::play(const char *filename, bool isWave, uint16_t num
     _file_size = file.size();
     __enable_irq();
 
-    if (isWave) {
         wav_header wav_header;
         WaveHeaderParser wavHeaderParser;
         char buffer[44];
@@ -304,8 +296,7 @@ bool ResamplingFlashReader::play(const char *filename, bool isWave, uint16_t num
         setNumChannels(wav_header.num_channels);
         _header_offset = 22;
         _loop_finish = ((wav_header.data_bytes) / 2) + 22; 
-    } else 
-        _loop_finish = _file_size / 2;
+    
     
     __disable_irq();
     file.close();
@@ -350,9 +341,7 @@ void ResamplingFlashReader::stop()
     if (_playing) {
         __disable_irq();
         _playing = false;
-        //_file.close();
         __enable_irq();
-        //StopUsingSPI();
     }
 }
 

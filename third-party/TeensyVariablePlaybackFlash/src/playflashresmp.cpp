@@ -10,14 +10,7 @@ void AudioPlayFlashResmp::begin()
 {
     file_size = 0;
    // FlashReader.begin();
-    // FlashReader.close();
-}
-
-bool AudioPlayFlashResmp::playRaw(const char *filename, uint16_t numChannels)
-{
-    stop();
-    bool playing = FlashReader.playRaw(filename, numChannels);
-    return playing;
+  
 }
 
 bool AudioPlayFlashResmp::playWav(const char *filename)
@@ -48,14 +41,15 @@ void AudioPlayFlashResmp::update()
     if (FlashReader.available())
     {
         // we can read more data from the file...
-        n = FlashReader.read((void**)data, AUDIO_BLOCK_SAMPLES);
+            n = FlashReader.read((void**)data, AUDIO_BLOCK_SAMPLES);
             for (i=n; i < AUDIO_BLOCK_SAMPLES; i++) {
                 block->data[i] = 0;
             }
             transmit(block);
+       
     } else
     {
-       // FlashReader.close();
+        FlashReader.close();
     }
         release(block);
 }

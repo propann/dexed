@@ -6,8 +6,9 @@
 
 #include <string>
 #include <cstdint>
-#include <SD.h>
 #include "spi_interrupt.h"
+#include <SerialFlash.h>
+
 
 using namespace std;
 
@@ -37,7 +38,7 @@ class WaveHeaderParser {
 public:
     bool readWaveHeader(const char *filename, wav_header &header) {
         __disable_irq();
-        File wavFile = SD.open(filename);
+        SerialFlashFile wavFile = SerialFlash.open(filename);
         __enable_irq();
         if (!wavFile) {
             Serial.printf("Not able to open wave file... %s\n", filename);
@@ -48,7 +49,7 @@ public:
         return result;
     }
 
-    bool readWaveHeader(const char *filename, wav_header &header, File &wavFile) {
+    bool readWaveHeader(const char *filename, wav_header &header, SerialFlashFile &wavFile) {
         char buffer[44];
         __disable_irq();
         int bytesRead = wavFile.read(buffer, 44);

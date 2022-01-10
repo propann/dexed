@@ -2,8 +2,8 @@
 // Created by Nicholas Newdigate on 18/07/2020.
 //
 
-#ifndef TEENSY_RESAMPLING_FLASHREADER_PLAYFLASHRAWRESMP_H
-#define TEENSY_RESAMPLING_FLASHREADER_PLAYFLASHRAWRESMP_H
+#ifndef TEENSY_RESAMPLING_FLASHREADER_H
+#define TEENSY_RESAMPLING_FLASHREADER_H
 
 
 #include "Arduino.h"
@@ -54,11 +54,10 @@ public:
             FlashReader.setInterpolationType(ResampleInterpolationType::resampleinterpolation_none);
     }
 private:
-   // SerialFlashFile rawfile; //
     uint32_t file_size;
     ResamplingFlashReader FlashReader;
   
 };
 
 
-#endif //TEENSY_RESAMPLING_FLASHREADER_PLAYFLASHRAWRESMP_H
+#endif //TEENSY_RESAMPLING_FLASHREADER_H
