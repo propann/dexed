@@ -484,7 +484,7 @@ bool load_sd_drummappings_json(uint8_t number)
         Serial.println();
 #endif
 
-        for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS - 1; i++)
+        for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS; i++)
         {
           custom_midi_map[i].type = data_json["type"][i];
           custom_midi_map[i].in = data_json["in"][i];
@@ -541,7 +541,7 @@ bool save_sd_drummappings_json(uint8_t number)
       json = SD.open(filename, FILE_WRITE);
       if (json)
       {
-        for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS - 1; i++)
+        for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS; i++)
         {
           data_json["type"][i] = custom_midi_map[i].type;
           data_json["in"][i] = custom_midi_map[i].in;

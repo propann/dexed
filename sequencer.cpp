@@ -85,6 +85,8 @@ uint8_t get_song_length()
     {
       if (seq.song[t][s] == 99)
         stepcounter++;
+      else
+        break;
     }
     if (stepcounter < best)
       best = stepcounter;
@@ -376,7 +378,7 @@ void sequencer_part2(void)
   {
     if (seq.noteoffsent[d] == false)
     {
-      if ( seq.prev_note[d] > 0 && seq.track_type[d] >0  )
+      if ( seq.prev_note[d] > 0 && seq.track_type[d] > 0  )
       {
         if (seq.note_data[  seq.current_pattern[d] ][seq.step] != 130)
         {
@@ -386,7 +388,7 @@ void sequencer_part2(void)
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] , 0);
           seq.noteoffsent[d] = true;
         }
-         if (seq.track_type[d] == 2 ) //Chords
+        if (seq.track_type[d] == 2 ) //Chords
         {
           if ( seq.prev_vel[d] > 199)
           {
@@ -400,7 +402,7 @@ void sequencer_part2(void)
             }
           }
         }
-         if (seq.track_type[d] == 3  )
+        if (seq.track_type[d] == 3  )
         { //Arp
           if (seq.inst_dexed[d] < 2) //dexed
             handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note_prev, 0);

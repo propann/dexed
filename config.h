@@ -73,7 +73,7 @@
 //*************************************************************************************************
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
-#define AUDIO_DEVICE_USB
+//#define AUDIO_DEVICE_USB
 #define TEENSY_AUDIO_BOARD
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -88,7 +88,7 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-#define DEBUG 1
+//#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE
 #define SERIAL_SPEED 230400
@@ -99,8 +99,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_FLASH
-//#define COMPILE_FOR_PROGMEM
+//#define COMPILE_FOR_FLASH
+#define COMPILE_FOR_PROGMEM
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
