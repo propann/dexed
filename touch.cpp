@@ -24,7 +24,7 @@ extern void border4_systext();
 extern void flash_printDirectory();
 extern void sd_printDirectory(File currentDirectory);
 extern uint8_t find_longest_chain();
-extern void seq_print_formatted_number(uint8_t v, uint8_t l);
+extern void seq_print_formatted_number(uint16_t v, uint8_t l);
 
 extern void seq_pattern_editor_update_dynamic_elements();
 extern void colors_screen_update();

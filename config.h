@@ -73,7 +73,7 @@
 //*************************************************************************************************
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
-//#define AUDIO_DEVICE_USB
+#define AUDIO_DEVICE_USB
 #define TEENSY_AUDIO_BOARD
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -122,7 +122,7 @@
 
 // NUMBER OF SAMPLES IN DRUMSET
 
-#define NUM_DRUMSET_CONFIG 73
+#define NUM_DRUMSET_CONFIG 71
 
 // SEQUENCER
 
@@ -140,6 +140,12 @@
 #ifdef USE_EPIANO
 #define NUM_EPIANO_VOICES 16
 #define DEFAULT_EP_MIDI_CHANNEL 3
+#endif
+
+// MICROSYNTH
+#define USE_MICROSYNTH
+#ifdef USE_MICROSYNTH
+#define NUM_MICROSYNTH 2 
 #endif
 
 // CHORUS parameters
@@ -213,7 +219,7 @@
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
 
-#define RED     0xF9A7
+#define RED     0xF000
 #define PINK    0xF81F
 #define YELLOW  0xFFEB
 
@@ -265,8 +271,7 @@
 #define SDCARD_TEENSY_SCK_PIN   13
 #endif
 
-//#define FlashChipSelect 6  // digital pin for flash chip CS pin (on Audio Shield)
-const int FlashChipSelect = 6;
+const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Shield)
 
 // Encoder with button
 //#define ENCODER_USE_INTERRUPTS
@@ -312,6 +317,7 @@ const int FlashChipSelect = 6;
 #define VOICE_CONFIG_NAME "voice"
 #define SYS_CONFIG_NAME "sys"
 #define EPIANO_CONFIG_NAME "epiano"
+#define MICROSYNTH_CONFIG_NAME "msynth"
 
 #define MAX_PERF_MOD 30
 
@@ -572,27 +578,13 @@ const int FlashChipSelect = 6;
 #define SOFT_MIDI_THRU_MAX 1
 #define SOFT_MIDI_THRU_DEFAULT 1
 
-#define VELOCITY_LEVEL_MIN 100
+#define VELOCITY_LEVEL_MIN 50
 #define VELOCITY_LEVEL_MAX 127
 #define VELOCITY_LEVEL_DEFAULT 100
 
 #define PERFORMANCE_NUM_MIN 0
 #define PERFORMANCE_NUM_MAX 99
 #define PERFORMANCE_NUM_DEFAULT 0
-
-/*
-  #define VOICE_CONFIG_MIN 0
-  #define VOICE_CONFIG_MAX 99
-  #define VOICE_CONFIG_DEFAULT -1
-
-  #define DRUMS_CONFIG_MIN 0
-  #define DRUMS_CONFIG_MAX 99
-  #define DRUMS_CONFIG_DEFAULT 0
-
-  #define SEQUENCE_CONFIG_MIN 0
-  #define SEQUENCE_CONFIG_MAX 99
-  #define SEQUENCE_CONFIG_DEFAULT 0
-*/
 
 #define EQ_1_MIN 15
 #define EQ_1_MAX 250
@@ -741,6 +733,11 @@ const int FlashChipSelect = 6;
 
 #define VOLUME_MULTIPLIER 1.4
 
+//Microsynth
+#define MS_SOUND_INTENSITY_MIN 0
+#define MS_SOUND_INTENSITY_MAX 100
+#define MS_SOUND_INTENSITY_DEFAULT 50
+
 // Buffer-size define for load/save configuration as JSON
 #define JSON_BUFFER_SIZE 8192
 
@@ -833,13 +830,51 @@ typedef struct epiano_s {
   uint8_t midi_channel;
 } epiano_t;
 
+typedef struct microsynth_s
+{
+  int coarse;
+  int detune;
+  bool trigger_noise_with_osc;
+  uint8_t pan;
+  uint8_t wave;
+  uint8_t midi_channel;
+  uint8_t sound_intensity;
+  uint8_t env_attack;
+  uint8_t env_decay;
+  uint8_t env_sustain;
+  uint8_t env_release;
+  uint8_t filter_osc_mode;
+  uint16_t filter_osc_freq_from;
+  uint16_t filter_osc_freq_to;
+  uint16_t filter_osc_freq_current;
+  uint16_t filter_osc_speed;
+  uint8_t filter_osc_resonance;
+  uint8_t noise_vol;
+  uint8_t noise_decay;
+  uint8_t filter_noise_mode;
+  uint16_t filter_noise_freq_from;
+  uint16_t filter_noise_freq_to;
+  uint16_t filter_noise_freq_current;
+  uint16_t filter_noise_speed;
+  uint8_t filter_noise_resonance; 
+  uint16_t pwm_from;
+  uint16_t pwm_to;
+  uint8_t pwm_speed;
+  uint16_t pwm_current;
+  uint16_t pwm_last_displayed;
+  uint8_t rev_send;
+  uint8_t chorus_send;
+  uint8_t delay_send;
+} microsynth_t;
+
 typedef struct sys_s {
   uint8_t vol;
   uint8_t mono;
   uint8_t soft_midi_thru;
   uint8_t performance_number;
   uint8_t favorites;
-  uint8_t load_at_startup;
+  uint8_t load_at_startup_performance;
+  uint8_t load_at_startup_page;
 } sys_t;
 
 typedef struct configuration_s {
@@ -855,14 +890,16 @@ enum master_mixer_ports {
   MASTER_MIX_CH_DEXED1,
   MASTER_MIX_CH_REVERB,
   MASTER_MIX_CH_DRUMS,
-  MASTER_MIX_CH_EPIANO
+  MASTER_MIX_CH_MICROSYNTH,
+  MASTER_MIX_CH_EPIANO,
 };
 
 enum reverb_mixer_ports {
   REVERB_MIX_CH_DEXED2,
   REVERB_MIX_CH_DEXED1,
   REVERB_MIX_CH_DRUMS,
-  REVERB_MIX_CH_EPIANO
+  REVERB_MIX_CH_MICROSYNTH,
+  REVERB_MIX_CH_EPIANO,
 };
 
 #ifndef _MAPFLOAT

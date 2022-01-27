@@ -132,6 +132,11 @@ class Adafruit_GFX : public Print {
       setCursor(pos_x * CHAR_width, pos_y * CHAR_height);
     }
 
+    void setCursor_textGrid_large(uint8_t pos_x, uint8_t pos_y)
+    {
+      setCursor(pos_x * CHAR_width, pos_y * (CHAR_height + 1));
+    }
+
     void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str)
     {
       char tmp[STRING_BUFFER_SIZE];

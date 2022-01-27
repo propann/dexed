@@ -48,7 +48,9 @@ extern void check_configuration_performance(void);
 extern void check_configuration_fx(void);
 extern void check_configuration_epiano(void);
 extern void sequencer();
+extern void microsynth_update_settings(uint8_t instance_id);
 extern sequencer_t seq;
+extern microsynth_t microsynth[NUM_MICROSYNTH];
 #ifdef USE_SEQUENCER
 extern PeriodicTimer sequencer_timer;
 #endif
@@ -924,6 +926,180 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 }
 
 /******************************************************************************
+   SD MICROSYNTH
+ ******************************************************************************/
+bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
+{
+  char filename[CONFIG_FILENAME_LEN];
+
+  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+
+    sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      Serial.print(F("Found micro synth configuration ["));
+      Serial.print(filename);
+      Serial.println(F("]... loading..."));
+#endif
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+
+        json.close();
+        AudioInterrupts();
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+        Serial.println(F("Read JSON data:"));
+        serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+        microsynth[instance_id].sound_intensity = data_json["sound_intensity"];
+        microsynth[instance_id].wave = data_json["wave"];
+        microsynth[instance_id].coarse = data_json["coarse"];
+        microsynth[instance_id].detune = data_json["detune"];
+        microsynth[instance_id].trigger_noise_with_osc = data_json["trigger_noise_with_osc"];
+        microsynth[instance_id].env_attack = data_json["env_attack"];
+        microsynth[instance_id].env_decay = data_json["env_decay"];
+        microsynth[instance_id].env_sustain = data_json["env_sustain"];
+        microsynth[instance_id].env_release = data_json["env_release"];
+        microsynth[instance_id].filter_osc_mode = data_json["filter_osc_mode"];
+        microsynth[instance_id].filter_osc_freq_from = data_json["filter_osc_freq_from"];
+        microsynth[instance_id].filter_osc_freq_to = data_json["filter_osc_freq_to"];
+        microsynth[instance_id].filter_osc_speed = data_json["filter_osc_speed"];
+        microsynth[instance_id].filter_osc_resonance = data_json["filter_osc_resonance"];
+        microsynth[instance_id].noise_vol = data_json["noise_vol"];
+        microsynth[instance_id].noise_decay = data_json["noise_decay"];
+        microsynth[instance_id].filter_noise_freq_from = data_json["filter_noise_freq_from"];
+        microsynth[instance_id].filter_noise_freq_to = data_json["filter_noise_freq_to"];
+        microsynth[instance_id].filter_noise_speed = data_json["filter_noise_speed"];
+        microsynth[instance_id].pwm_from = data_json["pwm_from"];
+        microsynth[instance_id].pwm_to = data_json["pwm_to"];
+        microsynth[instance_id].pwm_speed = data_json["pwm_speed"];
+        microsynth[instance_id].rev_send = data_json["rev_send"];
+        microsynth[instance_id].chorus_send = data_json["chorus_send"];
+        microsynth[instance_id].delay_send = data_json["delay_send"];
+        microsynth[instance_id].midi_channel = data_json["midi_channel"];
+        microsynth[instance_id].pan = data_json["pan"];
+
+        microsynth_update_settings(instance_id);
+
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E : Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
+{
+  char filename[CONFIG_FILENAME_LEN];
+
+  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
+
+#ifdef DEBUG
+    Serial.print(F("Saving microsynth config "));
+    Serial.print(ms);
+    Serial.print(F("["));
+    Serial.print(instance_id);
+    Serial.print(F("]"));
+    Serial.print(F(" to "));
+    Serial.println(filename);
+#endif
+
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      data_json["sound_intensity"] = microsynth[instance_id].sound_intensity;
+      data_json["wave"] = microsynth[instance_id].wave;
+      data_json["coarse"] = microsynth[instance_id].coarse;
+      data_json["detune"] = microsynth[instance_id].detune;
+      data_json["trigger_noise_with_osc"] = microsynth[instance_id].trigger_noise_with_osc;
+      data_json["env_attack"] = microsynth[instance_id].env_attack;
+      data_json["env_decay"] = microsynth[instance_id].env_decay;
+      data_json["env_sustain"] = microsynth[instance_id].env_sustain;
+      data_json["env_release"] = microsynth[instance_id].env_release;
+      data_json["filter_osc_mode"] = microsynth[instance_id].filter_osc_mode;
+      data_json["filter_osc_freq_from"] = microsynth[instance_id].filter_osc_freq_from;
+      data_json["filter_osc_freq_to"] = microsynth[instance_id].filter_osc_freq_to;
+      data_json["filter_osc_speed"] = microsynth[instance_id].filter_osc_speed;
+      data_json["filter_osc_resonance"] = microsynth[instance_id].filter_osc_resonance;
+      data_json["noise_vol"] = microsynth[instance_id].noise_vol;
+      data_json["noise_decay"] =  microsynth[instance_id].noise_decay;
+      data_json["filter_noise_freq_from"] = microsynth[instance_id].filter_noise_freq_from;
+      data_json["filter_noise_freq_to"] = microsynth[instance_id].filter_noise_freq_to;
+      data_json["filter_noise_speed"] = microsynth[instance_id].filter_noise_speed;
+      data_json["pwm_from"] = microsynth[instance_id].pwm_from;
+      data_json["pwm_to"] = microsynth[instance_id].pwm_to;
+      data_json["pwm_speed"] = microsynth[instance_id].pwm_speed;
+      data_json["rev_send"] = microsynth[instance_id].rev_send;
+      data_json["chorus_send"] = microsynth[instance_id].chorus_send;
+      data_json["delay_send"] = microsynth[instance_id].delay_send;
+      data_json["midi_channel"] = microsynth[instance_id].midi_channel;
+      data_json["pan"] = microsynth[instance_id].pan;
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+      Serial.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      Serial.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+/******************************************************************************
    SD FX
  ******************************************************************************/
 bool load_sd_fx_json(uint8_t number)
@@ -1301,7 +1477,8 @@ bool load_sd_sys_json(void)
         configuration.sys.soft_midi_thru = data_json["soft_midi_thru"];
         configuration.sys.performance_number = data_json["performance_number"];
         configuration.sys.favorites = data_json["favorites"];
-        configuration.sys.load_at_startup = data_json["load_at_startup"];
+        configuration.sys.load_at_startup_performance = data_json["load_at_startup_performance"];
+        configuration.sys.load_at_startup_page = data_json["load_at_startup_page"];
 
         check_configuration_sys();
         set_sys_params();
@@ -1355,7 +1532,8 @@ bool save_sd_sys_json(void)
       data_json["soft_midi_thru"] = configuration.sys.soft_midi_thru;
       data_json["performance_number"] = configuration.sys.performance_number;
       data_json["favorites"] = configuration.sys.favorites;
-      data_json["load_at_startup"] = configuration.sys.load_at_startup;
+      data_json["load_at_startup_performance"] = configuration.sys.load_at_startup_performance;
+      data_json["load_at_startup_page"] = configuration.sys.load_at_startup_page;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
@@ -1842,6 +2020,7 @@ bool save_sd_performance_json(uint8_t number)
     Serial.print(F("Write Voice-Config for sequencer"));
     Serial.println(filename);
 #endif
+    save_sd_microsynth_json(number, i);
     save_sd_voiceconfig_json(number, i);
   }
   if (sd_card > 0)
@@ -1867,7 +2046,7 @@ bool save_sd_performance_json(uint8_t number)
       data_json["arp_lenght"] = seq.arp_lenght;
       data_json["arp_volume_fade"] = seq.arp_volume_fade;
       data_json["arp_style"] = seq.arp_style;
-      data_json["seq_chord_velocity"] = seq.chord_velocity;
+      data_json["seq_chord_vel"] = seq.chord_vel;
       data_json["seq_chord_dexed_inst"] = seq.chord_dexed_inst;
       data_json["seq_transpose"] = seq.transpose;
       data_json["chord_key_ammount"] = seq.chord_key_ammount;
@@ -2234,13 +2413,13 @@ bool load_sd_performance_json(uint8_t number)
         seq.arp_lenght = data_json["arp_lenght"];
         seq.arp_volume_fade = data_json["arp_volume_fade"];
         seq.arp_style = data_json["arp_style"];
-        seq.chord_velocity = data_json["seq_chord_velocity"];
+        seq.chord_vel = data_json["seq_chord_vel"];
         seq.chord_dexed_inst = data_json["seq_chord_dexed_inst"] ;
         seq.transpose = data_json["seq_transpose"];
         seq.chord_key_ammount = data_json["chord_key_ammount"];
         seq.oct_shift = data_json["seq_oct_shift"];
         seq.element_shift = data_json["seq_element_shift"];
-        
+
         if (data_json["COLOR_SYSTEXT"] != data_json["COLOR_BACKGROUND"])
         {
           COLOR_SYSTEXT = data_json["COLOR_SYSTEXT"];
@@ -2251,7 +2430,7 @@ bool load_sd_performance_json(uint8_t number)
           COLOR_DRUMS = data_json["COLOR_DRUMS"];
           COLOR_PITCHSMP = data_json["COLOR_PITCHSMP"];
         }
-        
+
         for (uint8_t instance_id = 0;  instance_id < NUM_DEXED; instance_id++)
         {
 #ifdef DEBUG
@@ -2259,6 +2438,7 @@ bool load_sd_performance_json(uint8_t number)
           Serial.print(instance_id + 1);
           Serial.print(F(" for sequencer"));
 #endif
+          load_sd_microsynth_json(number, instance_id);
           load_sd_voiceconfig_json(number, instance_id);
           load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
           MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));

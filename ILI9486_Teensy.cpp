@@ -173,7 +173,7 @@ void ILI9486_Teensy::drawPixel(int16_t x, int16_t y, uint16_t color)
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
-   delayMicroseconds(20); //necessary to avoid random pixels in remote console phtodo
+   delayMicroseconds(20); //necessary to avoid random pixels in remote console
 #endif
 
   setAddrWindow(x, y, x + 1, y + 1);
@@ -288,7 +288,7 @@ void ILI9486_Teensy::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
-  delayMicroseconds(20); //necessary to avoid random pixels in remote console   phtodo
+  delayMicroseconds(20); //necessary to avoid random pixels in remote console
 #endif
 
   setAddrWindow(x, y, x + w - 1, y + h - 1);
