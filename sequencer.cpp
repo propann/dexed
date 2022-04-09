@@ -26,7 +26,9 @@
 #include "sequencer.h"
 #include <LCDMenuLib2.h>
 #include "synth_dexed.h"
-extern ILI9486_Teensy display;
+#include "ILI9341_t3n.h"
+
+extern ILI9341_t3n display;
 extern LCDMenuLib2 LCDML;
 extern config_t configuration;
 extern uint8_t drum_midi_channel;
@@ -45,8 +47,10 @@ boolean interrupt_swapper = false;
 extern void helptext_l (const char *str);
 extern void helptext_r (const char *str);
 extern AudioSynthDexed*  MicroDexed[NUM_DEXED];
-extern elapsedMillis midi_decay_timer;
-extern int8_t midi_decay[NUM_DEXED];
+extern elapsedMillis midi_decay_timer_dexed;
+extern elapsedMillis midi_decay_timer_microsynth;
+extern int8_t midi_decay_dexed[NUM_DEXED];
+extern int8_t midi_decay_microsynth[NUM_MICROSYNTH];
 
 extern void UI_func_microsynth(uint8_t param);
 extern AudioSynthWaveform       microsynth_waveform[NUM_MICROSYNTH];
@@ -55,6 +59,7 @@ extern AudioSynthNoisePink      microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope      microsynth_envelope_noise[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
+extern elapsedMillis microsynth_lfo_delay_timer[2];
 
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 extern uint16_t COLOR_SYSTEXT;
@@ -62,8 +67,10 @@ extern uint16_t COLOR_SYSTEXT_ACCENT;
 extern uint16_t COLOR_BACKGROUND;
 extern uint16_t COLOR_INSTR;
 extern uint16_t COLOR_CHORDS;
+extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
+extern void setCursor_textGrid_mini(uint8_t pos_x, uint8_t pos_y);
 sequencer_t seq;
 
 microsynth_t microsynth[2];
@@ -149,78 +156,9 @@ uint8_t find_longest_chain()
   return longest;
 }
 
-void play_microsynth_note(uint8_t sel_inst, float freq, bool noise_only)
-{
-
-  if (noise_only)
-  {
-    microsynth_noise[sel_inst].amplitude(microsynth[sel_inst].noise_vol / 100.1);
-    microsynth_envelope_noise[sel_inst].noteOn();
-    microsynth_waveform[sel_inst].amplitude(0);
-
-  }
-  else
-  {
-    if (microsynth[sel_inst].trigger_noise_with_osc)
-    {
-      microsynth_noise[sel_inst].amplitude(microsynth[sel_inst].noise_vol / 100.1);
-      microsynth_envelope_noise[sel_inst].noteOn();
-    }
-    else
-      microsynth_noise[sel_inst].amplitude(0.0f);
-
-  }
-  if (microsynth[sel_inst].wave == 4 || microsynth[sel_inst].wave == 7)
-  {
-    microsynth_waveform[sel_inst].pulseWidth(microsynth[sel_inst].pwm_from / 2000.1);
-    microsynth[sel_inst].pwm_current = microsynth[sel_inst].pwm_from;
-  }
-  microsynth_filter_osc[sel_inst].frequency(microsynth[sel_inst].filter_osc_freq_from);
-  microsynth[sel_inst].filter_osc_freq_current = microsynth[sel_inst].filter_osc_freq_from;
-  microsynth_filter_noise[sel_inst].frequency(microsynth[sel_inst].filter_noise_freq_from);
-  microsynth[sel_inst].filter_noise_freq_current = microsynth[sel_inst].filter_noise_freq_from;
-  microsynth_waveform[sel_inst].frequency(freq);
-  microsynth_waveform[sel_inst].amplitude( mapfloat(microsynth[sel_inst].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
-  microsynth_envelope_osc[sel_inst].noteOn();
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-  {
-    // midi_decay_timer = 0;
-    midi_decay[sel_inst] = min(microsynth[sel_inst].sound_intensity / 5, 7);
-  }
-
-}
-
-void seq_play_arp_note(uint8_t sel_inst, float freq)
-{
-  if ( freq > 60 && freq < 4900 ) // it is stange but if this filter is removed, audio/speakers might get killed instantly. I spend hours to fix this but no idea so far.
-    // Usable range is much more than enough for arpeggios anyway - so no critical issue.
-  {
-    seq.arp_volume_fade = seq.arp_volume_base - ( (seq.arp_volume_base / seq.arp_num_notes_max) * seq.arp_num_notes_count );
-    if (microsynth[sel_inst].wave == 4 || microsynth[sel_inst].wave == 7)
-    {
-      microsynth_waveform[sel_inst].pulseWidth(microsynth[sel_inst].pwm_from / 2000.1);
-      microsynth[sel_inst].pwm_current = microsynth[sel_inst].pwm_from;
-    }
-    if (microsynth[sel_inst].trigger_noise_with_osc)
-    {
-      microsynth_noise[sel_inst].amplitude(microsynth[sel_inst].noise_vol / 100.1);
-      microsynth_envelope_noise[sel_inst].noteOn();
-    }
-    microsynth_waveform[sel_inst].frequency(freq);
-    microsynth_waveform[sel_inst].amplitude( seq.arp_volume_fade);
-    microsynth_envelope_osc[sel_inst].noteOn();
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-    {
-      //  midi_decay_timer = 0;
-      midi_decay[sel_inst] = min(microsynth[sel_inst].sound_intensity / 5, 7);
-    }
-  }
-
-}
-
 void sequencer_part1(void)
 {
-  seq_live_recording();
+  //seq_live_recording();
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     int tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
@@ -261,10 +199,7 @@ void sequencer_part1(void)
                 handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
               else if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned for Microsynth
               {
-                if (   seq.note_data[  seq.current_pattern[d] ][seq.step] == MIDI_C8 ) // noise only
-                  play_microsynth_note(seq.inst_dexed[d] - 3, 0, true);
-                else
-                  play_microsynth_note(seq.inst_dexed[d] - 3, tune_frequencies2_PGM[ seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + microsynth[seq.inst_dexed[d] - 3].coarse ], false);
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , 90 );
               }
               seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  ;
               seq.prev_vel[d] = seq.vel[  seq.current_pattern[d] ][seq.step];
@@ -310,8 +245,8 @@ void sequencer_part1(void)
             { //arp up
               if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
               {
-                seq_play_arp_note( seq.inst_dexed[d] - 3, tune_frequencies2_PGM[ seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] + microsynth[seq.inst_dexed[d] - 3].coarse] );
-
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] , 90 );
+                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
                 if (seq.arp_speed > 1)
                 {
                   seq.arp_step++;
@@ -332,7 +267,7 @@ void sequencer_part1(void)
               if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
               {
 
-                seq_play_arp_note( seq.inst_dexed[d] - 3, tune_frequencies2_PGM[ seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] + microsynth[seq.inst_dexed[d] - 3].coarse]);
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] , 90);
 
                 if (seq.arp_speed > 1)
                 {
@@ -357,7 +292,7 @@ void sequencer_part1(void)
                 if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
                 {
 
-                  seq_play_arp_note( seq.inst_dexed[d] - 3, tune_frequencies2_PGM[ seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] + microsynth[seq.inst_dexed[d] - 3].coarse]);
+                  handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] , 90);
 
                   if (seq.arp_speed > 1)
                   {
@@ -377,7 +312,7 @@ void sequencer_part1(void)
                 if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4 ) // track is assigned to Microsynth
                 {
 
-                  seq_play_arp_note( seq.inst_dexed[d] - 3,  tune_frequencies2_PGM[ seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] + microsynth[seq.inst_dexed[d] - 3].coarse]);
+                  handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,   seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] , 90);
 
                   if (seq.arp_speed > 1)
                   {
@@ -398,7 +333,7 @@ void sequencer_part1(void)
               uint8_t rnd1 = random(seq.arp_lenght);
               if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
               {
-                seq_play_arp_note( seq.inst_dexed[d] - 3, tune_frequencies2_PGM[ seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12) + microsynth[seq.inst_dexed[d] - 3].coarse]);
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12) , 90);
 
                 if (seq.arp_speed > 1)
                 {
@@ -471,7 +406,7 @@ void sequencer_part1(void)
 
         if (seq.loop_end == 99) // no loop set
         {
-          if (seq.current_song_step == get_song_length() )
+          if (seq.current_song_step >= get_song_length() )
           {
             seq.current_song_step = 0;
             seq.chain_counter[d] = 0;
@@ -479,13 +414,35 @@ void sequencer_part1(void)
         }
         else
         {
-          if (seq.current_song_step == seq.loop_end + 1 )
+          if (seq.loop_start == seq.loop_end && seq.current_song_step > seq.loop_start) //loop only a single step
           {
             seq.current_song_step = seq.loop_start;
             seq.chain_counter[d] = 0;
           }
-        }
 
+          // if loop is on and changed during playback and new loop values are lower than current playing range, get back into the new loop range
+          else  if (seq.loop_start > seq.loop_end && seq.current_song_step == seq.loop_start + 1) //start is higher than end - > loop around
+          {
+            seq.current_song_step = 0;
+            seq.chain_counter[d] = 0;
+          }
+          else if (seq.loop_start > seq.loop_end && seq.current_song_step == seq.loop_end + 1 && seq.loop_start != seq.loop_end + 1) //end is lower than start, jump to start at end
+          {
+            seq.current_song_step = seq.loop_start;
+            seq.chain_counter[d] = 0;
+          }
+          else if (seq.loop_start < seq.loop_end && seq.current_song_step >= seq.loop_end + 1  ) //normal case, loop from end to start
+          {
+            seq.current_song_step = seq.loop_start;
+            seq.chain_counter[d] = 0;
+          }
+
+          else if (seq.current_song_step >= get_song_length()  && seq.current_song_step > seq.loop_start && seq.current_song_step > seq.loop_end)
+          {
+            seq.current_song_step = 0;
+            seq.chain_counter[d] = 0;
+          }
+        }
         if ( seq.chain_counter[d]  == find_longest_chain() && songstep_increased == false )
         {
           seq.current_song_step++;
@@ -503,7 +460,7 @@ void sequencer_part1(void)
 
 void sequencer_part2(void)
 {
-  seq_live_recording();
+  //seq_live_recording();
 
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
@@ -518,11 +475,7 @@ void sequencer_part2(void)
           else if (seq.inst_dexed[d] == 2 && seq.ticks == 7)  //epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] , 0);
           else if (seq.inst_dexed[d] > 2 )
-          {
-            microsynth_envelope_osc[seq.inst_dexed[d] - 3].noteOff(); // else microsynth 0 or 1 (inst-dexed 3+4)
-            microsynth_envelope_noise[seq.inst_dexed[d] - 3].noteOff();
-          }
-
+            handleNoteOff( microsynth[ seq.inst_dexed[d] - 3].midi_channel, seq.prev_note[d], 0);
 
           seq.noteoffsent[d] = true;
         }
@@ -547,12 +500,7 @@ void sequencer_part2(void)
           else if (seq.inst_dexed[d] == 2 && seq.ticks == 7)  //epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.arp_note_prev, 0);
           else if (seq.inst_dexed[d] > 2  ) // track is assigned to Microsynth
-          {
-            //    microsynth_envelope_osc[seq.inst_dexed[d] - 3].noteOff();
-            //    microsynth_envelope_noise[seq.inst_dexed[d] - 3].noteOff();
-            //    microsynth_waveform[seq.inst_dexed[d] - 3].amplitude( 0);
-
-          }
+            handleNoteOff( microsynth[ seq.inst_dexed[d] - 3].midi_channel, seq.arp_note_prev, 0);
 
           seq.noteoffsent[d] = true;
         }
@@ -561,25 +509,11 @@ void sequencer_part2(void)
   }
 }
 
-
-void sequencer(void)
-{ // Runs in Interrupt Timer. Switches between the Noteon and Noteoff Task, each cycle
-
-  interrupt_swapper = !interrupt_swapper;
-
-  if (seq.running)
+void update_microsynth_params()
+{
+  for (uint8_t d = 0; d < 2; d++)
   {
-    if (interrupt_swapper) sequencer_part1();
-    else sequencer_part2();
-
-
-    seq.ticks++;
-    if (seq.ticks > 7)
-      seq.ticks = 0;
-    //if (seq.ticks > 15)
-
-
-    for (uint8_t d = 0; d < 2; d++)
+    if ( microsynth_envelope_osc[d].isActive() )  //pwm down
     {
       if  (microsynth[d].pwm_from > microsynth[d].pwm_to)
       {
@@ -593,7 +527,7 @@ void sequencer(void)
         }
       } else
       {
-        if (microsynth[d].pwm_current < microsynth[d].pwm_to)
+        if (microsynth[d].pwm_current < microsynth[d].pwm_to)  //pwm up
         {
           if (microsynth[d].pwm_current + microsynth[d].pwm_speed <= 2000)
             microsynth[d].pwm_current = microsynth[d].pwm_current + microsynth[d].pwm_speed;
@@ -602,12 +536,12 @@ void sequencer(void)
           microsynth_waveform[d].pulseWidth(microsynth[d].pwm_current / 2000.1);
         }
       }
-      if  (microsynth[d].filter_osc_freq_from > microsynth[d].filter_osc_freq_to)
+      if  (microsynth[d].filter_osc_freq_from > microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0)
       {
-        if (microsynth[d].filter_osc_freq_current > microsynth[d].filter_osc_freq_to)
+        if (microsynth[d].filter_osc_freq_current > microsynth[d].filter_osc_freq_to)  //osc filter down
         {
-          if (microsynth[d].filter_osc_freq_current - microsynth[d].filter_osc_speed >= 0)
-            microsynth[d].filter_osc_freq_current = microsynth[d].filter_osc_freq_current - microsynth[d].filter_osc_speed;
+          if (int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001)))) >= 0)
+            microsynth[d].filter_osc_freq_current = int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001))));
           else
             microsynth[d].filter_osc_freq_current = 0;
 
@@ -615,8 +549,8 @@ void sequencer(void)
         }
       } else
       {
-        if (microsynth[d].filter_osc_freq_current < microsynth[d].filter_osc_freq_to)
-        {
+        if (microsynth[d].filter_osc_freq_current < microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0)
+        { //osc filter up
           if (microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed <= 15000)
             microsynth[d].filter_osc_freq_current = microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed;
           else
@@ -625,19 +559,19 @@ void sequencer(void)
         }
       }
 
-      if  (microsynth[d].filter_noise_freq_from > microsynth[d].filter_noise_freq_to)
+      if  (microsynth[d].filter_noise_freq_from > microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0)
       {
         if (microsynth[d].filter_noise_freq_current > microsynth[d].filter_noise_freq_to)
         {
-          if (microsynth[d].filter_noise_freq_current - microsynth[d].filter_noise_speed >= 0)
-            microsynth[d].filter_noise_freq_current = microsynth[d].filter_noise_freq_current - microsynth[d].filter_noise_speed;
+          if (int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001)))) >= 0)
+            microsynth[d].filter_noise_freq_current = int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001))));
           else
             microsynth[d].filter_noise_freq_current = 0;
           microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
         }
       } else
       {
-        if (microsynth[d].filter_noise_freq_current < microsynth[d].filter_noise_freq_to)
+        if (microsynth[d].filter_noise_freq_current < microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0)
         {
           if (microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed <= 15000)
             microsynth[d].filter_noise_freq_current = microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed;
@@ -645,35 +579,75 @@ void sequencer(void)
             microsynth[d].filter_noise_freq_current = 15000;
           microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
         }
+      }  //  --------------------------------------------------------- OSC LFO ----------------------------------------------------------------------
+
+      if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 0 )  // LFO U&D
+      {
+        if ( microsynth[d].lfo_direction == false && microsynth[d].lfo_value > microsynth[d].lfo_intensity * -1)
+          microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+
+        else if ( microsynth[d].lfo_direction == true && microsynth[d].lfo_value < microsynth[d].lfo_intensity )
+          microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
+
+        if ( microsynth[d].lfo_value <= microsynth[d].lfo_intensity * -1)  //switch mode 0 LFO direction
+          microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
+        else if (microsynth[d].lfo_mode == 0  && microsynth[d].lfo_value >= microsynth[d].lfo_intensity )
+          microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
+      }
+      else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 1 )  // LFO Up
+      {
+        if (  microsynth[d].lfo_value < microsynth[d].lfo_intensity * 10 )
+          microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
+      }
+      else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 2 )  // LFO Down
+      {
+        if ( microsynth[d].lfo_value > microsynth[d].lfo_intensity * -10)
+          microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+      }
+
+      //--------------------------------------------------------------------------- LFO FADE/DELAY ---------------------------------------------------------
+
+      if (microsynth[d].lfo_delay == 0 )  // no delay, instant lfo mod
+      {
+        microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + microsynth[d].lfo_value / 10);
+      }
+      else if ( (int)microsynth_lfo_delay_timer[d] / 10 > microsynth[d].lfo_delay && microsynth[d].lfo_fade == 0 ) //init lfo fade in
+      {
+        microsynth[d].lfo_fade = microsynth[d].lfo_delay;
+      }
+      if (microsynth[d].lfo_fade > 0   ) //fade in to max lfo intensity
+      {
+        if (microsynth[d].osc_freq_current + ( (microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10) )  ) > 20 &&
+            microsynth[d].osc_freq_current + ( (microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10) )  ) < 10000)
+          microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + ( (microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10) )  )  );
+        if (microsynth[d].lfo_fade > 1) //only count down to multiplier of 1, not 0
+          microsynth[d].lfo_fade = microsynth[d].lfo_fade - 1;
       }
     }
-
   }
-
 }
 
-void reset_tracker_edit_cache_single_track()
-{
-  memset(seq.tracker_data_cache[seq.selected_track], 254, 16);
-  memset(seq.tracker_names_cache[seq.selected_track], 254, 16);
-}
 
-void reset_tracker_edit_cache()
-{
-  memset(seq.tracker_data_cache, 254, sizeof(seq.tracker_data_cache));
-  memset(seq.tracker_names_cache, 254, sizeof(seq.tracker_names_cache));
-}
+void sequencer(void)
+{ // Runs in Interrupt Timer. Switches between the Noteon and Noteoff Task, each cycle
 
-void reset_tracker_edit_cache_current_step()
-{
-  for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)
+  interrupt_swapper = !interrupt_swapper;
+
+  if (seq.running)
   {
-    seq.tracker_data_cache[t][seq.tracker_active_step] = 254;
-    seq.tracker_names_cache[t][seq.tracker_active_step] = 254;
+    if (seq.ticks < 4)
+      seq_live_recording();
+
+    if (interrupt_swapper)
+      sequencer_part1();
+    else sequencer_part2();
+
+    seq.ticks++;
+    if (seq.ticks > 7)
+      seq.ticks = 0;
   }
+
 }
-
-
 
 void set_pattern_content_type_color(uint8_t pattern)
 {
@@ -681,8 +655,12 @@ void set_pattern_content_type_color(uint8_t pattern)
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
   else if (seq.content_type[pattern] == 1) //Instrument Pattern
     display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-  else if (seq.content_type[pattern] == 2 || seq.content_type[pattern] == 3) //  chord or arp pattern
+  else if (seq.content_type[pattern] == 2 ) //  chord  pattern
     display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  else if ( seq.content_type[pattern] == 3) //   arp pattern
+    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  else
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
 }
 
 int get_pattern_content_type_color(uint8_t pattern)
@@ -700,7 +678,17 @@ int get_pattern_content_type_color(uint8_t pattern)
 
 void seq_print_formatted_number (uint16_t number, uint8_t lenght)
 {
-  if (lenght == 3)
+  if (lenght == 4)
+  {
+    if (number < 10)
+      display.print("0");
+    if (number < 100)
+      display.print("0");
+    if (number < 1000)
+      display.print("0");
+    display.print(number);
+  }
+  else if (lenght == 3)
   {
     if (number < 10)
       display.print("0");
@@ -774,41 +762,40 @@ void print_chord_name (uint8_t currentstep)
   }
 }
 
-void seq_print_step_numbers(int xpos, int ypos)
-{
-  uint8_t buffer[35] = {10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-  uint8_t step = seq.step;
-  uint8_t yspacer = 18;
-  uint8_t count = 0;
-  while ( count < 12 )
-  {
-    display.setCursor(xpos, ypos + count * yspacer);
-    if (count == 6 )
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    else
-      display.setTextColor(GREEN, COLOR_BACKGROUND);
-    seq_print_formatted_number (buffer[step + count] , 2);
-    count++;
-  }
-}
+//void seq_print_step_numbers(int xpos, int ypos)
+//{
+//  uint8_t buffer[35] = {10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+//  uint8_t step = seq.step;
+//  uint8_t yspacer = CHAR_height_small+2;
+//  uint8_t count = 0;
+//  while ( count < 16 )
+//  {
+//    display.setCursor(xpos, ypos + count * yspacer);
+//    if (count == 6 )
+//      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//    else
+//      display.setTextColor(GREEN, COLOR_BACKGROUND);
+//    //seq_print_formatted_number (buffer[step + count] , 2);
+//    count++;
+//  }
+//}
 
 void update_keyboard_current_step ( int ypos, uint8_t octave, uint8_t current_step)
 {
-  uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
   // draw grid
   for (uint8_t y = 0; y < 34; y++)
   {
     display.fillRect(34 + current_step * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, COLOR_SYSTEXT); // active step
     if (current_step > 0)
     {
-      if (piano[y] == 0 ) // is a white key
+      if (seq.piano[y] == 0 ) // is a white key
         display.fillRect(34 - 7 + current_step * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY3); // GRID white key
       else
         display.fillRect(34 - 7 + current_step * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY4); // GRID black key
     }
     else if (current_step == 0)
     {
-      if (piano[y] == 0 ) // is a white key
+      if (seq.piano[y] == 0 ) // is a white key
         display.fillRect(34  + 63 * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY3); // GRID white key
       else
         display.fillRect(34  + 63 * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY4); // GRID black key
@@ -818,14 +805,16 @@ void update_keyboard_current_step ( int ypos, uint8_t octave, uint8_t current_st
 
 void print_keyboard ( int ypos, uint8_t octave)
 {
-  uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
   uint8_t offset[5] = {12, 12, 14, 12, 11 }; //+ is up
   int offcount = 0;
   uint8_t oct_count = 0;
+  uint8_t patternspacer = 0;
+  uint8_t barspacer = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
+
   //draw white keys
-  for (uint8_t y = 0; y < 20; y++)
+  for (uint8_t y = 0; y < 14; y++)
   {
     display.fillRect(0, ypos - CHAR_height - (y * 14 ), 30, 13, COLOR_SYSTEXT); // pianoroll white key
     if ( y == 0 || y == 7 || y == 14) {
@@ -835,9 +824,9 @@ void print_keyboard ( int ypos, uint8_t octave)
       oct_count++;
     }
   }
-  for (uint8_t y = 0; y < 33; y++)
+  for (uint8_t y = 0; y < 23; y++)
   {
-    if (piano[y] == 1)
+    if (seq.piano[y] == 1)
     {
       display.fillRect(0, ypos - (y * 8.15 ) - offset[offcount] , 12, 8, COLOR_BACKGROUND);  // BLACK key
       offcount++;
@@ -846,81 +835,86 @@ void print_keyboard ( int ypos, uint8_t octave)
   }
   // draw grid
 
-  for (uint8_t y = 0; y < 34; y++)
+  for (uint8_t y = 0; y < 24; y++)
   {
+    patternspacer = 0;
+    barspacer = 0;
     for (uint8_t x = 0; x < 64; x++)
     {
-      if (piano[y] == 0 ) // is a white key
-        display.fillRect(34 + x * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY3); // GRID white key
+      if (seq.piano[y] == 0 ) // is a white key
+        display.fillRect(40 + patternspacer + barspacer + x * 4 , ypos + 6 - CHAR_height - (y * 8.15 ), 3, 6, GREY3); // GRID white key
       else
-        display.fillRect(34 + x * 7 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY4); // GRID black key
+        display.fillRect(40 + patternspacer + barspacer + x * 4 , ypos + 6 - CHAR_height - (y * 8.15 ), 3, 6, GREY4); // GRID black key
+      if ( (x + 1) % 16 == 0)
+        patternspacer = patternspacer + 2;
+      if ( (x + 1) % 4 == 0)
+        barspacer = barspacer + 1;
     }
   }
 }
 
-void update_pianoroll (int xpos, int ypos, uint8_t track_number, uint8_t cur_step)
+void update_pianoroll ()
 {
-  //  uint8_t notes[64];
-  //  uint8_t lowest_note = 127;
-  //  int notes_display_shift = 0;
+  uint8_t notes[64];
+  uint8_t lowest_note = 127;
+  int notes_display_shift = 0;
+  uint8_t last_valid_note = 254;
+  uint8_t patternspacer = 0;
+  uint8_t barspacer = 0;
+  int8_t current_chain = 99;
+  int8_t pattern[4] =  { 99, 99, 99, 99 };
 
-  // SEQUENCER REWRITE
+  current_chain = seq.song[seq.active_track][0];  //so far only step 0 of chain is displayed
 
-  //  if (seq.patternchain[0][track_number] < NUM_SEQ_PATTERN && seq.patternchain[1][track_number] < NUM_SEQ_PATTERN
-  //      && seq.patternchain[2][track_number] < NUM_SEQ_PATTERN && seq.patternchain[3][track_number] < NUM_SEQ_PATTERN)
-  //  {
-  //    for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
-  //    {
-  //      notes[f] = seq.note_data[ seq.patternchain[0][track_number] ][f];
-  //      notes[f + 16] = seq.note_data[ seq.patternchain[1][track_number] ][f];
-  //      notes[f + 32] = seq.note_data[ seq.patternchain[2][track_number] ][f];
-  //      notes[f + 48] = seq.note_data[ seq.patternchain[3][track_number] ][f];
-  //    }
-  //
-  //
-  //    //find lowest note
-  //    for (uint8_t f = 0; f < 64; f++)
-  //    {
-  //      if (notes[f] < lowest_note && notes[f] > 0)
-  //      {
-  //        lowest_note = notes[f];
-  //      }
-  //    }
-  //    if (lowest_note == 127)
-  //      lowest_note = 24;
-  //    notes_display_shift = lowest_note % 12;
-  //    update_keyboard_current_step(ypos, lowest_note / 12 , cur_step);
-  //    if (cur_step - 1 >= 0)
-  //    {
-  //      if (notes[cur_step - 1] > 0)
-  //      {
-  //        if (notes[cur_step - 1] == 130)
-  //        {
-  //          display.fillRect ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, COLOR_PITCHSMP  );
-  //        }
-  //        else
-  //        {
-  //          display.fillRect  ( 34 + (cur_step - 1) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[cur_step - 1] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
-  //          seq.pianoroll_last_valid_note = notes[cur_step - 1];
-  //        }
-  //      }
-  //    }
-  //    else
-  //    {
-  //      if (notes[63] > 0)
-  //      {
-  //        if (notes[63] == 130)
-  //        {
-  //          display.fillRect ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.pianoroll_last_valid_note - lowest_note) ) , 5, 5, COLOR_PITCHSMP  );
-  //        }
-  //        else
-  //        {
-  //          display.fillRect  ( 34 + (63) * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[63] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
-  //          seq.pianoroll_last_valid_note = notes[63];
-  //        }
-  //      }
-  //    }
-  //  }
+  for (uint8_t d = 0; d < 4; d++)
+  {
+    pattern[d] = seq.chain[  current_chain ] [ d ];
+  }
+
+  for (uint8_t f = 0; f < 16; f++)  // Fill array with complete data from all chain parts of track
+  {
+    notes[f] = seq.note_data[ pattern[0] ][f];
+    notes[f + 16] = seq.note_data[ pattern[1]][f];
+    notes[f + 32] = seq.note_data[ pattern[2] ][f];
+    notes[f + 48] = seq.note_data[ pattern[3] ][f];
+  }
+  //find lowest note
+  for (uint8_t f = 0; f < 64; f++)
+  {
+    if (notes[f] < lowest_note && notes[f] > 0)
+    {
+      lowest_note = notes[f];
+    }
+  }
+  if (lowest_note > 120)
+    lowest_note = 24;
+  notes_display_shift = lowest_note % 12;
+
+  for (uint8_t xcount = 0; xcount < 64; xcount++)
+  {
+    if (notes[xcount] > 0)
+    {
+      if (notes[xcount] == 130)
+      {
+        if (seq.step * seq.chain_counter[seq.active_track] != xcount)
+          display.fillRect ( 40 + patternspacer + barspacer + xcount * 4, DISPLAY_HEIGHT - CHAR_height - 10 - (8.15 * notes_display_shift ) - (8.15 * (last_valid_note - lowest_note) ) , 3, 5, COLOR_PITCHSMP  );
+        else
+          display.fillRect ( 40 + patternspacer + barspacer + xcount * 4, DISPLAY_HEIGHT - CHAR_height - 10 - (8.15 * notes_display_shift ) - (8.15 * (last_valid_note - lowest_note) ) , 3, 5, RED  );
+      }
+      else
+      {
+        if (seq.step * seq.chain_counter[seq.active_track] != xcount)
+          display.fillRect  ( 40 + patternspacer + barspacer + xcount * 4, DISPLAY_HEIGHT - CHAR_height - 10 - (8.15 * notes_display_shift ) - (8.15 * (notes[xcount] - lowest_note) ) , 3, 5, GREY1  );
+        else
+          display.fillRect  ( 40 + patternspacer + barspacer + xcount * 4, DISPLAY_HEIGHT - CHAR_height - 10 - (8.15 * notes_display_shift ) - (8.15 * (notes[xcount] - lowest_note) ) , 3, 5, GREEN  );
+        last_valid_note = notes[xcount];
+      }
+    }
+    if ( (xcount + 1) % 16 == 0)
+      patternspacer = patternspacer + 2;
+    if ( (xcount + 1) % 4 == 0)
+      barspacer = barspacer + 1;
+  }
 }
 
 void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
@@ -929,13 +923,13 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
   uint8_t lowest_note = 127;
   int notes_display_shift = 0;
   uint8_t last_valid_note = 254;
+  uint8_t patternspacer = 0;
+  uint8_t barspacer = 0;
 
   //int8_t current_song_step=0;
   // int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0,0,0,0,0,0 };
   int8_t current_chain = 99;
   int8_t pattern[4] =  { 99, 99, 99, 99 };
-
-  // SEQUENCER REWRITE
 
   current_chain = seq.song[track_number][0];  //so far only step 0 of chain is displayed
 
@@ -944,7 +938,6 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
     pattern[d] = seq.chain[  current_chain ] [ d ];
   }
 
-  display.setTextSize(2);
   helptext_l("MOVE Y");
   helptext_r("MOVE X");
 
@@ -1005,18 +998,19 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
     {
       if (notes[xcount] == 130)
       {
-        display.fillRect ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_PITCHSMP  );
+        display.fillRect ( 40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift ) - (8.15 * (last_valid_note - lowest_note) ) , 3, 5, COLOR_PITCHSMP  );
       }
       else
       {
-        display.fillRect  ( 34 + xcount * 7,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (notes[xcount] - lowest_note) ) , 5, 5, GREY1  );
+        display.fillRect  ( 40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift ) - (8.15 * (notes[xcount] - lowest_note) ) , 3, 5, GREY1  );
         last_valid_note = notes[xcount];
       }
     }
+    if ( (xcount + 1) % 16 == 0)
+      patternspacer = patternspacer + 2;
+    if ( (xcount + 1) % 4 == 0)
+      barspacer = barspacer + 1;
   }
-
-  //  }
-
 }
 
 void seq_print_current_note_from_step(uint8_t step)
@@ -1048,173 +1042,21 @@ void seq_print_current_note_from_step(uint8_t step)
   }
 }
 
-void print_merged_pattern_for_editor(int xpos, int ypos, uint8_t track_number)
-{
 
-  // SEQUENCER REWRITE
 
-  //  uint8_t yspacer = 19;
-  //  uint8_t ycount = 0;
-  //  uint8_t yoffset = 0;
-  //  uint8_t cstep = 0;
-  //
-  //  for (uint8_t y = seq.scrollpos; y < seq.scrollpos + 12; y++) {
-  //
-  //    if (y >= 0 && y < 16)
-  //    {
-  //      yoffset = 0;
-  //      cstep = 0;
-  //    }
-  //    else if (y >= 16 && y < 32)
-  //    {
-  //      yoffset = 16;
-  //      cstep = 1;
-  //    }
-  //    else if (y >= 32 && y < 48)
-  //    {
-  //      yoffset = 32;
-  //      cstep = 2;
-  //    }
-  //    else if (y >= 48 && y < 64)
-  //    {
-  //      yoffset = 48;
-  //      cstep = 3;
-  //    }
-  //
-  //    display.setCursor(0, ypos + ycount * yspacer);
-  //    if (y % 16 == 0)
-  //      display.setTextColor(GREEN, COLOR_BACKGROUND);
-  //    else
-  //      display.setTextColor(DARKGREEN, COLOR_BACKGROUND);
-  //
-  //    if (seq.selected_track == 6 && y == seq.scrollpos + 6 + seq.cursor_scroll )
-  //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //
-  //
-  //    seq_print_formatted_number(y, 2);
-  //    set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
-  //
-  //    if (y == seq.scrollpos)
-  //    {
-  //      display.setTextSize(1);
-  //      display.setCursor_textGrid(7 + 6 * track_number, 4);
-  //      display.setCursor(display.getCursorX(), display.getCursorY() + 9);
-  //      set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
-  //      seq_print_formatted_number( seq.patternchain[cstep][track_number], 2);
-  //      display.setTextSize(2);
-  //    }
-  //
-  //    if (seq.selected_track == track_number && y == seq.scrollpos + 6 + seq.cursor_scroll)
-  //    {
-  //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //      seq.tracker_active_step = y - yoffset;
-  //    }
-  //    else
-  //      set_pattern_content_type_color( seq.patternchain[cstep][track_number] );
-  //
-  //    if (seq.tracker_names_cache[track_number][ycount] != seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0])
-  //    {
-  //      display.setCursor(xpos, ypos + ycount * yspacer);
-  //      display.print( seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0]);
-  //      seq.tracker_names_cache[track_number][ycount] = seq_find_shortname_in_track( y - yoffset , seq.patternchain[cstep][track_number] )[0];
-  //    }
-  //
-  //    if ( seq.tracker_data_cache[track_number][ycount] != seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] )
-  //    {
-  //      display.setCursor(xpos + 24, ypos + ycount * yspacer);
-  //      seq_print_formatted_number(  seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset] , 3);
-  //      seq.tracker_data_cache[track_number][ycount] = seq.note_data[ seq.patternchain[cstep][track_number] ][y - yoffset];
-  //    }
-  //
-  //    ycount++;
-  //  }
-  //
-
-}
-
-void print_merged_pattern_fast_play_only(int xpos, int ypos, uint8_t track_number)
-{
-
-  // SEQUENCER REWRITE
-
-  //  char names[48];
-  //  uint8_t data[48];
-  //  uint8_t step = seq.step;
-  //  uint8_t yspacer = 18;
-  //  uint8_t next_chain_step = 0;
-  //  uint8_t last_chain_step = 0;
-  //  if (seq.chain_active_step == 0)
-  //  {
-  //    next_chain_step = 1;
-  //    last_chain_step = 3;
-  //  }
-  //  else if (seq.chain_active_step == 1)
-  //  {
-  //    next_chain_step = 2;
-  //    last_chain_step = 0;
-  //  }
-  //  else if (seq.chain_active_step == 2)
-  //  {
-  //    next_chain_step = 3;
-  //    last_chain_step = 1;
-  //  }
-  //  else if (seq.chain_active_step == 3) {
-  //    next_chain_step = 0;
-  //    last_chain_step = 2;
-  //  }
-  //  display.setTextSize(1);
-  //  for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
-  //  {
-  //    display.setCursor_textGrid(7 + 6 * x, 4);
-  //    display.setCursor(display.getCursorX(), display.getCursorY() + 9);
-  //    set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][x] );
-  //    seq_print_formatted_number( seq.patternchain[seq.chain_active_step][x], 2);
-  //  }
-  //  display.setTextSize(2);
-  //  for (uint8_t f = 0; f < 16; f++)
-  //  {
-  //    names[f] = seq_find_shortname_in_track( f , seq.patternchain[last_chain_step][track_number] )[0];
-  //    names[f + 16] = seq_find_shortname_in_track( f , seq.patternchain[seq.chain_active_step][track_number] )[0];
-  //    names[f + 32] = seq_find_shortname_in_track( f , seq.patternchain[next_chain_step][track_number] )[0];
-  //    data[f] = seq.note_data[ seq.patternchain[last_chain_step][track_number] ][f];
-  //    data[f + 16] = seq.note_data[ seq.patternchain[seq.chain_active_step][track_number] ][f];
-  //    data[f + 32] = seq.note_data[ seq.patternchain[next_chain_step][track_number] ][f];
-  //  }
-  //  for (uint8_t ycount = 0; ycount < 12; ycount++)
-  //  {
-  //    if ( ycount == 6)
-  //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //    else
-  //      set_pattern_content_type_color( seq.patternchain[seq.chain_active_step][track_number] );
-  //    {
-  //      if (seq.tracker_names_cache[ track_number ][ycount  ] != names[ycount + step + 10 ])
-  //      {
-  //        display.setCursor(xpos, ypos + ycount * yspacer);
-  //        display.print( names[ycount + step + 10] );
-  //        seq.tracker_names_cache[ track_number ][ycount  ] = names[ycount + step + 10 ];
-  //      }
-  //      if  (seq.tracker_data_cache[ track_number ][ycount  ] != data[ycount + step + 10] )
-  //      {
-  //        display.setCursor(xpos + 24, ypos + ycount * yspacer);
-  //        seq_print_formatted_number( data[ycount + step + 10], 3);
-  //        seq.tracker_data_cache[ track_number ][ycount  ] = data[ycount + step + 10 ];
-  //      }
-  //    }
-  //  }
-}
 
 void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, bool fullredraw)
 {
-  uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
   uint8_t offset[5] = {12, 12, 14, 12, 11 }; //+ is up
   int offcount = 0;
   uint8_t oct_count = 0;
   uint8_t to_step = 16;
-  if (fullredraw || seq.pianoroll_octave != octave) {
+  if (fullredraw || seq.pianoroll_octave != octave)
+  {
     seq.pianoroll_octave = octave;
     display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     //draw white keys
-    for (uint8_t y = 0; y < 15; y++)
+    for (uint8_t y = 0; y < 11; y++)
     {
       display.fillRect(xpos, ypos - CHAR_height - (y * 14 ), 30, 13, COLOR_SYSTEXT); // pianoroll white key
       if ( y == 0 || y == 7 || y == 14) {
@@ -1223,9 +1065,9 @@ void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, 
         oct_count++;
       }
     }
-    for (uint8_t y = 0; y < 26; y++)
+    for (uint8_t y = 0; y < 20; y++) // draw BLACK keys
     {
-      if (piano[y] == 1)
+      if (seq.piano[y] == 1)
       {
         display.fillRect(xpos, ypos - (y * 8.15 ) - offset[offcount] , 12, 8, COLOR_BACKGROUND);  // BLACK key
         offcount++;
@@ -1239,11 +1081,11 @@ void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, 
       to_step = actstep + 1;
   }
   // draw grid
-  for (uint8_t y = 0; y < 26; y++)
+  for (uint8_t y = 0; y < 19; y++)
   {
     for (uint8_t x = 0; x < to_step; x++)
     {
-      if (piano[y] == 0 ) // is a white key
+      if (seq.piano[y] == 0 ) // is a white key
         display.fillRect(xpos + 36 + x * 10 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY3); // GRID white key
       else
         display.fillRect(xpos + 36 + x * 10 , ypos + 6 - CHAR_height  - (y * 8.15 ), 5, 6, GREY4); // GRID black key
@@ -1251,7 +1093,7 @@ void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, 
   }
 }
 
-void print_single_pattern_pianoroll (int xpos, int ypos, uint8_t pattern,  uint8_t actstep, bool fullredraw)
+void print_single_pattern_pianoroll_in_pattern_editor (int xpos, int ypos, uint8_t pattern,  uint8_t actstep, bool fullredraw)
 {
   uint8_t lowest_note = 128;
   int notes_display_shift = 0;
@@ -1275,22 +1117,37 @@ void print_single_pattern_pianoroll (int xpos, int ypos, uint8_t pattern,  uint8
   display.setTextColor(COLOR_SYSTEXT);
   for (from_step = 0; from_step < to_step; from_step++)
   {
-    if (seq.note_data[pattern][from_step] > 0 &&  (ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note))) > 5 * CHAR_height + 10 )
+    // if ( (ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note))) > 5 * CHAR_height + 10 )
+    // {
+
+    if ( seq.note_data[pattern][from_step] != 0 && seq.note_data[pattern][from_step]  != 130)
     {
-      if (seq.note_data[pattern][from_step] == 130)
-      {
-        if (actstep == from_step)
-          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
-        else
-          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREEN  );
-      }
+      if (from_step == actstep)
+        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
       else
+        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_INSTR  );
+      last_valid_note = seq.note_data[pattern][from_step];
+    }
+    else if ( seq.note_data[pattern][from_step]  == 130) //last valid note was latch
+    {
+      if (from_step == actstep)
+        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * ( last_valid_note  - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
+      else
+        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * ( last_valid_note  - lowest_note) ) , 5, 5, GREEN  );
+    }
+    else if (  from_step == actstep)
+    {
+      // if (last_valid_note != 0)
+      display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_SYSTEXT );
+    }
+    if (from_step < 15 )
+    {
+      if ( seq.note_data[pattern][from_step + 1] == 0)
       {
-        if (actstep == from_step)
-          display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
+        if (seq.piano[last_valid_note % 12 - lowest_note] == 0 ) // is a white key
+          display.fillRect  ( xpos + 36 + (from_step + 1) * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREY3); // GRID white key
         else
-          display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, get_pattern_content_type_color(pattern)  );
-        last_valid_note = seq.note_data[pattern][from_step];
+          display.fillRect  ( xpos + 36 + (from_step + 1) * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREY4); // GRID black key
       }
     }
   }

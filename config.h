@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.2.0a"
+#define VERSION "2.0.0a"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -73,7 +73,7 @@
 //*************************************************************************************************
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
-#define AUDIO_DEVICE_USB
+//#define AUDIO_DEVICE_USB
 #define TEENSY_AUDIO_BOARD
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -90,7 +90,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-//#define REMOTE_CONSOLE
+#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -99,8 +99,9 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-//#define COMPILE_FOR_FLASH
-#define COMPILE_FOR_PROGMEM
+#define COMPILE_FOR_FLASH
+//#define COMPILE_FOR_SDCARD
+//#define COMPILE_FOR_PROGMEM
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -123,17 +124,19 @@
 // NUMBER OF SAMPLES IN DRUMSET
 
 #define NUM_DRUMSET_CONFIG 71
+//#define NUM_DRUMSET_CONFIG 2
 
 // SEQUENCER
 
 #define NUM_SEQ_PATTERN 24
-#define NUM_SEQ_TRACKS 6
+#define NUM_SEQ_TRACKS 8
 #define SONG_LENGHT 64
 #define NUM_CHAINS 32
 
-#ifdef TEENSY4
 #define USE_SEQUENCER
-#endif
+
+#define VIRT_KEYB_YPOS 166
+
 
 // EPIANO
 #define USE_EPIANO
@@ -145,7 +148,7 @@
 // MICROSYNTH
 #define USE_MICROSYNTH
 #ifdef USE_MICROSYNTH
-#define NUM_MICROSYNTH 2 
+#define NUM_MICROSYNTH 2
 #endif
 
 // CHORUS parameters
@@ -235,17 +238,20 @@
 
 // Display
 
-#define TFT_RST 35
-#define TFT_RS 34 // DC
-#define TFT_CS 0
-#define TFT_TOUCH_CS 38
-#define TFT_TOUCH_IRQ 33
-#define TFT_WIDTH  320
-#define TFT_HEIGHT 480
+#define TFT_WIDTH  240
+#define TFT_HEIGHT 320
+
+#define DISPLAY_WIDTH  320
+#define DISPLAY_HEIGHT 240
+
 #define display_cols  20
 #define display_rows  4
 #define CHAR_width 12
 #define CHAR_height 17
+#define CHAR_width_small 6
+#define CHAR_height_small 8
+#define button_size_x 7
+#define button_size_y 4
 
 #define VOICE_SELECTION_MS 60000
 #define BACK_FROM_VOLUME_MS 2000
@@ -260,16 +266,10 @@
 #define SDCARD_AUDIO_CS_PIN    10
 #define SDCARD_AUDIO_MOSI_PIN  7
 #define SDCARD_AUDIO_SCK_PIN   14
-#if defined(ARDUINO_TEENSY41) || defined(TEENSY3_6)  // new detection logic to also find on board SD Card from Teensy 4.1
-// Teensy 3.6 & 4.1 internal SD card
+
 #define SDCARD_TEENSY_CS_PIN    BUILTIN_SDCARD
 #define SDCARD_TEENSY_MOSI_PIN  11
 #define SDCARD_TEENSY_SCK_PIN   13
-#else
-#define SDCARD_TEENSY_CS_PIN    10
-#define SDCARD_TEENSY_MOSI_PIN  11
-#define SDCARD_TEENSY_SCK_PIN   13
-#endif
 
 const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Shield)
 
@@ -326,6 +326,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 //*************************************************************************************************
 #define MAX_DEXED 2 // No! - even don't think about increasing this number! IT _WILL_ PRODUCE MASSIVE PROBLEMS!
 #define CONTROL_RATE_MS 50
+#define MICROSYNTH_LFO_RATE_MS 20
 #define SAVE_SYS_MS 5000
 #define VOL_MAX_FLOAT 0.95
 
@@ -662,10 +663,6 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define EP_VELOCITY_SENSE_MAX 100
 #define EP_VELOCITY_SENSE_DEFAULT 25
 
-#define EP_PANORAMA_MIN 0
-#define EP_PANORAMA_MAX 40
-#define EP_PANORAMA_DEFAULT 20
-
 #define EP_STEREO_MIN 0
 #define EP_STEREO_MAX 100
 #define EP_STEREO_DEFAULT 50
@@ -739,7 +736,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define MS_SOUND_INTENSITY_DEFAULT 50
 
 // Buffer-size define for load/save configuration as JSON
-#define JSON_BUFFER_SIZE 8192
+#define JSON_BUFFER_SIZE 9216
 
 // Internal configuration structure
 typedef struct dexed_s {
@@ -834,6 +831,14 @@ typedef struct microsynth_s
 {
   int coarse;
   int detune;
+  int lfo_intensity;
+  int lfo_delay;
+  uint8_t lfo_mode;
+  uint8_t lfo_speed;
+  //internal lfo values
+  boolean lfo_direction;
+  int lfo_value;
+  int lfo_fade;
   bool trigger_noise_with_osc;
   uint8_t pan;
   uint8_t wave;
@@ -844,9 +849,11 @@ typedef struct microsynth_s
   uint8_t env_sustain;
   uint8_t env_release;
   uint8_t filter_osc_mode;
+  uint16_t osc_freq_current;
   uint16_t filter_osc_freq_from;
   uint16_t filter_osc_freq_to;
   uint16_t filter_osc_freq_current;
+  uint16_t filter_osc_freq_last_displayed = 99;
   uint16_t filter_osc_speed;
   uint8_t filter_osc_resonance;
   uint8_t noise_vol;
@@ -856,7 +863,7 @@ typedef struct microsynth_s
   uint16_t filter_noise_freq_to;
   uint16_t filter_noise_freq_current;
   uint16_t filter_noise_speed;
-  uint8_t filter_noise_resonance; 
+  uint8_t filter_noise_resonance;
   uint16_t pwm_from;
   uint16_t pwm_to;
   uint8_t pwm_speed;
@@ -890,16 +897,17 @@ enum master_mixer_ports {
   MASTER_MIX_CH_DEXED1,
   MASTER_MIX_CH_REVERB,
   MASTER_MIX_CH_DRUMS,
-  MASTER_MIX_CH_MICROSYNTH,
   MASTER_MIX_CH_EPIANO,
+  MASTER_MIX_CH_MICROSYNTH,
+  MASTER_MIX_CH_SD_FILE_PREVIEW,
 };
 
 enum reverb_mixer_ports {
   REVERB_MIX_CH_DEXED2,
   REVERB_MIX_CH_DEXED1,
   REVERB_MIX_CH_DRUMS,
-  REVERB_MIX_CH_MICROSYNTH,
   REVERB_MIX_CH_EPIANO,
+  REVERB_MIX_CH_MICROSYNTH,
 };
 
 #ifndef _MAPFLOAT

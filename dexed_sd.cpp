@@ -31,7 +31,6 @@
 #include <ArduinoJson.h>
 #include <TeensyTimerTool.h>
 using namespace TeensyTimerTool;
-#include "ILI9486_Teensy.h"
 #include "dexed_sd.h"
 #include "synth_dexed.h"
 #if NUM_DRUMS > 0
@@ -51,7 +50,7 @@ extern void sequencer();
 extern void microsynth_update_settings(uint8_t instance_id);
 extern sequencer_t seq;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
-#ifdef USE_SEQUENCER
+#if defined(USE_SEQUENCER)
 extern PeriodicTimer sequencer_timer;
 #endif
 extern float midi_volume_transform(uint8_t midi_amp);
@@ -80,8 +79,10 @@ extern uint16_t COLOR_SYSTEXT_ACCENT;
 extern uint16_t COLOR_BACKGROUND;
 extern uint16_t COLOR_INSTR;
 extern uint16_t COLOR_CHORDS;
+extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
+
 extern bool save_sys_flag;
 
 /******************************************************************************
@@ -834,7 +835,6 @@ bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
     }
   }
 
-  AudioInterrupts();
   return (false);
 }
 
@@ -921,7 +921,6 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 #endif
   }
 
-  AudioInterrupts();
   return (false);
 }
 
@@ -1013,7 +1012,6 @@ bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
     }
   }
 
-  AudioInterrupts();
   return (false);
 }
 
@@ -1094,8 +1092,6 @@ bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
     Serial.println(F(" on SD."));
 #endif
   }
-
-  AudioInterrupts();
   return (false);
 }
 
@@ -1197,8 +1193,6 @@ bool load_sd_fx_json(uint8_t number)
 #endif
     }
   }
-
-  AudioInterrupts();
   return (false);
 }
 
@@ -1282,8 +1276,6 @@ bool save_sd_fx_json(uint8_t number)
     Serial.println(F(" on SD."));
 #endif
   }
-
-  AudioInterrupts();
   return (false);
 }
 
@@ -1364,8 +1356,6 @@ bool load_sd_epiano_json(uint8_t number)
 #endif
     }
   }
-
-  AudioInterrupts();
   return (false);
 }
 
@@ -1796,8 +1786,12 @@ bool load_sd_song_json(uint8_t number)
         int count = 0;
         for (uint8_t i = 0; i < rows; i++)
         {
-          for (uint8_t j = 0; j < columns; j++) {
-            seq.song[i][j] = data_json["s"][count];
+          for (uint8_t j = 0; j < columns; j++)
+          {
+          //  if (i<6)
+              seq.song[i][j] = data_json["s"][count];
+           //    else
+           //    seq.song[i][j] = 99;
             count++;
           }
         }
@@ -1989,7 +1983,8 @@ bool save_sd_performance_json(uint8_t number)
   bool seq_was_running = false;
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
-  if (seq.running == true ) {
+  if (seq.running == true )
+  {
     seq_was_running = true;
     handleStop();
   }
@@ -2057,6 +2052,7 @@ bool save_sd_performance_json(uint8_t number)
       data_json["COLOR_BACKGROUND"] = COLOR_BACKGROUND;
       data_json["COLOR_INSTR"] = COLOR_INSTR;
       data_json["COLOR_CHORDS"] = COLOR_CHORDS;
+      data_json["COLOR_ARP"] = COLOR_ARP;
       data_json["COLOR_DRUMS"] = COLOR_DRUMS;
       data_json["COLOR_PITCHSMP"] = COLOR_PITCHSMP;
       for (uint8_t i = 0; i < sizeof(seq.track_type); i++) {
@@ -2085,8 +2081,8 @@ bool save_sd_performance_json(uint8_t number)
         handleStart();
       return (true);
     }
-    json.close();
-    AudioInterrupts();
+    //json.close();
+    //AudioInterrupts();
   }
 #ifdef DEBUG
   else
@@ -2332,7 +2328,7 @@ bool load_sd_seq_sub_patterns_json(uint8_t number)
 
 bool load_sd_performance_json(uint8_t number)
 {
-#ifdef USE_SEQUENCER
+#if defined(USE_SEQUENCER)
   bool seq_was_running = false;
 
   if (seq.running)
@@ -2372,7 +2368,6 @@ bool load_sd_performance_json(uint8_t number)
       Serial.print(filename);
       Serial.println(F("]... loading..."));
 #endif
-      AudioNoInterrupts();
       json = SD.open(filename);
       if (json)
       {
@@ -2427,10 +2422,12 @@ bool load_sd_performance_json(uint8_t number)
           COLOR_BACKGROUND = data_json["COLOR_BACKGROUND"];
           COLOR_INSTR = data_json["COLOR_INSTR"];
           COLOR_CHORDS = data_json["COLOR_CHORDS"];
+         // COLOR_ARP = data_json["COLOR_ARP"];
           COLOR_DRUMS = data_json["COLOR_DRUMS"];
           COLOR_PITCHSMP = data_json["COLOR_PITCHSMP"];
         }
 
+        AudioNoInterrupts();
         for (uint8_t instance_id = 0;  instance_id < NUM_DEXED; instance_id++)
         {
 #ifdef DEBUG
@@ -2438,30 +2435,32 @@ bool load_sd_performance_json(uint8_t number)
           Serial.print(instance_id + 1);
           Serial.print(F(" for sequencer"));
 #endif
+
           load_sd_microsynth_json(number, instance_id);
           load_sd_voiceconfig_json(number, instance_id);
           load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
           MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
           MicroDexed[instance_id]->panic();
         }
-        /* for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-          set_voiceconfig_params(instance_id);
 
-          set_fx_params();*/
-
+        AudioInterrupts();
         dac_unmute();
-        seq.step = 0;
 
-#ifdef USE_SEQUENCER
+#if defined(USE_SEQUENCER)
+
+        for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+        {
+          seq.chain_counter[d] = 0;
+        }
+
         if (seq_was_running)
         {
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
           seq.running = true;
+          //handleStart();
         }
         else
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
-#else
-        seq.running = false;
 #endif
         return (true);
       }
@@ -2476,6 +2475,7 @@ bool load_sd_performance_json(uint8_t number)
     }
     else
     {
+      AudioInterrupts();
       Serial.print(F("No "));
       Serial.print(filename);
       Serial.println(F(" available."));

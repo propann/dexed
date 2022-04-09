@@ -25,8 +25,7 @@
 #ifndef _SEQUENCER_H
 #define _SEQUENCER_H
 #include "XPT2046_Touchscreen.h"
-extern XPT2046_Touchscreen touch ;
-#include "ILI9486_Teensy.h"
+//extern XPT2046_Touchscreen touch ;
 
 #include <avr/pgmspace.h>
 
@@ -55,7 +54,12 @@ const float tune_frequencies2_PGM[128] =
 
 
 typedef struct sequencer_s {
+  uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
+  uint8_t piano2[13] = {1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
+  int generic_ui_delay;
   bool midi_learn_active = false;
+  bool help_text_needs_refresh=false;
+  uint8_t tracktype_or_instrument_assign;
   uint8_t loop_edit_step;
   uint8_t loop_start=99;
   uint8_t loop_end=99;
@@ -66,8 +70,6 @@ typedef struct sequencer_s {
   uint8_t selected_track;
   uint8_t tracker_active_step;
   bool edit_state;
-  uint8_t tracker_data_cache[NUM_SEQ_TRACKS][16];
-  char tracker_names_cache[NUM_SEQ_TRACKS][16];
   float drums_volume;
   uint8_t menu_status; // 0= normal jump
   // 1= jump from pattern edit to vel edit
@@ -213,6 +215,8 @@ typedef struct sequencer_s {
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
+    { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
+    { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 }
   };
   
@@ -289,7 +293,7 @@ typedef struct sequencer_s {
  uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0};
   // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
   
-  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 }; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp , 4=Tables
+  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 ,0,0}; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
 
 } sequencer_t;
 

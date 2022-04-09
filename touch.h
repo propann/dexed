@@ -5,51 +5,56 @@
 #include <SD.h>
 extern XPT2046_Touchscreen touch;
 
+
 typedef struct ts_s
 {
 
-  uint16_t temp_col_hue=1; 
-  uint8_t  temp_col_sat=240, temp_col_bright=240;
-  
+  uint16_t temp_col_hue = 1;
+  uint8_t  temp_col_sat = 240, temp_col_bright = 240;
+
   int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
+  uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums
+  uint8_t virtual_keyboard_midi_channel = 1;
+
   TS_Point p;
   uint8_t virtual_keyboard_state_white[11];
   uint8_t virtual_keyboard_state_black[17];
   bool update_virtual_keyboard_octave;
   bool switch_active_instance;
   bool block_screen_update;
- 
+
   int16_t scopebuffer[AUDIO_BLOCK_SAMPLES];
   int16_t scopebuffer_old[AUDIO_BLOCK_SAMPLES];
   bool scope_is_drawing;
   uint8_t scope_delay;
-  uint8_t displayed_peak[12];
-  uint8_t old_helptext_lenght[2];
+  uint8_t displayed_peak[14];
+  uint8_t old_helptext_lenght[3];
 } ts_t;
 
 // (Touch)File Manager
 
 typedef struct fm_s
 {
-  File sd_currentDirectoy;
+  uint16_t sd_sum_files = 0;
+  File sd_currentDirectory;
   File sd_entry;
   uint8_t active_window = 0; // 0 = left window (SDCARD) , 1 = FLASH
   uint8_t sd_cap_rows;
   uint8_t sd_folder_depth = 0;
-  uint8_t sd_selected_file = 0;
-  uint8_t sd_skip_files = 0;
+  uint16_t sd_selected_file = 0;
+  uint16_t sd_skip_files = 0;
   uint8_t sd_mode = 4;
-  uint8_t sd_preview_slot;
   bool sd_is_folder;
   bool sd_parent_folder = false;
   char sd_temp_name[52];
   char sd_new_name[52];
   char sd_full_name[52];
 
-  uint8_t flash_cap_rows;
-  uint8_t flash_selected_file = 0;
-  uint8_t flash_skip_files = 0;
+  uint16_t flash_sum_files = 0;
+  uint16_t flash_cap_rows;
+  uint16_t flash_selected_file = 0;
+  uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
   //uint8_t flash_folder_depth = 0;
