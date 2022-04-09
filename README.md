@@ -8,7 +8,39 @@ A example Link to the Screen below 10 Euro:
 
 https://www.amazon.de/ILI9341-Display-Seriell-Arduino-Raspberry/dp/B07YTWRZGR/ 
 
-The Display is smaller as before but much faster - may it be the screen itself or most probably because of the much more optimized display library.
+The Display is smaller than the first "nextgen" version but now is much faster - may it be the screen itself or most probably because of the much more optimized display library.
+
+Compared to the previous Version, there are a lot of new features/improvments:
+
+* "Large" Graphical Interface, view and edit multiple Parameters in one Screen
+
+* Map MIDI CC to external MIDI Devices to control Input/Parameters
+
+* 2 new "Virtual Analog" Synth Instances -  Monosynths with one OSC, PWM, Filter and Noise. A lot of useful new sound possibilities. This module is called "MicroSynth"
+
+* Much improved Sequencer with 8 Tracks, 16 Step Pattern Chains and up to 16*64 Song Steps, Arpeggiator with 1/8 - 1/64 Steps, Arp Patterns, Pitched Drum- and Instrument Sample Support
+
+* Mixer View with all Channels
+
+* Sample Management from SD-CARD and SPI FLASH
+
+Development Status:
+
+| Feature | Status |   
+|:-----------|:-----------:| 
+| Pattern Editor | 90% |
+| Step/Grid Editor | 80% |
+| Song Mode| 85% |
+| MicroSynth | 80% |
+| EPiano GUI | 95% |
+| General UI Merge | 70% |
+| SysEx/MIDI Controls | 70% |
+| Main Mixer View | 60% |
+| Mute Matrix | 10% |
+| Piano Roll Editor | 80% |
+| File Manager (SD/Flash) | 60% |
+| Sample Editor | 0% |
+| MultiSample Player | 10% |
 
 This is a port of the original Dexed/msfa engine (see https://github.com/asb2m10/dexed and https://github.com/google/music-synthesizer-for-android) to be used on a ~~Teensy-3.6 or~~ Teensy-4.x.
 
