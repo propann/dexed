@@ -30,15 +30,21 @@
 #include <EEPROM.h>
 #include <SD.h>
 #include <SPI.h>
-#include <SerialFlash.h>
-#include "Adafruit_GFX.h"
-#include "ILI9486_Teensy.h"
+
+#include <Adafruit_GFX.h>
+#include "ILI9341_t3n.h"
 #include "XPT2046_Touchscreen.h"
 
 #ifdef COMPILE_FOR_PROGMEM
 #include <TeensyVariablePlayback.h>
 #endif
+
+#ifdef COMPILE_FOR_SDCARD
+#include <TeensyVariablePlayback.h>
+#endif
+
 #ifdef COMPILE_FOR_FLASH
+#include <SerialFlash.h>
 #include <TeensyVariablePlaybackFlash.h>
 #endif
 
@@ -63,8 +69,27 @@ using namespace TeensyTimerTool;
 #include "effect_stereo_panorama.h"
 #endif
 
-ILI9486_Teensy display;
+#define TFT_DC  0
+#define TFT_CS 41
+#define TFT_RST 24
+#define TFT_SCK 27
+#define TFT_MISO 1
+#define TFT_MOSI 26
+#define TFT_TOUCH_CS  38
+#define TFT_TOUCH_IRQ 33
+
+//ILI9486_Teensy display;
+ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
+
+//uint16_t COLOR_BACKGROUND = 0x0000;
+//uint16_t COLOR_SYSTEXT = 0xFFFF;
+//uint16_t COLOR_SYSTEXT_ACCENT = 0x159A;
+//uint16_t COLOR_INSTR = 0x7BBD;
+//uint16_t COLOR_CHORDS = 0xE2FA;
+//uint16_t COLOR_ARP = 0x071B;
+//uint16_t COLOR_DRUMS = 0xFE4F;
+//uint16_t COLOR_PITCHSMP = 0x159A;
 
 #ifndef Realtime_Scope_h_
 #define Realtime_Scope_h_
@@ -91,8 +116,10 @@ void Realtime_Scope::FillArray() {
   uint16_t i = 0;
   do {
     int16_t wave_data = buffer[i];
-    int16_t y = map(wave_data, 32767, -32768, -170, 170) + 50;
+    int8_t y = map(wave_data, 32767, -32768, 32, -32) + 33;
+
     ts.scopebuffer[i] = y;
+
     i = i + 1;
   } while (i < (AUDIO_BLOCK_SAMPLES) );
   __enable_irq();
@@ -119,7 +146,7 @@ void Realtime_Scope::AddtoBuffer(int16_t *audio)
 
 void Realtime_Scope::update(void)
 {
-  if (msecs < 7000) return;
+  //if (msecs < 6000) return;
   audio_block_t *block;
   block = receiveReadOnly(0);
   if (block)
@@ -129,26 +156,26 @@ void Realtime_Scope::update(void)
   }
 }
 
-void draw_scope() {
-  if (ts.scope_delay > 250)
+void draw_scope(uint16_t x, uint8_t y, uint8_t w) {
+  if (ts.scope_delay > 252)
   {
-    uint16_t x = 240;
     uint16_t i = 0;
     ts.scope_is_drawing = true;
     do {
-      if (ts.scopebuffer_old[i] > 0)
+      //      if (ts.scopebuffer[i] < 2)
+      //        ts.scopebuffer[i] = 2;
+      //      else if (ts.scopebuffer[i] > 96)
+      //        ts.scopebuffer[i] = 96;
+      if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
       {
-        if (ts.scopebuffer[i] < 2)
-          ts.scopebuffer[i] = 2;
-        else if (ts.scopebuffer[i] > 96)
-          ts.scopebuffer[i] = 96;
-        if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
-          display.drawPixel( x + i , ts.scopebuffer_old[i], COLOR_BACKGROUND);
-        display.drawPixel( x + i , ts.scopebuffer[i], COLOR_SYSTEXT);
+        // if (ts.scopebuffer_old[i] > 0)
+        display.drawPixel( x + i , ts.scopebuffer_old[i] + y, COLOR_BACKGROUND);
+        display.drawPixel( x + i , ts.scopebuffer[i] + y, COLOR_SYSTEXT);
       }
       ts.scopebuffer_old[i] = ts.scopebuffer[i];
       i = i + 1;
-    } while (i < ((AUDIO_BLOCK_SAMPLES) - 8));
+
+    } while (i < w);
     ts.scope_delay = 0;
     ts.scope_is_drawing = false;
   }
@@ -159,6 +186,8 @@ void draw_scope() {
 AudioSynthDexed*                MicroDexed[NUM_DEXED];
 #if defined(USE_EPIANO)
 AudioSynthEPiano                ep(NUM_EPIANO_VOICES);
+AudioAnalyzePeak                ep_peak_r;
+AudioAnalyzePeak                ep_peak_l;
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -175,6 +204,10 @@ AudioMixer<4>                   microsynth_mixer_l;
 AudioMixer<4>                   microsynth_mixer_filter_osc[NUM_MICROSYNTH];
 AudioMixer<4>                   microsynth_mixer_filter_noise[NUM_MICROSYNTH];
 AudioMixer<2>                   microsynth_mixer_reverb;
+AudioAnalyzePeak                microsynth_peak_osc_0;
+AudioAnalyzePeak                microsynth_peak_osc_1;
+AudioAnalyzePeak                microsynth_peak_noise_0;
+AudioAnalyzePeak                microsynth_peak_noise_1;
 #endif
 
 #if defined(USE_FX)
@@ -201,11 +234,14 @@ AudioMixer<2>                   ep_chorus_mixer_r;
 AudioMixer<2>                   ep_chorus_mixer_l;
 #endif
 
-//AudioMixer<2>                   microdexed_peak_mixer;
 AudioAnalyzePeak                microdexed_peak_0;
 AudioAnalyzePeak                microdexed_peak_1;
+
 #if defined(USE_FX)
-#if defined(USE_EPIANO)
+#if defined(USE_EPIANO) && defined(USE_MICROSYNTH)
+AudioMixer<5>                   reverb_mixer_r;
+AudioMixer<5>                   reverb_mixer_l;
+#elif defined(USE_EPIANO)
 AudioMixer<4>                   reverb_mixer_r;
 AudioMixer<4>                   reverb_mixer_l;
 #else
@@ -217,12 +253,15 @@ AudioMixer<3>                   reverb_mixer_l;
 AudioEffectPlateReverb          reverb;
 Realtime_Scope                  scope;
 
-#if defined(USE_FX) && defined(USE_EPIANO)
+#if defined(USE_FX) && defined(USE_EPIANO) && defined(USE_MICROSYNTH)
+AudioMixer<7>                   master_mixer_r;
+AudioMixer<7>                   master_mixer_l;
+#elif defined(USE_FX) && defined(USE_EPIANO)
+AudioMixer<6>                   master_mixer_r;
+AudioMixer<6>                   master_mixer_l;
+#else
 AudioMixer<5>                   master_mixer_r;
 AudioMixer<5>                   master_mixer_l;
-#else
-AudioMixer<4>                   master_mixer_r;
-AudioMixer<4>                   master_mixer_l;
 #endif
 AudioAmplifier                  volume_r;
 AudioAmplifier                  volume_l;
@@ -237,12 +276,17 @@ AudioMixer<2>                   audio_thru_mixer_l;
 // Drumset
 #if NUM_DRUMS > 0
 //AudioPlayMemory*              Drum[NUM_DRUMS];
-AudioPlaySdWav*                 sd_WAV[2];
+AudioPlaySdWav                  sd_WAV;
+
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp*            Drum[NUM_DRUMS];
 //AudioPlaySerialflashRaw*          Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
-//AudioPlaySdResmp*            Drum[NUM_DRUMS];
+
+#ifdef COMPILE_FOR_SDCARD
+AudioPlaySdResmp*            Drum[NUM_DRUMS];
+#endif
+
 #ifdef COMPILE_FOR_PROGMEM
 AudioPlayArrayResmp*            Drum[NUM_DRUMS];
 #endif
@@ -382,9 +426,14 @@ AudioConnection patchCord[] = {
   {ep_chorus_mixer_l, 0, reverb_mixer_l, REVERB_MIX_CH_EPIANO},
   {ep_chorus_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_EPIANO},
   {ep_chorus_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_EPIANO},
+
+  { master_mixer_r, MASTER_MIX_CH_EPIANO, ep_peak_r, 0},
+  { master_mixer_l, MASTER_MIX_CH_EPIANO, ep_peak_l, 0},
+
 #else
   {ep_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_EPIANO},
   {ep_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_EPIANO},
+
 #endif
 #endif
 
@@ -457,6 +506,12 @@ AudioConnection patchCord[] = {
   {microsynth_mixer_reverb, 0, reverb_mixer_r, REVERB_MIX_CH_MICROSYNTH},
   {microsynth_mixer_reverb, 1, reverb_mixer_l, REVERB_MIX_CH_MICROSYNTH},
 
+  {microsynth_mixer_filter_osc[0], 0, microsynth_peak_osc_0, 0}, //osc 1 (inst1) to peak analyzer
+  {microsynth_mixer_filter_osc[1], 0, microsynth_peak_osc_1, 0}, //osc 2 (inst2) to peak analyzer
+  {microsynth_mixer_filter_noise[0], 0, microsynth_peak_noise_0, 0}, // unfiltered noise to mixer
+  {microsynth_mixer_filter_noise[1], 0, microsynth_peak_noise_1, 0},
+
+
 #endif
 
 };
@@ -488,7 +543,6 @@ void create_audio_dexed_chain(uint8_t instance_id)
   delay_mixer[instance_id] = new AudioMixer<2>();
 #endif
 
-  // dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_mixer, instance_id);
   if (instance_id == 0)
     dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_0, 0);
   else
@@ -534,15 +588,20 @@ void create_audio_drum_chain(uint8_t instance_id)
   //Drum[instance_id] = new AudioPlaySdWav();
 #ifdef COMPILE_FOR_FLASH
   Drum[instance_id] = new AudioPlayFlashResmp();
-  //Drum[instance_id] = new AudioPlaySerialflashRaw();
 #endif
-  //Drum[instance_id] = new AudioPlaySdResmp();
+  //Drum[instance_id] = new AudioPlaySerialflashRaw();
+
+#ifdef COMPILE_FOR_SDCARD
+  Drum[instance_id] = new AudioPlaySdResmp();
+#endif
+
 #ifdef COMPILE_FOR_PROGMEM
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
+
   Drum[instance_id]->enableInterpolation(false);
   Drum[instance_id]->setPlaybackRate(1.0);
-
+  
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
 #ifdef USE_FX
@@ -550,6 +609,7 @@ void create_audio_drum_chain(uint8_t instance_id)
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
 #endif
 
+  
 #ifdef DEBUG
   Serial.print(F("Drum-Instance: "));
   Serial.println(instance_id);
@@ -591,11 +651,11 @@ void microsynth_update_settings(uint8_t instance_id)
   else if (microsynth[instance_id].filter_noise_mode == 3)
     microsynth_mixer_filter_noise[instance_id].gain(2, 1.0);
 
-  microsynth_envelope_osc[instance_id].releaseNoteOn(0);
-  microsynth_envelope_osc[instance_id].attack(microsynth[instance_id].env_attack);
-  microsynth_envelope_osc[instance_id].decay(microsynth[instance_id].env_decay);
-  microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain);
-  microsynth_envelope_osc[instance_id].release(microsynth[instance_id].env_release * 8);
+  // test microsynth_envelope_osc[instance_id].releaseNoteOn(0);
+  microsynth_envelope_osc[instance_id].attack(microsynth[instance_id].env_attack * 4);
+  microsynth_envelope_osc[instance_id].decay(microsynth[instance_id].env_decay * 4 );
+  microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain / 50.1);
+  microsynth_envelope_osc[instance_id].release( microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release );
   microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
   microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
@@ -607,21 +667,21 @@ void microsynth_update_settings(uint8_t instance_id)
   microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
   microsynth_waveform[instance_id].amplitude( mapfloat(microsynth[instance_id].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
   microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
-  microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, EP_PANORAMA_MIN, EP_PANORAMA_MAX, -1.0, 1.0));
-  microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, EP_PANORAMA_MIN, EP_PANORAMA_MAX, -1.0, 1.0));
+  microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+  microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 
 }
-void create_audio_sd_wav_chain(uint8_t instance_id)
-{ //phtodo
 
-  //  sd_WAV[instance_id] = new AudioPlaySdWav();
-  //  if (instance_id == 0)
-  //    dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_r, instance_id);
-  //  else if (instance_id == 1)
-  //    dynamicConnections[nDynamic++] = new AudioConnection(*sd_WAV[instance_id], 0, drum_mixer_l, instance_id);
+//void create_audio_sd_wav_chain(uint8_t instance_id)
+void create_audio_sd_wav_preview_chain()
+{
 
-  // dynamicConnections[nDynamic++] = new AudioConnection(microsynth_waveform[0], 0, microsynth_envelope_osc[0], 0);
-  // dynamicConnections[nDynamic++] = new AudioConnection(microsynth_waveform[1], 0, microsynth_envelope_osc[1], 0);
+  //sd_WAV[instance_id] = new AudioPlaySdWav();
+  //sd_WAV = new AudioPlaySdWav();
+
+  //phtodo
+  //  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV, 0, master_mixer_r, MASTER_MIX_CH_SD_FILE_PREVIEW);
+  //  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV, 0, master_mixer_l, MASTER_MIX_CH_SD_FILE_PREVIEW);
 
 }
 
@@ -635,6 +695,8 @@ int16_t _midi_bpm = -1;
 elapsedMillis midi_bpm_timer;
 elapsedMillis long_button_pressed;
 elapsedMillis control_rate;
+elapsedMillis microsynth_lfo_control_rate;
+elapsedMillis microsynth_lfo_delay_timer[2];
 elapsedMillis save_sys;
 bool save_sys_flag = false;
 uint8_t active_voices[NUM_DEXED];
@@ -660,11 +722,13 @@ uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
 
 #if NUM_DEXED>1
-int8_t midi_decay[NUM_DEXED] = { -1, -1};
+int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1};
 #else
-int8_t midi_decay[NUM_DEXED] = { -1};
+int8_t midi_decay_dexed[NUM_DEXED] = { -1};
 #endif
-elapsedMillis midi_decay_timer;
+int8_t midi_decay_microsynth[NUM_MICROSYNTH];
+elapsedMillis midi_decay_timer_dexed;
+elapsedMillis midi_decay_timer_microsynth;
 
 
 #if NUM_DEXED>1
@@ -696,6 +760,7 @@ extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
 extern void handle_touchscreen_mute_matrix(void);
 extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_pattern_editor(void);
+extern void handle_touchscreen_microsynth(void);
 extern void handle_touchscreen_file_manager(void);
 extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
@@ -703,11 +768,13 @@ extern void handle_touchscreen_color_edit(void);
 extern void update_midi_learn_button(void);
 #endif
 
+extern void update_microsynth_params(void);
+
 extern LCDMenuLib2 LCDML;
 
 extern void getNoteName(char* noteName, uint8_t noteNumber);
 
-#ifdef USE_SEQUENCER
+#if defined(USE_SEQUENCER)
 PeriodicTimer sequencer_timer;
 #endif
 
@@ -744,10 +811,13 @@ void setup()
   Serial.flush();
 #endif
 
-  SPI1.begin();  //TFT is on SPI1
+  //SPI1.begin();  //TFT is on SPI1
+  display.begin();  //TFT is on SPI1
+
+  //display.fillScreen(ILI9341_RED);
 
   touch.begin();
-  touch.setRotation(3);
+  //touch.setRotation(3); // not necessary for ILI9341
 
   // Setup MIDI devices
   setup_midi_devices();
@@ -902,7 +972,7 @@ void setup()
   ep_chorus_mixer_l.gain(0, 1.0);
   ep_chorus_mixer_r.gain(1, mapfloat(EP_CHORUS_LEVEL_DEFAULT, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
   ep_chorus_mixer_l.gain(1, mapfloat(EP_CHORUS_LEVEL_DEFAULT, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
-  ep_stereo_panorama.panorama(mapfloat(EP_PANORAMA_DEFAULT, EP_PANORAMA_MIN, EP_PANORAMA_MAX, -1.0, 1.0));
+  ep_stereo_panorama.panorama(mapfloat(PANORAMA_DEFAULT, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 #endif
 #endif
 
@@ -946,27 +1016,32 @@ void setup()
 #endif
 #endif
 
+#ifdef COMPILE_FOR_FLASH
+
   //Setup SD WAV play
-  for (uint8_t instance_id = 0; instance_id < 2; instance_id++)
-  {
+  // for (uint8_t instance_id = 0; instance_id < 2; instance_id++)
+  // {
 #ifdef DEBUG
-    Serial.print(F("Creating WAV playback instance "));
-    Serial.println(instance_id, DEC);
+  Serial.print(F("Creating WAV playback instance "));
+  //  Serial.println(instance_id, DEC);
 #endif
-    create_audio_sd_wav_chain(instance_id);
-  }
+  create_audio_sd_wav_preview_chain();
+  master_mixer_r.gain(MASTER_MIX_CH_SD_FILE_PREVIEW, 0.4);
+  master_mixer_l.gain(MASTER_MIX_CH_SD_FILE_PREVIEW, 0.4);
 
-
-
+#endif
+  // }
 
   //  Serial Flash Init
 
+#ifdef COMPILE_FOR_FLASH
   if (!SerialFlash.begin(FlashChipSelect))
   {
 #ifdef DEBUG
     Serial.print(F("Unable to access SPI Flash chip"));
 #endif
   }
+#endif
 
   // Start SD card
 
@@ -980,19 +1055,23 @@ void setup()
   }
   else
   {
+#ifdef DEBUG
+    Serial.println(F("SD card found."));
+#endif
     check_and_create_directories();
 
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
       // load default SYSEX data
       //load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
+
       memset(g_voice_name[instance_id], 0, VOICE_NAME_LEN);
       memset(g_bank_name[instance_id], 0, BANK_NAME_LEN);
       memset(receive_bank_filename, 0, FILENAME_LEN);
     }
   }
 
-#ifdef USE_SEQUENCER
+#if defined(USE_SEQUENCER)
   // Start timer (to avoid a crash when loading the performance data)
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 #endif
@@ -1024,6 +1103,10 @@ void setup()
   Serial.print(F(" (Time per block="));
   Serial.print(1000000 / (SAMPLE_RATE / AUDIO_BLOCK_SAMPLES));
   Serial.println(F("ms)"));
+#endif
+
+#ifdef DEBUG
+  Serial.println(F("Show CPU Usage"));
 #endif
 
 #if defined (DEBUG) && defined (SHOW_CPU_LOAD_MSEC)
@@ -1086,6 +1169,10 @@ void setup()
     strcpy(seq.name, "INIT Perf");
   LCDML.OTHER_jumpToFunc(UI_func_voice_select);
 
+#ifdef DEBUG
+  Serial.println(F("Setup UI."));
+#endif
+
   setup_ui();
   if ( seq.name[0] == 0 )
     strcpy(seq.name, "INIT Perf");
@@ -1098,10 +1185,17 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   else if (configuration.sys.load_at_startup_page == 3)
     LCDML.OTHER_jumpToFunc(UI_func_microsynth);
+  else if (configuration.sys.load_at_startup_page == 4)
+    LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
 
-  sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+  {
+    ts.scopebuffer_old[i] = 10;
+  }
+
+
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1116,7 +1210,10 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
   {
     int z = 0;
     do {
-      display.drawLine ( x, y - height + z, x + 19,  y - height + z, ColorHSV(( (y - height + z) * 260 ) , 244, 254)   );
+      // display.drawFastHLine ( x, y - height + z, 19, ColorHSV(( (y - height + z) * 160 ) , 244, 214)   );
+      display.drawFastHLine ( x, y - height + z, 19, GREEN  );
+
+      // display.drawLine ( x, y - height + z, x + 19,  y - height + z, GREEN  );
       z++;
     } while (z < height - ts.displayed_peak[arr] );
     ts.displayed_peak[arr] = height;
@@ -1131,8 +1228,9 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
   }
   //draw text
   display.setCursor(x, y + 4);
-  display.print(value);
-  // display.print(height);
+  //display.print( int(value*100));
+  seq_print_formatted_number( int(value * 240), 2 );
+  // display.print(height); //phtodo555
 }
 
 void handle_touchscreen_mixer()
@@ -1145,20 +1243,20 @@ void handle_touchscreen_mixer()
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-    draw_volmeter(CHAR_width * 32, 220, 0, master_peak_l.read() );
-    draw_volmeter(CHAR_width * 36, 220, 1, master_peak_r.read() );
+    draw_volmeter(0, 170, 2, microdexed_peak_0.read() );
+    draw_volmeter(CHAR_width_small * 4, 170, 3, microdexed_peak_1.read() );
 
-    draw_volmeter(CHAR_width, 220, 2, microdexed_peak_0.read() );
-    draw_volmeter(CHAR_width * 4, 220, 3, microdexed_peak_1.read() );
+    draw_volmeter(CHAR_width_small * 8, 170, 8, microsynth_peak_osc_0.read() );
+    draw_volmeter(CHAR_width_small * 12, 170, 9, microsynth_peak_osc_1.read() );
 
-    if (dr < 0.2) {
-      draw_volmeter(CHAR_width * 7, 220, 4, dr );
-      draw_volmeter(CHAR_width * 10, 220, 5, dl );
-    }
+    draw_volmeter(CHAR_width_small * 16, 170, 4, dr );
+    draw_volmeter(CHAR_width_small * 20, 170, 5, dl );
 
-    draw_volmeter(CHAR_width * 13, 220, 6, reverb_return_peak_l.read() );
-    draw_volmeter(CHAR_width * 16, 220, 7, reverb_return_peak_r.read() );
+    draw_volmeter(CHAR_width_small * 27, 170, 6, reverb_return_peak_l.read() );
+    draw_volmeter(CHAR_width_small * 32, 170, 7, reverb_return_peak_r.read() );
 
+    draw_volmeter(CHAR_width_small * 40, 170, 0, master_peak_l.read() );
+    draw_volmeter(CHAR_width_small * 47, 170, 1, master_peak_r.read() );
   }
 }
 
@@ -1175,48 +1273,41 @@ void loop()
   LCDML.loop();
 
   if (LCDML.FUNC_getID() > _LCDML_DISP_cnt && seq.running)
-    draw_scope();
+    draw_scope(225, 20, 92);
   else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
     handle_touchscreen_voice_select();
-    draw_scope();
+    draw_scope(216, 32, 103);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
   {
     handle_touchscreen_pattern_editor();
-    draw_scope();
+    draw_scope(220, 0, 80);
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
-    handle_touchscreen_mute_matrix();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
-    handle_touchscreen_color_edit();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
-    handle_touchscreen_file_manager();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
-    handle_touchscreen_custom_mappings();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
-    handle_touchscreen_cc_mappings();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
+  {
+    handle_touchscreen_microsynth();
+    draw_scope(253, 34, 58);
+  }
+     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
+      handle_touchscreen_file_manager();
+      
+  //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
+  //    handle_touchscreen_mute_matrix();
+  //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
+  //    handle_touchscreen_color_edit();
+ 
+  //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
+  //    handle_touchscreen_custom_mappings();
+  //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
+  //    handle_touchscreen_cc_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
   {
     handle_touchscreen_mixer();
-    draw_scope();
+    draw_scope(225, 0, 80);
   }
 
-  if (seq.running && seq.step != seq.UI_last_seq_step )
-  {
-    update_display_functions_while_seq_running();
 
-  }
-
-  //Microsynth Realtime Screen Updates
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) &&
-      microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current)
-  {
-    display.setCursor_textGrid_large(35, 9);
-    display.setTextColor(GREY1, COLOR_BACKGROUND);
-    seq_print_formatted_number( microsynth[microsynth_selected_instance].pwm_current, 3);
-    microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
-  }
 
   //  //DEBUG
   //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
@@ -1224,27 +1315,67 @@ void loop()
   //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   //    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   //    {
-  //     // display.setCursor_textGrid(5 + 4 * d, 10);
+  //     // setCursor_textGrid(5 + 4 * d, 10);
   //
   //      //seq_print_formatted_number( seq.chain_reached_end[d], 2 );
-  //      display.setCursor_textGrid(5 + 4 * d, 11);
+  //      setCursor_textGrid(5 + 4 * d, 11);
   //      seq_print_formatted_number (seq.chain_counter[d], 2 );
-  //      display.setCursor_textGrid(5 + 4 * d, 12);
+  //      setCursor_textGrid(5 + 4 * d, 12);
   //   //   seq_print_formatted_number( seq.current_pattern[d], 2 );
-  //    //   display.setCursor_textGrid(5 + 4 * d, 14);
+  //    //   setCursor_textGrid(5 + 4 * d, 14);
   //      seq_print_formatted_number( get_chain_length_from_track(d) , 2 );
-  //       display.setCursor_textGrid(3, 15);
+  //       setCursor_textGrid(3, 15);
   //      seq_print_formatted_number( find_longest_chain() , 2 );
   //
-  //        display.setCursor_textGrid(6, 15);
+  //        setCursor_textGrid(6, 15);
   //      seq_print_formatted_number( seq.current_song_step , 2 );
   //    }
   //  }
 
-  // CONTROL-RATE-EVENT-HANDLING
+
+  if (microsynth_lfo_control_rate > MICROSYNTH_LFO_RATE_MS) //update lfos, filters etc. when played live or by seq.
+  {
+    microsynth_lfo_control_rate = 0;
+    update_microsynth_params();
+    //Microsynth Realtime Screen Updates
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) &&
+        microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1)
+    {
+      display.setTextSize(1);
+      setCursor_textGrid_mini(15, 18);//phtodo
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      seq_print_formatted_number( microsynth[microsynth_selected_instance].pwm_current, 3);
+      microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
+    }
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && seq.cycle_touch_element != 1 &&
+        microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
+    {
+      display.setTextSize(1);
+      setCursor_textGrid_mini(15, 15);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      seq_print_formatted_number( microsynth[microsynth_selected_instance].filter_osc_freq_current / 100, 3);
+      microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;
+    }
+
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) ) //debug
+    {
+      display.setTextSize(1);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      setCursor_textGrid_mini(42, 9);
+      seq_print_formatted_number( microsynth[0].lfo_delay , 4);
+
+      setCursor_textGrid_mini(42, 10);
+      seq_print_formatted_number( microsynth[0].lfo_fade, 4);
+    }
+  }
   if (control_rate > CONTROL_RATE_MS)
   {
     control_rate = 0;
+
+    if (seq.running && seq.step != seq.UI_last_seq_step )
+    {
+      update_display_functions_while_seq_running();
+    }
 
     // check for value changes, unused voices and CPU overload
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
@@ -1258,40 +1389,39 @@ void loop()
     {
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
       {
-        if (midi_decay_timer > MIDI_DECAY_TIMER && midi_decay[instance_id] > 0)
+        if (midi_decay_timer_dexed > MIDI_DECAY_TIMER && midi_decay_dexed[instance_id] > 0)
         {
-          midi_decay[instance_id]--;
-          display.drawBitmap(212 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
+          midi_decay_dexed[instance_id]--;
+          drawBitmap(177 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay_dexed[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         }
-        else if (midi_voices[instance_id] == 0 && midi_decay[instance_id] == 0 && !MicroDexed[instance_id]->getSustain())
+        else if (midi_voices[instance_id] == 0 && midi_decay_dexed[instance_id] == 0 && !MicroDexed[instance_id]->getSustain())
         {
-          midi_decay[instance_id]--;
-          display.fillRect(215 + (instance_id * 12), 23, 5, 1, COLOR_BACKGROUND); // blank
+          midi_decay_dexed[instance_id]--;
+          display.fillRect(180 + (instance_id * 12), 23, 5, 1, COLOR_BACKGROUND); // blank
         }
       }
-      if (midi_decay_timer > MIDI_DECAY_LEVEL_TIME)
+      if (midi_decay_timer_dexed > MIDI_DECAY_LEVEL_TIME)
       {
-        midi_decay_timer = 0;
+        midi_decay_timer_dexed = 0;
       }
     }
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) // draw MIDI in activity bars on microsynth page
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
       {
-        if (midi_decay_timer > MIDI_DECAY_TIMER && midi_decay[instance_id] > 0)
+
+        if (midi_decay_timer_microsynth > MIDI_DECAY_TIMER && midi_decay_microsynth[instance_id] > 0)
         {
-          midi_decay[instance_id]--;
-          display.drawBitmap( 15 * CHAR_width + (instance_id * 12), 26, special_chars[15 - (7 - midi_decay[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
+          midi_decay_microsynth[instance_id]--;
+          drawBitmap( 13 * 6 - 3 + (instance_id * 12), 18, special_chars[15 - (7 - midi_decay_microsynth[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         }
-        else if (midi_decay[instance_id] == 0 )
+        else if (midi_decay_microsynth[instance_id] == 0)
+          display.fillRect( 13 * 6 + (instance_id * 12), 25, 5, 1, COLOR_BACKGROUND); // blank
+
+        if (midi_decay_timer_microsynth > MIDI_DECAY_LEVEL_TIME)
         {
-          midi_decay[instance_id]--;
-          display.fillRect(15 * CHAR_width + 3 + (instance_id * 12), 33, 5, 1, COLOR_BACKGROUND); // blank
+          midi_decay_timer_microsynth = 0;
         }
-      }
-      if (midi_decay_timer > MIDI_DECAY_LEVEL_TIME)
-      {
-        midi_decay_timer = 0;
       }
     }
   }
@@ -1362,17 +1492,21 @@ void loop()
 
 void playWAVFile(const char *filename)
 {
-  sd_WAV[fm.sd_preview_slot]->play(filename);
-  if (fm.sd_preview_slot == 0)
-  {
-    fm.sd_preview_slot = 1;
-  }
-  else
-    fm.sd_preview_slot = 0;
+  //sd_WAV[fm.sd_preview_slot]->play(filename);
+  //sd_WAV.stop();
+  sd_WAV.play(filename);
 
 #ifdef DEBUG
-  Serial.println(F("play wav"));
+  Serial.println(F("play/preview wav from SD Card"));
 #endif
+
+  // A brief delay for the library to read WAV info
+  delay(25);
+  // Simply wait for the file to finish playing.
+  while (sd_WAV.isPlaying())
+  {
+
+  }
 }
 
 #ifdef COMPILE_FOR_FLASH
@@ -1543,7 +1677,6 @@ void learn_cc(byte inChannel, byte inNumber)
 
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 {
-
 #ifdef COMPILE_FOR_FLASH
   if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_phSampler) )
   {
@@ -1554,218 +1687,237 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 #endif
     if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
       learn_key(inChannel, inNumber);
-    else
+
+    if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) // live play pitched sample
     {
-      if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) // live play pitched sample
+      if (drum_counter >= NUM_DRUMS)
+        drum_counter = 0;
+      uint8_t slot = drum_get_slot(drum_config[activesample].drum_class);
+      float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
+      drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
+      drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
+#ifdef USE_FX
+      drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
+      drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
+#endif
+      //  if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
+      // {
+      
+      Drum[slot]->enableInterpolation(true);
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+
+      // Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
+      // }
+    }
+
+    //Ignore the note when playing & recording the same note into the sequencer
+    if (seq.recording == false || (seq.recording && inNumber != seq.note_in ))
+    {
+      // Check for MicroDexed
+      for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+      {
+        if (checkMidiChannel(inChannel, instance_id))
+        {
+          if (inNumber >= configuration.dexed[instance_id].lowest_note && inNumber <= configuration.dexed[instance_id].highest_note)
+          {
+            if (configuration.dexed[instance_id].polyphony > 0)
+              MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
+
+            midi_voices[instance_id]++;
+
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+            {
+              midi_decay_timer_dexed = 0;
+              midi_decay_dexed[instance_id] = min(inVelocity / 5, 7);
+            }
+
+            //#ifdef DEBUG
+            //                char note_name[4];
+            //                getNoteName(note_name, inNumber);
+            //                Serial.print(F("Keydown "));
+            //                Serial.print(note_name);
+            //                Serial.print(F(" instance "));
+            //                Serial.print(instance_id, DEC);
+            //                Serial.print(F(" MIDI-channel "));
+            //                Serial.print(inChannel, DEC);
+            //                Serial.println();
+            //#endif
+            return;
+          }
+        }
+      }
+
+      // Check for MicroSynth
+      for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
+      {
+        if (inChannel == microsynth[instance_id].midi_channel)
+        {
+          if (inNumber == MIDI_C8)  // is noise only
+          {
+            microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
+            microsynth_envelope_noise[instance_id].noteOn();
+            microsynth_waveform[instance_id].amplitude(0);
+          }
+          else
+          {
+            if (microsynth[instance_id].trigger_noise_with_osc)
+            {
+              microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
+              microsynth_envelope_noise[instance_id].noteOn();
+            }
+            else
+              microsynth_noise[instance_id].amplitude(0.0f);
+          }
+          if (microsynth[instance_id].wave == 4 || microsynth[instance_id].wave == 7)
+          {
+            microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
+            microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
+          }
+          microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
+          microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
+          microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
+          microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
+          microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse]  );
+          microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] ;
+          microsynth_waveform[instance_id].amplitude( mapfloat( ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
+          microsynth_envelope_osc[instance_id].noteOn();
+          microsynth_lfo_delay_timer[instance_id] = 0;
+          microsynth[instance_id].lfo_fade = 0;
+          if (microsynth[instance_id].lfo_mode > 0) // If LFO in 1up or 1down
+            microsynth[instance_id].lfo_value = 0;
+
+          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
+          {
+            midi_decay_timer_microsynth = 0;
+            midi_decay_microsynth[instance_id] = min(inVelocity / 5, 7);
+          }
+        }
+      }
+
+#if NUM_DRUMS > 0
+      // Check for Drum
+      if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI)
       {
         if (drum_counter >= NUM_DRUMS)
           drum_counter = 0;
-        uint8_t slot = drum_get_slot(drum_config[activesample].drum_class);
-        float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
-        drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
-#ifdef USE_FX
-        drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
-        drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
-#endif
-        //  if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
-        // {
-        Drum[slot]->enableInterpolation(true);
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
-        // Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
-        // }
-      }
-      else
 
-        //Ignore the note when playing & recording the same note into the sequencer
-        if (seq.recording == false || (seq.recording && inNumber != seq.note_in ))
+        //check custom midi mapping
+        for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
         {
-          // Check for MicroDexed
-          for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+          if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1)
           {
-            if (checkMidiChannel(inChannel, instance_id))
-            {
-              if (inNumber >= configuration.dexed[instance_id].lowest_note && inNumber <= configuration.dexed[instance_id].highest_note)
-              {
-                if (configuration.dexed[instance_id].polyphony > 0)
-                  MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
-
-                midi_voices[instance_id]++;
-
-                if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
-                {
-                  midi_decay_timer = 0;
-                  midi_decay[instance_id] = min(inVelocity / 5, 7);
-                }
-
-                //#ifdef DEBUG
-                //                char note_name[4];
-                //                getNoteName(note_name, inNumber);
-                //                Serial.print(F("Keydown "));
-                //                Serial.print(note_name);
-                //                Serial.print(F(" instance "));
-                //                Serial.print(instance_id, DEC);
-                //                Serial.print(F(" MIDI-channel "));
-                //                Serial.print(inChannel, DEC);
-                //                Serial.println();
-                //#endif
-                return;
-              }
-            }
+            inNumber = custom_midi_map[c].out;
+            break;
           }
-
-          // Check for MicroSynth
-          for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
-          {
-            if (inChannel == microsynth[instance_id].midi_channel)
-            {
-              if (inNumber == MIDI_C8)  // is noise only
-              {
-                microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
-                microsynth_envelope_noise[instance_id].noteOn();
-                microsynth_waveform[instance_id].amplitude(0);
-              }
-              else
-              {
-                if (microsynth[instance_id].trigger_noise_with_osc)
-                {
-                  microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
-                  microsynth_envelope_noise[instance_id].noteOn();
-                }
-                else
-                  microsynth_noise[instance_id].amplitude(0.0f);
-              }
-              if (microsynth[instance_id].wave == 4 || microsynth[instance_id].wave == 7)
-              {
-                microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
-                microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
-              }
-              microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
-              microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
-              microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
-              microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
-              microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber] + microsynth[instance_id].coarse );
-              microsynth_waveform[instance_id].amplitude( mapfloat( ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
-              microsynth_envelope_osc[instance_id].noteOn();
-              if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-              {
-                midi_decay_timer = 0;
-                midi_decay[instance_id] = min(inVelocity / 5, 7);
-              }
-            }
-          }
-
-#if NUM_DRUMS > 0
-          // Check for Drum
-          if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI)
-          {
-            if (drum_counter >= NUM_DRUMS)
-              drum_counter = 0;
-
-            //check custom midi mapping
-            for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
-            {
-              if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1)
-              {
-                inNumber = custom_midi_map[c].out;
-                break;
-              }
-            }
+        }
 
 #ifdef DEBUG
-            char note_name[4];
-            getNoteName(note_name, inNumber);
-            Serial.print(F("=> Drum["));
-            Serial.print(drum_counter, DEC);
-            Serial.print(F("]: "));
-            Serial.println(note_name);
+        char note_name[4];
+        getNoteName(note_name, inNumber);
+        Serial.print(F("=> Drum["));
+        Serial.print(drum_counter, DEC);
+        Serial.print(F("]: "));
+        Serial.println(note_name);
 #endif
 
-            for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
-            {
-              if (inNumber == drum_config[d].midinote)
-              {
-#ifdef COMPILE_FOR_FLASH
-                char temp_name[16];
-#endif
-                uint8_t slot = drum_get_slot(drum_config[d].drum_class);
-                float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
-
-                drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-                drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-#ifdef USE_FX
-                drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
-                drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-#endif
-#ifdef COMPILE_FOR_PROGMEM
-                if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
-                {
-#endif
-
-                  if (drum_config[d].pitch != 0.0)
-                  {
-                    Drum[slot]->enableInterpolation(true);
-                    Drum[slot]->setPlaybackRate(drum_config[d].pitch);
-                  }
-#ifdef COMPILE_FOR_PROGMEM
-                  Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
-#endif
-#ifdef COMPILE_FOR_FLASH
-                  strcpy(temp_name, drum_config[d].name);
-                  strcat(temp_name, ".wav");
-                  Drum[slot]->playWav(temp_name);
-                  //     Drum[slot]->play(temp_name);
-
-#endif
-
-#ifdef COMPILE_FOR_PROGMEM
-                }
-#endif
-                //#ifdef DEBUG
-                //                Serial.print(F("Drum "));
-                //                Serial.print(drum_config[d].shortname);
-                //                Serial.print(F(" ["));
-                //                Serial.print(drum_config[d].name);
-                //                Serial.print(F("], Slot "));
-                //                Serial.print(slot);
-                //                Serial.print(F(": V"));
-                //                Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
-                //                Serial.print(F(" P"));
-                //                Serial.print(drum_config[d].pan, 2);
-                //                Serial.print(F(" PAN"));
-                //                Serial.print(pan, 2);
-                //                Serial.print(F(" RS"));
-                //                Serial.println(drum_config[d].reverb_send, 2);
-                //#endif
-                break;
-              }
-            }
-          }
-#endif
-          //
-          // E-Piano
-          //
-#if defined(USE_EPIANO)
-          if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel)
+        for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
+        {
+          if (inNumber == drum_config[d].midinote)
           {
-            if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
-            {
-              ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
-              //#ifdef DEBUG
-              //              char note_name[4];
-              //              getNoteName(note_name, inNumber);
-              //              Serial.print(F("KeyDown "));
-              //              Serial.print(note_name);
-              //              Serial.print(F(" EPIANO "));
-              //              Serial.print(F(" MIDI-channel "));
-              //              Serial.print(inChannel, DEC);
-              //              Serial.println();
-              //#endif
-            }
-          }
+#ifdef COMPILE_FOR_FLASH
+            char temp_name[16];
 #endif
+
+#ifdef COMPILE_FOR_SDCARD
+            char temp_name[26];
+#endif
+            uint8_t slot = drum_get_slot(drum_config[d].drum_class);
+            float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
+
+            drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+            drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+#ifdef USE_FX
+            drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
+            drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
+#endif
+
+#ifdef COMPILE_FOR_PROGMEM
+            if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+            {
+#endif
+
+              if (drum_config[d].pitch != 0.0)
+              {
+                Drum[slot]->enableInterpolation(true);
+                Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+              }
+
+#ifdef COMPILE_FOR_PROGMEM
+              Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+#endif
+#ifdef COMPILE_FOR_FLASH
+              strcpy(temp_name, drum_config[d].name);
+              strcat(temp_name, ".wav");
+              Drum[slot]->playWav(temp_name);
+              //Drum[slot]->playWav("DMpop.wav");
+#endif
+
+#ifdef COMPILE_FOR_SDCARD
+              strcpy(temp_name, "/samples_dexed/");
+              strcat(temp_name, drum_config[d].name);
+              // strcpy(temp_name, drum_config[d].name);
+              strcat(temp_name, ".wav");
+              Drum[slot]->playWav(temp_name);     
+#endif
+
+#ifdef COMPILE_FOR_PROGMEM
+            }
+#endif
+            //#ifdef DEBUG
+            //                Serial.print(F("Drum "));
+            //                Serial.print(drum_config[d].shortname);
+            //                Serial.print(F(" ["));
+            //                Serial.print(drum_config[d].name);
+            //                Serial.print(F("], Slot "));
+            //                Serial.print(slot);
+            //                Serial.print(F(": V"));
+            //                Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
+            //                Serial.print(F(" P"));
+            //                Serial.print(drum_config[d].pan, 2);
+            //                Serial.print(F(" PAN"));
+            //                Serial.print(pan, 2);
+            //                Serial.print(F(" RS"));
+            //                Serial.println(drum_config[d].reverb_send, 2);
+            //#endif
+            break;
+          }
         }
+      }
+#endif
+      //
+      // E-Piano
+      //
+#if defined(USE_EPIANO)
+      if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel)
+      {
+        if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
+        {
+          ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
+          //#ifdef DEBUG
+          //              char note_name[4];
+          //              getNoteName(note_name, inNumber);
+          //              Serial.print(F("KeyDown "));
+          //              Serial.print(note_name);
+          //              Serial.print(F(" EPIANO "));
+          //              Serial.print(F(" MIDI - channel "));
+          //              Serial.print(inChannel, DEC);
+          //              Serial.println();
+          //#endif
+        }
+      }
+#endif
     }
+
 #ifdef COMPILE_FOR_FLASH
   }
 #endif
@@ -1781,7 +1933,6 @@ uint8_t drum_get_slot(uint8_t dt)
       Drum[i]->enableInterpolation(false);
       Drum[i]->setPlaybackRate(1.0);
     }
-
     //phtodo
 
     //    else
@@ -1814,6 +1965,19 @@ uint8_t drum_get_slot(uint8_t dt)
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
 {
+
+#if defined(USE_MICROSYNTH)
+  for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
+  {
+    if (inChannel == microsynth[instance_id].midi_channel)
+    {
+      microsynth_envelope_osc[instance_id].noteOff();
+      if (inNumber == MIDI_C8 || microsynth[instance_id].trigger_noise_with_osc )  // is noise only or is osc_with_noise
+        microsynth_envelope_noise[instance_id].noteOff();
+    }
+  }
+#endif
+
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
     if (checkMidiChannel(inChannel, instance_id))
@@ -1832,7 +1996,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
         //        Serial.print(note_name);
         //        Serial.print(F(" instance "));
         //        Serial.print(instance_id, DEC);
-        //        Serial.print(F(" MIDI-channel "));
+        //        Serial.print(F(" MIDI - channel "));
         //        Serial.print(inChannel, DEC);
         //        Serial.println();
         //#endif
@@ -1853,22 +2017,10 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
       Serial.print(F("KeyUp "));
       Serial.print(note_name);
       Serial.print(F(" EPIANO "));
-      Serial.print(F(" MIDI-channel "));
+      Serial.print(F(" MIDI - channel "));
       Serial.print(inChannel, DEC);
       Serial.println();
 #endif
-    }
-  }
-#endif
-
-#if defined(USE_MICROSYNTH)
-  for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
-  {
-    if (inChannel == microsynth[instance_id].midi_channel)
-    {
-      if (inNumber == MIDI_C8 || microsynth[instance_id].trigger_noise_with_osc )  // is noise only or is osc_with_noise
-        microsynth_envelope_noise[instance_id].noteOff();
-      microsynth_envelope_osc[instance_id].noteOff();
     }
   }
 #endif
@@ -1905,7 +2057,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
         Serial.print(instance_id, DEC);
         Serial.print(F(": CC#"));
         Serial.print(inCtrl, DEC);
-        Serial.print(F(":"));
+        Serial.print(F(": "));
         Serial.println(inValue, DEC);
 #endif
 
@@ -1914,7 +2066,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
         switch (inCtrl) {
           case 0: // BankSelect MSB
 #ifdef DEBUG
-            Serial.println(F("BANK-SELECT MSB CC"));
+            Serial.println(F("BANK - SELECT MSB CC"));
 #endif
             configuration.dexed[instance_id].bank = constrain((inValue << 7)&configuration.dexed[instance_id].bank, 0, MAX_BANKS - 1);
             /* load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
@@ -1975,7 +2127,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
             break;
           case 32: // BankSelect LSB
 #ifdef DEBUG
-            Serial.println(F("BANK-SELECT LSB CC"));
+            Serial.println(F("BANK - SELECT LSB CC"));
 #endif
             configuration.dexed[instance_id].bank = constrain(inValue, 0, MAX_BANKS - 1);
             /*load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
@@ -2189,7 +2341,7 @@ void handleSystemExclusive(byte * sysex, uint len)
 #ifdef DEBUG
       Serial.print(F("INSTANCE "));
       Serial.print(instance_id, DEC);
-      Serial.println(F(": SYSEX-MIDI-Channel mismatch"));
+      Serial.println(F(": SYSEX - MIDI - Channel mismatch"));
 #endif
       return;
     }
@@ -2199,7 +2351,7 @@ void handleSystemExclusive(byte * sysex, uint len)
     Serial.print(len);
     Serial.println(F("]"));
 
-    Serial.println(F("SysEx data:"));
+    Serial.println(F("SysEx data: "));
     for (uint16_t i = 0; i < len; i++)
     {
       Serial.print(F("[0x"));
@@ -2207,7 +2359,7 @@ void handleSystemExclusive(byte * sysex, uint len)
       if (s < 16)
         Serial.print(F("0"));
       Serial.print(s, HEX);
-      Serial.print(F("|"));
+      Serial.print(F(" | "));
       if (s < 100)
         Serial.print(F("0"));
       if (s < 10)
@@ -2260,7 +2412,7 @@ void handleSystemExclusive(byte * sysex, uint len)
       if ((sysex[3] & 0x7c) >> 2 == 0)
       {
 #ifdef DEBUG
-        Serial.println(F("SysEx Voice parameter:"));
+        Serial.println(F("SysEx Voice parameter: "));
         Serial.print("Parameter #");
         Serial.print(sysex[4] + ((sysex[3] & 0x03) * 128), DEC);
         Serial.print(" Value: ");
@@ -2271,7 +2423,7 @@ void handleSystemExclusive(byte * sysex, uint len)
       else if ((sysex[3] & 0x7c) >> 2 == 2)
       {
 #ifdef DEBUG
-        Serial.println(F("SysEx Function parameter:"));
+        Serial.println(F("SysEx Function parameter: "));
         Serial.print("Parameter #");
         Serial.print(sysex[4], DEC);
         Serial.print(" Value: ");
@@ -2445,9 +2597,9 @@ void handleSystemExclusive(byte * sysex, uint len)
       if (bulk_checksum_calc != bulk_checksum)
       {
 #ifdef DEBUG
-        Serial.print(F("E: Checksum error for one voice [0x"));
+        Serial.print(F("E : Checksum error for one voice [0x"));
         Serial.print(bulk_checksum, HEX);
-        Serial.print(F("/0x"));
+        Serial.print(F(" / 0x"));
         Serial.print(bulk_checksum_calc, HEX);
         Serial.println(F("]"));
 #endif
@@ -2488,9 +2640,9 @@ void handleSystemExclusive(byte * sysex, uint len)
         if ((sysex[3] & 0x7f) != 9)
         {
 #ifdef DEBUG
-          Serial.println(F("E: Not a SysEx bank bulk upload."));
+          Serial.println(F("E : Not a SysEx bank bulk upload."));
 #endif
-          display.setCursor_textGrid(1, 2);
+          setCursor_textGrid(1, 2);
           display.print(F("Error (TYPE)      "));
           delay(MESSAGE_WAIT_TIME);
           LCDML.FUNC_goBackToMenu();
@@ -2504,9 +2656,9 @@ void handleSystemExclusive(byte * sysex, uint len)
         if (((sysex[4] << 7) | sysex[5]) != 0x1000)
         {
 #ifdef DEBUG
-          Serial.println(F("E: Wrong length for SysEx bank bulk upload (not 4096)."));
+          Serial.println(F("E : Wrong length for SysEx bank bulk upload (not 4096)."));
 #endif
-          display.setCursor_textGrid(1, 2);
+          setCursor_textGrid(1, 2);
           display.print(F("Error (SIZE)     "));
           delay(MESSAGE_WAIT_TIME);
           LCDML.FUNC_goBackToMenu();
@@ -2527,13 +2679,13 @@ void handleSystemExclusive(byte * sysex, uint len)
         if (bulk_checksum_calc != bulk_checksum)
         {
 #ifdef DEBUG
-          Serial.print(F("E: Checksum error for bank [0x"));
+          Serial.print(F("E : Checksum error for bank [0x"));
           Serial.print(bulk_checksum, HEX);
-          Serial.print(F("/0x"));
+          Serial.print(F(" / 0x"));
           Serial.print(bulk_checksum_calc, HEX);
           Serial.println(F("]"));
 #endif
-          display.setCursor_textGrid(1, 2);
+          setCursor_textGrid(1, 2);
           display.print(F("Error (CHECKSUM)"));
           delay(MESSAGE_WAIT_TIME);
           LCDML.FUNC_goBackToMenu();
@@ -2551,7 +2703,7 @@ void handleSystemExclusive(byte * sysex, uint len)
           Serial.print(receive_bank_filename);
           Serial.println(F("]"));
 #endif
-          display.setCursor_textGrid(1, 2);
+          setCursor_textGrid(1, 2);
           display.print(F("Done.           "));
           delay(MESSAGE_WAIT_TIME);
           LCDML.FUNC_goBackToMenu();
@@ -2563,7 +2715,7 @@ void handleSystemExclusive(byte * sysex, uint len)
           Serial.print(receive_bank_filename);
           Serial.println(F("]"));
 #endif
-          display.setCursor_textGrid(1, 2);
+          setCursor_textGrid(1, 2);
           display.print(F("Error.          "));
           delay(MESSAGE_WAIT_TIME);
           LCDML.FUNC_goBackToMenu();
@@ -2572,12 +2724,12 @@ void handleSystemExclusive(byte * sysex, uint len)
       }
 #ifdef DEBUG
       else
-        Serial.println(F("E: Not in MIDI receive bank mode."));
+        Serial.println(F("E : Not in MIDI receive bank mode."));
 #endif
     }
 #ifdef DEBUG
     else
-      Serial.println(F("E: SysEx parameter length wrong."));
+      Serial.println(F("E : SysEx parameter length wrong."));
 #endif
   }
 }
@@ -2611,7 +2763,7 @@ void handleClock(void)
     if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
     {
 #ifdef DEBUG
-      Serial.print(F("MIDI Clock: "));
+      Serial.print(F("MIDI Clock : "));
       Serial.print(midi_bpm);
       Serial.print(F(" bpm ("));
       Serial.print(midi_bpm_timer, DEC);
@@ -2637,7 +2789,7 @@ void handleClock(void)
           uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[configuration.fx.delay_sync[instance_id]] / float(midi_bpm) + 0.5);
           delay_fx[instance_id]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
 #ifdef DEBUG
-          Serial.print(F("Setting Delay-Sync of instance "));
+          Serial.print(F("Setting Delay - Sync of instance "));
           Serial.print(instance_id);
           Serial.print(F(" to "));
           Serial.print(constrain(midi_sync_delay_time, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10), DEC);
@@ -2675,15 +2827,21 @@ void handleStart(void)
   midi_bpm_timer = 0;
   midi_bpm_counter = 0;
   _midi_bpm = -1;
+
+  //        seq.loop_start = 99;
+  //        seq.loop_end = 99;
+
+  //#if defined(USE_SEQUENCER)
   seq.step = 0;
+  seq.current_song_step = 0;
   seq.arp_note = 0;
   seq.arp_chord = 0;
 
-  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-  {
-    seq.chain_counter[d] = 0;
-    seq.current_pattern[d] = 99;
-  }
+  //  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  //  {
+  //    seq.chain_counter[d] = 0;
+  //    seq.current_pattern[d] = 99;
+  //  }
 
   if (seq.loop_start == 99)  // no loop start set, start at step 0
     seq.current_song_step = 0;
@@ -2691,9 +2849,10 @@ void handleStart(void)
     seq.current_song_step = seq.loop_start;
 
   seq.running = true;
-#ifdef USE_SEQUENCER
-  sequencer_timer.start();
-#endif
+  sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+  // sequencer_timer.start();
+
+  //#endif
 
 }
 
@@ -2704,9 +2863,41 @@ void handleContinue(void)
 
 void handleStop(void)
 {
-#ifdef USE_SEQUENCER
+#if defined(USE_SEQUENCER)
   if (seq.running)
+  {
     sequencer_timer.stop();
+
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
+    {
+      display.setTextColor( GREEN, COLOR_BACKGROUND);  //play indicator song view
+
+
+      if (CHAR_height_small * 8  + 10 *  ( seq.current_song_step - 1 - seq.scrollpos) > CHAR_height_small * 7)
+      {
+        display.setCursor(CHAR_width_small * 4 , CHAR_height_small * 8  + 10  *  (seq.current_song_step - seq.scrollpos)  );
+        display.print(" ");
+      }
+
+    }
+  }
+
+  seq.running = false;
+  seq.recording = false;
+  seq.note_in = 0;
+  seq.step = 0;
+
+  //  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  //  {
+  //    seq.chain_counter[d] = 0;
+  //    seq.current_pattern[d] = 99;
+  //  }
+
+  //  if (seq.loop_start == 99)  // no loop start set, start at step 0
+  //    seq.current_song_step = 0;
+  //  else
+  //    seq.current_song_step = seq.loop_start;
+
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -2715,21 +2906,6 @@ void handleStop(void)
   microsynth_envelope_noise[0].noteOff();
   microsynth_envelope_noise[1].noteOff();
 #endif
-
-  seq.running = false;
-  seq.recording = false;
-  seq.note_in = 0;
-  seq.step = 0;
-  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-  {
-    seq.chain_counter[d] = 0;
-    seq.current_pattern[d] = 99;
-  }
-
-  if (seq.loop_start == 99)  // no loop start set, start at step 0
-    seq.current_song_step = 0;
-  else
-    seq.current_song_step = seq.loop_start;
 
   MicroDexed[0]->panic();
 #if NUM_DEXED > 1
@@ -2770,7 +2946,7 @@ bool checkMidiChannel(byte inChannel, uint8_t instance_id)
     //#ifdef DEBUG
     //    Serial.print(F("INSTANCE "));
     //    Serial.print(instance_id, DEC);
-    //    Serial.print(F(": Ignoring MIDI data on channel "));
+    //    Serial.print(F(" : Ignoring MIDI data on channel "));
     //    Serial.print(inChannel);
     //    Serial.print(F("(listening on "));
     //    Serial.print(configuration.dexed[instance_id].midi_channel);
@@ -2785,7 +2961,7 @@ bool checkMidiChannel(byte inChannel, uint8_t instance_id)
 void init_MIDI_send_CC(void)
 {
 #ifdef DEBUG
-  Serial.println("init_MIDI_send_CC():");
+  Serial.println("init_MIDI_send_CC() : ");
 #endif
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, configuration.dexed[selected_instance_id].sound_intensity);
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, configuration.dexed[selected_instance_id].pan);
@@ -2821,9 +2997,9 @@ void set_volume(uint8_t v, uint8_t m)
   configuration.sys.mono = m;
 
 #ifdef DEBUG
-  Serial.print(F("Setting volume: VOL="));
+  Serial.print(F("Setting volume : VOL = "));
   Serial.println(v, DEC);
-  Serial.print(F(" V="));
+  Serial.print(F(" V = "));
   Serial.println(volume_transform(tmp_v / 100.0));
 #endif
 
@@ -3037,7 +3213,7 @@ void check_configuration_epiano(void)
   configuration.epiano.highest_note = constrain(configuration.epiano.highest_note, EP_HIGHEST_NOTE_MIN, EP_HIGHEST_NOTE_MAX);
   configuration.epiano.transpose = constrain(configuration.epiano.transpose, EP_TRANSPOSE_MIN, EP_TRANSPOSE_MAX);
   configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX);
-  configuration.epiano.pan = constrain(configuration.epiano.pan, EP_PANORAMA_MIN, EP_PANORAMA_MAX);
+  configuration.epiano.pan = constrain(configuration.epiano.pan, PANORAMA_MIN, PANORAMA_MAX);
   configuration.epiano.velocity_sense = constrain(configuration.epiano.velocity_sense, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX);
   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel, EP_MIDI_CHANNEL_MIN, EP_MIDI_CHANNEL_MAX);
 }
@@ -3136,7 +3312,7 @@ void init_configuration(void)
   configuration.epiano.highest_note = EP_HIGHEST_NOTE_DEFAULT;
   configuration.epiano.transpose = EP_TRANSPOSE_DEFAULT;
   configuration.epiano.sound_intensity = EP_SOUND_INTENSITY_DEFAULT;
-  configuration.epiano.pan = EP_PANORAMA_DEFAULT;
+  configuration.epiano.pan = PANORAMA_DEFAULT;
   configuration.epiano.velocity_sense = EP_VELOCITY_SENSE_DEFAULT;
   configuration.epiano.midi_channel = EP_MIDI_CHANNEL_DEFAULT;
 #endif
@@ -3455,9 +3631,9 @@ void _softRestart(void)
 float midi_volume_transform(uint8_t midi_amp)
 {
 #ifdef DEBUG
-  Serial.print(F("midi_amp="));
+  Serial.print(F("midi_amp = "));
   Serial.print(midi_amp, DEC);
-  Serial.print(F(" transformed_midi_amp="));
+  Serial.print(F(" transformed_midi_amp = "));
   Serial.println(powf(midi_amp / 127.0, 4), 3);
 #endif
   return powf(midi_amp / 127.0, 4);
@@ -3496,19 +3672,19 @@ void generate_version_string(char* buffer, uint8_t len)
   memset(buffer, 0, len);
   strncat(buffer, VERSION, len);
 #if defined(TEENSY3_5)
-  strncat(buffer, "-3.5", 4);
+  strncat(buffer, " - 3.5", 4);
 #elif defined(TEENSY3_6)
-  strncat(buffer, "-3.6", 4);
+  strncat(buffer, " - 3.6", 4);
 #elif defined(TEENSY4_0)
-  strncat(buffer, "-4.0", 4);
+  strncat(buffer, " - 4.0", 4);
 #elif defined(TEENSY4_1)
-  strncat(buffer, "-4.1", 4);
+  strncat(buffer, " - 4.1", 4);
 #endif
 #if defined(USE_FX)
   strncat(buffer, "FX", 2);
 #endif
 #if defined(MAX_NOTES)
-  strncat(buffer, "-", 1);
+  strncat(buffer, " - ", 1);
   itoa (MAX_NOTES, tmp, 10);
   strncat(buffer, tmp, 2);
 #endif
@@ -3555,7 +3731,7 @@ uint8_t check_sd_cards(void)
   if (ret >= 0)
   {
 #ifdef DEBUG
-    Serial.print(F("Card type: "));
+    Serial.print(F("Card type : "));
 #endif
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
@@ -3586,7 +3762,7 @@ uint8_t check_sd_cards(void)
     if (!volume.init(card))
     {
 #ifdef DEBUG
-      Serial.println(F("Could not find FAT16/FAT32 partition."));
+      Serial.println(F("Could not find FAT16 / FAT32 partition."));
 #endif
       ret = -1;
     }
@@ -3604,11 +3780,11 @@ uint8_t check_sd_cards(void)
 #ifdef DEBUG
     Serial.print(F("Volume type is FAT"));
     Serial.println(volume.fatType(), DEC);
-    Serial.print(F("Volume size (GB): "));
+    Serial.print(F("Volume size (GB) : "));
     Serial.println(volumesize);
 #endif
 
-    sprintf(sd_string + 5, "FAT%2d %02dGB", volume.fatType(), int(volumesize));
+    sprintf(sd_string + 5, "FAT %2d %02dGB", volume.fatType(), int(volumesize));
   }
 
 #ifdef DEBUG
@@ -3653,52 +3829,52 @@ void check_and_create_directories(void)
     }
 
     /*
-        // create directories for configuration files
-        sprintf(tmp, "/%s", VOICE_CONFIG_PATH);
-        if (!SD.exists(tmp))
-        {
+      // create directories for configuration files
+      sprintf(tmp, "/%s", VOICE_CONFIG_PATH);
+      if (!SD.exists(tmp))
+      {
       #ifdef DEBUG
-          Serial.print(F("Creating directory "));
-          Serial.println(tmp);
+      Serial.print(F("Creating directory "));
+      Serial.println(tmp);
       #endif
-          SD.mkdir(tmp);
-        }
-        sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
-        if (!SD.exists(tmp))
-        {
+      SD.mkdir(tmp);
+      }
+      sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
+      if (!SD.exists(tmp))
+      {
       #ifdef DEBUG
-          Serial.print(F("Creating directory "));
-          Serial.println(tmp);
+      Serial.print(F("Creating directory "));
+      Serial.println(tmp);
       #endif
-          SD.mkdir(tmp);
-        }
-        sprintf(tmp, "/%s", FX_CONFIG_PATH);
-        if (!SD.exists(tmp))
-        {
+      SD.mkdir(tmp);
+      }
+      sprintf(tmp, "/%s", FX_CONFIG_PATH);
+      if (!SD.exists(tmp))
+      {
       #ifdef DEBUG
-          Serial.print(F("Creating directory "));
-          Serial.println(tmp);
+      Serial.print(F("Creating directory "));
+      Serial.println(tmp);
       #endif
-          SD.mkdir(tmp);
-        }
-        sprintf(tmp, "/%s", DRUM_CONFIG_PATH);
-        if (!SD.exists(tmp))
-        {
+      SD.mkdir(tmp);
+      }
+      sprintf(tmp, "/%s", DRUM_CONFIG_PATH);
+      if (!SD.exists(tmp))
+      {
       #ifdef DEBUG
-          Serial.print(F("Creating directory "));
-          Serial.println(tmp);
+      Serial.print(F("Creating directory "));
+      Serial.println(tmp);
       #endif
-          SD.mkdir(tmp);
-        }
-        sprintf(tmp, "/%s", FAV_CONFIG_PATH);
-        if (!SD.exists(tmp))
-        {
+      SD.mkdir(tmp);
+      }
+      sprintf(tmp, "/%s", FAV_CONFIG_PATH);
+      if (!SD.exists(tmp))
+      {
       #ifdef DEBUG
-          Serial.print(F("Creating directory "));
-          Serial.println(tmp);
+      Serial.print(F("Creating directory "));
+      Serial.println(tmp);
       #endif
-          SD.mkdir(tmp);
-        }
+      SD.mkdir(tmp);
+      }
     */
 
     sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
@@ -3747,10 +3923,13 @@ void check_and_create_directories(void)
 
 
     /* #ifdef DEBUG
-        else
-          Serial.println(F("No SD card for directory check available."));
+      else
+      Serial.println(F("No SD card for directory check available."));
       #endif */
   }
+#ifdef DEBUG
+  Serial.println(F("SD card check end"));
+#endif
 }
 
 /******************************************************************************
@@ -3778,51 +3957,51 @@ void show_cpu_and_mem_usage(void)
 #ifdef DEBUG
   else
     Serial.print(F(" "));
-  Serial.print(F("CPU:"));
+  Serial.print(F("CPU : "));
   Serial.print(AudioProcessorUsage(), 2);
-  Serial.print(F("%|CPUMAX:"));
+  Serial.print(F(" % | CPUMAX : "));
   Serial.print(AudioProcessorUsageMax(), 2);
-  Serial.print(F("%|CPUMAXCNT:"));
+  Serial.print(F(" % | CPUMAXCNT : "));
   Serial.print(cpumax, DEC);
 #ifdef TEENSY4
-  Serial.print(F("|CPUTEMP:"));
+  Serial.print(F(" | CPUTEMP : "));
   Serial.print(tempmonGetTemp(), 2);
-  Serial.print(F("C|MEM:"));
+  Serial.print(F("C | MEM : "));
 #else
-  Serial.print(F("|MEM:"));
+  Serial.print(F(" | MEM : "));
 #endif
   Serial.print(AudioMemoryUsage(), DEC);
-  Serial.print(F("|MEMMAX:"));
+  Serial.print(F(" | MEMMAX : "));
   Serial.print(AudioMemoryUsageMax(), DEC);
-  Serial.print(F("|AUDIO_MEM_MAX:"));
+  Serial.print(F(" | AUDIO_MEM_MAX : "));
   Serial.print(AUDIO_MEM, DEC);
-  Serial.print(F("|RENDERTIMEMAX:"));
+  Serial.print(F(" | RENDERTIMEMAX : "));
   Serial.print(sum_render_time_max, DEC);
-  Serial.print(F("|XRUN:"));
+  Serial.print(F(" | XRUN : "));
   Serial.print(sum_xrun, DEC);
-  //  Serial.print(F("|PEAKR:"));
+  //  Serial.print(F(" | PEAKR : "));
   //  Serial.print(peak_r, DEC);
-  //  Serial.print(F("|PEAKL:"));
+  //  Serial.print(F(" | PEAKL : "));
   //  Serial.print(peak_l, DEC);
-  //  Serial.print(F("|PEAKMD:"));
+  //  Serial.print(F(" | PEAKMD : "));
   //  Serial.print(peak_dexed, DEC);
-  //  Serial.print(F("|ACTPEAKMD:"));
+  //  Serial.print(F(" | ACTPEAKMD : "));
   //  Serial.print(peak_dexed_value, 1);
-  Serial.print(F("|BLOCKSIZE:"));
+  Serial.print(F(" | BLOCKSIZE : "));
   Serial.print(AUDIO_BLOCK_SAMPLES, DEC);
-  Serial.print(F("|RAM:"));
+  Serial.print(F(" | RAM : "));
   Serial.print(FreeMem(), DEC);
 
-  Serial.print(F("|ACTVOICES:"));
+  Serial.print(F(" | ACTVOICES : "));
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
     Serial.print(instance_id, DEC);
-    Serial.print(F("="));
+    Serial.print(F(" = "));
     Serial.print(active_voices[instance_id], DEC);
-    Serial.print(F("/"));
+    Serial.print(F(" / "));
     Serial.print(MAX_NOTES / NUM_DEXED, DEC);
     if (instance_id != NUM_DEXED - 1)
-      Serial.print(F(","));
+      Serial.print(F(", "));
   }
   Serial.println();
 #endif
@@ -3835,7 +4014,7 @@ void show_cpu_and_mem_usage(void)
 void show_configuration(void)
 {
   Serial.println();
-  Serial.println(F("CONFIGURATION:"));
+  Serial.println(F("CONFIGURATION : "));
   Serial.println(F("System"));
   Serial.print(F("  Volume              ")); Serial.println(configuration.sys.vol, DEC);
   Serial.print(F("  Mono                ")); Serial.println(configuration.sys.mono, DEC);
@@ -3858,7 +4037,7 @@ void show_configuration(void)
     Serial.println(instance_id, DEC);
     Serial.print(F("  Bank                 ")); Serial.println(configuration.dexed[instance_id].bank, DEC);
     Serial.print(F("  Voice                ")); Serial.println(configuration.dexed[instance_id].voice, DEC);
-    Serial.print(F("  MIDI-Channel         ")); Serial.println(configuration.dexed[instance_id].midi_channel, DEC);
+    Serial.print(F("  MIDI - Channel         ")); Serial.println(configuration.dexed[instance_id].midi_channel, DEC);
     Serial.print(F("  Lowest Note          ")); Serial.println(configuration.dexed[instance_id].lowest_note, DEC);
     Serial.print(F("  Highest Note         ")); Serial.println(configuration.dexed[instance_id].highest_note, DEC);
     Serial.print(F("  Filter Cutoff        ")); Serial.println(configuration.fx.filter_cutoff[instance_id], DEC);
@@ -3877,7 +4056,7 @@ void show_configuration(void)
     Serial.print(F("  Transpose            ")); Serial.println(configuration.dexed[instance_id].transpose, DEC);
     Serial.print(F("  Tune                 ")); Serial.println(configuration.dexed[instance_id].tune, DEC);
     Serial.print(F("  Polyphony            ")); Serial.println(configuration.dexed[instance_id].polyphony, DEC);
-    Serial.print(F("  Mono/Poly            ")); Serial.println(configuration.dexed[instance_id].monopoly, DEC);
+    Serial.print(F("  Mono / Poly            ")); Serial.println(configuration.dexed[instance_id].monopoly, DEC);
     Serial.print(F("  Note Refresh         ")); Serial.println(configuration.dexed[instance_id].note_refresh, DEC);
     Serial.print(F("  Pitchbend Range      ")); Serial.println(configuration.dexed[instance_id].pb_range, DEC);
     Serial.print(F("  Pitchbend Step       ")); Serial.println(configuration.dexed[instance_id].pb_step, DEC);
@@ -3912,17 +4091,17 @@ void show_patch(uint8_t instance_id)
   Serial.println(instance_id, DEC);
 
   memset(vn, 0, sizeof(vn));
-  Serial.println(F("+==========================================================================================================+"));
+  Serial.println(F(" += == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == = +"));
   for (int8_t i = 5; i >= 0; --i)
   {
-    Serial.println(F("+==========================================================================================================+"));
-    Serial.print(F("| OP"));
+    Serial.println(F(" += == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == = +"));
+    Serial.print(F(" | OP"));
     Serial.print(6 - i, DEC);
-    Serial.println(F("                                                                                                      |"));
-    Serial.println(F("+======+======+======+======+======+======+======+======+================+================+================+"));
-    Serial.println(F("|  R1  |  R2  |  R3  |  R4  |  L1  |  L2  |  L3  |  L4  | LEV_SCL_BRK_PT | SCL_LEFT_DEPTH | SCL_RGHT_DEPTH |"));
-    Serial.println(F("+------+------+------+------+------+------+------+------+----------------+----------------+----------------+"));
-    Serial.print("| ");
+    Serial.println(F("                                                                                                      | "));
+    Serial.println(F(" += == == = += == == = += == == = += == == = += == == = += == == = += == == = += == == = += == == == == == == == = += == == == == == == == = += == == == == == == == = +"));
+    Serial.println(F(" |  R1  |  R2  |  R3  |  R4  |  L1  |  L2  |  L3  |  L4  | LEV_SCL_BRK_PT | SCL_LEFT_DEPTH | SCL_RGHT_DEPTH | "));
+    Serial.println(F(" + ------ +------ +------ +------ +------ +------ +------ +------ +---------------- +---------------- +---------------- +"));
+    Serial.print(" | ");
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R1));
     Serial.print(F("  | "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R2));
@@ -3944,19 +4123,19 @@ void show_patch(uint8_t instance_id)
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_LEFT_DEPTH));
     Serial.print(F("  |           "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_RGHT_DEPTH));
-    Serial.println(F("  |"));
-    Serial.println(F("+======+======+======+======+======+===+==+==+===+======+====+========+==+====+=======+===+================+"));
-    Serial.println(F("| SCL_L_CURVE | SCL_R_CURVE | RT_SCALE | AMS | KVS | OUT_LEV | OP_MOD | FRQ_C | FRQ_F | DETUNE             |"));
-    Serial.println(F("+-------------+-------------+----------+-----+-----+---------+--------+-------+-------+--------------------+"));
-    Serial.print(F("|        "));
+    Serial.println(F("  | "));
+    Serial.println(F(" += == == = += == == = += == == = += == == = += == == = += == += = += = += == += == == = += == = += == == == = += = += == = += == == == += == += == == == == == == == = +"));
+    Serial.println(F(" | SCL_L_CURVE | SCL_R_CURVE | RT_SCALE | AMS | KVS | OUT_LEV | OP_MOD | FRQ_C | FRQ_F | DETUNE             | "));
+    Serial.println(F(" + ------------ - +------------ - +---------- +---- - +---- - +-------- - +-------- +------ - +------ - +-------------------- +"));
+    Serial.print(F(" |        "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_LEFT_CURVE));
     Serial.print(F("  |        "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_RGHT_CURVE));
     Serial.print(F("  |     "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OSC_RATE_SCALE));
-    Serial.print(F("  |"));
+    Serial.print(F("  | "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_AMP_MOD_SENS));
-    Serial.print(F("  |"));
+    Serial.print(F("  | "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_KEY_VEL_SENS));
     Serial.print(F("  |    "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OUTPUT_LEV));
@@ -3968,12 +4147,12 @@ void show_patch(uint8_t instance_id)
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_FREQ_FINE));
     Serial.print(F("  |               "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OSC_DETUNE));
-    Serial.println(F("  |"));
+    Serial.println(F("  | "));
   }
-  Serial.println(F("+=======+=====+=+=======+===+===+======++====+==+==+====+====+==+======+======+=====+=+====================+"));
-  Serial.println(F("|  PR1  |  PR2  |  PR3  |  PR4  |  PL1  |  PL2  |  PL3  |  PL4  | ALG  |  FB  | OKS | TRANSPOSE            |"));
-  Serial.println(F("+-------+-------+-------+-------+-------+-------+-------+-------+------+------+-----+----------------------+"));
-  Serial.print(F("|  "));
+  Serial.println(F(" += == == == += == == += += == == == += == += == += == == = ++ == == += = += = += == = += == = += = += == == = += == == = += == == += += == == == == == == == == == = +"));
+  Serial.println(F(" |  PR1  |  PR2  |  PR3  |  PR4  |  PL1  |  PL2  |  PL3  |  PL4  | ALG  |  FB  | OKS | TRANSPOSE            | "));
+  Serial.println(F(" + ------ - +------ - +------ - +------ - +------ - +------ - +------ - +------ - +------ +------ +---- - +---------------------- +"));
+  Serial.print(F(" |  "));
   for (int8_t i = 0; i < 8; i++)
   {
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + i));
@@ -3982,15 +4161,15 @@ void show_patch(uint8_t instance_id)
   SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_ALGORITHM));
   Serial.print(F(" | "));
   SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_FEEDBACK));
-  Serial.print(F("  |"));
+  Serial.print(F("  | "));
   SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_OSC_KEY_SYNC));
   Serial.print(F("  |                 "));
   SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_TRANSPOSE));
-  Serial.println(F("  |"));
-  Serial.println(F("+=======+=+=====+===+===+=====+=+=======+=======+==+====+=====+=+======++=====+=====+======================+"));
-  Serial.println(F("| LFO SPD | LFO DLY | LFO PMD | LFO AMD | LFO SYNC | LFO WAVE | LFO PMS | NAME                             |"));
-  Serial.println(F("+---------+---------+---------+---------+----------+----------+---------+----------------------------------+"));
-  Serial.print(F("|    "));
+  Serial.println(F("  | "));
+  Serial.println(F(" += == == == += += == == += == += == += == == += += == == == += == == == += = += == = += == == += += == == = ++ == == = += == == += == == == == == == == == == == = +"));
+  Serial.println(F(" | LFO SPD | LFO DLY | LFO PMD | LFO AMD | LFO SYNC | LFO WAVE | LFO PMS | NAME                             | "));
+  Serial.println(F(" + -------- - +-------- - +-------- - +-------- - +---------- +---------- +-------- - +---------------------------------- +"));
+  Serial.print(F(" |    "));
   SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_SPEED));
   Serial.print(F("  |    "));
   SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_DELAY));
@@ -4007,16 +4186,16 @@ void show_patch(uint8_t instance_id)
   Serial.print(F("  | "));
   MicroDexed[instance_id]->getName(vn);
   Serial.print(vn);
-  Serial.println(F("                       |"));
-  Serial.println(F("+=========+=========+=========+=========+==========+==========+=========+==================================+"));
-  Serial.println(F("+==========================================================================================================+"));
+  Serial.println(F("                       | "));
+  Serial.println(F(" += == == == == += == == == == += == == == == += == == == == += == == == == = += == == == == = += == == == == += == == == == == == == == == == == == == == == == = +"));
+  Serial.println(F(" += == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == = +"));
 }
 
 void SerialPrintFormatInt3(uint8_t num)
 {
   char buf[4];
   memset(buf, 0, 4);
-  sprintf(buf, "%3d", num);
+  sprintf(buf, " % 3d", num);
   Serial.print(buf);
 }
 
