@@ -172,6 +172,3 @@ void XPT2046_Touchscreen::update()
 		}
 	}
 }
-
-
-

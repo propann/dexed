@@ -5939,56 +5939,42 @@ void UI_draw_waveform(uint8_t samplenumber)
 
 void UI_draw_waveform_large()
 {
-  //  int xspace = 0;
-  //  int i = 4;
-  //  short samplevalue = 0;
-  //  int oldx = 0, oldy = 180;
-  //
-  //  setCursor_textGrid(31, 0);
-  //  display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
-  //  display.print("SCALE");
-  //  setCursor_textGrid(37, 0);
-  //  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-  //  display.print(wave_spacing);
-  //  display.print (" ");
-  //  do {
-  //    {
-  //      samplevalue = (( (DRUM_SQBass[i * wave_spacing_old + 1]) * 256) + DRUM_SQBass[i * wave_spacing_old] )  / 710 + 120;
-  //      if (DRUM_SQBass[i * wave_spacing_old + 1] < 128)
-  //      {
-  //        display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_BACKGROUND );
-  //        oldx = xspace; oldy = samplevalue + 60;
-  //      }
-  //      else
-  //      {
-  //        display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_BACKGROUND );
-  //        oldx = xspace;  oldy = samplevalue - 40;
-  //      }
-  //      xspace = xspace + 1; i++;
-  //    }
-  //  } while (oldx < TFT_HEIGHT);
-  //  xspace = 0;
-  //  i = 4;
-  //  samplevalue = 0;
-  //  oldx = 0;  oldy = 180;
-  //  do {
-  //    {
-  //      samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 120;
-  //
-  //      if (DRUM_SQBass[i * wave_spacing + 1] < 128)
-  //      {
-  //        display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
-  //        oldx = xspace; oldy = samplevalue + 60;
-  //      }
-  //      else
-  //      {
-  //        display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
-  //        oldx = xspace;  oldy = samplevalue - 40;
-  //      }
-  //      xspace = xspace + 1;  i++;
-  //    }
-  //  } while (oldx < TFT_HEIGHT);
-  //wave_spacing_old = wave_spacing;
+//    int xspace = 0;
+//    int i = 4;
+//    short samplevalue = 0;
+//    int oldx = 0, oldy = 180;
+//   display.setTextSize(1);
+//    setCursor_textGrid(21, 3);
+//    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
+//    display.print("SCALE");
+//    setCursor_textGrid(21, 4);
+//    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+//    display.print(wave_spacing);
+//    display.print (" ");
+//   display.fillRect(0,100,DISPLAY_WIDTH-1,100,COLOR_BACKGROUND);
+//    
+//    xspace = 0;
+//    i = 4;
+//    samplevalue = 0;
+//    oldx = 0;  oldy = 180;
+//    do {
+//      {
+//        samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 100;
+//  
+//        if (DRUM_SQBass[i * wave_spacing + 1] < 128)
+//        {
+//          display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
+//          oldx = xspace; oldy = samplevalue + 60;
+//        }
+//        else
+//        {
+//          display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
+//          oldx = xspace;  oldy = samplevalue - 40;
+//        }
+//        xspace = xspace + 1;  i++;
+//      }
+//    } while (oldx < DISPLAY_WIDTH);
+//  wave_spacing_old = wave_spacing;
 }
 
 

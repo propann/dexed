@@ -23,13 +23,8 @@
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 
-// Low Memory Bitmap Support
-//-------------------------
-// writeRect1BPP - 	write 1 bit per pixel paletted bitmap
-
 /* ILI9341_t3DMA library code is placed under the MIT license
    Copyright (c) 2016 Frank Bösing
-
 */
 
 #ifndef _ILI9341_t3NH_
@@ -164,7 +159,7 @@ class ILI9341_t3n : public Print {
 
     // writeRect1BPP - 	write 1 bit per pixel paletted bitmap
     //					bitmap data in array at pixels, 4 bits per
-    //pixel
+    //
     //					color palette data in array at palette
     //					width must be at least 8 pixels
     void writeRect1BPP(int16_t x, int16_t y, int16_t w, int16_t h,

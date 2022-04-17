@@ -23,11 +23,6 @@ typedef struct ts_s
   bool update_virtual_keyboard_octave;
   bool switch_active_instance;
   bool block_screen_update;
-
-  int16_t scopebuffer[AUDIO_BLOCK_SAMPLES];
-  int16_t scopebuffer_old[AUDIO_BLOCK_SAMPLES];
-  bool scope_is_drawing;
-  uint8_t scope_delay;
   uint8_t displayed_peak[14];
   uint8_t old_helptext_lenght[3];
 } ts_t;
