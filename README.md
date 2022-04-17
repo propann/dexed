@@ -51,6 +51,11 @@ MicroDexed is licensed on the GPL v3. The msfa component (acronym for music synt
 
 Links for building a TMA board and/or MicroDexed, a small installation guide for Arduino-IDE and a user manual are located here: https://codeberg.org/dcoredump/MicroDexed/wiki/_pages
 
+
+## PIN LAYOUT
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/pin_layout_t41.png" >
+
 ## CURRENT Screenshots:
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-004831.png" >
