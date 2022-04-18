@@ -24,6 +24,9 @@ Compared to the previous Version, there are a lot of new features/improvments:
 
 * Sample Management from SD-CARD and SPI FLASH
 
+YouTube playlist about the development:
+https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
+
 Development Status:
 
 | Feature | Status |   
