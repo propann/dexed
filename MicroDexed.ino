@@ -24,12 +24,14 @@
 
 #include <limits.h>
 #include "config.h"
+#include "scope.h"
 #include <Audio.h>
 #include <Wire.h>
 #include <MIDI.h>
 #include <EEPROM.h>
 #include <SD.h>
 #include <SPI.h>
+#include "microsynth.h"
 
 #include <Adafruit_GFX.h>
 #include "ILI9341_t3n.h"
@@ -44,8 +46,7 @@
 #endif
 
 #ifdef COMPILE_FOR_FLASH
-#include <SerialFlash.h>
-#include <TeensyVariablePlaybackFlash.h>
+#include "vp_TeensyVariablePlaybackFlash.h"
 #endif
 
 #include <TeensyTimerTool.h>
@@ -78,7 +79,6 @@ using namespace TeensyTimerTool;
 #define TFT_TOUCH_CS  38
 #define TFT_TOUCH_IRQ 33
 
-//ILI9486_Teensy display;
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
 
@@ -91,96 +91,7 @@ XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - 
 //uint16_t COLOR_DRUMS = 0xFE4F;
 //uint16_t COLOR_PITCHSMP = 0x159A;
 
-#ifndef Realtime_Scope_h_
-#define Realtime_Scope_h_
 
-class Realtime_Scope : public AudioStream {
-  public:
-    Realtime_Scope(void) : AudioStream(1, inputQueueArray) {
-    }
-    virtual void update(void);
-    void FillArray(void);
-    void AddtoBuffer(int16_t*);
-
-  private:
-    audio_block_t *inputQueueArray[2];
-    int16_t buffer[AUDIO_BLOCK_SAMPLES];
-    int16_t buffer_old[AUDIO_BLOCK_SAMPLES];
-    uint32_t count = 0;
-    elapsedMillis msecs;
-};
-#endif
-
-void Realtime_Scope::FillArray() {
-  __disable_irq();
-  uint16_t i = 0;
-  do {
-    int16_t wave_data = buffer[i];
-    int8_t y = map(wave_data, 32767, -32768, 32, -32) + 33;
-
-    ts.scopebuffer[i] = y;
-
-    i = i + 1;
-  } while (i < (AUDIO_BLOCK_SAMPLES) );
-  __enable_irq();
-}
-
-void Realtime_Scope::AddtoBuffer(int16_t *audio)
-{
-  const int16_t *end = audio + AUDIO_BLOCK_SAMPLES;
-  __disable_irq();
-  do
-  {
-    buffer[count++] = *audio;
-    audio++;
-  } while (audio < end);
-  if (count > (AUDIO_BLOCK_SAMPLES) - 1)
-  {
-    count = 0;
-  }
-  __enable_irq();
-  if (ts.scope_is_drawing == false)
-    FillArray();
-
-}
-
-void Realtime_Scope::update(void)
-{
-  //if (msecs < 6000) return;
-  audio_block_t *block;
-  block = receiveReadOnly(0);
-  if (block)
-  {
-    AddtoBuffer(block->data);
-    release(block);
-  }
-}
-
-void draw_scope(uint16_t x, uint8_t y, uint8_t w) {
-  if (ts.scope_delay > 252)
-  {
-    uint16_t i = 0;
-    ts.scope_is_drawing = true;
-    do {
-      //      if (ts.scopebuffer[i] < 2)
-      //        ts.scopebuffer[i] = 2;
-      //      else if (ts.scopebuffer[i] > 96)
-      //        ts.scopebuffer[i] = 96;
-      if (ts.scopebuffer_old[i] != ts.scopebuffer[i])
-      {
-        // if (ts.scopebuffer_old[i] > 0)
-        display.drawPixel( x + i , ts.scopebuffer_old[i] + y, COLOR_BACKGROUND);
-        display.drawPixel( x + i , ts.scopebuffer[i] + y, COLOR_SYSTEXT);
-      }
-      ts.scopebuffer_old[i] = ts.scopebuffer[i];
-      i = i + 1;
-
-    } while (i < w);
-    ts.scope_delay = 0;
-    ts.scope_is_drawing = false;
-  }
-  ts.scope_delay++;
-}
 
 // Audio engines
 AudioSynthDexed*                MicroDexed[NUM_DEXED];
@@ -275,12 +186,13 @@ AudioMixer<2>                   audio_thru_mixer_l;
 
 // Drumset
 #if NUM_DRUMS > 0
-//AudioPlayMemory*              Drum[NUM_DRUMS];
 AudioPlaySdWav                  sd_WAV;
 
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp*            Drum[NUM_DRUMS];
 //AudioPlaySerialflashRaw*          Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
+AudioConnection*  DrumConL[NUM_DRUMS];
+ AudioConnection*  DrumConR[NUM_DRUMS];
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -333,6 +245,7 @@ AudioOutputUSB                  usb1;
 #if defined(TEENSY_AUDIO_BOARD) && defined(SGTL5000_AUDIO_THRU)
 AudioInputI2S                   i2s1in;
 #endif
+
 
 //
 // Static patching of audio objects
@@ -511,7 +424,6 @@ AudioConnection patchCord[] = {
   {microsynth_mixer_filter_noise[0], 0, microsynth_peak_noise_0, 0}, // unfiltered noise to mixer
   {microsynth_mixer_filter_noise[1], 0, microsynth_peak_noise_1, 0},
 
-
 #endif
 
 };
@@ -587,7 +499,8 @@ void create_audio_drum_chain(uint8_t instance_id)
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
 #ifdef COMPILE_FOR_FLASH
-  Drum[instance_id] = new AudioPlayFlashResmp();
+ // Drum[instance_id] = new AudioPlayFlashResmp();
+  
 #endif
   //Drum[instance_id] = new AudioPlaySerialflashRaw();
 
@@ -599,17 +512,17 @@ void create_audio_drum_chain(uint8_t instance_id)
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
 
-  Drum[instance_id]->enableInterpolation(false);
-  Drum[instance_id]->setPlaybackRate(1.0);
-  
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
-#ifdef USE_FX
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
-#endif
+//  Drum[instance_id]->enableInterpolation(false);
+//  Drum[instance_id]->setPlaybackRate(1.0);
+//
+//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
+//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
+//#ifdef USE_FX
+//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
+//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
+//#endif
 
-  
+
 #ifdef DEBUG
   Serial.print(F("Drum-Instance: "));
   Serial.println(instance_id);
@@ -619,58 +532,6 @@ void create_audio_drum_chain(uint8_t instance_id)
 }
 #endif
 
-
-void microsynth_update_settings(uint8_t instance_id)
-{
-
-  microsynth_mixer_filter_osc[instance_id].gain(0, 0.0);
-  microsynth_mixer_filter_osc[instance_id].gain(1, 0.0);
-  microsynth_mixer_filter_osc[instance_id].gain(2, 0.0);
-  microsynth_mixer_filter_osc[instance_id].gain(3, 0.0);
-
-  microsynth_mixer_filter_noise[instance_id].gain(0, 0.0);
-  microsynth_mixer_filter_noise[instance_id].gain(1, 0.0);
-  microsynth_mixer_filter_noise[instance_id].gain(2, 0.0);
-  microsynth_mixer_filter_noise[instance_id].gain(3, 0.0);
-
-  if (microsynth[instance_id].filter_osc_mode == 0)
-    microsynth_mixer_filter_osc[instance_id].gain(3, 1.0);
-  else if (microsynth[instance_id].filter_osc_mode == 1)
-    microsynth_mixer_filter_osc[instance_id].gain(0, 1.0);
-  else if (microsynth[instance_id].filter_osc_mode == 2)
-    microsynth_mixer_filter_osc[instance_id].gain(1, 1.0);
-  else if (microsynth[instance_id].filter_osc_mode == 3)
-    microsynth_mixer_filter_osc[instance_id].gain(2, 1.0);
-
-  if (microsynth[instance_id].filter_noise_mode == 0)
-    microsynth_mixer_filter_noise[instance_id].gain(3, 1.0);
-  else if (microsynth[instance_id].filter_noise_mode == 1)
-    microsynth_mixer_filter_noise[instance_id].gain(0, 1.0);
-  else if (microsynth[instance_id].filter_noise_mode == 2)
-    microsynth_mixer_filter_noise[instance_id].gain(1, 1.0);
-  else if (microsynth[instance_id].filter_noise_mode == 3)
-    microsynth_mixer_filter_noise[instance_id].gain(2, 1.0);
-
-  // test microsynth_envelope_osc[instance_id].releaseNoteOn(0);
-  microsynth_envelope_osc[instance_id].attack(microsynth[instance_id].env_attack * 4);
-  microsynth_envelope_osc[instance_id].decay(microsynth[instance_id].env_decay * 4 );
-  microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain / 50.1);
-  microsynth_envelope_osc[instance_id].release( microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release );
-  microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-  microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
-  microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
-  microsynth_filter_noise[instance_id].resonance(microsynth[instance_id].filter_noise_resonance / 20);
-  microsynth_filter_osc[instance_id].resonance(microsynth[instance_id].filter_osc_resonance / 20);
-  microsynth_envelope_noise[instance_id].release(microsynth[instance_id].noise_decay * 4);
-  microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
-  microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
-  microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
-  microsynth_waveform[instance_id].amplitude( mapfloat(microsynth[instance_id].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
-  microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
-  microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-  microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-
-}
 
 //void create_audio_sd_wav_chain(uint8_t instance_id)
 void create_audio_sd_wav_preview_chain()
@@ -683,6 +544,8 @@ void create_audio_sd_wav_preview_chain()
   //  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV, 0, master_mixer_r, MASTER_MIX_CH_SD_FILE_PREVIEW);
   //  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV, 0, master_mixer_l, MASTER_MIX_CH_SD_FILE_PREVIEW);
 
+ 
+ 
 }
 
 uint8_t sd_card = 0;
@@ -918,7 +781,7 @@ void setup()
     Serial.print(F("Creating Drum instance "));
     Serial.println(instance_id, DEC);
 #endif
-    create_audio_drum_chain(instance_id);
+   /////////// create_audio_drum_chain(instance_id); phtodo
 
     drum_mixer_r.gain(instance_id, 1.0);
     drum_mixer_l.gain(instance_id, 1.0);
@@ -1190,12 +1053,12 @@ void setup()
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
 
-  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-  {
-    ts.scopebuffer_old[i] = 10;
-  }
+//  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+//  {
+//    ts.scopebuffer_old[i] = 10;
+//  }
 
-
+ 
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1235,7 +1098,7 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
 
 void handle_touchscreen_mixer()
 {
-  if (ts.scope_delay % 60 == 0)
+  if (scope.scope_delay % 60 == 0)
   {
     float dr, dl;
     dr = drum_mixer_peak_l.read() / 6;
@@ -1260,7 +1123,6 @@ void handle_touchscreen_mixer()
   }
 }
 
-
 void loop()
 {
   // MIDI input handling
@@ -1273,30 +1135,30 @@ void loop()
   LCDML.loop();
 
   if (LCDML.FUNC_getID() > _LCDML_DISP_cnt && seq.running)
-    draw_scope(225, 20, 92);
+    scope.draw_scope(225, 20, 92);
   else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
     handle_touchscreen_voice_select();
-    draw_scope(216, 32, 103);
+    scope.draw_scope(216, 32, 103);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
   {
     handle_touchscreen_pattern_editor();
-    draw_scope(220, 0, 80);
+    scope.draw_scope(220, 0, 80);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
   {
     handle_touchscreen_microsynth();
-    draw_scope(253, 34, 58);
+    scope.draw_scope(253, 34, 58);
   }
-     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
-      handle_touchscreen_file_manager();
-      
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
+    handle_touchscreen_file_manager();
+
   //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
   //    handle_touchscreen_mute_matrix();
   //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
   //    handle_touchscreen_color_edit();
- 
+
   //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
   //    handle_touchscreen_custom_mappings();
   //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
@@ -1304,10 +1166,8 @@ void loop()
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
   {
     handle_touchscreen_mixer();
-    draw_scope(225, 0, 80);
+    scope.draw_scope(225, 0, 80);
   }
-
-
 
   //  //DEBUG
   //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
@@ -1443,17 +1303,17 @@ void loop()
         break;
       }
     }
-    if (instance_is_playing == false)
-    {
-      for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
-      {
-        if (Drum[instance_id]->isPlaying())
-        {
-          instance_is_playing = true;
-          break;
-        }
-      }
-    }
+//    if (instance_is_playing == false)
+//    {
+//      for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
+//      {
+//        if (Drum[instance_id]->isPlaying())
+//        {
+//          instance_is_playing = true;
+//          break;
+//        }
+//      }
+//    }
     if (instance_is_playing == false)
       save_sd_sys_json();
     else
@@ -1512,73 +1372,73 @@ void playWAVFile(const char *filename)
 #ifdef COMPILE_FOR_FLASH
 void sampleplayertest(byte inNumber, byte inVelocity)
 {
-  if (drum_counter >= NUM_DRUMS)
-    drum_counter = 0;
-  uint8_t slot = drum_get_slot(1);
-
-  //float pan = 0.0;
-
-  drum_mixer_r.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
-  drum_mixer_l.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
-
-#ifdef USE_FX
-  drum_reverb_send_mixer_r.gain(slot, 0.6);
-  drum_reverb_send_mixer_l.gain(slot, 0.6);
-#endif
-
-  Drum[slot]->enableInterpolation(true);
-
-  if (temp_int == 0 )
-  {
-    if (inNumber <= 24 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
-      Drum[slot]->playWav("Piano N C1.wav");
-    }
-    else if (inNumber < 36 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-      Drum[slot]->playWav("Piano N C2.wav");
-    }
-    else if (inNumber < 48 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-      Drum[slot]->playWav("Piano N C3.wav");
-    }
-    else if (inNumber < 60 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-      Drum[slot]->playWav("Piano N C4.wav");
-    }
-    else if (inNumber < 72 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
-      Drum[slot]->playWav("Piano N C5.wav");
-    }
-    else if (inNumber < 84 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
-      Drum[slot]->playWav("Piano N C6.wav");
-    }
-  }
-  else if (temp_int == 1)
-  {
-    if (inNumber < 36 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-      Drum[slot]->playWav("STRINGS-Low.wav");
-    }
-    else if (inNumber < 48 + 6)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-      Drum[slot]->playWav("STRINGS-Mid.wav");
-    }
-    else if (inNumber < 60 + 6 + 12)
-    {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-      Drum[slot]->playWav("STRINGS-High.wav");
-    }
-  }
+//  if (drum_counter >= NUM_DRUMS)
+//    drum_counter = 0;
+//  uint8_t slot = drum_get_slot(1);
+//
+//  //float pan = 0.0;
+//
+//  drum_mixer_r.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
+//  drum_mixer_l.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
+//
+//#ifdef USE_FX
+//  drum_reverb_send_mixer_r.gain(slot, 0.6);
+//  drum_reverb_send_mixer_l.gain(slot, 0.6);
+//#endif
+//
+//  Drum[slot]->enableInterpolation(true);
+//
+//  if (temp_int == 0 )
+//  {
+//    if (inNumber <= 24 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
+//      Drum[slot]->playWav("Piano N C1.wav");
+//    }
+//    else if (inNumber < 36 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
+//      Drum[slot]->playWav("Piano N C2.wav");
+//    }
+//    else if (inNumber < 48 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
+//      Drum[slot]->playWav("Piano N C3.wav");
+//    }
+//    else if (inNumber < 60 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
+//      Drum[slot]->playWav("Piano N C4.wav");
+//    }
+//    else if (inNumber < 72 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
+//      Drum[slot]->playWav("Piano N C5.wav");
+//    }
+//    else if (inNumber < 84 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
+//      Drum[slot]->playWav("Piano N C6.wav");
+//    }
+//  }
+//  else if (temp_int == 1)
+//  {
+//    if (inNumber < 36 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
+//      Drum[slot]->playWav("STRINGS-Low.wav");
+//    }
+//    else if (inNumber < 48 + 6)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
+//      Drum[slot]->playWav("STRINGS-Mid.wav");
+//    }
+//    else if (inNumber < 60 + 6 + 12)
+//    {
+//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
+//      Drum[slot]->playWav("STRINGS-High.wav");
+//    }
+//  }
 }
 #endif
 
@@ -1702,7 +1562,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
 #endif
       //  if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
       // {
-      
+
       Drum[slot]->enableInterpolation(true);
       Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
 
@@ -1811,14 +1671,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
           }
         }
 
-#ifdef DEBUG
-        char note_name[4];
-        getNoteName(note_name, inNumber);
-        Serial.print(F("=> Drum["));
-        Serial.print(drum_counter, DEC);
-        Serial.print(F("]: "));
-        Serial.println(note_name);
-#endif
 
         for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
         {
@@ -1846,20 +1698,44 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
             {
 #endif
 
-              if (drum_config[d].pitch != 0.0)
+//              if (drum_config[d].pitch != 0.0)
+//              {
+//                Drum[slot]->enableInterpolation(true);
+//                Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+//              }
+
+#ifdef COMPILE_FOR_PROGMEM
+              Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+#endif
+
+#ifdef COMPILE_FOR_FLASH
+              strcpy(temp_name, drum_config[d].name);
+              strcat(temp_name, ".wav");
+
+                 //  SerialFlashFile gg = SerialFlash.open("DMpop.wav");
+            //  Drum[slot]->playWav(temp_name);
+
+if (!Drum[slot]){
+  
+
+//create_audio_drum_chain(slot);
+Drum[slot] = new AudioPlayFlashResmp();
+DrumConL[slot] = new AudioConnection(*Drum[slot], 0, drum_mixer_r, slot);
+DrumConR[slot] = new AudioConnection(*Drum[slot], 0, drum_mixer_l, slot);
+
+
+ if (drum_config[d].pitch != 0.0)
               {
                 Drum[slot]->enableInterpolation(true);
                 Drum[slot]->setPlaybackRate(drum_config[d].pitch);
               }
 
-#ifdef COMPILE_FOR_PROGMEM
-              Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
-#endif
-#ifdef COMPILE_FOR_FLASH
-              strcpy(temp_name, drum_config[d].name);
-              strcat(temp_name, ".wav");
-              Drum[slot]->playWav(temp_name);
-              //Drum[slot]->playWav("DMpop.wav");
+              }
+Drum[slot]->playWav(temp_name);
+
+
+              
+              //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -1867,8 +1743,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
               strcat(temp_name, drum_config[d].name);
               // strcpy(temp_name, drum_config[d].name);
               strcat(temp_name, ".wav");
-              Drum[slot]->playWav(temp_name);     
+              Drum[slot]->playWav(temp_name);
 #endif
+
+//#ifdef DEBUG
+//        char note_name[4];
+//        getNoteName(note_name, inNumber);
+//        Serial.print(F("=> Drum["));
+//        Serial.print(slot, DEC);
+//        Serial.print(F("]: "));
+//        Serial.println(note_name);
+//#endif
 
 #ifdef COMPILE_FOR_PROGMEM
             }
@@ -1927,11 +1812,27 @@ uint8_t drum_get_slot(uint8_t dt)
 {
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
   {
+    if (Drum[i])
+    {
     if (!Drum[i]->isPlaying())
     {
       drum_type[i] = DRUM_NONE;
-      Drum[i]->enableInterpolation(false);
-      Drum[i]->setPlaybackRate(1.0);
+    //  Drum[i]->enableInterpolation(false);
+    //  Drum[i]->setPlaybackRate(1.0);
+
+
+   // delete   DrumConL[i];
+    // delete   DrumConR[i];
+      delete Drum[i];
+//DrumConR[slot] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
+
+//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
+//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
+
+
+      
+      return (i);
+      
     }
     //phtodo
 
@@ -1950,17 +1851,15 @@ uint8_t drum_get_slot(uint8_t dt)
     //        return (i);
     //      }
     //    }
-
-
-
+    }
   }
-#ifdef DEBUG
-  Serial.print(F("Using next free Drum slot "));
-  Serial.println(drum_counter % NUM_DRUMS);
-#endif
-  drum_type[drum_counter % NUM_DRUMS] = dt;
-  drum_counter++;
-  return (drum_counter - 1 % NUM_DRUMS);
+//#ifdef DEBUG
+//  Serial.print(F("Using next free Drum slot "));
+//  Serial.println(drum_counter % NUM_DRUMS);
+//#endif
+//  drum_type[drum_counter % NUM_DRUMS] = dt;
+//  drum_counter++;
+//  return (drum_counter  % NUM_DRUMS);
 }
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
