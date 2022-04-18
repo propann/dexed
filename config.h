@@ -88,7 +88,7 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-#define DEBUG 1
+//#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
@@ -99,9 +99,9 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_FLASH
+#define COMPILE_FOR_PROGMEM
+//#define COMPILE_FOR_FLASH
 //#define COMPILE_FOR_SDCARD
-//#define COMPILE_FOR_PROGMEM
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
