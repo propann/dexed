@@ -2,7 +2,7 @@
 
 ## This is a development fork of MicroDexed with TFT Touch Display, "nextgen" UI and advanced sequencer
 
-### This fork requires a Teensy 4.1,  Audio Shield, ~~480x320 TFT Display (pseudo SPI)~~ 320x240 ILI9341 SPI Display,  XPT2046 Touchscreen and serial Flash.
+### This fork requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
 
 A example Link to the Screen below 10 Euro:
 
@@ -36,16 +36,18 @@ Development Status:
 | Song Mode| 85% |
 | MicroSynth | 80% |
 | EPiano GUI | 95% |
-| General UI Merge | 70% |
+| General UI Merge | 75% |
 | SysEx/MIDI Controls | 70% |
 | Main Mixer View | 60% |
 | Mute Matrix | 10% |
 | Piano Roll Editor | 80% |
 | File Manager (SD/Flash) | 60% |
-| Sample Editor | 0% |
 | MultiSample Player | 10% |
+| Virtual Keyboard | 80% |
+| Custom/User Samples | 0% |
+| Sample Editor | 0% |
 
-This is a port of the original Dexed/msfa engine (see https://github.com/asb2m10/dexed and https://github.com/google/music-synthesizer-for-android) to be used on a ~~Teensy-3.6 or~~ Teensy-4.x.
+This is a port of the original Dexed/msfa engine (see https://github.com/asb2m10/dexed and https://github.com/google/music-synthesizer-for-android) to be used on a ~~Teensy-3.6 or~~ Teensy-4.1.
 
 ## License
 MicroDexed is licensed on the GPL v3. The msfa component (acronym for music synthesizer for android, see https://github.com/google/music-synthesizer-for-android) stays on the Apache 2.0 license to able to collaborate between projects.
