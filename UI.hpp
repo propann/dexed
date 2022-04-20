@@ -5939,42 +5939,42 @@ void UI_draw_waveform(uint8_t samplenumber)
 
 void UI_draw_waveform_large()
 {
-//    int xspace = 0;
-//    int i = 4;
-//    short samplevalue = 0;
-//    int oldx = 0, oldy = 180;
-//   display.setTextSize(1);
-//    setCursor_textGrid(21, 3);
-//    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
-//    display.print("SCALE");
-//    setCursor_textGrid(21, 4);
-//    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-//    display.print(wave_spacing);
-//    display.print (" ");
-//   display.fillRect(0,100,DISPLAY_WIDTH-1,100,COLOR_BACKGROUND);
-//    
-//    xspace = 0;
-//    i = 4;
-//    samplevalue = 0;
-//    oldx = 0;  oldy = 180;
-//    do {
-//      {
-//        samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 100;
-//  
-//        if (DRUM_SQBass[i * wave_spacing + 1] < 128)
-//        {
-//          display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
-//          oldx = xspace; oldy = samplevalue + 60;
-//        }
-//        else
-//        {
-//          display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
-//          oldx = xspace;  oldy = samplevalue - 40;
-//        }
-//        xspace = xspace + 1;  i++;
-//      }
-//    } while (oldx < DISPLAY_WIDTH);
-//  wave_spacing_old = wave_spacing;
+  //    int xspace = 0;
+  //    int i = 4;
+  //    short samplevalue = 0;
+  //    int oldx = 0, oldy = 180;
+  //   display.setTextSize(1);
+  //    setCursor_textGrid(21, 3);
+  //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
+  //    display.print("SCALE");
+  //    setCursor_textGrid(21, 4);
+  //    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+  //    display.print(wave_spacing);
+  //    display.print (" ");
+  //   display.fillRect(0,100,DISPLAY_WIDTH-1,100,COLOR_BACKGROUND);
+  //
+  //    xspace = 0;
+  //    i = 4;
+  //    samplevalue = 0;
+  //    oldx = 0;  oldy = 180;
+  //    do {
+  //      {
+  //        samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 100;
+  //
+  //        if (DRUM_SQBass[i * wave_spacing + 1] < 128)
+  //        {
+  //          display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
+  //          oldx = xspace; oldy = samplevalue + 60;
+  //        }
+  //        else
+  //        {
+  //          display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
+  //          oldx = xspace;  oldy = samplevalue - 40;
+  //        }
+  //        xspace = xspace + 1;  i++;
+  //      }
+  //    } while (oldx < DISPLAY_WIDTH);
+  //  wave_spacing_old = wave_spacing;
 }
 
 
@@ -6136,17 +6136,17 @@ void print_edit_mode()
 
     if (seq.menu < 19)
     {
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      display.setTextColor(COLOR_SYSTEXT, PINK);
       display.print(F("VEL./CHORDS"));
     }
     else if (seq.menu == 19)
     {
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      display.print(F("(PATTERN "));
-      display.setTextColor(GREY1, COLOR_SYSTEXT);
-      display.print(seq.active_pattern);
-      display.setTextColor(GREY2, COLOR_SYSTEXT);
-      display.print(")");
+      display.setTextColor(COLOR_BACKGROUND, RED);
+      display.print(F("CONT. TYPE "));
+//      display.setCursor(175 , 71 - 17);
+//      display.setTextColor(DARKGREEN, COLOR_SYSTEXT);
+//      display.print(seq.active_pattern);
+//      display.print(" ");
     }
     else if (seq.menu > 20 && seq.menu < 29)
     {
@@ -6155,14 +6155,14 @@ void print_edit_mode()
     }
     else if (seq.menu > 28 && seq.menu < 37)
     {
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      display.setTextColor(COLOR_BACKGROUND, DX_DARKCYAN);
       display.print(F("DEXED/EP A."));
     }
 
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
   {
-    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    display.setTextColor(COLOR_BACKGROUND, MIDDLEGREEN);
     display.print(F("NOTE EDITOR"));
   }
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -6354,14 +6354,19 @@ void UI_func_seq_vel_editor(uint8_t param)
   char tmp[5];
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
-
     // setup function
 
+    if (seq.menu_status != 1)
+    {
+      display.fillScreen(COLOR_BACKGROUND);
+      seq_pattern_editor_update_dynamic_elements();
+    }
     if (seq.cycle_touch_element != 0) //hide Keyboard in Velocity editor
     {
       seq.cycle_touch_element = 0;
       seq_pattern_editor_update_dynamic_elements();
     }
+
     encoderDir[ENC_R].reset();
     print_edit_mode();
     seq.menu = 1;
@@ -6380,7 +6385,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextSize(1);
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print(F("CONT.TYPE:"));
-      display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+      display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
       print_content_type();
       seq_printVelGraphBar();
     }
@@ -6539,7 +6544,7 @@ void UI_func_seq_vel_editor(uint8_t param)
     if (seq_active_function == 0)
     {
       display.setTextSize(1);
-      display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
       print_content_type();
       display.setTextSize(2);
     }
@@ -6783,7 +6788,8 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
       display.setCursor(0, CHAR_height * 3 + 3);
       display.print("CONT.TYPE:");
-      display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+
       print_content_type();
       display.setTextSize(2);
       seq_printAllSeqSteps();
@@ -6804,7 +6810,8 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextSize(1);
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print("CONT.TYPE:");
-      display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+
       print_content_type();
       display.setTextSize(2);
       // disable menu 19 end
@@ -6904,7 +6911,8 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.setCursor(0, CHAR_height * 3 + 3);
       display.print(F("CONT.TYPE:"));
-      display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+
       print_content_type();
       display.setTextSize(2);
       print_edit_mode();
@@ -6919,9 +6927,10 @@ void UI_func_seq_vel_editor(uint8_t param)
   {
     encoderDir[ENC_R].reset();
 
-    if (seq.menu_status != 2) // don't clear screen when jumping to pattern editor
+    if (seq.menu_status != 2) // don't clear screen when jumping (back) to pattern editor
     {
       display.fillScreen(COLOR_BACKGROUND);
+      seq.menu_status = 0;
     }
   }
 }
@@ -7665,7 +7674,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
       display.setTextSize(1);
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print(F("CONT.TYPE:"));
-      display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+
       print_content_type();
     }
     print_edit_mode();
@@ -7747,7 +7757,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
 
         display.setTextSize(1);
-        display.setCursor(CHAR_width * 5, CHAR_height * 3 + 3);
+         display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+
         print_content_type ();
       }
     }
@@ -8376,7 +8387,11 @@ void UI_func_seq_pattern_editor(uint8_t param)
     seq_active_function = 99;
     display.setTextSize(2);
     if (seq.menu_status != 1) // do not clear screen, jumping to velocity edit
+    {
       display.fillScreen(COLOR_BACKGROUND);
+      seq.menu_status = 0;
+    }
+
   }
 }
 
