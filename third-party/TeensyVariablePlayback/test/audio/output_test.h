@@ -21,34 +21,33 @@ public:
 	virtual void update(void);
 	void begin(void);
 	static void isr(void);
-	bool saveOutputFile(const char * path, const char* filename){
-		if (num_inputs == 0) return false;
+	void saveOutputFile(const char* filename){
+		if (num_inputs == 0) return;
 		char cwd[500];
 		if (getcwd(cwd, sizeof(cwd)) != NULL) {
 			printf("Current working dir: %s\n", cwd);
 		} else {
 			perror("getcwd() error");
 		}
-		string outputPath = string(cwd) + "/" + string(path);
+		string outputPath = string(cwd) + "/output/";
 		__filesystem::path p(outputPath);
 		if (! __filesystem::exists(p) )
 			__filesystem::create_directories(outputPath);
 		
-		_filePath = outputPath + string(filename);
-		std::cout << "saving output audio .wav file to " << _filePath << std::endl;
-		_outputFile.open(_filePath, ios_base::trunc | ios_base::out);
+		string filePath =  outputPath +  string(filename);
+		std::cout << "saving output audio .wav file to " << filePath << std::endl;
+		_outputFile.open(filePath);
 		if (!_outputFile.is_open()) {
-        	Serial.printf("couldn't open file for recording...%s\n", _filePath.c_str());
-			return false;	
+        	Serial.println("couldn't open file for recording...");			
         } else {
 			_filename = filename;
 			_outputFile.write((char*)test_output_wav_header, 44);
-			_saveToFile = true;	
-			return true;		
+			_saveToFile = true;			
 		}
     }
 	void closeOutputfile(uint16_t numChannels) {
 		if (!_saveToFile) return;
+
 		if (_outputFile.is_open()) {
 			_saveToFile = false;
 			char buf[4];
@@ -83,7 +82,6 @@ public:
 	}
 protected:
 	std::ofstream _outputFile;
-	std::string _filePath;
 	static audio_block_t *block_left_1st;
 	static audio_block_t *block_right_1st;
 	static bool update_responsibility;

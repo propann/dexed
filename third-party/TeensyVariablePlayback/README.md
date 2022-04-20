@@ -9,14 +9,12 @@
 [![Commits](https://img.shields.io/github/commit-activity/m/newdigate/teensy-variable-playback)](https://github.com/newdigate/teensy-variable-playback/graphs/contributors)
 ![s](https://img.shields.io/badge/dynamic/json?color=%23e85b46&label=Patreon&query=data.attributes.patron_count&suffix=%20patrons&url=https%3A%2F%2Fwww.patreon.com%2Fapi%2Fcampaigns%2F4105381)
 
-play 16-bit PCM raw or wav audio samples at variable playback rates on teensy
-* **Note** : this library only works with signed 16-bit integer samples. Floating point samples will not play. 
+play 16-bit audio samples at variable playback rates on teensy
 
 * for best performance, use SDXC UHS 30MB/sec Application Performance Class 2 (A2) class micro sd-card. 
   * [sd classes on wikipedia](https://en.wikipedia.org/wiki/SD_card#cite_ref-93) 
 
 ## updates
-* 25/08/2021: v1.0.12: Skip over RIFF tags in .wav header
 * 12/08/2021: v1.0.11: When playing a mono sample, transmit on both channels (credit to @atoktoto) 
 * 28/07/2021: v1.0.10: Fix issues when starting playback in reverse
 * 23/07/2021: v1.0.9: Fix issue which crashes teensy when playing multiple files from SD card using array of filenames

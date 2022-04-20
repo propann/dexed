@@ -1,5 +1,5 @@
 /*
-   MicroDexed
+   MicroDexed-touch
 
    MicroDexed is a port of the Dexed sound engine
    (https://github.com/asb2m10/dexed) for the Teensy-3.5/3.6/4.x with audio shield.
