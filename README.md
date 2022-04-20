@@ -47,6 +47,19 @@ Development Status:
 | Custom/User Samples | 0% |
 | Sample Editor | 0% |
 
+## Installation/Compile Instructions
+
+* Copy Libraries from /third-party to you Arduino / Teensy Library Directory (On Mac: usualy in your Home Directory/Documents/Arduino/libraries), if not already existing there.
+
+* Open MicroDexed-touch.ino with Teensyduino
+
+* Set Tools -> Optimize to "smallest code"
+
+* Set USB Type to "Serial + MIDI + Audio"
+
+* Compile and Upload to your Teensy 4.1
+
+
 This is a port of the original Dexed/msfa engine (see https://github.com/asb2m10/dexed and https://github.com/google/music-synthesizer-for-android) to be used on a ~~Teensy-3.6 or~~ Teensy-4.1.
 
 ## License
