@@ -46,7 +46,8 @@
 #endif
 
 #ifdef COMPILE_FOR_FLASH
-#include "vp_TeensyVariablePlaybackFlash.h"
+//#include "TeensyVariablePlaybackFlash.h"
+#include <TeensyVariablePlayback.h>
 #endif
 
 #include <TeensyTimerTool.h>
@@ -90,8 +91,6 @@ XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - 
 //uint16_t COLOR_ARP = 0x071B;
 //uint16_t COLOR_DRUMS = 0xFE4F;
 //uint16_t COLOR_PITCHSMP = 0x159A;
-
-
 
 // Audio engines
 AudioSynthDexed*                MicroDexed[NUM_DEXED];
@@ -189,14 +188,12 @@ AudioMixer<2>                   audio_thru_mixer_l;
 AudioPlaySdWav                  sd_WAV;
 
 #ifdef COMPILE_FOR_FLASH
-AudioPlayFlashResmp*            Drum[NUM_DRUMS];
-//AudioPlaySerialflashRaw*          Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
-AudioConnection*  DrumConL[NUM_DRUMS];
- AudioConnection*  DrumConR[NUM_DRUMS];
+//AudioPlayFlashResmp*          Drum[NUM_DRUMS];
+AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
-AudioPlaySdResmp*            Drum[NUM_DRUMS];
+AudioPlaySdResmp*               Drum[NUM_DRUMS];
 #endif
 
 #ifdef COMPILE_FOR_PROGMEM
@@ -209,8 +206,8 @@ AudioMixer<NUM_DRUMS>           drum_mixer_l;
 AudioAnalyzePeak                drum_mixer_peak_r;
 AudioAnalyzePeak                drum_mixer_peak_l;
 
-AudioMixer<8>                     drum_reverb_send_mixer_r;
-AudioMixer<8>                     drum_reverb_send_mixer_l;
+AudioMixer<8>                   drum_reverb_send_mixer_r;
+AudioMixer<8>                   drum_reverb_send_mixer_l;
 
 AudioAnalyzePeak                reverb_return_peak_r;
 AudioAnalyzePeak                reverb_return_peak_l;
@@ -498,12 +495,11 @@ void create_audio_drum_chain(uint8_t instance_id)
 {
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
-#ifdef COMPILE_FOR_FLASH
- // Drum[instance_id] = new AudioPlayFlashResmp();
-  
-#endif
   //Drum[instance_id] = new AudioPlaySerialflashRaw();
-
+#ifdef COMPILE_FOR_FLASH
+  Drum[instance_id] = new AudioPlaySerialflashRaw();
+#endif
+  
 #ifdef COMPILE_FOR_SDCARD
   Drum[instance_id] = new AudioPlaySdResmp();
 #endif
@@ -512,15 +508,15 @@ void create_audio_drum_chain(uint8_t instance_id)
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
 
-//  Drum[instance_id]->enableInterpolation(false);
-//  Drum[instance_id]->setPlaybackRate(1.0);
-//
-//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
-//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
-//#ifdef USE_FX
-//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
-//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
-//#endif
+  Drum[instance_id]->enableInterpolation(false);
+  Drum[instance_id]->setPlaybackRate(1.0);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
+#ifdef USE_FX
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
+#endif
 
 
 #ifdef DEBUG
@@ -532,20 +528,14 @@ void create_audio_drum_chain(uint8_t instance_id)
 }
 #endif
 
-
-//void create_audio_sd_wav_chain(uint8_t instance_id)
 void create_audio_sd_wav_preview_chain()
 {
-
   //sd_WAV[instance_id] = new AudioPlaySdWav();
   //sd_WAV = new AudioPlaySdWav();
 
   //phtodo
   //  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV, 0, master_mixer_r, MASTER_MIX_CH_SD_FILE_PREVIEW);
   //  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV, 0, master_mixer_l, MASTER_MIX_CH_SD_FILE_PREVIEW);
-
- 
- 
 }
 
 uint8_t sd_card = 0;
@@ -593,7 +583,6 @@ int8_t midi_decay_microsynth[NUM_MICROSYNTH];
 elapsedMillis midi_decay_timer_dexed;
 elapsedMillis midi_decay_timer_microsynth;
 
-
 #if NUM_DEXED>1
 int perform_attack_mod[NUM_DEXED] = { 0, 0 };
 int perform_release_mod[NUM_DEXED] = { 0, 0 };
@@ -640,8 +629,6 @@ extern void getNoteName(char* noteName, uint8_t noteNumber);
 #if defined(USE_SEQUENCER)
 PeriodicTimer sequencer_timer;
 #endif
-
-
 
 /***********************************************************************
    SETUP
@@ -781,7 +768,7 @@ void setup()
     Serial.print(F("Creating Drum instance "));
     Serial.println(instance_id, DEC);
 #endif
-   /////////// create_audio_drum_chain(instance_id); phtodo
+    create_audio_drum_chain(instance_id);
 
     drum_mixer_r.gain(instance_id, 1.0);
     drum_mixer_l.gain(instance_id, 1.0);
@@ -1053,12 +1040,12 @@ void setup()
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
 
-//  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-//  {
-//    ts.scopebuffer_old[i] = 10;
-//  }
+  //  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+  //  {
+  //    ts.scopebuffer_old[i] = 10;
+  //  }
 
- 
+
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1303,17 +1290,17 @@ void loop()
         break;
       }
     }
-//    if (instance_is_playing == false)
-//    {
-//      for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
-//      {
-//        if (Drum[instance_id]->isPlaying())
-//        {
-//          instance_is_playing = true;
-//          break;
-//        }
-//      }
-//    }
+    //    if (instance_is_playing == false)
+    //    {
+    //      for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
+    //      {
+    //        if (Drum[instance_id]->isPlaying())
+    //        {
+    //          instance_is_playing = true;
+    //          break;
+    //        }
+    //      }
+    //    }
     if (instance_is_playing == false)
       save_sd_sys_json();
     else
@@ -1372,73 +1359,73 @@ void playWAVFile(const char *filename)
 #ifdef COMPILE_FOR_FLASH
 void sampleplayertest(byte inNumber, byte inVelocity)
 {
-//  if (drum_counter >= NUM_DRUMS)
-//    drum_counter = 0;
-//  uint8_t slot = drum_get_slot(1);
-//
-//  //float pan = 0.0;
-//
-//  drum_mixer_r.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
-//  drum_mixer_l.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
-//
-//#ifdef USE_FX
-//  drum_reverb_send_mixer_r.gain(slot, 0.6);
-//  drum_reverb_send_mixer_l.gain(slot, 0.6);
-//#endif
-//
-//  Drum[slot]->enableInterpolation(true);
-//
-//  if (temp_int == 0 )
-//  {
-//    if (inNumber <= 24 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
-//      Drum[slot]->playWav("Piano N C1.wav");
-//    }
-//    else if (inNumber < 36 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-//      Drum[slot]->playWav("Piano N C2.wav");
-//    }
-//    else if (inNumber < 48 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-//      Drum[slot]->playWav("Piano N C3.wav");
-//    }
-//    else if (inNumber < 60 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-//      Drum[slot]->playWav("Piano N C4.wav");
-//    }
-//    else if (inNumber < 72 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
-//      Drum[slot]->playWav("Piano N C5.wav");
-//    }
-//    else if (inNumber < 84 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
-//      Drum[slot]->playWav("Piano N C6.wav");
-//    }
-//  }
-//  else if (temp_int == 1)
-//  {
-//    if (inNumber < 36 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-//      Drum[slot]->playWav("STRINGS-Low.wav");
-//    }
-//    else if (inNumber < 48 + 6)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-//      Drum[slot]->playWav("STRINGS-Mid.wav");
-//    }
-//    else if (inNumber < 60 + 6 + 12)
-//    {
-//      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-//      Drum[slot]->playWav("STRINGS-High.wav");
-//    }
-//  }
+  //  if (drum_counter >= NUM_DRUMS)
+  //    drum_counter = 0;
+  //  uint8_t slot = drum_get_slot(1);
+  //
+  //  //float pan = 0.0;
+  //
+  //  drum_mixer_r.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
+  //  drum_mixer_l.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.1, 0.8)));
+  //
+  //#ifdef USE_FX
+  //  drum_reverb_send_mixer_r.gain(slot, 0.6);
+  //  drum_reverb_send_mixer_l.gain(slot, 0.6);
+  //#endif
+  //
+  //  Drum[slot]->enableInterpolation(true);
+  //
+  //  if (temp_int == 0 )
+  //  {
+  //    if (inNumber <= 24 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
+  //      Drum[slot]->playWav("Piano N C1.wav");
+  //    }
+  //    else if (inNumber < 36 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
+  //      Drum[slot]->playWav("Piano N C2.wav");
+  //    }
+  //    else if (inNumber < 48 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
+  //      Drum[slot]->playWav("Piano N C3.wav");
+  //    }
+  //    else if (inNumber < 60 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
+  //      Drum[slot]->playWav("Piano N C4.wav");
+  //    }
+  //    else if (inNumber < 72 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
+  //      Drum[slot]->playWav("Piano N C5.wav");
+  //    }
+  //    else if (inNumber < 84 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
+  //      Drum[slot]->playWav("Piano N C6.wav");
+  //    }
+  //  }
+  //  else if (temp_int == 1)
+  //  {
+  //    if (inNumber < 36 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
+  //      Drum[slot]->playWav("STRINGS-Low.wav");
+  //    }
+  //    else if (inNumber < 48 + 6)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
+  //      Drum[slot]->playWav("STRINGS-Mid.wav");
+  //    }
+  //    else if (inNumber < 60 + 6 + 12)
+  //    {
+  //      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
+  //      Drum[slot]->playWav("STRINGS-High.wav");
+  //    }
+  //  }
 }
 #endif
 
@@ -1697,63 +1684,43 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
             if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
             {
 #endif
-
-//              if (drum_config[d].pitch != 0.0)
-//              {
-//                Drum[slot]->enableInterpolation(true);
-//                Drum[slot]->setPlaybackRate(drum_config[d].pitch);
-//              }
-
-#ifdef COMPILE_FOR_PROGMEM
-              Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
-#endif
-
-#ifdef COMPILE_FOR_FLASH
-              strcpy(temp_name, drum_config[d].name);
-              strcat(temp_name, ".wav");
-
-                 //  SerialFlashFile gg = SerialFlash.open("DMpop.wav");
-            //  Drum[slot]->playWav(temp_name);
-
-if (!Drum[slot]){
-  
-
-//create_audio_drum_chain(slot);
-Drum[slot] = new AudioPlayFlashResmp();
-DrumConL[slot] = new AudioConnection(*Drum[slot], 0, drum_mixer_r, slot);
-DrumConR[slot] = new AudioConnection(*Drum[slot], 0, drum_mixer_l, slot);
-
-
- if (drum_config[d].pitch != 0.0)
+              if (drum_config[d].pitch != 0.0)
               {
                 Drum[slot]->enableInterpolation(true);
                 Drum[slot]->setPlaybackRate(drum_config[d].pitch);
               }
 
-              }
-Drum[slot]->playWav(temp_name);
+#ifdef COMPILE_FOR_PROGMEM
+              Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+#endif
+#ifdef COMPILE_FOR_FLASH
+            //  strcpy(temp_name, drum_config[d].name);
+           //   strcat(temp_name, ".wav");
+             // Drum[slot]->playWav(temp_name);
 
-
+              strcpy(temp_name, "/samples_dexed/");
+              strcat(temp_name, drum_config[d].name);
+              strcat(temp_name, ".wav");
               
+               Drum[slot]->playWav(temp_name);
               //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
               strcpy(temp_name, "/samples_dexed/");
               strcat(temp_name, drum_config[d].name);
-              // strcpy(temp_name, drum_config[d].name);
               strcat(temp_name, ".wav");
               Drum[slot]->playWav(temp_name);
 #endif
 
-//#ifdef DEBUG
-//        char note_name[4];
-//        getNoteName(note_name, inNumber);
-//        Serial.print(F("=> Drum["));
-//        Serial.print(slot, DEC);
-//        Serial.print(F("]: "));
-//        Serial.println(note_name);
-//#endif
+              //#ifdef DEBUG
+              //        char note_name[4];
+              //        getNoteName(note_name, inNumber);
+              //        Serial.print(F("=> Drum["));
+              //        Serial.print(slot, DEC);
+              //        Serial.print(F("]: "));
+              //        Serial.println(note_name);
+              //#endif
 
 #ifdef COMPILE_FOR_PROGMEM
             }
@@ -1812,27 +1779,12 @@ uint8_t drum_get_slot(uint8_t dt)
 {
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
   {
-    if (Drum[i])
-    {
     if (!Drum[i]->isPlaying())
     {
       drum_type[i] = DRUM_NONE;
-    //  Drum[i]->enableInterpolation(false);
-    //  Drum[i]->setPlaybackRate(1.0);
-
-
-   // delete   DrumConL[i];
-    // delete   DrumConR[i];
-      delete Drum[i];
-//DrumConR[slot] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
-
-//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
-//  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
-
-
-      
+      Drum[i]->enableInterpolation(false);
+      Drum[i]->setPlaybackRate(1.0);
       return (i);
-      
     }
     //phtodo
 
@@ -1851,15 +1803,14 @@ uint8_t drum_get_slot(uint8_t dt)
     //        return (i);
     //      }
     //    }
-    }
   }
-//#ifdef DEBUG
-//  Serial.print(F("Using next free Drum slot "));
-//  Serial.println(drum_counter % NUM_DRUMS);
-//#endif
-//  drum_type[drum_counter % NUM_DRUMS] = dt;
-//  drum_counter++;
-//  return (drum_counter  % NUM_DRUMS);
+#ifdef DEBUG
+  Serial.print(F("Using next free Drum slot "));
+  Serial.println(drum_counter % NUM_DRUMS);
+#endif
+  drum_type[drum_counter % NUM_DRUMS] = dt;
+  drum_counter++;
+  return (drum_counter % NUM_DRUMS);
 }
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
@@ -1885,9 +1836,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
       {
         if (configuration.dexed[instance_id].polyphony > 0)
           MicroDexed[instance_id]->keyup(inNumber);
-
         midi_voices[instance_id]--;
-
         //#ifdef DEBUG
         //        char note_name[4];
         //        getNoteName(note_name, inNumber);
@@ -1899,7 +1848,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity)
         //        Serial.print(inChannel, DEC);
         //        Serial.println();
         //#endif
-
       }
     }
   }
