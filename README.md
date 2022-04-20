@@ -60,9 +60,10 @@ Development Status:
 * Compile and Upload to your Teensy 4.1
 
 
+## License
+
 This is a port of the original Dexed/msfa engine (see https://github.com/asb2m10/dexed and https://github.com/google/music-synthesizer-for-android) to be used on a ~~Teensy-3.6 or~~ Teensy-4.1.
 
-## License
 MicroDexed is licensed on the GPL v3. The msfa component (acronym for music synthesizer for android, see https://github.com/google/music-synthesizer-for-android) stays on the Apache 2.0 license to able to collaborate between projects.
 
 ## Manuals:
