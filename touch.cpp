@@ -5,6 +5,7 @@
 #include <LCDMenuLib2.h>
 #include "ILI9341_t3n.h"
 
+
 extern ILI9341_t3n display;
 extern config_t configuration;
 extern uint8_t selected_instance_id;
@@ -27,7 +28,10 @@ extern void seq_pattern_editor_update_dynamic_elements();
 extern void colors_screen_update();
 extern void microsynth_refresh_lower_screen_static_text();
 extern void microsynth_refresh_lower_screen_dynamic_text();
-
+extern float get_sample_p_offset(uint8_t sample);
+extern void set_sample_pitch(uint8_t sample, float playbackspeed);
+extern void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char *str);
+extern const char* find_long_drum_name_from_note(uint8_t note);
 extern microsynth_t  microsynth[NUM_MICROSYNTH];
 
 extern void playWAVFile(const char *filename);
@@ -155,40 +159,57 @@ void print_current_chord()
 void virtual_keyboard_print_current_instrument()
 {
 
-  display.setTextColor(GREY2);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.setCursor ( 17 * CHAR_width_small, 16 * CHAR_height_small );
-  display.print(F("PLAYING"));
+  if (ts.virtual_keyboard_instrument < 7)
+    display.print(F("PLAYING"));
+  else
+  {
+    display.setTextSize(1);
+    display.print(F("PITCHED SAMPLE "));
+    display.fillRect ( 17 * CHAR_width_small, 17 * CHAR_height_small , 14 * CHAR_width_small, 8, COLOR_BACKGROUND );
+  }
+  display.setTextSize(2);
   display.setCursor ( 17 * CHAR_width_small, 18 * CHAR_height_small + 1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (ts.virtual_keyboard_instrument == 1)
   {
-    display.print(F("DEXED1"));
+    display.print(F("DEXED1  "));
     ts.virtual_keyboard_midi_channel = configuration.dexed[0].midi_channel;
   }
   else if (ts.virtual_keyboard_instrument == 2)
   {
-    display.print(F("DEXED2"));
+    display.print(F("DEXED2  "));
     ts.virtual_keyboard_midi_channel = configuration.dexed[1].midi_channel;
   }
   else if (ts.virtual_keyboard_instrument == 3)
   {
-    display.print(F("SYNTH1"));
+    display.print(F("MSYNTH1 "));
     ts.virtual_keyboard_midi_channel = microsynth[0].midi_channel;
   }
   else if (ts.virtual_keyboard_instrument == 4)
   {
-    display.print(F("SYNTH2"));
+    display.print(F("MSYNTH2 "));
     ts.virtual_keyboard_midi_channel = microsynth[1].midi_channel;;
   }
   else if (ts.virtual_keyboard_instrument == 5)
   {
-    display.print(F("EPIANO"));
+    display.print(F("EPIANO  "));
     ts.virtual_keyboard_midi_channel = configuration.epiano.midi_channel;
   }
   else if (ts.virtual_keyboard_instrument == 6)
   {
-    display.print(F("DRUMS "));
+    display.print(F("DRUMS   "));
+    ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
+  }
+  else if (ts.virtual_keyboard_instrument > 6)
+  {
+    display.print(ts.virtual_keyboard_instrument - 7);
+    display.print(" ");
+
+    show_small_font( 18 * CHAR_height_small + 1, 20 * CHAR_width_small, 7,  find_long_drum_name_from_note( ts.virtual_keyboard_instrument - 7 + 210) );
+
     ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
   }
 
@@ -215,8 +236,13 @@ void virtual_keyboard_key_on ()
               halftones = halftones + 1;
           }
           // handleNoteOn_MIDI_DEVICE_DIN(configuration.dexed[selected_instance_id].midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
-          handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
-
+          if (ts.virtual_keyboard_instrument > 6) //pitched samples
+          {
+            set_sample_pitch(ts.virtual_keyboard_instrument - 7, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x + halftones - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
+            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 7 , 100 );
+          }
+          else
+            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
           display.fillRect( 1 + x * 32.22, VIRT_KEYB_YPOS + 34 , 29.33, 39, RED   ); // white key
         }
       }
@@ -233,7 +259,13 @@ void virtual_keyboard_key_on ()
           if (ts.virtual_keyboard_state_black[x] == 0)
           {
             ts.virtual_keyboard_state_black[x] = 254;
-            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x , 120);
+            if (ts.virtual_keyboard_instrument > 6) //pitched samples
+            {
+              set_sample_pitch(ts.virtual_keyboard_instrument - 7, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 7 , 100 );
+            }
+            else
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x , 120);
             display.fillRect(x * 18.56 , VIRT_KEYB_YPOS , 21.33, 34.5, RED);  // BLACK key
             offcount++;
             if (offcount == 5)offcount = 0;
@@ -500,7 +532,7 @@ void touch_button_oct_down()
 void touch_button_inst_up()
 {
   ts.virtual_keyboard_instrument++;
-  if (ts.virtual_keyboard_instrument > 6)ts.virtual_keyboard_instrument = 6;
+  if (ts.virtual_keyboard_instrument > 10)ts.virtual_keyboard_instrument = 10;
   virtual_keyboard_print_current_instrument();
   ts.update_virtual_keyboard_octave = true;
 }
@@ -568,14 +600,14 @@ void handle_touchscreen_voice_select()
         seq.cycle_touch_element = 0;
 
         display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
-        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD",0);
+        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
         print_voice_settings(CHAR_width_small, 115, 0, true);
         print_voice_settings(CHAR_width_small + 160, 115, 1, true);
       }
       else
       {
         seq.cycle_touch_element = 1;
-        draw_button_on_grid(45, 1, "DEXED" , "DETAIL",0);
+        draw_button_on_grid(45, 1, "DEXED" , "DETAIL", 0);
         virtual_keyboard();
 
         virtual_keyboard_print_buttons();
@@ -685,14 +717,14 @@ void handle_touchscreen_microsynth()
       if (seq.cycle_touch_element == 1)
       {
         seq.cycle_touch_element = 0;
-        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD",0);
+        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
         microsynth_refresh_lower_screen_static_text();
         microsynth_refresh_lower_screen_dynamic_text();
       }
       else
       {
         seq.cycle_touch_element = 1;
-        draw_button_on_grid(45, 1, "MORE" , "PARAM.",0);
+        draw_button_on_grid(45, 1, "MORE" , "PARAM.", 0);
         virtual_keyboard();
         virtual_keyboard_print_buttons();
         virtual_keyboard_print_current_instrument();
@@ -726,35 +758,35 @@ void handle_touchscreen_microsynth()
 void print_file_manager_buttons()
 {
   if (fm.sd_mode == 1)
-    draw_button_on_grid(1, 25, "DELETE", "FILE",1);
+    draw_button_on_grid(1, 25, "DELETE", "FILE", 1);
   else
-    draw_button_on_grid(1, 25, "DELETE", "FILE",0);
+    draw_button_on_grid(1, 25, "DELETE", "FILE", 0);
   if (fm.sd_mode == 2)
-   draw_button_on_grid(28, 25, "PLAY", "SAMPLE",1);
+    draw_button_on_grid(28, 25, "PLAY", "SAMPLE", 1);
   else
-  draw_button_on_grid(28, 25, "PLAY", "SAMPLE",0);
+    draw_button_on_grid(28, 25, "PLAY", "SAMPLE", 0);
   if (fm.sd_mode == 3)
-     draw_button_on_grid(19, 25, "COPY >", "FLASH",1);
+    draw_button_on_grid(19, 25, "COPY >", "FLASH", 1);
   else
-    draw_button_on_grid(19, 25, "COPY >", "FLASH",0);
+    draw_button_on_grid(19, 25, "COPY >", "FLASH", 0);
   if (fm.sd_mode == 4)
-    draw_button_on_grid(10, 25, "COPY", "PRESET",1);
+    draw_button_on_grid(10, 25, "COPY", "PRESET", 1);
   else
-    draw_button_on_grid(10, 25, "COPY", "PRESET",0);
+    draw_button_on_grid(10, 25, "COPY", "PRESET", 0);
 
   // active_window   0 = left window (SDCARD) , 1 = FLASH
 
   if ( fm.active_window == 0)
   {
-   display.drawRect( CHAR_width_small*29-1, 0, CHAR_width_small*24+3 ,CHAR_height_small*23, GREY2);
-    display.drawRect( 0, 0, CHAR_width_small*29 ,CHAR_height_small*23, COLOR_SYSTEXT);
-     
+    display.drawRect( CHAR_width_small * 29 - 1, 0, CHAR_width_small * 24 + 3 , CHAR_height_small * 23, GREY2);
+    display.drawRect( 0, 0, CHAR_width_small * 29 , CHAR_height_small * 23, COLOR_SYSTEXT);
+
   }
   else
   {
-    
-    display.drawRect( 0, 0, CHAR_width_small*29 ,CHAR_height_small*23, GREY2);
-     display.drawRect( CHAR_width_small*29-1, 0, CHAR_width_small*24+3 ,CHAR_height_small*23, COLOR_SYSTEXT);
+
+    display.drawRect( 0, 0, CHAR_width_small * 29 , CHAR_height_small * 23, GREY2);
+    display.drawRect( CHAR_width_small * 29 - 1, 0, CHAR_width_small * 24 + 3 , CHAR_height_small * 23, COLOR_SYSTEXT);
   }
 
 }
@@ -768,49 +800,49 @@ void handle_touchscreen_file_manager()
     ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
     ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
 
-// check touch buttons
+    // check touch buttons
 
-if (    ts.p.y > CHAR_height_small*25 )
+    if (    ts.p.y > CHAR_height_small * 25 )
     {
-    if (  ts.p.x > 1*CHAR_width_small && ts.p.x < CHAR_width_small*9   )
-    {
-      fm.sd_mode = 1;
-    }
-    else if (   ts.p.x > 28*CHAR_width_small && ts.p.x < CHAR_width_small*35 )
-    {
-      fm.sd_mode = 2;
-
-      if (fm.sd_mode == 2)
+      if (  ts.p.x > 1 * CHAR_width_small && ts.p.x < CHAR_width_small * 9   )
       {
-        if (fm.sd_is_folder == false)
+        fm.sd_mode = 1;
+      }
+      else if (   ts.p.x > 28 * CHAR_width_small && ts.p.x < CHAR_width_small * 35 )
+      {
+        fm.sd_mode = 2;
+
+        if (fm.sd_mode == 2)
         {
-          if (fm.sd_mode == 2 && ts.block_screen_update == false) //preview
+          if (fm.sd_is_folder == false)
           {
-            strcpy(fm.sd_full_name, fm.sd_new_name);
-            strcat(fm.sd_full_name, "/");
-            strcat(fm.sd_full_name, fm.sd_temp_name);
-            playWAVFile(fm.sd_full_name);
-            ts.slowdown_UI_input = 0;
-            ts.block_screen_update = true;
+            if (fm.sd_mode == 2 && ts.block_screen_update == false) //preview
+            {
+              strcpy(fm.sd_full_name, fm.sd_new_name);
+              strcat(fm.sd_full_name, "/");
+              strcat(fm.sd_full_name, fm.sd_temp_name);
+              playWAVFile(fm.sd_full_name);
+              ts.slowdown_UI_input = 0;
+              ts.block_screen_update = true;
+            }
           }
         }
       }
+      else  if (  ts.p.x > 19 * CHAR_width_small && ts.p.x < CHAR_width_small * 26  )
+      {
+        fm.sd_mode = 3;
+      }
+      else if (  ts.p.x > 10 * CHAR_width_small && ts.p.x < CHAR_width_small * 17 )
+      {
+        fm.sd_mode = 4;
+      }
     }
-    else  if (  ts.p.x > 19*CHAR_width_small && ts.p.x < CHAR_width_small*26  )
-    {
-      fm.sd_mode = 3;
-    }
-    else if (  ts.p.x > 10*CHAR_width_small && ts.p.x < CHAR_width_small*17 )
-    {
-      fm.sd_mode = 4;
-    }
-    } 
     // active_window   0 = left window (SDCARD) , 1 = FLASH
-    else if (   ts.p.x > 1  && ts.p.y > 1    &&  ts.p.x < CHAR_width_small*29 && ts.p.y < CHAR_height_small*24 )
+    else if (   ts.p.x > 1  && ts.p.y > 1    &&  ts.p.x < CHAR_width_small * 29 && ts.p.y < CHAR_height_small * 24 )
     {
       fm.active_window = 0;
     }
-    else if (   ts.p.x > CHAR_width_small*29  && ts.p.y > 1 && ts.p.y < CHAR_height_small*24 )
+    else if (   ts.p.x > CHAR_width_small * 29  && ts.p.y > 1 && ts.p.y < CHAR_height_small * 24 )
     {
       fm.active_window = 1;
     }
