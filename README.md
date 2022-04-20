@@ -49,7 +49,11 @@ Development Status:
 
 ## Installation/Compile Instructions
 
+* Your Flash Chip should be soldered on the TEENSY AUDIO BOARD, not on the Teensy 4.1 itself
+
 * Copy Libraries from /third-party to you Arduino / Teensy Library Directory (On Mac: usualy in your Home Directory/Documents/Arduino/libraries), if not already existing there.
+
+* Copy all Files/Directories from /addon/SD/ to the root of your SD Card (FAT32) and insert the card in SD Slot of the Teensy 4.1
 
 * Open MicroDexed-touch.ino with Teensyduino
 
@@ -58,6 +62,8 @@ Development Status:
 * Set USB Type to "Serial + MIDI + Audio"
 
 * Compile and Upload to your Teensy 4.1
+
+* Power on the Teensy and attach USB MIDI Keyboard ( or use the virtual Touch Keyboard and the Encoders to navigate)
 
 
 ## License
