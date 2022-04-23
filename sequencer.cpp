@@ -199,9 +199,16 @@ void sequencer_part1(void)
                 handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
               else if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned for Microsynth
               {
-                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , 90 );
+                 if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step]   ,microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity );
+                else  //allow transpose
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] , microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity );
               }
-              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  ;
+              if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
+              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step];
+              else
+              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d];
+              
               seq.prev_vel[d] = seq.vel[  seq.current_pattern[d] ][seq.step];
             }
           }
@@ -225,12 +232,11 @@ void sequencer_part1(void)
             seq.arp_step = 0;
             seq.arp_num_notes_count = 0;
             seq.arp_counter = 0;
-            //seq.arp_volume_fade = seq.chord_vel;
             if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
             {
-              seq.arp_volume_base = mapfloat(microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f);
+              seq.arp_volume_base = microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity;
             }
-            seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
+              seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
             seq.arp_chord = seq.vel[ seq.current_pattern[d] ][seq.step] - 200;
           }
         }
@@ -245,7 +251,7 @@ void sequencer_part1(void)
             { //arp up
               if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
               {
-                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] , 90 );
+                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] , seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)) );
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
                 if (seq.arp_speed > 1)
                 {
@@ -267,7 +273,7 @@ void sequencer_part1(void)
               if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned to Microsynth
               {
 
-                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] , 90);
+                handleNoteOn(microsynth[seq.inst_dexed[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)) );
 
                 if (seq.arp_speed > 1)
                 {

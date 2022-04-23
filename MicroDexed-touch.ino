@@ -499,7 +499,7 @@ void create_audio_drum_chain(uint8_t instance_id)
 #ifdef COMPILE_FOR_FLASH
   Drum[instance_id] = new AudioPlaySerialflashRaw();
 #endif
-  
+
 #ifdef COMPILE_FOR_SDCARD
   Drum[instance_id] = new AudioPlaySdResmp();
 #endif
@@ -1156,30 +1156,6 @@ void loop()
     scope.draw_scope(225, 0, 80);
   }
 
-  //  //DEBUG
-  //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
-  //  {
-  //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-  //    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-  //    {
-  //     // setCursor_textGrid(5 + 4 * d, 10);
-  //
-  //      //seq_print_formatted_number( seq.chain_reached_end[d], 2 );
-  //      setCursor_textGrid(5 + 4 * d, 11);
-  //      seq_print_formatted_number (seq.chain_counter[d], 2 );
-  //      setCursor_textGrid(5 + 4 * d, 12);
-  //   //   seq_print_formatted_number( seq.current_pattern[d], 2 );
-  //    //   setCursor_textGrid(5 + 4 * d, 14);
-  //      seq_print_formatted_number( get_chain_length_from_track(d) , 2 );
-  //       setCursor_textGrid(3, 15);
-  //      seq_print_formatted_number( find_longest_chain() , 2 );
-  //
-  //        setCursor_textGrid(6, 15);
-  //      seq_print_formatted_number( seq.current_song_step , 2 );
-  //    }
-  //  }
-
-
   if (microsynth_lfo_control_rate > MICROSYNTH_LFO_RATE_MS) //update lfos, filters etc. when played live or by seq.
   {
     microsynth_lfo_control_rate = 0;
@@ -1599,7 +1575,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
       {
         if (inChannel == microsynth[instance_id].midi_channel)
         {
-          if (inNumber == MIDI_C8)  // is noise only
+          if (inNumber == MIDI_C8)  // is noise only, mute osc
           {
             microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
             microsynth_envelope_noise[instance_id].noteOn();
@@ -1611,9 +1587,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
             {
               microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
               microsynth_envelope_noise[instance_id].noteOn();
+              microsynth_waveform[instance_id].amplitude(  mapfloat(
+                    ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
+
             }
             else
+            {
               microsynth_noise[instance_id].amplitude(0.0f);
+              microsynth_waveform[instance_id].amplitude(  mapfloat(
+                    ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
+
+            }
           }
           if (microsynth[instance_id].wave == 4 || microsynth[instance_id].wave == 7)
           {
@@ -1626,13 +1610,12 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
           microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
           microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse]  );
           microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] ;
-          microsynth_waveform[instance_id].amplitude( mapfloat( ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
+
           microsynth_envelope_osc[instance_id].noteOn();
           microsynth_lfo_delay_timer[instance_id] = 0;
           microsynth[instance_id].lfo_fade = 0;
           if (microsynth[instance_id].lfo_mode > 0) // If LFO in 1up or 1down
             microsynth[instance_id].lfo_value = 0;
-
           if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
           {
             midi_decay_timer_microsynth = 0;
@@ -1694,15 +1677,15 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity)
               Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 #ifdef COMPILE_FOR_FLASH
-            //  strcpy(temp_name, drum_config[d].name);
-           //   strcat(temp_name, ".wav");
-             // Drum[slot]->playWav(temp_name);
+              //  strcpy(temp_name, drum_config[d].name);
+              //   strcat(temp_name, ".wav");
+              // Drum[slot]->playWav(temp_name);
 
               strcpy(temp_name, "/samples_dexed/");
               strcat(temp_name, drum_config[d].name);
               strcat(temp_name, ".wav");
-              
-               Drum[slot]->playWav(temp_name);
+
+              Drum[slot]->playWav(temp_name);
               //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
 

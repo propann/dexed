@@ -1386,9 +1386,11 @@ void update_display_functions_while_seq_running()
     {
       display.setCursor(CHAR_width_small * 6 + (4 * d)*CHAR_width_small , CHAR_height_small * 3   );
       set_pattern_content_type_color( seq.current_pattern[d] );
-      if (seq.content_type[seq.current_pattern[d]] > 0) //Inst
+      if (seq.content_type[seq.current_pattern[d]] > 0) //it is a Inst. pattern
       {
-        if (seq.note_data [seq.current_pattern[d]][seq.step] != 0 && seq.note_data [seq.current_pattern[d]][seq.step] != 130)
+        if (seq.note_data [seq.current_pattern[d]][seq.step] >12 && 
+            seq.note_data [seq.current_pattern[d]][seq.step] != 130 &&
+            seq.note_data[seq.current_pattern[d]][seq.step] != 99)
         {
           display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][0] );
           if (noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] != '\0' )
@@ -1396,15 +1398,15 @@ void update_display_functions_while_seq_running()
             display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] );
           }
           display.print( (seq.note_data [seq.current_pattern[d]][seq.step] / 12) - 1);
-
         }
         else if ( seq.note_data [seq.current_pattern[d]][seq.step] == 130) //latch
           display.print(F("LAT"));
         else
           display.print(F("   "));
-      } else //is drum
 
-        if ( seq.vel[seq.current_pattern[d]][seq.step] < 210) //is Drumtrack and not a pitched sample
+      } else //it is a drum pattern
+
+        if ( seq.vel[seq.current_pattern[d]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
         {
           bool found = false;
           for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
@@ -1416,11 +1418,12 @@ void update_display_functions_while_seq_running()
               break;
             }
           }
-          if (found == false) display.print( "-");
+          if (found == false) display.print( "- ");
         }
+        else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
+          display.print(F("PS"));
     }
   }
-
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pianoroll)) //is in UI of Pianoroll
   {
     update_pianoroll();
@@ -6143,10 +6146,10 @@ void print_edit_mode()
     {
       display.setTextColor(COLOR_BACKGROUND, RED);
       display.print(F("CONT. TYPE "));
-//      display.setCursor(175 , 71 - 17);
-//      display.setTextColor(DARKGREEN, COLOR_SYSTEXT);
-//      display.print(seq.active_pattern);
-//      display.print(" ");
+      //      display.setCursor(175 , 71 - 17);
+      //      display.setTextColor(DARKGREEN, COLOR_SYSTEXT);
+      //      display.print(seq.active_pattern);
+      //      display.print(" ");
     }
     else if (seq.menu > 20 && seq.menu < 29)
     {
@@ -6544,7 +6547,7 @@ void UI_func_seq_vel_editor(uint8_t param)
     if (seq_active_function == 0)
     {
       display.setTextSize(1);
-       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+      display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
       print_content_type();
       display.setTextSize(2);
     }
@@ -6788,7 +6791,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
       display.setCursor(0, CHAR_height * 3 + 3);
       display.print("CONT.TYPE:");
-       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+      display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
 
       print_content_type();
       display.setTextSize(2);
@@ -6810,7 +6813,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextSize(1);
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print("CONT.TYPE:");
-       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+      display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
 
       print_content_type();
       display.setTextSize(2);
@@ -6911,7 +6914,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.setCursor(0, CHAR_height * 3 + 3);
       display.print(F("CONT.TYPE:"));
-       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+      display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
 
       print_content_type();
       display.setTextSize(2);
@@ -7674,7 +7677,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
       display.setTextSize(1);
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print(F("CONT.TYPE:"));
-       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+      display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
 
       print_content_type();
     }
@@ -7757,7 +7760,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
 
         display.setTextSize(1);
-         display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+        display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
 
         print_content_type ();
       }
@@ -9686,6 +9689,15 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
   }
 }
 
+void print_empty_spaces (uint8_t spaces)
+{
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  for (uint8_t x = 0; x < spaces; x++)
+  {
+   display.print(" ");
+  }
+}
+
 void UI_func_song(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -10122,17 +10134,15 @@ void UI_func_song(uint8_t param)
         else if (seq.edit_state && seq.cycle_touch_element == 5)
         {
           display.setCursor(7 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 1);
-          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          display.print(F("                               "));
+          print_empty_spaces(31);
           helptext_l("> CHAIN");
           helptext_r("< > SELECT CHAIN");
         }
         else if (seq.edit_state && seq.cycle_touch_element == 6)
         {
           helptext_l("SONG < > TRANSPOSE");
-          display.setCursor (CHAR_width * 18, DISPLAY_HEIGHT - CHAR_height);
-          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          display.print("     ");  // fix empty space between left and right help_text
+          display.setCursor (CHAR_width_small * 18, DISPLAY_HEIGHT - CHAR_height_small);
+           print_empty_spaces(7);
           helptext_r("< > SEL. CH. STEP");
         }
         else if (seq.edit_state && seq.cycle_touch_element == 7)
@@ -10759,7 +10769,7 @@ void UI_func_load_performance(uint8_t param)
       else
         display.print(F(" -- DATA --"));
     }
-    else display.print(F("           "));
+    else print_empty_spaces(11);
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -10888,7 +10898,7 @@ void UI_func_save_performance(uint8_t param)
           else
             display.print("-- DATA --");
         }
-        else display.print("          ");
+        else  print_empty_spaces(10);
       }
       else if (mode == 1)
       {
@@ -11421,7 +11431,7 @@ void UI_func_file_manager(uint8_t param)
           if (filename[0] != 46)
           {
             display.print(filename);
-            display.print("       ");
+             print_empty_spaces(7);
             screenline++;
           }
           unsigned long length = f.size();
@@ -13831,7 +13841,7 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
   if (sign == true)
     size++;
 
-  v = float((value - min_value) * (display_cols + 4 - size)) / (max_value - min_value);
+  v = float((value - min_value) * (display_cols - size)) / (max_value - min_value);
   vf = uint8_t(modff(v, &_vi) * 10.0 + 0.5);
   vi = uint8_t(_vi);
 
@@ -13843,7 +13853,7 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
     show(1, 1, display_cols - 2, title);
 
   // Value
-  display.setCursor( CHAR_width * (display_cols - size - 1), CHAR_height * 2);
+  display.setCursor( CHAR_width * (display_cols - size - 3), CHAR_height * 2);
   display_float(value * factor, size_number, size_fraction, zeros, false, sign); // TBD
 
   // Bar
@@ -13851,7 +13861,7 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
   if (vi == 0)
   {
     drawBitmap(  CHAR_width , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t i = vi + 1; i < display_cols - size + 5; i++)
+    for (uint8_t i = vi + 1; i < display_cols - size ; i++)
       display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
   }
   else
@@ -13860,7 +13870,7 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
       drawBitmap(  CHAR_width + i * 8 , 2 * CHAR_height, block_bar[7], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND); // full block
     if (vi < display_cols - size)
       drawBitmap(  CHAR_width + vi * 8 , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t i = vi + 1; i < display_cols + 4 - size; i++)
+    for (uint8_t i = vi + 1; i < display_cols + 1 - size; i++)
       display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
   }
 }
@@ -13885,7 +13895,7 @@ void display_meter_float(const char* title, float value, float factor, float off
   if (sign == true)
     size++;
 
-  v = float((value - min_value) * (display_cols + 4 - size)) / (max_value - min_value);
+  v = float((value - min_value) * (display_cols - size)) / (max_value - min_value);
   vf = uint8_t(modff(v, &_vi) * 10.0 + 0.5);
   vi = uint8_t(_vi);
 
@@ -13897,7 +13907,7 @@ void display_meter_float(const char* title, float value, float factor, float off
   }
 
   // Value
-  display.setCursor( (display_cols - size - 1)*CHAR_width, CHAR_height * 2);
+  display.setCursor( (display_cols - size - 3)*CHAR_width, CHAR_height * 2);
   display_float((value + offset) * factor, size_number, size_fraction, zeros, false, sign);
 
   // Bar
@@ -13916,10 +13926,10 @@ void display_meter_float(const char* title, float value, float factor, float off
   }
   else
   {
-    for (uint8_t i = 0; i < display_cols - size + 4; i++)
+    for (uint8_t i = 0; i < display_cols - size + 2; i++)
       display.fillRect( CHAR_width + i * 8, 2 * CHAR_height + 4, 8, 8, COLOR_BACKGROUND ); //empty block
     drawBitmap(  CHAR_width + vi * 8 , 2 * CHAR_height + 4, meter_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 8, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t i = vi + 1; i < display_cols - size + 5; i++)
+    for (uint8_t i = vi + 1; i < display_cols - size + 2; i++)
       display.fillRect( CHAR_width + i * 8, 2 * CHAR_height + 4, 8, 8, COLOR_BACKGROUND ); //empty block
   }
 }
@@ -14319,7 +14329,7 @@ void UI_func_format_flash(uint8_t param)
       setCursor_textGrid(1, 1);
       display.print(F("Formatting     "));
       setCursor_textGrid(1, 2);
-      display.print(F("                "));
+       print_empty_spaces(16);
       unsigned char id[5];
       SerialFlash.readID(id);
       unsigned long size = SerialFlash.capacity(id);

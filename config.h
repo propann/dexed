@@ -88,7 +88,7 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-#define DEBUG 1
+//#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
