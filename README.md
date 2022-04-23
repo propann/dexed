@@ -10,6 +10,12 @@ https://www.amazon.de/ILI9341-Display-Seriell-Arduino-Raspberry/dp/B07YTWRZGR/
 
 The Display is smaller than the first "nextgen" version but now is much faster - may it be the screen itself or most probably because of the much more optimized display library.
 
+The Teensy supports several Serial Flash Chips, for development currently in use is a:
+
+WINBOND W25Q128FVSG SERIAL FLASH MEMORY 3V 128M-BIT
+
+It must be soldered to the Teensy AUDIO BOARD, not on the backside of the Teensy, to be able to work with the SerialFlash Library.
+
 Compared to the previous Version, there are a lot of new features/improvments:
 
 * "Large" Graphical Interface, view and edit multiple Parameters in one Screen
