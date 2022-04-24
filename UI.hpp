@@ -82,6 +82,7 @@ extern void print_file_manager_buttons(void);
 extern uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b);
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint32_t ColorHSV2(uint16_t hue, uint8_t sat, uint8_t val);
+extern uint8_t get_chain_length_from_current_track(uint8_t tr);
 extern void playWAVFile(const char *filename);
 extern uint8_t get_song_length(void);
 extern void helptext_l (const char *str);
@@ -90,6 +91,7 @@ extern void seq_pattern_editor_update_dynamic_elements();
 extern uint8_t microsynth_selected_instance;
 extern AudioMixer<2>   microsynth_mixer_reverb;
 extern void virtual_keyboard_print_current_instrument();
+extern uint8_t find_longest_chain();
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -1238,6 +1240,40 @@ void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, ui
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
+void print_playing_chains()
+{
+
+  for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
+  {
+    display.setTextColor( COLOR_SYSTEXT, COLOR_PITCHSMP);
+    display.setCursor(30 * CHAR_width_small + (x * 3 * CHAR_width_small) ,  1);
+    if ( seq.current_chain[x] < 99 )
+      seq_print_formatted_number( seq.current_chain[x], 2);
+    else
+    {
+      display.setTextColor( DX_DARKCYAN, COLOR_PITCHSMP);
+      display.print(F("--"));
+    }
+    display.setTextColor( COLOR_BACKGROUND, COLOR_PITCHSMP);
+    display.setCursor(30 * CHAR_width_small + (x * 3 * CHAR_width_small) ,  10);
+    if (  get_chain_length_from_current_track(x) > 0 )
+      seq_print_formatted_number(  get_chain_length_from_current_track(x), 2);
+    else
+    {
+      display.setTextColor( DX_DARKCYAN, COLOR_PITCHSMP);
+      display.print(F("--"));
+    }
+    //debug, show chain counter for all tracks
+    display.setTextColor( GREY1, COLOR_BACKGROUND);
+    display.setCursor(30 * CHAR_width_small + (x * 3 * CHAR_width_small) ,  20);
+    seq_print_formatted_number(  seq.chain_counter[x], 2);
+  }
+  //show longest current chain
+  display.setTextColor( COLOR_SYSTEXT, COLOR_PITCHSMP);
+  display.setCursor(26 * CHAR_width_small  ,  10);
+  seq_print_formatted_number(find_longest_chain(), 2);
+}
+
 void update_display_functions_while_seq_running()
 {
   seq.UI_last_seq_step = seq.step;
@@ -1306,8 +1342,6 @@ void update_display_functions_while_seq_running()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker)) //is in UI of Tracker
   { //phtodo
-
-
     display.setTextColor(GREEN, COLOR_BACKGROUND);
     display.setCursor(5 * CHAR_width_small, (5 + seq.step) * (CHAR_height_small + 3) - 7);
     display.print (F(">"));
@@ -1384,11 +1418,11 @@ void update_display_functions_while_seq_running()
     }
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  // print currently playing notes/chords/drums
     {
-      display.setCursor(CHAR_width_small * 6 + (4 * d)*CHAR_width_small , CHAR_height_small * 3   );
+      display.setCursor(CHAR_width_small * 6 + (4 * d)*CHAR_width_small , CHAR_height_small * 4   );
       set_pattern_content_type_color( seq.current_pattern[d] );
       if (seq.content_type[seq.current_pattern[d]] > 0) //it is a Inst. pattern
       {
-        if (seq.note_data [seq.current_pattern[d]][seq.step] >12 && 
+        if (seq.note_data [seq.current_pattern[d]][seq.step] > 12 &&
             seq.note_data [seq.current_pattern[d]][seq.step] != 130 &&
             seq.note_data[seq.current_pattern[d]][seq.step] != 99)
         {
@@ -1423,6 +1457,10 @@ void update_display_functions_while_seq_running()
         else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
           display.print(F("PS"));
     }
+
+    //print currently playing chain steps
+    print_playing_chains();
+
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pianoroll)) //is in UI of Pianoroll
   {
@@ -9694,8 +9732,36 @@ void print_empty_spaces (uint8_t spaces)
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   for (uint8_t x = 0; x < spaces; x++)
   {
-   display.print(" ");
+    display.print(" ");
   }
+}
+
+void print_song_loop ()
+{
+  //print loop
+  display.setCursor(CHAR_width_small * 11, 10);
+  display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+  if (seq.loop_start != 99)
+    seq_print_formatted_number( seq.loop_start + 1 , 2);
+  else
+    display.print(F("--"));
+
+  display.setCursor(CHAR_width_small * 14, 10);
+  display.print(F("-"));
+
+  display.setCursor(CHAR_width_small * 16, 10);
+  if (seq.loop_end != 99)
+    seq_print_formatted_number( seq.loop_end + 1 , 2);
+  else
+    display.print(F("--"));
+}
+
+void print_song_length()
+{
+  //print song length
+  display.setCursor(CHAR_width_small * 21, 10);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+  seq_print_formatted_number( get_song_length(), 2);
 }
 
 void UI_func_song(uint8_t param)
@@ -9715,48 +9781,32 @@ void UI_func_song(uint8_t param)
     display.setTextSize(1);
     UI_toplineInfoText( 2);
 
-    display.setCursor(CHAR_width_small, 1);
+    display.setCursor(1, 1);
     display.setTextColor(COLOR_SYSTEXT);
     display.print (F("SONG"));
 
-    display.setCursor(CHAR_width_small, 10);
-    show_small_font(10, CHAR_width_small, 11, seq.name);
-
+    show_small_font(10, 1, 11, seq.name);
     //print loop
-    display.setCursor(CHAR_width_small * 13, 10);
-    display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-    if (seq.loop_start != 99)
-      seq_print_formatted_number( seq.loop_start + 1 , 2);
-    else
-      display.print(F("--"));
-
-    display.setCursor(CHAR_width_small * 16, 10);
-    display.print(F("-"));
-
-    display.setCursor(CHAR_width_small * 18, 10);
-    if (seq.loop_end != 99)
-      seq_print_formatted_number( seq.loop_end + 1 , 2);
-    else
-      display.print(F("--"));
-
+    print_song_loop();
+    //print song lenght
+    print_song_length();
+    //print currently playing chain steps
+    print_playing_chains();
     sub_song_print_tracknumbers();
     sub_song_print_tracktypes();
     sub_song_print_instruments(GREY2, COLOR_BACKGROUND);
 
-    //print song length
-    display.setCursor(CHAR_width_small * 23, 10);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    seq_print_formatted_number( get_song_length()  , 2);
-
     display.setCursor(40 * CHAR_width_small  ,  CHAR_height_small * 4 );
     display.setTextColor(GREY1, COLOR_BACKGROUND);
     display.print (F("CHAIN:"));
-
+    display.setCursor(50 * CHAR_width_small  ,  CHAR_height_small * 4 );
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print (F("L"));
     display.setTextColor(COLOR_SYSTEXT);
-    display.setCursor(CHAR_width_small * 13, 1);
+    display.setCursor(CHAR_width_small * 11, 1);
     display.print (F("LOOP"));
-    display.setCursor(CHAR_width_small * 23, 1);
-    display.print (F("LENGTH"));
+    display.setCursor(CHAR_width_small * 21, 1);
+    display.print (F("SLEN LC"));
 
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.setCursor(40 * CHAR_width_small  ,  CHAR_height_small * 6 );
@@ -10054,27 +10104,9 @@ void UI_func_song(uint8_t param)
           if (seq.cycle_touch_element < 7)
           {
             //print loop
-            display.setCursor(CHAR_width_small * 13, 10);
-            display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-            if (seq.loop_start != 99)
-              seq_print_formatted_number( seq.loop_start + 1 , 2);
-            else
-              display.print(F("--"));
-
-            display.setCursor(CHAR_width_small * 16, 10);
-            display.print(F("-"));
-
-            display.setCursor(CHAR_width_small * 18, 10);
-            if (seq.loop_end != 99)
-              seq_print_formatted_number( seq.loop_end + 1 , 2);
-            else
-              display.print(F("--"));
-
+            print_song_loop();
             //print song length
-            display.setCursor(CHAR_width_small * 23, 10);
-            display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-            seq_print_formatted_number( get_song_length()  , 2);
-
+            print_song_length();
           }
           seq.help_text_needs_refresh = true;
         }
@@ -10142,7 +10174,7 @@ void UI_func_song(uint8_t param)
         {
           helptext_l("SONG < > TRANSPOSE");
           display.setCursor (CHAR_width_small * 18, DISPLAY_HEIGHT - CHAR_height_small);
-           print_empty_spaces(7);
+          print_empty_spaces(7);
           helptext_r("< > SEL. CH. STEP");
         }
         else if (seq.edit_state && seq.cycle_touch_element == 7)
@@ -10360,7 +10392,7 @@ void UI_func_song(uint8_t param)
         pattern_preview_in_song(seq.chain[  seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]   ][seq.menu] );
       }
 
-      //print CHAIN indicator
+      //print current CHAIN Number
       display.setTextSize(1);
       display.setCursor(47 * CHAR_width_small  ,  CHAR_height_small * 4 );
       if (seq.edit_state && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 9)
@@ -10372,8 +10404,10 @@ void UI_func_song(uint8_t param)
         seq_print_formatted_number(seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] , 2);
       else
         display.print("--");
-    }
+      display.setCursor(51 * CHAR_width_small  ,  CHAR_height_small * 4 ); //print chain lenght of current track step
+      seq_print_formatted_number(  get_chain_length_from_current_track(seq.selected_track), 2);
 
+    }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -11431,7 +11465,7 @@ void UI_func_file_manager(uint8_t param)
           if (filename[0] != 46)
           {
             display.print(filename);
-             print_empty_spaces(7);
+            print_empty_spaces(7);
             screenline++;
           }
           unsigned long length = f.size();
@@ -14329,7 +14363,7 @@ void UI_func_format_flash(uint8_t param)
       setCursor_textGrid(1, 1);
       display.print(F("Formatting     "));
       setCursor_textGrid(1, 2);
-       print_empty_spaces(16);
+      print_empty_spaces(16);
       unsigned char id[5];
       SerialFlash.readID(id);
       unsigned long size = SerialFlash.capacity(id);

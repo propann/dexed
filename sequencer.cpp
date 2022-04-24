@@ -115,7 +115,7 @@ uint8_t get_song_length()
   return SONG_LENGHT - best;
 }
 
-uint8_t get_chain_length_from_track(uint8_t tr)
+uint8_t get_chain_length_from_current_track(uint8_t tr)
 {
   uint8_t stepcounter = 0;
 
@@ -131,6 +131,8 @@ uint8_t get_chain_length_from_track(uint8_t tr)
 
   return stepcounter;
 }
+
+
 
 uint8_t find_longest_chain()
 {
@@ -199,16 +201,16 @@ void sequencer_part1(void)
                 handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step]);
               else if (seq.inst_dexed[d] == 3 || seq.inst_dexed[d] == 4) // track is assigned for Microsynth
               {
-                 if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
-                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step]   ,microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity );
+                if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
+                  handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step]   , microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity );
                 else  //allow transpose
-                handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] , microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity );
+                  handleNoteOn( microsynth[ seq.inst_dexed[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] , microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity );
               }
               if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
-              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step];
+                seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step];
               else
-              seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d];
-              
+                seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d];
+
               seq.prev_vel[d] = seq.vel[  seq.current_pattern[d] ][seq.step];
             }
           }
@@ -236,7 +238,7 @@ void sequencer_part1(void)
             {
               seq.arp_volume_base = microsynth[ seq.inst_dexed[d] - 3 ].sound_intensity;
             }
-              seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
+            seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
             seq.arp_chord = seq.vel[ seq.current_pattern[d] ][seq.step] - 200;
           }
         }
@@ -404,10 +406,11 @@ void sequencer_part1(void)
 
       for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
       {
-        if (  get_chain_length_from_track(d) >  seq.chain_counter[d]  )
+        if (  get_chain_length_from_current_track(d) >  seq.chain_counter[d]  )
           seq.chain_counter[d]++;
 
-        if (get_chain_length_from_track(d) > 0 && get_chain_length_from_track(d) == seq.chain_counter[d] && seq.chain_counter[d] < find_longest_chain())
+        if (get_chain_length_from_current_track(d) > 0 && get_chain_length_from_current_track(d) == seq.chain_counter[d] &&
+            seq.chain_counter[d] < find_longest_chain())
           seq.chain_counter[d] = 0;
 
         if (seq.loop_end == 99) // no loop set
@@ -452,16 +455,17 @@ void sequencer_part1(void)
         if ( seq.chain_counter[d]  == find_longest_chain() && songstep_increased == false )
         {
           seq.current_song_step++;
-          seq.chain_counter[d] = 0;
+          for (uint8_t z = 0; z < NUM_SEQ_TRACKS; z++)
+          {
+            seq.chain_counter[z] = 0;
+          }
           songstep_increased = true;
         }
         if (songstep_increased == true )
           seq.chain_counter[d] = 0;
       }
     }
-
   }
-
 }
 
 void sequencer_part2(void)
