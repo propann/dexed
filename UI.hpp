@@ -103,8 +103,7 @@ extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 extern sequencer_t seq;
 extern ts_t ts;
 extern fm_t fm;
-
-
+extern dexed_live_mod_t dexed_live_mod;
 
 uint8_t seq_active_function = 99;
 uint8_t activesample;
@@ -193,8 +192,6 @@ extern AudioAnalyzePeak               master_peak_l;
 extern char sd_string[display_cols + 1];
 extern char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 extern char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
-extern int perform_attack_mod[NUM_DEXED];
-extern int perform_release_mod[NUM_DEXED];
 extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern bool save_sys_flag;
@@ -219,9 +216,7 @@ elapsedMillis back_from_volume;
 uint8_t instance_num[8][8];
 const char accepted_chars[] = " _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-abcdefghijklmnopqrstuvwxyz";
 const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-uint8_t active_perform_page = 1;
-uint8_t orig_attack_values[2][7];
-uint8_t orig_release_values[2][7];
+
 int temp_int;
 bool menu_select_toggle;
 float temp_float;
@@ -876,10 +871,6 @@ void border4_clear()  //lower right
 void border3_large()  //lower left+right as one window
 {
   display.drawRect(0, CHAR_height * 6 - 4 , DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 6 + 4,  GREY4);
-}
-void border3_large_with_buttons()  //lower left+right as one window but one line below for button info
-{
-  display.drawRect(0, CHAR_height * 6 - 4 , DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 7 + 3,  GREY4);
 }
 
 void border3_large_clear()  //lower left+right as one window
@@ -6035,8 +6026,6 @@ void UI_print_voice_info()
   display.setTextColor(COLOR_SYSTEXT, GREY2);
   display.print("SQBASS");
 
-
-
   char bank_name[BANK_NAME_LEN];
   char voice_name[VOICE_NAME_LEN];
 
@@ -9053,7 +9042,6 @@ void UI_func_microsynth(uint8_t param)
     setCursor_textGrid_mini(1, 11);
     display.print(F("RELEASE"));
 
-
     setCursor_textGrid_mini(22, 8);
     display.print(F("OSC LFO"));
     setCursor_textGrid_mini(22, 9);
@@ -11935,7 +11923,6 @@ void UI_func_velocity_level(uint8_t param)
 
 void UI_update_instance_icons()
 {
-
   display.setTextSize(1);
   if (selected_instance_id == 0)
   {
@@ -12005,7 +11992,6 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
     if (!get_voice_by_bank_name(configuration.dexed[instance_id].bank, bank_name, configuration.dexed[instance_id].voice, voice_name, sizeof(voice_name)))
       strcpy(voice_name, "*ERROR*");
   }
-
   display.setTextSize(1);
   display.setCursor(x, y);
   if (selected_instance_id == instance_id)
@@ -12017,25 +12003,22 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
     display.setTextColor(GREEN, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-
   display.print(instance_id + 1);
-
   if (selected_instance_id == instance_id)
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.setCursor(x + 48, y - 1);
+  display.setCursor(x + 54, y - 1);
   seq_print_formatted_number(configuration.dexed[instance_id].bank, 2);
-  display.setCursor(x + 48, y + 7);
+  display.setCursor(x + 54, y + 7);
   seq_print_formatted_number(configuration.dexed[instance_id].voice + 1, 2);
   if (selected_instance_id == instance_id)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.setCursor(x + 70 , y - 1);
   string_toupper(bank_name);
-  display.print( bank_name);
-  display.setCursor(x + 70 , y + 7);
+  show_smallfont_noGrid(y - 1, x + 81, 12, bank_name);
+  display.setCursor(x + 81 , y + 7);
   string_toupper(voice_name);
   display.print(voice_name);
 
@@ -12044,7 +12027,7 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   {
     display.setTextSize(1);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    yspacer = yspacer + 16;
+    //yspacer = yspacer + 9;
     display.setCursor(x, y + yspacer);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.print(F("VOL"));
@@ -12068,10 +12051,6 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
     display.print(F("LOW NOTE"));
     display.setCursor(x + 80, y + yspacer);
     display.print(F("HI NOTE"));
-    yspacer = yspacer + 9; display.setCursor(x, y + yspacer);
-    display.print(F("ATK.MD"));
-    display.setCursor(x + 80, y + yspacer);
-    display.print(F("REL.MD"));
   }
   display.setTextSize(1);
   if (selected_instance_id == instance_id)
@@ -12079,7 +12058,7 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
   yspacer = 16;
-  yspacer = yspacer + 16;
+
   display.setCursor(x + 9 * CHAR_width_small,  y + yspacer);
   display.print(configuration.dexed[instance_id].sound_intensity);
   display.setCursor(x + 21 * CHAR_width_small, y + yspacer);
@@ -12103,15 +12082,117 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   display.print(configuration.dexed[instance_id].lowest_note);
   display.setCursor(x + 21 * CHAR_width_small, y + yspacer);
   display.print(configuration.dexed[instance_id].highest_note);
-  yspacer = yspacer + 9;
-  display.setCursor(x + 9 * CHAR_width_small, y + yspacer);
-  display.print(perform_attack_mod[instance_id]);
-  display.setCursor(x + 21 * CHAR_width_small, y + yspacer);
-  display.print(perform_release_mod[instance_id]);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
 }
 
+void print_perfmod_lables()
+{
+  char tmp[5];
+  display.setTextSize(1);
+  if (dexed_live_mod.active_button == 1)
+  {
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    display.setCursor( 4 * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.attack_mod[0]);
+    display.print(tmp);
+  }
+  else
+  {
+    display.setTextColor(GREY1, GREY2);
+    display.setCursor( 4 * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.attack_mod[0]);
+    display.print(tmp);
+  }
+  if (dexed_live_mod.active_button == 2)
+  {
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    display.setCursor( 17 * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.release_mod[0]);
+    display.print(tmp);
+  }
+  else
+  {
+    display.setTextColor(GREY1, GREY2);
+    display.setCursor( 17 * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.release_mod[0]);
+    display.print(tmp);
+  }
+  if (dexed_live_mod.active_button == 3)
+  {
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    display.setCursor( (4 + 27) * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.attack_mod[1]);
+    display.print(tmp);
+  }
+  else
+  {
+    display.setTextColor(GREY1, GREY2);
+    display.setCursor( (4 + 27) * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.attack_mod[1]);
+    display.print(tmp);
+  }
+  if (dexed_live_mod.active_button == 4)
+  {
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    display.setCursor( (17 + 27) * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.release_mod[1]);
+    display.print(tmp);
+  }
+  else
+  {
+    display.setTextColor(GREY1, GREY2);
+    display.setCursor( (17 + 27) * CHAR_width_small + 3, 194);
+    sprintf(tmp, "%03d", dexed_live_mod.release_mod[1]);
+    display.print(tmp);
+  }
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+}
+
+void print_perfmod_buttons()
+{
+  // Performance Modifier Buttons
+  if (dexed_live_mod.active_button == 1)
+    draw_button_on_grid(1, 22, "ATTACK", "MD", 1);
+  else
+    draw_button_on_grid(1, 22, "ATTACK", "MD", 0);
+  if (dexed_live_mod.active_button == 2)
+    draw_button_on_grid(14, 22, "REL.", "MD", 1);
+  else
+    draw_button_on_grid(14, 22, "REL.", "MD", 0);
+  if (dexed_live_mod.active_button == 3)
+    draw_button_on_grid(28, 22, "ATTACK", "MD", 1);
+  else
+    draw_button_on_grid(28, 22, "ATTACK", "MD", 0);
+  if (dexed_live_mod.active_button == 4)
+    draw_button_on_grid(41, 22, "REL.", "MD", 1);
+  else
+    draw_button_on_grid(41, 22, "REL.", "MD", 0);
+}
+
+void print_voice_select_default_help()
+{
+  helptext_l ("BACK");
+  helptext_r ("< > SELECT SOUND/BANK");
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.setCursor(0, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2  );
+  display.print(F("LONG PUSH:"));
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("SET/DELETE"));
+  display.setCursor(CHAR_width_small * 10, DISPLAY_HEIGHT - CHAR_height_small );
+  display.setTextColor(COLOR_BACKGROUND, GREEN );
+  display.print(F("F"));
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 11, DISPLAY_HEIGHT - CHAR_height_small  );
+  display.print(F("AVORITE"));
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 23 + 2, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2 );
+  display.print(F("SHORT:"));
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("INSTANCE "));
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print(F("LONG:"));
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("SOUND/BANK"));
+}
 void UI_func_voice_select(uint8_t param)
 {
   static uint8_t menu_voice_select = MENU_VOICE_SOUND;
@@ -12121,14 +12202,16 @@ void UI_func_voice_select(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
     border1();
     border2();
-    border3_large();
-
+    display.drawRect(0, CHAR_height * 6 - 4, DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 6 - CHAR_height_small * 3,  GREY4);
+    print_voice_select_default_help();
+    print_perfmod_buttons();
+    print_perfmod_lables();
     if (seq.cycle_touch_element != 1)
     {
-      display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
+      display.drawLine(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - CHAR_height_small * 4 + 2 ,  GREY4);
       draw_button_on_grid(45, 1, "TOUCH-", "KEYBRD", 0);
-      print_voice_settings(CHAR_width_small, 115, 0, true);
-      print_voice_settings(CHAR_width_small + 160, 115, 1, true);
+      print_voice_settings(CHAR_width_small, 104, 0, true);
+      print_voice_settings(CHAR_width_small + 160, 104, 1, true);
     }
     else
     {
@@ -12160,351 +12243,315 @@ void UI_func_voice_select(uint8_t param)
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    char bank_name[BANK_NAME_LEN];
-    char voice_name[VOICE_NAME_LEN];
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && (encoderDir[ENC_R].ButtonShort() || encoderDir[ENC_R].ButtonLong())))
+    if (dexed_live_mod.active_button != 0)  //touch button pressed for live modify
     {
-      uint8_t bank_tmp;
-      int8_t voice_tmp;
-
-      // Reset Performance Modifiers to 0 after every preset change
-      for (uint8_t count_tmp = 0; count_tmp < NUM_DEXED; count_tmp++)
+      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
-        perform_attack_mod[count_tmp] = 0;
-        perform_release_mod[count_tmp] = 0;
-      }
-      active_perform_page = 1;
-      if (LCDML.BT_checkUp())
-      {
-        //start : show all presets
-        if (configuration.sys.favorites == 0)
+        if ( (LCDML.BT_checkDown() && dexed_live_mod.active_button == 1) || (LCDML.BT_checkDown() && dexed_live_mod.active_button == 3))
         {
-          switch (menu_voice_select)
-          {
-            case MENU_VOICE_BANK:
-              memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
-              bank_tmp = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-              configuration.dexed[selected_instance_id].bank = bank_tmp;
-
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-
-              break;
-            case MENU_VOICE_SOUND:
-              memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
-              voice_tmp = configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed();
-              if (voice_tmp < 0 && configuration.dexed[selected_instance_id].bank - 1 >= 0)
-              {
-                configuration.dexed[selected_instance_id].bank--;
-                configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank, 0, MAX_BANKS - 1);
-              }
-              else if (voice_tmp < 0 && configuration.dexed[selected_instance_id].voice - 1 <= 0)
-              {
-                voice_tmp = 0;
-              }
-              if (voice_tmp < 0)
-                voice_tmp = MAX_VOICES + voice_tmp;
-              configuration.dexed[selected_instance_id].voice = constrain(voice_tmp, 0, MAX_VOICES - 1);
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              break;
-          }
-        }
-        else //only Favs
-          if (configuration.sys.favorites == 1)
-          {
-            locate_previous_favorite();
-            load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-          }
-          else  //only non-Favs
-            if (configuration.sys.favorites == 2)
+          if (dexed_live_mod.attack_mod[selected_instance_id] == 0)
+            for (uint8_t i = 0; i < 6; i++)
             {
-              locate_previous_non_favorite();
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              //break;
-
-            } else  //random non-Favs
-              if (configuration.sys.favorites == 3)
-              {
-                locate_random_non_favorite();
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              }
-      }  //end UP
-      else if (LCDML.BT_checkDown())
-      {
-        //start : show all presets
-        if (configuration.sys.favorites == 0)
+              dexed_live_mod.orig_attack_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, ATTACK);
+            }
+          dexed_live_mod.attack_mod[selected_instance_id] = constrain(dexed_live_mod.attack_mod[selected_instance_id] + ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
+          for (uint8_t i = 0; i < 6; i++)
+            MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, dexed_live_mod.orig_attack_values[selected_instance_id][i] - dexed_live_mod.attack_mod[selected_instance_id] );
+        }
+        else if ((LCDML.BT_checkUp() && dexed_live_mod.active_button == 1 ) || (LCDML.BT_checkUp() && dexed_live_mod.active_button == 3 ))
         {
-          switch (menu_voice_select)
-          {
-            case MENU_VOICE_BANK:
-              memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
-              bank_tmp = constrain(configuration.dexed[selected_instance_id].bank + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-              configuration.dexed[selected_instance_id].bank = bank_tmp;
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              break;
-            case MENU_VOICE_SOUND:
-              memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
-              voice_tmp = configuration.dexed[selected_instance_id].voice + ENCODER[ENC_R].speed();
-              if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 < MAX_BANKS)
-              {
-                voice_tmp %= MAX_VOICES;
-                configuration.dexed[selected_instance_id].bank++;
-                configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank, 0, MAX_BANKS - 1);
-
-              }
-              else if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 >= MAX_BANKS)
-              {
-                voice_tmp = MAX_VOICES - 1;
-              }
-              configuration.dexed[selected_instance_id].voice =  constrain(voice_tmp, 0, MAX_VOICES - 1);
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              break;
-          }
-        }
-        else //only Favs
-          if (configuration.sys.favorites == 1)
-          {
-
-            locate_next_favorite();
-            load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-            //break;
-          }
-          else  //only non-Favs
-            if (configuration.sys.favorites == 2)
+          if (dexed_live_mod.attack_mod[selected_instance_id] == 0)  // Save initial Values
+            for (uint8_t i = 0; i < 6; i++)
             {
-              locate_next_non_favorite();
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              //break;
-            } else  //random non-Favs
-              if (configuration.sys.favorites == 3)
-              {
-                locate_random_non_favorite();
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              }
+              dexed_live_mod.orig_attack_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, ATTACK);
+            }
+
+          dexed_live_mod.attack_mod[selected_instance_id] = constrain(dexed_live_mod.attack_mod[selected_instance_id] - ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
+          for (uint8_t i = 0; i < 6; i++)
+            MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, dexed_live_mod.orig_attack_values[selected_instance_id][i] - dexed_live_mod.attack_mod[selected_instance_id] );
+        }
+        if ((LCDML.BT_checkDown() && dexed_live_mod.active_button == 2 ) || (LCDML.BT_checkDown() && dexed_live_mod.active_button == 4))
+        {
+          if (dexed_live_mod.release_mod[selected_instance_id] == 0) // Save initial Values
+            for (uint8_t i = 0; i < 6; i++)
+            {
+              dexed_live_mod.orig_release_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, RELEASE);
+            }
+          dexed_live_mod.release_mod[selected_instance_id] = constrain(dexed_live_mod.release_mod[selected_instance_id] + ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
+          for (uint8_t i = 0; i < 6; i++)
+            MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, dexed_live_mod.orig_release_values[selected_instance_id][i] - dexed_live_mod.release_mod[selected_instance_id] );
+        }
+        else if ((LCDML.BT_checkUp() && dexed_live_mod.active_button == 2 ) || ( LCDML.BT_checkUp() && dexed_live_mod.active_button == 4))
+        {
+          if (dexed_live_mod.release_mod[selected_instance_id] == 0)
+            for (uint8_t i = 0; i < 6; i++)
+            {
+              dexed_live_mod.orig_release_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, RELEASE);
+            }
+          dexed_live_mod.release_mod[selected_instance_id] = constrain(dexed_live_mod.release_mod[selected_instance_id] - ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
+          for (uint8_t i = 0; i < 6; i++)
+            MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, dexed_live_mod.orig_release_values[selected_instance_id][i] - dexed_live_mod.release_mod[selected_instance_id] );
+        }
       }
-      else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed())
-      {
-        if (menu_voice_select == MENU_VOICE_BANK)
-          menu_voice_select = MENU_VOICE_SOUND;
-        else
-          menu_voice_select = MENU_VOICE_BANK;
-      }
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter())
       {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
+        dexed_live_mod.active_button = 0;
+        print_perfmod_buttons();
+        dexed_live_mod.active_button = 99;
+        print_voice_select_default_help();
       }
+      print_perfmod_lables();
+    }
+    if (dexed_live_mod.active_button == 0)
+    {
+      char bank_name[BANK_NAME_LEN];
+      char voice_name[VOICE_NAME_LEN];
+      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && (encoderDir[ENC_R].ButtonShort() || encoderDir[ENC_R].ButtonLong())))
+      {
+        uint8_t bank_tmp;
+        int8_t voice_tmp;
+
+        // Reset Performance Modifiers to 0 after every preset change
+
+        dexed_live_mod.attack_mod[selected_instance_id] = 0;
+        dexed_live_mod.release_mod[selected_instance_id] = 0;
+        //print_perfmod_buttons();
+        print_perfmod_lables();
+
+        if (LCDML.BT_checkUp())
+        {
+          //start : show all presets
+          if (configuration.sys.favorites == 0)
+          {
+            switch (menu_voice_select)
+            {
+              case MENU_VOICE_BANK:
+                memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
+                bank_tmp = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
+                configuration.dexed[selected_instance_id].bank = bank_tmp;
+
+                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+
+                break;
+              case MENU_VOICE_SOUND:
+                memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
+                voice_tmp = configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed();
+                if (voice_tmp < 0 && configuration.dexed[selected_instance_id].bank - 1 >= 0)
+                {
+                  configuration.dexed[selected_instance_id].bank--;
+                  configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank, 0, MAX_BANKS - 1);
+                }
+                else if (voice_tmp < 0 && configuration.dexed[selected_instance_id].voice - 1 <= 0)
+                {
+                  voice_tmp = 0;
+                }
+                if (voice_tmp < 0)
+                  voice_tmp = MAX_VOICES + voice_tmp;
+                configuration.dexed[selected_instance_id].voice = constrain(voice_tmp, 0, MAX_VOICES - 1);
+                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                break;
+            }
+          }
+          else //only Favs
+            if (configuration.sys.favorites == 1)
+            {
+              locate_previous_favorite();
+              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+            }
+            else  //only non-Favs
+              if (configuration.sys.favorites == 2)
+              {
+                locate_previous_non_favorite();
+                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                //break;
+
+              } else  //random non-Favs
+                if (configuration.sys.favorites == 3)
+                {
+                  locate_random_non_favorite();
+                  load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                }
+        }  //end UP
+        else if (LCDML.BT_checkDown())
+        {
+          //start : show all presets
+          if (configuration.sys.favorites == 0)
+          {
+            switch (menu_voice_select)
+            {
+              case MENU_VOICE_BANK:
+                memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
+                bank_tmp = constrain(configuration.dexed[selected_instance_id].bank + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
+                configuration.dexed[selected_instance_id].bank = bank_tmp;
+                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                break;
+              case MENU_VOICE_SOUND:
+                memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
+                voice_tmp = configuration.dexed[selected_instance_id].voice + ENCODER[ENC_R].speed();
+                if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 < MAX_BANKS)
+                {
+                  voice_tmp %= MAX_VOICES;
+                  configuration.dexed[selected_instance_id].bank++;
+                  configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank, 0, MAX_BANKS - 1);
+
+                }
+                else if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 >= MAX_BANKS)
+                {
+                  voice_tmp = MAX_VOICES - 1;
+                }
+                configuration.dexed[selected_instance_id].voice =  constrain(voice_tmp, 0, MAX_VOICES - 1);
+                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                break;
+            }
+          }
+          else //only Favs
+            if (configuration.sys.favorites == 1)
+            {
+
+              locate_next_favorite();
+              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+              //break;
+            }
+            else  //only non-Favs
+              if (configuration.sys.favorites == 2)
+              {
+                locate_next_non_favorite();
+                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                //break;
+              } else  //random non-Favs
+                if (configuration.sys.favorites == 3)
+                {
+                  locate_random_non_favorite();
+                  load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+                }
+        }
+        else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed() && dexed_live_mod.active_button != 99)
+        {
+          if (menu_voice_select == MENU_VOICE_BANK)
+            menu_voice_select = MENU_VOICE_SOUND;
+          else
+            menu_voice_select = MENU_VOICE_BANK;
+        }
+#if NUM_DEXED > 1
+        else if (LCDML.BT_checkEnter() && dexed_live_mod.active_button != 99)
+        {
+          selected_instance_id = !selected_instance_id;
+
+          UI_update_instance_icons();
+        }
 #endif
-    }
-    if (strlen(g_bank_name[selected_instance_id]) > 0)
-    {
-      strcpy(bank_name, g_bank_name[selected_instance_id]);
-    }
-    else
-    {
-      if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-        strcpy(bank_name, "*ERROR*");
-    }
-    if (strlen(g_voice_name[selected_instance_id]) > 0)
-    {
-      strcpy(voice_name, g_voice_name[selected_instance_id]);
-    }
-    else
-    {
-      if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-        strcpy(voice_name, "*ERROR*");
-    }
-    display.setTextSize(2);
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    setCursor_textGrid(1, 1);
-    seq_print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
-    setCursor_textGrid(1, 2);
-    seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    string_toupper(bank_name);
-    show(1, 5, 8, bank_name);
-    string_toupper(voice_name);
-    show(2, 5, 10, voice_name);
-
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    switch (menu_voice_select)
-    {
-      case MENU_VOICE_BANK:
-        show(1, 4, 1, "[");
-        show(1, 13, 1, "]");
-        show(2, 4, 1, " ");
-        show(2, 15, 1, " ");
-        break;
-      case MENU_VOICE_SOUND:
-        show(1, 4, 1, " ");
-        show(1, 13, 1, " ");
-        show(2, 4, 1, "[");
-        show(2, 15, 1, "]");
-        break;
-    }
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    draw_favorite_icon(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-
-    if (seq.cycle_touch_element != 1)
-    {
-      if (selected_instance_id == 0)
-        print_voice_settings(CHAR_width_small, 115, 0, false);
+      }
+      if (strlen(g_bank_name[selected_instance_id]) > 0)
+      {
+        strcpy(bank_name, g_bank_name[selected_instance_id]);
+      }
       else
-        print_voice_settings(CHAR_width_small + 160, 115, 1, false);
+      {
+        if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
+          strcpy(bank_name, "*ERROR*");
+      }
+      if (strlen(g_voice_name[selected_instance_id]) > 0)
+      {
+        strcpy(voice_name, g_voice_name[selected_instance_id]);
+      }
+      else
+      {
+        if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
+          strcpy(voice_name, "*ERROR*");
+      }
+      display.setTextSize(2);
+      display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+      setCursor_textGrid(1, 1);
+      seq_print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
+      setCursor_textGrid(1, 2);
+      seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      string_toupper(bank_name);
+      show(1, 5, 8, bank_name);
+      string_toupper(voice_name);
+      show(2, 5, 10, voice_name);
+
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      switch (menu_voice_select)
+      {
+        case MENU_VOICE_BANK:
+          show(1, 4, 1, "[");
+          show(1, 13, 1, "]");
+          show(2, 4, 1, " ");
+          show(2, 15, 1, " ");
+          break;
+        case MENU_VOICE_SOUND:
+          show(1, 4, 1, " ");
+          show(1, 13, 1, " ");
+          show(2, 4, 1, "[");
+          show(2, 15, 1, "]");
+          break;
+      }
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      draw_favorite_icon(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+
+      if (seq.cycle_touch_element != 1)
+      {
+        if (selected_instance_id == 0)
+          print_voice_settings(CHAR_width_small, 104, 0, false);
+        else
+          print_voice_settings(CHAR_width_small + 160, 104, 1, false);
+      }
     }
+    if (dexed_live_mod.active_button == 99) // if button press had confirmed live mod settings and is now unselected,
+      dexed_live_mod.active_button = 0;     // skip button push from voice_select once, then back to normal
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
+    dexed_live_mod.active_button = 0;
   }
 }
 
 void UI_func_volume(uint8_t param)
 {
-  char tmp[6];
   static uint8_t old_volume;
-
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     old_volume = configuration.sys.vol;
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     encoderDir[ENC_L].reset();
-    if (active_perform_page == 1)
-    {
-      //Master Volume
-      back_from_volume = 0;
-    }
+    back_from_volume = 0;
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    if ( LCDML.BT_checkDown() && encoderDir[ENC_R].Down() )
-    {
-      back_from_volume = 0;
-      active_perform_page++;
-      if (active_perform_page > 3)active_perform_page = 1;
-    }
-    else if ( LCDML.BT_checkUp() && encoderDir[ENC_R].Up() )
-    {
-      back_from_volume = 0;
-      active_perform_page--;
-      if (active_perform_page < 1)active_perform_page = 3;
-    }
     if ((LCDML.BT_checkDown() && encoderDir[ENC_L].Down() ) || (LCDML.BT_checkUp() && encoderDir[ENC_L].Up() ))
     {
-      if (active_perform_page == 1) {
-        back_from_volume = 0;
-
-        if (LCDML.BT_checkDown() )
-        {
-          configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
-        }
-        else if (LCDML.BT_checkUp() )
-        {
-          configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
-        }
+      back_from_volume = 0;
+      if (LCDML.BT_checkDown() )
+      {
+        configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
       }
-      else if ( active_perform_page == 2)
-      { //Attack
-
-        if (LCDML.BT_checkDown()   )
-        {
-          if (perform_attack_mod[selected_instance_id] == 0)
-            for (uint8_t i = 0; i < 6; i++) {
-              orig_attack_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, ATTACK);
-            }
-          perform_attack_mod[selected_instance_id] = constrain(perform_attack_mod[selected_instance_id] + ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
-          for (uint8_t i = 0; i < 6; i++)
-            MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, orig_attack_values[selected_instance_id][i] - perform_attack_mod[selected_instance_id] );
-        }
-        else if (LCDML.BT_checkUp() )
-        {
-          if (perform_attack_mod[selected_instance_id] == 0)  // Save initial Values
-            for (uint8_t i = 0; i < 6; i++) {
-              orig_attack_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, ATTACK);
-            }
-
-          perform_attack_mod[selected_instance_id] = constrain(perform_attack_mod[selected_instance_id] - ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
-          for (uint8_t i = 0; i < 6; i++)
-            MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, orig_attack_values[selected_instance_id][i] - perform_attack_mod[selected_instance_id] );
-        }
-      }
-      else if (active_perform_page == 3)
-      { //Release
-
-        if (LCDML.BT_checkDown() )
-        {
-          if (perform_release_mod[selected_instance_id] == 0) // Save initial Values
-            for (uint8_t i = 0; i < 6; i++) {
-              orig_release_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, RELEASE);
-            }
-          perform_release_mod[selected_instance_id] = constrain(perform_release_mod[selected_instance_id] + ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
-          for (uint8_t i = 0; i < 6; i++)
-            MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, orig_release_values[selected_instance_id][i] - perform_release_mod[selected_instance_id] );
-        }
-        else if (LCDML.BT_checkUp() )
-        {
-          if (perform_release_mod[selected_instance_id] == 0)
-            for (uint8_t i = 0; i < 6; i++) {
-              orig_release_values[selected_instance_id][i] = MicroDexed[selected_instance_id]->getOPRate(i, RELEASE);
-            }
-          perform_release_mod[selected_instance_id] = constrain(perform_release_mod[selected_instance_id] - ENCODER[ENC_L].speed(), -MAX_PERF_MOD, MAX_PERF_MOD);
-          for (uint8_t i = 0; i < 6; i++)
-            MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, orig_release_values[selected_instance_id][i] - perform_release_mod[selected_instance_id] );
-        }
+      else if (LCDML.BT_checkUp() )
+      {
+        configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
       }
     }
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid(15, 1);
-    display.print("P");
-    display.print(active_perform_page);
-    display.print("/3");
-    if (active_perform_page == 1)
-    { //Master Volume
-      display.setTextSize(2);
-      setCursor_textGrid(1, 1);
-      display.print(F("Master Volume"));
-      display_bar_int("Master Vol.", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
-      set_volume(configuration.sys.vol, configuration.sys.mono);
-    }
-    else if (active_perform_page == 2)
-    { //Attack
-      setCursor_textGrid(1, 1);
-      display.print(F("Live Modify  "));
-      setCursor_textGrid(1, 2);
-      display.print(F("Attack Mod.  ="));
-      setCursor_textGrid(16, 2);
-      sprintf(tmp, "%03d", perform_attack_mod[selected_instance_id]);
-      display.print(tmp);
-      back_from_volume = 0;
-    }
-    else if (active_perform_page == 3)
-    { //Release
-      setCursor_textGrid(1, 1);
-      display.print(F("Live Modify  "));
-      setCursor_textGrid(1, 2);
-      display.print(F("Release Mod. ="));
-      setCursor_textGrid(16, 2);
-      sprintf(tmp, "%03d", perform_release_mod[selected_instance_id]);
-      display.print(tmp);
-      back_from_volume = 0;
-    }
+    //Master Volume
+    setCursor_textGrid(1, 1);
+    display.print(F("Master Volume"));
+    display_bar_int("Master Vol.", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
+    set_volume(configuration.sys.vol, configuration.sys.mono);
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     //EEPROM.update(EEPROM_START_ADDRESS + offsetof(configuration_s, sys.vol), configuration.sys.vol);
     encoderDir[ENC_L].reset();
-
     if (old_volume != configuration.sys.vol)
     {
       // eeprom_update();
       save_sys_flag = true;
       save_sys = 0;
     }
-    display.setTextSize(2);
   }
 }
 

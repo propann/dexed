@@ -32,12 +32,16 @@ extern float get_sample_p_offset(uint8_t sample);
 extern void set_sample_pitch(uint8_t sample, float playbackspeed);
 extern void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char *str);
 extern const char* find_long_drum_name_from_note(uint8_t note);
+extern void print_perfmod_buttons();
+extern void print_perfmod_lables();
 extern microsynth_t  microsynth[NUM_MICROSYNTH];
-
+extern void print_empty_spaces (uint8_t spaces);
+extern void print_voice_select_default_help();
 extern void playWAVFile(const char *filename);
 
 ts_t ts; //touch screen
 fm_t fm; //file manager
+dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and release
 
 extern uint16_t COLOR_BACKGROUND;
 extern uint16_t COLOR_SYSTEXT;
@@ -592,6 +596,66 @@ void handle_touchscreen_voice_select()
     ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
     //display.drawPixel(ts.p.x, ts.p.y, RED); //DEBUG
 
+    if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 31000 )
+    {
+      if (check_button_on_grid(1, 22))
+      {
+        if (dexed_live_mod.active_button != 1)
+          dexed_live_mod.active_button = 1;
+        else
+          dexed_live_mod.active_button = 0;
+      }
+      else if (check_button_on_grid(14, 22))
+      {
+        if (dexed_live_mod.active_button != 2)
+          dexed_live_mod.active_button = 2;
+        else
+          dexed_live_mod.active_button = 0;
+      }
+      else if (check_button_on_grid(28, 22))
+      {
+        if (dexed_live_mod.active_button != 3)
+          dexed_live_mod.active_button = 3;
+        else
+          dexed_live_mod.active_button = 0;
+      }
+      else if (check_button_on_grid(41, 22))
+      {
+        if (dexed_live_mod.active_button != 4)
+          dexed_live_mod.active_button = 4;
+        else
+          dexed_live_mod.active_button = 0;
+      }
+      else
+        dexed_live_mod.active_button = 0;
+
+      if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 3)
+        selected_instance_id = 0;
+      else if (dexed_live_mod.active_button > 2 && dexed_live_mod.active_button < 5)
+        selected_instance_id = 1;
+
+      if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 5)
+      {
+        helptext_r ("< > CHANGE MODIFIER VALUE");
+        display.setCursor(0, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2  );
+        print_empty_spaces(38);
+        display.setCursor(9 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 1  );
+        print_empty_spaces(9);
+        display.setCursor(CHAR_width_small * 38 + 2, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2 );
+        display.print(F("PUSH TO CONFIRM"));
+      }
+      else
+      {
+       print_voice_select_default_help();
+      }
+
+      print_voice_settings(CHAR_width_small, 104, 0, false);
+      print_voice_settings(CHAR_width_small + 160, 104, 1, false);
+
+      print_perfmod_buttons();
+      print_perfmod_lables();
+      seq.generic_ui_delay = 0;
+    }
     if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000 )
     {
       border3_large_clear();
@@ -601,8 +665,8 @@ void handle_touchscreen_voice_select()
 
         display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
         draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
-        print_voice_settings(CHAR_width_small, 115, 0, true);
-        print_voice_settings(CHAR_width_small + 160, 115, 1, true);
+        print_voice_settings(CHAR_width_small, 104, 0, true);
+        print_voice_settings(CHAR_width_small + 160, 104, 1, true);
       }
       else
       {
@@ -620,12 +684,12 @@ void handle_touchscreen_voice_select()
     {
       touch_check_all_keyboard_buttons();
     }
-    else if (ts.p.y > 92  && ts.p.y < 190 && ts.p.x < 320 / 2 && ts.switch_active_instance == false && seq.cycle_touch_element != 1)
+    else if (ts.p.y > 92  && ts.p.y < 165 && ts.p.x < 320 / 2 && ts.switch_active_instance == false && seq.cycle_touch_element != 1)
     {
       selected_instance_id = 0;
       ts.switch_active_instance = true;
     }
-    else if (ts.p.y > 92  && ts.p.y < 190 && ts.p.x > 320 / 2 && ts.switch_active_instance == false && seq.cycle_touch_element != 1)
+    else if (ts.p.y > 92  && ts.p.y < 165 && ts.p.x > 320 / 2 && ts.switch_active_instance == false && seq.cycle_touch_element != 1)
     {
       selected_instance_id = 1;
       ts.switch_active_instance = true;
@@ -646,8 +710,8 @@ void handle_touchscreen_voice_select()
     {
       UI_update_instance_icons();
       //display.drawPixel(random(10), random(20), RED);
-      print_voice_settings(CHAR_width_small, 115, 0, 0);
-      print_voice_settings(CHAR_width_small + 160, 115, 1, 0);
+      print_voice_settings(CHAR_width_small, 104, 0, 0);
+      print_voice_settings(CHAR_width_small + 160, 104, 1, 0);
       ts.switch_active_instance = false;
     }
 

@@ -46,8 +46,8 @@
 #endif
 
 #ifdef COMPILE_FOR_FLASH
-//#include "TeensyVariablePlaybackFlash.h"
-#include <TeensyVariablePlayback.h>
+#include "TeensyVariablePlaybackFlash.h"
+//#include <TeensyVariablePlayback.h>
 #endif
 
 #include <TeensyTimerTool.h>
@@ -188,8 +188,8 @@ AudioMixer<2>                   audio_thru_mixer_l;
 AudioPlaySdWav                  sd_WAV;
 
 #ifdef COMPILE_FOR_FLASH
-//AudioPlayFlashResmp*          Drum[NUM_DRUMS];
-AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
+AudioPlayFlashResmp*          Drum[NUM_DRUMS];
+//AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -495,9 +495,10 @@ void create_audio_drum_chain(uint8_t instance_id)
 {
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
-  //Drum[instance_id] = new AudioPlaySerialflashRaw();
+  
 #ifdef COMPILE_FOR_FLASH
-  Drum[instance_id] = new AudioPlaySerialflashRaw();
+  Drum[instance_id] = new AudioPlayFlashResmp();
+  //Drum[instance_id] = new AudioPlaySerialflashRaw();
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -2678,8 +2679,9 @@ void handleStart(void)
   else
     seq.current_song_step = seq.loop_start;
 
-  seq.running = true;
+
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+  seq.running = true;
   // sequencer_timer.start();
 
   //#endif
@@ -2696,19 +2698,23 @@ void handleStop(void)
 #if defined(USE_SEQUENCER)
   if (seq.running)
   {
+    MicroDexed[0]->panic();
+#if NUM_DEXED > 1
+    MicroDexed[1]->panic();
+#endif
+
     sequencer_timer.stop();
 
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
     {
       display.setTextColor( GREEN, COLOR_BACKGROUND);  //play indicator song view
 
-
       if (CHAR_height_small * 8  + 10 *  ( seq.current_song_step - 1 - seq.scrollpos) > CHAR_height_small * 7)
       {
         display.setCursor(CHAR_width_small * 4 , CHAR_height_small * 8  + 10  *  (seq.current_song_step - seq.scrollpos)  );
         display.print(" ");
       }
-
+      sub_song_print_tracknumbers();
     }
   }
 
@@ -2716,18 +2722,15 @@ void handleStop(void)
   seq.recording = false;
   seq.note_in = 0;
   seq.step = 0;
-
-  //  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-  //  {
-  //    seq.chain_counter[d] = 0;
-  //    seq.current_pattern[d] = 99;
-  //  }
-
-  //  if (seq.loop_start == 99)  // no loop start set, start at step 0
-  //    seq.current_song_step = 0;
-  //  else
-  //    seq.current_song_step = seq.loop_start;
-
+  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+  {
+    seq.chain_counter[d] = 0;
+    seq.current_pattern[d] = 99;
+  }
+  if (seq.loop_start == 99)  // no loop start set, start at step 0
+    seq.current_song_step = 0;
+  else
+    seq.current_song_step = seq.loop_start;
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -2737,10 +2740,7 @@ void handleStop(void)
   microsynth_envelope_noise[1].noteOff();
 #endif
 
-  MicroDexed[0]->panic();
-#if NUM_DEXED > 1
-  MicroDexed[1]->panic();
-#endif
+
 }
 
 void handleActiveSensing(void)
