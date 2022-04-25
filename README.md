@@ -71,6 +71,13 @@ Development Status:
 
 * Power on the Teensy and attach USB MIDI Keyboard ( or use the virtual Touch Keyboard and the Encoders to navigate)
 
+## USB MIDI
+
+Connect your USB MIDI Keyboard/Controller like this:
+
+https://www.pjrc.com/store/cable_usb_host_t36.html
+
+https://www.pjrc.com/store/cable_usb_host_t36_2.jpg
 
 ## License
 
