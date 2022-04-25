@@ -78,7 +78,7 @@ Connect your USB MIDI Keyboard/Controller here (or buy the cable from pjrc.com)
 https://www.pjrc.com/store/cable_usb_host_t36.html
 
 <img src="https://forum.pjrc.com/attachment.php?attachmentid=20372&d=1590829923&thumb=1" >
-
+<br>
 <img src="https://www.pjrc.com/store/cable_usb_host_t36_2.jpg" >
 
 ## License
