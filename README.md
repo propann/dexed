@@ -73,12 +73,11 @@ Development Status:
 
 ## USB MIDI
 
-Connect your USB MIDI Keyboard/Controller like this:
+Connect your USB MIDI Keyboard/Controller like this (or buy the cable from pjrc.com)
 
 https://www.pjrc.com/store/cable_usb_host_t36.html
 
 <img src="https://www.pjrc.com/store/cable_usb_host_t36_2.jpg" >
-
 
 ## License
 
