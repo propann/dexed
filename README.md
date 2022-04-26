@@ -91,6 +91,22 @@ MicroDexed is licensed on the GPL v3. The msfa component (acronym for music synt
 
 Links for building a TMA board and/or MicroDexed, a small installation guide for Arduino-IDE and a user manual are located here: https://codeberg.org/dcoredump/MicroDexed/wiki/_pages
 
+## Buttons / Encoders
+
+A quick guide how the push Encoders are working:
+
+Usualy [SHORT PUSH] Encoder Left brings you back to the main menu or closer to the main menu one step.
+
+Usualy [SHORT PUSH] Encoder Right selects or confirms an input/menu item/goes deeper into this item.
+
+In most menu settings of dexed, [SHORT PUSH] Encoder Right, switches between the 2 dexed Instances.
+
+In microsynth, [LONG PUSH] Encoder Right, switches between the 2 microsynth Instances.
+
+in Voice select (dexed) : [SHORT PUSH] Encoder Right switches Instances, [LONG PUSH] Encoder Right switches betweens Banks and Sounds. [LONG PUSH] Encoder Left selects/unselects Sounds to the Favorites list.
+
+In Menus that need 2 Encoders, Encoder Right controls Y movement and Encoder Left controls X movement
+(for example in Song mode)
 
 ## PIN LAYOUT
 
