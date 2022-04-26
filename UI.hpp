@@ -5969,54 +5969,97 @@ void UI_draw_waveform(uint8_t samplenumber)
 //  display.setTextSize(2);
 //}
 
-void UI_draw_waveform_large()
+#ifdef COMPILE_FOR_PROGMEM
+void UI_draw_waveform_large()  // for progmem
 {
-  //    int xspace = 0;
-  //    int i = 4;
-  //    short samplevalue = 0;
-  //    int oldx = 0, oldy = 180;
-  //   display.setTextSize(1);
-  //    setCursor_textGrid(21, 3);
-  //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
-  //    display.print("SCALE");
-  //    setCursor_textGrid(21, 4);
-  //    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-  //    display.print(wave_spacing);
-  //    display.print (" ");
-  //   display.fillRect(0,100,DISPLAY_WIDTH-1,100,COLOR_BACKGROUND);
-  //
-  //    xspace = 0;
-  //    i = 4;
-  //    samplevalue = 0;
-  //    oldx = 0;  oldy = 180;
-  //    do {
-  //      {
-  //        samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 100;
-  //
-  //        if (DRUM_SQBass[i * wave_spacing + 1] < 128)
-  //        {
-  //          display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
-  //          oldx = xspace; oldy = samplevalue + 60;
-  //        }
-  //        else
-  //        {
-  //          display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
-  //          oldx = xspace;  oldy = samplevalue - 40;
-  //        }
-  //        xspace = xspace + 1;  i++;
-  //      }
-  //    } while (oldx < DISPLAY_WIDTH);
-  //  wave_spacing_old = wave_spacing;
+      int xspace = 0;
+      int i = 4;
+      short samplevalue = 0;
+      int oldx = 0, oldy = 180;
+     display.setTextSize(1);
+      setCursor_textGrid(21, 3);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
+      display.print("SCALE");
+      setCursor_textGrid(21, 4);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+      display.print(wave_spacing);
+      display.print (" ");
+     display.fillRect(0,100,DISPLAY_WIDTH-1,100,COLOR_BACKGROUND);
+  
+      xspace = 0;
+      i = 4;
+      samplevalue = 0;
+      oldx = 0;  oldy = 180;
+      do {
+        {
+          samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 100;
+  
+          if (DRUM_SQBass[i * wave_spacing + 1] < 128)
+          {
+            display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
+            oldx = xspace; oldy = samplevalue + 60;
+          }
+          else
+          {
+            display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
+            oldx = xspace;  oldy = samplevalue - 40;
+          }
+          xspace = xspace + 1;  i++;
+        }
+      } while (oldx < DISPLAY_WIDTH);
+    wave_spacing_old = wave_spacing;
 }
+#endif
 
+#ifdef COMPILE_FOR_FLASH
+void UI_draw_waveform_large()  // for flash
+{
+  unsigned char buf[256];
+      int xspace = 0;
+      int i = 4;
+      short samplevalue = 0;
+      int oldx = 0, oldy = 180;
+     display.setTextSize(1);
+      setCursor_textGrid(21, 3);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP );
+     // display.print("SCALE");
+      setCursor_textGrid(21, 4);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+      display.print(wave_spacing);
+      display.print (" ");
+     display.fillRect(0,80,DISPLAY_WIDTH-1,100,COLOR_BACKGROUND);
+      xspace = 0;
+      samplevalue = 0;
+      oldx = 0;  oldy = 180;
+      memset(buf, 0, sizeof(buf));
+      SerialFlash.read(0, buf, 256); 
+      do {
+        {
+         // samplevalue = (( (DRUM_SQBass[i * wave_spacing + 1]) * 256) + DRUM_SQBass[i * wave_spacing] )  / 710 + 100;
+          samplevalue = (( buf[i+1] * 256) + buf[i ] )  / 310 + 10;
+          
+          if (samplevalue< 128)
+          {
+            display.drawLine(oldx, oldy,  xspace, samplevalue + 60  , COLOR_SYSTEXT );
+            oldx = xspace; oldy = samplevalue + 60;
+          }
+          else
+          {
+            display.drawLine(oldx, oldy,  xspace, samplevalue  - 40 , COLOR_SYSTEXT );
+            oldx = xspace;  oldy = samplevalue - 40;
+          }
+          xspace = xspace + 1; 
+          i=i+1;
+        }
+      } while (i < 128);
+    
+}
+#endif
 
 void UI_print_voice_info()
 {
-
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
   //UI_draw_waveform(0);
-
   display.setTextSize(1);
   display.setCursor(415, 6);
   display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
@@ -6025,16 +6068,13 @@ void UI_print_voice_info()
   display.print(" ");
   display.setTextColor(COLOR_SYSTEXT, GREY2);
   display.print("SQBASS");
-
   char bank_name[BANK_NAME_LEN];
   char voice_name[VOICE_NAME_LEN];
-
   if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
     strcpy(bank_name, "*ERROR*");
   if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
     strcpy(voice_name, "*ERROR*");
   UI_update_instance_icons();
-
   if (strlen(g_bank_name[selected_instance_id]) > 0)
   {
     strcpy(bank_name, g_bank_name[selected_instance_id]);
@@ -6054,7 +6094,6 @@ void UI_print_voice_info()
     if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
       strcpy(voice_name, "*ERROR*");
   }
-
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   setCursor_textGrid(1, 2);
   seq_print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
@@ -6063,10 +6102,8 @@ void UI_print_voice_info()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   string_toupper(bank_name);
   show(2, 5, 8, bank_name);
-
   string_toupper(voice_name);
   show(2, 5, 10, voice_name);
-
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   draw_favorite_icon(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
   display.setTextSize(2);
@@ -6086,8 +6123,6 @@ void UI_func_sample_editor(uint8_t param)
     setCursor_textGrid(9, 1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.print(F("SQRBASS1"));
-
-
     setCursor_textGrid(1, 2);
     display.print("V:");
     sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
@@ -6101,7 +6136,6 @@ void UI_func_sample_editor(uint8_t param)
     display.print(seq.active_pattern);
     setCursor_textGrid(24, 0);
     display.print("]");
-
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -6109,9 +6143,9 @@ void UI_func_sample_editor(uint8_t param)
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
       if (LCDML.BT_checkDown())
-        wave_spacing = constrain(wave_spacing + 2, 2, 500);
+        wave_spacing = constrain(wave_spacing + 2, 0, 500);
       else if (LCDML.BT_checkUp())
-        wave_spacing = constrain(wave_spacing - 2, 2, 500);
+        wave_spacing = constrain(wave_spacing - 2, 0, 500);
     }
 
     if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -6132,7 +6166,6 @@ void UI_func_sample_editor(uint8_t param)
     }
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    //wave_spacing=260;
 
     UI_draw_waveform_large();
   }
