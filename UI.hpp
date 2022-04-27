@@ -10987,8 +10987,10 @@ void UI_func_information(uint8_t param)
     generate_version_string(version_string, sizeof(version_string));
     // setup function
     setCursor_textGrid(1, 1);
+    display.setTextSize(1);
     display.print(version_string);
     setCursor_textGrid(1, 2);
+    display.setTextSize(2);
     display.print(sd_string);
   }
 
