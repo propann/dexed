@@ -3502,19 +3502,19 @@ void generate_version_string(char* buffer, uint8_t len)
   memset(buffer, 0, len);
   strncat(buffer, VERSION, len);
 #if defined(TEENSY3_5)
-  strncat(buffer, " - 3.5", 4);
+  strncat(buffer, " - 3.5", 6);
 #elif defined(TEENSY3_6)
-  strncat(buffer, " - 3.6", 4);
+  strncat(buffer, " - 3.6", 6);
 #elif defined(TEENSY4_0)
-  strncat(buffer, " - 4.0", 4);
+  strncat(buffer, " - 4.0", 6);
 #elif defined(TEENSY4_1)
-  strncat(buffer, " - 4.1", 4);
+  strncat(buffer, " - 4.1", 6);
 #endif
 #if defined(USE_FX)
-  strncat(buffer, "FX", 2);
+  strncat(buffer, " - FX", 5);
 #endif
 #if defined(MAX_NOTES)
-  strncat(buffer, " - ", 1);
+  strncat(buffer, " - MAX ", 7);
   itoa (MAX_NOTES, tmp, 10);
   strncat(buffer, tmp, 2);
 #endif
