@@ -71,7 +71,7 @@ using namespace TeensyTimerTool;
 #include "effect_stereo_panorama.h"
 #endif
 
-#define TFT_DC  0
+#define TFT_DC 37  // was pin 0 (midi in) 
 #define TFT_CS 41
 #define TFT_RST 24
 #define TFT_SCK 27
