@@ -168,8 +168,9 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
+#ifdef DEBUG
     Serial.print("save_sd_voice");
-
+#endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
 

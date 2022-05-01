@@ -75,7 +75,7 @@ using namespace TeensyTimerTool;
 #define TFT_CS 41
 #define TFT_RST 24
 #define TFT_SCK 27
-#define TFT_MISO 1
+#define TFT_MISO 39 // was pin 1 (midi out), new MISO PIN = 39
 #define TFT_MOSI 26
 #define TFT_TOUCH_CS  38
 #define TFT_TOUCH_IRQ 33
@@ -3503,11 +3503,7 @@ void generate_version_string(char* buffer, uint8_t len)
 
   memset(buffer, 0, len);
   strncat(buffer, VERSION, len);
-#if defined(TEENSY3_5)
-  strncat(buffer, " - 3.5", 6);
-#elif defined(TEENSY3_6)
-  strncat(buffer, " - 3.6", 6);
-#elif defined(TEENSY4_0)
+#if defined(TEENSY4_0)
   strncat(buffer, " - 4.0", 6);
 #elif defined(TEENSY4_1)
   strncat(buffer, " - 4.1", 6);

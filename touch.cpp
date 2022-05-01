@@ -642,16 +642,14 @@ void handle_touchscreen_voice_select()
         display.setCursor(9 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 1  );
         print_empty_spaces(9);
         display.setCursor(CHAR_width_small * 38 + 2, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2 );
-        display.print(F("PUSH TO CONFIRM"));
+        display.print(F(" PUSH TO RETURN"));
       }
       else
       {
-       print_voice_select_default_help();
+        print_voice_select_default_help();
       }
-
       print_voice_settings(CHAR_width_small, 104, 0, false);
       print_voice_settings(CHAR_width_small + 160, 104, 1, false);
-
       print_perfmod_buttons();
       print_perfmod_lables();
       seq.generic_ui_delay = 0;
@@ -667,6 +665,9 @@ void handle_touchscreen_voice_select()
         draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
         print_voice_settings(CHAR_width_small, 104, 0, true);
         print_voice_settings(CHAR_width_small + 160, 104, 1, true);
+        print_perfmod_buttons();
+        print_perfmod_lables();
+        print_voice_select_default_help();
       }
       else
       {
@@ -709,7 +710,6 @@ void handle_touchscreen_voice_select()
     if ( ts.switch_active_instance && seq.cycle_touch_element != 1)
     {
       UI_update_instance_icons();
-      //display.drawPixel(random(10), random(20), RED);
       print_voice_settings(CHAR_width_small, 104, 0, 0);
       print_voice_settings(CHAR_width_small + 160, 104, 1, 0);
       ts.switch_active_instance = false;
