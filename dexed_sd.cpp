@@ -2731,6 +2731,7 @@ void _load_sd_bank_and_voices_names(uint8_t b) {
     {
       entry.close();
       sysex.close();
+      AudioInterrupts();
       return;
     }
 
