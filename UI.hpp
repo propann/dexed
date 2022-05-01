@@ -1047,28 +1047,17 @@ void print_voice_settings_in_pattern_editor(int x, int y)
   char bank_name[BANK_NAME_LEN];
   char voice_name[VOICE_NAME_LEN];
 
-  if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-    strcpy(bank_name, "*ERROR*");
-  if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-    strcpy(voice_name, "*ERROR*");
-  if (strlen(g_bank_name[selected_instance_id]) > 0)
-  {
+  if (strlen(g_bank_name[selected_instance_id]) > 0) {
     strcpy(bank_name, g_bank_name[selected_instance_id]);
+  } else {
+    strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
   }
-  else
-  {
-    if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-      strcpy(bank_name, "*ERROR*");
-  }
-  if (strlen(g_voice_name[selected_instance_id]) > 0)
-  {
+  if (strlen(g_voice_name[selected_instance_id]) > 0) {
     strcpy(voice_name, g_voice_name[selected_instance_id]);
+  } else {
+    strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
   }
-  else
-  {
-    if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-      strcpy(voice_name, "*ERROR*");
-  }
+
   display.setTextSize(1);
   display.setCursor(x, y);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -6056,58 +6045,52 @@ void UI_draw_waveform_large()  // for flash
 }
 #endif
 
-void UI_print_voice_info()
-{
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //UI_draw_waveform(0);
-  display.setTextSize(1);
-  display.setCursor(415, 6);
-  display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-  display.print("01");
-  display.setTextColor(COLOR_BACKGROUND, COLOR_BACKGROUND);
-  display.print(" ");
-  display.setTextColor(COLOR_SYSTEXT, GREY2);
-  display.print("SQBASS");
-  char bank_name[BANK_NAME_LEN];
-  char voice_name[VOICE_NAME_LEN];
-  if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-    strcpy(bank_name, "*ERROR*");
-  if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-    strcpy(voice_name, "*ERROR*");
-  UI_update_instance_icons();
-  if (strlen(g_bank_name[selected_instance_id]) > 0)
-  {
-    strcpy(bank_name, g_bank_name[selected_instance_id]);
-  }
-  else
-  {
-    if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-      strcpy(bank_name, "*ERROR*");
-  }
+// void UI_print_voice_info()
+// {
+//   Serial.print("UI_print_voice_info");
 
-  if (strlen(g_voice_name[selected_instance_id]) > 0)
-  {
-    strcpy(voice_name, g_voice_name[selected_instance_id]);
-  }
-  else
-  {
-    if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-      strcpy(voice_name, "*ERROR*");
-  }
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  setCursor_textGrid(1, 2);
-  seq_print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
-  setCursor_textGrid(1, 2);
-  seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  string_toupper(bank_name);
-  show(2, 5, 8, bank_name);
-  string_toupper(voice_name);
-  show(2, 5, 10, voice_name);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  draw_favorite_icon(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-  display.setTextSize(2);
-}
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//   //UI_draw_waveform(0);
+//   display.setTextSize(1);
+//   display.setCursor(415, 6);
+//   display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+//   display.print("01");
+//   display.setTextColor(COLOR_BACKGROUND, COLOR_BACKGROUND);
+//   display.print(" ");
+//   display.setTextColor(COLOR_SYSTEXT, GREY2);
+//   display.print("SQBASS");
+//   char bank_name[BANK_NAME_LEN];
+//   char voice_name[VOICE_NAME_LEN];
+//   UI_update_instance_icons();
+
+//   if (strlen(g_bank_name[selected_instance_id]) > 0)
+//   {
+//     strcpy(bank_name, g_bank_name[selected_instance_id]);
+//   } else {
+//     strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
+//   }
+//   if (strlen(g_voice_name[selected_instance_id]) > 0)
+//   {
+//     strcpy(voice_name, g_voice_name[selected_instance_id]);
+//   }
+//   } else {
+//     strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
+//   }
+
+//   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+//   setCursor_textGrid(1, 2);
+//   seq_print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
+//   setCursor_textGrid(1, 2);
+//   seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//   string_toupper(bank_name);
+//   show(2, 5, 8, bank_name);
+//   string_toupper(voice_name);
+//   show(2, 5, 10, voice_name);
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//   draw_favorite_icon(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+//   display.setTextSize(2);
+// }
 
 void UI_func_sample_editor(uint8_t param)
 {
@@ -12005,28 +11988,17 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
   char bank_name[BANK_NAME_LEN];
   char voice_name[VOICE_NAME_LEN];
 
-  if (!get_bank_name(configuration.dexed[instance_id].bank, bank_name, sizeof(bank_name)))
-    strcpy(bank_name, "*ERROR*");
-  if (!get_voice_by_bank_name(configuration.dexed[instance_id].bank, bank_name, configuration.dexed[instance_id].voice, voice_name, sizeof(voice_name)))
-    strcpy(voice_name, "*ERROR*");
-  if (strlen(g_bank_name[selected_instance_id]) > 0)
-  {
+  if (strlen(g_bank_name[selected_instance_id]) > 0) {
     strcpy(bank_name, g_bank_name[instance_id]);
+  } else {
+    strcpy(bank_name, banks[configuration.dexed[instance_id].bank].name);
   }
-  else
-  {
-    if (!get_bank_name(configuration.dexed[instance_id].bank, bank_name, sizeof(bank_name)))
-      strcpy(bank_name, "*ERROR*");
-  }
-  if (strlen(g_voice_name[instance_id]) > 0)
-  {
+  if (strlen(g_voice_name[instance_id]) > 0) {
     strcpy(voice_name, g_voice_name[instance_id]);
+  } else {
+    strcpy(voice_name, banks[configuration.dexed[instance_id].bank].voices[configuration.dexed[instance_id].voice].name);
   }
-  else
-  {
-    if (!get_voice_by_bank_name(configuration.dexed[instance_id].bank, bank_name, configuration.dexed[instance_id].voice, voice_name, sizeof(voice_name)))
-      strcpy(voice_name, "*ERROR*");
-  }
+ 
   display.setTextSize(1);
   display.setCursor(x, y);
   if (selected_instance_id == instance_id)
@@ -12267,12 +12239,10 @@ void UI_func_voice_select(uint8_t param)
     UI_draw_waveform(activesample);
     seq.last_drawn_sample = 254;
     encoderDir[ENC_R].reset();
-    char bank_name[BANK_NAME_LEN];
-    char voice_name[VOICE_NAME_LEN];
-    if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-      strcpy(bank_name, "*ERROR*");
-    if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-      strcpy(voice_name, "*ERROR*");
+    // char bank_name[BANK_NAME_LEN];
+    // char voice_name[VOICE_NAME_LEN];
+    // get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name));
+    // get_voice_name(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name));
     UI_update_instance_icons();
   }
 
@@ -12364,10 +12334,8 @@ void UI_func_voice_select(uint8_t param)
                 memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
                 bank_tmp = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
                 configuration.dexed[selected_instance_id].bank = bank_tmp;
-
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-
                 break;
+
               case MENU_VOICE_SOUND:
                 memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
                 voice_tmp = configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed();
@@ -12383,29 +12351,24 @@ void UI_func_voice_select(uint8_t param)
                 if (voice_tmp < 0)
                   voice_tmp = MAX_VOICES + voice_tmp;
                 configuration.dexed[selected_instance_id].voice = constrain(voice_tmp, 0, MAX_VOICES - 1);
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
                 break;
             }
           }
-          else //only Favs
-            if (configuration.sys.favorites == 1)
-            {
-              locate_previous_favorite();
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-            }
-            else  //only non-Favs
-              if (configuration.sys.favorites == 2)
-              {
+          else {
+            switch (configuration.sys.favorites) {
+              case 1: //only Favs
+                locate_previous_favorite();
+                break;
+              case 2: //only non-Favs
                 locate_previous_non_favorite();
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-                //break;
+                break;
+              case 3: //random non-Favs
+                locate_random_non_favorite();
+                break;
+            }
+          }
 
-              } else  //random non-Favs
-                if (configuration.sys.favorites == 3)
-                {
-                  locate_random_non_favorite();
-                  load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-                }
+          load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
         }  //end UP
         else if (LCDML.BT_checkDown())
         {
@@ -12418,8 +12381,8 @@ void UI_func_voice_select(uint8_t param)
                 memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
                 bank_tmp = constrain(configuration.dexed[selected_instance_id].bank + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
                 configuration.dexed[selected_instance_id].bank = bank_tmp;
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
                 break;
+
               case MENU_VOICE_SOUND:
                 memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
                 voice_tmp = configuration.dexed[selected_instance_id].voice + ENCODER[ENC_R].speed();
@@ -12435,30 +12398,24 @@ void UI_func_voice_select(uint8_t param)
                   voice_tmp = MAX_VOICES - 1;
                 }
                 configuration.dexed[selected_instance_id].voice =  constrain(voice_tmp, 0, MAX_VOICES - 1);
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
                 break;
             }
           }
-          else //only Favs
-            if (configuration.sys.favorites == 1)
-            {
-
-              locate_next_favorite();
-              load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-              //break;
-            }
-            else  //only non-Favs
-              if (configuration.sys.favorites == 2)
-              {
+          else { // favs
+            switch (configuration.sys.favorites) {
+              case 1: //only Favs
+                locate_next_favorite();
+                break;
+              case 2: //only non-Favs
                 locate_next_non_favorite();
-                load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-                //break;
-              } else  //random non-Favs
-                if (configuration.sys.favorites == 3)
-                {
-                  locate_random_non_favorite();
-                  load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-                }
+                break;
+              case 3: //random non-Favs
+                locate_random_non_favorite();
+                break;
+            }
+          }
+
+          load_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
         }
         else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed() && dexed_live_mod.active_button != 99)
         {
@@ -12476,23 +12433,18 @@ void UI_func_voice_select(uint8_t param)
         }
 #endif
       }
-      if (strlen(g_bank_name[selected_instance_id]) > 0)
-      {
+      if (strlen(g_bank_name[selected_instance_id]) > 0) {
         strcpy(bank_name, g_bank_name[selected_instance_id]);
       }
-      else
-      {
-        if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-          strcpy(bank_name, "*ERROR*");
+      else {
+        strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
       }
       if (strlen(g_voice_name[selected_instance_id]) > 0)
       {
         strcpy(voice_name, g_voice_name[selected_instance_id]);
       }
-      else
-      {
-        if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-          strcpy(voice_name, "*ERROR*");
+      else {
+        strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
       }
       display.setTextSize(2);
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
@@ -12607,14 +12559,10 @@ void UI_func_save_voice(uint8_t param)
 #endif
 
 #if NUM_DEXED == 1
-    char bank_name[BANK_NAME_LEN];
-    if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-      strcpy(bank_name, "*ERROR*");
-
     setCursor_textGrid(1, 1);
     display.print(F("Save to Bank"));
     show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, bank_name);
+    show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
     show(2, 2, 1, "[");
     show(2, 13, 1, "]");
 #else
@@ -12629,8 +12577,6 @@ void UI_func_save_voice(uint8_t param)
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    char bank_name[BANK_NAME_LEN];
-    char voice_name[VOICE_NAME_LEN];
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
       switch (mode)
@@ -12638,7 +12584,6 @@ void UI_func_save_voice(uint8_t param)
         case 0: // Instance selection
           if (LCDML.BT_checkDown() || LCDML.BT_checkUp())
             selected_instance_id = !selected_instance_id;
-
 
           setCursor_textGrid(5, 1);
           display.print(0);
@@ -12651,11 +12596,8 @@ void UI_func_save_voice(uint8_t param)
           else if (LCDML.BT_checkUp() && configuration.dexed[selected_instance_id].voice > 0)
             configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
-          if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-            strcpy(bank_name, "*ERROR*");
-
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 4, 10, bank_name);
+          show(2, 4, 10, banks[configuration.dexed[selected_instance_id].bank].name);
           break;
         case 2: // Voice selection
           if (LCDML.BT_checkDown() && configuration.dexed[selected_instance_id].voice < MAX_VOICES - 1)
@@ -12663,13 +12605,8 @@ void UI_func_save_voice(uint8_t param)
           else if (LCDML.BT_checkUp() && configuration.dexed[selected_instance_id].voice > 0)
             configuration.dexed[selected_instance_id].voice = constrain(configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
 
-          if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-            strncpy(bank_name, "*ERROR*", sizeof(bank_name));
-          if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-            strncpy(voice_name, "*ERROR*", sizeof(voice_name));
-
           show(2, 1, 2, configuration.dexed[selected_instance_id].voice + 1);
-          show(2, 4, 10, voice_name);
+          show(2, 4, 10, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
           break;
         case 3: // Yes/No selection
           yesno = !yesno;
@@ -12691,25 +12628,18 @@ void UI_func_save_voice(uint8_t param)
       switch (mode)
       {
         case 1:
-          if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-            strncpy(bank_name, "*ERROR*", sizeof(bank_name));
           setCursor_textGrid(1, 1);
           display.print(F("Save to Bank"));
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 3, 10, bank_name);
+          show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
           show(2, 2, 2, " [");
           show(2, 14, 1, "]");
           break;
         case 2:
-          if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-            strncpy(bank_name, "*ERROR*", sizeof(bank_name));
-          if (!get_voice_by_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, configuration.dexed[selected_instance_id].voice, voice_name, sizeof(voice_name)))
-            strncpy(voice_name, "*ERROR*", sizeof(voice_name));
-
           show(1, 0, 16, "Save to Bank");
           show(1, 13, 2, configuration.dexed[selected_instance_id].bank);
           show(2, 0, 2, configuration.dexed[selected_instance_id].voice + 1);
-          show(2, 3, 10, voice_name);
+          show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
           break;
         case 3:
           show(1, 0, 16, "Overwrite?");
@@ -12772,8 +12702,8 @@ void UI_func_sysex_receive_bank(uint8_t param)
     display.print(F("["));
     setCursor_textGrid(14, 1);
     display.print(F("]"));
-    if (!get_bank_name(configuration.dexed[selected_instance_id].bank, receive_bank_filename, sizeof(receive_bank_filename)))
-      strcpy(receive_bank_filename, "*ERROR*");
+    strcpy(receive_bank_filename, banks[configuration.dexed[selected_instance_id].bank].name);
+
     show(2, 0, 2, bank_number);
     show(2, 3, 10, receive_bank_filename);
   }
@@ -12787,8 +12717,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
         {
           case 0:
             bank_number = constrain(bank_number + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-            if (!get_bank_name(bank_number, receive_bank_filename, sizeof(receive_bank_filename)))
-              strcpy(receive_bank_filename, "*ERROR*");
+            strcpy(receive_bank_filename, banks[bank_number].name);
             show(2, 1, 2, bank_number);
             show(2, 3, 10, receive_bank_filename);
             break;
@@ -12810,8 +12739,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
         {
           case 0:
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-            if (!get_bank_name(bank_number, receive_bank_filename, sizeof(receive_bank_filename)))
-              strcpy(receive_bank_filename, "*ERROR*");
+            strcpy(receive_bank_filename, banks[bank_number].name);
             show(2, 0, 2, bank_number);
             show(2, 3, 10, receive_bank_filename);
             break;
@@ -12973,7 +12901,6 @@ void UI_func_set_performance_name(uint8_t param)
 
 void UI_func_sysex_send_bank(uint8_t param)
 {
-  char bank_name[BANK_NAME_LEN];
   static uint8_t bank_number;
 
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -12982,12 +12909,10 @@ void UI_func_sysex_send_bank(uint8_t param)
     bank_number = configuration.dexed[selected_instance_id].bank;
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Bank"));
-    if (!get_bank_name(configuration.dexed[selected_instance_id].bank, bank_name, sizeof(bank_name)))
-      strncpy(bank_name, "*ERROR*", sizeof(bank_name));
     show(2, 2, 1, "[");
     show(2, 14, 1, "]");
     show(2, 0, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, bank_name);
+    show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -13002,19 +12927,17 @@ void UI_func_sysex_send_bank(uint8_t param)
       {
         bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
       }
-      if (!get_bank_name(bank_number, bank_name, sizeof(bank_name)))
-        strcpy(bank_name, "*ERROR*");
       show(2, 0, 2, bank_number);
-      show(2, 3, 10, bank_name);
+      show(2, 3, 10, banks[bank_number].name);
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
       File sysex;
       char filename[FILENAME_LEN];
 
-      if (get_bank_name(bank_number, bank_name, sizeof(bank_name)))
+      if (!strcmp("*ERROR*", banks[bank_number].name))
       {
-        sprintf(filename, "/%d/%s.syx", bank_number, bank_name);
+        sprintf(filename, "/%d/%s.syx", bank_number, banks[bank_number].name);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
@@ -13085,23 +13008,16 @@ void UI_func_sysex_send_voice(uint8_t param)
     bank_number = configuration.dexed[selected_instance_id].bank;
     voice_number = configuration.dexed[selected_instance_id].voice;
 
-    char bank_name[BANK_NAME_LEN];
-
-    if (!get_bank_name(bank_number, bank_name, sizeof(bank_name)))
-      strcpy(bank_name, "*ERROR*");
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Voice"));
     show(2, 1, 2, bank_number);
-    show(2, 5, 10, bank_name);
+    show(2, 5, 10, banks[bank_number].name);
     show(2, 4, 1, "[");
     show(2, 15, 1, "]");
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    char bank_name[BANK_NAME_LEN];
-    char voice_name[VOICE_NAME_LEN];
-
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
       switch (mode)
@@ -13112,23 +13028,16 @@ void UI_func_sysex_send_voice(uint8_t param)
           else if (LCDML.BT_checkUp() && bank_number > 0)
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
-          if (!get_bank_name(bank_number, bank_name, sizeof(bank_name)))
-            strcpy(bank_name, "*ERROR*");
-
           show(2, 1, 2, bank_number);
-          show(2, 5, 10, bank_name);
+          show(2, 5, 10, banks[bank_number].name);
           break;
         case 1: // Voice selection
           if (LCDML.BT_checkDown() && voice_number < MAX_VOICES - 1)
             voice_number = constrain(voice_number + ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
           else if (LCDML.BT_checkUp() && voice_number > 0)
             voice_number = constrain(voice_number - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
-          if (!get_bank_name(bank_number, bank_name, sizeof(bank_name)))
-            strncpy(bank_name, "*ERROR*", sizeof(bank_name));
-          if (!get_voice_by_bank_name(bank_number, bank_name, voice_number, voice_name, sizeof(voice_name)))
-            strncpy(voice_name, "*ERROR*", sizeof(voice_name));
           show(2, 1, 2, voice_number + 1);
-          show(2, 5, 10, voice_name);
+          show(2, 5, 10, banks[bank_number].voices[voice_number].name);
           break;
       }
     }
@@ -13139,21 +13048,16 @@ void UI_func_sysex_send_voice(uint8_t param)
       switch (mode)
       {
         case 1:
-          if (!get_bank_name(bank_number, bank_name, sizeof(bank_name)))
-            strncpy(bank_name, "*ERROR*", sizeof(bank_name));
-          if (!get_voice_by_bank_name(bank_number, bank_name, voice_number, voice_name, sizeof(voice_name)))
-            strncpy(voice_name, "*ERROR*", sizeof(voice_name));
-
           show(2, 1, 2, voice_number + 1);
-          show(2, 5, 10, voice_name);
+          show(2, 5, 10, banks[bank_number].voices[voice_number].name);
           break;
         case 2:
           File sysex;
           char filename[FILENAME_LEN];
 
-          if (get_bank_name(bank_number, bank_name, sizeof(bank_name)))
+          if (!strcmp("*ERROR*", banks[bank_number].name))
           {
-            sprintf(filename, "/%d/%s.syx", bank_number, bank_name);
+            sprintf(filename, "/%d/%s.syx", bank_number, banks[bank_number].name);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
             Serial.print(voice_number);

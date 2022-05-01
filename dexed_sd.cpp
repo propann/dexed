@@ -88,6 +88,17 @@ extern bool save_sys_flag;
 /******************************************************************************
    SD BANK/VOICE LOADING
  ******************************************************************************/
+void load_sd_banks_voices() {
+#ifdef DEBUG
+  Serial.println("Load all banks and voices names");
+#endif
+  if (sd_card > 0) {
+    for (uint8_t b=0; b<MAX_BANKS; b++) {
+      _load_sd_bank_and_voices_names(b);
+    }
+  } 
+}
+
 bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
   v = constrain(v, 0, MAX_VOICES - 1);
@@ -97,11 +108,9 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
   {
     File sysex;
     char filename[FILENAME_LEN];
-    char bank_name[BANK_NAME_LEN];
     uint8_t data[128];
 
-    get_bank_name(b, bank_name, sizeof(bank_name));
-    sprintf(filename, "/%d/%s.syx", b, bank_name);
+    sprintf(filename, "/%d/%s.syx", b, banks[b].name);
 
     AudioNoInterrupts();
     sysex = SD.open(filename);
@@ -119,12 +128,10 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     if (get_sd_voice(sysex, v, data))
     {
 #ifdef DEBUG
-      char voice_name[VOICE_NAME_LEN];
-      get_voice_name(b, v, voice_name, sizeof(voice_name));
       Serial.print(F("Loading voice from "));
       Serial.print(filename);
       Serial.print(F(" ["));
-      Serial.print(voice_name);
+      Serial.print(banks[b].voices[v].name);
       Serial.println(F("]"));
 #endif
       uint8_t tmp_data[156];
@@ -161,6 +168,8 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
+    Serial.print("save_sd_voice");
+
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -168,11 +177,9 @@ bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
   {
     File sysex;
     char filename[FILENAME_LEN];
-    char bank_name[BANK_NAME_LEN];
     uint8_t data[128];
 
-    get_bank_name(b, bank_name, sizeof(bank_name));
-    sprintf(filename, "/%d/%s.syx", b, bank_name);
+    sprintf(filename, "/%d/%s.syx", b, banks[b].name);
 
     AudioNoInterrupts();
     sysex = SD.open(filename, FILE_WRITE);
@@ -192,13 +199,10 @@ bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     if (put_sd_voice(sysex, v, data))
     {
 #ifdef DEBUG
-      char voice_name[VOICE_NAME_LEN];
-
-      MicroDexed[instance_id]->getName(voice_name);
       Serial.print(F("Saving voice to "));
       Serial.print(filename);
       Serial.print(F(" ["));
-      Serial.print(voice_name);
+      Serial.print(banks[b].voices[v].name);
       Serial.println(F("]"));
 #endif
       AudioNoInterrupts();
@@ -2693,23 +2697,30 @@ void strip_extension(const char* s, char* target, uint8_t len)
   target[len] = '\0';
 }
 
-bool get_bank_name(uint8_t b, char* name, uint8_t len)
-{
+void _load_sd_bank_and_voices_names(uint8_t b) {
   File sysex;
 
   if (sd_card > 0)
   {
     char bankdir[4];
+    char bank_name[BANK_NAME_LEN];
+    char voice_name[VOICE_NAME_LEN];
     File entry;
 
-    memset(name, 0, len);
+    memset(bank_name, 0, BANK_NAME_LEN);
 
     sprintf(bankdir, "/%d", b);
 
-    // try to open directory
+    // try to open bank directory
+    AudioNoInterrupts();
     sysex = SD.open(bankdir);
-    if (!sysex)
-      return (false);
+    if (!sysex) {
+      strcpy(banks[b].name, "*ERROR*");
+      for (uint8_t v=0; v<MAX_VOICES; v++) {
+        strcpy(banks[b].voices[v].name, "*ERROR*");
+      }
+      return;
+    }
 
     do
     {
@@ -2720,121 +2731,41 @@ bool get_bank_name(uint8_t b, char* name, uint8_t len)
     {
       entry.close();
       sysex.close();
-      return (false);
+      return;
     }
 
-    strip_extension(entry.name(), name, len);
+    strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
+    strncpy(banks[b].name, bank_name, sizeof(bank_name));
 
 #ifdef DEBUG
-    Serial.print(F("Found bank-name ["));
-    Serial.print(name);
-    Serial.print(F("] for bank ["));
-    Serial.print(b);
-    Serial.println(F("]"));
+    Serial.printf("Found bank-name [%s] for bank [%d]\n", bank_name, b);
 #endif
+
+    // load name of voices of the bank
+#ifdef DEBUG
+    Serial.printf("Reading voices from [/%d/%s.syx]\n", b, bank_name);
+#endif
+
+    for (uint8_t v=0; v<MAX_VOICES; v++) {
+      memset(voice_name, 0, VOICE_NAME_LEN);
+      entry.seek(124 + (v * 128));
+      entry.read(voice_name, min(VOICE_NAME_LEN, 10));
+
+      strncpy(banks[b].voices[v].name, voice_name, sizeof(voice_name));
+
+#ifdef DEBUG
+//    Serial.printf("Found voice-name [%s] for bank [%d] and voice [%d]\n", voice_name, b, v+1);
+#endif
+    }
 
     entry.close();
     sysex.close();
-
-    return (true);
-  }
-
-  return (false);
-}
-
-bool get_voice_name(uint8_t b, uint8_t v, char* name, uint8_t len)
-{
-  File sysex;
-
-  if (sd_card > 0)
-  {
-    char bank_name[BANK_NAME_LEN];
-    char filename[FILENAME_LEN];
-
-    b = constrain(b, 0, MAX_BANKS - 1);
-    v = constrain(v, 0, MAX_VOICES - 1);
-
-    get_bank_name(b, bank_name, sizeof(bank_name));
-    sprintf(filename, "/%d/%s.syx", b, bank_name);
-#ifdef DEBUG
-    Serial.print(F("Reading voice-name from ["));
-    Serial.print(filename);
-    Serial.println(F("]"));
-#endif
-
-    // try to open directory
-    AudioNoInterrupts();
-    sysex = SD.open(filename);
-    if (!sysex)
-      return (false);
-
-    memset(name, 0, len);
-    sysex.seek(124 + (v * 128));
-    sysex.read(name, min(len, 10));
-
-#ifdef DEBUG
-    Serial.print(F("Found voice-name ["));
-    Serial.print(name);
-    Serial.print(F("] for bank ["));
-    Serial.print(b);
-    Serial.print(F("] and voice ["));
-    Serial.print(v);
-    Serial.println(F("]"));
-#endif
-
-    sysex.close();
     AudioInterrupts();
 
-    return (true);
+    return;
   }
-
-  return (false);
-}
-
-bool get_voice_by_bank_name(uint8_t b, const char* bank_name, uint8_t v, char* voice_name, uint8_t len)
-{
-  File sysex;
-
-  if (sd_card > 0)
-  {
-    char filename[FILENAME_LEN];
-
-    sprintf(filename, "/%d/%s.syx", b, bank_name);
-#ifdef DEBUG
-    Serial.print(F("Reading voice-name from ["));
-    Serial.print(filename);
-    Serial.println(F("]"));
-#endif
-
-    // try to open directory
-    AudioNoInterrupts();
-    sysex = SD.open(filename);
-    if (!sysex)
-      return (false);
-
-    memset(voice_name, 0, len);
-    sysex.seek(124 + (v * 128));
-    sysex.read(voice_name, min(len, 10));
-
-#ifdef DEBUG
-    Serial.print(F("Found voice-name ["));
-    Serial.print(voice_name);
-    Serial.print(F("] for bank ["));
-    Serial.print(b);
-    Serial.print(F("|"));
-    Serial.print(bank_name);
-    Serial.print(F("] and voice ["));
-    Serial.print(v);
-    Serial.println(F("]"));
-#endif
-
-    sysex.close();
-    AudioInterrupts();
-
-    return (true);
-  }
-
-  return (false);
+  
+  return;
 }
 
 void string_toupper(char* s)
