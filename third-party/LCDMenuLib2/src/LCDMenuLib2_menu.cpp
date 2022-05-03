@@ -4,7 +4,7 @@
  *
  * MIT License
  *
- * Copyright (c) [2021] [Nils Feldkämper]
+ * Copyright (c) [2020] [Nils Feldkämper]
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,13 @@ LCDMenuLib2_menu::LCDMenuLib2_menu(uint8_t p_id, uint8_t p_param, uint8_t p_conf
     id      = p_id;        // element name
     param   = p_param;     // element configuration
 
-    REG_control = p_configuration;    
+    switch(p_configuration)
+    {
+        case _LCDML_TYPE_default:  bitSet(REG_control, _LCDML_REG_MENU_CONTROL_type_default);   break;
+        case _LCDML_TYPE_dynParam: bitSet(REG_control, _LCDML_REG_MENU_CONTROL_type_dynParam);  break;
+        default:
+            break;
+    } 
 
     if(p_callback_function == NULL) 
     { 
@@ -218,18 +224,3 @@ bool LCDMenuLib2_menu::checkType_dynParam()
 {
     return bitRead(REG_control, _LCDML_REG_MENU_CONTROL_type_dynParam);    
 }
-
-/* ******************************************************************** */
-bool LCDMenuLib2_menu::checkType_dynParam_enabledSubMenu()
-/* ******************************************************************** */
-{
-    return bitRead(REG_control, _LCDML_REG_MENU_CONTROL_type_dynParam);    
-}
-
-/* ******************************************************************** */
-bool LCDMenuLib2_menu::checkType_dynParam_enabledCustomRefresh()
-/* ******************************************************************** */
-{
-    return bitRead(REG_control, _LCDML_REG_MENU_CONTROL_type_dynParam_enable_custom_refresh);    
-}   
-

@@ -27,7 +27,7 @@
 
   // LCD object
   // liquid crystal needs (rs, e, dat4, dat5, dat6, dat7)
-  LiquidCrystal lcd(22, 24, 9, 10, 11, 12);
+  LiquidCrystal lcd(2, 3, 8, 9, 10, 11);
 
   const uint8_t scroll_bar[5][8] = {
     {B10001, B10001, B10001, B10001, B10001, B10001, B10001, B10001}, // scrollbar top
@@ -88,7 +88,7 @@
   // Example for one function and different parameters
   // It is recommend to use parameters for switching settings like, (small drink, medium drink, big drink) or (200ml, 400ml, 600ml, 800ml) ...
   // the parameter change can also be released with dynParams on the next example
-  // LCDMenuLib_addAdvanced(id, prev_layer,     new_num, condition,   lang_char_array, callback_function, parameter (0-255), menu function type  )
+  // LCDMenuLib_add(id, prev_layer,     new_num, condition,   lang_char_array, callback_function, parameter (0-255), menu function type  )
   LCDML_addAdvanced (16 , LCDML_0         , 5  , NULL,          "Parameter"      , NULL,                0,            _LCDML_TYPE_default);                    // NULL = no menu function
   LCDML_addAdvanced (17 , LCDML_0_5       , 1  , NULL,          "Parameter 1"      , mFunc_para,       10,            _LCDML_TYPE_default);                    // NULL = no menu function
   LCDML_addAdvanced (18 , LCDML_0_5       , 2  , NULL,          "Parameter 2"      , mFunc_para,       20,            _LCDML_TYPE_default);                    // NULL = no menu function
@@ -100,20 +100,20 @@
   // 1. set the string to ""
   // 2. use type  _LCDML_TYPE_dynParam   instead of    _LCDML_TYPE_default
   // this function type can not be used in combination with different parameters
-  // LCDMenuLib_addAdvanced(id, prev_layer,     new_num, condition,   lang_char_array, callback_function, parameter (0-255), menu function type  )
+  // LCDMenuLib_add(id, prev_layer,     new_num, condition,   lang_char_array, callback_function, parameter (0-255), menu function type  )
   LCDML_addAdvanced (21 , LCDML_0         , 6  , NULL,          ""                  , mDyn_para,                0,   _LCDML_TYPE_dynParam);                     // NULL = no menu function
 
   // 2. Example for dyn content
   // add a function which have a upwards timer with seconds / minutes / hours
   // the timer value is continuously updated
   // the initscreentimer is disabled for this function 
-  LCDML_addAdvanced (22 , LCDML_0         , 7  , NULL,          ""                  , mDyn_time,                0,   _LCDML_TYPE_dynParam_enableCustomRefresh);                     // NULL = no menu function
+  LCDML_addAdvanced (22 , LCDML_0         , 7  , NULL,          ""                  , mDyn_time,                0,   _LCDML_TYPE_dynParam);                     // NULL = no menu function
 
 
   // Example for conditions (for example for a screensaver)
   // 1. define a condition as a function of a boolean type -> return false = not displayed, return true = displayed
   // 2. set the function name as callback (remove the braces '()' it gives bad errors)
-  // LCDMenuLib_addAdvanced(id, prev_layer,     new_num, condition,   lang_char_array, callback_function, parameter (0-255), menu function type  )
+  // LCDMenuLib_add(id, prev_layer,     new_num, condition,   lang_char_array, callback_function, parameter (0-255), menu function type  )
   LCDML_addAdvanced (23 , LCDML_0         , 8  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);       // this menu function can be found on "LCDML_display_menuFunction" tab
 
   // ***TIP*** Try to update _LCDML_DISP_cnt when you add a menu element.
@@ -163,28 +163,28 @@
 
 
 // special gobal variables for this example
-boolean g_status_if_dyn_content_external_refresh_is_displayed = false;
 unsigned long g_timer_1000ms = 0;
 uint8_t dyn_hour = 0;
 uint8_t dyn_min  = 0;
 uint8_t dyn_sec  = 0;
+boolean dyn_menu_is_displayed = false;
 
 // *********************************************************************
 // LOOP
 // *********************************************************************
   void loop()
-  {    
+  {
     // split loop() into loop_control() and loop_menu()
-    LCDML.loop_control();  
+    LCDML.loop_control();
 
     // add a counter (1000ms) 
     if(LCDML.TIMER_ms(g_timer_1000ms, 1000))
     {
       // only update the menu when a dynamic content function is called
       // This variable is set in the LCDML_display_menu Tab on line 59/60
-      if(LCDML.MENU_checkDynRContent() == true)
+      if(LCDML.MENU_checkDynContent() == true)
       {
-        LCDML.MENU_display();
+        LCDML.DISP_update();
       }    
 
       // callculate a new value for the next update

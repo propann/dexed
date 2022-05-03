@@ -1,5 +1,4 @@
-Arduino LCDMenuLib2 (LCDML) with layers for any LCD Type (Row Displays, Graphic Displays, Console output)
-=================================================================
+# **Arduino LCDMenuLib2 (LCDML) with layers for any LCD Type (row displays, graphic displays, console output)**
 
 https://github.com/Jomelo/LCDMenuLib2/wiki/Code-Reference
 
@@ -54,7 +53,7 @@ Images:
 
 MIT License
 
-Copyright (c) [2021] [Nils Feldkämper]
+Copyright (c) [2020] [Nils Feldkämper]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -4,7 +4,7 @@
 #
 # MIT License
 #
-# Copyright (c) [2021] [Nils Feldkämper]
+# Copyright (c) [2020] [Nils Feldkämper]
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -178,10 +178,8 @@ _LCDML_DISP_cfg_cursor	LITERAL1
 
 _LCDML_DISP_cnt	LITERAL1
 
-_LCDML_TYPE_default	LITERAL1
 _LCDML_TYPE_dynParam	LITERAL1
-_LCDML_TYPE_dynParam_enableSubMenus	LITERAL1
-_LCDML_TYPE_dynParam_enableCustomRefresh	LITERAL1
+_LCDML_TYPE_default	LITERAL1
 
 LCDML_UNUSED	LITERAL1
 
@@ -199,8 +197,6 @@ callback	KEYWORD2
 checkCondition	KEYWORD2
 checkType_menu	KEYWORD2
 checkType_dynParam	KEYWORD2
-checkType_dynParam_enabledSubMenu	KEYWORD2
-checkType_dynParam_enabledCustomRefresh	KEYWORD2
 
 
 #######################################
@@ -219,7 +215,6 @@ MENU_getLayer	KEYWORD2
 MENU_getCursorPos	KEYWORD2
 MENU_getChilds	KEYWORD2
 MENU_getCursorPosAbs	KEYWORD2
-MENU_getCursorObjPos	KEYWORD2
 MENU_getParentID	KEYWORD2
 MENU_enRollover	KEYWORD2
 MENU_disRollover	KEYWORD2
@@ -229,8 +224,6 @@ MENU_getRootObj	KEYWORD2
 MENU_getScroll	KEYWORD2
 MENU_enScroll	KEYWORD2
 MENU_disScroll	KEYWORD2
-MENU_enUseDynElementsWithSubElements	KEYWORD2
-MENU_disUseDynElementsWithSubElements	KEYWORD2
 MENU_getScrollDisableStatus	KEYWORD2
 MENU_setDynContent	KEYWORD2
 MENU_checkDynContent	KEYWORD2
@@ -241,11 +234,6 @@ MENU_getElementIDFromCursorPos	KEYWORD2
 MENU_setDynFunctionContentUpdate	KEYWORD2
 MENU_clearDynFunctionContentUpdate	KEYWORD2
 MENU_allCondetionRefresh	KEYWORD2
-MENU_enRefreshAllOnButtonAction	KEYWORD2
-MENU_disRefreshAllOnButtonAction	KEYWORD2
-MENU_setDynRContent	KEYWORD2
-MENU_clearDynRContent	KEYWORD2
-MENU_checkDynRContent	KEYWORD2
 
 BT_setup	KEYWORD2
 BT_enter	KEYWORD2

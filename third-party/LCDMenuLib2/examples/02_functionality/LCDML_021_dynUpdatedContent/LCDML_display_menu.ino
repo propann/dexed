@@ -8,11 +8,8 @@
 void lcdml_menu_clear()
 /* ******************************************************************** */
 {
-  if (LCDML.MENU_checkDynRContent() == false)
-  {
-    // clear only the display when the external content refresh is not displayed
-    lcd.clear();
-  } 
+  lcd.clear();
+  lcd.setCursor(0, 0);
 }
 
 /* ******************************************************************** */
@@ -22,7 +19,11 @@ void lcdml_menu_display()
   // update content
   // ***************
   if (LCDML.DISP_checkMenuUpdate()) {
-       // declaration of some variables
+    // clear menu
+    // ***************
+    LCDML.DISP_clear();
+
+    // declaration of some variables
     // ***************
     // content variable
     char content_text[_LCDML_DISP_cols];  // save the content text of every menu element
@@ -31,11 +32,10 @@ void lcdml_menu_display()
     // some limit values
     uint8_t i = LCDML.MENU_getScroll();
     uint8_t maxi = _LCDML_DISP_rows + i;
-    uint8_t n = 0;   
-
-    // clear menu
-    // ***************
-    LCDML.DISP_clear();
+    uint8_t n = 0;
+    
+    // reset a state 
+    dyn_menu_is_displayed = false;
 
     // check if this element has children
     if ((tmp = LCDML.MENU_getDisplayedObj()) != NULL)
@@ -57,7 +57,9 @@ void lcdml_menu_display()
           else
           {
             if(tmp->checkType_dynParam()) 
-            {              
+            {
+              // call a dyn content element
+              LCDML.MENU_setDynContent();             
               tmp->callback(n);
             }
           }
@@ -68,8 +70,6 @@ void lcdml_menu_display()
       // try to go to the next sibling and check the number of displayed rows
       } while (((tmp = tmp->getSibling(1)) != NULL) && (i < maxi));
     }
-
-    
   }
 
   if(LCDML.DISP_checkMenuCursorUpdate())
@@ -91,10 +91,6 @@ void lcdml_menu_display()
       //set cursor char
       if (n == LCDML.MENU_getCursorPos()) {
         lcd.write(_LCDML_DISP_cfg_cursor);
-        if(LCDML.MENU_checkDynRContent() == true)
-        {
-          LCDML.MENU_getDisplayedObj()->callback(n); 
-        }
       } else {
         lcd.write(' ');
       }

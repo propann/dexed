@@ -62,23 +62,13 @@ void mDyn_para(uint8_t line)
     }
   }
 
-
-  // clear the line manuel because clear the complete content is disabled when a external refreshed function is active
-  lcd.setCursor(1, line);
-  for(uint8_t i=0;i<_LCDML_DISP_cols-3;i++) // -3 because: 
-                                            // -1 for counter from 0 to x 
-                                            // -1 for cursor position
-                                            // -1 for scrollbar on the end
-  {
-    lcd.print(F(" "));
-  } 
-
- 
   char buf[20];
   sprintf (buf, "dynValue: %d", g_dynParam);
+
   // use the line from function parameters
   lcd.setCursor(1, line);
   lcd.print(buf);
+
 }
 
 
@@ -88,31 +78,25 @@ void mDyn_para(uint8_t line)
 void mDyn_time(uint8_t line)
 // *********************************************************************
 {
-  // clear the line manuel because clear the complete content is disabled when a external refreshed function is active
-  lcd.setCursor(1, line);
-  for(uint8_t i=0;i<_LCDML_DISP_cols-3;i++) // -3 because: 
-                                            // -1 for counter from 0 to x 
-                                            // -1 for cursor position
-                                            // -1 for scrollbar on the end
-  {
-    lcd.print(F(" "));
-  } 
-
-  
   char buf[20];
   // http://www.c-howto.de/tutorial/benutzerinteraktion/bildschirmausgaben/
-  sprintf (buf, "Time %02d:%02d:%02d", dyn_hour, dyn_min, dyn_sec);
+  sprintf (buf, "%02d:%02d:%02d", dyn_hour, dyn_min, dyn_sec);
 
   // use the line from function parameters
   lcd.setCursor(1, line);
   lcd.print(buf);
 
   // reset initscreen timer when this function is displayed
-  //LCDML.SCREEN_resetTimer();
+  LCDML.SCREEN_resetTimer();
   
   // check if this function is active (cursor stands on this line)
   if (line == LCDML.MENU_getCursorPos())
   {
-    // ...  
+    // ...
+
+
+  
   }
 }
+
+
