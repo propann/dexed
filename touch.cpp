@@ -1005,37 +1005,36 @@ void update_midi_learn_button()
 //    ts.block_screen_update = false;
 //}
 
-//void handle_touchscreen_color_edit()
-//{
-//  if (touch.touched())
-//  {
-//    LCDML.SCREEN_resetTimer();
-//    ts.p = touch.getPoint();
-//    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-//    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
-//
-//    if ( ts.p.x > 270  && ts.p.x < 310  && ts.p.y < TFT_WIDTH - CHAR_height )
-//      if (ts.p.y * 1.22 > 359)
-//        ts.temp_col_hue = 359;
-//      else
-//        ts.temp_col_hue = ts.p.y * 1.22;
-//
-//    else if ( ts.p.x > 355  && ts.p.x < 395 && ts.p.y < TFT_WIDTH - CHAR_height)
-//    {
-//      if (ts.p.y > 254)
-//        ts.temp_col_sat = 255;
-//      else
-//        ts.temp_col_sat = ts.p.y / 1.20;
-//
-//    }
-//    else if ( ts.p.x > 440  && ts.p.x < 480 && ts.p.y < TFT_WIDTH - CHAR_height )
-//    {
-//      if (ts.p.y > 254)
-//        ts.temp_col_bright = 255;
-//      else
-//        ts.temp_col_bright = ts.p.y / 1.20;
-//    }
-//
-//    colors_screen_update();
-//  }
-//}
+void handle_touchscreen_color_edit()
+{
+  if (touch.touched())
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+
+    if ( ts.p.x > 170  && ts.p.x < 170+36  && ts.p.y < DISPLAY_HEIGHT-CHAR_height )
+      if (ts.p.y * 1.22 > 359)
+        ts.temp_col_hue = 359;
+      else
+        ts.temp_col_hue = ts.p.y * 1.22;
+
+    else if ( ts.p.x > 226  && ts.p.x < 226+36 && ts.p.y < DISPLAY_HEIGHT-CHAR_height )
+    {
+      if (ts.p.y *1.2> 234)
+        ts.temp_col_sat = 255;
+      else
+        ts.temp_col_sat = ts.p.y*1.2;
+
+    }
+    else if ( ts.p.x > 283  && ts.p.x < 283+36 && ts.p.y < DISPLAY_HEIGHT-CHAR_height )
+    {
+      if (ts.p.y*1.2 > 234)
+        ts.temp_col_bright = 255;
+      else
+        ts.temp_col_bright = ts.p.y*1.2;
+    }
+    colors_screen_update();
+  }
+}
