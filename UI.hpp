@@ -433,7 +433,6 @@ void UI_func_sample_editor(uint8_t param);
 void UI_func_format_flash(uint8_t param);
 
 char* basename(const char* filename);
-char* strip_extension(char* filename);
 
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
@@ -1044,20 +1043,6 @@ void seq_sub_pat_chain_update_running_step(int x, int y)
 
 void print_voice_settings_in_pattern_editor(int x, int y)
 {
-  char bank_name[BANK_NAME_LEN];
-  char voice_name[VOICE_NAME_LEN];
-
-  if (strlen(g_bank_name[selected_instance_id]) > 0) {
-    strcpy(bank_name, g_bank_name[selected_instance_id]);
-  } else {
-    strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
-  }
-  if (strlen(g_voice_name[selected_instance_id]) > 0) {
-    strcpy(voice_name, g_voice_name[selected_instance_id]);
-  } else {
-    strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
-  }
-
   display.setTextSize(1);
   display.setCursor(x, y);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -1073,11 +1058,9 @@ void print_voice_settings_in_pattern_editor(int x, int y)
   seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(x + 120 + 16, y - 1);
-  string_toupper(bank_name);
-  display.print( bank_name);
+  display.print(g_bank_name[selected_instance_id]);
   display.setCursor(x + 120 + 16, y + 7);
-  string_toupper(voice_name);
-  display.print(voice_name);
+  display.print(g_voice_name[selected_instance_id]);
   display.setTextSize(2);
 }
 
@@ -11938,19 +11921,6 @@ void UI_update_instance_icons()
 void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
 {
   int yspacer = 16;
-  char bank_name[BANK_NAME_LEN];
-  char voice_name[VOICE_NAME_LEN];
-
-  if (strlen(g_bank_name[selected_instance_id]) > 0) {
-    strcpy(bank_name, g_bank_name[instance_id]);
-  } else {
-    strcpy(bank_name, banks[configuration.dexed[instance_id].bank].name);
-  }
-  if (strlen(g_voice_name[instance_id]) > 0) {
-    strcpy(voice_name, g_voice_name[instance_id]);
-  } else {
-    strcpy(voice_name, banks[configuration.dexed[instance_id].bank].voices[configuration.dexed[instance_id].voice].name);
-  }
 
   display.setTextSize(1);
   display.setCursor(x, y);
@@ -11976,11 +11946,9 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-  string_toupper(bank_name);
-  show_smallfont_noGrid(y - 1, x + 81, 12, bank_name);
+  show_smallfont_noGrid(y - 1, x + 81, 12, g_bank_name[instance_id]);
   display.setCursor(x + 81 , y + 7);
-  string_toupper(voice_name);
-  display.print(voice_name);
+  display.print(g_voice_name[instance_id]);
 
   // static content
   if (fullrefresh)
@@ -12263,8 +12231,6 @@ void UI_func_voice_select(uint8_t param)
     }
     if (dexed_live_mod.active_button == 0)
     {
-      char bank_name[BANK_NAME_LEN];
-      char voice_name[VOICE_NAME_LEN];
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && (encoderDir[ENC_R].ButtonShort() || encoderDir[ENC_R].ButtonLong())))
       {
         uint8_t bank_tmp;
@@ -12332,13 +12298,13 @@ void UI_func_voice_select(uint8_t param)
             switch (menu_voice_select)
             {
               case MENU_VOICE_BANK:
-                memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
+//                memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
                 bank_tmp = constrain(configuration.dexed[selected_instance_id].bank + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
                 configuration.dexed[selected_instance_id].bank = bank_tmp;
                 break;
 
               case MENU_VOICE_SOUND:
-                memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
+//                memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
                 voice_tmp = configuration.dexed[selected_instance_id].voice + ENCODER[ENC_R].speed();
                 if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 < MAX_BANKS)
                 {
@@ -12387,19 +12353,7 @@ void UI_func_voice_select(uint8_t param)
         }
 #endif
       }
-      if (strlen(g_bank_name[selected_instance_id]) > 0) {
-        strcpy(bank_name, g_bank_name[selected_instance_id]);
-      }
-      else {
-        strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
-      }
-      if (strlen(g_voice_name[selected_instance_id]) > 0)
-      {
-        strcpy(voice_name, g_voice_name[selected_instance_id]);
-      }
-      else {
-        strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
-      }
+
       display.setTextSize(2);
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
       setCursor_textGrid(1, 1);
@@ -12407,10 +12361,8 @@ void UI_func_voice_select(uint8_t param)
       setCursor_textGrid(1, 2);
       seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      string_toupper(bank_name);
-      show(1, 5, 8, bank_name);
-      string_toupper(voice_name);
-      show(2, 5, 10, voice_name);
+      show(1, 5, 8, g_bank_name[selected_instance_id]);
+      show(2, 5, 10, g_voice_name[selected_instance_id]);
 
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       switch (menu_voice_select)
@@ -12516,7 +12468,7 @@ void UI_func_save_voice(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Save to Bank"));
     show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+    show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
     show(2, 2, 1, "[");
     show(2, 13, 1, "]");
 #else
@@ -12551,7 +12503,7 @@ void UI_func_save_voice(uint8_t param)
             configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 4, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+          show(2, 4, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
           break;
         case 2: // Voice selection
           if (LCDML.BT_checkDown() && configuration.dexed[selected_instance_id].voice < MAX_VOICES - 1)
@@ -12560,7 +12512,7 @@ void UI_func_save_voice(uint8_t param)
             configuration.dexed[selected_instance_id].voice = constrain(configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
 
           show(2, 1, 2, configuration.dexed[selected_instance_id].voice + 1);
-          show(2, 4, 10, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
+          show(2, 4, 10, g_voice_name[configuration.dexed[selected_instance_id].bank]);
           break;
         case 3: // Yes/No selection
           yesno = !yesno;
@@ -12585,7 +12537,7 @@ void UI_func_save_voice(uint8_t param)
           setCursor_textGrid(1, 1);
           display.print(F("Save to Bank"));
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+          show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
           show(2, 2, 2, " [");
           show(2, 14, 1, "]");
           break;
@@ -12593,7 +12545,7 @@ void UI_func_save_voice(uint8_t param)
           show(1, 0, 16, "Save to Bank");
           show(1, 13, 2, configuration.dexed[selected_instance_id].bank);
           show(2, 0, 2, configuration.dexed[selected_instance_id].voice + 1);
-          show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
+          show(2, 3, 10, g_voice_name[configuration.dexed[selected_instance_id].bank]);
           break;
         case 3:
           show(1, 0, 16, "Overwrite?");
@@ -12656,7 +12608,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
     display.print(F("["));
     setCursor_textGrid(14, 1);
     display.print(F("]"));
-    strcpy(receive_bank_filename, banks[configuration.dexed[selected_instance_id].bank].name);
+    strcpy(receive_bank_filename, g_bank_name[configuration.dexed[selected_instance_id].bank]);
 
     show(2, 0, 2, bank_number);
     show(2, 3, 10, receive_bank_filename);
@@ -12671,7 +12623,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
         {
           case 0:
             bank_number = constrain(bank_number + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-            strcpy(receive_bank_filename, banks[bank_number].name);
+            strcpy(receive_bank_filename, g_bank_name[bank_number]);
             show(2, 1, 2, bank_number);
             show(2, 3, 10, receive_bank_filename);
             break;
@@ -12693,7 +12645,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
         {
           case 0:
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-            strcpy(receive_bank_filename, banks[bank_number].name);
+            strcpy(receive_bank_filename, g_bank_name[bank_number]);
             show(2, 0, 2, bank_number);
             show(2, 3, 10, receive_bank_filename);
             break;
@@ -12866,7 +12818,7 @@ void UI_func_sysex_send_bank(uint8_t param)
     show(2, 2, 1, "[");
     show(2, 14, 1, "]");
     show(2, 0, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+    show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -12882,16 +12834,16 @@ void UI_func_sysex_send_bank(uint8_t param)
         bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
       }
       show(2, 0, 2, bank_number);
-      show(2, 3, 10, banks[bank_number].name);
+      show(2, 3, 10, g_bank_name[bank_number]);
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
       File sysex;
       char filename[FILENAME_LEN];
 
-      if (!strcmp("*ERROR*", banks[bank_number].name))
+      if (!strcmp("*ERROR*", g_bank_name[bank_number]))
       {
-        sprintf(filename, "/%d/%s.syx", bank_number, banks[bank_number].name);
+        sprintf(filename, "/%d/%s.syx", bank_number, g_bank_name[bank_number]);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
@@ -12965,7 +12917,7 @@ void UI_func_sysex_send_voice(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Voice"));
     show(2, 1, 2, bank_number);
-    show(2, 5, 10, banks[bank_number].name);
+    show(2, 5, 10, g_bank_name[bank_number]);
     show(2, 4, 1, "[");
     show(2, 15, 1, "]");
   }
@@ -12983,7 +12935,7 @@ void UI_func_sysex_send_voice(uint8_t param)
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
           show(2, 1, 2, bank_number);
-          show(2, 5, 10, banks[bank_number].name);
+          show(2, 5, 10, g_bank_name[bank_number]);
           break;
         case 1: // Voice selection
           if (LCDML.BT_checkDown() && voice_number < MAX_VOICES - 1)
@@ -12991,7 +12943,7 @@ void UI_func_sysex_send_voice(uint8_t param)
           else if (LCDML.BT_checkUp() && voice_number > 0)
             voice_number = constrain(voice_number - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
           show(2, 1, 2, voice_number + 1);
-          show(2, 5, 10, banks[bank_number].voices[voice_number].name);
+          show(2, 5, 10, g_voice_name[voice_number]);
           break;
       }
     }
@@ -13003,15 +12955,15 @@ void UI_func_sysex_send_voice(uint8_t param)
       {
         case 1:
           show(2, 1, 2, voice_number + 1);
-          show(2, 5, 10, banks[bank_number].voices[voice_number].name);
+          show(2, 5, 10, g_voice_name[voice_number]);
           break;
         case 2:
           File sysex;
           char filename[FILENAME_LEN];
 
-          if (!strcmp("*ERROR*", banks[bank_number].name))
+          if (!strcmp("*ERROR*", g_bank_name[bank_number]))
           {
-            sprintf(filename, "/%d/%s.syx", bank_number, banks[bank_number].name);
+            sprintf(filename, "/%d/%s.syx", bank_number, g_bank_name[bank_number]);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
             Serial.print(voice_number);

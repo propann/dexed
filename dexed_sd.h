@@ -36,7 +36,6 @@ extern void show_patch(uint8_t instance_id);
 
 extern void send_sysex_voice(uint8_t midi_channel, uint8_t* data);
 
-extern bank_type banks[];
 extern uint8_t bank;
 extern uint8_t voice;
 extern uint8_t ui_state;
@@ -48,8 +47,6 @@ extern void set_voiceconfig_params(uint8_t instance_id);
 extern void set_sys_params(void);
 extern void set_epiano_params(void);
 
-void load_sd_banks_voices();
-void _load_sd_bank_and_voices_names(uint8_t b);
 bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id);
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id);
 bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data);
@@ -77,7 +74,7 @@ bool get_sd_data(File sysex, uint8_t format, uint8_t* conf);
 bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len);
 
 uint8_t calc_checksum(uint8_t* data, uint16_t len);
-void strip_extension(const char* s, char* target);
+void strip_extension(const char* s, char* target, uint8_t len);
 
 void string_toupper(char* s);
 #endif
