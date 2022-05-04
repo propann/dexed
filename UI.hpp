@@ -12298,13 +12298,11 @@ void UI_func_voice_select(uint8_t param)
             switch (menu_voice_select)
             {
               case MENU_VOICE_BANK:
-//                memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
                 bank_tmp = constrain(configuration.dexed[selected_instance_id].bank + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
                 configuration.dexed[selected_instance_id].bank = bank_tmp;
                 break;
 
               case MENU_VOICE_SOUND:
-//                memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
                 voice_tmp = configuration.dexed[selected_instance_id].voice + ENCODER[ENC_R].speed();
                 if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 < MAX_BANKS)
                 {
@@ -12385,9 +12383,7 @@ void UI_func_voice_select(uint8_t param)
 
       if (seq.cycle_touch_element != 1)
       {
-        if (selected_instance_id == 0)
           print_voice_settings(CHAR_width_small, 104, 0, false);
-        else
           print_voice_settings(CHAR_width_small + 160, 104, 1, false);
       }
     }
