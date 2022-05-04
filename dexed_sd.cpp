@@ -108,8 +108,8 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     char voice_name[VOICE_NAME_LEN];
     uint8_t data[128];
 
-    memset(g_bank_name[instance_id], 0, BANK_NAME_LEN);
-    memset(g_voice_name[instance_id], 0, VOICE_NAME_LEN);
+    memset(g_bank_name[instance_id], '\0', BANK_NAME_LEN);
+    memset(g_voice_name[instance_id], '\0', VOICE_NAME_LEN);
 
     sprintf(bankdir, "/%d", b);
 
@@ -118,8 +118,8 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     AudioInterrupts();
     if (!sysex_dir)
     {
-      strncpy(g_bank_name[instance_id], "*ERROR*", 7);
-      strncpy(g_voice_name[instance_id], "*ERROR*", 7);
+      strcpy(g_bank_name[instance_id], "*ERROR*");
+      strcpy(g_voice_name[instance_id], "*ERROR*");
 
 #ifdef DEBUG
       Serial.print(F("E : Cannot open "));
@@ -145,13 +145,13 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    strncpy(g_bank_name[instance_id], bank_name, sizeof(bank_name));
+    strcpy(g_bank_name[instance_id], bank_name);
 
     // search voice name
     entry.seek(124 + (v * 128));
     entry.read(voice_name, min(VOICE_NAME_LEN, 10));
     string_toupper(voice_name);
-    strncpy(g_voice_name[instance_id], voice_name, sizeof(voice_name));
+    strcpy(g_voice_name[instance_id], voice_name);
 
     if (get_sd_voice(entry, v, data))
     {
@@ -186,7 +186,7 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
       return (ret);
     }
     else {
-      strncpy(g_voice_name[instance_id], "*ERROR*", 7);
+      strcpy(g_voice_name[instance_id], "*ERROR*");
 #ifdef DEBUG
       Serial.println(F("E : Cannot load voice data"));
 #endif
