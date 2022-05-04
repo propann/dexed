@@ -13,7 +13,7 @@ class Realtime_Scope : public AudioStream {
     virtual void update(void);
     void FillArray(void);
     void AddtoBuffer(int16_t*);
-    void draw_scope(uint16_t x, uint8_t y, uint8_t w);
+    void draw_scope(uint16_t x, int y, uint8_t w);
     
   private:
     audio_block_t *inputQueueArray[2];
