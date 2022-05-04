@@ -1127,11 +1127,10 @@ void loop()
     handle_touchscreen_voice_select();
     scope.draw_scope(216, 32, 103);
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || 
-  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
   {
     handle_touchscreen_pattern_editor();
-    scope.draw_scope(216, -9, 52);
+    scope.draw_scope(220, 0, 80);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
   {

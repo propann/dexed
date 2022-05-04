@@ -729,48 +729,41 @@ void handle_touchscreen_pattern_editor()
     // Scale from ~0->4000 to tft
     ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
     ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
-    if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000 )
+    if ( ts.p.y > 168  && ts.p.y < 168 + 42  &&  ts.update_virtual_keyboard_octave == false)
     {
-      border3_large();
-      border3_large_clear();
       if (seq.cycle_touch_element == 1)
-      {
-        seq.cycle_touch_element = 0;
-        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
-        seq_pattern_editor_update_dynamic_elements();
-      }
-      else
+        touch_check_all_keyboard_buttons();
+
+    }
+    else if (ts.p.x > 430 && ts.p.y < CHAR_height * 3  && ts.update_virtual_keyboard_octave == false)
+    {
+      if (seq.cycle_touch_element == 0)
       {
         seq.cycle_touch_element = 1;
-        draw_button_on_grid(45, 1, "BACK" , "TO SEQ", 0);
-        display.fillRect(216, CHAR_height_small * 6 , 95, CHAR_height_small * 6 + 1 , COLOR_BACKGROUND);
-        display.fillRect(0, CHAR_height_small * 10 + 1 , 195, CHAR_height_small * 2 + 1 , COLOR_BACKGROUND);
-        virtual_keyboard();
-        virtual_keyboard_print_buttons();
-        virtual_keyboard_print_current_instrument();
       }
-      seq.generic_ui_delay = 0;
+      else if (seq.cycle_touch_element == 1)
+      {
+        seq.cycle_touch_element = 0;
+      }
+      ts.update_virtual_keyboard_octave = true;
+      seq_pattern_editor_update_dynamic_elements();
     }
-    if ( ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
-    {
-      touch_check_all_keyboard_buttons();
-    }
-    if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && seq.cycle_touch_element == 1)
+    else if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && seq.cycle_touch_element == 1)
     {
       virtual_keyboard_key_on();
     }
   }
-  if (touch.touched() == false )
+  if (touch.touched() == false)
   {
-    if ( ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
+    if ( ts.update_virtual_keyboard_octave)
     {
-      print_virtual_keyboard_octave();
+      //print_virtual_keyboard_octave();
       ts.update_virtual_keyboard_octave = false;
     }
   }
-  seq.generic_ui_delay++;
   virtual_keyboard_update_all_key_states();
 }
+
 
 void handle_touchscreen_microsynth()
 {

@@ -48,7 +48,7 @@ void Realtime_Scope::update(void)
   }
 }
 
-void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
+void Realtime_Scope::draw_scope(uint16_t x, uint8_t y, uint8_t w) {
   if (scope_delay > 252)
   {
     uint16_t i = 0;
