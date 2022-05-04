@@ -594,8 +594,7 @@ void handle_touchscreen_voice_select()
     // Scale from ~0->4000 to tft
     ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
     ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
-    //display.drawPixel(ts.p.x, ts.p.y, RED); //DEBUG
-
+   
     if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 31000 )
     {
       if (check_button_on_grid(1, 22))
@@ -927,83 +926,61 @@ void handle_touchscreen_file_manager()
 }
 
 void update_midi_learn_button()
-{
+{     
   if (seq.midi_learn_active == true)
   {
-    display.setTextColor(COLOR_SYSTEXT, RED);
-    display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, RED);
-    display.setCursor(240 + CHAR_width * 12 + 4, 2 * CHAR_height);
-    display.setTextSize(2);
-    display.print("TOUCH");
-    display.setCursor(240 + CHAR_width * 12 + 3, CHAR_height * 4 - 12 );
-    display.setTextSize(1);
-    display.print("MIDI LEARN");
+    draw_button_on_grid(45, 1, "MIDI",  "LEARN", 2); //RED button
   }
   else
   {
-    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    display.fillRect (240 + CHAR_width + CHAR_width * 10 - 2, CHAR_height, 8 * CHAR_width, 4 * CHAR_height, COLOR_PITCHSMP);
-    display.setCursor(240 + CHAR_width * 12 + 4, 2 * CHAR_height);
-    display.setTextSize(2);
-    display.print("TOUCH");
-    display.setCursor(240 + CHAR_width * 12 + 3, CHAR_height * 4 - 12 );
-    display.setTextSize(1);
-    display.print("MIDI LEARN");
+      draw_button_on_grid(45, 1, "MIDI",  "LEARN", 0);
     // seq.midi_learn_active = false;
   }
 }
 
-//void handle_touchscreen_custom_mappings()
-//{
-//  if (touch.touched() && ts.block_screen_update == false)
-//  {
-//    LCDML.SCREEN_resetTimer();
-//    ts.p = touch.getPoint();
-//    // Scale from ~0->4000 to tft
-//    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-//    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
-//
-//    if (  ts.p.x > 240 + CHAR_width + CHAR_width * 10 - 2   && ts.p.y > CHAR_height  &&
-//          ts.p.x < 240 + CHAR_width + CHAR_width * 18       && ts.p.y < 5 * CHAR_height )
-//    {
-//      seq.midi_learn_active = !seq.midi_learn_active;
-//      ts.block_screen_update = true;
-//      ts.slowdown_UI_input = 0;
-//
-//      update_midi_learn_button();
-//
-//    }
-//  }
-//  ts.slowdown_UI_input++;
-//  if (ts.slowdown_UI_input > 7115)
-//    ts.block_screen_update = false;
-//}
+void handle_touchscreen_custom_mappings()
+{
+  if (touch.touched() && ts.block_screen_update == false)
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    // Scale from ~0->4000 to tft
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    if ( check_button_on_grid(45, 1))
+    {
+      seq.midi_learn_active = !seq.midi_learn_active;
+      ts.block_screen_update = true;
+      ts.slowdown_UI_input = 0;
+      update_midi_learn_button();
+    }
+  }
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 7115)
+    ts.block_screen_update = false;
+}
 
-//void handle_touchscreen_cc_mappings()
-//{
-//  if (touch.touched() && ts.block_screen_update == false)
-//  {
-//    LCDML.SCREEN_resetTimer();
-//    ts.p = touch.getPoint();
-//    // Scale from ~0->4000 to tft
-//    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-//    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
-//
-//    if (  ts.p.x > 240 + CHAR_width + CHAR_width * 10 - 2   && ts.p.y > CHAR_height  &&
-//          ts.p.x < 240 + CHAR_width + CHAR_width * 18       && ts.p.y < 5 * CHAR_height )
-//    {
-//      seq.midi_learn_active = !seq.midi_learn_active;
-//      ts.block_screen_update = true;
-//      ts.slowdown_UI_input = 0;
-//
-//      update_midi_learn_button();
-//
-//    }
-//  }
-//  ts.slowdown_UI_input++;
-//  if (ts.slowdown_UI_input > 7115)
-//    ts.block_screen_update = false;
-//}
+void handle_touchscreen_cc_mappings()
+{
+  if (touch.touched() && ts.block_screen_update == false)
+  {
+    LCDML.SCREEN_resetTimer();
+    ts.p = touch.getPoint();
+    // Scale from ~0->4000 to tft
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    if ( check_button_on_grid(45, 1))
+    {
+      seq.midi_learn_active = !seq.midi_learn_active;
+      ts.block_screen_update = true;
+      ts.slowdown_UI_input = 0;
+      update_midi_learn_button();
+    }
+  }
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 7115)
+    ts.block_screen_update = false;
+}
 
 void handle_touchscreen_color_edit()
 {
@@ -1014,26 +991,26 @@ void handle_touchscreen_color_edit()
     ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
     ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
 
-    if ( ts.p.x > 170  && ts.p.x < 170+36  && ts.p.y < DISPLAY_HEIGHT-CHAR_height )
+    if ( ts.p.x > 170  && ts.p.x < 170 + 36  && ts.p.y < DISPLAY_HEIGHT - CHAR_height )
       if (ts.p.y * 1.22 > 359)
         ts.temp_col_hue = 359;
       else
         ts.temp_col_hue = ts.p.y * 1.22;
 
-    else if ( ts.p.x > 226  && ts.p.x < 226+36 && ts.p.y < DISPLAY_HEIGHT-CHAR_height )
+    else if ( ts.p.x > 226  && ts.p.x < 226 + 36 && ts.p.y < DISPLAY_HEIGHT - CHAR_height )
     {
-      if (ts.p.y *1.2> 234)
+      if (ts.p.y * 1.2 > 234)
         ts.temp_col_sat = 255;
       else
-        ts.temp_col_sat = ts.p.y*1.2;
+        ts.temp_col_sat = ts.p.y * 1.2;
 
     }
-    else if ( ts.p.x > 283  && ts.p.x < 283+36 && ts.p.y < DISPLAY_HEIGHT-CHAR_height )
+    else if ( ts.p.x > 283  && ts.p.x < 283 + 36 && ts.p.y < DISPLAY_HEIGHT - CHAR_height )
     {
-      if (ts.p.y*1.2 > 234)
+      if (ts.p.y * 1.2 > 234)
         ts.temp_col_bright = 255;
       else
-        ts.temp_col_bright = ts.p.y*1.2;
+        ts.temp_col_bright = ts.p.y * 1.2;
     }
     colors_screen_update();
   }

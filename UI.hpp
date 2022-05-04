@@ -455,6 +455,11 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, u
     display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
     display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, DX_DARKCYAN);
   }
+  else if (color == 2) //button has RED color
+  {
+    display.setTextColor(COLOR_SYSTEXT, RED);
+    display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, RED);
+  }
   display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 6 );
   display.print(t1);
   if (t2[1] == '\0')
@@ -5028,16 +5033,13 @@ void UI_func_drum_pitch(uint8_t param)
 
 void print_custom_mappings()
 {
-
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
   for (uint8_t y = 0; y < 14; y++)
   {
     display.setCursor( 1 * CHAR_width_small, (y + 6) * 12);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     seq_print_formatted_number((y + 1), 2); //entry no.
-
     if (custom_midi_map[y].type == 0)
     {
       display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -5055,15 +5057,10 @@ void print_custom_mappings()
     }
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
     show_small_font((y + 6) * 12, 14 * CHAR_width_small, 3,  custom_midi_map[y].in   );
-
-
     display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
     show_small_font((y + 6) * 12, 19 * CHAR_width_small, 3, custom_midi_map[y].out );
-
     display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
     show_small_font((y + 6) * 12, 24 * CHAR_width_small, 3, custom_midi_map[y].channel );
-
-
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     if (custom_midi_map[y].in == 0)
       show_small_font((y + 6) * 12, 29 * CHAR_width_small, 12, "EMPTY SLOT");
@@ -5087,21 +5084,31 @@ void print_custom_mappings()
 void UI_func_custom_mappings(uint8_t param)
 {
   char displayname[8] = {0, 0, 0, 0, 0, 0, 0};
+  display.setTextSize(2);
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setTextSize(1);
-
     setCursor_textGrid_mini(1, 1);
     display.print(F("CUSTOM MAPPINGS"));
-
+    display.setTextSize(1);
     draw_button_on_grid(36, 1, "PREV.", "", 0);
     drawBitmap(CHAR_width_small * 38 + 4, CHAR_height * 1 + 8 , special_chars[19], 8, 8, GREEN);
     draw_button_on_grid(45, 1, "MIDI",  "LEARN", 0);
+    setCursor_textGrid_mini(1, 5);
+    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+    display.print(F("SET YOUR MIDI DEVICE TO DRUM CH. "));
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(F("["));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(DRUM_MIDI_CHANNEL);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(F("]"));
+     display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+    display.print(F(" TO LEARN "));
 
-    //scrollbar
+    //scrollbar - not implemented, yet
     display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 9 * CHAR_height_small, CHAR_width_small * 2, 13 * 12 + 6, COLOR_SYSTEXT);
     display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3 + 1, 9 * CHAR_height_small + 1, CHAR_width_small * 2 - 2, 6 * 12, GREY2);
 
@@ -5109,9 +5116,7 @@ void UI_func_custom_mappings(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(1, 6);
     display.print(F("NO  TYPE     IN   OUT  CH.  NAME"));
-
     print_custom_mappings();
-
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -5131,18 +5136,17 @@ void UI_func_custom_mappings(uint8_t param)
       ;
     }
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setTextSize(1);
-    setCursor_textGrid_mini(1, 2);
+    display.setTextSize(2);
+    setCursor_textGrid_mini(1, 3);
     display.print("[");
-    setCursor_textGrid_mini(4, 2);
+    setCursor_textGrid_mini(7, 3);
     display.print("]");
-    setCursor_textGrid_mini(2, 2);
+    setCursor_textGrid_mini(3, 3);
 
     sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    show_small_font(20, 6 * CHAR_width_small, 13, basename(drum_config[activesample].name));
-
+    show_small_font(4 * CHAR_height_small - 2, 9 * CHAR_width_small, 13, basename(drum_config[activesample].name));
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -5156,32 +5160,23 @@ void UI_func_cc_mappings(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
-
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
     display.setTextSize(1);
-
     UI_update_instance_icons();
-
     setCursor_textGrid(1, 1);
     display.print("CUSTOM DEXED CC");
-
     display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
     draw_button_on_grid(45, 1, "MIDI",  "LEARN", 0);
-
     //scrollbar
     display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 9 * CHAR_height_small, CHAR_width_small * 2, 13 * 12 + 6, COLOR_SYSTEXT);
     display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3 + 1, 9 * CHAR_height_small + 1, CHAR_width_small * 2 - 2, 6 * 12, GREY2);
-
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(1, 6);
     display.print(F("NO  TYPE     IN   OUT  CH.  NAME"));
-
     print_custom_mappings();
-
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -5199,15 +5194,11 @@ void UI_func_cc_mappings(uint8_t param)
     if (LCDML.BT_checkEnter())
     {
       selected_instance_id = !selected_instance_id;
-
       UI_update_instance_icons();
-
     }
-
     display.setTextSize(2);
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
     show(2, 1, 13, cc_names[seq.temp_select_menu] );
-
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -5216,7 +5207,6 @@ void UI_func_cc_mappings(uint8_t param)
     encoderDir[ENC_R].reset();
   }
 }
-
 
 void UI_func_drum_volume(uint8_t param)
 {
