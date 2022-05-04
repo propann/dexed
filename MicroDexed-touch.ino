@@ -33,7 +33,6 @@
 #include <SPI.h>
 #include "microsynth.h"
 
-#include <Adafruit_GFX.h>
 #include "ILI9341_t3n.h"
 #include "XPT2046_Touchscreen.h"
 
@@ -575,8 +574,6 @@ char receive_bank_filename[FILENAME_LEN];
 uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
 
-bank_type banks[MAX_BANKS];
-
 #if NUM_DEXED>1
 int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1};
 #else
@@ -912,7 +909,6 @@ void setup()
     Serial.println(F("SD card found."));
 #endif
     check_and_create_directories();
-    load_sd_banks_voices();
 
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
@@ -1131,10 +1127,11 @@ void loop()
     handle_touchscreen_voice_select();
     scope.draw_scope(216, 32, 103);
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || 
+  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
     handle_touchscreen_pattern_editor();
-    scope.draw_scope(220, 0, 80);
+    scope.draw_scope(216, -9, 52);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
   {

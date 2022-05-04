@@ -137,7 +137,6 @@
 
 #define VIRT_KEYB_YPOS 166
 
-
 // EPIANO
 #define USE_EPIANO
 #ifdef USE_EPIANO
@@ -909,15 +908,6 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_EPIANO,
   REVERB_MIX_CH_MICROSYNTH,
 };
-
-
-typedef struct {
-  char name[VOICE_NAME_LEN];
-} voice_type;
-typedef struct {
-  char name[BANK_NAME_LEN];
-  voice_type voices[MAX_VOICES];
-} bank_type;
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT

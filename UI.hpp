@@ -433,7 +433,6 @@ void UI_func_sample_editor(uint8_t param);
 void UI_func_format_flash(uint8_t param);
 
 char* basename(const char* filename);
-char* strip_extension(char* filename);
 
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
@@ -1044,20 +1043,6 @@ void seq_sub_pat_chain_update_running_step(int x, int y)
 
 void print_voice_settings_in_pattern_editor(int x, int y)
 {
-  char bank_name[BANK_NAME_LEN];
-  char voice_name[VOICE_NAME_LEN];
-
-  if (strlen(g_bank_name[selected_instance_id]) > 0) {
-    strcpy(bank_name, g_bank_name[selected_instance_id]);
-  } else {
-    strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
-  }
-  if (strlen(g_voice_name[selected_instance_id]) > 0) {
-    strcpy(voice_name, g_voice_name[selected_instance_id]);
-  } else {
-    strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
-  }
-
   display.setTextSize(1);
   display.setCursor(x, y);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -1073,11 +1058,9 @@ void print_voice_settings_in_pattern_editor(int x, int y)
   seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(x + 120 + 16, y - 1);
-  string_toupper(bank_name);
-  display.print( bank_name);
+  display.print(g_bank_name[selected_instance_id]);
   display.setCursor(x + 120 + 16, y + 7);
-  string_toupper(voice_name);
-  display.print(voice_name);
+  display.print(g_voice_name[selected_instance_id]);
   display.setTextSize(2);
 }
 
@@ -1099,125 +1082,128 @@ void update_pattern_number_in_tracker(uint8_t tracknumber)
 
 void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, uint8_t currentstep)
 {
-  uint8_t i = 0;
-  int y = 0;
-  int x = 0;
-  uint8_t z = 0;
-  uint8_t array[2] = {currentstep, 99};
-  display.setTextSize(1);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.setCursor(xpos, ypos);
-  if (currentstep == 0)
-    array[1] = 15;
-  else if (currentstep == 15)
-    array[1] = 14;
-  else
-    array[1] = currentstep - 1;
-  while ( z < 2 )
+  if (seq.cycle_touch_element == 0)  // touch keyboard is off
   {
-    i = array[z];
-    x = xpos;
+    uint8_t i = 0;
+    int y = 0;
+    int x = 0;
+    uint8_t z = 0;
+    uint8_t array[2] = {currentstep, 99};
+    display.setTextSize(1);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setCursor(xpos, ypos);
+    if (currentstep == 0)
+      array[1] = 15;
+    else if (currentstep == 15)
+      array[1] = 14;
+    else
+      array[1] = currentstep - 1;
+    while ( z < 2 )
+    {
+      i = array[z];
+      x = xpos;
 
-    y = ypos + 10 + i * (CHAR_height_small + 2);
-    // Short Name
-    if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
-         ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else if (i == currentstep)
-      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    else
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 4 , y);
-    if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
-    {
-      seq_print_current_note_from_step(i);
-    }
-    else
-    {
-      display.print (seq_find_shortname_in_track( i , seq.active_pattern)[0]   );
-    }
-    // Data values
-    if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
-         ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else if (i == currentstep)
-      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    else
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 7 , y);
-    seq_print_formatted_number (seq.note_data[seq.active_pattern][i] , 3);
-    // Velocity values
-    if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
-         ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else if (i == currentstep)
-      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    else
-      display.setTextColor(GREY1, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 12 , y);
-    seq_print_formatted_number (seq.vel[seq.active_pattern][i] , 3);
-    // Long Name / Note
-
-    if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
-         ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else if (i == currentstep)
-      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    else
-      set_pattern_content_type_color(seq.active_pattern);
-    if (seq.content_type[seq.active_pattern] == 0) //Drum Track
-    {
-      if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
-      {
-        show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, basename(drum_config[seq.vel[seq.active_pattern][i] - 210].name) );
-      }
-      else // else it is a regular Drum Sample
-        show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, find_long_drum_name_from_note( seq.note_data[seq.active_pattern][i] ));
-    }
-    else if (seq.content_type[seq.active_pattern] > 0 ) //Inst Track or Chord or Arp
-    {
-      display.setCursor(x + CHAR_width_small * 17, y);
-      if (seq.note_data[seq.active_pattern][i] != 0)
-      {
-        if (seq.note_data[seq.active_pattern][i] == 130) //it is a latched note
-        {
-          if (i == currentstep)
-            display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-          else
-            display.setTextColor(GREEN, COLOR_BACKGROUND);
-          display.write (0x7E); display.print(F("LATCH")); //Tilde Symbol for latched note
-        }
-        else
-        {
-          display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][0] );
-          if (noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] != '\0' )
-          {
-            display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] );
-          }
-          if (seq.vel[ seq.active_pattern][i] < 200) //print octave when it is not a chord
-          {
-            display.print( (seq.note_data[seq.active_pattern][i] / 12) - 1);
-            display.print(" ");
-          }
-          if (seq.vel[ seq.active_pattern][i] > 199)  //is a chord
-          {
-            display.print(" ");
-            print_chord_name(i);
-          }
-        }
-      }
-    }
-    z++;
-    while (display.getCursorX() < CHAR_width_small * 32)
-    {
-      if (i == currentstep)
+      y = ypos + 10 + i * (CHAR_height_small + 2);
+      // Short Name
+      if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
+           ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else if (i == currentstep)
         display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
       else
         display.setTextColor(GREY2, COLOR_BACKGROUND);
-      display.print(" ");
+      display.setCursor(CHAR_width_small * 4 , y);
+      if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
+      {
+        seq_print_current_note_from_step(i);
+      }
+      else
+      {
+        display.print (seq_find_shortname_in_track( i , seq.active_pattern)[0]   );
+      }
+      // Data values
+      if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
+           ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else if (i == currentstep)
+        display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+      else
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.setCursor(CHAR_width_small * 7 , y);
+      seq_print_formatted_number (seq.note_data[seq.active_pattern][i] , 3);
+      // Velocity values
+      if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
+           ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else if (i == currentstep)
+        display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+      else
+        display.setTextColor(GREY1, COLOR_BACKGROUND);
+      display.setCursor(CHAR_width_small * 12 , y);
+      seq_print_formatted_number (seq.vel[seq.active_pattern][i] , 3);
+      // Long Name / Note
+
+      if ( (array[1] == seq.menu - 3 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) ||
+           ( array[1] == seq.menu - 1 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)  ) )
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else if (i == currentstep)
+        display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+      else
+        set_pattern_content_type_color(seq.active_pattern);
+      if (seq.content_type[seq.active_pattern] == 0) //Drum Track
+      {
+        if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
+        {
+          show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, basename(drum_config[seq.vel[seq.active_pattern][i] - 210].name) );
+        }
+        else // else it is a regular Drum Sample
+          show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, find_long_drum_name_from_note( seq.note_data[seq.active_pattern][i] ));
+      }
+      else if (seq.content_type[seq.active_pattern] > 0 ) //Inst Track or Chord or Arp
+      {
+        display.setCursor(x + CHAR_width_small * 17, y);
+        if (seq.note_data[seq.active_pattern][i] != 0)
+        {
+          if (seq.note_data[seq.active_pattern][i] == 130) //it is a latched note
+          {
+            if (i == currentstep)
+              display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+            else
+              display.setTextColor(GREEN, COLOR_BACKGROUND);
+            display.write (0x7E); display.print(F("LATCH")); //Tilde Symbol for latched note
+          }
+          else
+          {
+            display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][0] );
+            if (noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] != '\0' )
+            {
+              display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] );
+            }
+            if (seq.vel[ seq.active_pattern][i] < 200) //print octave when it is not a chord
+            {
+              display.print( (seq.note_data[seq.active_pattern][i] / 12) - 1);
+              display.print(" ");
+            }
+            if (seq.vel[ seq.active_pattern][i] > 199)  //is a chord
+            {
+              display.print(" ");
+              print_chord_name(i);
+            }
+          }
+        }
+      }
+      z++;
+      while (display.getCursorX() < CHAR_width_small * 32)
+      {
+        if (i == currentstep)
+          display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+        else
+          display.setTextColor(GREY2, COLOR_BACKGROUND);
+        display.print(" ");
+      }
     }
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
 void print_playing_chains()
@@ -1261,8 +1247,7 @@ void update_display_functions_while_seq_running()
   if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ||
        LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) )
   {
-    if (seq.cycle_touch_element == 0)
-      seq_sub_pat_chain_update_running_step(CHAR_width * 21, CHAR_height * 9);
+    seq_sub_pat_chain_update_running_step(CHAR_width * 21, CHAR_height * 9);
     display.setTextSize(2);
     if (seq.step == 0)
     {
@@ -5790,53 +5775,54 @@ void seq_printAllSeqSteps()
 
 void seq_sub_pat_chain(int x, int y, bool init)
 {
-  display.setTextSize(1);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  for (uint8_t track = 0; track < NUM_SEQ_TRACKS; track++)
+  if (seq.cycle_touch_element == 0)  // touch keyboard is off
   {
-    display.setCursor(CHAR_width_small * 36,  (track + 13) * (CHAR_height_small + 2) + 10  );
-    if (seq.menu - 21 == track)
-      set_track_type_color_inverted(track);
-    else
-      set_track_type_color(track);
-    display.print(F("T"));
-    display.print (track + 1);
-    display.setCursor(CHAR_width_small * 36 + 3 * CHAR_width_small,   (track + 13) * (CHAR_height_small + 2) + 10  );
-    if (seq.menu - 21 - NUM_SEQ_TRACKS == track)
-      set_track_type_color_inverted(track);
-    else
-      set_track_type_color(track);
-    if (seq.track_type[track] > 0 && seq.inst_dexed[track] < 2)
+    display.setTextSize(1);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    for (uint8_t track = 0; track < NUM_SEQ_TRACKS; track++)
     {
-      display.print ("DEXED INST.");
-      display.print (seq.inst_dexed[track] + 1);
+      display.setCursor(CHAR_width_small * 36,  (track + 13) * (CHAR_height_small + 2) + 10  );
+      if (seq.menu - 21 == track)
+        set_track_type_color_inverted(track);
+      else
+        set_track_type_color(track);
+      display.print(F("T"));
+      display.print (track + 1);
+      display.setCursor(CHAR_width_small * 36 + 3 * CHAR_width_small,   (track + 13) * (CHAR_height_small + 2) + 10  );
+      if (seq.menu - 21 - NUM_SEQ_TRACKS == track)
+        set_track_type_color_inverted(track);
+      else
+        set_track_type_color(track);
+      if (seq.track_type[track] > 0 && seq.inst_dexed[track] < 2)
+      {
+        display.print ("DEXED INST.");
+        display.print (seq.inst_dexed[track] + 1);
+      }
+      else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 2) //epiano
+      {
+        display.print ("ELECTR.PIANO");
+      }
+      else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 3)  //MicroSynth 0
+      {
+        display.print ("MICROSYNTH 1");
+      }
+      else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 4)  //MicroSynth 1
+      {
+        display.print ("MICROSYNTH 2");
+      }
+      else if (seq.track_type[track] == 0 ) //drums/samples
+      {
+        display.print ("DRUMS/SAMPLE");
+      }
+      else
+      {
+        display.print ("- - - -");
+      }
     }
-    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 2) //epiano
-    {
-      display.print ("ELECTR.PIANO");
-    }
-    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 3)  //MicroSynth 0
-    {
-      display.print ("MICROSYNTH 1");
-    }
-    else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 4)  //MicroSynth 1
-    {
-      display.print ("MICROSYNTH 2");
-    }
-    else if (seq.track_type[track] == 0 ) //drums/samples
-    {
-      display.print ("DRUMS/SAMPLE");
-    }
-    else
-    {
-      display.print ("- - - -");
-    }
+    if (init)
+      print_color_map(x , 17 * CHAR_height_small + 5);
+    display.setTextSize(2);
   }
-
-
-  if (init)
-    print_color_map(x , 17 * CHAR_height_small + 5);
-  display.setTextSize(2);
 }
 
 void seq_printVelGraphBar()
@@ -6170,145 +6156,148 @@ void print_edit_mode()
 
 void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool init, bool allsteps)
 {
-  //bool init = only print static content one time. if true, print the static content
-  //allsteps ==  print all lines , allsteps == false print just the current step +-1 steps
-  uint8_t i = 0;
-  uint8_t laststep = 16;
-  int y = 0;
-  int x = 0;
-
-  display.setTextSize(1);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.setCursor(xpos, ypos);
-
-  //  if (init)
-  //  { //only needs to be drawn at first run
-  //
-  //    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  //    display.setCursor(xpos, ypos + 14);
-  //    display.print(F("STEP  N   DATA  VEL   NAME / NOTE"));
-  //  }
-
-  if (allsteps == false)
+  if (seq.cycle_touch_element == 0)  // touch keyboard is off
   {
-    if (currentstep == 0)
-      laststep = 2;
-    else if (currentstep == 15)
+    //bool init = only print static content one time. if true, print the static content
+    //allsteps ==  print all lines , allsteps == false print just the current step +-1 steps
+    uint8_t i = 0;
+    uint8_t laststep = 16;
+    int y = 0;
+    int x = 0;
+
+    display.setTextSize(1);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setCursor(xpos, ypos);
+
+    //  if (init)
+    //  { //only needs to be drawn at first run
+    //
+    //    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    //    display.setCursor(xpos, ypos + 14);
+    //    display.print(F("STEP  N   DATA  VEL   NAME / NOTE"));
+    //  }
+
+    if (allsteps == false)
     {
-      i = 14;
-      laststep = 16;
-    }
-    else
-    {
-      i = currentstep - 1;
-      laststep = currentstep + 2;
-    }
-  }
-
-  while ( i < laststep )
-  {
-    x = xpos;
-    y = ypos + 10 + i * (CHAR_height_small + 2);
-
-    if (init)
-    { //only needs to be drawn at first run
-
-      if (i % 4 == 0)
-        display.setTextColor(GREY1, COLOR_BACKGROUND);
+      if (currentstep == 0)
+        laststep = 2;
+      else if (currentstep == 15)
+      {
+        i = 14;
+        laststep = 16;
+      }
       else
-        display.setTextColor(MIDDLEGREEN, COLOR_BACKGROUND);
-      display.setCursor(x, y);
-      seq_print_formatted_number (i + 1 , 2);
-    }
-    // Short Name
-    if (i == currentstep)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-
-    display.setCursor(CHAR_width_small * 4 , y);
-
-    if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
-    {
-      seq_print_current_note_from_step(i);
-    }
-    else
-    {
-      display.print (seq_find_shortname_in_track( i , seq.active_pattern)[0]   );
-    }
-    // Data values
-    if (i == currentstep)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 7 , y);
-    seq_print_formatted_number (seq.note_data[seq.active_pattern][i] , 3);
-
-    // Velocity values
-    if (i == currentstep)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      display.setTextColor(GREY1, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 12 , y);
-    seq_print_formatted_number (seq.vel[seq.active_pattern][i] , 3);
-    // Long Name / Note
-    if (i == currentstep)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      set_pattern_content_type_color(seq.active_pattern);
-    if (seq.content_type[seq.active_pattern] == 0) //Drum Track
-    {
-      if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
       {
-        show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, basename(drum_config[seq.vel[seq.active_pattern][i] - 210].name) );
+        i = currentstep - 1;
+        laststep = currentstep + 2;
       }
-      else // else it is a regular Drum Sample
-        show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, find_long_drum_name_from_note( seq.note_data[seq.active_pattern][i] ));
     }
-    else if (seq.content_type[seq.active_pattern] > 0 ) //Inst Track or Chord or Arp
+
+    while ( i < laststep )
     {
-      display.setCursor(x + CHAR_width_small * 17, y);
-      if (seq.note_data[seq.active_pattern][i] != 0)
-      {
-        if (seq.note_data[seq.active_pattern][i] == 130) //it is a latched note
-        {
-          if (i == currentstep)
-            display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-          else
-            display.setTextColor(GREEN, COLOR_BACKGROUND);
-          display.write (0x7E); display.print("LATCH"); //Tilde Symbol for latched note
-        }
+      x = xpos;
+      y = ypos + 10 + i * (CHAR_height_small + 2);
+
+      if (init)
+      { //only needs to be drawn at first run
+
+        if (i % 4 == 0)
+          display.setTextColor(GREY1, COLOR_BACKGROUND);
         else
-        {
-          display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][0] );
-          if (noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] != '\0' )
-          {
-            display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] );
-          }
-          if (seq.vel[ seq.active_pattern][i] < 200) //print octave is not a chord
-          {
-            display.print( (seq.note_data[seq.active_pattern][i] / 12) - 1);
-          }
-          if (seq.vel[ seq.active_pattern][i] > 199)  //is a chord
-          {
-            display.print(" ");
-            print_chord_name(i);
-          }
-        }
+          display.setTextColor(MIDDLEGREEN, COLOR_BACKGROUND);
+        display.setCursor(x, y);
+        seq_print_formatted_number (i + 1 , 2);
       }
-    }
-    while (display.getCursorX() < CHAR_width_small * 32)
-    {
+      // Short Name
       if (i == currentstep)
         display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY2, COLOR_BACKGROUND);
-      display.print(" ");
+
+      display.setCursor(CHAR_width_small * 4 , y);
+
+      if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
+      {
+        seq_print_current_note_from_step(i);
+      }
+      else
+      {
+        display.print (seq_find_shortname_in_track( i , seq.active_pattern)[0]   );
+      }
+      // Data values
+      if (i == currentstep)
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.setCursor(CHAR_width_small * 7 , y);
+      seq_print_formatted_number (seq.note_data[seq.active_pattern][i] , 3);
+
+      // Velocity values
+      if (i == currentstep)
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else
+        display.setTextColor(GREY1, COLOR_BACKGROUND);
+      display.setCursor(CHAR_width_small * 12 , y);
+      seq_print_formatted_number (seq.vel[seq.active_pattern][i] , 3);
+      // Long Name / Note
+      if (i == currentstep)
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else
+        set_pattern_content_type_color(seq.active_pattern);
+      if (seq.content_type[seq.active_pattern] == 0) //Drum Track
+      {
+        if (seq.vel[seq.active_pattern][i] > 209)  //it is a pitched Drum Sample
+        {
+          show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, basename(drum_config[seq.vel[seq.active_pattern][i] - 210].name) );
+        }
+        else // else it is a regular Drum Sample
+          show_smallfont_noGrid(y, CHAR_width_small * 17 , 10, find_long_drum_name_from_note( seq.note_data[seq.active_pattern][i] ));
+      }
+      else if (seq.content_type[seq.active_pattern] > 0 ) //Inst Track or Chord or Arp
+      {
+        display.setCursor(x + CHAR_width_small * 17, y);
+        if (seq.note_data[seq.active_pattern][i] != 0)
+        {
+          if (seq.note_data[seq.active_pattern][i] == 130) //it is a latched note
+          {
+            if (i == currentstep)
+              display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+            else
+              display.setTextColor(GREEN, COLOR_BACKGROUND);
+            display.write (0x7E); display.print("LATCH"); //Tilde Symbol for latched note
+          }
+          else
+          {
+            display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][0] );
+            if (noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] != '\0' )
+            {
+              display.print(noteNames[seq.note_data[seq.active_pattern][i] % 12 ][1] );
+            }
+            if (seq.vel[ seq.active_pattern][i] < 200) //print octave is not a chord
+            {
+              display.print( (seq.note_data[seq.active_pattern][i] / 12) - 1);
+            }
+            if (seq.vel[ seq.active_pattern][i] > 199)  //is a chord
+            {
+              display.print(" ");
+              print_chord_name(i);
+            }
+          }
+        }
+      }
+      while (display.getCursorX() < CHAR_width_small * 32)
+      {
+        if (i == currentstep)
+          display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+        else
+          display.setTextColor(GREY2, COLOR_BACKGROUND);
+        display.print(" ");
+      }
+      i++;
     }
-    i++;
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(2);
   }
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.setTextSize(2);
 }
 
 void seq_sub_display_menu_logic()
@@ -6358,11 +6347,6 @@ void UI_func_seq_vel_editor(uint8_t param)
     if (seq.menu_status != 1)
     {
       display.fillScreen(COLOR_BACKGROUND);
-      seq_pattern_editor_update_dynamic_elements();
-    }
-    if (seq.cycle_touch_element != 0) //hide Keyboard in Velocity editor
-    {
-      seq.cycle_touch_element = 0;
       seq_pattern_editor_update_dynamic_elements();
     }
 
@@ -6644,7 +6628,6 @@ void UI_func_seq_vel_editor(uint8_t param)
       }
       else
         print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, false);
-
       setCursor_textGrid(3, 0);
       if (seq.note_data[seq.active_pattern][seq.menu - 1] > 0)
       {
@@ -6793,6 +6776,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextSize(2);
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
+      if (seq.cycle_touch_element == 0)  // touch keyboard is off
       border3_clear();
       if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
       {
@@ -7484,42 +7468,41 @@ void seq_sub_pitch_edit_pitched_sample ()
 }
 
 void print_current_sample_and_pitch_buffer()
-{ //phtodo123
-  display.setTextSize(1);
-  display.setCursor(36 * CHAR_width_small,  4 * (CHAR_height_small + 2) + 10  );
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print(F("SAMPLE BUFFER: "));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.setCursor(36 * CHAR_width_small,  5 * (CHAR_height_small + 2) + 10  );
-  if (activesample < NUM_DRUMSET_CONFIG - 1 && seq.vel[seq.active_pattern][seq.menu - 3] < 210) //normal sample
+{
+  if (seq.cycle_touch_element == 0)  // touch keyboard is off
   {
-    display.print( basename(drum_config[activesample].name) );
-    fill_up_with_spaces_right_window();
+    display.setTextSize(1);
+    display.setCursor(36 * CHAR_width_small,  4 * (CHAR_height_small + 2) + 10  );
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(F("SAMPLE BUFFER: "));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(36 * CHAR_width_small,  5 * (CHAR_height_small + 2) + 10  );
+    if (activesample < NUM_DRUMSET_CONFIG - 1 && seq.vel[seq.active_pattern][seq.menu - 3] < 210) //normal sample
+    {
+      display.print( basename(drum_config[activesample].name) );
+      fill_up_with_spaces_right_window();
+    }
+    else if (activesample < NUM_DRUMSET_CONFIG - 1 && seq.vel[seq.active_pattern][seq.menu - 3] > 209) //pitched sample
+    {
+      display.print( basename(drum_config[ seq.vel[seq.active_pattern][seq.menu - 3] - 210  ].name));
+      fill_up_with_spaces_right_window();
+    }
+    display.setCursor(36 * CHAR_width_small,  6 * (CHAR_height_small + 2) + 10  );
+    display.setTextColor(GREY2);
+    display.print(F("SAMPLE TYPE: "));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(36 * CHAR_width_small,  7 * (CHAR_height_small + 2) + 10  );
+    print_sample_type();
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setCursor(36 * CHAR_width_small,  8 * (CHAR_height_small + 2) + 10  );
+    display.print(F("NOTE BUFFER: "));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(noteNames[temp_int % 12 ]);
+    display.print( (temp_int / 12) - 1);
+    display.print(" ");
+    display.setTextSize(2);
   }
-  else if (activesample < NUM_DRUMSET_CONFIG - 1 && seq.vel[seq.active_pattern][seq.menu - 3] > 209) //pitched sample
-  {
-    display.print( basename(drum_config[ seq.vel[seq.active_pattern][seq.menu - 3] - 210  ].name));
-    fill_up_with_spaces_right_window();
-  }
-  display.setCursor(36 * CHAR_width_small,  6 * (CHAR_height_small + 2) + 10  );
-  display.setTextColor(GREY2);
-  display.print(F("SAMPLE TYPE: "));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.setCursor(36 * CHAR_width_small,  7 * (CHAR_height_small + 2) + 10  );
-  print_sample_type();
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.setCursor(36 * CHAR_width_small,  8 * (CHAR_height_small + 2) + 10  );
-  display.print(F("NOTE BUFFER: "));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(noteNames[temp_int % 12 ]);
-  display.print( (temp_int / 12) - 1);
-  display.print(" ");
-
-  display.setTextSize(2);
-
 }
-
-
 
 void set_sample_type_color()
 {
@@ -7591,31 +7574,10 @@ void virtual_keyboard_print_buttons()
 
 }
 void seq_pattern_editor_update_dynamic_elements()
-{ //phtodo
+{
   if (seq.cycle_touch_element == 0)
   {
-    //    border3_large_clear();
-    //    border3();
-    //    border4();
-    //
-    //    display.fillRect(366, 0 + 8, 50, 51 - 13, COLOR_PITCHSMP);
-    //    display.fillRect(366, 50 + 5, 50, 49 - 13, COLOR_PITCHSMP);
-    //
-    //    display.fillRect(422, 0 + 8, 51, 51 - 13, COLOR_PITCHSMP);
-    //    display.fillRect(422, 50 + 5, 51, 49 - 13, COLOR_PITCHSMP);
-
-    display.setTextSize(1);
-    //touch buttons
-
-    // draw_button_on_grid(45, 1, "KEYBRD", "");
-
-    //    display.setCursor(432, CHAR_height * 1 );
-    //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    //    display.print(F("TOUCH-"));
-    //    display.setCursor(424, CHAR_height * 2 - 8);
-    //    display.print(F("KEYBOARD"));
-
-
+    draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
     if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
     {
       print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
@@ -7631,24 +7593,10 @@ void seq_pattern_editor_update_dynamic_elements()
   }
   else if (seq.cycle_touch_element == 1)
   {
-    // border3_large_clear();
-    // border3_large();
     virtual_keyboard_print_buttons();
-
-
-    //touch buttons
-    //    display.setTextSize(1);
-    //    display.setCursor(432, CHAR_height * 1 );
-    //    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    //    display.print(F("TOUCH"));
-    //    display.setCursor(424, CHAR_height * 2 - 8);
-    //    display.print(F("PAT.EDIT"));
-
+    draw_button_on_grid(45, 1, "BACK" , "TO SEQ", 0);
     virtual_keyboard();
-
-    // seq_pattern_editor_update_disp_instr();
   }
-
   display.setTextSize(2);
 }
 
@@ -7662,25 +7610,15 @@ void UI_func_seq_pattern_editor(uint8_t param)
     if (seq.menu_status != 2)
     {
       display.fillScreen(COLOR_BACKGROUND);
-
-
       seq_pattern_editor_update_dynamic_elements();
-
-      // display.drawLine(411, 0, 411, 99, GREY4);
-      //display.drawLine(360, 0, 360, 99, GREY4);
-
       display.setCursor(0, CHAR_height * 3 + 3);
       display.setTextSize(1);
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print(F("CONT.TYPE:"));
       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
-
       print_content_type();
     }
     print_edit_mode();
-
-    display.setTextSize(2);
-
     check_variable_samples_basespeed();
     temp_int = seq.note_data[seq.active_pattern][0];
     encoderDir[ENC_R].reset();
@@ -7899,8 +7837,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
     display.setTextSize(2);
     if (seq.menu == 0)  //sound select menu
     {
-      if (seq.cycle_touch_element == 0)
-        print_current_sample_and_pitch_buffer();
+      print_current_sample_and_pitch_buffer();
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(11, 0);
       display.print(" ");
@@ -8061,17 +7998,14 @@ void UI_func_seq_pattern_editor(uint8_t param)
         show(0, 1, 9, basename(drum_config[activesample].name));
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print("  ");
-        if (seq.cycle_touch_element == 0)
+        if (seq.note_editor_view != 0)
         {
-          if (seq.note_editor_view != 0)
-          {
-            seq.note_editor_view = 0;
-            border3_clear();
-            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
-          }
-          else
-            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+          seq.note_editor_view = 0;
+          border3_clear();
+          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
         }
+        else
+          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
       }
       else
       {
@@ -8104,12 +8038,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
       display.setTextSize(2);
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
-
-      if (seq.cycle_touch_element == 0)
-      {
-        print_current_sample_and_pitch_buffer();
-        seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
-      }
+      print_current_sample_and_pitch_buffer();
+      seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
     }
     if (seq.menu == 3)
     {
@@ -8126,15 +8056,11 @@ void UI_func_seq_pattern_editor(uint8_t param)
     {
       if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
       {
-        if (seq.cycle_touch_element == 0)
-          print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 3, false, false);
-
+        print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 3, false, false);
       }
       else
       {
-        if (seq.cycle_touch_element == 0)
-          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
-
+        print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
       }
       if (seq.menu == 3)
         setCursor_textGrid(0, 1);
@@ -11938,19 +11864,6 @@ void UI_update_instance_icons()
 void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
 {
   int yspacer = 16;
-  char bank_name[BANK_NAME_LEN];
-  char voice_name[VOICE_NAME_LEN];
-
-  if (strlen(g_bank_name[selected_instance_id]) > 0) {
-    strcpy(bank_name, g_bank_name[instance_id]);
-  } else {
-    strcpy(bank_name, banks[configuration.dexed[instance_id].bank].name);
-  }
-  if (strlen(g_voice_name[instance_id]) > 0) {
-    strcpy(voice_name, g_voice_name[instance_id]);
-  } else {
-    strcpy(voice_name, banks[configuration.dexed[instance_id].bank].voices[configuration.dexed[instance_id].voice].name);
-  }
 
   display.setTextSize(1);
   display.setCursor(x, y);
@@ -11976,11 +11889,9 @@ void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-  string_toupper(bank_name);
-  show_smallfont_noGrid(y - 1, x + 81, 12, bank_name);
+  show_smallfont_noGrid(y - 1, x + 81, 12, g_bank_name[instance_id]);
   display.setCursor(x + 81 , y + 7);
-  string_toupper(voice_name);
-  display.print(voice_name);
+  display.print(g_voice_name[instance_id]);
 
   // static content
   if (fullrefresh)
@@ -12263,8 +12174,6 @@ void UI_func_voice_select(uint8_t param)
     }
     if (dexed_live_mod.active_button == 0)
     {
-      char bank_name[BANK_NAME_LEN];
-      char voice_name[VOICE_NAME_LEN];
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && (encoderDir[ENC_R].ButtonShort() || encoderDir[ENC_R].ButtonLong())))
       {
         uint8_t bank_tmp;
@@ -12332,13 +12241,11 @@ void UI_func_voice_select(uint8_t param)
             switch (menu_voice_select)
             {
               case MENU_VOICE_BANK:
-                memset(g_bank_name[selected_instance_id], 0, BANK_NAME_LEN);
                 bank_tmp = constrain(configuration.dexed[selected_instance_id].bank + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
                 configuration.dexed[selected_instance_id].bank = bank_tmp;
                 break;
 
               case MENU_VOICE_SOUND:
-                memset(g_voice_name[selected_instance_id], 0, VOICE_NAME_LEN);
                 voice_tmp = configuration.dexed[selected_instance_id].voice + ENCODER[ENC_R].speed();
                 if (voice_tmp >= MAX_VOICES && configuration.dexed[selected_instance_id].bank + 1 < MAX_BANKS)
                 {
@@ -12387,19 +12294,7 @@ void UI_func_voice_select(uint8_t param)
         }
 #endif
       }
-      if (strlen(g_bank_name[selected_instance_id]) > 0) {
-        strcpy(bank_name, g_bank_name[selected_instance_id]);
-      }
-      else {
-        strcpy(bank_name, banks[configuration.dexed[selected_instance_id].bank].name);
-      }
-      if (strlen(g_voice_name[selected_instance_id]) > 0)
-      {
-        strcpy(voice_name, g_voice_name[selected_instance_id]);
-      }
-      else {
-        strcpy(voice_name, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
-      }
+
       display.setTextSize(2);
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
       setCursor_textGrid(1, 1);
@@ -12407,10 +12302,8 @@ void UI_func_voice_select(uint8_t param)
       setCursor_textGrid(1, 2);
       seq_print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      string_toupper(bank_name);
-      show(1, 5, 8, bank_name);
-      string_toupper(voice_name);
-      show(2, 5, 10, voice_name);
+      show(1, 5, 8, g_bank_name[selected_instance_id]);
+      show(2, 5, 10, g_voice_name[selected_instance_id]);
 
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       switch (menu_voice_select)
@@ -12433,10 +12326,8 @@ void UI_func_voice_select(uint8_t param)
 
       if (seq.cycle_touch_element != 1)
       {
-        if (selected_instance_id == 0)
-          print_voice_settings(CHAR_width_small, 104, 0, false);
-        else
-          print_voice_settings(CHAR_width_small + 160, 104, 1, false);
+        print_voice_settings(CHAR_width_small, 104, 0, false);
+        print_voice_settings(CHAR_width_small + 160, 104, 1, false);
       }
     }
     if (dexed_live_mod.active_button == 99) // if button press had confirmed live mod settings and is now unselected,
@@ -12516,7 +12407,7 @@ void UI_func_save_voice(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Save to Bank"));
     show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+    show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
     show(2, 2, 1, "[");
     show(2, 13, 1, "]");
 #else
@@ -12551,7 +12442,7 @@ void UI_func_save_voice(uint8_t param)
             configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 4, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+          show(2, 4, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
           break;
         case 2: // Voice selection
           if (LCDML.BT_checkDown() && configuration.dexed[selected_instance_id].voice < MAX_VOICES - 1)
@@ -12560,7 +12451,7 @@ void UI_func_save_voice(uint8_t param)
             configuration.dexed[selected_instance_id].voice = constrain(configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
 
           show(2, 1, 2, configuration.dexed[selected_instance_id].voice + 1);
-          show(2, 4, 10, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
+          show(2, 4, 10, g_voice_name[configuration.dexed[selected_instance_id].bank]);
           break;
         case 3: // Yes/No selection
           yesno = !yesno;
@@ -12585,7 +12476,7 @@ void UI_func_save_voice(uint8_t param)
           setCursor_textGrid(1, 1);
           display.print(F("Save to Bank"));
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+          show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
           show(2, 2, 2, " [");
           show(2, 14, 1, "]");
           break;
@@ -12593,7 +12484,7 @@ void UI_func_save_voice(uint8_t param)
           show(1, 0, 16, "Save to Bank");
           show(1, 13, 2, configuration.dexed[selected_instance_id].bank);
           show(2, 0, 2, configuration.dexed[selected_instance_id].voice + 1);
-          show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].voices[configuration.dexed[selected_instance_id].voice].name);
+          show(2, 3, 10, g_voice_name[configuration.dexed[selected_instance_id].bank]);
           break;
         case 3:
           show(1, 0, 16, "Overwrite?");
@@ -12656,7 +12547,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
     display.print(F("["));
     setCursor_textGrid(14, 1);
     display.print(F("]"));
-    strcpy(receive_bank_filename, banks[configuration.dexed[selected_instance_id].bank].name);
+    strcpy(receive_bank_filename, g_bank_name[configuration.dexed[selected_instance_id].bank]);
 
     show(2, 0, 2, bank_number);
     show(2, 3, 10, receive_bank_filename);
@@ -12671,7 +12562,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
         {
           case 0:
             bank_number = constrain(bank_number + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-            strcpy(receive_bank_filename, banks[bank_number].name);
+            strcpy(receive_bank_filename, g_bank_name[bank_number]);
             show(2, 1, 2, bank_number);
             show(2, 3, 10, receive_bank_filename);
             break;
@@ -12693,7 +12584,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
         {
           case 0:
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
-            strcpy(receive_bank_filename, banks[bank_number].name);
+            strcpy(receive_bank_filename, g_bank_name[bank_number]);
             show(2, 0, 2, bank_number);
             show(2, 3, 10, receive_bank_filename);
             break;
@@ -12866,7 +12757,7 @@ void UI_func_sysex_send_bank(uint8_t param)
     show(2, 2, 1, "[");
     show(2, 14, 1, "]");
     show(2, 0, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, banks[configuration.dexed[selected_instance_id].bank].name);
+    show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -12882,16 +12773,16 @@ void UI_func_sysex_send_bank(uint8_t param)
         bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
       }
       show(2, 0, 2, bank_number);
-      show(2, 3, 10, banks[bank_number].name);
+      show(2, 3, 10, g_bank_name[bank_number]);
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
       File sysex;
       char filename[FILENAME_LEN];
 
-      if (!strcmp("*ERROR*", banks[bank_number].name))
+      if (!strcmp("*ERROR*", g_bank_name[bank_number]))
       {
-        sprintf(filename, "/%d/%s.syx", bank_number, banks[bank_number].name);
+        sprintf(filename, "/%d/%s.syx", bank_number, g_bank_name[bank_number]);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
@@ -12965,7 +12856,7 @@ void UI_func_sysex_send_voice(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Voice"));
     show(2, 1, 2, bank_number);
-    show(2, 5, 10, banks[bank_number].name);
+    show(2, 5, 10, g_bank_name[bank_number]);
     show(2, 4, 1, "[");
     show(2, 15, 1, "]");
   }
@@ -12983,7 +12874,7 @@ void UI_func_sysex_send_voice(uint8_t param)
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
           show(2, 1, 2, bank_number);
-          show(2, 5, 10, banks[bank_number].name);
+          show(2, 5, 10, g_bank_name[bank_number]);
           break;
         case 1: // Voice selection
           if (LCDML.BT_checkDown() && voice_number < MAX_VOICES - 1)
@@ -12991,7 +12882,7 @@ void UI_func_sysex_send_voice(uint8_t param)
           else if (LCDML.BT_checkUp() && voice_number > 0)
             voice_number = constrain(voice_number - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
           show(2, 1, 2, voice_number + 1);
-          show(2, 5, 10, banks[bank_number].voices[voice_number].name);
+          show(2, 5, 10, g_voice_name[voice_number]);
           break;
       }
     }
@@ -13003,15 +12894,15 @@ void UI_func_sysex_send_voice(uint8_t param)
       {
         case 1:
           show(2, 1, 2, voice_number + 1);
-          show(2, 5, 10, banks[bank_number].voices[voice_number].name);
+          show(2, 5, 10, g_voice_name[voice_number]);
           break;
         case 2:
           File sysex;
           char filename[FILENAME_LEN];
 
-          if (!strcmp("*ERROR*", banks[bank_number].name))
+          if (!strcmp("*ERROR*", g_bank_name[bank_number]))
           {
-            sprintf(filename, "/%d/%s.syx", bank_number, banks[bank_number].name);
+            sprintf(filename, "/%d/%s.syx", bank_number, g_bank_name[bank_number]);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
             Serial.print(voice_number);
