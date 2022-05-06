@@ -54,6 +54,8 @@ const float tune_frequencies2_PGM[128] =
 
 
 typedef struct sequencer_s {
+  bool track_mute[NUM_SEQ_TRACKS];
+  uint8_t mute_mode=0;
   uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
   uint8_t piano2[13] = {1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
   int generic_ui_delay;

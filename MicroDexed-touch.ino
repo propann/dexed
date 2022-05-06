@@ -1140,8 +1140,8 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
     handle_touchscreen_file_manager();
-  //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
-  //    handle_touchscreen_mute_matrix();
+    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
+      handle_touchscreen_mute_matrix();
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
       handle_touchscreen_color_edit();
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))

@@ -172,7 +172,7 @@ void sequencer_part1(void)
     else if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] < NUM_CHAINS * 2 )
       tr[d] = NUM_CHAINS - (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]]);  // number above NUM_CHAINS is used as negative value to save space
 
-    if ( seq.current_pattern[d] < NUM_SEQ_PATTERN  && seq.current_chain[d] != 99)  // sequence not empty or muted
+    if ( seq.current_pattern[d] < NUM_SEQ_PATTERN  && seq.current_chain[d] != 99 && !seq.track_mute[d])  // sequence not empty or muted
     {
       if ( seq.track_type[d] == 0  && seq.ticks == 0 )
       { // drum track (drum samples and pitched one-shot samples)

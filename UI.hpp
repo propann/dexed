@@ -1311,7 +1311,7 @@ void update_display_functions_while_seq_running()
     print_current_chord();
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker)) //is in UI of Tracker
-  { //phtodo
+  {
     display.setTextColor(GREEN, COLOR_BACKGROUND);
     display.setCursor(5 * CHAR_width_small, (5 + seq.step) * (CHAR_height_small + 3) - 7);
     display.print (F(">"));
@@ -1427,10 +1427,55 @@ void update_display_functions_while_seq_running()
         else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
           display.print(F("PS"));
     }
-
     //print currently playing chain steps
     print_playing_chains();
-
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
+  {
+    uint8_t track_count = 0;
+    for (uint8_t y = 0; y < 2; y++)
+    {
+      for (uint8_t x = 0; x < 4; x++)
+      {
+        display.setCursor( (2 * CHAR_width_small) + x * (CHAR_width_small * 14), 4+(10 * CHAR_height_small) + (y * (CHAR_height_small * 8)) );
+        set_pattern_content_type_color( seq.current_pattern[track_count] );
+        if (seq.content_type[seq.current_pattern[track_count]] > 0) //it is a Inst. pattern
+        {
+          if (seq.note_data [seq.current_pattern[track_count]][seq.step] > 12 &&
+              seq.note_data [seq.current_pattern[track_count]][seq.step] != 130 &&
+              seq.note_data[seq.current_pattern[track_count]][seq.step] != 99)
+          {
+            display.print(noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][0] );
+            if (noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][1] != '\0' )
+            {
+              display.print(noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][1] );
+            }
+            display.print( (seq.note_data [seq.current_pattern[track_count]][seq.step] / 12) - 1);
+          }
+          else if ( seq.note_data [seq.current_pattern[track_count]][seq.step] == 130) //latch
+            display.print(F("LAT"));
+          else
+            display.print(F("   "));
+        } else //it is a drum pattern
+          if ( seq.vel[seq.current_pattern[track_count]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
+          {
+            bool found = false;
+            for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
+            {
+              if (seq.note_data[seq.current_pattern[track_count]][seq.step] == drum_config[n].midinote)
+              {
+                display.print( drum_config[n].shortname);
+                found = true;
+                break;
+              }
+            }
+            if (found == false) display.print( "- ");
+          }
+          else if ( seq.vel[seq.current_pattern[track_count]][seq.step] > 209) //pitched sample
+            display.print(F("PS"));
+        track_count++;
+      }
+    }
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pianoroll)) //is in UI of Pianoroll
   {
@@ -5105,7 +5150,7 @@ void UI_func_custom_mappings(uint8_t param)
     display.print(DRUM_MIDI_CHANNEL);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.print(F("]"));
-     display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
     display.print(F(" TO LEARN "));
 
     //scrollbar - not implemented, yet
@@ -10585,19 +10630,60 @@ void UI_func_seq_mute_matrix(uint8_t param)
     // setup function
     display.fillScreen(COLOR_BACKGROUND);
     UI_toplineInfoText( 1);
-    display.setTextSize(2);
-    setCursor_textGrid(1, 0);
+    display.setTextSize(1);
+    display.setCursor(1, 2);
     display.setTextColor(COLOR_SYSTEXT);
     display.print ("MUTE MATRIX");
-    display.drawRect( 11, 2 * CHAR_height - 1, 455, 64, COLOR_SYSTEXT  );
+    helptext_l("BACK");
+    helptext_r ("TOUCH SCREEN TO MUTE/UNMUTE");
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    for (uint8_t y = 0; y < 4; y++)
+    uint8_t button_count = 0;
+    char buf[4];
+
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_mini( 2, 4);
+    display.print("MUTE/UNMUTE");
+    setCursor_textGrid_mini( 2, 5);
+    display.print("AT/IN:");
+
+    for (uint8_t y = 0; y < 3; y++)
     {
-      for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
+      for (uint8_t x = 0; x < 4; x++)
       {
-        display.fillRect( CHAR_width + x * (DISPLAY_WIDTH / 6 - 3)  , 2 * CHAR_height + y * (DISPLAY_HEIGHT / 4 - 7),  68, 62, GREY2);
+        if (y < 2)
+        {
+          if (!seq.track_mute[button_count])
+            draw_button_on_grid( 2 + x * 14,  12 + y * 8, "TRACK:", itoa(button_count + 1, buf, 10), 1 );
+          else
+            draw_button_on_grid( 2 + x * 14,  12 + y * 8, "TRACK:", itoa(button_count + 1, buf, 10), 0 );
+          button_count++;
+        }
+        else
+        {
+          if (x == 1)
+          {
+            if (seq.mute_mode == 0)
+              draw_button_on_grid( 2 + x * 14,  4, "REAL", "TIME", 1 );
+            else
+              draw_button_on_grid( 2 + x * 14,  4, "REAL", "TIME", 0 );
+          }
+          else if (x == 2)
+          {
+            if (seq.mute_mode == 1)
+              draw_button_on_grid( 2 + x * 14,  4, "NEXT", "PATTRN", 1 );
+            else
+              draw_button_on_grid( 2 + x * 14,  4, "NEXT", "PATTRN", 0 );
+          }
+          else if (x == 3)
+          {
+            if (seq.mute_mode == 2)
+              draw_button_on_grid( 2 + x * 14,  4, "SONG", "STEP", 1 );
+            else
+              draw_button_on_grid( 2 + x * 14,  4, "SONG", "STEP", 0 );
+          }
+        }
       }
     }
   }
