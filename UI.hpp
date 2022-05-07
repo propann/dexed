@@ -12351,12 +12351,21 @@ void UI_func_save_voice(uint8_t param)
 #else
     setCursor_textGrid(1, 1);
     display.print(F("Save Instance"));
-
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    if (selected_instance_id == 0)
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid(5, 2);
-    display.print(0);
+    display.print("0");
+    if (selected_instance_id == 1)
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid(10, 2);
-    display.print(1);
+    display.print("1");
+    helptext_l("BACK");
+    helptext_r("< > SELECT INSTANCE");
+    display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 #endif
   }
@@ -12374,13 +12383,13 @@ void UI_func_save_voice(uint8_t param)
           else
             display.setTextColor(GREY2, COLOR_BACKGROUND);
           setCursor_textGrid(5, 2);
-          display.print(0);
+          display.print("0");
           if (selected_instance_id == 1)
             display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           else
             display.setTextColor(GREY2, COLOR_BACKGROUND);
           setCursor_textGrid(10, 2);
-          display.print(1);
+          display.print("1");
           break;
         case 1: // Bank selection
           if (LCDML.BT_checkDown())
@@ -12404,11 +12413,11 @@ void UI_func_save_voice(uint8_t param)
           yesno = !yesno;
           if (yesno == true)
           {
-            show(2, 1, 3, "YES");
+            show(2, 2, 3, "YES");
           }
           else
           {
-            show(2, 1, 3, "NO");
+            show(2, 2, 3, "NO");
           }
           break;
       }
@@ -12421,22 +12430,28 @@ void UI_func_save_voice(uint8_t param)
       {
         case 1:
           setCursor_textGrid(1, 1);
-          display.print(F("Save to Bank"));
+          display.print(F("Save to Bank "));
           show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
           show(2, 3, 10, g_bank_name[configuration.dexed[selected_instance_id].bank]);
           show(2, 2, 2, " [");
           show(2, 14, 1, "]");
+          helptext_r("< > SELECT DESTINATION BANK");
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           break;
         case 2:
-          show(1, 0, 16, "Save to Bank");
-          show(1, 13, 2, configuration.dexed[selected_instance_id].bank);
-          show(2, 0, 2, configuration.dexed[selected_instance_id].voice + 1);
+          show(1, 1, 16, "Save to Bank ");
+          show(1, 14, 2, configuration.dexed[selected_instance_id].bank);
+          show(2, 1, 2, configuration.dexed[selected_instance_id].voice + 1);
           show(2, 3, 10, g_voice_name[configuration.dexed[selected_instance_id].bank]);
+          helptext_r("< > SELECT DESTINATION VOICE");
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           break;
         case 3:
-          show(1, 0, 16, "Overwrite?");
+          show(1, 1, 16, "Overwrite?");
           show(2, 1, 15, "[NO");
-          show(2, 4, 1, "]");
+          show(2, 5, 1, "]");
           break;
         default:
           if (yesno == true)
@@ -12451,7 +12466,7 @@ void UI_func_save_voice(uint8_t param)
 #else
             save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
 #endif
-            show(2, 0, 16, "Done.");
+            show(2, 1, 16, "Done.");
             delay(MESSAGE_WAIT_TIME);
 
             mode = 0xff;
@@ -12795,19 +12810,22 @@ void UI_func_sysex_send_voice(uint8_t param)
 
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     mode = 0;
     bank_number = configuration.dexed[selected_instance_id].bank;
     voice_number = configuration.dexed[selected_instance_id].voice;
-
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Voice"));
     show(2, 1, 2, bank_number);
     show(2, 5, 10, g_bank_name[bank_number]);
     show(2, 4, 1, "[");
     show(2, 15, 1, "]");
+    helptext_l("BACK");
+    helptext_r("< > SELECT BANK");
+    display.setTextSize(2);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
-
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
@@ -12822,6 +12840,7 @@ void UI_func_sysex_send_voice(uint8_t param)
 
           show(2, 1, 2, bank_number);
           show(2, 5, 10, g_bank_name[bank_number]);
+
           break;
         case 1: // Voice selection
           if (LCDML.BT_checkDown() && voice_number < MAX_VOICES - 1)
@@ -12842,6 +12861,9 @@ void UI_func_sysex_send_voice(uint8_t param)
         case 1:
           show(2, 1, 2, voice_number + 1);
           show(2, 5, 10, g_voice_name[voice_number]);
+          helptext_r("< > SELECT VOICE");
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           break;
         case 2:
           File sysex;
