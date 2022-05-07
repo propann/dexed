@@ -854,7 +854,7 @@ void border2()  //upper right
 
 void border1_clear() //upper left
 {
-  display.fillRect(1,  1, CHAR_width * 18 - 1, CHAR_height * 6 - 3 - 2, COLOR_BACKGROUND);
+  display.fillRect(1,  1, CHAR_width * 19 - 1, CHAR_height * 5 - 1, COLOR_BACKGROUND);
 }
 void border2_clear()  //upper right
 {
@@ -1055,7 +1055,6 @@ void print_voice_settings_in_pattern_editor(int x, int y)
   display.setTextColor(GREEN, COLOR_BACKGROUND);
   display.setCursor(x + 101, y);
   display.print(selected_instance_id + 1);
-
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   display.setCursor(x + 118, y - 1);
   seq_print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
@@ -4369,7 +4368,6 @@ void UI_func_at_range(uint8_t param)
 
     display_bar_int("AT Range", configuration.dexed[selected_instance_id].at_range, 1.0, AT_RANGE_MIN, AT_RANGE_MAX, 2, false, false, true);
 
-
     UI_update_instance_icons();
   }
 
@@ -4954,9 +4952,9 @@ void UI_func_drum_tune_offset(uint8_t param)
       }
     }
     if (menu_select_toggle == false) {
-      setCursor_textGrid(14, 2);
+      setCursor_textGrid(13, 2);
       display.print(" ");
-      setCursor_textGrid(18, 2);
+      setCursor_textGrid(17, 2);
       display.print(" ");
       setCursor_textGrid(1, 2);
       display.print("[");
@@ -4967,7 +4965,7 @@ void UI_func_drum_tune_offset(uint8_t param)
       display.print(displayname);
       show(2, 5, 8, basename(drum_config[activesample].name));
       sprintf(displayname, "%03d", (int)(drum_config[activesample].p_offset * 200) );
-      setCursor_textGrid(15, 2);
+      setCursor_textGrid(14, 2);
       display.print(displayname);
     } else {
       temp_float = mapfloat(temp_int, 0, 400, 0.0, 2.0);
@@ -4975,12 +4973,12 @@ void UI_func_drum_tune_offset(uint8_t param)
       display.print(" ");
       setCursor_textGrid(4, 2);
       display.print(" ");
-      setCursor_textGrid(14, 2);
+      setCursor_textGrid(13, 2);
       display.print("[");
-      setCursor_textGrid(18, 2);
+      setCursor_textGrid(17, 2);
       display.print("]");
       sprintf(displayname, "%03d", temp_int);
-      setCursor_textGrid(15, 2);
+      setCursor_textGrid(14, 2);
       display.print(displayname);
       drum_config[activesample].p_offset = temp_float;
     }
@@ -10363,21 +10361,21 @@ void arp_refresh_display_play_status()
   if (seq.running == false )
   {
     //play symbol
-    drawBitmap(24 * CHAR_width-4 , CHAR_height *7+6, special_chars[19], 8, 8, GREEN);
+    drawBitmap(24 * CHAR_width - 4 , CHAR_height * 7 + 6, special_chars[19], 8, 8, GREEN);
   }  else if (seq.running == true )
   {
     //stop symbol
-    drawBitmap(24 * CHAR_width -4, CHAR_height *7+6, special_chars[21], 8, 8, COLOR_SYSTEXT);
+    drawBitmap(24 * CHAR_width - 4, CHAR_height * 7 + 6, special_chars[21], 8, 8, COLOR_SYSTEXT);
   }
 }
 
 void print_arp_start_stop_button()
 {
-   if (seq.running)
-      draw_button_on_grid( 42, 15, "SEQ.", "STOP", 1 );
-    else
-      draw_button_on_grid( 42, 15, "SEQ.", "START", 0 );
-arp_refresh_display_play_status();
+  if (seq.running)
+    draw_button_on_grid( 42, 15, "SEQ.", "STOP", 1 );
+  else
+    draw_button_on_grid( 42, 15, "SEQ.", "START", 0 );
+  arp_refresh_display_play_status();
 }
 
 void UI_func_arpeggio(uint8_t param)
@@ -10409,7 +10407,7 @@ void UI_func_arpeggio(uint8_t param)
     display.print(F("["));
     setCursor_textGrid_large(18, 8);
     display.print(F("]"));
-   print_arp_start_stop_button();
+    print_arp_start_stop_button();
     helptext_l("BACK");
     display.setTextSize(2);
   }
@@ -10446,9 +10444,9 @@ void UI_func_arpeggio(uint8_t param)
         seq_active_function = 1;
       else
         seq_active_function = 0;
-      
+
     }
-    
+
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     if ( seq_active_function == 0 )
@@ -12335,7 +12333,7 @@ void UI_func_save_voice(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     yesno = false;
 #if NUM_DEXED == 1
     mode = 1;
@@ -12354,10 +12352,12 @@ void UI_func_save_voice(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Save Instance"));
 
-    setCursor_textGrid(15, 1);
-    display.print("x");
-    setCursor_textGrid(16, 1);
-    display.print("y");
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid(5, 2);
+    display.print(0);
+    setCursor_textGrid(10, 2);
+    display.print(1);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 #endif
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -12369,10 +12369,17 @@ void UI_func_save_voice(uint8_t param)
         case 0: // Instance selection
           if (LCDML.BT_checkDown() || LCDML.BT_checkUp())
             selected_instance_id = !selected_instance_id;
-
-          setCursor_textGrid(5, 1);
+          if (selected_instance_id == 0)
+            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          else
+            display.setTextColor(GREY2, COLOR_BACKGROUND);
+          setCursor_textGrid(5, 2);
           display.print(0);
-          setCursor_textGrid(10, 1);
+          if (selected_instance_id == 1)
+            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          else
+            display.setTextColor(GREY2, COLOR_BACKGROUND);
+          setCursor_textGrid(10, 2);
           display.print(1);
           break;
         case 1: // Bank selection

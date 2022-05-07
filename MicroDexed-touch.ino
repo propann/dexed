@@ -1041,12 +1041,7 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
-
-  //  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-  //  {
-  //    ts.scopebuffer_old[i] = 10;
-  //  }
-
+  scope.clear();
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1155,7 +1150,7 @@ void loop()
     handle_touchscreen_mixer();
     scope.draw_scope(225, 0, 80);
   }
- else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
   {
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();

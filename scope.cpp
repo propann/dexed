@@ -49,8 +49,16 @@ void Realtime_Scope::update(void)
   }
 }
 
+void Realtime_Scope::clear(void)
+{
+   for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+    {
+      scopebuffer_old[i] = 40;
+    }
+}
+
 void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
-  if (scope_delay > 252 && seq.running)
+  if (scope_delay > 252)
   {
     uint16_t i = 0;
     scope_is_drawing = true;

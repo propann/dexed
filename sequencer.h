@@ -25,7 +25,6 @@
 #ifndef _SEQUENCER_H
 #define _SEQUENCER_H
 #include "XPT2046_Touchscreen.h"
-//extern XPT2046_Touchscreen touch ;
 
 #include <avr/pgmspace.h>
 

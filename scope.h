@@ -14,14 +14,12 @@ class Realtime_Scope : public AudioStream {
     void FillArray(void);
     void AddtoBuffer(int16_t*);
     void draw_scope(uint16_t x, int y, uint8_t w);
-    
+    void clear(void);
   private:
     audio_block_t *inputQueueArray[2];
     int16_t buffer[AUDIO_BLOCK_SAMPLES];
-    int16_t buffer_old[AUDIO_BLOCK_SAMPLES];
     uint32_t count = 0;
     elapsedMillis msecs;
-
     int16_t scopebuffer[AUDIO_BLOCK_SAMPLES];
     int16_t scopebuffer_old[AUDIO_BLOCK_SAMPLES];
 };
