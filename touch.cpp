@@ -38,6 +38,8 @@ extern microsynth_t  microsynth[NUM_MICROSYNTH];
 extern void print_empty_spaces (uint8_t spaces);
 extern void print_voice_select_default_help();
 extern void playWAVFile(const char *filename);
+extern void handleStop(void);
+extern void handleStart(void);
 
 ts_t ts; //touch screen
 fm_t fm; //file manager
@@ -334,7 +336,6 @@ void virtual_keyboard ()
   display.setTextSize(1);
 
   //display.drawLine(1, VIRT_KEYB_YPOS - 4, DISPLAY_WIDTH - 2, VIRT_KEYB_YPOS - 4, GREY2);
-
   //display.drawLine(0, VIRT_KEYB_YPOS - 3, 0 , VIRT_KEYB_YPOS , COLOR_BACKGROUND);
   //display.drawLine(239, VIRT_KEYB_YPOS - 3, 239 , VIRT_KEYB_YPOS , COLOR_BACKGROUND);
   //display.drawLine(479, VIRT_KEYB_YPOS - 3, 479 , VIRT_KEYB_YPOS , COLOR_BACKGROUND);
@@ -456,15 +457,19 @@ void virtual_keyboard_update_all_key_states()
   }
 }
 
+void get_scaled_touch_point() {
+  LCDML.SCREEN_resetTimer();
+  ts.p = touch.getPoint();
+  // Scale from ~0->4000 to tft
+  ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+  ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+}
+
 void handle_touchscreen_voice_select()
 {
   if (touch.touched())
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
 
     if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 31000 )
     {
@@ -594,11 +599,7 @@ void handle_touchscreen_pattern_editor()
 {
   if (touch.touched())
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
     if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000 )
     {
       border3_large();
@@ -646,11 +647,7 @@ void handle_touchscreen_microsynth()
 {
   if (touch.touched())
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
 
     if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000 )
     {
@@ -735,11 +732,7 @@ void handle_touchscreen_file_manager()
 {
   if (touch.touched())
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
 
     // check touch buttons
 
@@ -813,11 +806,7 @@ void handle_touchscreen_custom_mappings()
 {
   if (touch.touched() && ts.block_screen_update == false)
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
     if ( check_button_on_grid(45, 1))
     {
       seq.midi_learn_active = !seq.midi_learn_active;
@@ -835,11 +824,7 @@ void handle_touchscreen_cc_mappings()
 {
   if (touch.touched() && ts.block_screen_update == false)
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
     if ( check_button_on_grid(45, 1))
     {
       seq.midi_learn_active = !seq.midi_learn_active;
@@ -857,10 +842,7 @@ void handle_touchscreen_color_edit()
 {
   if (touch.touched())
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
 
     if ( ts.p.x > 170  && ts.p.x < 170 + 36  && ts.p.y < DISPLAY_HEIGHT - CHAR_height )
       if (ts.p.y * 1.22 > 359)
@@ -891,11 +873,7 @@ void handle_touchscreen_mute_matrix()
 {
   if (touch.touched())
   {
-    LCDML.SCREEN_resetTimer();
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
-    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-    ts.p.y = map(ts.p.y, 310, 3720 , 0, TFT_WIDTH);
+    get_scaled_touch_point();
     uint8_t button_count = 0;
     char buf[4];
     for (uint8_t y = 0; y < 3; y++)
@@ -951,6 +929,24 @@ void handle_touchscreen_mute_matrix()
           }
         }
       }
+    }
+  }
+  seq.generic_ui_delay++;
+}
+
+void handle_touchscreen_arpeggio()
+{
+  if (touch.touched())
+  {
+    get_scaled_touch_point();
+    if (check_button_on_grid(42, 15) && seq.generic_ui_delay > 3000 )
+    {
+      if (seq.running)
+        handleStop();
+      else
+        handleStart();
+
+      seq.generic_ui_delay = 0;
     }
   }
   seq.generic_ui_delay++;

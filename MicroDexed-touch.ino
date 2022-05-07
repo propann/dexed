@@ -494,7 +494,7 @@ void create_audio_drum_chain(uint8_t instance_id)
 {
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
-  
+
 #ifdef COMPILE_FOR_FLASH
   Drum[instance_id] = new AudioPlayFlashResmp();
   //Drum[instance_id] = new AudioPlaySerialflashRaw();
@@ -617,7 +617,9 @@ extern void handle_touchscreen_file_manager(void);
 extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
 extern void handle_touchscreen_color_edit(void);
+extern void handle_touchscreen_arpeggio(void);
 extern void update_midi_learn_button(void);
+extern void print_arp_start_stop_button(void);
 #endif
 
 extern void update_microsynth_params(void);
@@ -1127,8 +1129,8 @@ void loop()
     handle_touchscreen_voice_select();
     scope.draw_scope(216, 32, 103);
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || 
-  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ||
+           LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
     handle_touchscreen_pattern_editor();
     scope.draw_scope(216, -9, 52);
@@ -1140,20 +1142,24 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
     handle_touchscreen_file_manager();
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
-      handle_touchscreen_mute_matrix();
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
-      handle_touchscreen_color_edit();
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
-      handle_touchscreen_custom_mappings();
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
-      handle_touchscreen_cc_mappings();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
+    handle_touchscreen_mute_matrix();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
+    handle_touchscreen_color_edit();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
+    handle_touchscreen_custom_mappings();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
+    handle_touchscreen_cc_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
   {
     handle_touchscreen_mixer();
     scope.draw_scope(225, 0, 80);
   }
-
+ else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
+  {
+    scope.draw_scope(232, -2, 64);
+    handle_touchscreen_arpeggio();
+  }
   if (microsynth_lfo_control_rate > MICROSYNTH_LFO_RATE_MS) //update lfos, filters etc. when played live or by seq.
   {
     microsynth_lfo_control_rate = 0;
@@ -2656,33 +2662,23 @@ void handleStart(void)
   midi_bpm_counter = 0;
   _midi_bpm = -1;
 
-  //        seq.loop_start = 99;
-  //        seq.loop_end = 99;
-
-  //#if defined(USE_SEQUENCER)
   seq.step = 0;
   seq.current_song_step = 0;
   seq.arp_note = 0;
   seq.arp_chord = 0;
-
-  //  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-  //  {
-  //    seq.chain_counter[d] = 0;
-  //    seq.current_pattern[d] = 99;
-  //  }
 
   if (seq.loop_start == 99)  // no loop start set, start at step 0
     seq.current_song_step = 0;
   else
     seq.current_song_step = seq.loop_start;
 
-
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
   seq.running = true;
-  // sequencer_timer.start();
 
-  //#endif
-
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
+  {
+    print_arp_start_stop_button();
+  }
 }
 
 void handleContinue(void)
@@ -2713,8 +2709,9 @@ void handleStop(void)
       }
       sub_song_print_tracknumbers();
     }
-  }
 
+
+  }
   seq.running = false;
   seq.recording = false;
   seq.note_in = 0;
@@ -2737,7 +2734,10 @@ void handleStop(void)
   microsynth_envelope_noise[1].noteOff();
 #endif
 
-
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
+  {
+    print_arp_start_stop_button();
+  }
 }
 
 void handleActiveSensing(void)

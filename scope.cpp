@@ -1,10 +1,11 @@
 
 #include "scope.h"
 #include "ILI9341_t3n.h"
-
+#include "sequencer.h"
 extern ILI9341_t3n display;
 extern uint16_t COLOR_SYSTEXT;
 extern uint16_t COLOR_BACKGROUND;
+extern sequencer_t seq;
 
 void Realtime_Scope::FillArray() {
   __disable_irq();
@@ -49,7 +50,7 @@ void Realtime_Scope::update(void)
 }
 
 void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
-  if (scope_delay > 252)
+  if (scope_delay > 252 && seq.running)
   {
     uint16_t i = 0;
     scope_is_drawing = true;

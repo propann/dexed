@@ -125,9 +125,9 @@ typedef struct sequencer_s {
   };
 
   const char arp_style_names[4][3] = {
-    { 'u', 'p', ' '},
-    {'d', 'w', 'n'},
-    {'u', '&', 'd'},
+    { 'U', 'P', ' '},
+    {'D', 'W', 'N'},
+    {'U', '&', 'D'},
     {'R', 'N', 'D'}
   };
   int tempo_ms = 180000;
