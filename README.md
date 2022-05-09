@@ -37,19 +37,19 @@ Development Status:
 
 | Feature | Status |   
 |:-----------|:-----------:| 
-| Pattern Editor | 90% |
+| Pattern Editor | 92% |
 | Step/Grid Editor | 80% |
-| Song Mode| 85% |
-| MicroSynth | 85% |
+| Song Mode| 90% |
+| MicroSynth | 90% |
 | EPiano GUI | 95% |
-| General UI Merge | 75% |
+| General UI Merge | 80% |
 | SysEx/MIDI Controls | 70% |
-| Main Mixer View | 60% |
-| Mute Matrix | 70% |
+| Main Mixer View | 90% |
+| Mute Matrix | 80% |
 | Piano Roll Editor | 80% |
 | File Manager (SD/Flash) | 60% |
 | MultiSample Player | 10% |
-| Virtual Keyboard | 85% |
+| Virtual Keyboard | 90% |
 | Custom/User Samples | 0% |
 | Sample Editor | 0% |
 
