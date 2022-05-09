@@ -2588,11 +2588,7 @@ void UI_func_reverb_level(uint8_t param)
       else if (LCDML.BT_checkUp())
         configuration.fx.reverb_level = constrain(configuration.fx.reverb_level - ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
     }
-
     display_bar_int("Reverb Level", configuration.fx.reverb_level, 1.0, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 3, false, false, true);
-
-    //master_mixer_r.gain(MASTER_MIX_CH_REVERB, pseudo_log_curve(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0)));
-    //master_mixer_l.gain(MASTER_MIX_CH_REVERB, pseudo_log_curve(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0)));
     master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
     master_mixer_l.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
   }
@@ -4866,13 +4862,11 @@ void UI_func_drum_midi_channel(uint8_t param)
 }
 void UI_func_drums_main_volume(uint8_t param)
 {
-  char displayname[4] = {0, 0, 0, 0};
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
     temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
-    setCursor_textGrid(1, 1);
-    display.print(F(" Drums M.Volume "));
+    display_bar_int("Drums Volume", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, true);
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -4887,13 +4881,9 @@ void UI_func_drums_main_volume(uint8_t param)
         temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 100);
       }
     }
-    setCursor_textGrid(5, 2);
-    sprintf(displayname, "%03d", temp_int);
-    display.print(displayname);
-    setCursor_textGrid(8, 2);
-    display.print(F("/100"));
-    master_mixer_r.gain (2, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
-    master_mixer_l.gain (2, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
+    display_bar_int("Drums Volume", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+    master_mixer_r.gain (3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
+    master_mixer_l.gain (3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
     seq.drums_volume = mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT);
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
@@ -8998,7 +8988,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].coarse = constrain(microsynth[microsynth_selected_instance].coarse + 1, -36, 36);
         else if ( seq.temp_select_menu == 3 )
           microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune + 1, -99, 99);
-
         else if ( seq.temp_select_menu == 4 )
           microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack + 1, 0, 254);
         else if ( seq.temp_select_menu == 5 )
@@ -9007,8 +8996,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].env_sustain = constrain(microsynth[microsynth_selected_instance].env_sustain + 1, 0, 50);
         else if ( seq.temp_select_menu == 7 )
           microsynth[microsynth_selected_instance].env_release = constrain(microsynth[microsynth_selected_instance].env_release + 1, 0, 99);
-
-
         else if ( seq.temp_select_menu == 8 )
           microsynth[microsynth_selected_instance].filter_osc_mode = constrain(microsynth[microsynth_selected_instance].filter_osc_mode + 1, 0, 3);
         else if ( seq.temp_select_menu == 9 )
@@ -9019,15 +9006,12 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].filter_osc_resonance = constrain(microsynth[microsynth_selected_instance].filter_osc_resonance + 1, 0, 99);
         else if ( seq.temp_select_menu == 12 )
           microsynth[microsynth_selected_instance].filter_osc_speed = constrain(microsynth[microsynth_selected_instance].filter_osc_speed + 5, 0, 999);
-
         else if ( seq.temp_select_menu == 13 )
           microsynth[microsynth_selected_instance].pwm_from = constrain(microsynth[microsynth_selected_instance].pwm_from + 5, 0, 999);
         else if ( seq.temp_select_menu == 14 )
           microsynth[microsynth_selected_instance].pwm_to = constrain(microsynth[microsynth_selected_instance].pwm_to + 5, 0, 999);
         else if ( seq.temp_select_menu == 15 )
           microsynth[microsynth_selected_instance].pwm_speed = constrain(microsynth[microsynth_selected_instance].pwm_speed + 1, 0, 99);
-
-
         else if ( seq.temp_select_menu == 16 )
           microsynth[microsynth_selected_instance].noise_vol = constrain(microsynth[microsynth_selected_instance].noise_vol + 1, 0, 100);
         else if ( seq.temp_select_menu == 17 )
@@ -9044,9 +9028,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].filter_noise_resonance = constrain(microsynth[microsynth_selected_instance].filter_noise_resonance + 1, 0, 99);
         else if ( seq.temp_select_menu == 23 )
           microsynth[microsynth_selected_instance].filter_noise_speed = constrain(microsynth[microsynth_selected_instance].filter_noise_speed + 6, 0, 999);
-
-
-
         else if ( seq.temp_select_menu == 24 )
           microsynth[microsynth_selected_instance].lfo_intensity = constrain(microsynth[microsynth_selected_instance].lfo_intensity + 1, 0, 254);
         else if ( seq.temp_select_menu == 25 )
@@ -9055,8 +9036,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].lfo_delay = constrain(microsynth[microsynth_selected_instance].lfo_delay + 1, 0, 254);
         else if ( seq.temp_select_menu == 27 )
           microsynth[microsynth_selected_instance].lfo_speed = constrain(microsynth[microsynth_selected_instance].lfo_speed + 1, 0, 254);
-
-
         else if ( seq.temp_select_menu == 28 )
           microsynth[microsynth_selected_instance].rev_send = constrain(microsynth[microsynth_selected_instance].rev_send + 1, 0, 127);
         else if ( seq.temp_select_menu == 29 )
@@ -11612,79 +11591,217 @@ void UI_func_midi_soft_thru(uint8_t param)
   }
 }
 
+void print_mixer_text()
+{
+  if (seq.temp_active_menu == 0)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(0, 20);
+  display.print(F("DXD"));
+  setCursor_textGrid_mini(0, 21);
+  display.print(F("#1"));
+  if (seq.temp_active_menu == 1)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(4, 20);
+  display.print(F("DXD"));
+  setCursor_textGrid_mini(4, 21);
+  display.print(F("#2"));
+  if (seq.temp_active_menu == 2)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(8, 20);
+  display.print(F("MSY"));
+  setCursor_textGrid_mini(8, 21);
+  display.print(F("#1"));
+  if (seq.temp_active_menu == 3)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(12, 20);
+  display.print(F("MSY"));
+  setCursor_textGrid_mini(12, 21);
+  display.print(F("#2"));
+  if (seq.temp_active_menu == 4)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(16, 20);
+  display.print(F("DRM"));
+  setCursor_textGrid_mini(16, 21);
+  display.print(F("L"));
+  setCursor_textGrid_mini(20, 20);
+  display.print(F("DRM"));
+  setCursor_textGrid_mini(20, 21);
+  display.print(F("R"));
+  if (seq.temp_active_menu == 5)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(27, 20);
+  display.print(F("REVB"));
+  setCursor_textGrid_mini(32, 20);
+  display.print(F("REVB"));
+  setCursor_textGrid_mini(27, 21);
+  display.print(F("L"));
+  setCursor_textGrid_mini(32, 21);
+  display.print(F("R"));
+  if (seq.temp_active_menu == 6)
+    display.setTextColor(RED, COLOR_BACKGROUND); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(40, 20);
+  display.print(F("MASTER"));
+  setCursor_textGrid_mini(47, 20);
+  display.print(F("MASTER"));
+  setCursor_textGrid_mini(40, 21);
+  display.print(F("L"));
+  setCursor_textGrid_mini(47, 21);
+  display.print(F("R"));
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_mini(0, 19);
+  seq_print_formatted_number(configuration.dexed[0].sound_intensity, 3);
+  setCursor_textGrid_mini(4, 19);
+  seq_print_formatted_number(configuration.dexed[1].sound_intensity, 3);
+  setCursor_textGrid_mini(8, 19);
+  seq_print_formatted_number(microsynth[0].sound_intensity, 3);
+  setCursor_textGrid_mini(12, 19);
+  seq_print_formatted_number(microsynth[1].sound_intensity, 3);
+  temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
+  setCursor_textGrid_mini(16, 19);
+  seq_print_formatted_number(temp_int, 3);
+  setCursor_textGrid_mini(20, 19);
+  seq_print_formatted_number(temp_int, 3);
+  setCursor_textGrid_mini(27, 19);
+  seq_print_formatted_number(configuration.fx.reverb_level, 3);
+  setCursor_textGrid_mini(32, 19);
+  seq_print_formatted_number(configuration.fx.reverb_level, 3);
+  setCursor_textGrid_mini(40, 19);
+  seq_print_formatted_number(configuration.sys.vol, 3);
+  setCursor_textGrid_mini(47, 19);
+  seq_print_formatted_number(configuration.sys.vol, 3);
+}
 void UI_func_mixer(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
+    seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
-
-    setCursor_textGrid_mini(1, 1);
-    display.print(F("MASTER MIX"));
-
-    display.setTextSize(1);
+    for (uint8_t j = 0; j < uint8_t(sizeof(ts.displayed_peak)); j++)
+      ts.displayed_peak[j] = 0;
+    setCursor_textGrid(1, 1);
+    display.print(F("MIXER"));
     helptext_l("BACK");
     helptext_r ("< > SELECT CH");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
-    setCursor_textGrid_mini(0, 20);
-    display.print(F("DXD"));
-    setCursor_textGrid_mini(4, 20);
-    display.print(F("DXD"));
-
-    setCursor_textGrid_mini(8, 20);
-    display.print(F("MSY"));
-    setCursor_textGrid_mini(12, 20);
-    display.print(F("MSY"));
-
-    setCursor_textGrid_mini(16, 20);
-    display.print(F("DRM"));
-    setCursor_textGrid_mini(20, 20);
-    display.print(F("DRM"));
-
-    setCursor_textGrid_mini(27, 20);
-    display.print(F("REVB"));
-    setCursor_textGrid_mini(32, 20);
-    display.print(F("REVB"));
-
-    setCursor_textGrid_mini(40, 20);
-    display.print(F("MASTER"));
-    setCursor_textGrid_mini(47, 20);
-    display.print(F("MASTER"));
-
-    setCursor_textGrid_mini(0, 21);
-    display.print(F("#1"));
-    setCursor_textGrid_mini(4, 21);
-    display.print(F("#2"));
-
-    setCursor_textGrid_mini(16, 21);
-    display.print(F("L"));
-    setCursor_textGrid_mini(20, 21);
-    display.print(F("R"));
-
-    setCursor_textGrid_mini(27, 21);
-    display.print(F("L"));
-    setCursor_textGrid_mini(32, 21);
-    display.print(F("R"));
-
-    setCursor_textGrid_mini(40, 21);
-    display.print(F("L CH"));
-    setCursor_textGrid_mini(47, 21);
-    display.print(F("R CH"));
-
-
+    print_mixer_text();
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
-      if (LCDML.BT_checkDown())
-        ;
-      else if (LCDML.BT_checkUp())
-        ;
+      if (!seq.edit_state)  //select channel
+      {
+        if (LCDML.BT_checkDown())
+          seq.temp_active_menu = constrain(seq.temp_active_menu + ENCODER[ENC_R].speed(), 0, 6);
+        else if (LCDML.BT_checkUp())
+          seq.temp_active_menu = constrain(seq.temp_active_menu - ENCODER[ENC_R].speed(), 0, 6);
+      }
+      else
+      {
+        if (seq.temp_active_menu < 2)  //dexed instance #0 or #1
+        {
+          if (LCDML.BT_checkDown())
+            configuration.dexed[seq.temp_active_menu].sound_intensity = constrain(configuration.dexed[seq.temp_active_menu].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+          else if (LCDML.BT_checkUp())
+            configuration.dexed[seq.temp_active_menu].sound_intensity = constrain(configuration.dexed[seq.temp_active_menu].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+        }
+        else if (seq.temp_active_menu > 1 && seq.temp_active_menu < 4) //microsynth
+        {
+          if (LCDML.BT_checkDown())
+            microsynth[seq.temp_active_menu - 2].sound_intensity = constrain(microsynth[seq.temp_active_menu - 2].sound_intensity + 1, 0, 100);
+          else if (LCDML.BT_checkUp())
+            microsynth[seq.temp_active_menu - 2].sound_intensity = constrain(microsynth[seq.temp_active_menu - 2].sound_intensity - 1, 0, 100);
+        }
+        else if (seq.temp_active_menu == 4) //drums
+        {
+          if (LCDML.BT_checkDown())
+            temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 100);
+          else if (LCDML.BT_checkUp())
+            temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 100);
+          seq.drums_volume = mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT);
+        }
+        else if (seq.temp_active_menu == 5) //reverb level
+        {
+          if (LCDML.BT_checkDown())
+            configuration.fx.reverb_level = constrain(configuration.fx.reverb_level + ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
+          else if (LCDML.BT_checkUp())
+            configuration.fx.reverb_level = constrain(configuration.fx.reverb_level - ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
+        }
+        else if (seq.temp_active_menu == 6) //master level
+        {
+          if (LCDML.BT_checkDown() )
+          {
+            configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
+          }
+          else if (LCDML.BT_checkUp() )
+          {
+            configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
+          }
+        }
+      }
     }
-
-
+    else  if (LCDML.BT_checkEnter())
+    {
+      seq.edit_state = !seq.edit_state;
+      border1_clear();
+      if (!seq.edit_state)
+      {
+        display.setTextSize(2);
+        setCursor_textGrid(1, 1);
+        display.print(F("MIXER"));
+      }
+    }
+    if (seq.edit_state)
+      helptext_r ("CHANGE VOLUME");
+    else
+      helptext_r ("< > SELECT CHANNEL");
+    display.setTextSize(2);
+    if (seq.temp_active_menu < 2 && seq.edit_state) // dexed 0 or dexed 1 instance selected
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display_bar_int("", configuration.dexed[seq.temp_active_menu].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      setCursor_textGrid(1, 1);
+      display.print("DEXED #");
+      display.print(seq.temp_active_menu + 1);
+      MD_sendControlChange(configuration.dexed[seq.temp_active_menu].midi_channel, 7, configuration.dexed[seq.temp_active_menu].sound_intensity);
+      MicroDexed[seq.temp_active_menu]->setGain(midi_volume_transform(map(configuration.dexed[seq.temp_active_menu].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
+    }
+    if (seq.temp_active_menu > 1 && seq.temp_active_menu < 4 && seq.edit_state) // //microsynth
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display_bar_int("", microsynth[seq.temp_active_menu - 2].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      setCursor_textGrid(1, 1);
+      display.print("MICROSYNTH #");
+      display.print(seq.temp_active_menu - 2 + 1);
+    }
+    else if (seq.temp_active_menu == 4 && seq.edit_state) // drums
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
+      display_bar_int("DRUMS VOLUME", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, true);
+      master_mixer_r.gain (3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
+      master_mixer_l.gain (3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
+    }
+    else if (seq.temp_active_menu == 5 && seq.edit_state) // reverb level
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      setCursor_textGrid(1, 1);
+      display.print(F("REVERB LEVEL"));
+      display_bar_int("", configuration.fx.reverb_level, 1.0, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 3, false, false, false);
+      master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
+      master_mixer_l.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
+    }
+    else if (seq.temp_active_menu == 6 && seq.edit_state) // master volume
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      setCursor_textGrid(1, 1);
+      display.print(F("MASTER VOLUME"));
+      display_bar_int("", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
+      set_volume(configuration.sys.vol, configuration.sys.mono);
+    }
+    display.setTextSize(1);
+    print_mixer_text();
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {

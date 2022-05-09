@@ -1046,20 +1046,26 @@ void setup()
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
 {
-  // draw bar
-  //int height = value * 610;
-  int height = mapfloat(value, 0.0, 0.13, 0, 100);
-  if (height > 101)
-    height = 101;
-
+  int height;
+  //draw text
+  display.setCursor(x, y + 4);
+  if (value == 0 || value > 0.16)
+  {
+    height = 0;
+    seq_print_formatted_number( 0, 3 );
+  }
+  else
+  {
+    height = mapfloat(value, 0.0, 0.13, 0, 99);
+    seq_print_formatted_number( height, 3 );
+  }
+  //draw bar
   if (height > ts.displayed_peak[arr])
   {
     int z = 0;
     do {
-      // display.drawFastHLine ( x, y - height + z, 19, ColorHSV(( (y - height + z) * 160 ) , 244, 214)   );
-      display.drawFastHLine ( x, y - height + z, 19, GREEN  );
-
-      // display.drawLine ( x, y - height + z, x + 19,  y - height + z, GREEN  );
+     // display.drawFastHLine ( x, y - height + z, 19, GREEN  );
+      display.drawFastHLine ( x, y - height + z, 19, ColorHSV(( 100-height+ z), 200, 200) );
       z++;
     } while (z < height - ts.displayed_peak[arr] );
     ts.displayed_peak[arr] = height;
@@ -1068,15 +1074,15 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
   {
     if (ts.displayed_peak[arr] > 1)
     {
+      display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 2, COLOR_BACKGROUND);
+      ts.displayed_peak[arr] = ts.displayed_peak[arr] - 2;
+    }
+    else if (ts.displayed_peak[arr] > 0)
+    {
       display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 1, COLOR_BACKGROUND);
       ts.displayed_peak[arr] = ts.displayed_peak[arr] - 1;
     }
   }
-  //draw text
-  display.setCursor(x, y + 4);
-  //display.print( int(value*100));
-  seq_print_formatted_number( int(value * 240), 2 );
-  // display.print(height); //phtodo555
 }
 
 void handle_touchscreen_mixer()

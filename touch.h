@@ -23,7 +23,6 @@ int release_mod[NUM_DEXED] = { 0 };
 
 typedef struct ts_s
 {
-
   uint16_t temp_col_hue = 1;
   uint8_t  temp_col_sat = 240, temp_col_bright = 240;
 
