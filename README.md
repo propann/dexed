@@ -35,23 +35,11 @@ https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
 Development Status:
 
-| Feature | Status |   
-|:-----------|:-----------:| 
-| Pattern Editor | 92% |
-| Step/Grid Editor | 80% |
-| Song Mode| 90% |
-| MicroSynth | 90% |
-| EPiano GUI | 95% |
-| General UI Merge | 80% |
-| SysEx/MIDI Controls | 70% |
-| Main Mixer View | 90% |
-| Mute Matrix | 80% |
-| Piano Roll Editor | 80% |
-| File Manager (SD/Flash) | 60% |
-| MultiSample Player | 10% |
-| Virtual Keyboard | 90% |
-| Custom/User Samples | 0% |
-| Sample Editor | 0% |
+Hardware:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Status:-Hardware-%2F-PCB
+
+Software:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Status:-Software
 
 ## Installation/Compile Instructions
 
