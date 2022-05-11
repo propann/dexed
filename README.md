@@ -56,7 +56,6 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 * Power on the Teensy and attach USB MIDI Keyboard ( or use the virtual Touch Keyboard and the Encoders to navigate)
 
 ## USB MIDI
-
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/DIY-USB-MIDI-HOST
 
 ## License
@@ -67,7 +66,7 @@ MicroDexed is licensed on the GPL v3. The msfa component (acronym for music synt
 
 ## Manuals:
 
-Links for building a TMA board and/or MicroDexed, a small installation guide for Arduino-IDE and a user manual are located here: https://codeberg.org/dcoredump/MicroDexed/wiki/_pages
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/?action=_pages
 
 ## Buttons / Encoders
 
