@@ -32,10 +32,10 @@ https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 ## Development Status:
 
 ### Hardware:
-https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Status:-Hardware-%2F-PCB
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Hardware-%2F-PCB
 
 ### Software:
-https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Status:-Software
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 
 ## Installation/Compile Instructions
 
