@@ -4,8 +4,6 @@
 
 ### This fork requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
 
-The Display is smaller than the first "nextgen" version but now is much faster - may it be the screen itself or most probably because of the much more optimized display library.
-
 The Teensy supports several Serial Flash Chips, for development currently in use is a:
 
 WINBOND W25Q128FVSG SERIAL FLASH MEMORY 3V 128M-BIT
