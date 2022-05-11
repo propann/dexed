@@ -57,13 +57,7 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 
 ## USB MIDI
 
-Connect your USB MIDI Keyboard/Controller here (or buy the cable from pjrc.com)
-
-https://www.pjrc.com/store/cable_usb_host_t36.html
-
-<img src="https://forum.pjrc.com/attachment.php?attachmentid=20372&d=1590829923&thumb=1" >
-<br>
-<img src="https://www.pjrc.com/store/cable_usb_host_t36_2.jpg" >
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/DIY-USB-MIDI-HOST
 
 ## License
 
@@ -92,13 +86,9 @@ in Voice select (dexed) : [SHORT PUSH] Encoder Right switches Instances, [LONG P
 In Menus that need 2 Encoders, Encoder Right controls Y movement and Encoder Left controls X movement
 (for example in Song mode)
 
-## PIN LAYOUT
+## PIN LAYOUT & DISPLAY WIRING
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/pin_layout_t41.png" >
-
-## DISPLAY WIRING
-
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/display-wire.png" >
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Wiring-diagram-for-Display
 
 ## CONTRIBUTING
 
