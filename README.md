@@ -33,12 +33,12 @@ Compared to the previous Version, there are a lot of new features/improvments:
 YouTube playlist about the development:
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
-##Development Status:
+## Development Status:
 
-###Hardware:
+### Hardware:
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Status:-Hardware-%2F-PCB
 
-###Software:
+### Software:
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Status:-Software
 
 ## Installation/Compile Instructions
