@@ -94,7 +94,6 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Wiring-diagram-for-Displ
 This project lives from the contributions of C++ developers, testers, reviewers. Please check https://codeberg.org/positionhigh/MicroDexed-touch/issues to help in open topics or add your own Issue or Feature Request.
 
 ## SURVEY / POLL: Let us know what you want to see
- <embed type="text/html" src="https://www.supersurvey.com/poll4335406x48364DD1-136" > 
 https://www.supersurvey.com/poll4335406x48364DD1-136
 
 ## CURRENT Screenshots:
