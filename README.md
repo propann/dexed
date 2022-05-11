@@ -4,12 +4,6 @@
 
 ### This fork requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
 
-The Teensy supports several Serial Flash Chips, for development currently in use is a:
-
-WINBOND W25Q128FVSG SERIAL FLASH MEMORY 3V 128M-BIT
-
-It must be soldered to the Teensy AUDIO BOARD, not on the backside of the Teensy, to be able to work with the SerialFlash Library.
-
 Compared to the previous Version, there are a lot of new features/improvments:
 
 * "Large" Graphical Interface, view and edit multiple Parameters in one Screen
@@ -37,7 +31,8 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 
 ## Installation/Compile Instructions
 
-* Your Flash Chip should be soldered on the TEENSY AUDIO BOARD, not on the Teensy 4.1 itself
+* Your Flash Chip should be soldered on the TEENSY AUDIO BOARD, not on the Teensy 4.1 backside. The SerialFlash Library will not work with a Chip on the Teensy. For development, currently in use is a:
+WINBOND W25Q128FVSG SERIAL FLASH MEMORY 3V 128M-BIT
 
 * Copy Libraries from /third-party to you Arduino / Teensy Library Directory (On Mac: usualy in your Home Directory/Documents/Arduino/libraries), if not already existing there.
 
