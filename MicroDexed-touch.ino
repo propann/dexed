@@ -568,8 +568,10 @@ const uint8_t mosi_pins[] = { SDCARD_TEENSY_MOSI_PIN, SDCARD_AUDIO_MOSI_PIN };
 const uint8_t sck_pins[] = { SDCARD_TEENSY_SCK_PIN, SDCARD_AUDIO_SCK_PIN };
 char version_string[display_cols + 1];
 char sd_string[display_cols + 1];
-char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
+char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
+char tmp_bank_name[BANK_NAME_LEN];
+char tmp_voice_name[VOICE_NAME_LEN];
 char receive_bank_filename[FILENAME_LEN];
 uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
@@ -656,7 +658,7 @@ void setup()
 
   generate_version_string(version_string, sizeof(version_string));
   Serial.println(F("MicroDexed based on https://github.com/asb2m10/dexed"));
-  Serial.println(F("(c)2018-2021 H. Wirtz <wirtz@parasitstudio.de>"));
+  Serial.println(F("(c)2018-2022 H. Wirtz <wirtz@parasitstudio.de>"));
   Serial.println(F("https://codeberg.org/dcoredump/MicroDexed"));
   Serial.print(F("Version: "));
   Serial.println(version_string);
