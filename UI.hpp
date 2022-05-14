@@ -9532,8 +9532,28 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
       else if (seq.inst_dexed[x] == 2 )  display.print(F("EP "));
       else if (seq.inst_dexed[x] == 3 )  display.print(F("MS1"));
       else if (seq.inst_dexed[x] == 4 )  display.print(F("MS2"));
-      else if (seq.inst_dexed[x] > 4 && seq.inst_dexed[x] < 21)  display.print(F("USB"));
-      else if (seq.inst_dexed[x] > 20 && seq.inst_dexed[x] < 37)  display.print(F("DIN"));
+      else if (seq.inst_dexed[x] > 4 && seq.inst_dexed[x] < 21)
+      {
+        if (seq.tracktype_or_instrument_assign == 2)
+        {
+          display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 5 );
+          display.print(F("USB"));
+        }
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
+        display.print(F("#"));
+        seq_print_formatted_number(seq.inst_dexed[x] - 4, 2);
+      }
+      else if (seq.inst_dexed[x] > 20 && seq.inst_dexed[x] < 37)
+      {
+        if (seq.tracktype_or_instrument_assign == 2)
+        {
+          display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 5 );
+          display.print(F("DIN"));
+        }
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
+        display.print(F("#"));
+        seq_print_formatted_number(seq.inst_dexed[x] - 20, 2);
+      }
       else display.print(F("???"));
     }
     else
@@ -9843,6 +9863,7 @@ void UI_func_song(uint8_t param)
         else if (seq.tracktype_or_instrument_assign == 2)  //exit instr. assign menu
         {
           seq.tracktype_or_instrument_assign = 1;
+          sub_song_print_tracktypes();
           seq.help_text_needs_refresh = true;
         }
 
