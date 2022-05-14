@@ -1512,12 +1512,20 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #ifdef MIDI_DEVICE_USB_HOST
   if (device == 1)
+
     midi_usb.sendNoteOn(inNumber, inVelocity, inChannel);
+
 #endif
 #ifdef MIDI_DEVICE_DIN
   if (device == 2)
+  {
     midi_serial.sendNoteOn(inNumber, inVelocity, inChannel);
-
+//#ifdef DEBUG
+//    Serial.print(F(" DIN OUT Channel:"));
+//    Serial.print(inChannel);
+//    Serial.println(" ");
+//#endif
+  }
 #endif
 
   if (device == 0)

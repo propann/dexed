@@ -64,7 +64,7 @@
 //*************************************************************************************************
 //* MIDI HARDWARE SETTINGS
 //*************************************************************************************************
-#define MIDI_DEVICE_DIN Serial4
+#define MIDI_DEVICE_DIN Serial1
 #define MIDI_DEVICE_USB 1
 #define MIDI_DEVICE_USB_HOST 1
 
