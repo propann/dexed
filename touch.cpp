@@ -268,7 +268,7 @@ void virtual_keyboard_key_on ()
             if (ts.virtual_keyboard_instrument > 6) //pitched samples
             {
               set_sample_pitch(ts.virtual_keyboard_instrument - 7, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
-              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 7 , 100 );
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 7 , 100);
             }
             else
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x , 120);

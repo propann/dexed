@@ -57,8 +57,8 @@ MIDIDevice midi_usb(usb_host);
   MIDI_CREATE_INSTANCE(UsbTransport, sUsbTransport, midi_onboard_usb);
   #endif */
 
-void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity);
-void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity);
+void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device);
+void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device);
 void handleControlChange(byte inChannel, byte inData1, byte inData2);
 void handleAfterTouch(byte inChannel, byte inPressure);
 void handlePitchBend(byte inChannel, int inPitch);
@@ -84,10 +84,10 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #ifdef MIDI_DEVICE_DIN
 void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity)
 {
-  seq.note_in=inNumber;
-  seq.note_in_velocity=inVelocity;
-  handleNoteOn(inChannel, inNumber, inVelocity);
-  #ifdef DEBUG
+  seq.note_in = inNumber;
+  seq.note_in_velocity = inVelocity;
+  handleNoteOn(inChannel, inNumber, inVelocity, 0);
+#ifdef DEBUG
   Serial.print(F("[MIDI_DIN] NoteOn"));
 #endif
   if (configuration.sys.soft_midi_thru == 1)
@@ -112,7 +112,7 @@ void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity
 
 void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity)
 {
-  handleNoteOff(inChannel, inNumber, inVelocity);
+  handleNoteOff(inChannel, inNumber, inVelocity, 0);
 #ifdef DEBUG
   Serial.print(F("[MIDI_DIN] NoteOff"));
 #endif
@@ -585,9 +585,9 @@ void handleSystemReset_MIDI_DEVICE_DIN(void)
 #ifdef MIDI_DEVICE_USB_HOST
 void handleNoteOn_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNumber, byte inVelocity)
 {
-  seq.note_in=inNumber;
-  seq.note_in_velocity=inVelocity;
-  handleNoteOn(inChannel, inNumber, inVelocity);
+  seq.note_in = inNumber;
+  seq.note_in_velocity = inVelocity;
+  handleNoteOn(inChannel, inNumber, inVelocity, 0);
 #ifdef DEBUG
   Serial.print(F("[MIDI_USB_HOST] NoteOn"));
 #endif
@@ -613,7 +613,7 @@ void handleNoteOn_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNumber, byte inVel
 
 void handleNoteOff_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNumber, byte inVelocity)
 {
-  handleNoteOff(inChannel, inNumber, inVelocity);
+  handleNoteOff(inChannel, inNumber, inVelocity, 0);
 #ifdef DEBUG
   Serial.print(F("[MIDI_USB_HOST] NoteOff"));
 #endif
@@ -1086,7 +1086,8 @@ void handleSystemReset_MIDI_DEVICE_USB_HOST(void)
 #ifdef MIDI_DEVICE_USB
 void handleNoteOn_MIDI_DEVICE_USB(byte inChannel, byte inNumber, byte inVelocity)
 {
-  handleNoteOn(inChannel, inNumber, inVelocity);
+
+  handleNoteOn(inChannel, inNumber, inVelocity, 0);
 #ifdef DEBUG
   Serial.print(F("[MIDI_USB] NoteOn"));
 #endif
@@ -1108,11 +1109,12 @@ void handleNoteOn_MIDI_DEVICE_USB(byte inChannel, byte inNumber, byte inVelocity
 #ifdef DEBUG
   Serial.println();
 #endif
+
 }
 
 void handleNoteOff_MIDI_DEVICE_USB(byte inChannel, byte inNumber, byte inVelocity)
 {
-  handleNoteOff(inChannel, inNumber, inVelocity);
+  handleNoteOff(inChannel, inNumber, inVelocity, 0);
 #ifdef DEBUG
   Serial.print(F("[MIDI_USB] NoteOff"));
 #endif

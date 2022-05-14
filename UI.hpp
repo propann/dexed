@@ -93,6 +93,7 @@ extern AudioMixer<2>   microsynth_mixer_reverb;
 extern void virtual_keyboard_print_current_instrument();
 extern uint8_t find_longest_chain();
 
+
 #if NUM_DRUMS > 0
 #include "drums.h"
 extern void get_sd_performance_name_json(uint8_t number);
@@ -780,10 +781,8 @@ void fill_up_with_spaces_left_window()
   do
   {
     display.print(" ");
-  } while (display.getCursorX() < 15 * CHAR_width_small);
+  } while (display.getCursorX() < 35 * CHAR_width_small);
 }
-
-
 
 void smart_filter(uint8_t dir)
 {
@@ -5826,13 +5825,23 @@ void seq_sub_pat_chain(int x, int y, bool init)
       {
         display.print ("MICROSYNTH 2");
       }
-      else if (seq.track_type[track] == 0 ) //drums/samples
+      else if (seq.track_type[track] == 0 && seq.inst_dexed[track] < 5) //drums/samples
       {
         display.print ("DRUMS/SAMPLE");
       }
+      else if (seq.inst_dexed[track] > 4 && seq.inst_dexed[track] < 21) //external MIDI USB
+      {
+        display.print ("MIDI USB #");
+        seq_print_formatted_number(seq.inst_dexed[track] - 4, 2);
+      }
+      else if (seq.inst_dexed[track] > 20 && seq.inst_dexed[track] < 37) //external MIDI MINI JACK/DIN
+      {
+        display.print ("MIDI DIN #");
+        seq_print_formatted_number(seq.inst_dexed[track] - 20, 2);
+      }
       else
       {
-        display.print ("- - - -");
+        display.print ("-----------");
       }
     }
     if (init)
@@ -6340,14 +6349,14 @@ void seq_sub_display_menu_logic()
           seq.track_type[i] = constrain(seq.track_type[i] - 1, 0, 3);
       }
     }
-    else if (seq_active_function == 1 && seq.menu == 21 + i + NUM_SEQ_TRACKS) // edit dexed assign
+    else if (seq_active_function == 1 && seq.menu == 21 + i + NUM_SEQ_TRACKS) // edit dexed/instrument assign
     {
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] + 1, 0, 4);
+          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] + 1, 0, 36);
         else if (LCDML.BT_checkUp())
-          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] - 1, 0, 4);
+          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] - 1, 0, 36);
       }
     }
   }
@@ -6833,7 +6842,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       } else
       {
         display.setTextColor(GREEN, COLOR_BACKGROUND);
-        display.print("ASSIGN TRACK TYPE = ");
+        display.print("ASSIGN TRACK TYPE : ");
 
         set_track_type_color(seq.menu - 21);
 
@@ -6857,14 +6866,14 @@ void UI_func_seq_vel_editor(uint8_t param)
         if (seq.track_type[seq.menu - 21 - NUM_SEQ_TRACKS] > 0 )
         {
           display.setTextColor(GREEN, COLOR_BACKGROUND);
-          display.print(F("ASSIGN A [NEW] INSTR. TO "));
+          display.print(F("ASSIGN NEW INSTR. TO "));
           display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
           display.print(F("TRACK "));
           display.print( seq.menu - 20 - NUM_SEQ_TRACKS);
           display.setTextColor(GREEN, COLOR_BACKGROUND);
           display.print(F(" ? "));
-
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          fill_up_with_spaces_left_window();
           display.setTextSize(2);
         }
         else
@@ -6878,32 +6887,40 @@ void UI_func_seq_vel_editor(uint8_t param)
           display.print(F(" IS SET FOR "));
           display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
           display.print(F("DRUMS/SMP"));
-
         }
       }
       else
       {
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        display.print(F("SET TRACK TO INSTR: "));
+        display.print(F("SET TRACK TO: "));
         display.setTextColor(GREEN, COLOR_BACKGROUND);
         if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] < 2)
         {
-          display.print(F("DEXED "));
+          display.print(F("DEXED #"));
           display.print(seq.inst_dexed[seq.menu - 21 - 8] + 1);
         }
         else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] == 2)
-          display.print(F("EPIANO"));
+          display.print(F("ELEC.PIANO"));
         else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] == 3)
-          display.print(F("MiSynth1"));
+          display.print(F("MICROSYNTH #1"));
         else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] == 4)
-          display.print(F("MiSynth2"));
-
+          display.print(F("MICROSYNTH #2"));
+        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] > 4 && seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] < 21)
+        {
+          display.print(F("MIDI USB #"));
+          seq_print_formatted_number(seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] - 4, 2);
+        }
+        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] > 20 && seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] < 37)
+        {
+          display.print(F("MIDI DIN #"));
+          seq_print_formatted_number(seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] - 20, 2);
+        }
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        display.print(F(" ?  "));
+        display.print(F(" ?"));
+        fill_up_with_spaces_left_window();
       }
       seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
     }
-
     else if (seq.menu == 16 )
     {
       display.setTextSize(1);
@@ -6917,10 +6934,6 @@ void UI_func_seq_vel_editor(uint8_t param)
       print_edit_mode();
       seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
     }
-
-    //display.setCursor(290, 30); // debug
-    //display.print( seq.menu);
-
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -9519,6 +9532,8 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
       else if (seq.inst_dexed[x] == 2 )  display.print(F("EP "));
       else if (seq.inst_dexed[x] == 3 )  display.print(F("MS1"));
       else if (seq.inst_dexed[x] == 4 )  display.print(F("MS2"));
+      else if (seq.inst_dexed[x] > 4 && seq.inst_dexed[x] < 21)  display.print(F("USB"));
+      else if (seq.inst_dexed[x] > 20 && seq.inst_dexed[x] < 37)  display.print(F("DIN"));
       else display.print(F("???"));
     }
     else
@@ -9663,7 +9678,7 @@ void UI_func_song(uint8_t param)
           }
           else if (seq.tracktype_or_instrument_assign == 2) //select instruments for track
           {
-            if (seq.inst_dexed[seq.selected_track] < 3)
+            if (seq.inst_dexed[seq.selected_track] < 36)
               seq.inst_dexed[seq.selected_track]++;
           }
           else if (seq.tracktype_or_instrument_assign == 6) // tracktype change
