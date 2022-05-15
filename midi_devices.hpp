@@ -1613,7 +1613,7 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value)
 }
 
 /*****************************************
-   HELPER FUCNTIONS
+   HELPER FUNCTIONS
  *****************************************/
 void setup_midi_devices(void)
 {
@@ -1736,8 +1736,12 @@ void send_sysex_voice(uint8_t midi_channel, uint8_t* data)
 #ifdef MIDI_DEVICE_DIN
   midi_serial.sendSysEx(161, vd); // Send to DIN MIDI
 #endif
-  midi_usb.sendSysEx(161, vd); // Send to USB MIDI
-  usbMIDI.sendSysEx(161, vd); // Send to USB-HOST MIDI
+#ifdef MIDI_DEVICE_USB
+  usbMIDI.sendSysEx(161, vd); // Send to USB MIDI
+#endif
+#ifdef MIDI_DEVICE_USB_HOST
+  midi_usb.sendSysEx(161, vd); // Send to USB-HOST MIDI
+#endif
 }
 
 void send_sysex_bank(uint8_t midi_channel, uint8_t* bank_data)
@@ -1746,10 +1750,10 @@ void send_sysex_bank(uint8_t midi_channel, uint8_t* bank_data)
   midi_serial.sendSysEx(4104, bank_data); // Send to DIN MIDI
 #endif
 #ifdef MIDI_DEVICE_USB
-  midi_usb.sendSysEx(4104, bank_data); // Send to USB MIDI
+  usbMIDI.sendSysEx(4104, bank_data); // Send to USB MIDI
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
-  usbMIDI.sendSysEx(4104, bank_data); // Send to USB-HOST MIDI
+  midi_usb.sendSysEx(4104, bank_data); // Send to USB-HOST MIDI
 #endif
 }
 
@@ -1775,10 +1779,10 @@ void send_sysex_param(uint8_t midi_channel, uint8_t var, uint8_t val, uint8_t pa
   midi_serial.sendSysEx(5, s); // Send to DIN MIDI
 #endif
 #ifdef MIDI_DEVICE_USB
-  midi_usb.sendSysEx(5, s); // Send to USB MIDI
+  usbMIDI.sendSysEx(5, s); // Send to USB MIDI
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
-  usbMIDI.sendSysEx(5, s); // Send to USB-HOST MIDI
+  midi_usb.sendSysEx(5, s); // Send to USB-HOST MIDI
 #endif
 }
 

@@ -568,8 +568,10 @@ const uint8_t mosi_pins[] = { SDCARD_TEENSY_MOSI_PIN, SDCARD_AUDIO_MOSI_PIN };
 const uint8_t sck_pins[] = { SDCARD_TEENSY_SCK_PIN, SDCARD_AUDIO_SCK_PIN };
 char version_string[display_cols + 1];
 char sd_string[display_cols + 1];
-char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
+char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
+char tmp_bank_name[BANK_NAME_LEN];
+char tmp_voice_name[VOICE_NAME_LEN];
 char receive_bank_filename[FILENAME_LEN];
 uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
@@ -656,7 +658,7 @@ void setup()
 
   generate_version_string(version_string, sizeof(version_string));
   Serial.println(F("MicroDexed based on https://github.com/asb2m10/dexed"));
-  Serial.println(F("(c)2018-2021 H. Wirtz <wirtz@parasitstudio.de>"));
+  Serial.println(F("(c)2018-2022 H. Wirtz <wirtz@parasitstudio.de>"));
   Serial.println(F("https://codeberg.org/dcoredump/MicroDexed"));
   Serial.print(F("Version: "));
   Serial.println(version_string);
@@ -906,8 +908,14 @@ void setup()
   if (sd_card < 1)
   {
 #ifdef DEBUG
-    Serial.println(F("SD card not accessable."));
+    Serial.println(F("SD card not accessible."));
 #endif
+    strcpy(receive_bank_filename, "*ERROR*");
+    for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+    {
+      strcpy(g_voice_name[instance_id], "*ERROR*");
+      strcpy(g_bank_name[instance_id], "*ERROR*");
+    }
   }
   else
   {
@@ -916,6 +924,7 @@ void setup()
 #endif
     check_and_create_directories();
 
+    memset(receive_bank_filename, 0, FILENAME_LEN);
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
       // load default SYSEX data
@@ -923,7 +932,6 @@ void setup()
 
       memset(g_voice_name[instance_id], 0, VOICE_NAME_LEN);
       memset(g_bank_name[instance_id], 0, BANK_NAME_LEN);
-      memset(receive_bank_filename, 0, FILENAME_LEN);
     }
   }
 
@@ -2748,7 +2756,6 @@ void handleStop(void)
       sub_song_print_tracknumbers();
     }
 
-
   }
   seq.running = false;
   seq.recording = false;
@@ -3578,18 +3585,18 @@ uint8_t check_sd_cards(void)
     }
   }
 
-  if (ret >= 0)
+  if (ret > 0)
   {
     if (!card.init(SPI_HALF_SPEED, ret))
     {
 #ifdef DEBUG
       Serial.println(F("SD card initialization failed."));
 #endif
-      ret = -1;
+      ret = 0;
     }
   }
 
-  if (ret >= 0)
+  if (ret > 0)
   {
 #ifdef DEBUG
     Serial.print(F("Card type : "));
@@ -3625,18 +3632,18 @@ uint8_t check_sd_cards(void)
 #ifdef DEBUG
       Serial.println(F("Could not find FAT16 / FAT32 partition."));
 #endif
-      ret = -1;
+      ret = 0;
     }
   }
 
-  if (ret >= 0)
+  if (ret > 0)
   {
     uint32_t volumesize;
 
     volumesize = volume.blocksPerCluster() * volume.clusterCount() / 2097152;
 
     if (volumesize == 0)
-      ret = -1;
+      ret = 0;
 
 #ifdef DEBUG
     Serial.print(F("Volume type is FAT"));
@@ -3652,7 +3659,7 @@ uint8_t check_sd_cards(void)
   Serial.println(sd_string);
 #endif
 
-  return (ret);
+  return ret;
 }
 
 void check_and_create_directories(void)

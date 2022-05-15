@@ -95,7 +95,7 @@ extern bool save_sys_flag;
 bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
-  Serial.printf("load voice, bank [%d] - voice [%d]\n", b, v);
+  Serial.printf("load voice, bank [%d] - voice [%d]\n", b, v+1);
 #endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
@@ -134,9 +134,12 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 
     if (entry.isDirectory())
     {
+      AudioNoInterrupts();
       entry.close();
       sysex_dir.close();
       AudioInterrupts();
+      strcpy(g_bank_name[instance_id], "*ERROR*");
+      strcpy(g_voice_name[instance_id], "*ERROR*");
       return (false);
     }
 
@@ -162,7 +165,7 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     if (get_sd_voice(entry, v, data))
     {
 #ifdef DEBUG
-      Serial.print(F(" - voice:["));
+      Serial.print(F("get_sd_voice:["));
       Serial.print(g_voice_name[instance_id]);
       Serial.println(F("]"));
 #endif
@@ -197,15 +200,19 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     entry.close();
     sysex_dir.close();
     AudioInterrupts();
+
+    return true;
   }
 
-  return (false);
+  strcpy(g_bank_name[instance_id], "*ERROR*");
+  strcpy(g_voice_name[instance_id], "*ERROR*");
+  return false;
 }
 
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
-    Serial.print("save_sd_voice");
+    Serial.printf("save_sd_voice, b:%d - d:%d\n", b, v);
 #endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
@@ -2377,7 +2384,7 @@ bool load_sd_performance_json(uint8_t number)
   if (seq.running)
   {
     seq_was_running = true;
-    seq.running = false;
+    handleStop();
   }
 #endif
 
@@ -2498,9 +2505,9 @@ bool load_sd_performance_json(uint8_t number)
 
         if (seq_was_running)
         {
-          sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
-          seq.running = true;
-          //handleStart();
+          //sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+          //seq.running = true;
+          handleStart();
         }
         else
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
@@ -2709,6 +2716,137 @@ bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len)
 #endif
 
   return (true);
+}
+
+bool get_bank_name(uint8_t b, char* bank_name) {
+#ifdef DEBUG
+  Serial.printf("get bank name for bank [%d]\n", b);
+#endif
+  b = constrain(b, 0, MAX_BANKS - 1);
+
+  if (sd_card > 0)
+  {
+    File sysex_dir;
+    char bankdir[4];
+
+    sprintf(bankdir, "/%d", b);
+
+    AudioNoInterrupts();
+    sysex_dir = SD.open(bankdir);
+    AudioInterrupts();
+    if (!sysex_dir)
+    {
+      strcpy(bank_name, "*ERROR*");
+
+#ifdef DEBUG
+      Serial.print(F("E : Cannot open "));
+      Serial.print(bankdir);
+      Serial.println(F(" on SD."));
+#endif
+      return false;
+    }
+
+    File entry;
+    do
+    {
+      entry = sysex_dir.openNextFile();
+    } while (entry.isDirectory());
+
+    if (entry.isDirectory())
+    {
+      strcpy(bank_name, "*ERROR*");
+      AudioNoInterrupts();
+      entry.close();
+      sysex_dir.close();
+      AudioInterrupts();
+      return false;
+    }
+
+    strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
+    string_toupper(bank_name);
+
+    AudioNoInterrupts();
+    entry.close();
+    sysex_dir.close();
+    AudioInterrupts();
+
+    return true;
+  }
+
+  strcpy(bank_name, "*ERROR*");
+  return false;
+}
+
+bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
+#ifdef DEBUG
+    Serial.printf("get voice name for voice [%d]\n", v+1);
+#endif
+    b = constrain(b, 0, MAX_BANKS - 1);
+
+    if (sd_card > 0)
+    {
+      File sysex_dir;
+      char bankdir[4];
+
+      sprintf(bankdir, "/%d", b);
+
+      AudioNoInterrupts();
+      sysex_dir = SD.open(bankdir);
+      AudioInterrupts();
+      if (!sysex_dir)
+      {
+        strcpy(voice_name, "*ERROR*");
+
+#ifdef DEBUG
+        Serial.print(F("E : Cannot open "));
+        Serial.print(bankdir);
+        Serial.println(F(" on SD."));
+#endif
+        return false;
+      }
+
+      File entry;
+      do
+      {
+        entry = sysex_dir.openNextFile();
+      } while (entry.isDirectory());
+
+      if (entry.isDirectory())
+      {
+        strcpy(voice_name, "*ERROR*");
+        AudioNoInterrupts();
+        entry.close();
+        sysex_dir.close();
+        AudioInterrupts();
+        return false;
+      }
+
+      // load name of voices of the bank
+#ifdef DEBUG
+      char bank_name[BANK_NAME_LEN];
+      strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
+      string_toupper(bank_name);
+      Serial.printf("Get voice name from [/%d/%s.syx]\n", b, bank_name);
+#endif
+      memset(voice_name, 0, VOICE_NAME_LEN);
+      entry.seek(124 + (v * 128));
+      entry.read(voice_name, min(VOICE_NAME_LEN, 10));
+      string_toupper(voice_name);
+
+#ifdef DEBUG
+      Serial.printf("Found voice-name [%s] for bank [%d] and voice [%d]\n", voice_name, b, v+1);
+#endif
+
+      AudioNoInterrupts();
+      entry.close();
+      sysex_dir.close();
+      AudioInterrupts();
+
+      return true;
+    }
+
+    strcpy(voice_name, "*ERROR*");
+    return false;
 }
 
 uint8_t calc_checksum(uint8_t* data, uint16_t len)
