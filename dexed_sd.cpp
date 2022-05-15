@@ -134,9 +134,12 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 
     if (entry.isDirectory())
     {
+      AudioNoInterrupts();
       entry.close();
       sysex_dir.close();
       AudioInterrupts();
+      strcpy(g_bank_name[instance_id], "*ERROR*");
+      strcpy(g_voice_name[instance_id], "*ERROR*");
       return (false);
     }
 
@@ -197,9 +200,13 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     entry.close();
     sysex_dir.close();
     AudioInterrupts();
+
+    return true;
   }
 
-  return (false);
+  strcpy(g_bank_name[instance_id], "*ERROR*");
+  strcpy(g_voice_name[instance_id], "*ERROR*");
+  return false;
 }
 
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
@@ -2747,6 +2754,7 @@ bool get_bank_name(uint8_t b, char* bank_name) {
 
     if (entry.isDirectory())
     {
+      strcpy(bank_name, "*ERROR*");
       AudioNoInterrupts();
       entry.close();
       sysex_dir.close();
@@ -2806,6 +2814,7 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 
       if (entry.isDirectory())
       {
+        strcpy(voice_name, "*ERROR*");
         AudioNoInterrupts();
         entry.close();
         sysex_dir.close();
@@ -2813,16 +2822,17 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
         return false;
       }
 
-      strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
-      string_toupper(bank_name);
-
       // load name of voices of the bank
 #ifdef DEBUG
+      strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
+      string_toupper(bank_name);
       Serial.printf("Get voice name from [/%d/%s.syx]\n", b, bank_name);
 #endif
       memset(voice_name, 0, VOICE_NAME_LEN);
       entry.seek(124 + (v * 128));
       entry.read(voice_name, min(VOICE_NAME_LEN, 10));
+      string_toupper(voice_name);
+
 #ifdef DEBUG
       Serial.printf("Found voice-name [%s] for bank [%d] and voice [%d]\n", voice_name, b, v+1);
 #endif
