@@ -94,6 +94,9 @@ extern bool save_sys_flag;
 
 bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
+#ifdef DEBUG
+  Serial.printf("load voice, bank [%d] - voice [%d]\n", b, v+1);
+#endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -208,6 +211,9 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 
 bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
+#ifdef DEBUG
+    Serial.printf("save_sd_voice, b:%d - d:%d\n", b, v);
+#endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -2713,6 +2719,9 @@ bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len)
 }
 
 bool get_bank_name(uint8_t b, char* bank_name) {
+#ifdef DEBUG
+  Serial.printf("get bank name for bank [%d]\n", b);
+#endif
   b = constrain(b, 0, MAX_BANKS - 1);
 
   if (sd_card > 0)
@@ -2769,8 +2778,10 @@ bool get_bank_name(uint8_t b, char* bank_name) {
 }
 
 bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
+#ifdef DEBUG
+    Serial.printf("get voice name for voice [%d]\n", v+1);
+#endif
     b = constrain(b, 0, MAX_BANKS - 1);
-    v = constrain(b, 0, MAX_VOICES - 1);
 
     if (sd_card > 0)
     {
