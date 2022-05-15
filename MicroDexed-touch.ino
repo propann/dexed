@@ -908,8 +908,14 @@ void setup()
   if (sd_card < 1)
   {
 #ifdef DEBUG
-    Serial.println(F("SD card not accessable."));
+    Serial.println(F("SD card not accessible."));
 #endif
+    strcpy(receive_bank_filename, "*ERROR*");
+    for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+    {
+      strcpy(g_voice_name[instance_id], "*ERROR*");
+      strcpy(g_bank_name[instance_id], "*ERROR*");
+    }
   }
   else
   {
@@ -918,6 +924,7 @@ void setup()
 #endif
     check_and_create_directories();
 
+    memset(receive_bank_filename, 0, FILENAME_LEN);
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
       // load default SYSEX data
@@ -925,7 +932,6 @@ void setup()
 
       memset(g_voice_name[instance_id], 0, VOICE_NAME_LEN);
       memset(g_bank_name[instance_id], 0, BANK_NAME_LEN);
-      memset(receive_bank_filename, 0, FILENAME_LEN);
     }
   }
 
@@ -3580,18 +3586,18 @@ uint8_t check_sd_cards(void)
     }
   }
 
-  if (ret >= 0)
+  if (ret > 0)
   {
     if (!card.init(SPI_HALF_SPEED, ret))
     {
 #ifdef DEBUG
       Serial.println(F("SD card initialization failed."));
 #endif
-      ret = -1;
+      ret = 0;
     }
   }
 
-  if (ret >= 0)
+  if (ret > 0)
   {
 #ifdef DEBUG
     Serial.print(F("Card type : "));
@@ -3627,18 +3633,18 @@ uint8_t check_sd_cards(void)
 #ifdef DEBUG
       Serial.println(F("Could not find FAT16 / FAT32 partition."));
 #endif
-      ret = -1;
+      ret = 0;
     }
   }
 
-  if (ret >= 0)
+  if (ret > 0)
   {
     uint32_t volumesize;
 
     volumesize = volume.blocksPerCluster() * volume.clusterCount() / 2097152;
 
     if (volumesize == 0)
-      ret = -1;
+      ret = 0;
 
 #ifdef DEBUG
     Serial.print(F("Volume type is FAT"));
@@ -3654,7 +3660,7 @@ uint8_t check_sd_cards(void)
   Serial.println(sd_string);
 #endif
 
-  return (ret);
+  return ret;
 }
 
 void check_and_create_directories(void)

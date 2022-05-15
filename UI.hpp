@@ -12599,13 +12599,14 @@ void UI_func_save_voice(uint8_t param)
         default:
           if (yesno == true)
           {
-            bool ret = save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-
 #ifdef DEBUG
+            bool ret = save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
             if (ret == true)
               Serial.println(F("Saving voice OK."));
             else
               Serial.println(F("Error while saving voice."));
+#else
+            save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
 #endif
             show(2, 1, 16, "Done.");
             delay(MESSAGE_WAIT_TIME);
@@ -12855,12 +12856,13 @@ void UI_func_sysex_send_bank(uint8_t param)
   {
     encoderDir[ENC_R].reset();
     bank_number = configuration.dexed[selected_instance_id].bank;
+    strcpy(tmp_bank_name, g_bank_name[selected_instance_id]);
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Bank"));
     show(2, 2, 1, "[");
     show(2, 14, 1, "]");
     show(2, 0, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, g_bank_name[selected_instance_id]);
+    show(2, 3, 10, tmp_bank_name);
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -12877,7 +12879,9 @@ void UI_func_sysex_send_bank(uint8_t param)
       }
 
       get_bank_name(bank_number, tmp_bank_name);
-
+#ifdef DEBUG
+      Serial.printf("send bank sysex %d - bank:[%s]\n", bank_number, tmp_bank_name);
+#endif
       show(2, 0, 2, bank_number);
       show(2, 3, 10, tmp_bank_name);
     }
@@ -12898,7 +12902,7 @@ void UI_func_sysex_send_bank(uint8_t param)
         if (!sysex)
         {
 #ifdef DEBUG
-          Serial.println(F("Connot read from SD."));
+          Serial.println(F("Cannot read from SD."));
 #endif
           show(2, 0, 16, "Read error.");
           bank_number = 0xff;
@@ -12908,6 +12912,7 @@ void UI_func_sysex_send_bank(uint8_t param)
           uint8_t bank_data[4104];
           sysex.read(bank_data, 4104);
           sysex.close();
+          
           show(2, 0, 16, "Sending Ch");
           if (configuration.dexed[selected_instance_id].midi_channel == MIDI_CHANNEL_OMNI)
           {

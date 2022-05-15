@@ -2787,7 +2787,6 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     {
       File sysex_dir;
       char bankdir[4];
-      char bank_name[BANK_NAME_LEN];
 
       sprintf(bankdir, "/%d", b);
 
@@ -2824,6 +2823,7 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 
       // load name of voices of the bank
 #ifdef DEBUG
+      char bank_name[BANK_NAME_LEN];
       strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
       string_toupper(bank_name);
       Serial.printf("Get voice name from [/%d/%s.syx]\n", b, bank_name);
