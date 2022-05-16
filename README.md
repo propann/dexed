@@ -29,7 +29,7 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Hardware-
 ### Software:
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 
-### Build Instructions:
+### Build Instructions (including 3d files):
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Build-Instructions
 
 ### Build of Materials (BOM)
