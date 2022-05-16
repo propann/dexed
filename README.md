@@ -18,6 +18,10 @@ Compared to the previous Version, there are a lot of new features/improvments:
 
 * Sample Management from SD-CARD and SPI FLASH
 
+* Tracker View (Editor) - work in progress
+
+* Track Print/Recording - work in progress
+
 YouTube playlist about the development:
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
@@ -26,7 +30,7 @@ https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 ### Hardware:
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Hardware-%2F-PCB
 
-### Software:
+### Software (feature progress status):
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 
 ### Build Instructions (including 3d case files):
