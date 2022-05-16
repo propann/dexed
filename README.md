@@ -29,6 +29,15 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Hardware-
 ### Software:
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Current-State:-Software
 
+### Build Instructions:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Build-Instructions
+
+### Build of Materials (BOM)
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/current-BOM-%28Bill-of-Materials%29-for-MicroDexed-touch
+
+### Changelog:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Changelog
+
 ## Installation/Compile Instructions
 
 * Your Flash Chip should be soldered on the TEENSY AUDIO BOARD, not on the Teensy 4.1 backside. The SerialFlash Library will not work with a Chip on the Teensy. For development, currently in use is a:
