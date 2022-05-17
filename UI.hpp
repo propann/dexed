@@ -1319,8 +1319,17 @@ void update_display_functions_while_seq_running()
     display.print (F(">"));
     if (seq.step == 1)
     {
+      display.setCursor(CHAR_width_small * 46, 2); //print song step at each 1. pattern step
+      display.setTextColor(COLOR_DRUMS, COLOR_PITCHSMP);
+      seq_print_formatted_number(  seq.current_song_step , 2);
+      display.setCursor(CHAR_width_small * 51, 2);
+      seq_print_formatted_number(  get_song_length() , 2);
+
       for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
       {
+         display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+         display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
+        seq_print_formatted_number(seq.chain_counter[d], 2);
         tracker_print_pattern(  (6 + 6 * d) * CHAR_width_small , 48,  d);
         update_pattern_number_in_tracker(d);
       }
@@ -9312,21 +9321,39 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
 {
   uint8_t yspacer = CHAR_height_small + 3;
   uint8_t ycount = 0;
-  uint8_t yoffset = 0;
+
   display.setTextSize(1);
 
- //display.setCursor(35* CHAR_width_small, DISPLAY_HEIGHT-CHAR_height_small);
- //display.print( "000");
-  for (uint8_t y = 0; y < 16; y++) {
+  for (uint8_t y = 0; y < 16; y++)
+  {
+
+    // print data byte of current step
+    if (track_number == seq.selected_track && y == seq.scrollpos)  //print velocity of active pattern-step
+    {
+      display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
+      display.setCursor(22 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small);
+      seq_print_formatted_number(  seq.vel[ seq.current_pattern[track_number]][y]  , 3);
+      display.setCursor(34 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small);
+      if (seq.vel[ seq.current_pattern[track_number]][y] < 128)
+        display.print( "VELOCITY");
+      else if (seq.vel[ seq.current_pattern[track_number]][y] > 209)
+        display.print( "PITCHSMP");
+      else if (seq.vel[ seq.current_pattern[track_number]][y] > 199)
+        display.print( "CHORD   ");
+      else
+        display.print( "OTHER   ");
+    }
+
+    /// -- update all other columns --
 
     display.setCursor(xpos, ypos + ycount * yspacer);
-    if (seq.note_data[ seq.current_pattern[track_number]][y - yoffset] != 99 && seq.note_data[ seq.current_pattern[track_number]][y - yoffset] != 0)
+    if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0)
     {
       if (track_number == seq.selected_track && y == seq.scrollpos)
-       display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
-       else
-      set_pattern_content_type_color( seq.current_pattern[track_number] );
-      
+        display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
+      else
+        set_pattern_content_type_color( seq.current_pattern[track_number] );
+
       display.print( tracker_find_shortname_from_pattern_step( track_number,   seq.current_pattern[track_number] , y )[0]);
     }
     else
@@ -9338,31 +9365,25 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
       display.print( "-");
     }
     display.setCursor(xpos + 2 * CHAR_width_small, ypos + ycount * yspacer);
-    if (seq.note_data[ seq.current_pattern[track_number]][y - yoffset] != 99 && seq.note_data[ seq.current_pattern[track_number]][y - yoffset] != 0
-        && seq.note_data[ seq.current_pattern[track_number]][y - yoffset] != 130 )
+    if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0
+        && seq.note_data[ seq.current_pattern[track_number]][y] != 130 )
     {
-       if (track_number == seq.selected_track && y == seq.scrollpos)
-       display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
-       else
-      set_pattern_content_type_color( seq.current_pattern[track_number] );
-      seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y - yoffset]  , 3);
-
-      if (track_number == seq.selected_track && y == seq.scrollpos)  //print velocity of active pattern-step
-      {
+      if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
-         display.setCursor(35* CHAR_width_small, DISPLAY_HEIGHT-CHAR_height_small);
-         seq_print_formatted_number(  seq.vel[ seq.current_pattern[track_number]][y - yoffset]  , 3);
-      }
+      else
+        set_pattern_content_type_color( seq.current_pattern[track_number] );
+      seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y]  , 3);
+
     }
-    else if (seq.note_data[ seq.current_pattern[track_number]][y - yoffset] == 0 )  //empty
+    else if (seq.note_data[ seq.current_pattern[track_number]][y] == 0 )  //empty
     {
       if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY2, COLOR_BACKGROUND);
-      seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y - yoffset]  , 3);
+      seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y]  , 3);
     }
-    else if (seq.note_data[ seq.current_pattern[track_number]][y - yoffset] == 130 )  //Latch
+    else if (seq.note_data[ seq.current_pattern[track_number]][y] == 130 )  //Latch
     {
       if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT_ACCENT);
@@ -9390,9 +9411,35 @@ void UI_func_seq_tracker(uint8_t param)
     display.setTextSize(1);
     display.fillScreen(COLOR_BACKGROUND);
     UI_toplineInfoText( 1);
-    display.setCursor(CHAR_width_small, 2);
+    display.setCursor(1, 2);
     display.setTextColor(COLOR_SYSTEXT);
-    display.print (F("TRACKER"));
+    display.print (F("TRACKER "));
+    display.setCursor(CHAR_width_small * 10, 2);
+    display.print (F("CHAIN"));
+    display.setCursor(CHAR_width_small * 41, 2);
+    display.print (F("SONG"));
+    display.setCursor(CHAR_width_small * 49, 2);
+    display.print (F("/"));
+
+    display.setCursor(CHAR_width_small * 46, 2); //print song step at init
+    display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+    seq_print_formatted_number(  seq.current_song_step , 2);
+    display.setCursor(CHAR_width_small * 51, 2);
+    seq_print_formatted_number(  get_song_length() , 2);
+
+    display.setCursor(CHAR_width_small * 22, 2);
+
+    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  //print chain steps
+    {
+
+      display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
+      seq_print_formatted_number(  seq.chain_counter[d]  , 2);
+
+      //  display.setCursor(CHAR_width_small * 16+ (CHAR_width_small*3)*d , 2);
+      //  seq_print_formatted_number( get_chain_length_from_current_track(d)  , 2);
+
+    }
+
     for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
     {
       seq.current_chain[x] = seq.song[x][seq.current_song_step];
@@ -9413,6 +9460,10 @@ void UI_func_seq_tracker(uint8_t param)
       seq_print_formatted_number(y, 2);
     }
 
+    display.setCursor(CHAR_width_small * 11, DISPLAY_HEIGHT - CHAR_height_small);
+    display.print ("DATA BYTE: ");
+    display.setCursor(CHAR_width_small * 26, DISPLAY_HEIGHT - CHAR_height_small);
+    display.print ("USED AS");
 
     helptext_l("< > MOVE X");
     helptext_r("< > MOVE Y");
@@ -9432,33 +9483,41 @@ void UI_func_seq_tracker(uint8_t param)
       {
         //  if (seq.edit_state == false)
 
-       // if (seq.cursor_scroll == 15)
-       
-          seq.scrollpos++;
-          if (seq.scrollpos > 15)
-            seq.scrollpos = 15;
-       
+        // if (seq.cursor_scroll == 15)
+
+        seq.scrollpos++;
+        if (seq.scrollpos > 15)
+          seq.scrollpos = 15;
+
       }
       else if (LCDML.BT_checkUp())
       {
         //if (seq.edit_state == false)
         //{ //seq.cursor_scroll == 0 &&
-        
-          if (seq.scrollpos > 0 )
-          {
-            seq.scrollpos--;
-          }
-     
+
+        if (seq.scrollpos > 0 )
+        {
+          seq.scrollpos--;
+        }
+
       }
     }
+
+    for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
+    {
+      seq.current_chain[x] = seq.song[x][seq.current_song_step];
+      seq.current_pattern[x] = seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ];
+      // update_pattern_number_in_tracker(x);
+    }
+
     display.setTextSize(1);
-    //seq_print_step_numbers(0, 32);
+
+
 
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
     {
       tracker_print_pattern(  (6 + 6 * d) * CHAR_width_small , 48,  d);
     }
-
 
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
