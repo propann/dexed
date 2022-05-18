@@ -1327,8 +1327,8 @@ void update_display_functions_while_seq_running()
 
       for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
       {
-         display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-         display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
+        display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+        display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
         seq_print_formatted_number(seq.chain_counter[d], 2);
         tracker_print_pattern(  (6 + 6 * d) * CHAR_width_small , 48,  d);
         update_pattern_number_in_tracker(d);
@@ -1806,7 +1806,7 @@ void lcdml_menu_control(void)
         }
         else  if ( (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 1) ||
                    (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 5) ||
-                   LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) )
+                   (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state == false) )
           //select track for instrument or select track for tracktype change
         {
 
@@ -1814,6 +1814,11 @@ void lcdml_menu_control(void)
             seq.selected_track = 0;
           else
             seq.selected_track++;
+        }
+        else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state  )
+        {
+          if (seq.vel[ seq.current_pattern[seq.selected_track]][seq.scrollpos] < 253)
+            seq.vel[ seq.current_pattern[seq.selected_track]][seq.scrollpos]++;
         }
         else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0)
         { //do nothing
@@ -1879,7 +1884,7 @@ void lcdml_menu_control(void)
         }
         else  if ( (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 1) ||
                    (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 5) ||
-                   LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) )
+                   (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state == false) )
           //select track for instrument or select track for tracktype change
         {
 
@@ -1887,6 +1892,11 @@ void lcdml_menu_control(void)
             seq.selected_track = NUM_SEQ_TRACKS - 1;
           else
             seq.selected_track--;
+        }
+        else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state  )
+        {
+          if (seq.vel[ seq.current_pattern[seq.selected_track]][seq.scrollpos] > 0)
+            seq.vel[ seq.current_pattern[seq.selected_track]][seq.scrollpos]--;
         }
         else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0)
         { //do nothing
@@ -9079,8 +9089,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].coarse = constrain(microsynth[microsynth_selected_instance].coarse - 1, -36, 36);
         else if ( seq.temp_select_menu == 3 )
           microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune - 1, -127, 127);
-
-
         else if ( seq.temp_select_menu == 4 )
           microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack - 1, 0, 254);
         else if ( seq.temp_select_menu == 5 )
@@ -9089,8 +9097,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].env_sustain = constrain(microsynth[microsynth_selected_instance].env_sustain - 1, 0, 50);
         else if ( seq.temp_select_menu == 7 )
           microsynth[microsynth_selected_instance].env_release = constrain(microsynth[microsynth_selected_instance].env_release - 1, 0, 99);
-
-
         else if ( seq.temp_select_menu == 8 )
           microsynth[microsynth_selected_instance].filter_osc_mode = constrain(microsynth[microsynth_selected_instance].filter_osc_mode - 1, 0, 3);
         else if ( seq.temp_select_menu == 9 )
@@ -9101,15 +9107,12 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].filter_osc_resonance = constrain(microsynth[microsynth_selected_instance].filter_osc_resonance - 1, 0, 99);
         else if ( seq.temp_select_menu == 12 )
           microsynth[microsynth_selected_instance].filter_osc_speed = constrain(microsynth[microsynth_selected_instance].filter_osc_speed - 6, 0, 999);
-
-
         else if ( seq.temp_select_menu == 13 )
           microsynth[microsynth_selected_instance].pwm_from = constrain(microsynth[microsynth_selected_instance].pwm_from - 5, 0, 999);
         else if ( seq.temp_select_menu == 14 )
           microsynth[microsynth_selected_instance].pwm_to = constrain(microsynth[microsynth_selected_instance].pwm_to - 5, 0, 999);
         else if ( seq.temp_select_menu == 15 )
           microsynth[microsynth_selected_instance].pwm_speed = constrain(microsynth[microsynth_selected_instance].pwm_speed - 1, 0, 99);
-
         else if ( seq.temp_select_menu == 16 )
           microsynth[microsynth_selected_instance].noise_vol = constrain(microsynth[microsynth_selected_instance].noise_vol - 1, 0, 100);
         else if ( seq.temp_select_menu == 17 )
@@ -9126,9 +9129,6 @@ void UI_func_microsynth(uint8_t param)
           microsynth[microsynth_selected_instance].filter_noise_resonance = constrain(microsynth[microsynth_selected_instance].filter_noise_resonance - 1, 0, 99);
         else if ( seq.temp_select_menu == 23 )
           microsynth[microsynth_selected_instance].filter_noise_speed = constrain(microsynth[microsynth_selected_instance].filter_noise_speed - 6, 0, 999);
-
-
-
         else if ( seq.temp_select_menu == 24 )
           microsynth[microsynth_selected_instance].lfo_intensity = constrain(microsynth[microsynth_selected_instance].lfo_intensity - 1, 0, 254);
         else if ( seq.temp_select_menu == 25 )
@@ -9168,15 +9168,11 @@ void UI_func_microsynth(uint8_t param)
 
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //display.setTextSize(1);
-
     if (seq_active_function == 1)
       microsynth_update_settings(microsynth_selected_instance);
-
     if (seq.temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
     print_small_intbar(9, 3,  microsynth[microsynth_selected_instance].sound_intensity, 0, 1, 0);
-
     if (seq.temp_select_menu == 1)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(RED, COLOR_BACKGROUND);
     setCursor_textGrid_mini(9, 4);
@@ -9198,7 +9194,6 @@ void UI_func_microsynth(uint8_t param)
       display.print(F("LM_PULSE"));
     else if (microsynth[microsynth_selected_instance].wave == 8)
       display.print(F("SMP&HOLD"));
-
     if (seq.temp_select_menu == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(9, 5);
@@ -9207,7 +9202,6 @@ void UI_func_microsynth(uint8_t param)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(9, 6);
     seq_print_formatted_number_signed( microsynth[microsynth_selected_instance].detune, 2);
-
     if (seq.temp_select_menu == 4)
     {
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
@@ -9234,14 +9228,10 @@ void UI_func_microsynth(uint8_t param)
     } else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(10, 11);
     seq_print_formatted_number( microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release , 4);
-
     if (seq.cycle_touch_element != 1)
       microsynth_refresh_lower_screen_dynamic_text();
-
     print_small_intbar(32, 1,  microsynth[microsynth_selected_instance].noise_vol, 16, 1, 0);
     print_small_intbar(32, 2,  microsynth[microsynth_selected_instance].noise_decay, 17, 1, 1);
-
-
     if (seq.temp_select_menu == 18)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(32, 3);
@@ -9260,17 +9250,11 @@ void UI_func_microsynth(uint8_t param)
       display.print(F("BP12dB"));
     else if (microsynth[microsynth_selected_instance].filter_noise_mode == 3)
       display.print(F("HI12dB"));
-
-
-
     print_small_intbar(32, 5, microsynth[microsynth_selected_instance].filter_noise_freq_from / 100, 20, 0, 1);
     print_small_intbar(38, 5, microsynth[microsynth_selected_instance].filter_noise_freq_to / 100, 21, 0, 1);
-
     print_small_intbar(27, 6, microsynth[microsynth_selected_instance].filter_noise_resonance, 22, 0, 1);
     print_small_intbar(38, 6, microsynth[microsynth_selected_instance].filter_noise_speed / 10, 23, 0, 1);
-
     print_small_intbar(32, 8, microsynth[microsynth_selected_instance].lfo_intensity, 24, 0, 1);
-
 
     if (seq.temp_select_menu == 25)
     {
@@ -9302,11 +9286,8 @@ void UI_func_microsynth(uint8_t param)
     else display.setTextColor(GREY1, GREY3);
     setCursor_textGrid_mini(39, 9);
     display.print(F("1D"));
-
     print_small_intbar(28, 10, microsynth[microsynth_selected_instance].lfo_delay, 26, 0, 1);
     print_small_intbar(38, 10, microsynth[microsynth_selected_instance].lfo_speed, 27, 0, 1);
-
-
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -9321,16 +9302,16 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
 {
   uint8_t yspacer = CHAR_height_small + 3;
   uint8_t ycount = 0;
-
   display.setTextSize(1);
-
   for (uint8_t y = 0; y < 16; y++)
   {
-
     // print data byte of current step
     if (track_number == seq.selected_track && y == seq.scrollpos)  //print velocity of active pattern-step
     {
-      display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
+      if (seq.edit_state)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else
+        display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       display.setCursor(22 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small);
       seq_print_formatted_number(  seq.vel[ seq.current_pattern[track_number]][y]  , 3);
       display.setCursor(34 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small);
@@ -9349,16 +9330,19 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     display.setCursor(xpos, ypos + ycount * yspacer);
     if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0)
     {
-      if (track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         set_pattern_content_type_color( seq.current_pattern[track_number] );
-
       display.print( tracker_find_shortname_from_pattern_step( track_number,   seq.current_pattern[track_number] , y )[0]);
     }
     else
     {
-      if (track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY3, COLOR_BACKGROUND);
@@ -9368,16 +9352,19 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0
         && seq.note_data[ seq.current_pattern[track_number]][y] != 130 )
     {
-      if (track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         set_pattern_content_type_color( seq.current_pattern[track_number] );
       seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y]  , 3);
-
     }
     else if (seq.note_data[ seq.current_pattern[track_number]][y] == 0 )  //empty
     {
-      if (track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -9385,7 +9372,9 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     }
     else if (seq.note_data[ seq.current_pattern[track_number]][y] == 130 )  //Latch
     {
-      if (track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT_ACCENT);
       else
         display.setTextColor(COLOR_SYSTEXT_ACCENT, COLOR_BACKGROUND);
@@ -9393,7 +9382,9 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     }
     else
     {
-      if (track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+        display.setTextColor( COLOR_SYSTEXT, RED);
+      else if (track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -9408,6 +9399,8 @@ void UI_func_seq_tracker(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     // setup function
+    seq.menu = 0;
+    seq.edit_state = false;
     display.setTextSize(1);
     display.fillScreen(COLOR_BACKGROUND);
     UI_toplineInfoText( 1);
@@ -9420,24 +9413,19 @@ void UI_func_seq_tracker(uint8_t param)
     display.print (F("SONG"));
     display.setCursor(CHAR_width_small * 49, 2);
     display.print (F("/"));
-
     display.setCursor(CHAR_width_small * 46, 2); //print song step at init
     display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
     seq_print_formatted_number(  seq.current_song_step , 2);
     display.setCursor(CHAR_width_small * 51, 2);
     seq_print_formatted_number(  get_song_length() , 2);
-
     display.setCursor(CHAR_width_small * 22, 2);
 
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  //print chain steps
     {
-
       display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
       seq_print_formatted_number(  seq.chain_counter[d]  , 2);
-
       //  display.setCursor(CHAR_width_small * 16+ (CHAR_width_small*3)*d , 2);
       //  seq_print_formatted_number( get_chain_length_from_current_track(d)  , 2);
-
     }
 
     for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
@@ -9453,25 +9441,19 @@ void UI_func_seq_tracker(uint8_t param)
       display.print ("PAT");
       update_pattern_number_in_tracker(x);
     }
-
     display.setTextColor(DARKGREEN, COLOR_BACKGROUND);
     for (uint8_t y = 0; y < 16; y++) {
       display.setCursor(0, 45 + y * (CHAR_height_small + 3));
       seq_print_formatted_number(y, 2);
     }
-
     display.setCursor(CHAR_width_small * 11, DISPLAY_HEIGHT - CHAR_height_small);
     display.print ("DATA BYTE: ");
     display.setCursor(CHAR_width_small * 26, DISPLAY_HEIGHT - CHAR_height_small);
     display.print ("USED AS");
 
-    helptext_l("< > MOVE X");
-    helptext_r("< > MOVE Y");
-
     display.setTextColor(GREEN, COLOR_BACKGROUND);
     display.setCursor(5 * CHAR_width_small, (5 + seq.step) * (CHAR_height_small + 3) - 7);
     display.print (F(">"));
-
     encoderDir[ENC_R].reset();
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -9479,30 +9461,41 @@ void UI_func_seq_tracker(uint8_t param)
 
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
     {
-      if (LCDML.BT_checkDown())
+      if (seq.edit_state == false)  // NOT in editor mode
       {
-        //  if (seq.edit_state == false)
-
-        // if (seq.cursor_scroll == 15)
-
-        seq.scrollpos++;
-        if (seq.scrollpos > 15)
-          seq.scrollpos = 15;
-
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        //if (seq.edit_state == false)
-        //{ //seq.cursor_scroll == 0 &&
-
-        if (seq.scrollpos > 0 )
+        if (LCDML.BT_checkDown())
         {
-          seq.scrollpos--;
+          seq.scrollpos++;
+          if (seq.scrollpos > 15)
+            seq.scrollpos = 15;
+        }
+        else if (LCDML.BT_checkUp())
+        {
+          if (seq.scrollpos > 0 )
+          {
+            seq.scrollpos--;
+          }
+        }
+      }
+      else  // IS in editor mode
+      {
+        if (LCDML.BT_checkDown())
+        {
+
+          seq.note_data[ seq.current_pattern[seq.selected_track]][seq.scrollpos] = constrain(seq.note_data[ seq.current_pattern[seq.selected_track]][seq.scrollpos] + ENCODER[ENC_R].speed(), 0, 254);
+        }
+        else if (LCDML.BT_checkUp())
+        {
+          seq.note_data[ seq.current_pattern[seq.selected_track]][seq.scrollpos] = constrain(seq.note_data[ seq.current_pattern[seq.selected_track]][seq.scrollpos] - ENCODER[ENC_R].speed(), 0, 254);
         }
 
       }
-    }
+      if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      {
+        seq.edit_state = !seq.edit_state;
+      }
 
+    }
     for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++)
     {
       seq.current_chain[x] = seq.song[x][seq.current_song_step];
@@ -9511,9 +9504,21 @@ void UI_func_seq_tracker(uint8_t param)
     }
 
     display.setTextSize(1);
-
-
-
+    setCursor_textGrid_mini(1, 2);
+    if (seq.edit_state)
+    {
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print ("EDIT");
+      helptext_l("< > DATA");
+      helptext_r("< > NOTE");
+    }
+    else
+    {
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
+      display.print ("PLAY");
+      helptext_l("< > MOVE X");
+      helptext_r("< > MOVE Y");
+    }
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
     {
       tracker_print_pattern(  (6 + 6 * d) * CHAR_width_small , 48,  d);

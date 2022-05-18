@@ -69,7 +69,7 @@ typedef struct sequencer_s {
   uint8_t scrollpos;
   int cursor_scroll;
   uint8_t selected_track;
-  uint8_t tracker_active_step;
+  //uint8_t tracker_active_step;
   bool edit_state;
   float drums_volume;
   uint8_t menu_status; // 0= normal jump
