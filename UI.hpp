@@ -365,7 +365,6 @@ void UI_func_portamento_time(uint8_t param);
 void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
 void UI_func_file_manager(uint8_t param);
-void UI_func_phSampler(uint8_t param);
 void UI_func_custom_mappings(uint8_t param);
 void UI_func_cc_mappings(uint8_t param);
 void UI_func_microsynth(uint8_t param);
@@ -432,8 +431,9 @@ void UI_func_drum_volume(uint8_t param);
 void UI_func_drum_pan(uint8_t param);
 void UI_func_drum_pitch(uint8_t param);
 void UI_func_drum_tune_offset(uint8_t param);
-void UI_func_sample_editor(uint8_t param);
 void UI_func_format_flash(uint8_t param);
+//void UI_func_sample_editor(uint8_t param);
+//void UI_func_phSampler(uint8_t param);
 
 char* basename(const char* filename);
 
@@ -6070,72 +6070,71 @@ void UI_draw_waveform_large()  // for flash
 }
 #endif
 
-void UI_func_sample_editor(uint8_t param)
-{
-  char tmp[5];
-  if (LCDML.FUNC_setup())         // ****** SETUP *********
-  {
-    // setup function
-    encoderDir[ENC_R].reset();
-    display.fillScreen(COLOR_BACKGROUND);
-    setCursor_textGrid(1, 1);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    display.print(F("SAMPLE:"));
-    setCursor_textGrid(9, 1);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(F("SQRBASS1"));
-    setCursor_textGrid(1, 2);
-    display.print("V:");
-    sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
-    setCursor_textGrid(3, 2);
-    display.print(tmp);
-    setCursor_textGrid(21, 0);
-    display.print("[");
-    setCursor_textGrid(22, 0);
-    if (seq.active_pattern < 10)
-      display.print("0");
-    display.print(seq.active_pattern);
-    setCursor_textGrid(24, 0);
-    display.print("]");
-  }
-  if (LCDML.FUNC_loop())          // ****** LOOP *********
-  {
-
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-    {
-      if (LCDML.BT_checkDown())
-        wave_spacing = constrain(wave_spacing + 2, 0, 500);
-      else if (LCDML.BT_checkUp())
-        wave_spacing = constrain(wave_spacing - 2, 0, 500);
-    }
-
-    if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    {
-      if ( seq.menu == 0 && seq_active_function == 99)
-      {
-        seq_active_function = 0;
-      } else if ( seq.menu == 0 && seq_active_function == 0)
-      {
-        seq_active_function = 99;
-      }
-      else if (seq.menu > 0 && seq_active_function == 99)
-      {
-        seq_active_function = 1;
-      }
-      else
-        seq_active_function = 99;
-    }
-    //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-    UI_draw_waveform_large();
-  }
-  if (LCDML.FUNC_close())     // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-    display.fillScreen(COLOR_BACKGROUND);
-  }
-}
+//void UI_func_sample_editor(uint8_t param)
+//{
+//  char tmp[5];
+//  if (LCDML.FUNC_setup())         // ****** SETUP *********
+//  {
+//    // setup function
+//    encoderDir[ENC_R].reset();
+//    display.fillScreen(COLOR_BACKGROUND);
+//    setCursor_textGrid(1, 1);
+//    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+//    display.print(F("SAMPLE:"));
+//    setCursor_textGrid(9, 1);
+//    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//    display.print(F("SQRBASS1"));
+//    setCursor_textGrid(1, 2);
+//    display.print("V:");
+//    sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
+//    setCursor_textGrid(3, 2);
+//    display.print(tmp);
+//    setCursor_textGrid(21, 0);
+//    display.print("[");
+//    setCursor_textGrid(22, 0);
+//    if (seq.active_pattern < 10)
+//      display.print("0");
+//    display.print(seq.active_pattern);
+//    setCursor_textGrid(24, 0);
+//    display.print("]");
+//  }
+//  if (LCDML.FUNC_loop())          // ****** LOOP *********
+//  {
+//    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+//    {
+//      if (LCDML.BT_checkDown())
+//        wave_spacing = constrain(wave_spacing + 2, 0, 500);
+//      else if (LCDML.BT_checkUp())
+//        wave_spacing = constrain(wave_spacing - 2, 0, 500);
+//    }
+//
+//    if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+//    {
+//      if ( seq.menu == 0 && seq_active_function == 99)
+//      {
+//        seq_active_function = 0;
+//      } else if ( seq.menu == 0 && seq_active_function == 0)
+//      {
+//        seq_active_function = 99;
+//      }
+//      else if (seq.menu > 0 && seq_active_function == 99)
+//      {
+//        seq_active_function = 1;
+//      }
+//      else
+//        seq_active_function = 99;
+//    }
+//    //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//
+//
+//    UI_draw_waveform_large();
+//  }
+//  if (LCDML.FUNC_close())     // ****** STABLE END *********
+//  {
+//    encoderDir[ENC_R].reset();
+//    display.fillScreen(COLOR_BACKGROUND);
+//  }
+//}
 
 void print_content_type ()
 {
@@ -11203,63 +11202,63 @@ void print_flash_stats()
   display.print(" KB");
 }
 
-void UI_func_phSampler(uint8_t param)
-{
-  if (LCDML.FUNC_setup())         // ****** SETUP *********
-  {
-    display.fillScreen(COLOR_BACKGROUND);
-    encoderDir[ENC_R].reset();
-    display.setTextSize(2);
-    border1();
-    border2();
-
-    display.setTextColor(COLOR_SYSTEXT);
-
-    setCursor_textGrid(1, 1);
-    display.print(F("phSAMPLER"));
-    setCursor_textGrid(1, 2);
-    display.print(F("["));
-    setCursor_textGrid(13, 2);
-    display.print(F("]"));
-    display.setTextSize(2);
-
-    setCursor_textGrid(21, 1);
-    display.print(F("SPI Flash"));
-    print_flash_stats();
-
-  }
-  if (LCDML.FUNC_loop())          // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-    {
-      if (LCDML.BT_checkDown())
-      {
-        temp_int = constrain(temp_int + 1, 0, 1);
-
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        temp_int = constrain(temp_int - 1, 0, 1);
-      }
-    }
-    if (LCDML.BT_checkEnter())
-    {
-      ;
-    }
-    display.setTextSize(2);
-    setCursor_textGrid(2, 2);
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    if (temp_int == 0)
-      display.print(F("MultiPiano "));
-    else if (temp_int == 1)
-      display.print(F("StringPad  "));
-  }
-  if (LCDML.FUNC_close())     // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  }
-}
+//void UI_func_phSampler(uint8_t param)
+//{
+//  if (LCDML.FUNC_setup())         // ****** SETUP *********
+//  {
+//    display.fillScreen(COLOR_BACKGROUND);
+//    encoderDir[ENC_R].reset();
+//    display.setTextSize(2);
+//    border1();
+//    border2();
+//
+//    display.setTextColor(COLOR_SYSTEXT);
+//
+//    setCursor_textGrid(1, 1);
+//    display.print(F("phSAMPLER"));
+//    setCursor_textGrid(1, 2);
+//    display.print(F("["));
+//    setCursor_textGrid(13, 2);
+//    display.print(F("]"));
+//    display.setTextSize(2);
+//
+//    setCursor_textGrid(21, 1);
+//    display.print(F("SPI Flash"));
+//    print_flash_stats();
+//
+//  }
+//  if (LCDML.FUNC_loop())          // ****** LOOP *********
+//  {
+//    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+//    {
+//      if (LCDML.BT_checkDown())
+//      {
+//        temp_int = constrain(temp_int + 1, 0, 1);
+//
+//      }
+//      else if (LCDML.BT_checkUp())
+//      {
+//        temp_int = constrain(temp_int - 1, 0, 1);
+//      }
+//    }
+//    if (LCDML.BT_checkEnter())
+//    {
+//      ;
+//    }
+//    display.setTextSize(2);
+//    setCursor_textGrid(2, 2);
+//    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+//    if (temp_int == 0)
+//      display.print(F("MultiPiano "));
+//    else if (temp_int == 1)
+//      display.print(F("StringPad  "));
+//  }
+//  if (LCDML.FUNC_close())     // ****** STABLE END *********
+//  {
+//    encoderDir[ENC_R].reset();
+//    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//  }
+//}
 
 void sd_card_count_files_from_directory(File dir)
 {
