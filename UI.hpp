@@ -6128,7 +6128,7 @@ void UI_func_sample_editor(uint8_t param)
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-   // UI_draw_waveform_large();
+    UI_draw_waveform_large();
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -11004,7 +11004,7 @@ void sd_printDirectory(File currentDirectory)
     if (! fm.sd_entry)
     {
       fm.sd_cap_rows = f - 1;
-      //display.fillRect(CHAR_width_small, f * 11   + 6 * 11 - 1 , CHAR_width_small * 15, (10 - f) * 11, COLOR_BACKGROUND);
+      display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1 , CHAR_width_small * 27, (10 - f) * 11, COLOR_BACKGROUND);
       break;
     }
     if (fm.sd_entry.isDirectory() )
@@ -11244,7 +11244,7 @@ void UI_func_phSampler(uint8_t param)
     }
     if (LCDML.BT_checkEnter())
     {
-
+      ;
     }
     display.setTextSize(2);
     setCursor_textGrid(2, 2);
@@ -11324,7 +11324,6 @@ void UI_func_file_manager(uint8_t param)
     display.setTextColor(COLOR_CHORDS);
     display.print(" MB");
 
-
     display.setTextColor(COLOR_SYSTEXT);
     display.setCursor (CHAR_width_small * 30 , 1 * CHAR_height_small  );
     display.print(F("SPI FLASH"));
@@ -11385,8 +11384,7 @@ void UI_func_file_manager(uint8_t param)
     {
       if (fm.sd_mode == 4) //copy presets dir from SD to flash
       {
-        //border3_large_clear();
-        display.fillRect( CHAR_width_small * 1, CHAR_height_small * 5, DISPLAY_WIDTH - CHAR_width_small, CHAR_height_small * 10, COLOR_BACKGROUND);
+        display.fillRect( CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
         encoderDir[ENC_R].reset();
         uint8_t screenline = 0;
 
@@ -11401,7 +11399,7 @@ void UI_func_file_manager(uint8_t param)
 
           if (screenline > 10)
             screenline = 0;
-          setCursor_textGrid(1, 6 + screenline);
+          setCursor_textGrid_mini(1, 6 + screenline);
 
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           //if (filename[0] != 46 && filename[1] != 95)
@@ -11476,10 +11474,10 @@ void UI_func_file_manager(uint8_t param)
                   ff.write(buf, n);
                   count = count + n;
                   if (count % 5120 == 0)
-                    display.fillRect(241, 80, count / (f.size() / 240) - 2, 8, RED);
+                    display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, count / (f.size() / (14 * CHAR_width_small)) , 8, RED);
                 }
                 ff.close();
-                display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);
+                display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, (14 * CHAR_width_small) + 2, 8, COLOR_BACKGROUND);
                 print_flash_stats();
                 flash_printDirectory();
               } else
@@ -11496,10 +11494,9 @@ void UI_func_file_manager(uint8_t param)
             }
           }
           f.close();
-          //display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);
         }
         rootdir.close();
-        display.fillRect( CHAR_width_small * 1, CHAR_height_small * 5, DISPLAY_WIDTH - CHAR_width_small, CHAR_height_small * 10, COLOR_BACKGROUND);
+        display.fillRect( CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
         print_flash_stats();
         flash_printDirectory();
 #ifdef DEBUG
@@ -14430,8 +14427,12 @@ void UI_func_format_flash(uint8_t param)
   {
     border3_large_clear();
     encoderDir[ENC_R].reset();
+    helptext_r ("FORMAT");
+    helptext_l ("BACK");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(2);
     setCursor_textGrid(1, 1);
-    display.print(F("Format FLASH?  "));
+    display.print(F("FORMAT FLASH?  "));
     setCursor_textGrid(1, 2);
     display.print(F("PUSH TO CONFIRM"));
   }
@@ -14448,22 +14449,23 @@ void UI_func_format_flash(uint8_t param)
       SerialFlash.readID(id);
       unsigned long size = SerialFlash.capacity(id);
       if (size > 0) {
-        setCursor_textGrid(1, 6);
+        setCursor_textGrid(1, 4);
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        display.print(F("Flash Memory has "));
+        display.print(F("FLASH MEMORY HAS"));
+        setCursor_textGrid(1, 5);
         display.print(size);
-        display.print(F(" bytes."));
+        display.print(F(" BYTES."));
         setCursor_textGrid(1, 7);
         display.setTextColor(RED, COLOR_BACKGROUND);
         display.print(F("Erasing ALL Flash Memory"));
-        setCursor_textGrid(1, 9);
+        setCursor_textGrid(1, 8);
         display.setTextColor(GREY1, COLOR_BACKGROUND);
         display.print(F("Estimated time: "));
         int seconds = (float)size / eraseBytesPerSecond(id) + 0.5;
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print(seconds);
         display.setTextColor(GREY1, COLOR_BACKGROUND);
-        display.print(F(" seconds."));
+        display.print(F(" sec."));
         SerialFlash.eraseAll();
         unsigned long dotMillis = millis();
         unsigned char dotcount = 0;
@@ -14473,10 +14475,10 @@ void UI_func_format_flash(uint8_t param)
           if (millis() - dotMillis > 1000)
           {
             dotMillis = dotMillis + 1000;
-            setCursor_textGrid(1 + dotcount, 12 + screenline);
+            setCursor_textGrid(1 + dotcount, 10 + screenline);
             display.print(".");
             dotcount = dotcount + 1;
-            if (dotcount >= 32)
+            if (dotcount >= 24)
             {
               screenline++;
               dotcount = 0;
@@ -14485,10 +14487,11 @@ void UI_func_format_flash(uint8_t param)
         }
         if (dotcount > 0)
         {
-          border3_large_clear();
+          display.fillRect(0, 7 * CHAR_height, DISPLAY_WIDTH, DISPLAY_HEIGHT, COLOR_BACKGROUND);
           setCursor_textGrid(1, 2);
           display.setTextColor(GREEN, COLOR_BACKGROUND);
           display.print(F("done!           "));
+          helptext_l ("BACK");
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         }
       }
@@ -14497,6 +14500,7 @@ void UI_func_format_flash(uint8_t param)
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
   }
 }
 

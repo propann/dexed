@@ -53,7 +53,7 @@ typedef struct fm_s
   uint8_t sd_folder_depth = 0;
   uint16_t sd_selected_file = 0;
   uint16_t sd_skip_files = 0;
-  uint8_t sd_mode = 4;
+  uint8_t sd_mode = 0;
   bool sd_is_folder;
   bool sd_parent_folder = false;
   char sd_temp_name[52];

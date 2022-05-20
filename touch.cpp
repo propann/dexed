@@ -695,34 +695,36 @@ void handle_touchscreen_microsynth()
 
 void print_file_manager_buttons()
 {
+   if (fm.sd_mode == 0)
+    draw_button_on_grid(1, 25, "BROWSE", "FILES", 1);
+  else
+    draw_button_on_grid(1, 25, "BROWSE", "FILES", 0);
   if (fm.sd_mode == 1)
-    draw_button_on_grid(1, 25, "DELETE", "FILE", 1);
+    draw_button_on_grid(11, 25, "DELETE", "FILE", 1);
   else
-    draw_button_on_grid(1, 25, "DELETE", "FILE", 0);
+    draw_button_on_grid(11, 25, "DELETE", "FILE", 0);
   if (fm.sd_mode == 2)
-    draw_button_on_grid(28, 25, "PLAY", "SAMPLE", 1);
+    draw_button_on_grid(41, 25, "PLAY", "SAMPLE", 1);
   else
-    draw_button_on_grid(28, 25, "PLAY", "SAMPLE", 0);
+    draw_button_on_grid(41, 25, "PLAY", "SAMPLE", 0);
   if (fm.sd_mode == 3)
-    draw_button_on_grid(19, 25, "COPY >", "FLASH", 1);
+    draw_button_on_grid(31, 25, "COPY >", "FLASH", 1);
   else
-    draw_button_on_grid(19, 25, "COPY >", "FLASH", 0);
+    draw_button_on_grid(31, 25, "COPY >", "FLASH", 0);
   if (fm.sd_mode == 4)
-    draw_button_on_grid(10, 25, "COPY", "PRESET", 1);
+    draw_button_on_grid(21, 25, "COPY", "PRESET", 1);
   else
-    draw_button_on_grid(10, 25, "COPY", "PRESET", 0);
+    draw_button_on_grid(21, 25, "COPY", "PRESET", 0);
 
   // active_window   0 = left window (SDCARD) , 1 = FLASH
-
+  
   if ( fm.active_window == 0)
   {
     display.drawRect( CHAR_width_small * 29 - 1, 0, CHAR_width_small * 24 + 3 , CHAR_height_small * 23, GREY2);
     display.drawRect( 0, 0, CHAR_width_small * 29 , CHAR_height_small * 23, COLOR_SYSTEXT);
-
   }
   else
   {
-
     display.drawRect( 0, 0, CHAR_width_small * 29 , CHAR_height_small * 23, GREY2);
     display.drawRect( CHAR_width_small * 29 - 1, 0, CHAR_width_small * 24 + 3 , CHAR_height_small * 23, COLOR_SYSTEXT);
   }
@@ -736,15 +738,19 @@ void handle_touchscreen_file_manager()
 
     // check touch buttons
 
-    if (    ts.p.y > CHAR_height_small * 25 )
+    if (    ts.p.y > CHAR_height_small * 24 )
     {
-      if (  ts.p.x > 1 * CHAR_width_small && ts.p.x < CHAR_width_small * 9   )
+        if (check_button_on_grid (1,25))
       {
-        fm.sd_mode = 1;
+        fm.sd_mode = 0; // browse files/directories
       }
-      else if (   ts.p.x > 28 * CHAR_width_small && ts.p.x < CHAR_width_small * 35 )
+       if (check_button_on_grid (11,25))
       {
-        fm.sd_mode = 2;
+        fm.sd_mode = 1; // delete
+      }
+      if (check_button_on_grid (41,25))
+      {
+        fm.sd_mode = 2; //play
 
         if (fm.sd_mode == 2)
         {
@@ -762,13 +768,13 @@ void handle_touchscreen_file_manager()
           }
         }
       }
-      else  if (  ts.p.x > 19 * CHAR_width_small && ts.p.x < CHAR_width_small * 26  )
+      else if (check_button_on_grid (31,25))
       {
-        fm.sd_mode = 3;
+        fm.sd_mode = 3; //copy to flash
       }
-      else if (  ts.p.x > 10 * CHAR_width_small && ts.p.x < CHAR_width_small * 17 )
+      else if (check_button_on_grid (21,25))
       {
-        fm.sd_mode = 4;
+        fm.sd_mode = 4; //copy preset samples to flash
       }
     }
     // active_window   0 = left window (SDCARD) , 1 = FLASH
