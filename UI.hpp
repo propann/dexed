@@ -6128,7 +6128,7 @@ void UI_func_sample_editor(uint8_t param)
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-    UI_draw_waveform_large();
+   // UI_draw_waveform_large();
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
