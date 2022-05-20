@@ -1,4 +1,3 @@
-<# MicroDexed-touch
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/teaser.png" >
 <br>
