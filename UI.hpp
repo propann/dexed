@@ -3210,11 +3210,8 @@ void UI_func_midi_channel(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Channel"));
-
-
     UI_update_instance_icons();
   }
 
@@ -3232,18 +3229,18 @@ void UI_func_midi_channel(uint8_t param)
       UI_update_instance_icons();
     }
 #endif
-
     setCursor_textGrid(1, 2);
     if (configuration.dexed[selected_instance_id].midi_channel == 0)
     {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display.print(F("[OMNI]"));
     }
     else
     {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_int(configuration.dexed[selected_instance_id].midi_channel, 4, false, true, false);
     }
   }
-
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
