@@ -12762,14 +12762,14 @@ void UI_func_sysex_receive_bank(uint8_t param)
 
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Recv Bank"));
-    setCursor_textGrid(2, 2);
+    setCursor_textGrid(3, 2);
     display.print(F("["));
-    setCursor_textGrid(14, 1);
+    setCursor_textGrid(15, 2);
     display.print(F("]"));
     strcpy(receive_bank_filename, g_bank_name[selected_instance_id]);
 
-    show(2, 0, 2, bank_number);
-    show(2, 3, 10, receive_bank_filename);
+    show(2, 1, 2, bank_number);
+    show(2, 4, 10, receive_bank_filename);
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -12783,17 +12783,17 @@ void UI_func_sysex_receive_bank(uint8_t param)
             bank_number = constrain(bank_number + ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
             strcpy(receive_bank_filename, g_bank_name[selected_instance_id]);
             show(2, 1, 2, bank_number);
-            show(2, 3, 10, receive_bank_filename);
+            show(2, 4, 10, receive_bank_filename);
             break;
           case 1:
             yesno = !yesno;
             if (yesno)
-              show(2, 12, 3, "YES");
+              show(2, 13, 3, "YES");
             else
-              show(2, 12, 3, "NO");
+              show(2, 13, 3, "NO");
             break;
           case 2:
-            ui_select_name_state = UI_select_name(1, 1, receive_bank_filename, BANK_NAME_LEN - 1, false);
+            ui_select_name_state = UI_select_name(2, 2, receive_bank_filename, BANK_NAME_LEN - 1, false);
             break;
         }
       }
@@ -12804,18 +12804,18 @@ void UI_func_sysex_receive_bank(uint8_t param)
           case 0:
             bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
             strcpy(receive_bank_filename, g_bank_name[selected_instance_id]);
-            show(2, 0, 2, bank_number);
-            show(2, 3, 10, receive_bank_filename);
+            show(2, 1, 2, bank_number);
+            show(2, 4, 10, receive_bank_filename);
             break;
           case 1:
             yesno = !yesno;
             if (yesno)
-              show(2, 12, 3, "YES");
+              show(2, 13, 3, "YES");
             else
-              show(2, 12, 3, "NO");
+              show(2, 13, 3, "NO");
             break;
           case 2:
-            ui_select_name_state = UI_select_name(1, 1, receive_bank_filename, BANK_NAME_LEN - 1, false);
+            ui_select_name_state = UI_select_name(2, 2, receive_bank_filename, BANK_NAME_LEN - 1, false);
             break;
         }
       }
@@ -12830,8 +12830,9 @@ void UI_func_sysex_receive_bank(uint8_t param)
           strcpy(receive_bank_filename, "NONAME");
           mode = 2;
           setCursor_textGrid(1, 2);
+           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           display.print(F("[          ]    "));
-          ui_select_name_state = UI_select_name(1, 1, receive_bank_filename, BANK_NAME_LEN - 1, true);
+          ui_select_name_state = UI_select_name(2, 2, receive_bank_filename, BANK_NAME_LEN - 1, true);
           // fix_later   lcd.blink();
         }
         else
@@ -12846,12 +12847,12 @@ void UI_func_sysex_receive_bank(uint8_t param)
         mode = 2;
         setCursor_textGrid(1, 2);
         display.print(F("[          ]    "));
-        ui_select_name_state = UI_select_name(1, 1, receive_bank_filename, BANK_NAME_LEN - 1, true);
+        ui_select_name_state = UI_select_name(2, 2, receive_bank_filename, BANK_NAME_LEN - 1, true);
         // fix_later   lcd.blink();
       }
       else if (mode == 2)
       {
-        ui_select_name_state = UI_select_name(1, 1, receive_bank_filename, BANK_NAME_LEN - 1, false);
+        ui_select_name_state = UI_select_name(2, 2, receive_bank_filename, BANK_NAME_LEN - 1, false);
         if (ui_select_name_state == true)
         {
           if (yesno == true)
@@ -12974,10 +12975,10 @@ void UI_func_sysex_send_bank(uint8_t param)
     strcpy(tmp_bank_name, g_bank_name[selected_instance_id]);
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Send Bank"));
-    show(2, 2, 1, "[");
-    show(2, 14, 1, "]");
-    show(2, 0, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 3, 10, tmp_bank_name);
+    show(2, 3, 1, "[");
+    show(2, 15, 1, "]");
+    show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
+    show(2, 4, 10, tmp_bank_name);
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -12997,8 +12998,8 @@ void UI_func_sysex_send_bank(uint8_t param)
 #ifdef DEBUG
       Serial.printf("send bank sysex %d - bank:[%s]\n", bank_number, tmp_bank_name);
 #endif
-      show(2, 0, 2, bank_number);
-      show(2, 3, 10, tmp_bank_name);
+      show(2, 1, 2, bank_number);
+      show(2, 4, 10, tmp_bank_name);
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
@@ -13019,7 +13020,7 @@ void UI_func_sysex_send_bank(uint8_t param)
 #ifdef DEBUG
           Serial.println(F("Cannot read from SD."));
 #endif
-          show(2, 0, 16, "Read error.");
+          show(2, 1, 16, "Read error.");
           bank_number = 0xff;
         }
         else
@@ -13028,24 +13029,24 @@ void UI_func_sysex_send_bank(uint8_t param)
           sysex.read(bank_data, 4104);
           sysex.close();
 
-          show(2, 0, 16, "Sending Ch");
+          show(2, 1, 16, "Sending Ch");
           if (configuration.dexed[selected_instance_id].midi_channel == MIDI_CHANNEL_OMNI)
           {
-            show(2, 11, 2, "01");
+            show(2, 12, 2, "01");
             send_sysex_bank(1, bank_data);
           }
           else
           {
-            show(2, 11, 2, configuration.dexed[selected_instance_id].midi_channel + 1);
+            show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel + 1);
             send_sysex_bank(configuration.dexed[selected_instance_id].midi_channel, bank_data);
           }
-          show(2, 0, 16, "Done.");
+          show(2, 1, 16, "Done.");
           bank_number = 0xff;
         }
       }
       else
       {
-        show(2, 0, 16, "No bank.");
+        show(2, 1, 16, "No bank.");
         bank_number = 0xff;
       }
 
@@ -13717,6 +13718,7 @@ bool UI_select_name(uint8_t y, uint8_t x, char* edit_string, uint8_t len, bool i
         display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
         setCursor_textGrid(x + edit_pos, y);
         display.print(edit_string[edit_pos]);
+        display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
       }
       else
       {
@@ -13729,6 +13731,7 @@ bool UI_select_name(uint8_t y, uint8_t x, char* edit_string, uint8_t len, bool i
             setCursor_textGrid(x + edit_pos, y);
             display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
             display.print(edit_string[edit_pos]); // highlight current char
+            display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
           }
           if (edit_pos > 0)
           {
@@ -13764,6 +13767,7 @@ bool UI_select_name(uint8_t y, uint8_t x, char* edit_string, uint8_t len, bool i
         display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
         setCursor_textGrid(x + edit_pos, y);
         display.print(edit_string[edit_pos]);
+        display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
       }
       else
       {
@@ -13793,7 +13797,7 @@ bool UI_select_name(uint8_t y, uint8_t x, char* edit_string, uint8_t len, bool i
 
         if (edit_pos == last_char_pos)
         {
-          //display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
+          display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
           setCursor_textGrid(x - 1, y);
           display.print("[");
           setCursor_textGrid(x + len, y);
@@ -13847,9 +13851,11 @@ bool UI_select_name(uint8_t y, uint8_t x, char* edit_string, uint8_t len, bool i
       display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
       setCursor_textGrid(x + edit_pos, y);
       display.print(edit_string[edit_pos]); // highlight char
+      display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
     }
     else
     {
+      display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(x + len + 1, y);
       display.print(" ");
     }
@@ -14496,6 +14502,7 @@ void UI_func_format_flash(uint8_t param)
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
