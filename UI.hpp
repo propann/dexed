@@ -9114,7 +9114,7 @@ void UI_func_microsynth(uint8_t param)
         else if ( seq.temp_select_menu == 31 )
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         else if ( seq.temp_select_menu == 32 )
-          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel + 1, 1, 15);
+          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel, 1, 15);
       }
       else if (LCDML.BT_checkUp())
       {
@@ -13084,7 +13084,7 @@ void UI_func_sysex_send_bank(uint8_t param)
           }
           else
           {
-            show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel + 1);
+            show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
             send_sysex_bank(configuration.dexed[selected_instance_id].midi_channel, bank_data);
           }
           show(2, 1, 16, "Done.");
@@ -13227,7 +13227,7 @@ void UI_func_sysex_send_voice(uint8_t param)
               }
               else
               {
-                show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel + 1);
+                show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
                 send_sysex_voice(configuration.dexed[selected_instance_id].midi_channel, voice_data);
               }
               delay(MESSAGE_WAIT_TIME);
