@@ -447,37 +447,63 @@ int favsearcher = 0;
 
 void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, uint8_t color )
 {
-  display.setTextSize(1);
-  if (color == 0) //standard grey
+  if (color == 99) //special case, draw virtual keyboard button (icon)
   {
-    display.setTextColor(GREY1, GREY2);
     display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY2);
-  }
-  else if (color == 1) //button has active color
-  {
-    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-    display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, DX_DARKCYAN);
-  }
-  else if (color == 2) //button has RED color
-  {
-    display.setTextColor(COLOR_SYSTEXT, RED);
-    display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, RED);
-  }
-  display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 6 );
-  display.print(t1);
-  if (t2[1] == '\0')
-  {
-    display.setCursor((x + 2)* CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 6 + CHAR_height_small );
-    display.setTextSize(2);
+    uint8_t offset[5] = {1, 2, 2, 4, 6 }; //+ is the offset to left
+    int offcount = 0;
+    display.setTextSize(1);
+    display.setTextColor(GREY1, GREY2);
+    display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 4 );
+    display.print("KEYBRD");
+    //draw white keys
+    for (uint8_t i = 0; i < 7; i++)
+    {
+      display.fillRect( x * CHAR_width_small + 6 * i, y + 23, 5, 15, COLOR_SYSTEXT); // pianoroll white key
+    }
+    for (uint8_t i = 0; i < 11; i++)
+    {
+      if (seq.piano[i] == 1)
+      {
+        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y + 23, 4, 8, COLOR_BACKGROUND); // BLACK key
+        offcount++;
+        if (offcount == 5)offcount = 0;
+      }
+    }
   }
   else
   {
-    display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 10 + CHAR_height_small );
+    display.setTextSize(1);
+    if (color == 0) //standard grey
+    {
+      display.setTextColor(GREY1, GREY2);
+      display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY2);
+    }
+    else if (color == 1) //button has active color
+    {
+      display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+      display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, DX_DARKCYAN);
+    }
+    else if (color == 2) //button has RED color
+    {
+      display.setTextColor(COLOR_SYSTEXT, RED);
+      display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, RED);
+    }
+    display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 6 );
+    display.print(t1);
+    if (t2[1] == '\0')
+    {
+      display.setCursor((x + 2)* CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 6 + CHAR_height_small );
+      display.setTextSize(2);
+    }
+    else
+    {
+      display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 10 + CHAR_height_small );
+    }
+    display.print(t2);
+    display.setTextSize(1);
+    // display.setTextColor(COLOR_SYSTEXT,COLOR_BACKGROUND);
   }
-  display.print(t2);
-
-  display.setTextSize(1);
-  // display.setTextColor(COLOR_SYSTEXT,COLOR_BACKGROUND);
 }
 
 void show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char *str)
@@ -7602,7 +7628,7 @@ void seq_pattern_editor_update_dynamic_elements()
 {
   if (seq.cycle_touch_element == 0)
   {
-    draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
+    draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
     if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
     {
       print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
@@ -8501,7 +8527,7 @@ void UI_func_epiano(uint8_t param)
 
     if (seq.cycle_touch_element != 1)
     {
-      draw_button_on_grid(45, 1, "TOUCH-", "KEYBRD", 0);
+      draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
     }
     else
     {
@@ -8909,7 +8935,7 @@ void UI_func_microsynth(uint8_t param)
 
     if (seq.cycle_touch_element != 1)
     {
-      draw_button_on_grid(45, 1, "TOUCH-", "KEYBRD", 0);
+      draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
       microsynth_refresh_lower_screen_static_text();
     }
     else
@@ -12266,7 +12292,8 @@ void UI_func_voice_select(uint8_t param)
     if (seq.cycle_touch_element != 1)
     {
       display.drawLine(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - CHAR_height_small * 4 + 2 ,  GREY4);
-      draw_button_on_grid(45, 1, "TOUCH-", "KEYBRD", 0);
+      draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
+
       print_voice_settings(CHAR_width_small, 104, 0, true);
       print_voice_settings(CHAR_width_small + 160, 104, 1, true);
       print_voice_select_default_help();
@@ -12830,7 +12857,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
           strcpy(receive_bank_filename, "NONAME");
           mode = 2;
           setCursor_textGrid(1, 2);
-           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           display.print(F("[          ]    "));
           ui_select_name_state = UI_select_name(2, 2, receive_bank_filename, BANK_NAME_LEN - 1, true);
           // fix_later   lcd.blink();

@@ -5,7 +5,6 @@
 #include <LCDMenuLib2.h>
 #include "ILI9341_t3n.h"
 
-
 extern ILI9341_t3n display;
 extern config_t configuration;
 extern uint8_t selected_instance_id;
@@ -537,7 +536,7 @@ void handle_touchscreen_voice_select()
         seq.cycle_touch_element = 0;
 
         display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
-        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
+        draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
         print_voice_settings(CHAR_width_small, 104, 0, true);
         print_voice_settings(CHAR_width_small + 160, 104, 1, true);
         print_perfmod_buttons();
@@ -607,7 +606,7 @@ void handle_touchscreen_pattern_editor()
       if (seq.cycle_touch_element == 1)
       {
         seq.cycle_touch_element = 0;
-        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
+        draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
         seq_pattern_editor_update_dynamic_elements();
       }
       else
@@ -655,7 +654,7 @@ void handle_touchscreen_microsynth()
       if (seq.cycle_touch_element == 1)
       {
         seq.cycle_touch_element = 0;
-        draw_button_on_grid(45, 1, "TOUCH", "KEYBRD", 0);
+        draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
         microsynth_refresh_lower_screen_static_text();
         microsynth_refresh_lower_screen_dynamic_text();
       }
@@ -695,7 +694,7 @@ void handle_touchscreen_microsynth()
 
 void print_file_manager_buttons()
 {
-   if (fm.sd_mode == 0)
+  if (fm.sd_mode == 0)
     draw_button_on_grid(1, 25, "BROWSE", "FILES", 1);
   else
     draw_button_on_grid(1, 25, "BROWSE", "FILES", 0);
@@ -717,7 +716,7 @@ void print_file_manager_buttons()
     draw_button_on_grid(21, 25, "COPY", "PRESET", 0);
 
   // active_window   0 = left window (SDCARD) , 1 = FLASH
-  
+
   if ( fm.active_window == 0)
   {
     display.drawRect( CHAR_width_small * 29 - 1, 0, CHAR_width_small * 24 + 3 , CHAR_height_small * 23, GREY2);
@@ -740,15 +739,15 @@ void handle_touchscreen_file_manager()
 
     if (    ts.p.y > CHAR_height_small * 24 )
     {
-        if (check_button_on_grid (1,25))
+      if (check_button_on_grid (1, 25))
       {
         fm.sd_mode = 0; // browse files/directories
       }
-       if (check_button_on_grid (11,25))
+      if (check_button_on_grid (11, 25))
       {
         fm.sd_mode = 1; // delete
       }
-      if (check_button_on_grid (41,25))
+      if (check_button_on_grid (41, 25))
       {
         fm.sd_mode = 2; //play
 
@@ -768,11 +767,11 @@ void handle_touchscreen_file_manager()
           }
         }
       }
-      else if (check_button_on_grid (31,25))
+      else if (check_button_on_grid (31, 25))
       {
         fm.sd_mode = 3; //copy to flash
       }
-      else if (check_button_on_grid (21,25))
+      else if (check_button_on_grid (21, 25))
       {
         fm.sd_mode = 4; //copy preset samples to flash
       }
