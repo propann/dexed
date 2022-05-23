@@ -449,13 +449,14 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, u
 {
   if (color == 99) //special case, draw virtual keyboard button (icon)
   {
-    display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY2);
+    display.fillRect(x * CHAR_width_small , y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y / 2 - 2, GREY2);
+
     uint8_t offset[5] = {1, 2, 2, 4, 6 }; //+ is the offset to left
     int offcount = 0;
     display.setTextSize(1);
     display.setTextColor(GREY1, GREY2);
     display.setCursor(x * CHAR_width_small + CHAR_width_small / 2 , y * CHAR_height_small + 4 );
-    display.print("KEYBRD");
+    display.print("V.KEYB");
     //draw white keys
     for (uint8_t i = 0; i < 7; i++)
     {
@@ -1053,26 +1054,6 @@ const char* seq_find_shortname(uint8_t sstep)
   return shortname;
 }
 
-void seq_sub_pat_chain_update_running_step(int x, int y)
-{
-  // SEQUENCER REWRITE
-
-  //  if (seq.step == 1) {
-  //    display.setTextSize(1);
-  //    display.setCursor(x + 9 * CHAR_width + 6, y + (CHAR_height - 5) );
-  //    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //    display.print(seq.chain_active_step + 1);
-  //    for (uint8_t r = 0; r < 4; r++)
-  //    {
-  //      if (seq.chain_active_step == r)
-  //        display.drawRect(x + 5 * CHAR_width - 2 + seq.chain_active_step * 42 , y + 31, 27, 78, COLOR_SYSTEXT);
-  //      else
-  //        display.drawRect(x + 5 * CHAR_width - 2 + r * 42, y + 31, 27, 78, COLOR_BACKGROUND);
-  //    }
-  //  }
-
-}
-
 void print_voice_settings_in_pattern_editor(int x, int y)
 {
   display.setTextSize(1);
@@ -1278,7 +1259,6 @@ void update_display_functions_while_seq_running()
   if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ||
        LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) )
   {
-    seq_sub_pat_chain_update_running_step(CHAR_width * 21, CHAR_height * 9);
     display.setTextSize(2);
     if (seq.step == 0)
     {
@@ -5825,7 +5805,7 @@ void seq_printAllSeqSteps()
   }
 }
 
-void seq_sub_pat_chain(int x, int y, bool init)
+void seq_sub_print_track_assignments(int x, int y, bool init)
 {
   if (seq.cycle_touch_element == 0)  // touch keyboard is off
   {
@@ -5833,14 +5813,14 @@ void seq_sub_pat_chain(int x, int y, bool init)
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     for (uint8_t track = 0; track < NUM_SEQ_TRACKS; track++)
     {
-      display.setCursor(CHAR_width_small * 36,  (track + 13) * (CHAR_height_small + 2) + 10  );
+      display.setCursor(CHAR_width_small * 36,  (track + 13) * (CHAR_height_small + 1) + 20  );
       if (seq.menu - 21 == track)
         set_track_type_color_inverted(track);
       else
         set_track_type_color(track);
       display.print(F("T"));
       display.print (track + 1);
-      display.setCursor(CHAR_width_small * 36 + 3 * CHAR_width_small,   (track + 13) * (CHAR_height_small + 2) + 10  );
+      display.setCursor(CHAR_width_small * 36 + 3 * CHAR_width_small,   (track + 13) * (CHAR_height_small + 1) + 20  );
       if (seq.menu - 21 - NUM_SEQ_TRACKS == track)
         set_track_type_color_inverted(track);
       else
@@ -5881,6 +5861,15 @@ void seq_sub_pat_chain(int x, int y, bool init)
         display.print ("-----------");
       }
     }
+    display.setCursor(CHAR_width_small * 36,  21 * (CHAR_height_small + 2) + 10  );
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print ("STEP RECORDING:");
+    display.setCursor(CHAR_width_small * 36,  22 * (CHAR_height_small + 2) + 11  );
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    if (seq.auto_advance_step)
+      display.print ("AUTO ADV. STEP");
+    else
+      display.print ("KEEP CUR. STEP");
     if (init)
       print_color_map(x , 17 * CHAR_height_small + 5);
     display.setTextSize(2);
@@ -5902,7 +5891,6 @@ void seq_printVelGraphBar()
       if ( seq.vel[seq.active_pattern][i] > 209)
       {
         drawBitmap((i - 1) * CHAR_width + 13, 2 * CHAR_height + 7, special_chars[22], 8, 8, COLOR_PITCHSMP);
-        //display.print("P");
       }
     }
   }
@@ -5910,8 +5898,7 @@ void seq_printVelGraphBar()
 
 void seq_printVelGraphBar_single_step(uint8_t step, int color)
 {
-  display.fillRect(0 + step * CHAR_width + 3 , CHAR_height * 2 + 1  , 3, 14, COLOR_BACKGROUND);
-
+  display.fillRect(0 + step * CHAR_width + 1 , CHAR_height * 2 + 1  , 8, 14, COLOR_BACKGROUND);
   if ( seq.vel[seq.active_pattern][step] < 130)
   {
     display.drawLine (0 + step * CHAR_width + 3 , CHAR_height * 3 - 3  , 0 + step * CHAR_width + 3 , CHAR_height * 3 - 3 - (seq.vel[seq.active_pattern][step] / 10)   , color);
@@ -5922,8 +5909,7 @@ void seq_printVelGraphBar_single_step(uint8_t step, int color)
   {
     if ( seq.vel[seq.active_pattern][step] > 209)
     {
-      //display.print("P");
-      drawBitmap(step * CHAR_width + 12, 2 * CHAR_height + 7, special_chars[22], 8, 8, COLOR_PITCHSMP);
+      drawBitmap((step - 1) * CHAR_width + 13, 2 * CHAR_height + 7, special_chars[22], 8, 8, COLOR_PITCHSMP);
     }
   }
 }
@@ -6395,6 +6381,16 @@ void seq_sub_display_menu_logic()
           seq.inst_dexed[i] = constrain(seq.inst_dexed[i] - 1, 0, 36);
       }
     }
+    else if (seq_active_function == 1 && seq.menu == 37) // edit auto/manual advance in step recorder
+    {
+      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+      {
+        if (LCDML.BT_checkDown())
+          seq.auto_advance_step = !seq.auto_advance_step;
+        else if (LCDML.BT_checkUp())
+          seq.auto_advance_step = !seq.auto_advance_step;
+      }
+    }
   }
 }
 
@@ -6448,7 +6444,7 @@ void UI_func_seq_vel_editor(uint8_t param)
           if (seq.menu == 19)
             seq.menu = 21;
           else
-            seq.menu = constrain(seq.menu + 1, 19, 36);
+            seq.menu = constrain(seq.menu + 1, 19, 37);
         }
         else if (LCDML.BT_checkUp())
         {
@@ -6457,7 +6453,7 @@ void UI_func_seq_vel_editor(uint8_t param)
             seq.menu = 16;  //return to vel_editor
           }
           else
-            seq.menu = constrain(seq.menu - 1, 19, 36);
+            seq.menu = constrain(seq.menu - 1, 19, 37);
         }
       }
     }
@@ -6845,7 +6841,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       }
       else
         print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
-      seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
+      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
     else if (seq.menu > 20  && seq.menu < 29) // sub menus functions: track type
     {
@@ -6890,7 +6886,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         display.print(" ?    ");
         display.setTextSize(2);
       }
-      seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
+      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
     else if (seq.menu > 20 + NUM_SEQ_TRACKS  && seq.menu < 21 + 2 * NUM_SEQ_TRACKS) // sub menus functions: assign dexed/other synth instance to tracks
     {
@@ -6955,7 +6951,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         display.print(F(" ?"));
         fill_up_with_spaces_left_window();
       }
-      seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
+      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
     else if (seq.menu == 16 )
     {
@@ -6968,8 +6964,24 @@ void UI_func_seq_vel_editor(uint8_t param)
       print_content_type();
       display.setTextSize(2);
       print_edit_mode();
-      seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
+      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
+    if (seq.menu == 37 )
+    {
+      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
+      if (seq_active_function == 1)
+        display.setTextColor(COLOR_SYSTEXT, RED);
+      else
+        display.setTextColor(COLOR_BACKGROUND, RED);
+    }
+    else
+      display.setTextColor(RED, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 36,  22 * (CHAR_height_small + 2) + 11  );
+    display.setTextSize(1);
+    if (seq.auto_advance_step)
+      display.print ("AUTO ADV. STEP");
+    else
+      display.print ("KEEP CUR. STEP");
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -7506,14 +7518,15 @@ void seq_sub_pitch_edit_pitched_sample ()
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     }
     display.setTextSize(1);
-    display.setCursor(1 * CHAR_width, 4 * CHAR_height + 17);
+    display.setCursor(0, 4 * CHAR_height);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.print(F("SELECT [ "));
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.print("C0");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(F(" ] TO CLEAR STEP!  "));
+    display.print(F(" ] TO CLEAR THIS STEP"));
+    fill_up_with_spaces_left_window();
     display.setTextSize(2);
   }
 }
@@ -7626,6 +7639,13 @@ void virtual_keyboard_print_buttons()
 }
 void seq_pattern_editor_update_dynamic_elements()
 {
+  if (seq.running == false)
+  {
+    if (seq.step_recording)
+      draw_button_on_grid(36, 1, "RECORD", "ACTIVE", 1); //print step recorder icon
+    else
+      draw_button_on_grid(36, 1, "STEP", "RECORD", 2); //print step recorder icon
+  }
   if (seq.cycle_touch_element == 0)
   {
     draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
@@ -7639,7 +7659,7 @@ void seq_pattern_editor_update_dynamic_elements()
       print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
       seq.note_editor_view = 1;
     }
-    seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, true);
+    seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, true);
     print_current_sample_and_pitch_buffer();
   }
   else if (seq.cycle_touch_element == 1)
@@ -8090,7 +8110,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
       print_current_sample_and_pitch_buffer();
-      seq_sub_pat_chain(CHAR_width * 12, CHAR_height * 2, false);
+      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
     if (seq.menu == 3)
     {

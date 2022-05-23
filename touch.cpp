@@ -588,7 +588,6 @@ void handle_touchscreen_voice_select()
       print_voice_settings(CHAR_width_small + 160, 104, 1, 0);
       ts.switch_active_instance = false;
     }
-
   }
   seq.generic_ui_delay++;
   virtual_keyboard_update_all_key_states();
@@ -599,7 +598,18 @@ void handle_touchscreen_pattern_editor()
   if (touch.touched())
   {
     get_scaled_touch_point();
-    if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000 )
+
+    if (check_button_on_grid(36, 1) && seq.generic_ui_delay > 12000 && seq.running == false )
+    {
+      seq.note_in = 0;
+      seq.step_recording = !seq.step_recording;
+      if (seq.step_recording)
+        draw_button_on_grid(36, 1, "RECORD", "ACTIVE", 1); //print step recorder icon
+      else
+        draw_button_on_grid(36, 1, "STEP", "RECORD", 2); //print step recorder icon
+      seq.generic_ui_delay = 0;
+    }
+    else if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000 )
     {
       border3_large();
       border3_large_clear();
@@ -607,6 +617,7 @@ void handle_touchscreen_pattern_editor()
       {
         seq.cycle_touch_element = 0;
         draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
+        display.fillRect(0, CHAR_height_small * 12 + 1 , DISPLAY_WIDTH, 1 , COLOR_BACKGROUND);
         seq_pattern_editor_update_dynamic_elements();
       }
       else
