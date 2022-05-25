@@ -1148,7 +1148,7 @@ void sub_step_recording()
         seq.note_in_velocity = 0;
         display.setTextSize(2);
         display.setTextColor(GREEN, GREY2);
-        if (seq.auto_advance_step)
+        if (seq.auto_advance_step > 0)
         {
           if (cur_step < 15)
           {
@@ -1159,10 +1159,20 @@ void sub_step_recording()
           }
           else
           {
-            seq.menu = seq.menu - 15;
-            setCursor_textGrid(cur_step - 15, 1);
-            display.print(seq_find_shortname(cur_step - 15)[0]);
-            print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step - 15);
+            if (seq.auto_advance_step == 1) // continue auto advance after last step on first step
+            {
+              seq.menu = seq.menu - 15;
+              setCursor_textGrid(cur_step - 15, 1);
+              display.print(seq_find_shortname(cur_step - 15)[0]);
+              print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step - 15);
+            }
+            else //stop at last step
+            {
+              // disable step record
+              seq.step_recording = false;
+              //handleStop
+              draw_button_on_grid(36, 1, "STEP", "RECORD", 2); //print step recorder icon
+            }
           }
         }
       }
@@ -1566,12 +1576,34 @@ void learn_cc(byte inChannel, byte inNumber)
 
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 {
+  if ( ( seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) ||
+       ( seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level)))
+  {
+    // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
+    //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
+
+    if (seq.current_track_type_of_active_pattern == 0) // drums
+      inChannel = DRUM_MIDI_CHANNEL;
+    else
+    {
+      uint8_t trk = 0;
+      trk = seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)];
+      if (trk == 0)
+        inChannel = configuration.dexed[0].midi_channel;
+      else  if (trk == 1)
+        inChannel = configuration.dexed[1].midi_channel;
+      else  if (trk == 2)
+        inChannel = configuration.epiano.midi_channel;
+      else  if (trk == 3)
+        inChannel = microsynth[0].midi_channel;
+      else  if (trk == 4)
+        inChannel = microsynth[1].midi_channel;
+    }
+  }
 
 #ifdef MIDI_DEVICE_USB_HOST
   if (device == 1)
-
     midi_usb.sendNoteOn(inNumber, inVelocity, inChannel);
-
 #endif
 #ifdef MIDI_DEVICE_DIN
   if (device == 2)
@@ -1610,13 +1642,14 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
       drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
       drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
 #endif
-      //  if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
+      // if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
       // {
 
-      Drum[slot]->enableInterpolation(true);
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+      //        Drum[slot]->enableInterpolation(true);
+      //        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+      //
+      //        Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
 
-      // Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
       // }
     }
 
@@ -1765,6 +1798,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
               sprintf(temp_name, "%s.wav", drum_config[d].name);
               Drum[slot]->playWav(temp_name);
+              //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -1878,6 +1912,31 @@ uint8_t drum_get_slot(uint8_t dt)
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)
 {
+  if ( ( seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) ||
+       ( seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level)))
+  {
+    // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
+    //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
+
+    if (seq.current_track_type_of_active_pattern == 0) // drums
+      inChannel = DRUM_MIDI_CHANNEL;
+    else
+    {
+      uint8_t trk = 0;
+      trk = seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)];
+      if (trk == 0)
+        inChannel = configuration.dexed[0].midi_channel;
+      else  if (trk == 1)
+        inChannel = configuration.dexed[1].midi_channel;
+      else  if (trk == 2)
+        inChannel = configuration.epiano.midi_channel;
+      else  if (trk == 3)
+        inChannel = microsynth[0].midi_channel;
+      else  if (trk == 4)
+        inChannel = microsynth[1].midi_channel;
+    }
+  }
+
 #ifdef MIDI_DEVICE_USB_HOST
   if (device == 1)
     midi_usb.sendNoteOff(inNumber, inVelocity, inChannel);

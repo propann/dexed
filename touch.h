@@ -25,7 +25,6 @@ typedef struct ts_s
 {
   uint16_t temp_col_hue = 1;
   uint8_t  temp_col_sat = 240, temp_col_bright = 240;
-
   int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
   uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums
@@ -59,22 +58,12 @@ typedef struct fm_s
   char sd_temp_name[52];
   char sd_new_name[52];
   char sd_full_name[52];
-
   uint16_t flash_sum_files = 0;
   uint16_t flash_cap_rows;
   uint16_t flash_selected_file = 0;
   uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
-  //uint8_t flash_folder_depth = 0;
-  //File flash_currentDirectory;
-  //File flash_entry;
-  //bool flash_is_folder;
-  //bool flash_parent_folder = false;
-  //char flash_temp_name[52];
-  //char flash_new_name[52];
-  //char flash_full_name[52];
-
 } fm_t;
 
 #endif

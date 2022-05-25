@@ -2111,8 +2111,8 @@ bool save_sd_performance_json(uint8_t number)
       for (uint8_t i = 0; i < sizeof(seq.content_type); i++) {
         data_json["content_type"][i] = seq.content_type[i];
       }
-      for (uint8_t i = 0; i < sizeof(seq.inst_dexed); i++) {
-        data_json["seq_inst_dexed"][i] = seq.inst_dexed[i];
+      for (uint8_t i = 0; i < sizeof(seq.instrument); i++) {
+        data_json["seq_inst_dexed"][i] = seq.instrument[i];
       }
       for (uint8_t i = 0; i < FILENAME_LEN; i++) {
         data_json["seq_name"][i] = seq.name[i];
@@ -2439,9 +2439,9 @@ bool load_sd_performance_json(uint8_t number)
         {
           seq.content_type[i] = data_json["content_type"][i];
         }
-        for (uint8_t i = 0; i < sizeof(seq.inst_dexed); i++)
+        for (uint8_t i = 0; i < sizeof(seq.instrument); i++)
         {
-          seq.inst_dexed[i] = data_json["seq_inst_dexed"][i];
+          seq.instrument[i] = data_json["seq_inst_dexed"][i];
         }
 
         if (data_json["seq_name"][0] != 0)

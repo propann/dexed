@@ -25,9 +25,7 @@
 #ifndef _SEQUENCER_H
 #define _SEQUENCER_H
 #include "XPT2046_Touchscreen.h"
-
 #include <avr/pgmspace.h>
-
 #include <SD.h>
 extern Sd2Card card;
 
@@ -51,10 +49,10 @@ const float tune_frequencies2_PGM[128] =
   8372.0181, 8869.8442, 9397.2726, 9956.0635, 10548.0818, 11175.3034, 11839.8215, 12543.8540
 };
 
-
 typedef struct sequencer_s {
-  bool auto_advance_step=false;
+  uint8_t auto_advance_step=0; //0 = single step, 1 = auto advance, 2 = auto advance and auto stop
   bool step_recording = false;
+  uint8_t current_track_type_of_active_pattern;
   bool track_mute[NUM_SEQ_TRACKS];
   uint8_t mute_mode=0;
   uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
@@ -71,7 +69,6 @@ typedef struct sequencer_s {
   uint8_t scrollpos;
   int cursor_scroll;
   uint8_t selected_track;
-  //uint8_t tracker_active_step;
   bool edit_state;
   float drums_volume;
   uint8_t menu_status; // 0= normal jump
@@ -87,7 +84,7 @@ typedef struct sequencer_s {
   uint8_t UI_last_seq_step;
   uint8_t note_editor_view = 99; // 0 = list/tracker view, 1 = pianoroll
   bool noteoffsent[NUM_SEQ_TRACKS] = {false, false, false, false, false, false, false, false};
-  uint8_t inst_dexed[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
+  uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
   uint8_t step = 0;
   bool running = false;
   bool recording = false;

@@ -5759,36 +5759,19 @@ void set_track_type_color_inverted(uint8_t track)
     display.setTextColor(COLOR_BACKGROUND, COLOR_ARP);
 }
 
-void print_color_map(int x, int y)
+void print_performance_name(int x, int y)
 {
   display.setTextSize(1);
-
-  display.setCursor(CHAR_width_small * 36,   10 * (CHAR_height_small + 2) + 10);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print(F( "PERF #"));
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 36,   11 * (CHAR_height_small + 2) + 10);
   seq_print_formatted_number(configuration.sys.performance_number, 2);
-  display.print( ": ");
-  display.setCursor(CHAR_width_small * 36,  11 * (CHAR_height_small + 2) + 10);
+  display.print( ":");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   display.print( "[");
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(seq.name);
-
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   display.print( "]");
-
-  //  display.setCursor(x,  21 * (CHAR_height_small + 2) + 10  );
-  //
-  //  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-  //  display.print(F("DRUMS "));
-  //  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  //  display.print(F("PITCHED SAMPLE "));
-  //  display.setCursor(x,  22 * (CHAR_height_small + 2) + 10  );
-  //  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-  //  display.print(F("CHORD/ARP "));
-  //  display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-  //  display.print(F("INST"));
   display.setTextSize(2);
 }
 
@@ -5825,36 +5808,36 @@ void seq_sub_print_track_assignments(int x, int y, bool init)
         set_track_type_color_inverted(track);
       else
         set_track_type_color(track);
-      if (seq.track_type[track] > 0 && seq.inst_dexed[track] < 2)
+      if (seq.track_type[track] > 0 && seq.instrument[track] < 2)
       {
         display.print ("DEXED INST.");
-        display.print (seq.inst_dexed[track] + 1);
+        display.print (seq.instrument[track] + 1);
       }
-      else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 2) //epiano
+      else if (seq.track_type[track] > 0 && seq.instrument[track] == 2) //epiano
       {
         display.print ("ELECTR.PIANO");
       }
-      else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 3)  //MicroSynth 0
+      else if (seq.track_type[track] > 0 && seq.instrument[track] == 3)  //MicroSynth 0
       {
         display.print ("MICROSYNTH 1");
       }
-      else if (seq.track_type[track] > 0 && seq.inst_dexed[track] == 4)  //MicroSynth 1
+      else if (seq.track_type[track] > 0 && seq.instrument[track] == 4)  //MicroSynth 1
       {
         display.print ("MICROSYNTH 2");
       }
-      else if (seq.track_type[track] == 0 && seq.inst_dexed[track] < 5) //drums/samples
+      else if (seq.track_type[track] == 0 && seq.instrument[track] < 5) //drums/samples
       {
         display.print ("DRUMS/SAMPLE");
       }
-      else if (seq.inst_dexed[track] > 4 && seq.inst_dexed[track] < 21) //external MIDI USB
+      else if (seq.instrument[track] > 4 && seq.instrument[track] < 21) //external MIDI USB
       {
         display.print ("MIDI USB #");
-        seq_print_formatted_number(seq.inst_dexed[track] - 4, 2);
+        seq_print_formatted_number(seq.instrument[track] - 4, 2);
       }
-      else if (seq.inst_dexed[track] > 20 && seq.inst_dexed[track] < 37) //external MIDI MINI JACK/DIN
+      else if (seq.instrument[track] > 20 && seq.instrument[track] < 37) //external MIDI MINI JACK/DIN
       {
         display.print ("MIDI DIN #");
-        seq_print_formatted_number(seq.inst_dexed[track] - 20, 2);
+        seq_print_formatted_number(seq.instrument[track] - 20, 2);
       }
       else
       {
@@ -5866,12 +5849,14 @@ void seq_sub_print_track_assignments(int x, int y, bool init)
     display.print ("STEP RECORDING:");
     display.setCursor(CHAR_width_small * 36,  22 * (CHAR_height_small + 2) + 11  );
     display.setTextColor(RED, COLOR_BACKGROUND);
-    if (seq.auto_advance_step)
+    if (seq.auto_advance_step == 1)
       display.print ("AUTO ADV. STEP");
+    else if (seq.auto_advance_step == 2)
+      display.print ("AUTO ADV.+STOP");
     else
       display.print ("KEEP CUR. STEP");
     if (init)
-      print_color_map(x , 17 * CHAR_height_small + 5);
+      print_performance_name(x , 17 * CHAR_height_small + 5);
     display.setTextSize(2);
   }
 }
@@ -6376,9 +6361,9 @@ void seq_sub_display_menu_logic()
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] + 1, 0, 36);
+          seq.instrument[i] = constrain(seq.instrument[i] + 1, 0, 36);
         else if (LCDML.BT_checkUp())
-          seq.inst_dexed[i] = constrain(seq.inst_dexed[i] - 1, 0, 36);
+          seq.instrument[i] = constrain(seq.instrument[i] - 1, 0, 36);
       }
     }
     else if (seq_active_function == 1 && seq.menu == 37) // edit auto/manual advance in step recorder
@@ -6386,9 +6371,9 @@ void seq_sub_display_menu_logic()
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.auto_advance_step = !seq.auto_advance_step;
+          seq.auto_advance_step = constrain(seq.auto_advance_step + 1, 0, 2);
         else if (LCDML.BT_checkUp())
-          seq.auto_advance_step = !seq.auto_advance_step;
+          seq.auto_advance_step = constrain(seq.auto_advance_step - 1, 0, 2);
       }
     }
   }
@@ -6926,26 +6911,26 @@ void UI_func_seq_vel_editor(uint8_t param)
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print(F("SET TRACK TO: "));
         display.setTextColor(GREEN, COLOR_BACKGROUND);
-        if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] < 2)
+        if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 2)
         {
           display.print(F("DEXED #"));
-          display.print(seq.inst_dexed[seq.menu - 21 - 8] + 1);
+          display.print(seq.instrument[seq.menu - 21 - 8] + 1);
         }
-        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] == 2)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 2)
           display.print(F("ELEC.PIANO"));
-        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] == 3)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 3)
           display.print(F("MICROSYNTH #1"));
-        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] == 4)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 4)
           display.print(F("MICROSYNTH #2"));
-        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] > 4 && seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] < 21)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 4 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 21)
         {
           display.print(F("MIDI USB #"));
-          seq_print_formatted_number(seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] - 4, 2);
+          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 4, 2);
         }
-        else if (seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] > 20 && seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] < 37)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 20 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 37)
         {
           display.print(F("MIDI DIN #"));
-          seq_print_formatted_number(seq.inst_dexed[seq.menu - 21 - NUM_SEQ_TRACKS] - 20, 2);
+          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 20, 2);
         }
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print(F(" ?"));
@@ -6978,8 +6963,10 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextColor(RED, COLOR_BACKGROUND);
     display.setCursor(CHAR_width_small * 36,  22 * (CHAR_height_small + 2) + 11  );
     display.setTextSize(1);
-    if (seq.auto_advance_step)
+    if (seq.auto_advance_step == 1)
       display.print ("AUTO ADV. STEP");
+    else if (seq.auto_advance_step == 2)
+      display.print ("AUTO ADV.+STOP");
     else
       display.print ("KEEP CUR. STEP");
   }
@@ -7564,6 +7551,11 @@ void print_current_sample_and_pitch_buffer()
     display.print(noteNames[temp_int % 12 ]);
     display.print( (temp_int / 12) - 1);
     display.print(" ");
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setCursor(36 * CHAR_width_small,  9 * (CHAR_height_small + 2) + 10  );
+    display.print(F("USED IN TRK:"));
+    display.setCursor(43 * CHAR_width_small,  10 * (CHAR_height_small + 2) + 10  );
+    display.print(F("INST:"));
     display.setTextSize(2);
   }
 }
@@ -7671,6 +7663,29 @@ void seq_pattern_editor_update_dynamic_elements()
   display.setTextSize(2);
 }
 
+uint8_t find_track_in_song_where_pattern_is_used(uint8_t pattern)
+{
+  uint8_t result = 99;
+  for (uint8_t s = 0; s < SONG_LENGHT; s++)
+  {
+    for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)
+    {
+      for (uint8_t c = 0; c < 16; c++)
+      {
+        if (seq.chain[ seq.song[t][s] ][c] == pattern )
+        {
+          result = t;
+          seq.current_track_type_of_active_pattern = seq.track_type[t];
+          return result;
+          break;
+        }
+
+      }
+    }
+  }
+  return result;
+}
+
 void UI_func_seq_pattern_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -7705,6 +7720,24 @@ void UI_func_seq_pattern_editor(uint8_t param)
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
     }
+    display.setTextSize(1);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setCursor(48 * CHAR_width_small,  9 * (CHAR_height_small + 2) + 10  );
+    if (find_track_in_song_where_pattern_is_used(seq.active_pattern) == 99)
+      display.print( "NONE" );
+    else
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.print( " " );
+      display.print( find_track_in_song_where_pattern_is_used(seq.active_pattern) + 1 );
+      display.print( "  " );
+    }
+    if (seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)] < 40)
+    {
+      display.setCursor(49 * CHAR_width_small,  10 * (CHAR_height_small + 2) + 10  );
+      seq_print_formatted_number(seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)], 2);
+    }
+    display.setTextSize(2);
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -7763,10 +7796,24 @@ void UI_func_seq_pattern_editor(uint8_t param)
           seq.active_pattern = constrain(seq.active_pattern + 1, 0, NUM_SEQ_PATTERN - 1);
         else if (LCDML.BT_checkUp())
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
-
         display.setTextSize(1);
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+        display.setCursor(48 * CHAR_width_small,  9 * (CHAR_height_small + 2) + 10  );
+        if (find_track_in_song_where_pattern_is_used(seq.active_pattern) == 99)
+          display.print( "NONE" );
+        else
+        {
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          display.print(" ");
+          display.print( find_track_in_song_where_pattern_is_used(seq.active_pattern) + 1 );
+          display.print("  ");
+        }
+        if (seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)] < 40)
+        {
+          display.setCursor(49 * CHAR_width_small,  10 * (CHAR_height_small + 2) + 10  );
+          seq_print_formatted_number(seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)], 2);
+        }
         display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
-
         print_content_type ();
       }
     }
@@ -9114,7 +9161,7 @@ void UI_func_microsynth(uint8_t param)
         else if ( seq.temp_select_menu == 31 )
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         else if ( seq.temp_select_menu == 32 )
-          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel, 1, 15);
+          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel + 1, 1, 15);
       }
       else if (LCDML.BT_checkUp())
       {
@@ -9674,12 +9721,12 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
     display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
     if (seq.track_type[x] != 0)
     {
-      if (seq.inst_dexed[x] == 0 )  display.print(F("DX1"));
-      else if (seq.inst_dexed[x] == 1 )  display.print(F("DX2"));
-      else if (seq.inst_dexed[x] == 2 )  display.print(F("EP "));
-      else if (seq.inst_dexed[x] == 3 )  display.print(F("MS1"));
-      else if (seq.inst_dexed[x] == 4 )  display.print(F("MS2"));
-      else if (seq.inst_dexed[x] > 4 && seq.inst_dexed[x] < 21)
+      if (seq.instrument[x] == 0 )  display.print(F("DX1"));
+      else if (seq.instrument[x] == 1 )  display.print(F("DX2"));
+      else if (seq.instrument[x] == 2 )  display.print(F("EP "));
+      else if (seq.instrument[x] == 3 )  display.print(F("MS1"));
+      else if (seq.instrument[x] == 4 )  display.print(F("MS2"));
+      else if (seq.instrument[x] > 4 && seq.instrument[x] < 21)
       {
         if (seq.tracktype_or_instrument_assign == 2)
         {
@@ -9688,9 +9735,9 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
         }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.inst_dexed[x] - 4, 2);
+        seq_print_formatted_number(seq.instrument[x] - 4, 2);
       }
-      else if (seq.inst_dexed[x] > 20 && seq.inst_dexed[x] < 37)
+      else if (seq.instrument[x] > 20 && seq.instrument[x] < 37)
       {
         if (seq.tracktype_or_instrument_assign == 2)
         {
@@ -9699,7 +9746,7 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
         }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.inst_dexed[x] - 20, 2);
+        seq_print_formatted_number(seq.instrument[x] - 20, 2);
       }
       else display.print(F("???"));
     }
@@ -9845,8 +9892,8 @@ void UI_func_song(uint8_t param)
           }
           else if (seq.tracktype_or_instrument_assign == 2) //select instruments for track
           {
-            if (seq.inst_dexed[seq.selected_track] < 36)
-              seq.inst_dexed[seq.selected_track]++;
+            if (seq.instrument[seq.selected_track] < 36)
+              seq.instrument[seq.selected_track]++;
           }
           else if (seq.tracktype_or_instrument_assign == 6) // tracktype change
           {
@@ -9921,8 +9968,8 @@ void UI_func_song(uint8_t param)
           }
           else if (seq.tracktype_or_instrument_assign == 2) //select instruments for track
           {
-            if (seq.inst_dexed[seq.selected_track] > 0)
-              seq.inst_dexed[seq.selected_track]--;
+            if (seq.instrument[seq.selected_track] > 0)
+              seq.instrument[seq.selected_track]--;
           }
           else if (seq.tracktype_or_instrument_assign == 1) //goto for tracktype change
           {
