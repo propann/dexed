@@ -641,14 +641,7 @@ void setup()
 {
 #ifdef DEBUG
   Serial.begin(SERIAL_SPEED);
-#else
-  delay(1300); // seems to be needed when no serial debugging is enabled // 900 working for external USB power bank
-#endif
 
-  Serial.begin(SERIAL_SPEED);
-  delay(2300);
-
-#ifdef DEBUG
   Serial.println(CrashReport);
   //setup_debug_message();
 
@@ -669,10 +662,7 @@ void setup()
   Serial.flush();
 #endif
 
-  //SPI1.begin();  //TFT is on SPI1
   display.begin();  //TFT is on SPI1
-
-  //display.fillScreen(ILI9341_RED);
 
   touch.begin();
   //touch.setRotation(3); // not necessary for ILI9341
@@ -1772,16 +1762,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
               Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 #ifdef COMPILE_FOR_FLASH
-              //  strcpy(temp_name, drum_config[d].name);
-              //   strcat(temp_name, ".wav");
-              // Drum[slot]->playWav(temp_name);
 
-              strcpy(temp_name, "/samples_dexed/");
-              strcat(temp_name, drum_config[d].name);
-              strcat(temp_name, ".wav");
-
+              sprintf(temp_name, "%s.wav", drum_config[d].name);
               Drum[slot]->playWav(temp_name);
-              //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
 
 #ifdef COMPILE_FOR_SDCARD

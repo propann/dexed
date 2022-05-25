@@ -9114,7 +9114,7 @@ void UI_func_microsynth(uint8_t param)
         else if ( seq.temp_select_menu == 31 )
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         else if ( seq.temp_select_menu == 32 )
-          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel + 1, 1, 15);
+          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel, 1, 15);
       }
       else if (LCDML.BT_checkUp())
       {
@@ -13050,18 +13050,16 @@ void UI_func_sysex_send_bank(uint8_t param)
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
-      File sysex;
-      char filename[FILENAME_LEN];
-
       if (strcmp("*ERROR*", tmp_bank_name) != 0)
       {
+        char filename[FILENAME_LEN];
         sprintf(filename, "/%d/%s.syx", bank_number, tmp_bank_name);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
         Serial.println(F(" from SD."));
 #endif
-        sysex = SD.open(filename);
+        File sysex = SD.open(filename);
         if (!sysex)
         {
 #ifdef DEBUG
@@ -13072,7 +13070,7 @@ void UI_func_sysex_send_bank(uint8_t param)
         }
         else
         {
-          uint8_t bank_data[4104];
+          uint8_t bank_data[4104];      
           sysex.read(bank_data, 4104);
           sysex.close();
 
@@ -13084,7 +13082,7 @@ void UI_func_sysex_send_bank(uint8_t param)
           }
           else
           {
-            show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel + 1);
+            show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
             send_sysex_bank(configuration.dexed[selected_instance_id].midi_channel, bank_data);
           }
           show(2, 1, 16, "Done.");
@@ -13187,11 +13185,9 @@ void UI_func_sysex_send_voice(uint8_t param)
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           break;
         case 2:
-          File sysex;
-          char filename[FILENAME_LEN];
-
           if (strcmp("*ERROR*", tmp_bank_name) != 0)
           {
+            char filename[FILENAME_LEN];
             sprintf(filename, "/%d/%s.syx", bank_number, tmp_bank_name);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
@@ -13200,7 +13196,7 @@ void UI_func_sysex_send_voice(uint8_t param)
             Serial.print(filename);
             Serial.println(F(" from SD."));
 #endif
-            sysex = SD.open(filename);
+            File sysex = SD.open(filename);
             if (!sysex)
             {
 #ifdef DEBUG
@@ -13227,7 +13223,7 @@ void UI_func_sysex_send_voice(uint8_t param)
               }
               else
               {
-                show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel + 1);
+                show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
                 send_sysex_voice(configuration.dexed[selected_instance_id].midi_channel, voice_data);
               }
               delay(MESSAGE_WAIT_TIME);

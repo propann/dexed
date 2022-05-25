@@ -1750,7 +1750,12 @@ void send_sysex_bank(uint8_t midi_channel, uint8_t* bank_data)
   midi_serial.sendSysEx(4104, bank_data); // Send to DIN MIDI
 #endif
 #ifdef MIDI_DEVICE_USB
-  usbMIDI.sendSysEx(4104, bank_data); // Send to USB MIDI
+  // Sysex bank dump is splitted due to Windows USB driver limitations
+  usbMIDI.sendSysEx(2048, bank_data, true); // Send to USB MIDI
+  delay(50);
+  usbMIDI.sendSysEx(2048, bank_data+2048, true);
+  delay(50);
+  usbMIDI.sendSysEx(8, bank_data+4096, true);
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
   midi_usb.sendSysEx(4104, bank_data); // Send to USB-HOST MIDI
