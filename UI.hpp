@@ -13050,18 +13050,16 @@ void UI_func_sysex_send_bank(uint8_t param)
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
-      File sysex;
-      char filename[FILENAME_LEN];
-
       if (strcmp("*ERROR*", tmp_bank_name) != 0)
       {
+        char filename[FILENAME_LEN];
         sprintf(filename, "/%d/%s.syx", bank_number, tmp_bank_name);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
         Serial.println(F(" from SD."));
 #endif
-        sysex = SD.open(filename);
+        File sysex = SD.open(filename);
         if (!sysex)
         {
 #ifdef DEBUG
@@ -13072,7 +13070,7 @@ void UI_func_sysex_send_bank(uint8_t param)
         }
         else
         {
-          uint8_t bank_data[4104];
+          uint8_t bank_data[4104];      
           sysex.read(bank_data, 4104);
           sysex.close();
 
@@ -13187,11 +13185,9 @@ void UI_func_sysex_send_voice(uint8_t param)
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           break;
         case 2:
-          File sysex;
-          char filename[FILENAME_LEN];
-
           if (strcmp("*ERROR*", tmp_bank_name) != 0)
           {
+            char filename[FILENAME_LEN];
             sprintf(filename, "/%d/%s.syx", bank_number, tmp_bank_name);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
@@ -13200,7 +13196,7 @@ void UI_func_sysex_send_voice(uint8_t param)
             Serial.print(filename);
             Serial.println(F(" from SD."));
 #endif
-            sysex = SD.open(filename);
+            File sysex = SD.open(filename);
             if (!sysex)
             {
 #ifdef DEBUG
