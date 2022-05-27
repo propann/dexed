@@ -16,14 +16,16 @@ Advantages :
 <br>
 
 <p>
+    
 > MicroDexed-touch is still in early development. However, these instructions should not change much in general in their steps. Some building/case parts and "look" might change rapidly.
+    
 <p> 
 
-
 <br>
-
 <p>
-# Build instructions for newest version (V2)
+    
+**Build instructions for newest version (V2)**
+    
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front.png" >
 <br>
@@ -54,7 +56,7 @@ This way they will use the free space "above" the Encoder-PCB and not collide wi
 
 <br>
 
-Audio Board FLASH chip
+**Audio Board FLASH chip**
 <p>
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/flash.jpg" >
@@ -77,7 +79,9 @@ It is suggested to put on the flash chip at first since this required the most a
    <br><p>
    <br>
 <p>
-MAIN PIN HEADER / SOCKETS
+    
+**MAIN PIN HEADER / SOCKETS**
+    
 <br><p>
 For the Teensy and for the Audio Board, in this build we will use pin socket rows instead of the old-school IC sockets. The Sockets will be soldered to the main PCB.<p>
  <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pinsandsocket.png" >
@@ -88,21 +92,25 @@ As the counterpart, we will use traditional rows of pin header with the pins of 
 >Since the top side of Teensy and Audio Board will be blocked by the plastic spacers, you solder the pins on to the bottom side of Teensy and Audio Board. This is the reason, why the pins are seemingly 2-3mm longer than they need to be for the sockets but the soldering will take up (some) of this extra space.<p>
 
  <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-teensy.png" >
+    <br>
  For the Teensy we need 2 pieces of 24 pins<br>
   
  <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-audio.png" >
+     <br>
  For the Audio Board we need 2 pieces with 14 pins
  
 <p>
 So for all 4 rows, 2 for the Teensy and 2 for the Audio Board, leave the plastic spacers exactly where they are at factory and snip off the short pin side, directly above the plastic spacer. <p>
 This is tiedeous. Take your time and take brakes if necessary.
 <br>
+    
 > Please take care that you don't hurt yourself or others when you snip the pins. These pins are sharp when cut and will fly off unpredictably if you are not carefull. 
-> <br>Place yourself so that the cut pins will not fly in your direct direction and use eye protection so nothing can happen in this process.
+<br>Place yourself so that the cut pins will not fly in your direct direction and use eye protection so nothing can happen in this process.
 > 
     
 <p>
 After all 4 long rows are cut like in the pictures above, we will do the same procedure to a much smaller 4 pin row and a 3 pin row.
+<p>
 
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/allsockets.png" >
@@ -121,11 +129,11 @@ It is a suggestion to solder only the first and last pin of every row, test if i
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensywithheader.png" >
 <br>
 Teensy with pin headers
-<p>
+<p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensywithheaderandsockets.png" >
 <br>
 Teensy with pin headers and sockets loosly attached to test fit.
-<br>
+<br><p>
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/audiowithheader.png" >
 <br>
@@ -135,12 +143,11 @@ Audio Board with pin headers
 <br>
 Audio Board with pin headers and sockets loosly attached to test fit.
 <br>
-
-
-
 <p>
 <p><br>
-    DISPLAY
+    
+**DISPLAY**
+    
     <p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector.png" >
 <br>
@@ -162,28 +169,63 @@ There might be a small offset, dependending on 3dprint, how much solder you have
 <br>
 <br><p>
   
-CASE
+**ENCODERS**
+<br><p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoder.jpg" >
+    <br>
+    Use standard dupont connectors for the encoders. 1 pin is ground, then the 2 encoder pins, then the the pin for the button.
+<p>
+   
+   <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bottomcaseandlidwithdisplay.png" >
+<br>
+    Take off the metal lid from the SD Card Reader on the TFT backside. These larger type of SD Card are outdated and we already have 2 MICRO SD Card readers available. 
+    <br>You can solder it off more careful if you really think you need it back sometime in the future. 
+    <br> 
+> To avoid any unwanted electrical contact from the bottom side of the TFT to the teensy pin headers, you should put a non conductive layer between them. Electrical tape, 1-2 layers, should be sufficient.
+>    
+
+
+**FIRST TEST**
+<p>
+At this stage, it should be possible to do a first test. 
+
+> You do not need to put in a SD CARD with the preset files copied to it - It should at least boot up and the menu/encoders can be tested in the menu.
+>
+
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/finalwithcomponents1.png" >
+<br>
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/finalwithcomponents2.png" >
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/finalwithencoders.png" >
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/heightview.png" >
+<br>
+
+**CASE**
 <p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bottomcase.png" >
     <br>
     This is the bare bottom case. With the limiters from the case itself and the height matching to the display, the PCB should not move in any direction when put together.
 <p>
     
-3D Print (STL) Files:
+
     
 <br>
       <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/case.png" >
 <br>
     <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/lid.png" >
 <br>
-    <br>
-    <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front_update.png" >
+3D Print (STL) Files:
 <br>
  https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE-BOTTOM.stl
 <br>
  https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE-LID.stl
 <br>
-     Files last updated: 22/05/2022
+     Files last updated: 27/05/2022
+   <br>
+   <p>
    <br>
      <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/slicer.png" >
 <br>
@@ -196,21 +238,9 @@ CASE
     The STL Files do not require to be printed with any support structures.
     <p>
         <br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoder.jpg" >
-    <br>
-    Use standard connectors for the encoders. 1 pin is ground, then the 2 encoder pins, then the pin for the button.
-<p>
-   
-   <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/tft.JPG" >
+        <p>   
 <br>
-    Take off the metal lid from the SD Card Reader on the TFT backside. It would fit even keeping it, if you shorten the Teensy Header pins. But since these larger type of SD Card are outdated anyway, it might be easier to just remove it. You can solder it off more careful if you really think you need it back sometime in the future. 
-    <br> To avoid any unwanted electrical contact from the bottom side of the TFT to the teensy pin headers, you should put a not conductive layer between them. Electrical tape, 1-2 layers, should be sufficient.
-    
-<p>
-    
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/assembly_final1.jpg" >
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/assembly_final2.jpg" >
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/lidwithpcb.png" >
 <br>
     <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/sdcard.jpg" >
 <br>
@@ -218,30 +248,26 @@ CASE
         If you have encoders that have a small PCB attached at the bottom, check out that there is no overlap or collision with the SD CARD from the Teensy.
       <br>
         If it does overlap, you might be able to cut/saw the PCB a bit or just rotate it a few degrees away, like in the picture above.
-        <br> Observe that it will not touch the SD CARD when you put everything together.
+        <br> 
+        
+> Observe that it will not touch the SD CARD when you put everything together.
         <br>Do not put any mechanical stress on your SD CARD or it sooner of later will get a fracture and then become unreliable or stop working at all.
-        <br><p><br>
+> 
+ 
+
     
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/assembly_final3.jpg" >
 <br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/assembly_final4.jpg" >
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/assembly_final5.jpg" >
-<br>
+
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/assembly_final6.jpg" >
     <br>
     Slide the PCB+Teensy assembly in the lower case. You might have to tilt a bit to the right side of the audio/midi connectors.
 <p>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.jpg" >
+
+
 <br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final2.jpg" >
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final3.jpg" >
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final4.jpg" >
-    <br>
-    Final Assembly.
+    Final Assembly
 <p>
 
 
