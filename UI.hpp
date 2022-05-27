@@ -370,6 +370,8 @@ void UI_func_cc_mappings(uint8_t param);
 void UI_func_microsynth(uint8_t param);
 void UI_func_seq_pattern_editor(uint8_t param);
 void UI_func_seq_vel_editor(uint8_t param);
+void UI_func_clear_song(uint8_t param);
+void UI_func_clear_song_chains(uint8_t param);
 void UI_func_seq_settings(uint8_t param);
 void UI_func_seq_tracker(uint8_t param);
 void UI_func_seq_pianoroll(uint8_t param);
@@ -13119,7 +13121,7 @@ void UI_func_sysex_send_bank(uint8_t param)
         }
         else
         {
-          uint8_t bank_data[4104];      
+          uint8_t bank_data[4104];
           sysex.read(bank_data, 4104);
           sysex.close();
 
@@ -14589,6 +14591,120 @@ void UI_func_format_flash(uint8_t param)
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         }
       }
+    }
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+void UI_func_clear_song(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    border3_large_clear();
+    encoderDir[ENC_R].reset();
+    helptext_r ("CLEAR SONG");
+    helptext_l ("BACK");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(2);
+    setCursor_textGrid(1, 1);
+    display.print(F("CLEAR SONG?  "));
+    setCursor_textGrid(1, 2);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("PUSH "));
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    display.print(F("[ENC R]"));
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F(" TO CONFIRM"));
+    display.setTextSize(1);
+    setCursor_textGrid(1, 6);
+    display.print(F("ALL SONG DATA WILL BE DELETED !"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid(1, 8);
+    display.print(F("CHAINS, CHAIN TRANSPOSES AND PATTERNS"));
+    setCursor_textGrid(1, 9);
+    display.print(F("WILL NOT BE TOUCHED."));
+    display.setTextSize(2);
+  }
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if (LCDML.BT_checkEnter())
+    {
+      for (uint8_t i = 0; i < NUM_SEQ_TRACKS ; i++)
+      {
+        memset(seq.song[i], 99, sizeof(seq.song[i]));
+      }
+      setCursor_textGrid(1, 1);
+      display.print(F("Done."));
+      print_empty_spaces(10);
+      setCursor_textGrid(1, 2);
+      print_empty_spaces(23);
+      helptext_l ("");
+      border3_large_clear();
+      delay(MESSAGE_WAIT_TIME);
+      LCDML.FUNC_goBackToMenu();
+    }
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+void UI_func_clear_song_chains(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    border3_large_clear();
+    encoderDir[ENC_R].reset();
+    helptext_r ("CLEAR ALL CHAINS");
+    helptext_l ("BACK");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(2);
+    setCursor_textGrid(1, 1);
+    display.print(F("CLEAR CHAINS?"));
+    setCursor_textGrid(1, 2);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("PUSH "));
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    display.print(F("[ENC R]"));
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F(" TO CONFIRM"));
+    display.setTextSize(1);
+    setCursor_textGrid(1, 6);
+    display.print(F("ALL CHAINS + CHAIN TRANSPOSES"));
+    setCursor_textGrid(1, 7);
+    display.print(F("WILL BE DELETED !"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid(1, 8);
+    display.print(F("SONG DATA AND PATTERNS WILL NOT BE TOUCHED."));
+
+    display.setTextSize(2);
+  }
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if (LCDML.BT_checkEnter())
+    {
+      for (uint8_t i = 0; i < NUM_CHAINS ; i++)
+      {
+        memset(seq.chain[i], 99, sizeof(seq.chain[i]));
+        memset(seq.chain_transpose[i], 99, sizeof(seq.chain_transpose[i]));
+      }
+      setCursor_textGrid(1, 1);
+      display.print(F("Done."));
+      print_empty_spaces(10);
+      setCursor_textGrid(1, 2);
+      print_empty_spaces(23);
+      helptext_l ("");
+      border3_large_clear();
+      delay(MESSAGE_WAIT_TIME);
+      LCDML.FUNC_goBackToMenu();
     }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
