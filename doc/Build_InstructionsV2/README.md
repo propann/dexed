@@ -1,11 +1,9 @@
 **UPDATE 27/05/2022:**
 
-these are the build instructions for the newest version (V2), using low height pin socket rows, instead of IC sockets.
-
-The matching BOM will be updated/compiled in the next days. 
-
-Until then you can use the current instructions or wait a little more. The improvements for this version are mostly of cosmetic nature so there will be no functional difference. <br>
-**However be warned that it will not be trivial to convert to the next version. It is possible but requires some time/effort and desoldering tools to swap sockets and headers later.**
+These are the build instructions for the newest version (V2), using low height pin socket rows, instead of IC sockets.
+The improvements for this version are mostly of cosmetic nature so there will be no functional difference.
+<br>
+**However be warned that it will not be trivial to convert to the this version. It is possible but requires some time/effort and desoldering tools to swap sockets and headers later.**
 
 Advantages :
 
@@ -148,11 +146,13 @@ Audio Board with pin headers and sockets loosly attached to test fit.
     
 **DISPLAY**
     
-    <p><br>
+<p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector.png" >
 <br>
 
-The Display connector now uses a standard part, not a stacked "half" height connector as in the last version. <br>
+The Display connector now uses a standard part, not the stacked half height connector as in the last version.
+<br>
+    However we do use them now as sockets for the Teensy + Audio Board instead. (Without any stacking)<br>
 
 <br>
 
@@ -265,7 +265,7 @@ At this stage, it should be possible to do a first test.
 <p>
 
 
-
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/DSC00002.png" >
 <br>
     Final Assembly
 <p>
