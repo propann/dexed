@@ -263,7 +263,7 @@ At this stage, it should be possible to do a first test.
     <br>
     Slide the PCB+Teensy assembly in the lower case. You might have to tilt a bit to the right side of the audio/midi connectors.
 <p>
-
+<br>
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/DSC00002.png" >
 <br>
