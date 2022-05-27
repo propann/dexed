@@ -1,6 +1,6 @@
 **UPDATE 27/05/2022:**
 
-these are the build instructions for the newest version, using low height pin socket rows, instead of IC sockets.
+these are the build instructions for the newest version (V2), using low height pin socket rows, instead of IC sockets.
 
 The matching BOM will be updated/compiled in the next days. 
 
@@ -13,11 +13,17 @@ Advantages :
 2.  no double / stacked special connector for the display, replaced by 1 standard connector.
 3.  much stronger pin binding for teensy and audio board to the PCB.
 4.  no more pin bending tricks required, pin locations are exactly where they are supposed to be.
+<br>
 
------
 <p>
-MicroDexed-touch is still in early development. However, these instructions should not change much in general in their steps. Some building/case parts and "look" might change rapidly. 
+> MicroDexed-touch is still in early development. However, these instructions should not change much in general in their steps. Some building/case parts and "look" might change rapidly.
+<p> 
 
+
+<br>
+
+<p>
+# Build instructions for newest version (V2)
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front.png" >
 <br>
@@ -34,18 +40,47 @@ Begin with the resistors. You need 4, the values are printed on the board and ar
 <p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/6n138.png" >
 <br>
-The 6n138 Optocoupler for MIDI. Make sure Pin 1 is on the top left. Your chip will either have a notch at the top side or a circle marking at the first pin. You can use an old-school socket, solder it in directly or use a socket with (round) precision pins. All of these 3 methods should work fine.
+The 6n138 Optocoupler for MIDI. Make sure Pin 1 is on the top left. Your chip will either have a notch at the top side or a circle marking at the first pin. You can use an old-school IC socket, solder it in directly or use a socket with (round) precision pins. All of these 3 methods should work fine.
 <p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/jumpers.png" >
 <br>
-Nothing special about the jumpers. Solder in for all of them 2 pin horizontal pin headers. For the 2 Encoder connections, it is advised to use vertical pin headers. 
+Nothing special about all of the 2-pin jumpers. Solder in for all of them 2 pin horizontal pin headers. 
 <p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/special_headers1.jpg" >
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoderconnector.png" >
+
+For the 2 Encoder connections, it is advised to use vertical pin headers - Also, depending on your encoders, for example when they have a small pcb on their bottom to connect the pins instead directly to the decoder, it might be an good idea to solder in the pin headers very lowly as seen in this image.<p>
+This way they will use the free space "above" the Encoder-PCB and not collide with them.  
+<p>
+
 <br>
-    For the Teensy and the Audio Board you have to use the old-school IC sockets with pins from both sides. Do not get precision IC Sockets with round pins, the Standard Pins will not fit in there.
-    Aside from that, this is the most tricky part to do. You will find that beside the Teensy IC Socket, there is not enough space to put in the 4-5 pin socket for USB HOST.
+<p>
+    For the Teensy and for the Audio Board, in this build we will use pin socket rows instead of the old-school IC sockets. The Sockets will be soldered to the main PCB.<p>
+    <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pinsandsocket.png" >
     
-The pins must be bend to fit in. See the following 3 pictures how to get this done. It is not difficult but it will take some time to fit them in for the socket and for the connector pins, coming from the teensy.
+As the counterpart, we will use tradition rows of pin header with the short side of the plastic spacer snipped off.
+<br><p>
+
+ <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-teensy.png" >
+ For the Teensy we need 2 pieces of 24 pins<br>
+  
+ <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-audio.png" >
+ and for the Audio Board we need 2 pieces with 14 pins
+ 
+<p>
+So for all 4 rows, 2 for the Teensy and 2 for the Audio Board, leave the plastic spacers exactly where they are at default and snip off the short pin side, directly above the spacer. <p>
+This is tiedeous. Take your time and make brakes.
+> please take care that you don't hurt yourself or others when you snip the pins. These pins are sharp when cut and will fly off. Place yourself so that the cut pins will not fly in your direction and use eye protection so nothing can happen in this process.
+> 
+    
+<p>
+After all 4 rows are cut like in the pictures, we will do the same procedure to a 4 pin row and a 3 pin row.
+The 4 pin row goes     
+    
+    
+    
+    
+    
+    
     For the audio out pins socket, there is nothing special. There is more than enough space, to put them in without any issues. Make sure that you are using pin headers that are as the same height as the socket.
     <br>
     The part used is:<br>
