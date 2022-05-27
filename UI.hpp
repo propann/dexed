@@ -7425,12 +7425,14 @@ void seq_sub_clear_pattern_or_clear_all ()
       { //clear all patterns
         seq_clear_all_patterns();
         seq_printAllSeqSteps();
+        print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
       }
       else if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG) ||
                 (seq.content_type[seq.active_pattern] > 0 && temp_int == 111) )
       { //clear pattern
         seq_clear_active_pattern();
         seq_printAllSeqSteps();
+        print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
       }
       seq_active_function = 99;
     }
