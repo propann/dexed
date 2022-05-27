@@ -53,80 +53,17 @@ This way they will use the free space "above" the Encoder-PCB and not collide wi
 <p>
 
 <br>
-<p>
-    For the Teensy and for the Audio Board, in this build we will use pin socket rows instead of the old-school IC sockets. The Sockets will be soldered to the main PCB.<p>
-    <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pinsandsocket.png" >
-    
-As the counterpart, we will use tradition rows of pin header with the short side of the plastic spacer snipped off.
-<br><p>
 
- <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-teensy.png" >
- For the Teensy we need 2 pieces of 24 pins<br>
-  
- <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-audio.png" >
- and for the Audio Board we need 2 pieces with 14 pins
- 
-<p>
-So for all 4 rows, 2 for the Teensy and 2 for the Audio Board, leave the plastic spacers exactly where they are at default and snip off the short pin side, directly above the spacer. <p>
-This is tiedeous. Take your time and make brakes.
-> please take care that you don't hurt yourself or others when you snip the pins. These pins are sharp when cut and will fly off. Place yourself so that the cut pins will not fly in your direction and use eye protection so nothing can happen in this process.
-> 
-    
-<p>
-After all 4 rows are cut like in the pictures, we will do the same procedure to a 4 pin row and a 3 pin row.
-The 4 pin row goes     
-    
-    
-    
-    
-    
-    
-    For the audio out pins socket, there is nothing special. There is more than enough space, to put them in without any issues. Make sure that you are using pin headers that are as the same height as the socket.
-    <br>
-    The part used is:<br>
-    https://www.reichelt.de/buchsenleiste-2-54mm-1x5-gerade-bkl-10120967-p266692.html?&nbc=1
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/special_headers_board1.JPG" >
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/special_headers_board2.JPG" >
+Audio Board FLASH chip
 <p>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bend.png" >
-<p>
-    Bend the pins of the Header on the PCB to the left and on the connector pins on the teensy to the right.
-    They then should match up the the center, as there would have been no offset, caused by the socket.
-    <p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensy_top.JPG" >
-<p>
-Make sure that you put the short side of the standard headers downwards to the sockets. Same for the Audio Board.
-    <p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensy_back.JPG" >
-<p>
-
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/usbhost.jpg" >
-<br> The additional 5 pin row is for connecting USB Host. Use the same type of pin headers as for the 2 main (longer) rows and the Audio Board.
-<p><br>
-    Display
-    <p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/special_headers2.jpg" >
-<br>
-The Display connector currently is a stack of two connectors of this "half" height connector. It is listed in the BOM.
-<br>
-You can put the second connector on the pin header of the display or also on top of the first connector you solder on to the PCB. <br>
-        From experience, when you take the display off, the 2nd connector keeps being attached to the display pin header. 
-        <br>So there is nothing special to concider, when re-connecting or disconnecting the display, for example when changing the SD Card.
-<br>
-<p>
-    <br>
-    Audio Board
-    <p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/flash.jpg" >
     <br>
     <p>
-    It is suggested to first put on the flash chip since this required the most attention.
+It is suggested to put on the flash chip at first since this required the most attention and anything other soldered in will be in the way.
         <br>
         It is possible to add it afterwards, however it might be a little more difficult then to reach the small pins of it. 
-        <br>
+       <br>
     If you already have experience how to solder SMD parts, do what works for you best.
         <p>
     However if you have not soldered small pins like this before, the suggestion is to first tin all the pads, then place the chip carefully above the tinned pins. 
@@ -138,17 +75,98 @@ You can put the second connector on the pin header of the display or also on top
             In the picture above it does not line up 100%, however it is good enough to work.
             <br>Do not try to make this look better than necessary, overheating and killing the chip is worse than having it aligned "perfectly". 
    <br><p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/audio.JPG" >
-    <p>
-    Beside the 2 rows of Standard Pins, make sure to add the pins for the audio out like this.
-    The shorter pin side goes down to the MicroDexed PCB, the longer pin side goes up to the top side of the Audio Board. The picture shows the bottom side of the audio Board to illustrate the pins - so there you see the inverse of the pin lenghts, with the short pin side upwards.
+   <br>
 <p>
+MAIN PIN HEADER / SOCKETS
+<br><p>
+For the Teensy and for the Audio Board, in this build we will use pin socket rows instead of the old-school IC sockets. The Sockets will be soldered to the main PCB.<p>
+ <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pinsandsocket.png" >
+    
+As the counterpart, we will use traditional rows of pin header with the pins of the short side from the plastic spacer snipped off. 
+<br>We keep only the side with the longer pins.
+<br>
+>Since the top side of Teensy and Audio Board will be blocked by the plastic spacers, you solder the pins on to the bottom side of Teensy and Audio Board. This is the reason, why the pins are seemingly 2-3mm longer than they need to be for the sockets but the soldering will take up (some) of this extra space.<p>
+
+ <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-teensy.png" >
+ For the Teensy we need 2 pieces of 24 pins<br>
+  
+ <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-audio.png" >
+ For the Audio Board we need 2 pieces with 14 pins
+ 
+<p>
+So for all 4 rows, 2 for the Teensy and 2 for the Audio Board, leave the plastic spacers exactly where they are at factory and snip off the short pin side, directly above the plastic spacer. <p>
+This is tiedeous. Take your time and take brakes if necessary.
+<br>
+> Please take care that you don't hurt yourself or others when you snip the pins. These pins are sharp when cut and will fly off unpredictably if you are not carefull. 
+> <br>Place yourself so that the cut pins will not fly in your direct direction and use eye protection so nothing can happen in this process.
+> 
+    
+<p>
+After all 4 long rows are cut like in the pictures above, we will do the same procedure to a much smaller 4 pin row and a 3 pin row.
+
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/allsockets.png" >
+
+The 4 pin row is for USB MIDI and is located at the top between the 2 Teensy pin rows.
+<br>
+The 3 pin row is for Audio Line Out and is on the right side from the Audio Board.
+ 
+Put in the sockets on the PCB and test fit with the Teensy and Audio Board if everything lines up, before you solder the sockets and pin rows.
+<br>
+
+It is a suggestion to solder only the first and last pin of every row, test if it fits and then solder all remaining pins.
+ 
+<br>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensywithheader.png" >
+<br>
+Teensy with pin headers
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensywithheaderandsockets.png" >
+<br>
+Teensy with pin headers and sockets loosly attached to test fit.
+<br>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/audiowithheader.png" >
+<br>
+Audio Board with pin headers
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/audiowithheaderandsockets.png" >
+<br>
+Audio Board with pin headers and sockets loosly attached to test fit.
+<br>
+
+
+
+<p>
+<p><br>
+    DISPLAY
+    <p><br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector.png" >
+<br>
+
+The Display connector now uses a standard part, not a stacked "half" height connector as in the last version. <br>
 
 <br>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/case.jpg" >
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector2.png" >
+<br>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector3.png" >
+<br>
+
+The connector should match up with the pin header that the display comes with by default.<br> 
+It does not matter when there is a small gap between the lid/display and the pin socket.
+<br><p>
+There might be a small offset, dependending on 3dprint, how much solder you have used on the audio board pin rows etc - this will mostly be influenced by how tight you screw on the display to the lid, in a later step. 
+<br>
+<br><p>
+  
+CASE
+<p><br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bottomcase.png" >
     <br>
-    This is the bare bottom case. You will find that there is no need to screw in the PCB. With the limiters from the case itself and the height matching to the display, the PCB will fit in 100% and not move in any direction.
+    This is the bare bottom case. With the limiters from the case itself and the height matching to the display, the PCB should not move in any direction when put together.
 <p>
     
 3D Print (STL) Files:
@@ -161,9 +179,9 @@ You can put the second connector on the pin header of the display or also on top
     <br>
     <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front_update.png" >
 <br>
- https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE_BOTTOM.stl
+ https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE-BOTTOM.stl
 <br>
- https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE_LID.stl
+ https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE-LID.stl
 <br>
      Files last updated: 22/05/2022
    <br>
