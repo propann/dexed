@@ -5,6 +5,8 @@
 #include <SerialFlash.h>
 #include <vector>
 
+extern int FreeMem(void);
+
 namespace newdigate {
 
 
@@ -25,12 +27,13 @@ public:
 
     static constexpr size_t element_size = sizeof(int16_t);
     size_t buffer_to_index_shift;
-    IndexableFile(const char *filename) : 
+    IndexableFile(SerialFlashFile file) : 
         _buffers(),
         buffer_to_index_shift(log2(BUFFER_SIZE)) {
-            _filename = new char[strlen(filename)+1] {0};
-            memcpy(_filename, filename, strlen(filename));
-            _file = SerialFlash.open(_filename);
+            _file = file;
+    }
+    ~IndexableFile() {
+        close();
     }
 
     int16_t &operator[](int i) {
@@ -48,16 +51,12 @@ public:
             next->buffer = new int16_t[BUFFER_SIZE];
             size_t basePos = indexFor_i << buffer_to_index_shift;
             size_t seekPos = basePos * element_size;
+
+            __disable_irq();
             _file.seek(seekPos);
             int16_t bytesRead = _file.read(next->buffer, BUFFER_SIZE * element_size);
-            #ifndef TEENSYDUINO
-            if (!_file.available()){  
-                _file.close();
-                __disable_irq();
-                _file = SerialFlash.open(_filename);
-                __enable_irq();
-            }
-            #endif
+            __enable_irq();
+
             next->buffer_size = bytesRead;
             _buffers.push_back(next);
             match = next;
@@ -66,16 +65,20 @@ public:
     }
 
     void close() {
-        if (_file)
+        if (_file.available()) {
+            __disable_irq();
             _file.close();
+            __enable_irq();
+        }
 
-        if (_filename)
-            delete [] _filename;
-        _filename = nullptr;
+       for (auto && x : _buffers){
+            delete [] x->buffer;
+            delete x;
+        }
+        _buffers.clear();
     }
 private:
     SerialFlashFile _file;
-    char *_filename;
     std::vector<indexedbuffer*> _buffers;
 
     indexedbuffer* find_with_index(uint32_t i) {
