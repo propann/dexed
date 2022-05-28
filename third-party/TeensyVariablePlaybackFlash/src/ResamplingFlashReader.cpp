@@ -2,19 +2,22 @@
 #include "interpolation.h"
 #include "waveheaderparser.h"
 #include <SerialFlash.h>
+
+extern int FreeMem(void);
+
 bool ResamplingFlashReader::isUsingSPI = false;
 
 // read n samples into each buffer (1 buffer per channel)
-unsigned int ResamplingFlashReader::read(void **buf, uint16_t nsamples) {
+unsigned int ResamplingFlashReader::read(int16_t **buf) {
     if (!_playing) return 0;
 
     int16_t *index[_numChannels];
     unsigned int count = 0;
     for (int channel=0; channel < _numChannels; channel++) {
-        index[channel] = (int16_t*)buf[channel];
+        index[channel] = (int16_t*) buf[channel];
     }
 
-    while (count < nsamples) {
+    while (count < AUDIO_BLOCK_SAMPLES) {
         
         for (int channel=0; channel < _numChannels; channel++) {
             if (readNextValue(index[channel], channel)) {
@@ -24,7 +27,6 @@ unsigned int ResamplingFlashReader::read(void **buf, uint16_t nsamples) {
             }
             else {
                 // we have reached the end of the file
-
                 switch (_loopType) {
                     case looptype_repeat:
                     {
@@ -55,22 +57,20 @@ unsigned int ResamplingFlashReader::read(void **buf, uint16_t nsamples) {
                     {
                         //Serial.printf("end of loop...\n");
                         /* no looping - return the number of (resampled) bytes returned... */
-                        _playing = false;
-                        if (_sourceBuffer) _sourceBuffer->close();
-                        _sourceBuffer = nullptr;
-                        StopUsingSPI();
+                        close();
+
                         return count;
                     }
                 }   
             }
         }
     }
+
     return count;
 }
 
 // read the sample value for given channel and store it at the location pointed to by the pointer 'value'
 bool ResamplingFlashReader::readNextValue(int16_t *value, uint16_t channel) {
-
     if (_playbackRate >= 0 ) {
         //forward playback
         if (_bufferPosition >=  _loop_finish )
@@ -83,7 +83,7 @@ bool ResamplingFlashReader::readNextValue(int16_t *value, uint16_t channel) {
     }
         
     newdigate::IndexableFile<128, 2> &sourceBuffer = (*_sourceBuffer);
-
+    
     int16_t result = sourceBuffer[_bufferPosition + channel];
     if (_interpolationType == ResampleInterpolationType::resampleinterpolation_linear) {
 
@@ -228,7 +228,7 @@ void ResamplingFlashReader::initializeInterpolationPoints(void) {
 void ResamplingFlashReader::deleteInterpolationPoints(void) {
     if (!_interpolationPoints) return;
     for (int i=0; i<_numInterpolationPointsChannels; i++) {
-            delete [] _interpolationPoints[i];
+        delete [] _interpolationPoints[i];
     }
     delete [] _interpolationPoints;
     _interpolationPoints = nullptr;
@@ -251,29 +251,22 @@ bool ResamplingFlashReader::playWav(const char *filename) {
 
 bool ResamplingFlashReader::play(const char *filename)
 {
-    stop();
+    close();
 
-    if (_sourceBuffer) {
-        //Serial.printf("closing %s\n", _filename);
-        __disable_irq();
-        _sourceBuffer->close();
-        __enable_irq();
-    }
-    if (_sourceBuffer) delete _sourceBuffer;
-    if (_filename) delete [] _filename;
-    _filename = new char[strlen(filename)+1] {0};
-    memcpy(_filename, filename, strlen(filename) + 1);
+    // _filename = new char[strlen(filename)+1] {0};
+    // memcpy(_filename, filename, strlen(filename) + 1);
     StartUsingSPI();
 
     __disable_irq();
-    SerialFlashFile file = SerialFlash.open(_filename);
+    SerialFlashFile file = SerialFlash.open(filename);
     __enable_irq();
 
     if (!file) {
         StopUsingSPI();
-        Serial.printf("Not able to open file: %s\n", _filename);
-        if (_filename) delete [] _filename;
-        _filename = nullptr;
+        Serial.print(F("Not able to open file: "));
+        Serial.println(filename);
+        // if (_filename) delete [] _filename;
+        // _filename = nullptr;
         return false;
     }
 
@@ -283,34 +276,40 @@ bool ResamplingFlashReader::play(const char *filename)
 
         wav_header wav_header;
         WaveHeaderParser wavHeaderParser;
-        char buffer[44];
-        __disable_irq();
-        size_t bytesRead =file.read(buffer, 44);
-        file.seek(0);
-        __enable_irq();
-        wavHeaderParser.readWaveHeaderFromBuffer((const char *) buffer, wav_header);
+        wavHeaderParser.readWaveHeader(wav_header, file);
         if (wav_header.bit_depth != 16) {
-            Serial.printf("Needs 16 bit audio! Aborting.... (got %d)", wav_header.bit_depth);
+            StopUsingSPI();
+            Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
+            Serial.print(wav_header.bit_depth);
+            Serial.println(F(")"));
+            __disable_irq();
+            file.close();
+            __enable_irq();
             return false;
         }
         setNumChannels(wav_header.num_channels);
         _header_offset = 22;
-        _loop_finish = ((wav_header.data_bytes) / 2) + 22; 
+        _loop_finish = ((wav_header.data_bytes) / 2) + _header_offset; 
     
-    
-    __disable_irq();
-    file.close();
-    __enable_irq();
+    // __disable_irq();
+    // file.close();
+    // __enable_irq();
 
-    _sourceBuffer = new newdigate::IndexableFile<128, 2>(_filename);
-    _loop_start = _header_offset;
     if (_file_size <= _header_offset * newdigate::IndexableFile<128, 2>::element_size) {
         _playing = false;
-        if (_filename) delete [] _filename;
-        _filename =  nullptr;
-        Serial.printf("Wave file contains no samples: %s\n", filename);
+        // if (filename) delete [] _filename;
+        // _filename =  nullptr;
+        Serial.print(F("Wave file contains no samples: "));
+        Serial.println(filename);
+        StopUsingSPI();
+        __disable_irq();
+        file.close();
+        __enable_irq();
         return false;
     }
+
+    _sourceBuffer = new newdigate::IndexableFile<128, 2>(file);
+    _loop_start = _header_offset;
 
     reset();
     _playing = true;
@@ -339,9 +338,7 @@ void ResamplingFlashReader::reset(){
 void ResamplingFlashReader::stop()
 {
     if (_playing) {
-        __disable_irq();
         _playing = false;
-        __enable_irq();
     }
 }
 
@@ -352,12 +349,18 @@ int ResamplingFlashReader::available(void) {
 void ResamplingFlashReader::close(void) {
     if (_playing)
         stop();
-    if (_sourceBuffer) {
+
+    if (_sourceBuffer != nullptr) {
         _sourceBuffer->close();
         delete _sourceBuffer;
+        _sourceBuffer = nullptr;
+        StopUsingSPI();
     }
-    StopUsingSPI();
-    _sourceBuffer = nullptr;
-    //TODO: dispose _sourceBuffer properly
+
+    // if (_filename != nullptr) {
+    //     delete [] _filename;
+    //     _filename = nullptr;
+    // }
+
     deleteInterpolationPoints();
 }

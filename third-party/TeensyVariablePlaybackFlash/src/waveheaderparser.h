@@ -44,12 +44,12 @@ public:
             Serial.printf("Not able to open wave file... %s\n", filename);
             return false;
         }
-        bool result = readWaveHeader(filename, header, wavFile);
+        bool result = readWaveHeader(header, wavFile);
         wavFile.close();
         return result;
     }
 
-    bool readWaveHeader(const char *filename, wav_header &header, SerialFlashFile &wavFile) {
+    bool readWaveHeader(wav_header &header, SerialFlashFile wavFile) {
         char buffer[44];
         __disable_irq();
         int bytesRead = wavFile.read(buffer, 44);

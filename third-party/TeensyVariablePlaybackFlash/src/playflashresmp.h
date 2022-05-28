@@ -56,7 +56,6 @@ public:
 private:
     uint32_t file_size;
     ResamplingFlashReader FlashReader;
-  
 };
 
 
