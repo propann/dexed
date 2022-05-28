@@ -1336,7 +1336,7 @@ void loop()
     bool instance_is_playing = false;
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
-      if (active_voices[instance_id] > 0)
+      if (active_voices[instance_id] > 0 || seq.running)
       {
         instance_is_playing = true;
         break;
@@ -1802,7 +1802,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
-              strcpy(temp_name, "/samples_dexed/");
+              strcpy(temp_name, "/DRUMS/");
               strcat(temp_name, drum_config[d].name);
               strcat(temp_name, ".wav");
               Drum[slot]->playWav(temp_name);

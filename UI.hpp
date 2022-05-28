@@ -6344,6 +6344,10 @@ void seq_sub_display_menu_logic()
         seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] + 1, 0, 2);
       else if (LCDML.BT_checkUp())
         seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] - 1, 0, 2);
+        if (seq.content_type[seq.active_pattern]==0)
+        seq.note_editor_view=0;
+        else
+        seq.note_editor_view=1;
     }
   }
   for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++)  // select track type
