@@ -11009,6 +11009,19 @@ void UI_func_information(uint8_t param)
     setCursor_textGrid(1, 2);
     display.setTextSize(2);
     display.print(sd_string);
+       setCursor_textGrid(1, 3);
+          display.setTextColor(GREY2);
+          display.print(F("COMPILED FOR "));
+          display.setTextColor(RED);
+      #ifdef COMPILE_FOR_PROGMEM
+          display.print(F("PROGMEM"));
+      #endif
+      #ifdef COMPILE_FOR_FLASH
+          display.print(F("FLASH CHIP"));
+      #endif
+      #ifdef COMPILE_FOR_SDCARD
+          display.print(F("SD CARD"));
+      #endif
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
