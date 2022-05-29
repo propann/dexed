@@ -434,8 +434,9 @@ void UI_func_drum_pan(uint8_t param);
 void UI_func_drum_pitch(uint8_t param);
 void UI_func_drum_tune_offset(uint8_t param);
 void UI_func_format_flash(uint8_t param);
+void UI_func_MultiSamplePlay(uint8_t param);
 //void UI_func_sample_editor(uint8_t param);
-//void UI_func_phSampler(uint8_t param);
+
 
 char* basename(const char* filename);
 
@@ -6344,10 +6345,10 @@ void seq_sub_display_menu_logic()
         seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] + 1, 0, 2);
       else if (LCDML.BT_checkUp())
         seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] - 1, 0, 2);
-        if (seq.content_type[seq.active_pattern]==0)
-        seq.note_editor_view=0;
-        else
-        seq.note_editor_view=1;
+      if (seq.content_type[seq.active_pattern] == 0)
+        seq.note_editor_view = 0;
+      else
+        seq.note_editor_view = 1;
     }
   }
   for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++)  // select track type
@@ -11009,19 +11010,19 @@ void UI_func_information(uint8_t param)
     setCursor_textGrid(1, 2);
     display.setTextSize(1);
     display.print(sd_string);
-       setCursor_textGrid(1, 3);
-          display.setTextColor(GREY2);
-          display.print(F("COMPILED FOR "));
-          display.setTextColor(RED);
-      #ifdef COMPILE_FOR_PROGMEM
-          display.print(F("PROGMEM"));
-      #endif
-      #ifdef COMPILE_FOR_FLASH
-          display.print(F("FLASH CHIP"));
-      #endif
-      #ifdef COMPILE_FOR_SDCARD
-          display.print(F("SD CARD"));
-      #endif
+    setCursor_textGrid(1, 3);
+    display.setTextColor(GREY2);
+    display.print(F("COMPILED FOR "));
+    display.setTextColor(RED);
+#ifdef COMPILE_FOR_PROGMEM
+    display.print(F("PROGMEM"));
+#endif
+#ifdef COMPILE_FOR_FLASH
+    display.print(F("FLASH CHIP"));
+#endif
+#ifdef COMPILE_FOR_SDCARD
+    display.print(F("SD CARD"));
+#endif
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -11313,63 +11314,58 @@ void print_flash_stats()
   display.print(" KB");
 }
 
-//void UI_func_phSampler(uint8_t param)
-//{
-//  if (LCDML.FUNC_setup())         // ****** SETUP *********
-//  {
-//    display.fillScreen(COLOR_BACKGROUND);
-//    encoderDir[ENC_R].reset();
-//    display.setTextSize(2);
-//    border1();
-//    border2();
-//
-//    display.setTextColor(COLOR_SYSTEXT);
-//
-//    setCursor_textGrid(1, 1);
-//    display.print(F("phSAMPLER"));
-//    setCursor_textGrid(1, 2);
-//    display.print(F("["));
-//    setCursor_textGrid(13, 2);
-//    display.print(F("]"));
-//    display.setTextSize(2);
-//
-//    setCursor_textGrid(21, 1);
-//    display.print(F("SPI Flash"));
-//    print_flash_stats();
-//
-//  }
-//  if (LCDML.FUNC_loop())          // ****** LOOP *********
-//  {
-//    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-//    {
-//      if (LCDML.BT_checkDown())
-//      {
-//        temp_int = constrain(temp_int + 1, 0, 1);
-//
-//      }
-//      else if (LCDML.BT_checkUp())
-//      {
-//        temp_int = constrain(temp_int - 1, 0, 1);
-//      }
-//    }
-//    if (LCDML.BT_checkEnter())
-//    {
-//      ;
-//    }
-//    display.setTextSize(2);
-//    setCursor_textGrid(2, 2);
-//    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-//    if (temp_int == 0)
-//      display.print(F("MultiPiano "));
-//    else if (temp_int == 1)
-//      display.print(F("StringPad  "));
-//  }
-//  if (LCDML.FUNC_close())     // ****** STABLE END *********
-//  {
-//    encoderDir[ENC_R].reset();
-//    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-//  }
-//}
+void UI_func_MultiSamplePlay(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    temp_int =0;
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    display.setTextSize(2);
+    border1();
+    border2();
+    display.setTextColor(COLOR_SYSTEXT);
+    setCursor_textGrid(1, 1);
+    display.print(F("SAMPLER"));
+    setCursor_textGrid(1, 2);
+    display.print(F("["));
+    setCursor_textGrid(13, 2);
+    display.print(F("]"));
+    setCursor_textGrid(21, 1);
+    //    display.print(F("SPI Flash"));
+    //    print_flash_stats();
+  }
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+    {
+      if (LCDML.BT_checkDown())
+      {
+        temp_int = constrain(temp_int + 1, 0, 1);
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        temp_int = constrain(temp_int - 1, 0, 1);
+      }
+    }
+    if (LCDML.BT_checkEnter())
+    {
+      ;
+    }
+    display.setTextSize(2);
+    setCursor_textGrid(2, 2);
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    if (temp_int == 0)
+      display.print(F("MultiPiano "));
+    else if (temp_int == 1)
+      display.print(F("StringPad  "));
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  }
+}
 
 void sd_card_count_files_from_directory(File dir)
 {
