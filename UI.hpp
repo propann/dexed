@@ -11007,7 +11007,7 @@ void UI_func_information(uint8_t param)
     display.setTextSize(1);
     display.print(version_string);
     setCursor_textGrid(1, 2);
-    display.setTextSize(2);
+    display.setTextSize(1);
     display.print(sd_string);
        setCursor_textGrid(1, 3);
           display.setTextColor(GREY2);
