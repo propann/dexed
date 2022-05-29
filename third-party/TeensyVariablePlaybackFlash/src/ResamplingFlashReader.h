@@ -104,7 +104,6 @@ private:
     uint32_t _loop_finish = 0;
     int16_t _numChannels = -1;
     uint16_t _numInterpolationPointsChannels = 0;
-    // char *_filename = nullptr;
     newdigate::IndexableFile<128, 2> *_sourceBuffer = nullptr;
 
     ResampleInterpolationType _interpolationType = ResampleInterpolationType::resampleinterpolation_none;

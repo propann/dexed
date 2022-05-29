@@ -252,21 +252,16 @@ bool ResamplingFlashReader::playWav(const char *filename) {
 bool ResamplingFlashReader::play(const char *filename)
 {
     close();
-
-    // _filename = new char[strlen(filename)+1] {0};
-    // memcpy(_filename, filename, strlen(filename) + 1);
-    StartUsingSPI();
+    // StartUsingSPI();
 
     __disable_irq();
     SerialFlashFile file = SerialFlash.open(filename);
     __enable_irq();
 
     if (!file) {
-        StopUsingSPI();
+        // StopUsingSPI();
         Serial.print(F("Not able to open file: "));
         Serial.println(filename);
-        // if (_filename) delete [] _filename;
-        // _filename = nullptr;
         return false;
     }
 
@@ -278,7 +273,7 @@ bool ResamplingFlashReader::play(const char *filename)
         WaveHeaderParser wavHeaderParser;
         wavHeaderParser.readWaveHeader(wav_header, file);
         if (wav_header.bit_depth != 16) {
-            StopUsingSPI();
+            // StopUsingSPI();
             Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
             Serial.print(wav_header.bit_depth);
             Serial.println(F(")"));
@@ -301,7 +296,7 @@ bool ResamplingFlashReader::play(const char *filename)
         // _filename =  nullptr;
         Serial.print(F("Wave file contains no samples: "));
         Serial.println(filename);
-        StopUsingSPI();
+        // StopUsingSPI();
         __disable_irq();
         file.close();
         __enable_irq();
@@ -354,13 +349,11 @@ void ResamplingFlashReader::close(void) {
         _sourceBuffer->close();
         delete _sourceBuffer;
         _sourceBuffer = nullptr;
-        StopUsingSPI();
+        // StopUsingSPI();
     }
 
-    // if (_filename != nullptr) {
-    //     delete [] _filename;
-    //     _filename = nullptr;
-    // }
-
     deleteInterpolationPoints();
+
+    // Serial.print(F("ResamplingFlashReader::close - MEM:"));
+    // Serial.println(FreeMem(), DEC);
 }
