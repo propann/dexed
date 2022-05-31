@@ -11406,6 +11406,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     temp_int = 0;
+    calc_low_high(temp_int);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     display.setTextSize(1);
@@ -11499,29 +11500,29 @@ void UI_func_MultiSamplePlay(uint8_t param)
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       display.print("[");
       display.setTextColor(temp_color, COLOR_BACKGROUND);
-      show_smallfont_noGrid(y *(CHAR_height_small+2)+90, 34 * CHAR_width_small, 16, msz[temp_int][y].name );
+      show_smallfont_noGrid(y * (CHAR_height_small + 2) + 90, 34 * CHAR_width_small, 16, msz[temp_int][y].name );
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_mini(50, y + yoffset);
       display.print("]");
 
-if (msz[temp_int][y].low == 0 && msz[temp_int][y].high == 0)
+      if (msz[temp_int][y].low == 0 && msz[temp_int][y].high == 0)
         display.fillRect (0,
                           195 + y * 5,
                           DISPLAY_WIDTH , 5, COLOR_BACKGROUND);
-                          else
-                          {
-      display.fillRect (0, 195 + y * 5, 2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
+      else
+      {
+        display.fillRect (0, 195 + y * 5, 2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
 
-      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
-                        (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 3.5 , 5, temp_color);
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
+                          (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 3.5 , 5, temp_color);
 
-      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5),  195 + y * 5,
-                        (DISPLAY_WIDTH - msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 3.5 , 5, COLOR_BACKGROUND);
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5),  195 + y * 5,
+                          (DISPLAY_WIDTH - msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 3.5 , 5, COLOR_BACKGROUND);
 
-      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
-                        3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
-                          }
-      
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
+                          3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+      }
+
     }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********

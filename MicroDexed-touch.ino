@@ -1043,7 +1043,7 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_microsynth);
   else if (configuration.sys.load_at_startup_page == 4)
     LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
-    else if (configuration.sys.load_at_startup_page == 5)
+  else if (configuration.sys.load_at_startup_page == 5)
     LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
@@ -1411,73 +1411,48 @@ void playWAVFile(const char *filename)
 #ifdef COMPILE_FOR_FLASH
 void sampleplayertest(byte inNumber, byte inVelocity)
 {
-    if (drum_counter >= NUM_DRUMS)
-      drum_counter = 0;
-    uint8_t slot = drum_get_slot(1);
-  
-    //float pan = 0.0;
-  
-    drum_mixer_r.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
-    drum_mixer_l.gain(slot,   volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
-  
-  #ifdef USE_FX
-    drum_reverb_send_mixer_r.gain(slot, 0.05);
-    drum_reverb_send_mixer_l.gain(slot, 0.05);
-  #endif
-  
-    Drum[slot]->enableInterpolation(true);
-  
-    if (temp_int == 0 )
+//#ifdef DEBUG
+//  Serial.print(F(" SamplePLAYER"));
+//  Serial.println(" ");
+//  Serial.print(F("inNote:"));
+//  Serial.println(inNumber);
+//#endif
+  uint8_t zone = 99;
+  if (drum_counter >= NUM_DRUMS)
+    drum_counter = 0;
+  uint8_t slot = drum_get_slot(1);
+
+  //float pan = 0.0;
+  drum_mixer_r.gain(slot, volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
+  drum_mixer_l.gain(slot, volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
+
+#ifdef USE_FX
+  drum_reverb_send_mixer_r.gain(slot, 0.05);
+  drum_reverb_send_mixer_l.gain(slot, 0.05);
+#endif
+
+  Drum[slot]->enableInterpolation(true);
+
+  for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++)
+  {
+
+    if (inNumber >= msz[temp_int][y].low && inNumber <= msz[temp_int][y].high)
     {
-      if (inNumber <= 24 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 24) / 12.00)   );
-        Drum[slot]->playWav("Piano N C1.wav");
-      }
-      else if (inNumber < 36 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-        Drum[slot]->playWav("Piano N C2.wav");
-      }
-      else if (inNumber < 48 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-        Drum[slot]->playWav("Piano N C3.wav");
-      }
-      else if (inNumber < 60 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-        Drum[slot]->playWav("Piano N C4.wav");
-      }
-      else if (inNumber < 72 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00)  );
-        Drum[slot]->playWav("Piano N C5.wav");
-      }
-      else if (inNumber < 84 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 84) / 12.00)  );
-        Drum[slot]->playWav("Piano N C6.wav");
-      }
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[temp_int][y].rootnote) / 12.00)   );
+      Drum[slot]->playWav( msz[temp_int][y].name );
+
+//      if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+//      {
+//        
+//      }
+
+//#ifdef DEBUG
+//      Serial.print(F(" SampleName:"));
+//      Serial.print(msz[temp_int][y].name);
+//      Serial.println(" ");
+//#endif
     }
-    else if (temp_int == 1)
-    {
-      if (inNumber < 36 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 36) / 12.00)   );
-        Drum[slot]->playWav("STRINGS-Low.wav");
-      }
-      else if (inNumber < 48 + 6)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 48) / 12.00)   );
-        Drum[slot]->playWav("STRINGS-Mid.wav");
-      }
-      else if (inNumber < 60 + 6 + 12)
-      {
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 60) / 12.00)   );
-        Drum[slot]->playWav("STRINGS-High.wav");
-      }
-    }
+  }
 }
 #endif
 
