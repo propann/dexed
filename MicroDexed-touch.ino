@@ -1417,7 +1417,6 @@ void sampleplayertest(byte inNumber, byte inVelocity)
 //  Serial.print(F("inNote:"));
 //  Serial.println(inNumber);
 //#endif
-  uint8_t zone = 99;
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(1);

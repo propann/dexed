@@ -11426,8 +11426,6 @@ void UI_func_MultiSamplePlay(uint8_t param)
     setCursor_textGrid(13, 2);
     display.print(F("]"));
     display.setTextSize(1);
-    //setCursor_textGrid_mini(37, 1);
-    //display.print(F("FLASH"));
     print_flash_stats();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_mini(2, 7);
@@ -11508,16 +11506,16 @@ void UI_func_MultiSamplePlay(uint8_t param)
       if (msz[temp_int][y].low == 0 && msz[temp_int][y].high == 0)
         display.fillRect (0,
                           195 + y * 5,
-                          DISPLAY_WIDTH , 5, COLOR_BACKGROUND);
+                          DISPLAY_WIDTH-1 , 5, COLOR_BACKGROUND);
       else
       {
         display.fillRect (0, 195 + y * 5, 2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
 
         display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
-                          (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 3.5 , 5, temp_color);
+                          (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 2.5 , 5, temp_color);
 
-        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5),  195 + y * 5,
-                          (DISPLAY_WIDTH - msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 3.5 , 5, COLOR_BACKGROUND);
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5)+3.5,  195 + y * 5,
+                         DISPLAY_WIDTH - (msz[temp_int][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
 
         display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
                           3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
