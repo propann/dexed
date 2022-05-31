@@ -49,21 +49,32 @@ const float tune_frequencies2_PGM[128] =
   8372.0181, 8869.8442, 9397.2726, 9956.0635, 10548.0818, 11175.3034, 11839.8215, 12543.8540
 };
 
+typedef struct multisample_s {
+  char name[DRUM_NAME_LEN];
+} multisample_t;
+
+typedef struct multisample_zone_s {
+  char name[DRUM_NAME_LEN];
+  uint8_t rootnote;   // sample root note
+  uint8_t low;        // lowest note in range
+  uint8_t high;       // highest note in range
+} multisample_zone_t;
+
 typedef struct sequencer_s {
-  uint8_t auto_advance_step=0; //0 = single step, 1 = auto advance, 2 = auto advance and auto stop
+  uint8_t auto_advance_step = 0; //0 = single step, 1 = auto advance, 2 = auto advance and auto stop
   bool step_recording = false;
   uint8_t current_track_type_of_active_pattern;
   bool track_mute[NUM_SEQ_TRACKS];
-  uint8_t mute_mode=0;
+  uint8_t mute_mode = 0;
   uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
   uint8_t piano2[13] = {1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
   int generic_ui_delay;
   bool midi_learn_active = false;
-  bool help_text_needs_refresh=false;
+  bool help_text_needs_refresh = false;
   uint8_t tracktype_or_instrument_assign;
   uint8_t loop_edit_step;
-  uint8_t loop_start=99;
-  uint8_t loop_end=99;
+  uint8_t loop_start = 99;
+  uint8_t loop_end = 99;
   uint8_t ticks;
   uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
   uint8_t scrollpos;
@@ -132,12 +143,12 @@ typedef struct sequencer_s {
   int bpm = 102;
   uint8_t temp_select_menu;
   uint8_t temp_active_menu = 99;
-  
-  int8_t current_song_step=0;
-  int8_t current_chain[NUM_SEQ_TRACKS] =  { 99,99,99,99,99,99 };
-  int8_t current_pattern[NUM_SEQ_TRACKS] =  { 99,99,99,99,99,99 };
-  int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0,0,0,0,0,0 };
- 
+
+  int8_t current_song_step = 0;
+  int8_t current_chain[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99 };
+  int8_t current_pattern[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99 };
+  int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0, 0, 0, 0, 0, 0 };
+
   uint8_t prev_note[NUM_SEQ_TRACKS]; // note_offs for every (instr.) track
   uint8_t prev_vel[NUM_SEQ_TRACKS];
   uint8_t arp_step;
@@ -154,7 +165,7 @@ typedef struct sequencer_s {
   float arp_volume_fade;
   float arp_volume_base = 50;
   uint8_t data_buffer[16] = { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 };
-  
+
   uint8_t note_data[NUM_SEQ_PATTERN][16] = {
     { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
     { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
@@ -181,7 +192,7 @@ typedef struct sequencer_s {
     { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
     { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 }
   };
-  
+
   uint8_t vel[NUM_SEQ_PATTERN][16] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -208,7 +219,7 @@ typedef struct sequencer_s {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
   };
-  
+
   uint8_t song[NUM_SEQ_TRACKS][SONG_LENGHT] = {
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
@@ -219,7 +230,7 @@ typedef struct sequencer_s {
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 }
   };
-  
+
   uint8_t chain[NUM_CHAINS][16] = {
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
@@ -289,11 +300,11 @@ typedef struct sequencer_s {
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 },
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 }
   };
-  
- uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0};
+
+  uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0};
   // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
-  
-  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 ,0,0}; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
+
+  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 , 0, 0}; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
 
 } sequencer_t;
 

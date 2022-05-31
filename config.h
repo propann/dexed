@@ -99,8 +99,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_PROGMEM
-//#define COMPILE_FOR_FLASH
+//#define COMPILE_FOR_PROGMEM
+#define COMPILE_FOR_FLASH
 //#define COMPILE_FOR_SDCARD
 
 //*************************************************************************************************
@@ -137,6 +137,9 @@
 
 #define VIRT_KEYB_YPOS 166
 
+// SAMPLER
+#define NUM_MULTISAMPLES 10
+#define NUM_MULTISAMPLE_ZONES 6
 
 // EPIANO
 #define USE_EPIANO

@@ -73,9 +73,78 @@ extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_mini(uint8_t pos_x, uint8_t pos_y);
 sequencer_t seq;
-
 microsynth_t microsynth[2];
 
+multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES] =
+{
+  {
+    "Piano N C1.wav",
+    24,
+    0,
+    0,
+    "Piano N C2.wav",
+    36,
+    0,
+    0,
+    "Piano N C3.wav",
+    48,
+    0,
+    0,
+    "Piano N C4.wav",
+    60,
+    0,
+    0,
+    "Piano N C5.wav",
+    72,
+    0,
+    0,
+    "Piano N C6.wav",
+    84,
+    0,
+    0,
+  },
+  {
+    "STRINGS-Low.wav",
+    36,
+    0,
+    0
+    ,
+    "STRINGS-Mid.wav",
+    48,
+    0,
+    0
+    ,
+    "STRINGS-High.wav",
+    60,
+    0,
+    0,
+    " ",
+    0,
+    0,
+    0,
+    " ",
+    0,
+    0,
+    0,
+    " ",
+    0,
+    0,
+    0
+  }
+};
+
+multisample_s ms[NUM_MULTISAMPLES] =
+{
+  {
+    "MultiPiano"
+  },
+  {
+    "StringPad"
+  },
+  {
+    "empty"
+  },
+};
 
 void seq_live_recording(void)
 {
@@ -364,17 +433,17 @@ void sequencer_part1(void)
                   handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
                   handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
-                  #ifdef MIDI_DEVICE_USB_HOST
-              else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
-              {
-                handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 1);
-              }
+#ifdef MIDI_DEVICE_USB_HOST
+                else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
+                {
+                  handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 1);
+                }
 #endif
 #ifdef MIDI_DEVICE_DIN
-              else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
-              {
-                handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 2);
-              }
+                else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
+                {
+                  handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 2);
+                }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] ;
               }
@@ -396,18 +465,18 @@ void sequencer_part1(void)
                   handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 0);
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
                   handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 0);
-                  #ifdef MIDI_DEVICE_USB_HOST
-              else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
-              {
+#ifdef MIDI_DEVICE_USB_HOST
+                else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
+                {
 
-                handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 1);
-              }
+                  handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 1);
+                }
 #endif
 #ifdef MIDI_DEVICE_DIN
-              else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
-              {
-                handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 2);
-              }
+                else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
+                {
+                  handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 2);
+                }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] ;
               }
@@ -430,7 +499,7 @@ void sequencer_part1(void)
                 handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel , 0 );
               else if (seq.instrument[d] == 2) // track is assigned to epiano
                 handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 0);
-                #ifdef MIDI_DEVICE_USB_HOST
+#ifdef MIDI_DEVICE_USB_HOST
               else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
               {
 
@@ -440,7 +509,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 20,seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 2);
+                handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 2);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12);
@@ -599,11 +668,11 @@ void sequencer_part2(void)
                 handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 0);
               else if (seq.instrument[d] == 2)
                 handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 0);
-                #ifdef MIDI_DEVICE_USB_HOST
+#ifdef MIDI_DEVICE_USB_HOST
               else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
               {
 
-                handleNoteOff(seq.instrument[d] - 4, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0,1);
+                handleNoteOff(seq.instrument[d] - 4, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 1);
               }
 #endif
 #ifdef MIDI_DEVICE_DIN
@@ -622,18 +691,18 @@ void sequencer_part2(void)
             handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note_prev, 0, 0);
           else if (seq.instrument[d] == 2 && seq.ticks == 7)  //epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.arp_note_prev, 0, 0);
-             #ifdef MIDI_DEVICE_USB_HOST
-              else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
-              {
+#ifdef MIDI_DEVICE_USB_HOST
+          else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
+          {
 
-                handleNoteOff(seq.instrument[d] - 4, seq.arp_note_prev, 0,1);
-              }
+            handleNoteOff(seq.instrument[d] - 4, seq.arp_note_prev, 0, 1);
+          }
 #endif
 #ifdef MIDI_DEVICE_DIN
-              else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
-              {
-                handleNoteOff(seq.instrument[d] - 20, seq.arp_note_prev, 0, 2);
-              }
+          else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
+          {
+            handleNoteOff(seq.instrument[d] - 20, seq.arp_note_prev, 0, 2);
+          }
 #endif
           else if (seq.instrument[d] > 2  ) // track is assigned to Microsynth
             handleNoteOff( microsynth[ seq.instrument[d] - 3].midi_channel, seq.arp_note_prev, 0, 0);

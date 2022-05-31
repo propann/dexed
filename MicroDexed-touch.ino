@@ -603,6 +603,8 @@ int16_t* ep_delayline_l;
 
 #if NUM_DRUMS > 0
 extern sequencer_t seq;
+extern multisample_t ms[NUM_MULTISAMPLES];
+extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 uint8_t drum_counter;
 uint8_t drum_type[NUM_DRUMS];
@@ -1041,6 +1043,8 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_microsynth);
   else if (configuration.sys.load_at_startup_page == 4)
     LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
+    else if (configuration.sys.load_at_startup_page == 5)
+    LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
   scope.clear();
