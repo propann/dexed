@@ -92,7 +92,7 @@ extern void virtual_keyboard_print_current_instrument();
 extern uint8_t find_longest_chain();
 extern bool get_bank_name(uint8_t b, char* bank_name);
 extern bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
-
+extern void fill_sample_zone_from_flash (const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -11408,6 +11408,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
     temp_int = 0;
     seq_active_function = 99;
     seq.menu = 0;
+    seq.scrollpos = 0;
     calc_low_high(temp_int);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
@@ -11457,6 +11458,18 @@ void UI_func_MultiSamplePlay(uint8_t param)
         }
         calc_low_high(temp_int);
       }
+      if (seq_active_function == 0 && seq.menu > 0)
+      {
+        if (LCDML.BT_checkDown())
+        {
+          seq.scrollpos = constrain(seq.scrollpos + 1, 0, fm.flash_sum_files);
+        }
+        else if (LCDML.BT_checkUp())
+        {
+          seq.scrollpos = constrain(seq.scrollpos - 1, 0, fm.flash_sum_files);
+        }
+        fill_sample_zone_from_flash (seq.scrollpos, temp_int, seq.menu - 1);
+      }
       else  if (seq_active_function == 99) // no option is selected, scroll at paramater fields
       {
         if (LCDML.BT_checkDown())
@@ -11468,16 +11481,13 @@ void UI_func_MultiSamplePlay(uint8_t param)
           seq.menu = constrain( seq.menu - 1, 0, 6);
         }
       }
-
     }
     if (LCDML.BT_checkEnter())
     {
-
       if (seq_active_function == 99)
         seq_active_function = 0;
       else
         seq_active_function = 99;
-
     }
     display.setTextSize(2);
     if (seq.menu == 0 )
