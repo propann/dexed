@@ -11406,6 +11406,8 @@ void UI_func_MultiSamplePlay(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     temp_int = 0;
+    seq_active_function = 99;
+    seq.menu = 0;
     calc_low_high(temp_int);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
@@ -11443,45 +11445,83 @@ void UI_func_MultiSamplePlay(uint8_t param)
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
-      if (LCDML.BT_checkDown())
+      if (seq_active_function == 0 && seq.menu == 0)
       {
-        temp_int = constrain(temp_int + 1, 0, NUM_MULTISAMPLES - 1);
+        if (LCDML.BT_checkDown())
+        {
+          temp_int = constrain(temp_int + 1, 0, NUM_MULTISAMPLES - 1);
+        }
+        else if (LCDML.BT_checkUp())
+        {
+          temp_int = constrain(temp_int - 1, 0, NUM_MULTISAMPLES - 1);
+        }
+        calc_low_high(temp_int);
       }
-      else if (LCDML.BT_checkUp())
+      else  if (seq_active_function == 99) // no option is selected, scroll at paramater fields
       {
-        temp_int = constrain(temp_int - 1, 0, NUM_MULTISAMPLES - 1);
+        if (LCDML.BT_checkDown())
+        {
+          seq.menu = constrain( seq.menu + 1, 0, 6);
+        }
+        else if (LCDML.BT_checkUp())
+        {
+          seq.menu = constrain( seq.menu - 1, 0, 6);
+        }
       }
-      calc_low_high(temp_int);
+
     }
     if (LCDML.BT_checkEnter())
     {
 
+      if (seq_active_function == 99)
+        seq_active_function = 0;
+      else
+        seq_active_function = 99;
+
     }
     display.setTextSize(2);
-
+    if (seq.menu == 0 )
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid(1, 2);
+    display.print(F("["));
+    setCursor_textGrid(13, 2);
+    display.print(F("]"));
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
     show(2, 2, 11, ms[temp_int].name);
 
     uint8_t yoffset = 9;
     display.setTextSize(1);
     uint16_t temp_color;
+    uint16_t temp_background;
     for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++)
     {
-      if (y == 0)
-        temp_color = COLOR_PITCHSMP;
-      else if (y == 1)
-        temp_color = COLOR_INSTR;
-      else if (y == 2)
-        temp_color = COLOR_CHORDS;
-      else if (y == 3)
-        temp_color = COLOR_ARP;
-      else if (y == 4)
-        temp_color = COLOR_DRUMS;
-      else if (y == 5)
-        temp_color = GREY1;
-      display.setTextColor(temp_color, COLOR_BACKGROUND);
+      if (seq.menu == y + 1 )
+      {
+        temp_color = COLOR_BACKGROUND;
+        temp_background = COLOR_SYSTEXT;
+      }
+      else
+      {
+        if (y == 0)
+          temp_color = COLOR_PITCHSMP;
+        else if (y == 1)
+          temp_color = COLOR_INSTR;
+        else if (y == 2)
+          temp_color = COLOR_CHORDS;
+        else if (y == 3)
+          temp_color = COLOR_ARP;
+        else if (y == 4)
+          temp_color = COLOR_DRUMS;
+        else if (y == 5)
+          temp_color = GREY1;
+        temp_background = COLOR_BACKGROUND;
+      }
+      display.setTextColor(temp_color, temp_background);
       setCursor_textGrid_mini(2, y + yoffset);
       display.print(y + 1);
+
       setCursor_textGrid_mini(8, y + yoffset);
       display.print( msz[temp_int][y].rootnote  );
       display.print(" ");
@@ -11495,18 +11535,23 @@ void UI_func_MultiSamplePlay(uint8_t param)
       display.print(" ");
       print_note_name_and_octave(msz[temp_int][y].high );
       setCursor_textGrid_mini(33, y + yoffset);
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.setTextColor(GREY2, temp_background);
       display.print("[");
-      display.setTextColor(temp_color, COLOR_BACKGROUND);
+      display.setTextColor(temp_color, temp_background);
       show_smallfont_noGrid(y * (CHAR_height_small + 2) + 90, 34 * CHAR_width_small, 16, msz[temp_int][y].name );
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.setTextColor(GREY2, temp_background);
       setCursor_textGrid_mini(50, y + yoffset);
       display.print("]");
+
+      if (seq.menu == y + 1 )
+      {
+        temp_color = RED;
+      }
 
       if (msz[temp_int][y].low == 0 && msz[temp_int][y].high == 0)
         display.fillRect (0,
                           195 + y * 5,
-                          DISPLAY_WIDTH-1 , 5, COLOR_BACKGROUND);
+                          DISPLAY_WIDTH - 1 , 5, COLOR_BACKGROUND);
       else
       {
         display.fillRect (0, 195 + y * 5, 2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
@@ -11514,8 +11559,8 @@ void UI_func_MultiSamplePlay(uint8_t param)
         display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
                           (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 2.5 , 5, temp_color);
 
-        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5)+3.5,  195 + y * 5,
-                         DISPLAY_WIDTH - (msz[temp_int][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5) + 3.5,  195 + y * 5,
+                          DISPLAY_WIDTH - (msz[temp_int][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
 
         display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
                           3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
