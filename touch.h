@@ -37,7 +37,7 @@ typedef struct ts_s
   bool switch_active_instance;
   bool block_screen_update;
   uint8_t displayed_peak[14];
-  uint8_t old_helptext_lenght[3];
+  uint8_t old_helptext_length[3];
 } ts_t;
 
 // (Touch)File Manager

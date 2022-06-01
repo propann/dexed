@@ -61,14 +61,14 @@ void helptext_l (const char *str)
   display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
   display.print(str);
 
-  if (l < ts.old_helptext_lenght[0])
+  if (l < ts.old_helptext_length[0])
   {
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t x = 0; x < ts.old_helptext_lenght[0] - l; x++)
+    for (uint8_t x = 0; x < ts.old_helptext_length[0] - l; x++)
       display.print(" ");
   }
 
-  ts.old_helptext_lenght[0] = l;
+  ts.old_helptext_length[0] = l;
 }
 
 void helptext_r (const char *str)
@@ -78,14 +78,14 @@ void helptext_r (const char *str)
   display.setCursor(DISPLAY_WIDTH - CHAR_width_small * l, DISPLAY_HEIGHT - CHAR_height_small);
   display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
   display.print(str);
-  if (l < ts.old_helptext_lenght[1])
+  if (l < ts.old_helptext_length[1])
   {
-    display.setCursor(DISPLAY_WIDTH - CHAR_width_small * (ts.old_helptext_lenght[1]), DISPLAY_HEIGHT - CHAR_height_small);
+    display.setCursor(DISPLAY_WIDTH - CHAR_width_small * (ts.old_helptext_length[1]), DISPLAY_HEIGHT - CHAR_height_small);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t x = 0; x < ts.old_helptext_lenght[1] - l; x++)
+    for (uint8_t x = 0; x < ts.old_helptext_length[1] - l; x++)
       display.print(" ");
   }
-  ts.old_helptext_lenght[1] = l;
+  ts.old_helptext_length[1] = l;
 }
 
 void helptext_c (const char *str)
@@ -95,14 +95,14 @@ void helptext_c (const char *str)
   display.setCursor(DISPLAY_WIDTH / 2 - (l / 2)*CHAR_width_small,  DISPLAY_HEIGHT - CHAR_height_small  );
   display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
   display.print(str);
-  if (l < ts.old_helptext_lenght[2])
+  if (l < ts.old_helptext_length[2])
   {
-    display.setCursor(DISPLAY_WIDTH / 2 - (ts.old_helptext_lenght[2] / 2)*CHAR_width_small,  DISPLAY_HEIGHT - CHAR_height_small  );
+    display.setCursor(DISPLAY_WIDTH / 2 - (ts.old_helptext_length[2] / 2)*CHAR_width_small,  DISPLAY_HEIGHT - CHAR_height_small  );
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t x = 0; x < ts.old_helptext_lenght[2] - l; x++)
+    for (uint8_t x = 0; x < ts.old_helptext_length[2] - l; x++)
       display.print(" ");
   }
-  ts.old_helptext_lenght[2] = l;
+  ts.old_helptext_length[2] = l;
 }
 
 uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b)

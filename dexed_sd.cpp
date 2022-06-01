@@ -2088,7 +2088,7 @@ bool save_sd_performance_json(uint8_t number)
       data_json["seq_tempo_ms"] = seq.tempo_ms ;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_speed"] = seq.arp_speed;
-      data_json["arp_lenght"] = seq.arp_lenght;
+      data_json["arp_length"] = seq.arp_length;
       data_json["arp_volume_fade"] = seq.arp_volume_fade;
       data_json["arp_style"] = seq.arp_style;
       data_json["seq_chord_vel"] = seq.chord_vel;
@@ -2455,7 +2455,7 @@ bool load_sd_performance_json(uint8_t number)
         seq.tempo_ms = data_json["seq_tempo_ms"] ;
         seq.bpm = data_json["seq_bpm"];
         seq.arp_speed = data_json["arp_speed"] ;
-        seq.arp_lenght = data_json["arp_lenght"];
+        seq.arp_length = data_json["arp_length"];
         seq.arp_volume_fade = data_json["arp_volume_fade"];
         seq.arp_style = data_json["arp_style"];
         seq.chord_vel = data_json["seq_chord_vel"];

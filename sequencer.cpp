@@ -114,7 +114,7 @@ uint8_t get_song_length()
   for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)  //loop tracks
   {
     stepcounter = 0;
-    for (uint8_t s = SONG_LENGHT - 1; s > 0; s--) //search song lenght from back to front
+    for (uint8_t s = SONG_LENGTH - 1; s > 0; s--) //search song length from back to front
     {
       if (seq.song[t][s] == 99)
         stepcounter++;
@@ -124,7 +124,7 @@ uint8_t get_song_length()
     if (stepcounter < best)
       best = stepcounter;
   }
-  return SONG_LENGHT - best;
+  return SONG_LENGTH - best;
 }
 
 uint8_t get_chain_length_from_current_track(uint8_t tr)
@@ -294,7 +294,7 @@ void sequencer_part1(void)
                 if (seq.arp_speed > 1)
                 {
                   seq.arp_step++;
-                  if (seq.arp_step >= seq.arp_lenght)
+                  if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
               }
@@ -324,40 +324,40 @@ void sequencer_part1(void)
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
 
-                handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0 );
+                handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0 );
 
                 if (seq.arp_speed > 1)
                 {
                   seq.arp_step++;
-                  if (seq.arp_step >= seq.arp_lenght)
+                  if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
               }
               else if (seq.instrument[d] < 2) // track is assigned to dexed
               {
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
               }
               else if (seq.instrument[d] == 2) // track is assigned for epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
 #ifdef MIDI_DEVICE_USB_HOST
               else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
               {
 
-                handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_vel, 1);
+                handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 1);
               }
 #endif
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift], seq.chord_vel, 2);
+                handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 2);
               }
 #endif
-              seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght - seq.arp_step + seq.element_shift] ;
+              seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift] ;
             }
             else if (seq.arp_style == 2)
             { //arp up & down
 
-              if (seq.arp_step <= seq.arp_lenght)
+              if (seq.arp_step <= seq.arp_length)
               {
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
                 {
@@ -367,7 +367,7 @@ void sequencer_part1(void)
                   if (seq.arp_speed > 1)
                   {
                     seq.arp_step++;
-                    if (seq.arp_step >= seq.arp_lenght)
+                    if (seq.arp_step >= seq.arp_length)
                       seq.arp_step = 0;
                   }
                 }
@@ -394,38 +394,38 @@ void sequencer_part1(void)
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4 ) // track is assigned to Microsynth
                 {
 
-                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,   seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] , 90, 0);
+                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,   seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] , 90, 0);
 
                   if (seq.arp_speed > 1)
                   {
                     seq.arp_step++;
-                    if (seq.arp_step >= seq.arp_lenght)
+                    if (seq.arp_step >= seq.arp_length)
                       seq.arp_step = 0;
                   }
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 0);
+                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
-                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 0);
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
 #ifdef MIDI_DEVICE_USB_HOST
                 else if (seq.instrument[d] > 4 && seq.instrument[d] < 21) // track is for external USB MIDI
                 {
 
-                  handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 1);
+                  handleNoteOn(seq.instrument[d] - 4, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 1);
                 }
 #endif
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 20 && seq.instrument[d] < 37) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ], seq.chord_vel, 2);
+                  handleNoteOn(seq.instrument[d] - 20, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 2);
                 }
 #endif
-                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_lenght * 2 - seq.arp_step ] ;
+                seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] ;
               }
             }
             else if (seq.arp_style == 3)
             { //arp random
-              uint8_t rnd1 = random(seq.arp_lenght);
+              uint8_t rnd1 = random(seq.arp_length);
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
                 handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12) , 90, 0);
@@ -433,7 +433,7 @@ void sequencer_part1(void)
                 if (seq.arp_speed > 1)
                 {
                   seq.arp_step++;
-                  if (seq.arp_step >= seq.arp_lenght)
+                  if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
               }
@@ -482,18 +482,18 @@ void sequencer_part1(void)
 
     if (seq.arp_style != 2) {
 
-      if ( (seq.arp_step > 1 && seq.arps[seq.arp_chord][seq.arp_step] == 0) || seq.arp_step == seq.arp_lenght)
+      if ( (seq.arp_step > 1 && seq.arps[seq.arp_chord][seq.arp_step] == 0) || seq.arp_step == seq.arp_length)
       {
         seq.arp_step = 0;
       }
     }
     if (seq.arp_style == 1 || seq.arp_style == 2  )
     {
-      if (seq.arp_lenght == 0)seq.arp_lenght = 9;
+      if (seq.arp_length == 0)seq.arp_length = 9;
     }
     if ( seq.arp_style == 2  )  //only for up&down
     {
-      if ( (seq.arp_step > 1 && seq.arps[seq.arp_chord][seq.arp_step] == 0) || seq.arp_step == seq.arp_lenght * 2)
+      if ( (seq.arp_step > 1 && seq.arps[seq.arp_chord][seq.arp_step] == 0) || seq.arp_step == seq.arp_length * 2)
       {
         seq.arp_step = 0;
       }
@@ -823,9 +823,9 @@ int get_pattern_content_type_color(uint8_t pattern)
   return col;
 }
 
-void seq_print_formatted_number (uint16_t number, uint8_t lenght)
+void seq_print_formatted_number (uint16_t number, uint8_t length)
 {
-  if (lenght == 4)
+  if (length == 4)
   {
     if (number < 10)
       display.print("0");
@@ -835,7 +835,7 @@ void seq_print_formatted_number (uint16_t number, uint8_t lenght)
       display.print("0");
     display.print(number);
   }
-  else if (lenght == 3)
+  else if (length == 3)
   {
     if (number < 10)
       display.print("0");
@@ -844,7 +844,7 @@ void seq_print_formatted_number (uint16_t number, uint8_t lenght)
     display.print(number);
   }
   else
-    //if not 3 then lenght defaults to 2
+    //if not 3 then length defaults to 2
   {
     if (number < 10)
       display.print("0");
@@ -852,14 +852,14 @@ void seq_print_formatted_number (uint16_t number, uint8_t lenght)
   }
 }
 
-void seq_print_formatted_number_signed (int number, uint8_t lenght)
+void seq_print_formatted_number_signed (int number, uint8_t length)
 {
 
   if (number > -1)
   {
     display.print("+");
 
-    if (lenght == 3)
+    if (length == 3)
     {
       if (number < 10)
         display.print("0");
@@ -868,7 +868,7 @@ void seq_print_formatted_number_signed (int number, uint8_t lenght)
       display.print(number);
     }
     else
-      //if not 3 then lenght defaults to 2
+      //if not 3 then length defaults to 2
     {
       if (number < 10)
         display.print("0");
@@ -878,7 +878,7 @@ void seq_print_formatted_number_signed (int number, uint8_t lenght)
 
   else
   {
-    if (lenght == 3)
+    if (length == 3)
     {
       display.print("-");
       if (number > -10)
@@ -887,7 +887,7 @@ void seq_print_formatted_number_signed (int number, uint8_t lenght)
         display.print("0");
       display.print(  abs( number));
     }
-    else if (lenght == 2)
+    else if (length == 2)
     {
       display.print("-");
       if (number > -10)
