@@ -31,7 +31,6 @@
 #include <EEPROM.h>
 #include <SD.h>
 #include <SPI.h>
-#include "microsynth.h"
 
 #include "ILI9341_t3n.h"
 #include "XPT2046_Touchscreen.h"
@@ -51,6 +50,8 @@
 
 #include <TeensyTimerTool.h>
 using namespace TeensyTimerTool;
+
+#include "microsynth.h"
 #include "midi_devices.hpp"
 #include "synth_dexed.h"
 #include "dexed_sd.h"
@@ -1034,6 +1035,7 @@ void setup()
   setup_ui();
   if ( seq.name[0] == 0 )
     strcpy(seq.name, "INIT Perf");
+    
   //Menu Startup
   if (configuration.sys.load_at_startup_page == 0)
     LCDML.OTHER_jumpToFunc(UI_func_voice_select);
@@ -1049,6 +1051,7 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
+    
   scope.clear();
 }
 

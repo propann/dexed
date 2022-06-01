@@ -15146,14 +15146,14 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
     MatchState ms;
     ms.Target(filename);
 
-    char result = ms.Match ("[A-G]#?[0-9]");
+    char result = ms.Match ("[-_ ][A-G]#?[0-9]");
     if (result > 0) {
-      memcpy(root_note, filename+ms.MatchStart, ms.MatchLength);
+      memcpy(root_note, filename+ms.MatchStart+1, ms.MatchLength-1);
 #ifdef DEBUG
       Serial.print("Found match at: ");
-      Serial.println(ms.MatchStart);
+      Serial.println(ms.MatchStart+1);
       Serial.print("Match length: ");
-      Serial.println(ms.MatchLength);
+      Serial.println(ms.MatchLength-1);
       Serial.print("Match root note: ");
       Serial.println(root_note);
 #endif
@@ -15184,10 +15184,10 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
           break;
       }
 
-      if(root_note[ms.MatchLength -2] == '#') {
+      if(root_note[ms.MatchLength -2 -1] == '#') {
         offset++;
       }
-      uint8_t midi_root = (root_note[ms.MatchLength -1] - '0' + 1) * 12 + offset;
+      uint8_t midi_root = (root_note[ms.MatchLength -1 -1] - '0' + 1) * 12 + offset;
 #ifdef DEBUG
       Serial.printf("root note found: %s\n", root_note);
       Serial.printf("midi root note found: %d\n", midi_root);
@@ -15197,10 +15197,11 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
       // recalculate low and high notes for all zones
       calc_low_high(preset_number);
     }
-    else
+    else {
 #ifdef DEBUG
       Serial.println ("No match.");
 #endif
+    }
   } else {
 #ifdef DEBUG
     Serial.print(F("Flash file not found for entry #"));
