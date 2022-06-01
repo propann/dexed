@@ -130,7 +130,7 @@
 
 #define NUM_SEQ_PATTERN 24
 #define NUM_SEQ_TRACKS 8
-#define SONG_LENGHT 64
+#define SONG_LENGTH 64
 #define NUM_CHAINS 32
 
 #define USE_SEQUENCER

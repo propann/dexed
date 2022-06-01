@@ -2,7 +2,7 @@
   "seq_tempo_ms": 150000,
   "seq_bpm": 100,
   "arp_speed": 0,
-  "arp_lenght": 8,
+  "arp_length": 8,
   "arp_volume_fade": 0,
   "arp_style": 0,
   "seq_chord_vel": 0,

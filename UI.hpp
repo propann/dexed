@@ -28,6 +28,8 @@
 
 #include <LCDMenuLib2.h>
 #include <MD_REncoder.h>
+#include <Regexp.h>
+
 #include "config.h"
 #include "disp_plus.h"
 #include "synth_dexed.h"
@@ -7689,7 +7691,7 @@ void seq_pattern_editor_update_dynamic_elements()
 uint8_t find_track_in_song_where_pattern_is_used(uint8_t pattern)
 {
   uint8_t result = 99;
-  for (uint8_t s = 0; s < SONG_LENGHT; s++)
+  for (uint8_t s = 0; s < SONG_LENGTH; s++)
   {
     for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)
     {
@@ -9844,7 +9846,7 @@ void UI_func_song(uint8_t param)
     show_small_font(10, 1, 11, seq.name);
     //print loop
     print_song_loop();
-    //print song lenght
+    //print song length
     print_song_length();
     //print currently playing chain steps
     print_playing_chains();
@@ -9902,8 +9904,8 @@ void UI_func_song(uint8_t param)
           if (seq.cursor_scroll == 15)
           {
             seq.scrollpos++;
-            if (seq.scrollpos > SONG_LENGHT - 16)
-              seq.scrollpos = SONG_LENGHT - 16;
+            if (seq.scrollpos > SONG_LENGTH - 16)
+              seq.scrollpos = SONG_LENGTH - 16;
           }
           else if (seq.tracktype_or_instrument_assign == 1) //disable edit instruments for tracks
           {
@@ -10461,7 +10463,7 @@ void UI_func_song(uint8_t param)
         seq_print_formatted_number(seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] , 2);
       else
         display.print("--");
-      display.setCursor(51 * CHAR_width_small  ,  CHAR_height_small * 4 ); //print chain lenght of current track step
+      display.setCursor(51 * CHAR_width_small  ,  CHAR_height_small * 4 ); //print chain length of current track step
       seq_print_formatted_number(  get_chain_length_from_current_track(seq.selected_track), 2);
 
     }
@@ -10652,7 +10654,7 @@ void UI_func_arpeggio(uint8_t param)
         if ( seq_active_function == 0 )
           seq.temp_select_menu = constrain(seq.temp_select_menu + 1, 0, 2);
         else if ( seq.temp_select_menu == 0 )
-          seq.arp_lenght = constrain(seq.arp_lenght + ENCODER[ENC_R].speed(), 0, 9);
+          seq.arp_length = constrain(seq.arp_length + ENCODER[ENC_R].speed(), 0, 9);
         else if ( seq.temp_select_menu == 1 )
           seq.arp_style = constrain(seq.arp_style + ENCODER[ENC_R].speed(), 0, 3);
         else if ( seq.temp_select_menu == 2 )
@@ -10663,7 +10665,7 @@ void UI_func_arpeggio(uint8_t param)
         if ( seq_active_function == 0 )
           seq.temp_select_menu = constrain(seq.temp_select_menu - 1, 0, 2);
         else if ( seq.temp_select_menu == 0 )
-          seq.arp_lenght = constrain(seq.arp_lenght - ENCODER[ENC_R].speed(), 0, 9);
+          seq.arp_length = constrain(seq.arp_length - ENCODER[ENC_R].speed(), 0, 9);
         else if ( seq.temp_select_menu == 1 )
           seq.arp_style = constrain(seq.arp_style - ENCODER[ENC_R].speed(), 0, 3);
         else if ( seq.temp_select_menu == 2 )
@@ -10689,10 +10691,10 @@ void UI_func_arpeggio(uint8_t param)
     if (seq.temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_large(10, 4);
-    if (seq.arp_lenght == 0)
+    if (seq.arp_length == 0)
       display.print("ALL");
     else
-      seq_print_formatted_number( seq.arp_lenght, 3);//play all elements or from 1-xx elements
+      seq_print_formatted_number( seq.arp_length, 3);//play all elements or from 1-xx elements
     setCursor_textGrid_large(10, 5);
     for (uint8_t i = 0; i < 4; i++)
     {
@@ -15119,10 +15121,10 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
   for (f = 0; f <= entry_number; f++) {
     if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
 #ifdef DEBUG
-      //      Serial.print(F("entry #"));
-      //      Serial.print(f);
-      //      Serial.print(F(": "));
-      //      Serial.println(filename);
+      Serial.print(F("entry #"));
+      Serial.print(f);
+      Serial.print(F(": "));
+      Serial.println(filename);  
 #endif
     }
     else
@@ -15138,58 +15140,68 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
 #endif
 
     // Search root note from filename
-    char root_note[3];
-    root_note[0] = '\0';
+    char root_note[4];
+    memset(root_note, 0, sizeof(root_note));
 
-    //    strcpy(filename, "testmulti_F3.wav");
-    char *dot_pos = strchr(filename, '.');
-    int pos = dot_pos ? dot_pos - filename : -1;
+    MatchState ms;
+    ms.Target(filename);
 
-    if (pos != -1) {
-      char octave = filename[--pos];
-      char note = toupper(filename[--pos]);
-      if ((note >= 'A' && note <= 'G')
-          && ('0' <= octave && octave <= '9')) {
-        sprintf(root_note, "%c%c", note, octave);
-
-        // get midi note from the root note string
-        uint8_t offset = 0;
-        switch (note) {
-          case 'A':
-            offset = 9;
-            break;
-          case 'B':
-            offset = 11;
-            break;
-          case 'C':
-            offset = 0;
-            break;
-          case 'D':
-            offset = 2;
-            break;
-          case 'E':
-            offset = 4;
-            break;
-          case 'F':
-            offset = 5;
-            break;
-          case 'G':
-            offset = 7;
-            break;
-        }
-        uint8_t midi_root = (octave - '0' + 1) * 12 + offset;
-
+    char result = ms.Match ("[-_ ][A-G]#?[0-9]");
+    if (result > 0) {
+      memcpy(root_note, filename+ms.MatchStart+1, ms.MatchLength-1);
 #ifdef DEBUG
-        Serial.printf("root note found: %s\n", root_note);
-        Serial.printf("midi root note found: %d\n", midi_root);
+      Serial.print("Found match at: ");
+      Serial.println(ms.MatchStart+1);
+      Serial.print("Match length: ");
+      Serial.println(ms.MatchLength-1);
+      Serial.print("Match root note: ");
+      Serial.println(root_note);
 #endif
-        msz[preset_number][zone_number].rootnote = midi_root;
 
-        // assign low and high notes for the zone
-        calc_low_high(preset_number);
+      // get midi note from the root note string
+      uint8_t offset = 0;
+      switch (root_note[0]) {
+        case 'A':
+          offset = 9;
+          break;
+        case 'B':
+          offset = 11;
+          break;
+        case 'C':
+          offset = 0;
+          break;
+        case 'D':
+          offset = 2;
+          break;
+        case 'E':
+          offset = 4;
+          break;
+        case 'F':
+          offset = 5;
+          break;
+        case 'G':
+          offset = 7;
+          break;
       }
-    }
 
+      if(root_note[ms.MatchLength -2 -1] == '#') {
+        offset++;
+      }
+      uint8_t midi_root = (root_note[ms.MatchLength -1 -1] - '0' + 1) * 12 + offset;
+#ifdef DEBUG
+      Serial.printf("root note found: %s\n", root_note);
+      Serial.printf("midi root note found: %d\n", midi_root);
+#endif
+      msz[preset_number][zone_number].rootnote = midi_root;
+
+      // recalculate low and high notes for all zones
+      calc_low_high(preset_number);
+    }
+    else {
+#ifdef DEBUG
+      Serial.println ("No match.");
+#endif
+    }
   } else {
 #ifdef DEBUG
     Serial.print(F("Flash file not found for entry #"));
