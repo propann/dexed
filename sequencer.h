@@ -52,11 +52,11 @@ const float tune_frequencies2_PGM[128] =
 };
 
 typedef struct multisample_s {
-  char name[DRUM_NAME_LEN];
+  char name[MAX_FLASH_FILENAME_LEN];
 } multisample_t;
 
 typedef struct multisample_zone_s {
-  char name[DRUM_NAME_LEN];
+  char name[MAX_FLASH_FILENAME_LEN];
   uint8_t rootnote;   // sample root note
   uint8_t low;        // lowest note in range
   uint8_t high;       // highest note in range

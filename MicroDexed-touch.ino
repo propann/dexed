@@ -1413,12 +1413,12 @@ void playWAVFile(const char *filename)
 #ifdef COMPILE_FOR_FLASH
 void sampleplayertest(byte inNumber, byte inVelocity)
 {
-//#ifdef DEBUG
-//  Serial.print(F(" SamplePLAYER"));
-//  Serial.println(" ");
-//  Serial.print(F("inNote:"));
-//  Serial.println(inNumber);
-//#endif
+  //#ifdef DEBUG
+  //  Serial.print(F(" SamplePLAYER"));
+  //  Serial.println(" ");
+  //  Serial.print(F("inNote:"));
+  //  Serial.println(inNumber);
+  //#endif
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(1);
@@ -1479,6 +1479,10 @@ void sampleplayertest(byte inNumber, byte inVelocity)
       else if (y == 4)
         temp_color = COLOR_DRUMS;
       else if (y == 5)
+        temp_color = GREEN;
+      else if (y == 6)
+        temp_color = YELLOW;
+      else if (y == 7)
         temp_color = GREY1;
 
       display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,

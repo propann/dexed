@@ -74,64 +74,7 @@ extern void setCursor_textGrid_mini(uint8_t pos_x, uint8_t pos_y);
 sequencer_t seq;
 microsynth_t microsynth[2];
 
-multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES] =
-{
-  {
-    "Piano N C1.wav",
-    24,
-    0,
-    0,
-    "Piano N C2.wav",
-    36,
-    0,
-    0,
-    "Piano N C3.wav",
-    48,
-    0,
-    0,
-    "Piano N C4.wav",
-    60,
-    0,
-    0,
-    "Piano N C5.wav",
-    72,
-    0,
-    0,
-    "Piano N C6.wav",
-    84,
-    0,
-    0,
-  },
-  {
-    "STRINGS-Low.wav",
-    36,
-    0,
-    0
-    ,
-    "STRINGS-Mid.wav",
-    48,
-    0,
-    0
-    ,
-    "STRINGS-High.wav",
-    60,
-    0,
-    0,
-    " ",
-    0,
-    0,
-    0,
-    " ",
-    0,
-    0,
-    0,
-    " ",
-    0,
-    0,
-    0
-  }
-};
-
+multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 multisample_s ms[NUM_MULTISAMPLES] =
 {
   {

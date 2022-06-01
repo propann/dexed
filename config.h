@@ -139,7 +139,7 @@
 
 // SAMPLER
 #define NUM_MULTISAMPLES 10
-#define NUM_MULTISAMPLE_ZONES 6
+#define NUM_MULTISAMPLE_ZONES 8
 
 // EPIANO
 #define USE_EPIANO
@@ -325,7 +325,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define MAX_PERF_MOD 30
 
 // SerialFlash
-#define MAX_FLASH_FILENAME_LEN 16
+#define MAX_FLASH_FILENAME_LEN 18
 
 //*************************************************************************************************
 //* DO NO CHANGE ANYTHING BEYOND IF YOU DON'T KNOW WHAT YOU ARE DOING !!!
