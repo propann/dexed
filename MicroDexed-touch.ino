@@ -576,6 +576,8 @@ char receive_bank_filename[FILENAME_LEN];
 uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
 
+char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
 #if NUM_DEXED>1
 int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1};
 #else
