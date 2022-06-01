@@ -62,7 +62,6 @@ extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern elapsedMillis microsynth_lfo_delay_timer[2];
 
-const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 extern uint16_t COLOR_SYSTEXT;
 extern uint16_t COLOR_SYSTEXT_ACCENT;
 extern uint16_t COLOR_BACKGROUND;

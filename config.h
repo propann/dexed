@@ -90,7 +90,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-#define REMOTE_CONSOLE  //enable USB Display Mirroring
+//#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -323,6 +323,9 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define MICROSYNTH_CONFIG_NAME "msynth"
 
 #define MAX_PERF_MOD 30
+
+// SerialFlash
+#define MAX_FLASH_FILENAME_LEN 16
 
 //*************************************************************************************************
 //* DO NO CHANGE ANYTHING BEYOND IF YOU DON'T KNOW WHAT YOU ARE DOING !!!

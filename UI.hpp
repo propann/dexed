@@ -92,7 +92,9 @@ extern void virtual_keyboard_print_current_instrument();
 extern uint8_t find_longest_chain();
 extern bool get_bank_name(uint8_t b, char* bank_name);
 extern bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
-extern void fill_sample_zone_from_flash (const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
+extern void fill_msz_from_flash_filename (const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
+
+extern char noteNames[12][3];
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -220,7 +222,6 @@ uint16_t COLOR_PITCHSMP = 0x159A;
 elapsedMillis back_from_volume;
 uint8_t instance_num[8][8];
 const char accepted_chars[] = " _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-abcdefghijklmnopqrstuvwxyz";
-const char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
 int temp_int;
 bool menu_select_toggle;
@@ -11468,7 +11469,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
         {
           seq.scrollpos = constrain(seq.scrollpos - 1, 0, fm.flash_sum_files);
         }
-        fill_sample_zone_from_flash (seq.scrollpos, temp_int, seq.menu - 1);
+        fill_msz_from_flash_filename(seq.scrollpos, temp_int, seq.menu - 1);
       }
       else  if (seq_active_function == 99) // no option is selected, scroll at paramater fields
       {
@@ -15095,4 +15096,111 @@ char* basename(const char* filename)
   char* p = strrchr (filename, '/');
   return p ? p + 1 : (char *) filename;
 }
+
+void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number)
+{
+  char filename[MAX_FLASH_FILENAME_LEN];
+  uint32_t filesize;
+  uint16_t f;
+
+  SerialFlash.opendir();
+
+  // search for the right file from its entry_number in the directory
+  for (f = 0; f <= entry_number; f++) {
+    if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
+#ifdef DEBUG
+//      Serial.print(F("entry #"));
+//      Serial.print(f);
+//      Serial.print(F(": "));
+//      Serial.println(filename);  
+#endif
+    }
+    else
+      break;
+  }
+
+  if (f == entry_number + 1) {
+#ifdef DEBUG
+    Serial.print(F("Flash file found for entry #"));
+    Serial.print(entry_number);
+    Serial.print(F(": "));
+    Serial.println(filename);
+#endif
+
+    // Search root note from filename
+    char root_note[3];
+    root_note[0] = '\0';
+
+//    strcpy(filename, "testmulti_F3.wav");
+    char *dot_pos = strchr(filename, '.');
+    int pos = dot_pos ? dot_pos - filename : -1;
+
+    if(pos != -1) {
+      char octave = filename[--pos];
+      char note = toupper(filename[--pos]);
+      if((note >= 'A' && note <= 'G')
+          && ('0' <= octave && octave <= '9')) {
+        sprintf(root_note, "%c%c", note, octave);
+
+        // get midi note from the root note string
+        uint8_t offset = 0;
+          switch(note) {
+            case 'A':
+              offset = 10;
+              break;
+            case 'B':
+              offset = 11;
+              break;
+            case 'C':
+              offset = 0;
+              break;
+            case 'D':
+              offset = 2;
+              break;
+            case 'E':
+              offset = 4;
+              break;
+            case 'F':
+              offset = 5;
+              break;
+            case 'G':
+              offset = 7;
+              break;
+          }
+        uint8_t midi_root = (octave - '0' + 1) * 12 + offset;
+        
+#ifdef DEBUG
+        Serial.printf("root note found: %s\n", root_note);
+        Serial.printf("midi root note found: %d\n", midi_root);
+#endif
+        msz[preset_number][zone_number].rootnote = midi_root;
+
+        // assign low and high notes for the zone
+        calc_low_high(preset_number);
+      }
+    }
+
+  } else {
+#ifdef DEBUG
+    Serial.print(F("Flash file not found for entry #"));
+    Serial.println(entry_number);
+#endif
+    strcpy(filename, "*ERROR*");
+  }
+
+  // fill the multisample zone informations
+  strcpy(msz[preset_number][zone_number].name, filename);
+#ifdef DEBUG
+    Serial.print(F("MSZ preset #"));
+    Serial.print(preset_number);
+    Serial.print(F(" - zone #"));
+    Serial.print(zone_number);
+    Serial.print(F(": "));
+    Serial.print(msz[preset_number][zone_number].name);
+    Serial.print(F(" root: "));
+    Serial.println(msz[preset_number][zone_number].rootnote);
+#endif
+}
+
+
 #endif
