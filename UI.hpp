@@ -95,7 +95,7 @@ extern uint8_t find_longest_chain();
 extern bool get_bank_name(uint8_t b, char* bank_name);
 extern bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
 extern void fill_msz_from_flash_filename (const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
-
+extern void stop_all_drum_slots();
 extern char noteNames[12][3];
 
 #if NUM_DRUMS > 0
@@ -11476,6 +11476,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
         {
           seq.scrollpos = constrain(seq.scrollpos - 1, 0, fm.flash_sum_files);
         }
+        stop_all_drum_slots();
         fill_msz_from_flash_filename(seq.scrollpos, temp_int, seq.menu - 1);
       }
       else  if (seq_active_function == 99) // no option is selected, scroll at paramater fields
@@ -11546,24 +11547,30 @@ void UI_func_MultiSamplePlay(uint8_t param)
       display.print(y + 1);
 
       setCursor_textGrid_mini(8, y + yoffset);
-      display.print( msz[temp_int][y].rootnote  );
-      display.print(" ");
+//      display.print( msz[temp_int][y].rootnote  );
       print_note_name_and_octave(msz[temp_int][y].rootnote);
+       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+       display.print(" ");
+        display.setTextColor(temp_color, temp_background);
       setCursor_textGrid_mini(16, y + yoffset);
-      display.print( msz[temp_int][y].low  );
-      display.print(" ");
+//      display.print( msz[temp_int][y].low  );
       print_note_name_and_octave(msz[temp_int][y].low );
+       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+       display.print(" ");
+        display.setTextColor(temp_color, temp_background);
       setCursor_textGrid_mini(24, y + yoffset);
-      display.print( msz[temp_int][y].high );
-      display.print(" ");
+//      display.print( msz[temp_int][y].high );
       print_note_name_and_octave(msz[temp_int][y].high );
+       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+       display.print(" ");
+        display.setTextColor(temp_color, temp_background);
       setCursor_textGrid_mini(33, y + yoffset);
       display.setTextColor(GREY2, temp_background);
       display.print("[");
       display.setTextColor(temp_color, temp_background);
-      show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 16, msz[temp_int][y].name );
+      show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 17, msz[temp_int][y].name );
       display.setTextColor(GREY2, temp_background);
-      setCursor_textGrid_mini(50, y + yoffset);
+      setCursor_textGrid_mini(51, y + yoffset);
       display.print("]");
 
       if (seq.menu == y + 1 )

@@ -321,6 +321,8 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define SYS_CONFIG_NAME "sys"
 #define EPIANO_CONFIG_NAME "epiano"
 #define MICROSYNTH_CONFIG_NAME "msynth"
+#define MULTISAMPLE_NAMES_CONFIG_NAME "mltsmpnames"
+#define MULTISAMPLE_ZONES_CONFIG_NAME "mltsmpzones"
 
 #define MAX_PERF_MOD 30
 

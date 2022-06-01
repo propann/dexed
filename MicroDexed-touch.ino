@@ -1035,7 +1035,7 @@ void setup()
   setup_ui();
   if ( seq.name[0] == 0 )
     strcpy(seq.name, "INIT Perf");
-    
+
   //Menu Startup
   if (configuration.sys.load_at_startup_page == 0)
     LCDML.OTHER_jumpToFunc(UI_func_voice_select);
@@ -1051,7 +1051,7 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
   else
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
-    
+
   scope.clear();
 }
 
@@ -1414,14 +1414,8 @@ void playWAVFile(const char *filename)
 }
 
 #ifdef COMPILE_FOR_FLASH
-void sampleplayertest(byte inNumber, byte inVelocity)
+void Multi_Sample_Player(byte inNumber, byte inVelocity)
 {
-  //#ifdef DEBUG
-  //  Serial.print(F(" SamplePLAYER"));
-  //  Serial.println(" ");
-  //  Serial.print(F("inNote:"));
-  //  Serial.println(inNumber);
-  //#endif
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(1);
@@ -1429,17 +1423,13 @@ void sampleplayertest(byte inNumber, byte inVelocity)
   //float pan = 0.0;
   drum_mixer_r.gain(slot, volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
   drum_mixer_l.gain(slot, volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
-
 #ifdef USE_FX
   drum_reverb_send_mixer_r.gain(slot, 0.05);
   drum_reverb_send_mixer_l.gain(slot, 0.05);
 #endif
-
   Drum[slot]->enableInterpolation(true);
-
   for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++)
   {
-
     if (inNumber >= msz[temp_int][y].low && inNumber <= msz[temp_int][y].high)
     {
       Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[temp_int][y].rootnote - 12) / 12.00)   );
@@ -1458,8 +1448,6 @@ void sampleplayertest(byte inNumber, byte inVelocity)
 
         display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
                           3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
-
-
       }
 
       //#ifdef DEBUG
@@ -1638,7 +1626,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 #ifdef COMPILE_FOR_FLASH
     if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
     {
-      sampleplayertest(inNumber, inVelocity);
+      Multi_Sample_Player(inNumber, inVelocity);
     }
     else
     {
@@ -1885,6 +1873,20 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
     }
 #endif
 
+  }
+}
+
+void stop_all_drum_slots()
+{
+  for (uint8_t i = 0; i < NUM_DRUMS; i++)
+  {
+    if (Drum[i]->isPlaying())
+    {
+      Drum[i]->stop();
+      drum_type[i] = DRUM_NONE;
+      Drum[i]->enableInterpolation(false);
+      Drum[i]->setPlaybackRate(1.0);
+    }
   }
 }
 
@@ -3872,55 +3874,8 @@ void check_and_create_directories(void)
       }
     */
 
-    sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
-    if (!SD.exists(tmp))
-    {
-#ifdef DEBUG
-      Serial.print(F("Creating directory "));
-      Serial.println(tmp);
-#endif
-      SD.mkdir(tmp);
-    }
-
-    //    //check if updated Fav-System is ready or if setup has to run once.
-    //    sprintf(tmp, "/%s/fav-v2", FAV_CONFIG_PATH);
-    //    if (!SD.exists(tmp))
-    //    {
-    //
-    //      // Clear now obsolte marker files from Favs.
-    //      // Only needs to run once.
-    //      for (uint8_t i = 0; i < MAX_BANKS; i++)
-    //      {
-    //        sprintf(tmp, "/%s/%d/hasfav", FAV_CONFIG_PATH, i);
-    //#ifdef DEBUG
-    //        Serial.print(F("Delete Marker File"));
-    //        Serial.println(tmp);
-    //#endif
-    //        if (SD.exists(tmp))
-    //          SD.remove(tmp);
-    //      }
-    //      // Remove empty Folders. rmdir will only remove strictly emtpy folders, which is the desired result.
-    //      // Only needs to run once.
-    //      for (uint8_t i = 0; i < MAX_BANKS; i++)
-    //      {
-    //        sprintf(tmp, "/%s/%d", FAV_CONFIG_PATH, i);
-    //#ifdef DEBUG
-    //        Serial.print(F("Delete empty folder "));
-    //        Serial.println(tmp);
-    //#endif
-    //        if (SD.exists(tmp))
-    //          SD.rmdir(tmp);
-    //      }
-    //      sprintf(tmp, "/%s/fav-v2", FAV_CONFIG_PATH);
-    //      if (!SD.exists(tmp))
-    //        SD.mkdir(tmp);  // Set Marker so that the Cleanup loops only run once.
-    //    }
 
 
-    /* #ifdef DEBUG
-      else
-      Serial.println(F("No SD card for directory check available."));
-      #endif */
   }
 #ifdef DEBUG
   Serial.println(F("SD card check end"));
