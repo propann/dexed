@@ -1439,19 +1439,52 @@ void sampleplayertest(byte inNumber, byte inVelocity)
 
     if (inNumber >= msz[temp_int][y].low && inNumber <= msz[temp_int][y].high)
     {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[temp_int][y].rootnote) / 12.00)   );
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[temp_int][y].rootnote - 12) / 12.00)   );
       Drum[slot]->playWav( msz[temp_int][y].name );
 
-//      if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
-//      {
-//        
-//      }
+      if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+      {
 
-//#ifdef DEBUG
-//      Serial.print(F(" SampleName:"));
-//      Serial.print(msz[temp_int][y].name);
-//      Serial.println(" ");
-//#endif
+        display.fillRect (0, 195 + y * 5, 2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
+
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
+                          (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 2.5 , 5, RED);
+
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5) + 3.5,  195 + y * 5,
+                          DISPLAY_WIDTH - (msz[temp_int][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
+
+        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
+                          3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+
+
+      }
+
+      //#ifdef DEBUG
+      //      Serial.print(F(" SampleName:"));
+      //      Serial.print(msz[temp_int][y].name);
+      //      Serial.println(" ");
+      //#endif
+    }
+    else
+    {
+      uint16_t temp_color;
+      if (y == 0)
+        temp_color = COLOR_PITCHSMP;
+      else if (y == 1)
+        temp_color = COLOR_INSTR;
+      else if (y == 2)
+        temp_color = COLOR_CHORDS;
+      else if (y == 3)
+        temp_color = COLOR_ARP;
+      else if (y == 4)
+        temp_color = COLOR_DRUMS;
+      else if (y == 5)
+        temp_color = GREY1;
+
+      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
+                        (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 2.5 , 5, temp_color);
+      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
+                        3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
     }
   }
 }
