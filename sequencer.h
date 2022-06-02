@@ -60,9 +60,13 @@ typedef struct multisample_zone_s {
   uint8_t rootnote;   // sample root note
   uint8_t low;        // lowest note in range
   uint8_t high;       // highest note in range
+  uint8_t vol;        // volume
+  uint8_t pan;        // panorama
+  uint8_t rev;        // reverb send
 } multisample_zone_t;
 
 typedef struct sequencer_s {
+  uint8_t active_multisample;   // multisample currently selected in editor
   uint8_t auto_advance_step = 0; //0 = single step, 1 = auto advance, 2 = auto advance and auto stop
   bool step_recording = false;
   uint8_t current_track_type_of_active_pattern;

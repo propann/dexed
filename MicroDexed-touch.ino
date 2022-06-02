@@ -1420,65 +1420,52 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(1);
 
-  //float pan = 0.0;
-  drum_mixer_r.gain(slot, volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
-  drum_mixer_l.gain(slot, volume_transform(mapfloat(inVelocity, 0, 127, 0.2, 0.7)));
-#ifdef USE_FX
-  drum_reverb_send_mixer_r.gain(slot, 0.05);
-  drum_reverb_send_mixer_l.gain(slot, 0.05);
-#endif
+
   Drum[slot]->enableInterpolation(true);
   for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++)
   {
-    if (inNumber >= msz[temp_int][y].low && inNumber <= msz[temp_int][y].high)
+    if (inNumber >= msz[seq.active_multisample][y].low && inNumber <= msz[seq.active_multisample][y].high)
     {
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[temp_int][y].rootnote - 12) / 12.00)   );
-      Drum[slot]->playWav( msz[temp_int][y].name );
+
+      float pan = mapfloat(msz[seq.active_multisample][y].pan, 0, 40, 0.0, 1.0);
+      drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[seq.active_multisample][y].vol, 0, 127 * 100, 0.0, 0.7)));
+      drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[seq.active_multisample][y].vol, 0, 127 * 100, 0.0, 0.7)));
+      //   drum_mixer_r.gain(slot, volume_transform(mapfloat(inVelocity*msz[seq.active_multisample][y].vol, 0, 127*100, 0.0, 0.7)));
+      //   drum_mixer_l.gain(slot, volume_transform(mapfloat(inVelocity*msz[seq.active_multisample][y].vol, 0, 127*100, 0.0, 0.7)));
+#ifdef USE_FX
+      drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[seq.active_multisample][y].rev, 0, 100, 0.0, 1.0)));
+      drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[seq.active_multisample][y].rev, 0, 100, 0.0, 1.0)));
+#endif
+
+      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[seq.active_multisample][y].rootnote - 12) / 12.00)   );
+      Drum[slot]->playWav( msz[seq.active_multisample][y].name );
 
       if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
       {
 
-        display.fillRect (0, 195 + y * 5, 2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
+        display.fillRect (0, 185 + y * 5, 2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
 
-        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
-                          (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 2.5 , 5, RED);
+        display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+                          (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5 , 5, RED);
 
-        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].high * 3.5 - (24 * 3.5) + 3.5,  195 + y * 5,
-                          DISPLAY_WIDTH - (msz[temp_int][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
+        display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].high * 3.5 - (24 * 3.5) + 3.5,  185 + y * 5,
+                          DISPLAY_WIDTH - (msz[seq.active_multisample][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
 
-        display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
+        display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
                           3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
       }
 
       //#ifdef DEBUG
       //      Serial.print(F(" SampleName:"));
-      //      Serial.print(msz[temp_int][y].name);
+      //      Serial.print(msz[seq.active_multisample][y].name);
       //      Serial.println(" ");
       //#endif
     }
     else
     {
-      uint16_t temp_color;
-      if (y == 0)
-        temp_color = COLOR_PITCHSMP;
-      else if (y == 1)
-        temp_color = COLOR_INSTR;
-      else if (y == 2)
-        temp_color = COLOR_CHORDS;
-      else if (y == 3)
-        temp_color = COLOR_ARP;
-      else if (y == 4)
-        temp_color = COLOR_DRUMS;
-      else if (y == 5)
-        temp_color = GREEN;
-      else if (y == 6)
-        temp_color = YELLOW;
-      else if (y == 7)
-        temp_color = GREY1;
-
-      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].low * 3.5 - (24 * 3.5), 195 + y * 5,
-                        (msz[temp_int][y].high - msz[temp_int][y].low) * 3.5 + 2.5 , 5, temp_color);
-      display.fillRect (2 * CHAR_width_small + msz[temp_int][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  195 + y * 5 + 1,
+      display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+                        (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
+      display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
                         3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
     }
   }
