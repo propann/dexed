@@ -1427,11 +1427,9 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity)
     if (inNumber >= msz[seq.active_multisample][y].low && inNumber <= msz[seq.active_multisample][y].high)
     {
 
-      float pan = mapfloat(msz[seq.active_multisample][y].pan, 0, 40, 0.0, 1.0);
+      float pan = mapfloat(msz[seq.active_multisample][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
       drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[seq.active_multisample][y].vol, 0, 127 * 100, 0.0, 0.7)));
       drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[seq.active_multisample][y].vol, 0, 127 * 100, 0.0, 0.7)));
-      //   drum_mixer_r.gain(slot, volume_transform(mapfloat(inVelocity*msz[seq.active_multisample][y].vol, 0, 127*100, 0.0, 0.7)));
-      //   drum_mixer_l.gain(slot, volume_transform(mapfloat(inVelocity*msz[seq.active_multisample][y].vol, 0, 127*100, 0.0, 0.7)));
 #ifdef USE_FX
       drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[seq.active_multisample][y].rev, 0, 100, 0.0, 1.0)));
       drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[seq.active_multisample][y].rev, 0, 100, 0.0, 1.0)));
@@ -1454,7 +1452,6 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity)
         display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
                           3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
       }
-
       //#ifdef DEBUG
       //      Serial.print(F(" SampleName:"));
       //      Serial.print(msz[seq.active_multisample][y].name);
