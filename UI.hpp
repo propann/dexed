@@ -11489,32 +11489,19 @@ uint16_t get_multisample_zone_color(uint8_t row)
 
 void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option)
 {
-  if (selected_option == seq.temp_select_menu-1 && seq.selected_track == 4)
-    display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
-  else
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 , 10 * y + 1, 3 * CHAR_width_small - 1, 7 - 2, COLOR_BACKGROUND );
 
-  setCursor_textGrid_mini(x, y);
-  if (input_value < 20)
-  {
-    display.print(F("L"));
-    seq_print_formatted_number( 20 - input_value, 2);
-  }
-  else  if (input_value > 20)
-  {
-    display.print(F("R"));
-    seq_print_formatted_number( input_value - 20, 2);
-  }
+  if (input_value == 20)
+    display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83 , 10 * y + 1, 3 , 5, COLOR_SYSTEXT );
   else
-  {
-    display.print(F("C"));
-    seq_print_formatted_number( input_value - 20, 2);
-  }
-  display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small, 7, COLOR_SYSTEXT );
-  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 , 10 * y + 1, 3 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND );
-  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.90 , 10 * y + 1, 3 , 5, COLOR_PITCHSMP );
+    display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83 , 10 * y + 1, 3 , 5, COLOR_PITCHSMP );
+    
+  if (selected_option == seq.temp_select_menu - 1 && seq.selected_track == 4)
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small+1, 7, COLOR_SYSTEXT );
+  else
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small+1, 7, GREY2 );
+
 }
-
 
 void UI_func_MultiSamplePlay(uint8_t param)
 {
@@ -11555,15 +11542,15 @@ void UI_func_MultiSamplePlay(uint8_t param)
     display.print(F("ROOT"));
     display.setCursor(9 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
     display.print(F("LOW"));
-    display.setCursor(13 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
+    display.setCursor(14 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
     display.print(F("HIGH"));
-    display.setCursor(18 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
+    display.setCursor(19 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
     display.print(F("VOL"));
-    display.setCursor(22 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
+    display.setCursor(23 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
     display.print(F("PAN"));
-    display.setCursor(30 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
-    display.print(F("REV"));
-    display.setCursor(37 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
+    display.setCursor(28 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
+    display.print(F("REV."));
+    display.setCursor(33 * CHAR_width_small , (6) * (CHAR_height_small + 2) - 2 );
     display.print(F("FILENAME"));
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -11709,7 +11696,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
       print_note_name_and_octave(msz[seq.active_multisample][y].low );
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display.print(" ");
-      setCursor_textGrid_mini(13, y + yoffset);
+      setCursor_textGrid_mini(14, y + yoffset);
       sub_MultiSample_setColor( y, 2);
       print_note_name_and_octave(msz[seq.active_multisample][y].high );
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -11717,15 +11704,12 @@ void UI_func_MultiSamplePlay(uint8_t param)
       char tmp[4];
 
       sub_MultiSample_setColor( y, 3);
-      show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 18 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].vol, tmp, 10) );
-      //setCursor_textGrid_mini(25, y + yoffset);
-      //sub_MultiSample_setColor( y, 4);
-      // show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 25 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].pan, tmp, 10) );
-
-      print_multisampler_panbar(22, yoffset + y , msz[seq.active_multisample][y].pan, y );
+      show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 19 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].vol, tmp, 10) );
+    
+      print_multisampler_panbar(19, yoffset + y , msz[seq.active_multisample][y].pan, y );
 
       sub_MultiSample_setColor( y, 5);
-      show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 30 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].rev, tmp, 10) );
+      show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 28 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].rev, tmp, 10) );
       setCursor_textGrid_mini(33, y + yoffset);
       sub_MultiSample_setColor( y, 6);
       display.print("[");
