@@ -1053,6 +1053,14 @@ void setup()
     LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
 
   scope.clear();
+
+  // temporary set volumes for 1. multisample until load/save is in place
+  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++)
+  {
+    msz[seq.active_multisample][zone].vol = 100;
+    msz[seq.active_multisample][zone].pan = 20;
+    msz[seq.active_multisample][zone].rev = 50;
+  }
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1414,56 +1422,58 @@ void playWAVFile(const char *filename)
 }
 
 #ifdef COMPILE_FOR_FLASH
-void Multi_Sample_Player(byte inNumber, byte inVelocity)
+void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
 {
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
-  uint8_t slot = drum_get_slot(1);
+  uint8_t slot = drum_get_slot(DRUM_POLY);
 
-
-  Drum[slot]->enableInterpolation(true);
-  for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++)
+  if (slot != 99)
   {
-    if (inNumber >= msz[seq.active_multisample][y].low && inNumber <= msz[seq.active_multisample][y].high)
+
+    drum_type[slot] = DRUM_POLY;
+    Drum[slot]->enableInterpolation(true);
+    for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++)
     {
-
-      float pan = mapfloat(msz[seq.active_multisample][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
-      drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[seq.active_multisample][y].vol, 0, 127 * 100, 0.0, 0.7)));
-      drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[seq.active_multisample][y].vol, 0, 127 * 100, 0.0, 0.7)));
-#ifdef USE_FX
-      drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[seq.active_multisample][y].rev, 0, 100, 0.0, 1.0)));
-      drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[seq.active_multisample][y].rev, 0, 100, 0.0, 1.0)));
-#endif
-
-      Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[seq.active_multisample][y].rootnote - 12) / 12.00)   );
-      Drum[slot]->playWav( msz[seq.active_multisample][y].name );
-
-      if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+      if (inNumber >= msz[presetslot][y].low && inNumber <= msz[presetslot][y].high)
       {
 
-        display.fillRect (0, 185 + y * 5, 2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
+        float pan = mapfloat(msz[presetslot][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
+        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol, 0, 127 * 100, 0.0, 0.7)));
+        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol, 0, 127 * 100, 0.0, 0.7)));
+#ifdef USE_FX
+        drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
+        drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
+#endif
 
-        display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                          (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5 , 5, RED);
+        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[presetslot][y].rootnote - 12) / 12.00)   );
+        Drum[slot]->playWav( msz[presetslot][y].name );
 
-        display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].high * 3.5 - (24 * 3.5) + 3.5,  185 + y * 5,
-                          DISPLAY_WIDTH - (msz[seq.active_multisample][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
+        if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+        {
 
-        display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
-                          3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+          display.fillRect (0, 185 + y * 5, 2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5) - 1 , 5, COLOR_BACKGROUND);
+
+          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+                            (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5 , 5, RED);
+
+          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].high * 3.5 - (24 * 3.5) + 3.5,  185 + y * 5,
+                            DISPLAY_WIDTH - (msz[presetslot][y].high  * 3.5  )  + (18 * 3.5) , 5, COLOR_BACKGROUND);
+
+          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
+                            3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+        }
       }
-      //#ifdef DEBUG
-      //      Serial.print(F(" SampleName:"));
-      //      Serial.print(msz[seq.active_multisample][y].name);
-      //      Serial.println(" ");
-      //#endif
-    }
-    else
-    {
-      display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                        (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
-      display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
-                        3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+      //      else
+      //      {
+      //        if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+      //        {
+      //          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+      //                            (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
+      //          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
+      //                            3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+      //        }
+      //      }
     }
   }
 }
@@ -1568,7 +1578,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
        ( seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level)))
   {
     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
-    //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
+    //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-14 MultiSample 15-30 = MIDI OUT USB, 31-46 MIDI OUT DIN
 
     if (seq.current_track_type_of_active_pattern == 0) // drums
       inChannel = DRUM_MIDI_CHANNEL;
@@ -1605,12 +1615,19 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   }
 #endif
 
+#ifdef COMPILE_FOR_FLASH
+  if (device == 3) //playing Multisample by Sequencer
+  {
+    Multi_Sample_Player(inNumber, inVelocity, inChannel);
+  }
+#endif
+
   if (device == 0)
   {
 #ifdef COMPILE_FOR_FLASH
-    if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+    if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false)
     {
-      Multi_Sample_Player(inNumber, inVelocity);
+      Multi_Sample_Player(inNumber, inVelocity, seq.active_multisample);  //play multisample live with manual preset selection
     }
     else
     {
@@ -1760,75 +1777,79 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
               char temp_name[26];
 #endif
               uint8_t slot = drum_get_slot(drum_config[d].drum_class);
-              float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
 
-              drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-              drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-#ifdef USE_FX
-              drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
-              drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-#endif
-
-#ifdef COMPILE_FOR_PROGMEM
-              if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+              if (slot != 99)
               {
+                float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
+
+                drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+                drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+#ifdef USE_FX
+                drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
+                drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
 #endif
-                if (drum_config[d].pitch != 0.0)
-                {
-                  Drum[slot]->enableInterpolation(true);
-                  Drum[slot]->setPlaybackRate(drum_config[d].pitch);
-                }
 
 #ifdef COMPILE_FOR_PROGMEM
-                Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+                if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+                {
+#endif
+                  if (drum_config[d].pitch != 0.0)
+                  {
+                    Drum[slot]->enableInterpolation(true);
+                    Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+                  }
+
+#ifdef COMPILE_FOR_PROGMEM
+                  Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 #ifdef COMPILE_FOR_FLASH
 
-                sprintf(temp_name, "%s.wav", drum_config[d].name);
-                Drum[slot]->playWav(temp_name);
-                //Drum[slot]->playWav("DMpop.wav");  //Test
+                  sprintf(temp_name, "%s.wav", drum_config[d].name);
+                  Drum[slot]->playWav(temp_name);
+                  //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
-                strcpy(temp_name, "/DRUMS/");
-                strcat(temp_name, drum_config[d].name);
-                strcat(temp_name, ".wav");
-                Drum[slot]->playWav(temp_name);
+                  strcpy(temp_name, "/DRUMS/");
+                  strcat(temp_name, drum_config[d].name);
+                  strcat(temp_name, ".wav");
+                  Drum[slot]->playWav(temp_name);
 #endif
 
-                //#ifdef DEBUG
-                //        char note_name[4];
-                //        getNoteName(note_name, inNumber);
-                //        Serial.print(F("=> Drum["));
-                //        Serial.print(slot, DEC);
-                //        Serial.print(F("]: "));
-                //        Serial.println(note_name);
-                //#endif
+                  //#ifdef DEBUG
+                  //        char note_name[4];
+                  //        getNoteName(note_name, inNumber);
+                  //        Serial.print(F("=> Drum["));
+                  //        Serial.print(slot, DEC);
+                  //        Serial.print(F("]: "));
+                  //        Serial.println(note_name);
+                  //#endif
 
 #ifdef COMPILE_FOR_PROGMEM
-              }
+                }
 #endif
-              //#ifdef DEBUG
-              //                Serial.print(F("Drum "));
-              //                Serial.print(drum_config[d].shortname);
-              //                Serial.print(F(" ["));
-              //                Serial.print(drum_config[d].name);
-              //                Serial.print(F("], Slot "));
-              //                Serial.print(slot);
-              //                Serial.print(F(": V"));
-              //                Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
-              //                Serial.print(F(" P"));
-              //                Serial.print(drum_config[d].pan, 2);
-              //                Serial.print(F(" PAN"));
-              //                Serial.print(pan, 2);
-              //                Serial.print(F(" RS"));
-              //                Serial.println(drum_config[d].reverb_send, 2);
-              //#endif
-              break;
+                //#ifdef DEBUG
+                //                Serial.print(F("Drum "));
+                //                Serial.print(drum_config[d].shortname);
+                //                Serial.print(F(" ["));
+                //                Serial.print(drum_config[d].name);
+                //                Serial.print(F("], Slot "));
+                //                Serial.print(slot);
+                //                Serial.print(F(": V"));
+                //                Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
+                //                Serial.print(F(" P"));
+                //                Serial.print(drum_config[d].pan, 2);
+                //                Serial.print(F(" PAN"));
+                //                Serial.print(pan, 2);
+                //                Serial.print(F(" RS"));
+                //                Serial.println(drum_config[d].reverb_send, 2);
+                //#endif
+                break;
+              }
             }
           }
-        }
 #endif
+        }
         //
         // E-Piano
         //
@@ -1876,40 +1897,46 @@ void stop_all_drum_slots()
 
 uint8_t drum_get_slot(uint8_t dt)
 {
+  bool found = false;
+
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
   {
-    if (!Drum[i]->isPlaying())
+    if (!Drum[i]->isPlaying() && found == false)
     {
       drum_type[i] = DRUM_NONE;
       Drum[i]->enableInterpolation(false);
       Drum[i]->setPlaybackRate(1.0);
+      found = true;
       return (i);
     }
-    //phtodo
-
-    //    else
-    //    {
-    //      if (drum_type[i] == dt)
-    //      {
-    //#ifdef DEBUG
-    //        Serial.print(F("Stopping Drum "));
-    //        Serial.print(i);
-    //        Serial.print(F(" type "));
-    //        Serial.println(dt);
-    //#endif
-    //        Drum[i]->stop();
-    //
-    //        return (i);
-    //      }
-    //    }
   }
+
+  if (found == false)
+  {
+    Drum[drum_counter]->stop();
+    drum_type[drum_counter] = DRUM_NONE;
+    Drum[drum_counter]->enableInterpolation(false);
+    Drum[drum_counter]->setPlaybackRate(1.0);
+    drum_type[drum_counter % NUM_DRUMS] = dt;
+
 #ifdef DEBUG
-  Serial.print(F("Using next free Drum slot "));
-  Serial.println(drum_counter % NUM_DRUMS);
+    Serial.print(F("Stopping sample "));
+    Serial.print(drum_counter);
+    Serial.print(F(" type "));
+    Serial.println(dt);
 #endif
-  drum_type[drum_counter % NUM_DRUMS] = dt;
-  drum_counter++;
-  return (drum_counter % NUM_DRUMS);
+
+    drum_counter++;
+    return (drum_counter - 1 % NUM_DRUMS);
+
+  }
+  //  #ifdef DEBUG
+  //    Serial.print(F("Using next free Drum slot "));
+  //    Serial.println(drum_counter % NUM_DRUMS);
+  //  #endif
+
+  // do not play the sample
+  return (99);
 }
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)

@@ -99,8 +99,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-//#define COMPILE_FOR_PROGMEM
-#define COMPILE_FOR_FLASH
+#define COMPILE_FOR_PROGMEM
+//#define COMPILE_FOR_FLASH
 //#define COMPILE_FOR_SDCARD
 
 //*************************************************************************************************

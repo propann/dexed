@@ -220,7 +220,6 @@ uint16_t COLOR_ARP = 0xFC80;
 uint16_t COLOR_DRUMS = 0xFE4F;
 uint16_t COLOR_PITCHSMP = 0x159A;
 
-
 elapsedMillis back_from_volume;
 uint8_t instance_num[8][8];
 const char accepted_chars[] = " _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-abcdefghijklmnopqrstuvwxyz";
@@ -441,7 +440,6 @@ void UI_func_drum_tune_offset(uint8_t param);
 void UI_func_format_flash(uint8_t param);
 void UI_func_MultiSamplePlay(uint8_t param);
 void UI_func_sample_editor(uint8_t param);
-
 
 char* basename(const char* filename);
 
@@ -9769,7 +9767,15 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
       else if (seq.instrument[x] == 2 )  display.print(F("EP "));
       else if (seq.instrument[x] == 3 )  display.print(F("MS1"));
       else if (seq.instrument[x] == 4 )  display.print(F("MS2"));
-      else if (seq.instrument[x] > 4 && seq.instrument[x] < 21)
+      else if (seq.instrument[x] > 4 && seq.instrument[x] < 15 )
+      {
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 5 );
+        display.print(F("SMP"));
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
+        display.print(F("#"));
+        seq_print_formatted_number(seq.instrument[x] - 4, 2);
+      }
+      else if (seq.instrument[x] > 14 && seq.instrument[x] < 31)
       {
         if (seq.tracktype_or_instrument_assign == 2)
         {
@@ -9778,9 +9784,9 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
         }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.instrument[x] - 4, 2);
+        seq_print_formatted_number(seq.instrument[x] - 14, 2);
       }
-      else if (seq.instrument[x] > 20 && seq.instrument[x] < 37)
+      else if (seq.instrument[x] > 30 && seq.instrument[x] < 47)
       {
         if (seq.tracktype_or_instrument_assign == 2)
         {
@@ -9789,7 +9795,7 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
         }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.instrument[x] - 20, 2);
+        seq_print_formatted_number(seq.instrument[x] - 30, 2);
       }
       else display.print(F("???"));
     }
@@ -9935,7 +9941,7 @@ void UI_func_song(uint8_t param)
           }
           else if (seq.tracktype_or_instrument_assign == 2) //select instruments for track
           {
-            if (seq.instrument[seq.selected_track] < 36)
+            if (seq.instrument[seq.selected_track] < 46)
               seq.instrument[seq.selected_track]++;
           }
           else if (seq.tracktype_or_instrument_assign == 6) // tracktype change
@@ -11495,18 +11501,23 @@ void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_
     display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83 , 10 * y + 1, 3 , 5, COLOR_SYSTEXT );
   else
     display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83 , 10 * y + 1, 3 , 5, COLOR_PITCHSMP );
-    
+
   if (selected_option == seq.temp_select_menu - 1 && seq.selected_track == 4)
-    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small+1, 7, COLOR_SYSTEXT );
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small + 1, 7, COLOR_SYSTEXT );
   else
-    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small+1, 7, GREY2 );
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small , 10 * y, 3 * CHAR_width_small + 1, 7, GREY2 );
 
 }
 
+#ifdef COMPILE_FOR_FLASH
 void UI_func_MultiSamplePlay(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
+    //test is this prevents crashing
+    handleStop();
+    stop_all_drum_slots();
+
     seq.active_multisample = 0;
     seq_active_function = 99;
     seq.temp_select_menu = 0;
@@ -11705,7 +11716,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
 
       sub_MultiSample_setColor( y, 3);
       show_smallfont_noGrid( (y + yoffset) * (CHAR_height_small + 2), 19 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].vol, tmp, 10) );
-    
+
       print_multisampler_panbar(19, yoffset + y , msz[seq.active_multisample][y].pan, y );
 
       sub_MultiSample_setColor( y, 5);
@@ -11733,16 +11744,44 @@ void UI_func_MultiSamplePlay(uint8_t param)
         display.fillRect (2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
                           3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
       }
-
     }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
+    seq.scrollpos = 0;
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
 }
+#else
+void UI_func_MultiSamplePlay(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+
+    encoderDir[ENC_R].reset();
+    helptext_l("BACK");
+    setCursor_textGrid(1, 1);
+    display.setTextSize(1);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("ONLY WORKING WITH SERIAL FLASH CHIP"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  }
+
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    ;
+  }
+
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+#endif
 
 void sd_card_count_files_from_directory(File dir)
 {
@@ -15259,7 +15298,6 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
   char filename[MAX_FLASH_FILENAME_LEN];
   uint32_t filesize;
   uint16_t f;
-
   SerialFlash.opendir();
 
   // search for the right file from its entry_number in the directory
@@ -15275,7 +15313,6 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
     else
       break;
   }
-
   if (f == entry_number + 1) {
 #ifdef DEBUG
     Serial.print(F("Flash file found for entry #"));
