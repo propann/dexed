@@ -589,7 +589,9 @@ bool save_sd_drummappings_json(uint8_t number)
 #endif
       AudioNoInterrupts();
       if (SD.exists(filename)) {
+#ifdef DEBUG
         Serial.println("remove old drum mapping file");
+#endif
         SD.begin();
         SD.remove(filename);
       }
@@ -2059,6 +2061,7 @@ bool save_sd_performance_json(uint8_t number)
   save_sd_chain_json(number);
   save_sd_fx_json(number);
   save_sd_epiano_json(number);
+  save_sd_multisample_presets_json(number);
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -2402,6 +2405,7 @@ bool load_sd_performance_json(uint8_t number)
   load_sd_song_json(number);
   load_sd_transpose_json(number);
   load_sd_chain_json(number);
+  load_sd_multisample_presets_json(number);
 
   configuration.sys.performance_number = number;
 
@@ -2883,4 +2887,151 @@ void string_toupper(char* s)
     *s = toupper((unsigned char) * s);
     s++;
   }
+}
+
+bool save_sd_multisample_presets_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+    
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
+#ifdef DEBUG
+    Serial.print(F("Saving multisample presets "));
+    Serial.print(number);
+    Serial.print(F(" to "));
+    Serial.println(filename);
+#endif
+    AudioNoInterrupts();
+    if (SD.exists(filename)) {
+#ifdef DEBUG
+      Serial.println("remove old drum mapping file");
+#endif
+      SD.begin();
+      SD.remove(filename);
+    }
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      char zone_filename[CONFIG_FILENAME_LEN];
+      for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++)
+      {
+        data_json[i]["name"] = ms[i].name;
+        
+        for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
+          strcpy(zone_filename, msz[i][j].name);
+          if (strchr(zone_filename, '.')) {
+            *(strchr(zone_filename, '.')) = '\0';
+          }
+          data_json[i]["zones"]["filename"][j] = zone_filename;
+          data_json[i]["zones"]["root"][j] = msz[i][j].rootnote;
+          data_json[i]["zones"]["low"][j] = msz[i][j].low;
+          data_json[i]["zones"]["high"][j] = msz[i][j].high;
+          data_json[i]["zones"]["vol"][j] = msz[i][j].vol;
+          data_json[i]["zones"]["pan"][j] = msz[i][j].pan;
+          data_json[i]["zones"]["rev"][j] = msz[i][j].rev;
+        }
+      }
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+      Serial.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      Serial.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    else
+    {
+#ifdef DEBUG
+      Serial.print(F("E : Cannot open "));
+      Serial.print(filename);
+      Serial.println(F(" on SD."));
+#endif
+    }
+    AudioInterrupts();
+    json.close();
+  }
+  return (false);
+}
+
+bool load_sd_multisample_presets_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      Serial.print(F("Found msp presets data ["));
+      Serial.print(filename);
+      Serial.println(F("]... loading..."));
+      Serial.println(F(" "));
+#endif
+      SD.begin();
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+        json.close();
+        AudioInterrupts();
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+        Serial.println(F("Read JSON data:"));
+        serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+        for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++)
+        {
+          strcpy(ms[i].name, data_json[i]["name"]);
+          for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
+            strcpy(msz[i][j].name, data_json[i]["zones"]["filename"][j]);
+            if (strlen(msz[i][j].name) > 0) strcat(msz[i][j].name, ".wav");
+            msz[i][j].rootnote = data_json[i]["zones"]["root"][j];
+            msz[i][j].low = data_json[i]["zones"]["low"][j];
+            msz[i][j].high = data_json[i]["zones"]["high"][j];
+            msz[i][j].vol = data_json[i]["zones"]["vol"][j];
+            msz[i][j].pan = data_json[i]["zones"]["pan"][j];
+            msz[i][j].rev = data_json[i]["zones"]["rev"][j];
+          }
+        }
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E: Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+  return (false);
 }
