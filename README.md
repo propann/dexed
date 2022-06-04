@@ -13,6 +13,8 @@ Compared to the previous Version, there are a lot of new features/improvments:
 
 * Map MIDI CC to external MIDI Devices to control Input/Parameters
 
+* Loading, playing and editing multi-sampled instruments or layered instruments in a "live" mode or played by the sequencer. Auto detection sample zones but also can be edited manually
+
 * 2 new "Virtual Analog" Synth Instances -  Monosynths with one OSC, PWM, Filter and Noise. A lot of useful new sound possibilities. This module is called "MicroSynth"
 
 * Much improved Sequencer with 8 Tracks, 16 Step Patterns, 16 Step Pattern Chains, up to 16384 Song Steps, Arpeggiator with 1/8 - 1/64 Steps, Arp Patterns, Pitched Drum- and Instrument Sample Support
