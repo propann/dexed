@@ -2944,7 +2944,7 @@ bool save_sd_multisample_presets_json(uint8_t number)
       serializeJsonPretty(data_json, Serial);
       Serial.println();
 #endif
-      serializeJsonPretty(data_json, json);
+      serializeJson(data_json, json);
       json.close();
       AudioInterrupts();
       return (true);

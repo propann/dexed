@@ -384,6 +384,7 @@ void UI_func_seq_mute_matrix(uint8_t param);
 void UI_func_dexed_assign(uint8_t param);
 void UI_func_seq_display_style(uint8_t param);
 void UI_func_set_performance_name(uint8_t param);
+void UI_func_set_multisample_name(uint8_t param);
 void UI_func_volume(uint8_t param);
 void UI_func_smart_filter(uint8_t param);
 void UI_func_mixer(uint8_t param);
@@ -11539,10 +11540,6 @@ void UI_func_MultiSamplePlay(uint8_t param)
     display.setTextSize(2);
     setCursor_textGrid(1, 1);
     display.print(F("SAMPLER"));
-    setCursor_textGrid(1, 2);
-    display.print(F("["));
-    setCursor_textGrid(13, 2);
-    display.print(F("]"));
     display.setTextSize(1);
     print_flash_stats();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -11663,32 +11660,55 @@ void UI_func_MultiSamplePlay(uint8_t param)
       {
         if (LCDML.BT_checkDown())
         {
+          //          if (seq.edit_state)
+          //          {
+          //            display.setTextSize(2);
+          //            setCursor_textGrid(1, 1);
+          //            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          //            display.print(F("SAMPLER"));
+          //            seq.edit_state = false;
+          //          }
           seq.temp_select_menu = constrain( seq.temp_select_menu + 1, 0, 8);
         }
         else if (LCDML.BT_checkUp())
         {
+          //          if (seq.temp_select_menu == 0 && seq.edit_state == false)
+          //          {
+          //            display.setTextSize(2);
+          //            setCursor_textGrid(1, 1);
+          //            display.setTextColor(RED, COLOR_BACKGROUND);
+          //            display.print(F("RENAME?"));
+          //            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          //            seq.edit_state = true;
+          //          }
+          //          else
           seq.temp_select_menu = constrain( seq.temp_select_menu - 1, 0, 8);
         }
       }
     }
     if (LCDML.BT_checkEnter())
     {
+      //if (seq.temp_select_menu == 0 && seq_active_function == 99 && seq.edit_state)
+      //LCDML.OTHER_jumpToFunc(UI_func_set_multisample_name);
       if (seq_active_function == 99)
         seq_active_function = 0;
       else
         seq_active_function = 99;
     }
     display.setTextSize(2);
+    //if (seq.temp_select_menu == 0 && seq.edit_state == false )
     if (seq.temp_select_menu == 0 )
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid(1, 2);
+    seq_print_formatted_number(seq.active_multisample, 2);
+    setCursor_textGrid(3, 2);
     display.print(F("["));
-    setCursor_textGrid(13, 2);
+    setCursor_textGrid(15, 2);
     display.print(F("]"));
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    show(2, 2, 11, ms[seq.active_multisample].name);
+    show(2, 4, 11, ms[seq.active_multisample].name);
 
     uint8_t yoffset = 7;
     display.setTextSize(1);
@@ -13483,6 +13503,81 @@ void UI_func_set_performance_name(uint8_t param)
       setCursor_textGrid(1, 2);
       display.print(F("[          ]    "));
       ui_select_name_state = UI_select_name(2, 2, seq.name_temp, BANK_NAME_LEN - 1, true);
+    }
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+  }
+}
+
+void UI_func_set_multisample_name(uint8_t param)
+{
+  static uint8_t mode;
+  static uint8_t ui_select_name_state;
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextSize(2);
+    mode = 0;
+    setCursor_textGrid(1, 1);
+    display.print(F("Multisample Name"));
+  }
+  if (LCDML.FUNC_loop())    // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+    {
+      if (LCDML.BT_checkDown()) {
+        if (mode == 0) seq.active_multisample = constrain(seq.active_multisample + ENCODER[ENC_L].speed(), 0, NUM_MULTISAMPLES - 1);
+        else 
+        if (mode == 2)  ui_select_name_state = UI_select_name(2, 4, seq.name_temp, BANK_NAME_LEN - 1, false);
+      }
+      else if (LCDML.BT_checkUp()) {
+        if (mode == 0) seq.active_multisample = constrain(seq.active_multisample - ENCODER[ENC_L].speed(), 0, NUM_MULTISAMPLES - 1);
+        else 
+        if (mode == 2)  ui_select_name_state = UI_select_name(2, 4, seq.name_temp, BANK_NAME_LEN - 1, false);
+      }
+    }
+    else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
+    {
+      if (mode == 2)
+      {
+        ui_select_name_state = UI_select_name(2, 4, seq.name_temp, BANK_NAME_LEN - 1, false);
+        if (ui_select_name_state == true)
+        {
+          strcpy( ms[seq.active_multisample].name, seq.name_temp);
+          mode = 0xff;
+          setCursor_textGrid(1, 2);
+          display.print(F("OK.                 "));
+          delay(MESSAGE_WAIT_TIME);
+          //          if (LCDML.MENU_getLastActiveFunctionID() == LCDML.OTHER_getIDFromFunction(UI_func_set_multisample_name) )
+          //            LCDML.OTHER_jumpToID(LCDML.MENU_getLastActiveFunctionID());
+          //          else
+          LCDML.FUNC_goBackToMenu();
+        }
+      }
+         if (mode == 0) 
+        mode = 1; 
+    }
+    if (mode == 0 )
+    {
+      setCursor_textGrid(1, 2);
+      display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+      seq_print_formatted_number(seq.active_multisample, 2);
+      setCursor_textGrid(3, 2);
+      display.print(F("["));
+      setCursor_textGrid(15, 2);
+      display.print(F("]"));
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      show(2, 4, 11, ms[seq.active_multisample].name);
+    } 
+    if (mode == 1)
+    {
+      mode=2;
+      strcpy(seq.name_temp, ms[seq.active_multisample].name);
+      setCursor_textGrid(3, 2);
+      display.print(F("[          ]      "));
+      ui_select_name_state = UI_select_name(2, 4, seq.name_temp, BANK_NAME_LEN - 1, true);
     }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********

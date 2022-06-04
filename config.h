@@ -743,7 +743,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define MS_SOUND_INTENSITY_DEFAULT 50
 
 // Buffer-size define for load/save configuration as JSON
-#define JSON_BUFFER_SIZE 10000
+#define JSON_BUFFER_SIZE 12000
 
 // Internal configuration structure
 typedef struct dexed_s {
