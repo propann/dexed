@@ -7,7 +7,7 @@
 
 ### This fork requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
 
-Compared to the previous Version, there are a lot of new features/improvments:
+Compared to the previous Version, there are a lot of new features/improvements:
 
 * "Large" Graphical Interface, view and edit multiple Parameters in one Screen
 
