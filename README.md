@@ -1,6 +1,6 @@
 # MicroDexed-touch
 <br>
-img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png
+img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png"
 <br>
 
 ## This is a development fork of MicroDexed with TFT Touch Display, "nextgen" UI and advanced sequencer
