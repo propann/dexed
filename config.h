@@ -99,8 +99,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_PROGMEM
-//#define COMPILE_FOR_FLASH
+//#define COMPILE_FOR_PROGMEM
+#define COMPILE_FOR_FLASH
 //#define COMPILE_FOR_SDCARD
 
 //*************************************************************************************************
@@ -321,8 +321,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define SYS_CONFIG_NAME "sys"
 #define EPIANO_CONFIG_NAME "epiano"
 #define MICROSYNTH_CONFIG_NAME "msynth"
-#define MULTISAMPLE_NAMES_CONFIG_NAME "mltsmpnames"
-#define MULTISAMPLE_ZONES_CONFIG_NAME "mltsmpzones"
+#define MULTISAMPLE_PRESETS_CONFIG_NAME "msp_presets"
 
 #define MAX_PERF_MOD 30
 
@@ -744,7 +743,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define MS_SOUND_INTENSITY_DEFAULT 50
 
 // Buffer-size define for load/save configuration as JSON
-#define JSON_BUFFER_SIZE 9216
+#define JSON_BUFFER_SIZE 10000
 
 // Internal configuration structure
 typedef struct dexed_s {

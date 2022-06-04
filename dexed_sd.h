@@ -68,6 +68,9 @@ bool save_sd_performance_json(uint8_t p);
 //bool load_sd_seq_json(uint8_t p);
 //bool save_sd_seq_json(uint8_t p);
 
+bool load_sd_multisample_presets_json(uint8_t p);
+bool save_sd_multisample_presets_json(uint8_t p);
+
 bool check_performance_directory(uint8_t seq_number);
 
 bool get_sd_data(File sysex, uint8_t format, uint8_t* conf);
