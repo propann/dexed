@@ -71,11 +71,11 @@ using namespace TeensyTimerTool;
 #include "effect_stereo_panorama.h"
 #endif
 
-#define TFT_DC 37  // was pin 0 (midi in) 
+#define TFT_DC 37 
 #define TFT_CS 41
 #define TFT_RST 24
 #define TFT_SCK 27
-#define TFT_MISO 39 // was pin 1 (midi out), new MISO PIN = 39
+#define TFT_MISO 39
 #define TFT_MOSI 26
 #define TFT_TOUCH_CS  38
 #define TFT_TOUCH_IRQ 33
@@ -1258,7 +1258,7 @@ void loop()
         microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1)
     {
       display.setTextSize(1);
-      setCursor_textGrid_mini(15, 18);//phtodo
+      setCursor_textGrid_small(15, 18);//phtodo
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       seq_print_formatted_number( microsynth[microsynth_selected_instance].pwm_current, 3);
       microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
@@ -1267,7 +1267,7 @@ void loop()
         microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
     {
       display.setTextSize(1);
-      setCursor_textGrid_mini(15, 15);
+      setCursor_textGrid_small(15, 15);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       seq_print_formatted_number( microsynth[microsynth_selected_instance].filter_osc_freq_current / 100, 3);
       microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;
@@ -1277,10 +1277,10 @@ void loop()
     {
       display.setTextSize(1);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_mini(42, 9);
+      setCursor_textGrid_small(42, 9);
       seq_print_formatted_number( microsynth[0].lfo_delay , 4);
 
-      setCursor_textGrid_mini(42, 10);
+      setCursor_textGrid_small(42, 10);
       seq_print_formatted_number( microsynth[0].lfo_fade, 4);
     }
   }

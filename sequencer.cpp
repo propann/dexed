@@ -70,7 +70,7 @@ extern uint16_t COLOR_CHORDS;
 extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
-extern void setCursor_textGrid_mini(uint8_t pos_x, uint8_t pos_y);
+extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 sequencer_t seq;
 microsynth_t microsynth[2];
 
