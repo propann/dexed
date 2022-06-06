@@ -1267,7 +1267,7 @@ void loop()
         microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
     {
       display.setTextSize(1);
-      setCursor_textGrid_small(15, 15);
+      setCursor_textGrid_small(15, 16);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       seq_print_formatted_number( microsynth[microsynth_selected_instance].filter_osc_freq_current / 100, 3);
       microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;

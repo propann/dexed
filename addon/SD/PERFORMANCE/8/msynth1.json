@@ -1,11 +1,11 @@
 {
-  "sound_intensity": 10,
+  "sound_intensity": 45,
   "wave": 6,
   "coarse": 0,
   "detune": 0,
   "trigger_noise_with_osc": true,
   "env_attack": 0,
-  "env_decay": 2,
+  "env_decay": 11,
   "env_sustain": 1,
   "env_release": 5,
   "filter_osc_mode": 1,

@@ -16,6 +16,7 @@
   "COLOR_BACKGROUND": 0,
   "COLOR_INSTR": 31677,
   "COLOR_CHORDS": 58106,
+  "COLOR_ARP": 64640,
   "COLOR_DRUMS": 65103,
   "COLOR_PITCHSMP": 5530,
   "track_type": [
@@ -58,7 +59,7 @@
     0,
     0,
     0,
-    0,
+    3,
     0,
     0,
     0,
