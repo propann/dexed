@@ -666,10 +666,6 @@ void setup()
   Serial.flush();
 #endif
 
-  display.begin();  //TFT is on SPI1
-  touch.begin();
-  //touch.setRotation(3); // not necessary for ILI9341
-
   // Setup MIDI devices
   setup_midi_devices();
 
