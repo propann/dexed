@@ -3,11 +3,13 @@
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png" >
 <br>
 
-## This is a development fork of MicroDexed with TFT Touch Display, "nextgen" UI and advanced sequencer
+## This is the development fork of MicroDexed with TFT Touch Display, "nextgen" UI and advanced sequencer
 
-### This fork requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
+### This build requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
 
-Compared to the previous Version, there are a lot of new features/improvements:
+MicroDexed started as a Teensy based, 6-operator-FM-synthesizer. The first generation is still maintained at: https://codeberg.org/dcoredump/MicroDexed
+
+Compared to the first generation, MicroDexed-touch offers a lot of new features/improvements:
 
 * "Large" Graphical Interface, view and edit multiple Parameters in one Screen
 
@@ -21,7 +23,7 @@ Compared to the previous Version, there are a lot of new features/improvements:
 
 * Mixer View with all Channels
 
-* Sample Management from SD-CARD and SPI FLASH
+* Sample Management from SD-CARD and SPI FLASH, samples can be loaded/modified from SD-CARD to FLASH during runtime.
 
 * Tracker View (Editor) - work in progress
 
