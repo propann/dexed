@@ -10780,7 +10780,12 @@ void UI_func_load_performance(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     char tmp[10];
-    if (seq.state_last_loadsave != 200)temp_int = seq.state_last_loadsave; else temp_int = param;
+    if (seq.state_last_loadsave != 200) {
+      temp_int = seq.state_last_loadsave;
+    } else {
+      temp_int = param;
+    }
+
     mode = 0;
     encoderDir[ENC_R].reset();
     border1_clear();
@@ -10914,12 +10919,6 @@ void UI_func_save_performance(uint8_t param)
           mode = 0xff;
           if (overwrite == false || yesno == true)
           {
-            if (yesno == true)
-            {
-              char tmp[FILENAME_LEN];
-              sprintf(tmp, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, temp_int, SEQUENCER_CONFIG_NAME);
-              SD.remove(tmp);
-            }
             save_sd_performance_json(temp_int);
             show(2, 1, 16, "Done.");
             seq.state_last_loadsave = temp_int;
