@@ -3787,7 +3787,7 @@ void UI_func_note_refresh(uint8_t param)
 #endif
     }
 
-    MicroDexed[selected_instance_id]->setRefreshMode(configuration.dexed[selected_instance_id].note_refresh);
+    MicroDexed[selected_instance_id]->setNoteRefreshMode(configuration.dexed[selected_instance_id].note_refresh);
 
     setCursor_textGrid(1, 2);
     switch (configuration.dexed[selected_instance_id].note_refresh)
@@ -4591,7 +4591,7 @@ void UI_func_portamento_mode(uint8_t param)
 #endif
     }
 
-    MicroDexed[selected_instance_id]->setPortamentoMode(configuration.dexed[selected_instance_id].portamento_mode, configuration.dexed[selected_instance_id].portamento_glissando, configuration.dexed[selected_instance_id].portamento_time);
+    MicroDexed[selected_instance_id]->setPortamento(configuration.dexed[selected_instance_id].portamento_mode, configuration.dexed[selected_instance_id].portamento_glissando, configuration.dexed[selected_instance_id].portamento_time);
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 67, configuration.dexed[selected_instance_id].portamento_mode, 2);
 
     setCursor_textGrid(1, 2);
@@ -4649,7 +4649,7 @@ void UI_func_portamento_glissando(uint8_t param)
 #endif
     }
 
-    MicroDexed[selected_instance_id]->setPortamentoMode(configuration.dexed[selected_instance_id].portamento_mode, configuration.dexed[selected_instance_id].portamento_glissando, configuration.dexed[selected_instance_id].portamento_time);
+    MicroDexed[selected_instance_id]->setPortamento(configuration.dexed[selected_instance_id].portamento_mode, configuration.dexed[selected_instance_id].portamento_glissando, configuration.dexed[selected_instance_id].portamento_time);
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 68, configuration.dexed[selected_instance_id].portamento_glissando, 2);
 
     setCursor_textGrid(1, 2);
@@ -4698,7 +4698,7 @@ void UI_func_portamento_time(uint8_t param)
 #endif
     }
     display_bar_int("Portam. Time", configuration.dexed[selected_instance_id].portamento_time, 1.0, PORTAMENTO_TIME_MIN, PORTAMENTO_TIME_MAX, 2, false, false, false);
-    MicroDexed[selected_instance_id]->setPortamentoMode(configuration.dexed[selected_instance_id].portamento_mode, configuration.dexed[selected_instance_id].portamento_glissando, configuration.dexed[selected_instance_id].portamento_time);
+    MicroDexed[selected_instance_id]->setPortamento(configuration.dexed[selected_instance_id].portamento_mode, configuration.dexed[selected_instance_id].portamento_glissando, configuration.dexed[selected_instance_id].portamento_time);
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 69, configuration.dexed[selected_instance_id].portamento_time, 2);
   }
 
