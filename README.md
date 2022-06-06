@@ -53,6 +53,9 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/current-BOM-%28Bill-of-M
 ### Changelog:
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Changelog
 
+### Troubleshooting Guide & FAQ
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Troubleshooting-Guide-and-FAQ
+
 ## Installation/Compile Instructions
 
 * Your Flash Chip should be soldered on the TEENSY AUDIO BOARD, not on the Teensy 4.1 backside. The SerialFlash Library will not work with a Chip on the Teensy. For development, currently in use is a:
@@ -71,6 +74,8 @@ WINBOND W25Q128FVSG SERIAL FLASH MEMORY 3V 128M-BIT
 * Compile and Upload to your Teensy 4.1
 
 * Power on the Teensy and attach USB MIDI Keyboard ( or use the virtual Touch Keyboard and the Encoders to navigate)
+
+* If you have a FLASH chip, go to FileManager, Touch the icon "Copy Presets" and push Encoder R. This will copy all Samples from sdcard/DRUMS to FLASH.
 
 ## USB MIDI
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/DIY-USB-MIDI-HOST
