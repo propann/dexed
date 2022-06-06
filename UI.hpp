@@ -1577,6 +1577,8 @@ void setup_ui(void)
 #ifdef UI_REVERSE
   display.setRotation(1); // rotation 180°
   touch.setRotation(3); // rotation 180°
+#else
+  display.setRotation(3);
 #endif
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
