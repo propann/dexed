@@ -1572,7 +1572,10 @@ void setup_ui(void)
 {
   SPI.begin();
   display.begin();
-  display.setRotation(3);
+#ifdef UI_REVERSE
+  display.setRotation(1); // rotation 180°
+#endif
+//  display.setRotation(3);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.fillScreen(COLOR_BACKGROUND);

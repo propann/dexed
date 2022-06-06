@@ -45,7 +45,6 @@
 
 #ifdef COMPILE_FOR_FLASH
 #include "TeensyVariablePlaybackFlash.h"
-//#include <TeensyVariablePlayback.h>
 #endif
 
 #include <TeensyTimerTool.h>
@@ -668,7 +667,6 @@ void setup()
 #endif
 
   display.begin();  //TFT is on SPI1
-
   touch.begin();
   //touch.setRotation(3); // not necessary for ILI9341
 
@@ -1026,31 +1024,35 @@ void setup()
   //ep_modchorus.set_bypass(true);
   if ( seq.name[0] == 0 )
     strcpy(seq.name, "INIT Perf");
-  LCDML.OTHER_jumpToFunc(UI_func_voice_select);
 
 #ifdef DEBUG
   Serial.println(F("Setup UI."));
 #endif
-
   setup_ui();
-  if ( seq.name[0] == 0 )
-    strcpy(seq.name, "INIT Perf");
-
+  
   //Menu Startup
-  if (configuration.sys.load_at_startup_page == 0)
-    LCDML.OTHER_jumpToFunc(UI_func_voice_select);
-  else if (configuration.sys.load_at_startup_page == 1)
-    LCDML.OTHER_jumpToFunc(UI_func_song);
-  else if (configuration.sys.load_at_startup_page == 2)
-    LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-  else if (configuration.sys.load_at_startup_page == 3)
-    LCDML.OTHER_jumpToFunc(UI_func_microsynth);
-  else if (configuration.sys.load_at_startup_page == 4)
-    LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
-  else if (configuration.sys.load_at_startup_page == 5)
-    LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
-  else
-    LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
+  switch (configuration.sys.load_at_startup_page) {
+    case 0:
+      LCDML.OTHER_jumpToFunc(UI_func_voice_select);
+      break;
+    case 1:
+      LCDML.OTHER_jumpToFunc(UI_func_song);
+      break;
+    case 2:
+      LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+      break;
+    case 3:
+      LCDML.OTHER_jumpToFunc(UI_func_microsynth);
+      break;
+    case 4:
+      LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
+      break;
+    case 5:
+      LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
+      break;
+    default:
+      LCDML.OTHER_jumpToFunc(UI_func_voice_select); //fallback to voice select
+  }
 
   scope.clear();
 

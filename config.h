@@ -60,6 +60,7 @@
 //*************************************************************************************************
 //* DEVICE SETTINGS
 //*************************************************************************************************
+#define UI_REVERSE
 
 //*************************************************************************************************
 //* MIDI HARDWARE SETTINGS
@@ -107,14 +108,12 @@
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
 //*************************************************************************************************
 // Number of Dexed instances
-
 #define NUM_DEXED 2 // 1 or 2 - nothing else!
 
 // FX-CHAIN ENABLE/DISABLE
 #define USE_FX 1
 
 // NUMBER OF PARALLEL SAMPLEDRUMS
-
 #define NUM_DRUMS 8
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
@@ -122,12 +121,10 @@
 #define NUM_CUSTOM_MIDI_MAPPINGS 20  //Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
-
 #define NUM_DRUMSET_CONFIG 71
 //#define NUM_DRUMSET_CONFIG 2
 
 // SEQUENCER
-
 #define NUM_SEQ_PATTERN 24
 #define NUM_SEQ_TRACKS 8
 #define SONG_LENGTH 64
@@ -171,7 +168,6 @@
 #endif
 
 // DELAYTIME
-
 #define DELAY_MAX_TIME 500
 
 //*************************************************************************************************
@@ -279,13 +275,23 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 // Encoder with button
 //#define ENCODER_USE_INTERRUPTS
 #define NUM_ENCODER 2
-#define ENC_L_PIN_A  32
-#define ENC_L_PIN_B  31
-#define BUT_L_PIN    30
+#ifdef UI_REVERSE
+  #define ENC_L_PIN_B  29
+  #define ENC_L_PIN_A  28
+  #define BUT_L_PIN    25
 
-#define ENC_R_PIN_A  28
-#define ENC_R_PIN_B  29
-#define BUT_R_PIN    25
+  #define ENC_R_PIN_B  31
+  #define ENC_R_PIN_A  32
+  #define BUT_R_PIN    30
+#else
+  #define ENC_L_PIN_A  32
+  #define ENC_L_PIN_B  31
+  #define BUT_L_PIN    30
+
+  #define ENC_R_PIN_A  28
+  #define ENC_R_PIN_B  29
+  #define BUT_R_PIN    25
+#endif
 
 #define BUT_DEBOUNCE_MS 20
 #define LONG_BUTTON_PRESS 500
