@@ -21,9 +21,13 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 * Much improved Sequencer with 8 Tracks, 16 Step Patterns, 16 Step Pattern Chains, up to 16384 Song Steps, Arpeggiator with 1/8 - 1/64 Steps, Arp Patterns, Pitched Drum- and Instrument Sample Support
 
+* The sequencer can also play chords stacked up to 7 notes, using only a single track
+
 * Mixer View with all Channels
 
 * Sample Management from SD-CARD and SPI FLASH, samples can be loaded/modified from SD-CARD to FLASH during runtime.
+
+* Touch Mute Matrix for live / realtime performance
 
 * Tracker View (Editor) - work in progress
 
