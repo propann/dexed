@@ -53,6 +53,7 @@
 
 extern PeriodicTimer sequencer_timer;
 extern ILI9341_t3n display;
+extern XPT2046_Touchscreen touch;
 extern void sequencer(void);
 extern bool check_sd_performance_exists(uint8_t number);
 extern SdVolume volume;
@@ -1572,7 +1573,13 @@ void setup_ui(void)
 {
   SPI.begin();
   display.begin();
+  touch.begin();
+#ifdef UI_REVERSE
+  display.setRotation(1); // rotation 180°
+  touch.setRotation(3); // rotation 180°
+#else
   display.setRotation(3);
+#endif
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.fillScreen(COLOR_BACKGROUND);
