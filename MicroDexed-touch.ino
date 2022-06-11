@@ -2821,6 +2821,10 @@ void dac_mute(void)
   sgtl5000.dacVolume(0.0);
   sgtl5000.volume(0.0, 0.0); // Headphone volume
 #endif
+#ifdef PCM5102_MUTE_PIN
+digitalWrite(PCM5102_MUTE_PIN,LOW);
+#endif
+seq.DAC_mute_state=true;
 }
 
 void dac_unmute(void)
@@ -2830,6 +2834,10 @@ void dac_unmute(void)
   sgtl5000.dacVolume(1.0);
   sgtl5000.volume(SGTL5000_HEADPHONE_VOLUME, SGTL5000_HEADPHONE_VOLUME); // Headphone volume
 #endif
+#ifdef PCM5102_MUTE_PIN
+digitalWrite(PCM5102_MUTE_PIN,HIGH);
+#endif
+seq.DAC_mute_state=false;
 }
 
 void handleStart(void)

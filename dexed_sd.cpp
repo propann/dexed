@@ -2131,9 +2131,9 @@ bool save_sd_performance_json(uint8_t number)
       serializeJsonPretty(data_json, json);
       json.close();
       AudioInterrupts();
-      dac_unmute();
       if (seq_was_running == true )
         handleStart();
+        dac_unmute();
       return (true);
     }
     //json.close();

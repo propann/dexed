@@ -77,6 +77,7 @@
 //#define AUDIO_DEVICE_USB
 #define TEENSY_AUDIO_BOARD
 //#define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
+//#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
 

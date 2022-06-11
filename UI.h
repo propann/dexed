@@ -148,10 +148,11 @@ LCDML_add(114, LCDML_0_10, 6, "Startup Perform.", UI_func_startup_performance);
 LCDML_add(115, LCDML_0_10, 7, "Startup Page", UI_func_startup_page);
 LCDML_add(116, LCDML_0_10, 8, "Screen Colors", UI_func_colors);
 LCDML_add(117, LCDML_0_10, 9, "FORMAT FLASH", UI_func_format_flash);
-LCDML_add(118, LCDML_0, 11, "MultiSamplePlay", UI_func_MultiSamplePlay);
-LCDML_add(119, LCDML_0, 12, "Sample Editor", UI_func_sample_editor);
-LCDML_add(120, LCDML_0, 13, "Info", UI_func_information);
-LCDML_addAdvanced(121, LCDML_0, 14, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced (122 , LCDML_0   , 15  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 122
+LCDML_add(118, LCDML_0_10, 10, "TEST Menu", UI_func_test);
+LCDML_add(119, LCDML_0, 11, "MultiSamplePlay", UI_func_MultiSamplePlay);
+LCDML_add(120, LCDML_0, 12, "Sample Editor", UI_func_sample_editor);
+LCDML_add(121, LCDML_0, 13, "Info", UI_func_information);
+LCDML_addAdvanced(122, LCDML_0, 14, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced (123 , LCDML_0   , 15  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 123
 #endif

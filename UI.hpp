@@ -98,6 +98,8 @@ extern bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
 extern void fill_msz_from_flash_filename (const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
 extern void stop_all_drum_slots();
 extern char noteNames[12][3];
+extern void dac_mute(void);
+extern void dac_unmute(void);
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -437,6 +439,7 @@ void UI_func_drum_pan(uint8_t param);
 void UI_func_drum_pitch(uint8_t param);
 void UI_func_drum_tune_offset(uint8_t param);
 void UI_func_format_flash(uint8_t param);
+void UI_func_test(uint8_t param);
 void UI_func_MultiSamplePlay(uint8_t param);
 void UI_func_sample_editor(uint8_t param);
 
@@ -1629,6 +1632,11 @@ void lcdml_menu_control(void)
 
     ENCODER[ENC_R].begin();
     ENCODER[ENC_L].begin();
+
+#ifdef PCM5102_MUTE_PIN
+    pinMode(PCM5102_MUTE_PIN, OUTPUT);
+    digitalWrite(PCM5102_MUTE_PIN, HIGH); // ENABLE/UNMUTE DAC
+#endif
   }
 
   if (back_from_volume > BACK_FROM_VOLUME_MS && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
@@ -15070,6 +15078,42 @@ void UI_func_format_flash(uint8_t param)
         }
       }
     }
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+void UI_func_test(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    helptext_r ("CONFIRM");
+    helptext_l ("BACK");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(2);
+    setCursor_textGrid(1, 1);
+    display.print(F("TEST MENU"));
+  }
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if (LCDML.BT_checkEnter())
+    {
+      if (seq.DAC_mute_state)
+        dac_unmute();
+      else
+        dac_mute();
+    }
+    setCursor_textGrid(1, 2);
+    if (seq.DAC_mute_state)
+      display.print(F("UNMUTE DAC"));
+    else
+      display.print(F("MUTE DAC  "));
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
