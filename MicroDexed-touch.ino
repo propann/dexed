@@ -70,7 +70,7 @@ using namespace TeensyTimerTool;
 #include "effect_stereo_panorama.h"
 #endif
 
-#define TFT_DC 37 
+#define TFT_DC 37
 #define TFT_CS 41
 #define TFT_RST 24
 #define TFT_SCK 27
@@ -1025,7 +1025,7 @@ void setup()
   Serial.println(F("Setup UI."));
 #endif
   setup_ui();
-  
+
   //Menu Startup
   switch (configuration.sys.load_at_startup_page) {
     case 0:
@@ -2816,16 +2816,20 @@ void handleClock(void)
 
 void dac_mute(void)
 {
+#ifdef TEENSY_AUDIO_BOARD
   sgtl5000.lineOutLevel(0.0);
   sgtl5000.dacVolume(0.0);
   sgtl5000.volume(0.0, 0.0); // Headphone volume
+#endif
 }
 
 void dac_unmute(void)
 {
+#ifdef TEENSY_AUDIO_BOARD
   sgtl5000.lineOutLevel(SGTL5000_LINEOUT_LEVEL);
   sgtl5000.dacVolume(1.0);
   sgtl5000.volume(SGTL5000_HEADPHONE_VOLUME, SGTL5000_HEADPHONE_VOLUME); // Headphone volume
+#endif
 }
 
 void handleStart(void)

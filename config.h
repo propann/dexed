@@ -76,6 +76,7 @@
 // Left and right channel audio signal is presented on pins A21 and A22.
 //#define AUDIO_DEVICE_USB
 #define TEENSY_AUDIO_BOARD
+//#define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
 
