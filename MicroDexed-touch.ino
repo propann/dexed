@@ -47,6 +47,10 @@
 #include "TeensyVariablePlaybackFlash.h"
 #endif
 
+#ifdef COMPILE_FOR_QSPI
+#include "TeensyVariablePlaybackQSPI.h"
+#endif
+
 #include <TeensyTimerTool.h>
 using namespace TeensyTimerTool;
 
@@ -188,6 +192,11 @@ AudioPlaySdWav                  sd_WAV;
 
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp*          Drum[NUM_DRUMS];
+//AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
+#endif
+
+#ifdef COMPILE_FOR_QSPI
+AudioPlayQSPIResmp*          Drum[NUM_DRUMS];
 //AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
 
@@ -498,6 +507,10 @@ void create_audio_drum_chain(uint8_t instance_id)
 #ifdef COMPILE_FOR_FLASH
   Drum[instance_id] = new AudioPlayFlashResmp();
   //Drum[instance_id] = new AudioPlaySerialflashRaw();
+#endif
+
+#ifdef COMPILE_FOR_QSPI
+  Drum[instance_id] = new AudioPlayQSPIResmp();
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -888,6 +901,10 @@ void setup()
     Serial.print(F("Unable to access SPI Flash chip"));
 #endif
   }
+#endif
+
+#ifdef COMPILE_FOR_QSPI
+LittleFS_QSPIFlash myfs;
 #endif
 
   // Start SD card
@@ -1419,7 +1436,8 @@ void playWAVFile(const char *filename)
   }
 }
 
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
 {
   if (drum_counter >= NUM_DRUMS)
@@ -1613,7 +1631,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   }
 #endif
 
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
   if (device == 3) //playing Multisample by Sequencer
   {
     Multi_Sample_Player(inNumber, inVelocity, inChannel);
@@ -1622,7 +1641,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
   if (device == 0)
   {
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false)
     {
       Multi_Sample_Player(inNumber, inVelocity, seq.active_multisample);  //play multisample live with manual preset selection
@@ -1767,7 +1787,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           {
             if (inNumber == drum_config[d].midinote)
             {
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
               char temp_name[16];
 #endif
 
@@ -1800,7 +1821,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 #ifdef COMPILE_FOR_PROGMEM
                   Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 
                   sprintf(temp_name, "%s.wav", drum_config[d].name);
                   Drum[slot]->playWav(temp_name);
@@ -1872,7 +1894,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 #endif
       }
 
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     }
 #endif
 

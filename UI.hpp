@@ -5977,7 +5977,8 @@ void UI_draw_waveform_large()  // for progmem
 }
 #endif
 
-#ifdef COMPILE_FOR_FLASH
+//#ifdef COMPILE_FOR_FLASH
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 void UI_draw_waveform_large()  // for flash
 {
 
@@ -11026,6 +11027,10 @@ void UI_func_information(uint8_t param)
 #ifdef COMPILE_FOR_SDCARD
     display.print(F("SD CARD"));
 #endif
+#ifdef COMPILE_FOR_QSPI
+    display.print(F("QSPI "));
+#endif
+
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
