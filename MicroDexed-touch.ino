@@ -48,6 +48,9 @@
 #endif
 
 #ifdef COMPILE_FOR_QSPI
+#include <LittleFS.h>
+LittleFS_QSPIFlash  myfs;
+char szDiskMem[] = "QSPI_DISK";
 #include "TeensyVariablePlaybackQSPI.h"
 #endif
 
@@ -73,6 +76,7 @@ using namespace TeensyTimerTool;
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
 #endif
+
 
 #define TFT_DC 37
 #define TFT_CS 41
@@ -904,7 +908,17 @@ void setup()
 #endif
 
 #ifdef COMPILE_FOR_QSPI
-LittleFS_QSPIFlash myfs;
+ // Serial (QSPI) Flash Init
+#ifdef DEBUG
+  Serial.println("Initializing Flash Chip");
+#endif
+  if (!myfs.begin()) {
+#ifdef DEBUG
+    Serial.printf("Error starting %s\n", szDiskMem);
+#endif
+    while ( 1 );
+  }
+
 #endif
 
   // Start SD card

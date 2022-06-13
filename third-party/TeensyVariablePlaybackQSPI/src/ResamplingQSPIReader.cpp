@@ -1,8 +1,8 @@
 #include "ResamplingQSPIReader.h"
 #include "interpolation.h"
 #include "waveheaderparser.h"
-#include <LittleFS.h>
-LittleFS_SPIFlash myfs;
+//#include <LittleFS.h>
+//LittleFS_QSPIFlash myfs;
 
 extern int FreeMem(void);
 

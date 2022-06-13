@@ -17,7 +17,12 @@ extern LCDMenuLib2 LCDML;
 extern sequencer_t seq;
 extern void border3_large_clear();
 extern void border3_large();
+#ifdef COMPILE_FOR_FLASH
 extern void flash_printDirectory();
+#endif
+#ifdef COMPILE_FOR_QSPI
+extern void flash_printDirectory(File flash_currentDirectory);
+#endif
 extern void sd_printDirectory(File currentDirectory);
 extern uint8_t find_longest_chain();
 extern void seq_print_formatted_number(uint16_t v, uint8_t l);
@@ -798,7 +803,13 @@ void handle_touchscreen_file_manager()
     }
     print_file_manager_buttons();
     sd_printDirectory(fm.sd_currentDirectory);
+
+#ifdef COMPILE_FOR_FLASH
     flash_printDirectory();
+#endif
+#ifdef COMPILE_FOR_QSPI
+    flash_printDirectory(fm.flash_currentDirectory);
+#endif
   }
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 5)

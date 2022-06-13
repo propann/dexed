@@ -7,16 +7,16 @@ extern XPT2046_Touchscreen touch;
 
 typedef struct dexed_live_mod_s
 {
-uint8_t active_button = 0;
-uint8_t orig_attack_values[2][7];
-uint8_t orig_release_values[2][7]; 
+  uint8_t active_button = 0;
+  uint8_t orig_attack_values[2][7];
+  uint8_t orig_release_values[2][7];
 
 #if NUM_DEXED>1
-int attack_mod[NUM_DEXED] = { 0, 0 };
-int release_mod[NUM_DEXED] = { 0, 0 };
+  int attack_mod[NUM_DEXED] = { 0, 0 };
+  int release_mod[NUM_DEXED] = { 0, 0 };
 #else
-int attack_mod[NUM_DEXED] = { 0 };
-int release_mod[NUM_DEXED] = { 0 };
+  int attack_mod[NUM_DEXED] = { 0 };
+  int release_mod[NUM_DEXED] = { 0 };
 #endif
 
 } dexed_live_mod_t;
@@ -64,6 +64,15 @@ typedef struct fm_s
   uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
+#ifdef COMPILE_FOR_QSPI
+boolean flash_is_folder;
+uint8_t flash_folder_depth = 0;
+bool flash_parent_folder = false;
+char flash_temp_name[52];
+File flash_entry;
+  File flash_currentDirectory;
+   char flash_new_name[52];
+#endif
 } fm_t;
 
 #endif

@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "spi_interrupt.h"
 #include <LittleFS.h>
-extern LittleFS_SPIFlash myfs;
+extern LittleFS_QSPIFlash myfs;
 
 using namespace std;
 
