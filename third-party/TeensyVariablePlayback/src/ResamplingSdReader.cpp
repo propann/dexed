@@ -1,19 +1,20 @@
 #include "ResamplingSdReader.h"
 #include "interpolation.h"
 #include "waveheaderparser.h"
+
 bool ResamplingSdReader::isUsingSPI = false;
 
 // read n samples into each buffer (1 buffer per channel)
-unsigned int ResamplingSdReader::read(void **buf, uint16_t nsamples) {
+unsigned int ResamplingSdReader::read(int16_t **buf) {
     if (!_playing) return 0;
 
     int16_t *index[_numChannels];
     unsigned int count = 0;
     for (int channel=0; channel < _numChannels; channel++) {
-        index[channel] = (int16_t*)buf[channel];
+        index[channel] = (int16_t*) buf[channel];
     }
 
-    while (count < nsamples) {
+    while (count < AUDIO_BLOCK_SAMPLES) {
         
         for (int channel=0; channel < _numChannels; channel++) {
             if (readNextValue(index[channel], channel)) {
@@ -23,7 +24,6 @@ unsigned int ResamplingSdReader::read(void **buf, uint16_t nsamples) {
             }
             else {
                 // we have reached the end of the file
-
                 switch (_loopType) {
                     case looptype_repeat:
                     {
@@ -52,18 +52,15 @@ unsigned int ResamplingSdReader::read(void **buf, uint16_t nsamples) {
                     case looptype_none:            
                     default:
                     {
-                        //Serial.printf("end of loop...\n");
                         /* no looping - return the number of (resampled) bytes returned... */
-                        _playing = false;
-                        if (_sourceBuffer) _sourceBuffer->close();
-                        _sourceBuffer = nullptr;
-                        StopUsingSPI();
+                        close();
                         return count;
                     }
                 }   
             }
         }
     }
+
     return count;
 }
 
@@ -227,7 +224,7 @@ void ResamplingSdReader::initializeInterpolationPoints(void) {
 void ResamplingSdReader::deleteInterpolationPoints(void) {
     if (!_interpolationPoints) return;
     for (int i=0; i<_numInterpolationPointsChannels; i++) {
-            delete [] _interpolationPoints[i];
+        delete [] _interpolationPoints[i];
     }
     delete [] _interpolationPoints;
     _interpolationPoints = nullptr;
@@ -254,32 +251,19 @@ bool ResamplingSdReader::playWav(const char *filename) {
 
 bool ResamplingSdReader::play(const char *filename, bool isWave, uint16_t numChannelsIfRaw)
 {
-    stop();
-    
+    close();
+
     if (!isWave) // if raw file, then hardcode the numChannels as per the parameter
         setNumChannels(numChannelsIfRaw);
 
-    if (_sourceBuffer) {
-        //Serial.printf("closing %s\n", _filename);
-        __disable_irq();
-        _sourceBuffer->close();
-        __enable_irq();
-    }
-    if (_sourceBuffer) delete _sourceBuffer;
-    if (_filename) delete [] _filename;
-    _filename = new char[strlen(filename)+1] {0};
-    memcpy(_filename, filename, strlen(filename) + 1);
-    StartUsingSPI();
-
     __disable_irq();
-    File file = SD.open(_filename);
+    File file = SD.open(filename);
     __enable_irq();
 
     if (!file) {
-        StopUsingSPI();
-        Serial.printf("Not able to open file: %s\n", _filename);
-        if (_filename) delete [] _filename;
-        _filename = nullptr;
+//        StopUsingSPI();
+        Serial.print(F("Not able to open file: "));
+        Serial.println(filename);
         return false;
     }
 
@@ -287,38 +271,36 @@ bool ResamplingSdReader::play(const char *filename, bool isWave, uint16_t numCha
     _file_size = file.size();
     __enable_irq();
 
-    if (isWave) {
-        wav_header wav_header;
-        WaveHeaderParser wavHeaderParser;
-        char buffer[44];
-        __disable_irq();
-        size_t bytesRead =file.read(buffer, 44);
-        file.seek(0);
-        __enable_irq();
-        wavHeaderParser.readWaveHeaderFromBuffer((const char *) buffer, wav_header);
-        if (wav_header.bit_depth != 16) {
-            Serial.printf("Needs 16 bit audio! Aborting.... (got %d)", wav_header.bit_depth);
-            return false;
-        }
-        setNumChannels(wav_header.num_channels);
-        _header_offset = 22;
-        _loop_finish = ((wav_header.data_bytes) / 2) + 22; 
-    } else 
-        _loop_finish = _file_size / 2;
+    wav_header wav_header;
+    WaveHeaderParser wavHeaderParser;
     
-    __disable_irq();
-    file.close();
-    __enable_irq();
-
-    _sourceBuffer = new newdigate::IndexableFile<128, 2>(_filename);
-    _loop_start = _header_offset;
-    if (_file_size <= _header_offset * newdigate::IndexableFile<128, 2>::element_size) {
-        _playing = false;
-        if (_filename) delete [] _filename;
-        _filename =  nullptr;
-        Serial.printf("Wave file contains no samples: %s\n", filename);
+    wavHeaderParser.readWaveHeader(wav_header, file);		
+    if (wav_header.bit_depth != 16) {
+        Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
+        Serial.print(wav_header.bit_depth);
+        Serial.println(F(")"));
+        __disable_irq();
+        file.close();
+        __enable_irq();
         return false;
     }
+    setNumChannels(wav_header.num_channels);
+    _header_offset = 22;
+    _loop_finish = (wav_header.data_bytes / 2) + _header_offset; 
+    
+    if (_file_size <= _header_offset * newdigate::IndexableFile<128, 2>::element_size) {
+        _playing = false;
+        Serial.print(F("Wave file contains no samples: "));
+        Serial.println(filename);
+//        StopUsingSPI();
+        __disable_irq();
+        file.close();
+        __enable_irq();
+        return false;
+    }
+
+    _sourceBuffer = new newdigate::IndexableFile<128, 2>(file);
+    _loop_start = _header_offset;
 
     reset();
     _playing = true;
@@ -347,11 +329,7 @@ void ResamplingSdReader::reset(){
 void ResamplingSdReader::stop()
 {
     if (_playing) {
-        __disable_irq();
         _playing = false;
-        //_file.close();
-        __enable_irq();
-        //StopUsingSPI();
     }
 }
 
@@ -360,14 +338,15 @@ int ResamplingSdReader::available(void) {
 }
 
 void ResamplingSdReader::close(void) {
+
+    Serial.printf("sdreader close\n");
     if (_playing)
         stop();
-    if (_sourceBuffer) {
+
+    if (_sourceBuffer != nullptr) {
         _sourceBuffer->close();
         delete _sourceBuffer;
+        _sourceBuffer = nullptr;
     }
-    StopUsingSPI();
-    _sourceBuffer = nullptr;
-    //TODO: dispose _sourceBuffer properly
     deleteInterpolationPoints();
 }

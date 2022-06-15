@@ -6122,7 +6122,9 @@ void UI_func_sample_editor(uint8_t param)
     setCursor_textGrid_small(49, 1);
     seq_print_formatted_number (seq.wave_spacing / 2, 2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_FLASH)
     UI_draw_waveform_large();
+#endif
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -12728,7 +12730,7 @@ void UI_func_file_manager(uint8_t param)
 }
 #endif
 
-#ifdef COMPILE_FOR_PROGMEM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_SDCARD)
 void UI_func_file_manager(uint8_t param)
 {
   uint32_t volumesize;

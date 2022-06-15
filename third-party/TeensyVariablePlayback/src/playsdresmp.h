@@ -8,7 +8,6 @@
 
 #include "Arduino.h"
 #include "AudioStream.h"
-#include "SD.h"
 #include "stdint.h"
 #include "ResamplingSdReader.h"
 #include "playresmp.h"
