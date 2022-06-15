@@ -1,7 +1,4 @@
 # MicroDexed-touch
-<br>
-https://www.youtube-nocookie.com/embed/ZFvrbFw_cPg
-<br>
 
 <br><p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png" >
