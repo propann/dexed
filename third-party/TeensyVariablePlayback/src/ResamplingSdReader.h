@@ -14,6 +14,8 @@
 
 #define RESAMPLE_BUFFER_SAMPLE_SIZE 128
 
+#define B2M (uint32_t)((double)4294967296000.0 / AUDIO_SAMPLE_RATE_EXACT / 2.0) // 97352592
+
 class ResamplingSdReader {
 public:
     ResamplingSdReader() {
@@ -27,7 +29,7 @@ public:
     void stop(void);
     bool isPlaying(void) { return _playing; }
 
-    unsigned int read(void **buf, uint16_t nbyte);
+    unsigned int read(int16_t **buf);
     bool readNextValue(int16_t *value, uint16_t channelNumber);
 
     void setPlaybackRate(double f) {
@@ -91,21 +93,27 @@ public:
         }
     }
 
+    uint32_t positionMillis(void) {
+        return ((uint64_t) _file_size * B2M) >> 32;
+    }
+
+    uint32_t lengthMillis(void) {
+        return ((uint64_t) _file_size * B2M) >> 32;
+    }
 private:
     volatile bool _playing = false;
 
-    int32_t _file_size;
-    int32_t _header_offset = 0; // == (header size in bytes ) / 2
+    uint32_t _file_size;
+    uint32_t _header_offset = 0; // == (header size in bytes ) / 2
 
     double _playbackRate = 1.0;
     double _remainder = 0.0;
     loop_type _loopType = looptype_none;
-    int _bufferPosition = 0;
-    int32_t _loop_start = 0;
-    int32_t _loop_finish = 0;
+    unsigned int _bufferPosition = 0;
+    uint32_t _loop_start = 0;
+    uint32_t _loop_finish = 0;
     int16_t _numChannels = -1;
     uint16_t _numInterpolationPointsChannels = 0;
-    char *_filename = nullptr;
     newdigate::IndexableFile<128, 2> *_sourceBuffer = nullptr;
 
     ResampleInterpolationType _interpolationType = ResampleInterpolationType::resampleinterpolation_none;

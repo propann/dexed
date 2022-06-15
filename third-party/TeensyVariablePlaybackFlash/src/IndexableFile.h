@@ -5,8 +5,6 @@
 #include <SerialFlash.h>
 #include <vector>
 
-extern int FreeMem(void);
-
 namespace newdigate {
 
 

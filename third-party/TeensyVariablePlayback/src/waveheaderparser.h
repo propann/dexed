@@ -35,7 +35,7 @@ struct wav_header {
 
 class WaveHeaderParser {
 public:
-    bool readWaveHeader(const char *filename, wav_header &header) {
+    bool readWaveHeader(const char *filename, wav_header &header, wav_header &wav_header) {
         __disable_irq();
         File wavFile = SD.open(filename);
         __enable_irq();
@@ -43,12 +43,12 @@ public:
             Serial.printf("Not able to open wave file... %s\n", filename);
             return false;
         }
-        bool result = readWaveHeader(filename, header, wavFile);
+        bool result = readWaveHeader(header, wavFile);
         wavFile.close();
         return result;
     }
 
-    bool readWaveHeader(const char *filename, wav_header &header, File &wavFile) {
+    bool readWaveHeader(wav_header &header, File wavFile) {
         char buffer[44];
         __disable_irq();
         int bytesRead = wavFile.read(buffer, 44);
@@ -123,6 +123,7 @@ public:
         header.data_bytes = data_bytes;
         return true;
     }
+
 private:
 };
 

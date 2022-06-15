@@ -3,8 +3,6 @@
 #include "waveheaderparser.h"
 #include <SerialFlash.h>
 
-extern int FreeMem(void);
-
 bool ResamplingFlashReader::isUsingSPI = false;
 
 // read n samples into each buffer (1 buffer per channel)
@@ -252,14 +250,12 @@ bool ResamplingFlashReader::playWav(const char *filename) {
 bool ResamplingFlashReader::play(const char *filename)
 {
     close();
-    // StartUsingSPI();
 
     __disable_irq();
     SerialFlashFile file = SerialFlash.open(filename);
     __enable_irq();
 
     if (!file) {
-        // StopUsingSPI();
         Serial.print(F("Not able to open file: "));
         Serial.println(filename);
         return false;
@@ -269,34 +265,27 @@ bool ResamplingFlashReader::play(const char *filename)
     _file_size = file.size();
     __enable_irq();
 
-        wav_header wav_header;
-        WaveHeaderParser wavHeaderParser;
-        wavHeaderParser.readWaveHeader(wav_header, file);
-        if (wav_header.bit_depth != 16) {
-            // StopUsingSPI();
-            Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
-            Serial.print(wav_header.bit_depth);
-            Serial.println(F(")"));
-            __disable_irq();
-            file.close();
-            __enable_irq();
-            return false;
-        }
-        setNumChannels(wav_header.num_channels);
-        _header_offset = 22;
-        _loop_finish = ((wav_header.data_bytes) / 2) + _header_offset; 
-    
-    // __disable_irq();
-    // file.close();
-    // __enable_irq();
+    wav_header wav_header;
+    WaveHeaderParser wavHeaderParser;
+
+    wavHeaderParser.readWaveHeader(wav_header, file);
+    if (wav_header.bit_depth != 16) {
+        Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
+        Serial.print(wav_header.bit_depth);
+        Serial.println(F(")"));
+        __disable_irq();
+        file.close();
+        __enable_irq();
+        return false;
+    }
+    setNumChannels(wav_header.num_channels);
+    _header_offset = 22;
+    _loop_finish = ((wav_header.data_bytes) / 2) + _header_offset; 
 
     if (_file_size <= _header_offset * newdigate::IndexableFile<128, 2>::element_size) {
         _playing = false;
-        // if (filename) delete [] _filename;
-        // _filename =  nullptr;
         Serial.print(F("Wave file contains no samples: "));
         Serial.println(filename);
-        // StopUsingSPI();
         __disable_irq();
         file.close();
         __enable_irq();
@@ -349,11 +338,7 @@ void ResamplingFlashReader::close(void) {
         _sourceBuffer->close();
         delete _sourceBuffer;
         _sourceBuffer = nullptr;
-        // StopUsingSPI();
     }
 
     deleteInterpolationPoints();
-
-    // Serial.print(F("ResamplingFlashReader::close - MEM:"));
-    // Serial.println(FreeMem(), DEC);
 }
