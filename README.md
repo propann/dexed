@@ -37,7 +37,6 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 * YouTube playlist about the development:<br>
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
--
 > ###Latest news, 19/06/2022:
 > 	
 > [<span>&#10003;</span>] Started modularization of the code. Every User has different opinions what is important to have in an audio device. Memory on the Teensy however is limited, so you can not have everything at once, what we can think of.
