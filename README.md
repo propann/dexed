@@ -37,12 +37,13 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 * YouTube playlist about the development:<br>
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
->###Latest news, 19/06/2022:
+>Latest news, 19/06/2022:
  	
 >[<span>&#10003;</span>] Started modularization of the code. Every User has different opinions what is important to have in an audio device. Memory on the Teensy however is limited, so you can not have everything at once, what we can think of.
 Currently, this restructure is far from complete, but it is an start. <p>Also you now have the option to change your DAC to the (most likely) next prefered DAC, the PCM 5102.
-<p>About the modularization:
-	
+><p>
+>About the modularization:
+>
 >| Core   | Modules                        | Effects  | Polyphony/Tracks    |         
 | ------ | ------------------------------ | -------- | ---------------- |  
 | Dexed1 |                                |    <span>&#10003;</span>   | 16 voices        |
