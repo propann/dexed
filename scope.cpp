@@ -5,7 +5,10 @@
 extern ILI9341_t3n display;
 extern uint16_t COLOR_SYSTEXT;
 extern uint16_t COLOR_BACKGROUND;
+
+#ifdef USE_SEQUENCER
 extern sequencer_t seq;
+#endif
 
 void Realtime_Scope::FillArray() {
   __disable_irq();

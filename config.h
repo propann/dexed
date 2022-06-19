@@ -74,12 +74,13 @@
 //*************************************************************************************************
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
+
 //#define AUDIO_DEVICE_USB
 #define TEENSY_AUDIO_BOARD
 
+////////YOU HAVE TO ENABLE MUTE_PIN WHEN USING I2S_AUDIO WITH PCM5102, OTHERWISE AUDIO WILL BE MUTED PERMANENTLY
 //#define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
 //#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function - 
-////////YOU HAVE TO ENABLE MUTE_PIN WHEN USING I2S_AUDIO WITH PCM5102, OTHERWISE AUDIO WILL BE MUTED PERMANENTLY
 
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -121,41 +122,44 @@
 
 // NUMBER OF PARALLEL SAMPLEDRUMS
 #define NUM_DRUMS 8
+//#define NUM_DRUMS 0
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
-#define NUM_CUSTOM_MIDI_MAPPINGS 20  //Number of Custom Key, CC and Button Mappings
+#define NUM_CUSTOM_MIDI_MAPPINGS 10  //Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
 #define NUM_DRUMSET_CONFIG 71
 //#define NUM_DRUMSET_CONFIG 2
 
 // SEQUENCER
+#define USE_SEQUENCER
 #define NUM_SEQ_PATTERN 24
 #define NUM_SEQ_TRACKS 8
 #define SONG_LENGTH 64
 #define NUM_CHAINS 32
 
-#define USE_SEQUENCER
-
-#define VIRT_KEYB_YPOS 166
-
 // SAMPLER
+#define USE_MULTISAMPLES
 #define NUM_MULTISAMPLES 10
 #define NUM_MULTISAMPLE_ZONES 8
 
-// EPIANO
+//// EPIANO
 #define USE_EPIANO
 #ifdef USE_EPIANO
 #define NUM_EPIANO_VOICES 16
 #define DEFAULT_EP_MIDI_CHANNEL 3
 #endif
 
-// MICROSYNTH
+//// MICROSYNTH
 #define USE_MICROSYNTH
 #ifdef USE_MICROSYNTH
 #define NUM_MICROSYNTH 2
 #endif
+
+//#define USE_BRAIDS  //not there, yet. Not sure if possible at all. If so, only a small part of it could come in.
+
+#define VIRT_KEYB_YPOS 166
 
 // CHORUS parameters
 #define MOD_DELAY_SAMPLE_BUFFER int32_t(TIME_MS2SAMPLES(15.0)) // 15.0 ms delay buffer. 
@@ -363,9 +367,9 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #endif
 
 // MIDI
-#ifdef MIDI_DEVICE_USB
-#define USBCON 1
-#endif
+//#ifdef MIDI_DEVICE_USB
+//#define USBCON 1  ??
+//#endif
 
 // Some optimizations
 #define USE_TEENSY_DSP 1
@@ -918,6 +922,7 @@ enum master_mixer_ports {
   MASTER_MIX_CH_DRUMS,
   MASTER_MIX_CH_EPIANO,
   MASTER_MIX_CH_MICROSYNTH,
+  MASTER_MIX_CH_BRAIDS,
   MASTER_MIX_CH_SD_FILE_PREVIEW,
 };
 

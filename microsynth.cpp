@@ -5,6 +5,7 @@
 #include "template_mixer.hpp"
 #include "effect_stereo_panorama.h"
 
+#ifdef USE_MICROSYNTH
 extern AudioSynthWaveform              microsynth_waveform[NUM_MICROSYNTH];
 extern AudioSynthNoisePink             microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope             microsynth_envelope_osc[NUM_MICROSYNTH];
@@ -26,9 +27,12 @@ extern microsynth_t  microsynth[NUM_MICROSYNTH];
 extern uint8_t microsynth_selected_instance;
 extern float volume_transform(float amp);
 extern short wave_type[9];
+#endif
+
 
 void microsynth_update_settings(uint8_t instance_id)
 {
+  #ifdef USE_MICROSYNTH
   microsynth_mixer_filter_osc[instance_id].gain(0, 0.0);
   microsynth_mixer_filter_osc[instance_id].gain(1, 0.0);
   microsynth_mixer_filter_osc[instance_id].gain(2, 0.0);
@@ -70,4 +74,5 @@ void microsynth_update_settings(uint8_t instance_id)
   microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
   microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
   microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+  #endif
 }

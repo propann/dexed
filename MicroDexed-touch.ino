@@ -50,14 +50,25 @@
 #ifdef COMPILE_FOR_QSPI
 #include <LittleFS.h>
 LittleFS_QSPIFlash  myfs;
+//LittleFS_Program         myfs;
+#define PROG_FLASH_SIZE 960 * 1024 * 7 // Specify size to use of onboard Teensy Program Flash chip
 char szDiskMem[] = "QSPI_DISK";
-#include "TeensyVariablePlaybackQSPI.h"
+uint32_t diskSize;
+//#include "TeensyVariablePlaybackQSPI.h"
+#include <TeensyVariablePlayback.h>
+#endif
+
+#ifdef USE_BRAIDS
+#include <synth_braids.h>
 #endif
 
 #include <TeensyTimerTool.h>
 using namespace TeensyTimerTool;
 
+#ifdef USE_MICROSYNTH
 #include "microsynth.h"
+#endif
+
 #include "midi_devices.hpp"
 #include "synth_dexed.h"
 #include "dexed_sd.h"
@@ -77,6 +88,11 @@ using namespace TeensyTimerTool;
 #include "effect_stereo_panorama.h"
 #endif
 
+uint8_t check_sd_cards(void);
+void check_and_create_directories(void);
+void show_cpu_and_mem_usage(void);
+void initial_values(bool init);
+bool checkMidiChannel(byte inChannel, uint8_t instance_id);
 
 #define TFT_DC 37
 #define TFT_CS 41
@@ -99,12 +115,20 @@ XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - 
 //uint16_t COLOR_DRUMS = 0xFE4F;
 //uint16_t COLOR_PITCHSMP = 0x159A;
 
+Realtime_Scope                  scope;
+
 // Audio engines
 AudioSynthDexed*                MicroDexed[NUM_DEXED];
 #if defined(USE_EPIANO)
 AudioSynthEPiano                ep(NUM_EPIANO_VOICES);
 AudioAnalyzePeak                ep_peak_r;
 AudioAnalyzePeak                ep_peak_l;
+#endif
+
+#ifdef USE_BRAIDS
+AudioSynthBraids                synthBraids;
+AudioMixer<8>                   braids_mixer_r;
+AudioMixer<8>                   braids_mixer_l;
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -155,12 +179,9 @@ AudioAnalyzePeak                microdexed_peak_0;
 AudioAnalyzePeak                microdexed_peak_1;
 
 #if defined(USE_FX)
-#if defined(USE_EPIANO) && defined(USE_MICROSYNTH)
+#if defined(USE_EPIANO) || defined(USE_MICROSYNTH)
 AudioMixer<5>                   reverb_mixer_r;
 AudioMixer<5>                   reverb_mixer_l;
-#elif defined(USE_EPIANO)
-AudioMixer<4>                   reverb_mixer_r;
-AudioMixer<4>                   reverb_mixer_l;
 #else
 AudioMixer<3>                   reverb_mixer_r;
 AudioMixer<3>                   reverb_mixer_l;
@@ -168,14 +189,16 @@ AudioMixer<3>                   reverb_mixer_l;
 #endif
 
 AudioEffectPlateReverb          reverb;
-Realtime_Scope                  scope;
 
-#if defined(USE_FX) && defined(USE_EPIANO) && defined(USE_MICROSYNTH)
+
+//#ifdef USE_BRAIDS
+//AudioMixer<8>                   master_mixer_r;
+//AudioMixer<8>                   master_mixer_l;
+//#endif
+
+#if (defined(USE_FX) && defined(USE_EPIANO)) || ( defined(USE_FX) && defined(USE_MICROSYNTH))
 AudioMixer<7>                   master_mixer_r;
 AudioMixer<7>                   master_mixer_l;
-#elif defined(USE_FX) && defined(USE_EPIANO)
-AudioMixer<6>                   master_mixer_r;
-AudioMixer<6>                   master_mixer_l;
 #else
 AudioMixer<5>                   master_mixer_r;
 AudioMixer<5>                   master_mixer_l;
@@ -190,9 +213,11 @@ AudioMixer<2>                   audio_thru_mixer_r;
 AudioMixer<2>                   audio_thru_mixer_l;
 #endif
 
+
+AudioPlaySdWav                  sd_WAV;
+
 // Drumset
 #if NUM_DRUMS > 0
-AudioPlaySdWav                  sd_WAV;
 
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp*          Drum[NUM_DRUMS];
@@ -200,7 +225,8 @@ AudioPlayFlashResmp*          Drum[NUM_DRUMS];
 #endif
 
 #ifdef COMPILE_FOR_QSPI
-AudioPlayQSPIResmp*          Drum[NUM_DRUMS];
+//AudioPlayQSPIResmp*          Drum[NUM_DRUMS];
+AudioPlayLfsResmp*             Drum[NUM_DRUMS];
 //AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
 
@@ -220,11 +246,10 @@ AudioAnalyzePeak                drum_mixer_peak_l;
 
 AudioMixer<8>                   drum_reverb_send_mixer_r;
 AudioMixer<8>                   drum_reverb_send_mixer_l;
+#endif
 
 AudioAnalyzePeak                reverb_return_peak_r;
 AudioAnalyzePeak                reverb_return_peak_l;
-
-#endif
 
 // Outputs
 #if defined(TEENSY_AUDIO_BOARD)
@@ -316,17 +341,17 @@ AudioConnection patchCord[] = {
   {audio_thru_mixer_l, 0, i2s1, 1},
 #endif
 
+#if NUM_DRUMS > 0
   {drum_reverb_send_mixer_r, 0, reverb_mixer_r, REVERB_MIX_CH_DRUMS},
   {drum_reverb_send_mixer_l, 0, reverb_mixer_l, REVERB_MIX_CH_DRUMS},
   {drum_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_DRUMS},
   {drum_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_DRUMS},
+  {drum_mixer_r, 0, drum_mixer_peak_r, 0},
+  {drum_mixer_l, 0, drum_mixer_peak_l, 0},
+#endif
 
   { reverb, 0, reverb_return_peak_r, 0},
   { reverb, 1, reverb_return_peak_l, 0},
-
-  {drum_mixer_r, 0, drum_mixer_peak_r, 0},
-  {drum_mixer_l, 0, drum_mixer_peak_l, 0},
-
 
 #if defined(USE_EPIANO)
   {ep, 0, ep_stereo_panorama , 0},
@@ -359,8 +384,7 @@ AudioConnection patchCord[] = {
 #endif
 #endif
 
-#if defined(USE_MICROSYNTH)
-
+#ifdef USE_MICROSYNTH
   {microsynth_noise[0], 0, microsynth_envelope_noise[0] , 0},  //noise generator to envelope
   {microsynth_noise[1], 0, microsynth_envelope_noise[1] , 0},
 
@@ -432,7 +456,13 @@ AudioConnection patchCord[] = {
   {microsynth_mixer_filter_osc[1], 0, microsynth_peak_osc_1, 0}, //osc 2 (inst2) to peak analyzer
   {microsynth_mixer_filter_noise[0], 0, microsynth_peak_noise_0, 0}, // unfiltered noise to mixer
   {microsynth_mixer_filter_noise[1], 0, microsynth_peak_noise_1, 0},
+#endif
 
+#ifdef USE_BRAIDS
+  {synthBraids, 0, braids_mixer_r, 0},
+  {synthBraids, 0, braids_mixer_l, 1},
+  {braids_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS},
+  {braids_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_BRAIDS},
 #endif
 
 };
@@ -514,7 +544,8 @@ void create_audio_drum_chain(uint8_t instance_id)
 #endif
 
 #ifdef COMPILE_FOR_QSPI
-  Drum[instance_id] = new AudioPlayQSPIResmp();
+  //Drum[instance_id] = new AudioPlayQSPIResmp();
+  Drum[instance_id] = new AudioPlayLfsResmp(myfs);
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -565,8 +596,6 @@ int16_t _midi_bpm = -1;
 elapsedMillis midi_bpm_timer;
 elapsedMillis long_button_pressed;
 elapsedMillis control_rate;
-elapsedMillis microsynth_lfo_control_rate;
-elapsedMillis microsynth_lfo_delay_timer[2];
 elapsedMillis save_sys;
 bool save_sys_flag = false;
 uint8_t active_voices[NUM_DEXED];
@@ -600,9 +629,15 @@ int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1};
 #else
 int8_t midi_decay_dexed[NUM_DEXED] = { -1};
 #endif
+#ifdef USE_MICROSYNTH
 int8_t midi_decay_microsynth[NUM_MICROSYNTH];
-elapsedMillis midi_decay_timer_dexed;
 elapsedMillis midi_decay_timer_microsynth;
+extern void update_microsynth_params(void);
+elapsedMillis microsynth_lfo_control_rate;
+elapsedMillis microsynth_lfo_delay_timer[2];
+#endif
+elapsedMillis midi_decay_timer_dexed;
+
 
 #if NUM_DEXED>1
 int perform_attack_mod[NUM_DEXED] = { 0, 0 };
@@ -621,17 +656,31 @@ int16_t* ep_delayline_l;
 #endif
 
 #if NUM_DRUMS > 0
-extern sequencer_t seq;
-extern multisample_t ms[NUM_MULTISAMPLES];
-extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 uint8_t drum_counter;
 uint8_t drum_type[NUM_DRUMS];
-extern void sequencer(void);
 uint8_t drum_midi_channel = DRUM_MIDI_CHANNEL;
+#endif
+
+#ifdef USE_SEQUENCER
+extern sequencer_t seq;
+extern void sequencer(void);
+extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
+extern void print_arp_start_stop_button(void);
+PeriodicTimer sequencer_timer;
+#endif
+
+#ifdef USE_MULTISAMPLES
+extern multisample_t ms[NUM_MULTISAMPLES];
+extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
+#endif
+
+extern LCDMenuLib2 LCDML;
+
+extern void getNoteName(char* noteName, uint8_t noteNumber);
+extern void update_midi_learn_button(void);
 custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 extern void print_custom_mappings(void);
-extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
 extern void handle_touchscreen_mute_matrix(void);
 extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_pattern_editor(void);
@@ -641,19 +690,6 @@ extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
 extern void handle_touchscreen_color_edit(void);
 extern void handle_touchscreen_arpeggio(void);
-extern void update_midi_learn_button(void);
-extern void print_arp_start_stop_button(void);
-#endif
-
-extern void update_microsynth_params(void);
-
-extern LCDMenuLib2 LCDML;
-
-extern void getNoteName(char* noteName, uint8_t noteNumber);
-
-#if defined(USE_SEQUENCER)
-PeriodicTimer sequencer_timer;
-#endif
 
 /***********************************************************************
    SETUP
@@ -666,9 +702,8 @@ void setup()
   Serial.println(CrashReport);
   //setup_debug_message();
 
-
   // test DIN MIDI out
-  // MIDI.begin();
+  //MIDI.begin();
 
   generate_version_string(version_string, sizeof(version_string));
   Serial.println(F("MicroDexed based on https://github.com/asb2m10/dexed"));
@@ -908,10 +943,12 @@ void setup()
 #endif
 
 #ifdef COMPILE_FOR_QSPI
- // Serial (QSPI) Flash Init
+  diskSize = PROG_FLASH_SIZE;
+  // Serial (QSPI) Flash Init
 #ifdef DEBUG
   Serial.println("Initializing Flash Chip");
 #endif
+  //if (!myfs.begin(diskSize)) { //progmem
   if (!myfs.begin()) {
 #ifdef DEBUG
     Serial.printf("Error starting %s\n", szDiskMem);
@@ -920,6 +957,11 @@ void setup()
   }
 
 #endif
+
+  //
+  //#ifdef USE_BRAIDS
+  //  //synthBraids.init_braids();
+  //#endif
 
   // Start SD card
 
@@ -1027,6 +1069,10 @@ void setup()
 #if defined(USE_MICROSYNTH)
   master_mixer_r.gain(MASTER_MIX_CH_MICROSYNTH, VOL_MAX_FLOAT);
   master_mixer_l.gain(MASTER_MIX_CH_MICROSYNTH, VOL_MAX_FLOAT);
+#endif
+#if defined(USE_BRAIDS)
+  master_mixer_r.gain(MASTER_MIX_CH_BRAIDS, VOL_MAX_FLOAT);
+  master_mixer_l.gain(MASTER_MIX_CH_BRAIDS, VOL_MAX_FLOAT);
 #endif
 #if defined(TEENSY_AUDIO_BOARD) && defined(SGTL5000_AUDIO_THRU)
   audio_thru_mixer_r.gain(0, VOL_MAX_FLOAT); // MD signal sum
@@ -1137,21 +1183,24 @@ void handle_touchscreen_mixer()
 {
   if (scope.scope_delay % 60 == 0)
   {
+#if NUM_DRUMS > 0
     float dr, dl;
     dr = drum_mixer_peak_l.read() / 6;
     dl = drum_mixer_peak_r.read() / 6;
+#endif
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     draw_volmeter(0, 170, 2, microdexed_peak_0.read() );
     draw_volmeter(CHAR_width_small * 4, 170, 3, microdexed_peak_1.read() );
-
+#ifdef USE_MICROSYNTH
     draw_volmeter(CHAR_width_small * 8, 170, 8, microsynth_peak_osc_0.read() );
     draw_volmeter(CHAR_width_small * 12, 170, 9, microsynth_peak_osc_1.read() );
-
+#endif
+#if NUM_DRUMS > 0
     draw_volmeter(CHAR_width_small * 16, 170, 4, dr );
     draw_volmeter(CHAR_width_small * 20, 170, 5, dl );
-
+#endif
     draw_volmeter(CHAR_width_small * 27, 170, 6, reverb_return_peak_l.read() );
     draw_volmeter(CHAR_width_small * 32, 170, 7, reverb_return_peak_r.read() );
 
@@ -1175,11 +1224,13 @@ void sub_step_recording()
       if (cur_step < 16)
       {
         seq.note_data[seq.active_pattern][cur_step] = seq.note_in;
+#if NUM_DRUMS > 0
         if ( seq.content_type[seq.active_pattern] == 0 && get_sample_note(activesample) > 209 ) // pitched sample
         {
           seq.vel[seq.active_pattern][cur_step] = get_sample_note(activesample);
         }
         else
+#endif
           seq.vel[seq.active_pattern][cur_step] = seq.note_in_velocity;
         setCursor_textGrid(cur_step, 1);
         display.setTextSize(2);
@@ -1278,6 +1329,7 @@ void loop()
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
   }
+#ifdef USE_MICROSYNTH
   if (microsynth_lfo_control_rate > MICROSYNTH_LFO_RATE_MS) //update lfos, filters etc. when played live or by seq.
   {
     microsynth_lfo_control_rate = 0;
@@ -1313,6 +1365,7 @@ void loop()
       seq_print_formatted_number( microsynth[0].lfo_fade, 4);
     }
   }
+#endif
   if (control_rate > CONTROL_RATE_MS)
   {
     control_rate = 0;
@@ -1350,6 +1403,7 @@ void loop()
         midi_decay_timer_dexed = 0;
       }
     }
+#ifdef USE_MICROSYNTH
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) // draw MIDI in activity bars on microsynth page
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
@@ -1369,6 +1423,7 @@ void loop()
         }
       }
     }
+#endif
   }
   else
     yield();
@@ -1454,6 +1509,7 @@ void playWAVFile(const char *filename)
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
 {
+#if NUM_DRUMS > 0
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(DRUM_POLY);
@@ -1506,6 +1562,7 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
       //      }
     }
   }
+#endif
 }
 #endif
 
@@ -1622,10 +1679,12 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
         inChannel = configuration.dexed[1].midi_channel;
       else  if (trk == 2)
         inChannel = configuration.epiano.midi_channel;
+#ifdef USE_MICROSYNTH
       else  if (trk == 3)
         inChannel = microsynth[0].midi_channel;
       else  if (trk == 4)
         inChannel = microsynth[1].midi_channel;
+#endif
     }
   }
 
@@ -1633,6 +1692,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   if (device == 1)
     midi_usb.sendNoteOn(inNumber, inVelocity, inChannel);
 #endif
+
 #ifdef MIDI_DEVICE_DIN
   if (device == 2)
   {
@@ -1645,7 +1705,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   }
 #endif
 
-//#ifdef COMPILE_FOR_FLASH
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
   if (device == 3) //playing Multisample by Sequencer
   {
@@ -1653,271 +1712,270 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   }
 #endif
 
+  //#ifdef USE_BRAIDS
+  //  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
+  //  {
+  //    synthBraids.set_braids_pitch(inNumber);
+  //  }
+  //#endif
+
   if (device == 0)
   {
-//#ifdef COMPILE_FOR_FLASH
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false)
     {
       Multi_Sample_Player(inNumber, inVelocity, seq.active_multisample);  //play multisample live with manual preset selection
     }
-    else
+#endif
+    if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
+      learn_key(inChannel, inNumber);
+
+#if NUM_DRUMS > 0
+    if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) // live play pitched sample
     {
-#endif
-      if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) )
-        learn_key(inChannel, inNumber);
-
-      if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ) // live play pitched sample
-      {
-        if (drum_counter >= NUM_DRUMS)
-          drum_counter = 0;
-        uint8_t slot = drum_get_slot(drum_config[activesample].drum_class);
-        float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
-        drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
+      if (drum_counter >= NUM_DRUMS)
+        drum_counter = 0;
+      uint8_t slot = drum_get_slot(drum_config[activesample].drum_class);
+      float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
+      drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
+      drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
 #ifdef USE_FX
-        drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
-        drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
+      drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
+      drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
 #endif
-        // if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
-        // {
-
-        //        Drum[slot]->enableInterpolation(true);
-        //        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
-        //
-        //        Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
-
-        // }
-      }
-
-      //Ignore the note when playing & recording the same note into the sequencer
-      if (seq.recording == false || (seq.recording && inNumber != seq.note_in ))
+      // if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
+      // {
+      //        Drum[slot]->enableInterpolation(true);
+      //        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - 72) / 12.00) * drum_config[activesample].p_offset   );
+      //        Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
+      // }
+    }
+#endif
+    //Ignore the note when playing & recording the same note into the sequencer
+    if (seq.recording == false || (seq.recording && inNumber != seq.note_in ))
+    {
+      // Check for MicroDexed
+      for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
       {
-        // Check for MicroDexed
-        for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+        if (checkMidiChannel(inChannel, instance_id))
         {
-          if (checkMidiChannel(inChannel, instance_id))
+          if (inNumber >= configuration.dexed[instance_id].lowest_note && inNumber <= configuration.dexed[instance_id].highest_note)
           {
-            if (inNumber >= configuration.dexed[instance_id].lowest_note && inNumber <= configuration.dexed[instance_id].highest_note)
+            if (configuration.dexed[instance_id].polyphony > 0)
+              MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
+
+            midi_voices[instance_id]++;
+
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
             {
-              if (configuration.dexed[instance_id].polyphony > 0)
-                MicroDexed[instance_id]->keydown(inNumber, uint8_t(float(configuration.dexed[instance_id].velocity_level / 127.0)*inVelocity + 0.5));
-
-              midi_voices[instance_id]++;
-
-              if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
-              {
-                midi_decay_timer_dexed = 0;
-                midi_decay_dexed[instance_id] = min(inVelocity / 5, 7);
-              }
-
-              //#ifdef DEBUG
-              //                char note_name[4];
-              //                getNoteName(note_name, inNumber);
-              //                Serial.print(F("Keydown "));
-              //                Serial.print(note_name);
-              //                Serial.print(F(" instance "));
-              //                Serial.print(instance_id, DEC);
-              //                Serial.print(F(" MIDI-channel "));
-              //                Serial.print(inChannel, DEC);
-              //                Serial.println();
-              //#endif
-              return;
+              midi_decay_timer_dexed = 0;
+              midi_decay_dexed[instance_id] = min(inVelocity / 5, 7);
             }
+
+            //#ifdef DEBUG
+            //                char note_name[4];
+            //                getNoteName(note_name, inNumber);
+            //                Serial.print(F("Keydown "));
+            //                Serial.print(note_name);
+            //                Serial.print(F(" instance "));
+            //                Serial.print(instance_id, DEC);
+            //                Serial.print(F(" MIDI-channel "));
+            //                Serial.print(inChannel, DEC);
+            //                Serial.println();
+            //#endif
+            return;
           }
         }
-
-        // Check for MicroSynth
-        for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
+      }
+#ifdef USE_MICROSYNTH
+      // Check for MicroSynth
+      for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
+      {
+        if (inChannel == microsynth[instance_id].midi_channel)
         {
-          if (inChannel == microsynth[instance_id].midi_channel)
+          if (inNumber == MIDI_C8)  // is noise only, mute osc
           {
-            if (inNumber == MIDI_C8)  // is noise only, mute osc
+            microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
+            microsynth_envelope_noise[instance_id].noteOn();
+            microsynth_waveform[instance_id].amplitude(0);
+          }
+          else
+          {
+            if (microsynth[instance_id].trigger_noise_with_osc)
             {
               microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
               microsynth_envelope_noise[instance_id].noteOn();
-              microsynth_waveform[instance_id].amplitude(0);
+              microsynth_waveform[instance_id].amplitude(  mapfloat(
+                    ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
             }
             else
             {
-              if (microsynth[instance_id].trigger_noise_with_osc)
-              {
-                microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
-                microsynth_envelope_noise[instance_id].noteOn();
-                microsynth_waveform[instance_id].amplitude(  mapfloat(
-                      ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
-              }
-              else
-              {
-                microsynth_noise[instance_id].amplitude(0.0f);
-                microsynth_waveform[instance_id].amplitude(  mapfloat(
-                      ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
+              microsynth_noise[instance_id].amplitude(0.0f);
+              microsynth_waveform[instance_id].amplitude(  mapfloat(
+                    ((microsynth[instance_id].sound_intensity / 127.0)*inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
 
-              }
             }
-            if (microsynth[instance_id].wave == 4 || microsynth[instance_id].wave == 7)
-            {
-              microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
-              microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
-            }
-            microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
-            microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
-            microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
-            microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
-            microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse]  );
-            microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] ;
+          }
+          if (microsynth[instance_id].wave == 4 || microsynth[instance_id].wave == 7)
+          {
+            microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
+            microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
+          }
+          microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
+          microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
+          microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
+          microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
+          microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse]  );
+          microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] ;
 
-            microsynth_envelope_osc[instance_id].noteOn();
-            microsynth_lfo_delay_timer[instance_id] = 0;
-            microsynth[instance_id].lfo_fade = 0;
-            if (microsynth[instance_id].lfo_mode > 0) // If LFO in 1up or 1down
-              microsynth[instance_id].lfo_value = 0;
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-            {
-              midi_decay_timer_microsynth = 0;
-              midi_decay_microsynth[instance_id] = min(inVelocity / 5, 7);
-            }
+          microsynth_envelope_osc[instance_id].noteOn();
+          microsynth_lfo_delay_timer[instance_id] = 0;
+          microsynth[instance_id].lfo_fade = 0;
+          if (microsynth[instance_id].lfo_mode > 0) // If LFO in 1up or 1down
+            microsynth[instance_id].lfo_value = 0;
+          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
+          {
+            midi_decay_timer_microsynth = 0;
+            midi_decay_microsynth[instance_id] = min(inVelocity / 5, 7);
+          }
+        }
+      }
+#endif
+
+#if NUM_DRUMS > 0
+      // Check for Drum
+      if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI)
+      {
+        if (drum_counter >= NUM_DRUMS)
+          drum_counter = 0;
+
+        //check custom midi mapping
+        for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
+        {
+          if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1)
+          {
+            inNumber = custom_midi_map[c].out;
+            break;
           }
         }
 
-#if NUM_DRUMS > 0
-        // Check for Drum
-        if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI)
+        for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
         {
-          if (drum_counter >= NUM_DRUMS)
-            drum_counter = 0;
-
-          //check custom midi mapping
-          for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
+          if (inNumber == drum_config[d].midinote)
           {
-            if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1)
+
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+            char temp_name[16];
+#endif
+
+#ifdef COMPILE_FOR_SDCARD
+            char temp_name[26];
+#endif
+            uint8_t slot = drum_get_slot(drum_config[d].drum_class);
+
+            if (slot != 99)
             {
-              inNumber = custom_midi_map[c].out;
+              float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
+
+              drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+              drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+#ifdef USE_FX
+              drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
+              drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
+#endif
+
+#ifdef COMPILE_FOR_PROGMEM
+              if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+              {
+#endif
+                if (drum_config[d].pitch != 0.0)
+                {
+                  Drum[slot]->enableInterpolation(true);
+                  Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+                }
+
+#ifdef COMPILE_FOR_PROGMEM
+                Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+#endif
+
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+
+                sprintf(temp_name, "%s.wav", drum_config[d].name);
+                Drum[slot]->playWav(temp_name);
+                //Drum[slot]->playWav("DMpop.wav");  //Test
+#endif
+
+#ifdef COMPILE_FOR_SDCARD
+                strcpy(temp_name, "/DRUMS/");
+                strcat(temp_name, drum_config[d].name);
+                strcat(temp_name, ".wav");
+                Drum[slot]->playWav(temp_name);
+#endif
+
+                //#ifdef DEBUG
+                //        char note_name[4];
+                //        getNoteName(note_name, inNumber);
+                //        Serial.print(F("=> Drum["));
+                //        Serial.print(slot, DEC);
+                //        Serial.print(F("]: "));
+                //        Serial.println(note_name);
+                //#endif
+
+#ifdef COMPILE_FOR_PROGMEM
+              }
+#endif
+              //#ifdef DEBUG
+              //                Serial.print(F("Drum "));
+              //                Serial.print(drum_config[d].shortname);
+              //                Serial.print(F(" ["));
+              //                Serial.print(drum_config[d].name);
+              //                Serial.print(F("], Slot "));
+              //                Serial.print(slot);
+              //                Serial.print(F(": V"));
+              //                Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
+              //                Serial.print(F(" P"));
+              //                Serial.print(drum_config[d].pan, 2);
+              //                Serial.print(F(" PAN"));
+              //                Serial.print(pan, 2);
+              //                Serial.print(F(" RS"));
+              //                Serial.println(drum_config[d].reverb_send, 2);
+              //#endif
               break;
             }
           }
-
-          for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
-          {
-            if (inNumber == drum_config[d].midinote)
-            {
-//#ifdef COMPILE_FOR_FLASH
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-              char temp_name[16];
-#endif
-
-#ifdef COMPILE_FOR_SDCARD
-              char temp_name[26];
-#endif
-              uint8_t slot = drum_get_slot(drum_config[d].drum_class);
-
-              if (slot != 99)
-              {
-                float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
-
-                drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-                drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-#ifdef USE_FX
-                drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
-                drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-#endif
-
-#ifdef COMPILE_FOR_PROGMEM
-                if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
-                {
-#endif
-                  if (drum_config[d].pitch != 0.0)
-                  {
-                    Drum[slot]->enableInterpolation(true);
-                    Drum[slot]->setPlaybackRate(drum_config[d].pitch);
-                  }
-
-#ifdef COMPILE_FOR_PROGMEM
-                  Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
-#endif
-//#ifdef COMPILE_FOR_FLASH
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-
-                  sprintf(temp_name, "%s.wav", drum_config[d].name);
-                  Drum[slot]->playWav(temp_name);
-                  //Drum[slot]->playWav("DMpop.wav");  //Test
-#endif
-
-#ifdef COMPILE_FOR_SDCARD
-                  strcpy(temp_name, "/DRUMS/");
-                  strcat(temp_name, drum_config[d].name);
-                  strcat(temp_name, ".wav");
-                  Drum[slot]->playWav(temp_name);
-#endif
-
-                  //#ifdef DEBUG
-                  //        char note_name[4];
-                  //        getNoteName(note_name, inNumber);
-                  //        Serial.print(F("=> Drum["));
-                  //        Serial.print(slot, DEC);
-                  //        Serial.print(F("]: "));
-                  //        Serial.println(note_name);
-                  //#endif
-
-#ifdef COMPILE_FOR_PROGMEM
-                }
-#endif
-                //#ifdef DEBUG
-                //                Serial.print(F("Drum "));
-                //                Serial.print(drum_config[d].shortname);
-                //                Serial.print(F(" ["));
-                //                Serial.print(drum_config[d].name);
-                //                Serial.print(F("], Slot "));
-                //                Serial.print(slot);
-                //                Serial.print(F(": V"));
-                //                Serial.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
-                //                Serial.print(F(" P"));
-                //                Serial.print(drum_config[d].pan, 2);
-                //                Serial.print(F(" PAN"));
-                //                Serial.print(pan, 2);
-                //                Serial.print(F(" RS"));
-                //                Serial.println(drum_config[d].reverb_send, 2);
-                //#endif
-                break;
-              }
-            }
-          }
-#endif
         }
-        //
-        // E-Piano
-        //
-#if defined(USE_EPIANO)
-        if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel)
-        {
-          if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
-          {
-            ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
-            //#ifdef DEBUG
-            //              char note_name[4];
-            //              getNoteName(note_name, inNumber);
-            //              Serial.print(F("KeyDown "));
-            //              Serial.print(note_name);
-            //              Serial.print(F(" EPIANO "));
-            //              Serial.print(F(" MIDI - channel "));
-            //              Serial.print(inChannel, DEC);
-            //              Serial.println();
-            //#endif
-          }
-        }
-#endif
+
       }
-
-//#ifdef COMPILE_FOR_FLASH
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-    }
 #endif
-
+      //
+      // E-Piano
+      //
+#if defined(USE_EPIANO)
+      if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel)
+      {
+        if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note)
+        {
+          ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
+          //#ifdef DEBUG
+          //              char note_name[4];
+          //              getNoteName(note_name, inNumber);
+          //              Serial.print(F("KeyDown "));
+          //              Serial.print(note_name);
+          //              Serial.print(F(" EPIANO "));
+          //              Serial.print(F(" MIDI - channel "));
+          //              Serial.print(inChannel, DEC);
+          //              Serial.println();
+          //#endif
+        }
+      }
+#endif
+    }
   }
 }
 
 void stop_all_drum_slots()
 {
+  #if NUM_DRUMS > 0
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
   {
     if (Drum[i]->isPlaying())
@@ -1928,10 +1986,12 @@ void stop_all_drum_slots()
       Drum[i]->setPlaybackRate(1.0);
     }
   }
+  #endif
 }
 
 uint8_t drum_get_slot(uint8_t dt)
 {
+  #if NUM_DRUMS > 0
   bool found = false;
 
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
@@ -1971,6 +2031,7 @@ uint8_t drum_get_slot(uint8_t dt)
   //  #endif
 
   // do not play the sample
+  #endif
   return (99);
 }
 
@@ -1994,10 +2055,12 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)
         inChannel = configuration.dexed[1].midi_channel;
       else  if (trk == 2)
         inChannel = configuration.epiano.midi_channel;
+#ifdef USE_MICROSYNTH
       else  if (trk == 3)
         inChannel = microsynth[0].midi_channel;
       else  if (trk == 4)
         inChannel = microsynth[1].midi_channel;
+#endif
     }
   }
 
@@ -2859,9 +2922,9 @@ void dac_mute(void)
   sgtl5000.volume(0.0, 0.0); // Headphone volume
 #endif
 #ifdef PCM5102_MUTE_PIN
-digitalWrite(PCM5102_MUTE_PIN,LOW);
+  digitalWrite(PCM5102_MUTE_PIN, LOW);
 #endif
-seq.DAC_mute_state=true;
+  seq.DAC_mute_state = true;
 }
 
 void dac_unmute(void)
@@ -2872,9 +2935,9 @@ void dac_unmute(void)
   sgtl5000.volume(SGTL5000_HEADPHONE_VOLUME, SGTL5000_HEADPHONE_VOLUME); // Headphone volume
 #endif
 #ifdef PCM5102_MUTE_PIN
-digitalWrite(PCM5102_MUTE_PIN,HIGH);
+  digitalWrite(PCM5102_MUTE_PIN, HIGH);
 #endif
-seq.DAC_mute_state=false;
+  seq.DAC_mute_state = false;
 }
 
 void handleStart(void)
@@ -4207,15 +4270,6 @@ void SerialPrintFormatInt3(uint8_t num)
   Serial.print(buf);
 }
 
-#ifdef TEENSY3_6
-/* From: https://forum.pjrc.com/threads/33443-How-to-display-free-ram */
-extern "C" char* sbrk(int incr);
-uint32_t FreeMem(void)
-{
-  char top;
-  return &top - reinterpret_cast<char*>(sbrk(0));
-}
-#else
 /* From: https://forum.pjrc.com/threads/33443-How-to-display-free-ram */
 extern unsigned long _heap_end;
 extern char *__brkval;
@@ -4223,5 +4277,5 @@ int FreeMem(void)
 {
   return (char *)&_heap_end - __brkval;
 }
-#endif
+
 #endif

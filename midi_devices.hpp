@@ -25,10 +25,13 @@
 #define MIDI_DEVICES_H
 
 #include "config.h"
-#include "sequencer.h"
 
 extern config_t configuration;
+
+#ifdef USE_SEQUENCER
+#include "sequencer.h"
 extern sequencer_t seq;
+#endif
 
 /* #if defined(MIDI_DEVICE_USB)
   #include <midi_UsbTransport.h>

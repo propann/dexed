@@ -34,7 +34,6 @@ using namespace TeensyTimerTool;
 #include "dexed_sd.h"
 #include "synth_dexed.h"
 #if NUM_DRUMS > 0
-#include "sequencer.h"
 #include "drums.h"
 extern void set_drums_volume(float vol);
 extern drum_config_t drum_config[];
@@ -43,19 +42,25 @@ extern custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 
 extern char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 extern char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
-
 extern void init_MIDI_send_CC(void);
 extern void check_configuration_dexed(uint8_t instance_id);
 extern void check_configuration_performance(void);
 extern void check_configuration_fx(void);
 extern void check_configuration_epiano(void);
-extern void sequencer();
-extern void microsynth_update_settings(uint8_t instance_id);
-extern sequencer_t seq;
+
+#ifdef USE_MICROSYNTH
 extern microsynth_t microsynth[NUM_MICROSYNTH];
-#if defined(USE_SEQUENCER)
-extern PeriodicTimer sequencer_timer;
+extern void microsynth_update_settings(uint8_t instance_id);
 #endif
+
+#ifdef USE_SEQUENCER
+#include "sequencer.h"
+extern PeriodicTimer sequencer_timer;
+extern void sequencer();
+extern sequencer_t seq;
+#endif
+
+
 extern float midi_volume_transform(uint8_t midi_amp);
 extern void set_sample_note(uint8_t sample, uint8_t note);
 extern void set_sample_pitch(uint8_t sample, float playbackspeed);
@@ -504,6 +509,7 @@ bool save_sd_bank(const char* bank_filename, uint8_t* data)
 
 bool load_sd_drummappings_json(uint8_t number)
 {
+  #if NUM_DRUMS > 0
   if (number < 0)
     return (false);
 
@@ -564,11 +570,13 @@ bool load_sd_drummappings_json(uint8_t number)
 #endif
     }
   }
+  #endif
   return (false);
 }
 
 bool save_sd_drummappings_json(uint8_t number)
 {
+  #if NUM_DRUMS > 0
   char filename[CONFIG_FILENAME_LEN];
   number = constrain(number, 0, 99);
 
@@ -638,6 +646,7 @@ bool save_sd_drummappings_json(uint8_t number)
     Serial.println(F("E: SD card not available"));
   }
 #endif
+#endif
   return (false);
 }
 
@@ -647,6 +656,7 @@ bool save_sd_drummappings_json(uint8_t number)
  ******************************************************************************/
 bool load_sd_drumsettings_json(uint8_t number)
 {
+  #if NUM_DRUMS > 0
   if (number < 0)
     return (false);
 
@@ -715,11 +725,13 @@ bool load_sd_drumsettings_json(uint8_t number)
 #endif
     }
   }
+  #endif
   return (false);
 }
 
 bool save_sd_drumsettings_json(uint8_t number)
 {
+  #if NUM_DRUMS > 0
   char filename[CONFIG_FILENAME_LEN];
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
@@ -792,6 +804,7 @@ bool save_sd_drumsettings_json(uint8_t number)
   {
     Serial.println(F("E: SD card not available"));
   }
+#endif
 #endif
   return (false);
 }
@@ -983,6 +996,7 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
  ******************************************************************************/
 bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
+#ifdef USE_MICROSYNTH
   char filename[CONFIG_FILENAME_LEN];
 
   ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
@@ -1065,12 +1079,14 @@ bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 #endif
     }
   }
-
+#endif
   return (false);
+
 }
 
 bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
+#ifdef USE_MICROSYNTH
   char filename[CONFIG_FILENAME_LEN];
 
   ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
@@ -1146,7 +1162,9 @@ bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
     Serial.println(F(" on SD."));
 #endif
   }
+#endif
   return (false);
+
 }
 
 /******************************************************************************
@@ -2132,9 +2150,11 @@ bool save_sd_performance_json(uint8_t number)
       json.close();
       AudioInterrupts();
       if (seq_was_running == true )
+{
         handleStart();
-        dac_unmute();
+      dac_unmute();
       return (true);
+}
     }
     //json.close();
     //AudioInterrupts();
@@ -2899,7 +2919,7 @@ bool save_sd_multisample_presets_json(uint8_t number)
     File json;
     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     char filename[CONFIG_FILENAME_LEN];
-    
+
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 #ifdef DEBUG
@@ -2923,7 +2943,7 @@ bool save_sd_multisample_presets_json(uint8_t number)
       for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++)
       {
         data_json[i]["name"] = ms[i].name;
-        
+
         for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
           strcpy(zone_filename, msz[i][j].name);
           if (strchr(zone_filename, '.')) {

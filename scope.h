@@ -3,11 +3,11 @@
 #define scope_h_
 
 #include "Arduino.h"
-
+#include "AudioStream.h"
 class Realtime_Scope : public AudioStream {
   public:
-   bool scope_is_drawing;
-  uint8_t scope_delay;
+    bool scope_is_drawing;
+    uint8_t scope_delay;
     Realtime_Scope(void) : AudioStream(1, inputQueueArray) {
     }
     virtual void update(void);

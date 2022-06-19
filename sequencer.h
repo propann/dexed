@@ -66,7 +66,8 @@ typedef struct multisample_zone_s {
 } multisample_zone_t;
 
 typedef struct sequencer_s {
-   bool DAC_mute_state = false;
+  bool DAC_mute_state = false;
+  uint8_t active_function = 99;
   uint16_t wave_spacing = 2;
   uint8_t active_multisample;   // multisample currently selected in editor
   uint8_t auto_advance_step = 0; //0 = single step, 1 = auto advance, 2 = auto advance and auto stop

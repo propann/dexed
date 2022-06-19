@@ -51,9 +51,11 @@ extern AudioSynthDexed*  MicroDexed[NUM_DEXED];
 extern elapsedMillis midi_decay_timer_dexed;
 extern elapsedMillis midi_decay_timer_microsynth;
 extern int8_t midi_decay_dexed[NUM_DEXED];
+#ifdef USE_MICROSYNTH
 extern int8_t midi_decay_microsynth[NUM_MICROSYNTH];
-
+#endif
 extern void UI_func_microsynth(uint8_t param);
+#ifdef USE_MICROSYNTH
 extern AudioSynthWaveform       microsynth_waveform[NUM_MICROSYNTH];
 extern AudioEffectEnvelope      microsynth_envelope_osc[NUM_MICROSYNTH];
 extern AudioSynthNoisePink      microsynth_noise[NUM_MICROSYNTH];
@@ -61,6 +63,7 @@ extern AudioEffectEnvelope      microsynth_envelope_noise[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern elapsedMillis microsynth_lfo_delay_timer[2];
+#endif
 
 extern uint16_t COLOR_SYSTEXT;
 extern uint16_t COLOR_SYSTEXT_ACCENT;
@@ -71,9 +74,14 @@ extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
-sequencer_t seq;
-microsynth_t microsynth[2];
 
+#ifdef USE_SEQUENCER
+sequencer_t seq;
+#endif
+
+#ifdef USE_MICROSYNTH
+microsynth_t microsynth[2];
+#endif
 multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 multisample_s ms[NUM_MULTISAMPLES] =
 {
@@ -188,6 +196,7 @@ void sequencer_part1(void)
     {
       if ( seq.track_type[d] == 0  && seq.ticks == 0 )
       { // drum track (drum samples and pitched one-shot samples)
+        #if NUM_DRUMS > 0
         if (seq.note_data[  seq.current_pattern[d] ][seq.step] > 0 )
         {
           if (seq.vel[  seq.current_pattern[d] ][seq.step] > 209)  // it is a pitched sample
@@ -199,6 +208,7 @@ void sequencer_part1(void)
           else // else play normal drum sample
             handleNoteOn(drum_midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
         }
+        #endif
       }
       else {
         if (seq.note_data[ seq.current_pattern[d]][seq.step] > 0 )
@@ -207,8 +217,8 @@ void sequencer_part1(void)
           {
             if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 && seq.ticks == 0)
             {
-//Multisampler Instrument
- if (seq.instrument[d] > 4 && seq.instrument[d] < 15) // track is for internal MultiSampler
+              //Multisampler Instrument
+              if (seq.instrument[d] > 4 && seq.instrument[d] < 15) // track is for internal MultiSampler
               {
                 handleNoteOn(seq.instrument[d] - 5, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 3);
               }
@@ -228,6 +238,7 @@ void sequencer_part1(void)
                 handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
               else if (seq.instrument[d] == 2) // track is assigned to epiano
                 handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
+#ifdef USE_MICROSYNTH
               else if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned for Microsynth
               {
                 if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
@@ -235,6 +246,8 @@ void sequencer_part1(void)
                 else  //allow transpose
                   handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] , microsynth[ seq.instrument[d] - 3 ].sound_intensity, 0 );
               }
+#endif
+
               if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
                 seq.prev_note[d] = seq.note_data[  seq.current_pattern[d] ][seq.step];
               else
@@ -275,10 +288,12 @@ void sequencer_part1(void)
             seq.arp_step = 0;
             seq.arp_num_notes_count = 0;
             seq.arp_counter = 0;
+#ifdef USE_MICROSYNTH
             if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
             {
               seq.arp_volume_base = microsynth[ seq.instrument[d] - 3 ].sound_intensity;
             }
+#endif
             seq.arp_note = seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12);
             seq.arp_chord = seq.vel[ seq.current_pattern[d] ][seq.step] - 200;
           }
@@ -292,8 +307,10 @@ void sequencer_part1(void)
           {
             if (seq.arp_style == 0)
             { //arp up
+
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
+#ifdef USE_MICROSYNTH
                 handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] , seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)) , 0);
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
                 if (seq.arp_speed > 1)
@@ -302,6 +319,7 @@ void sequencer_part1(void)
                   if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
+#endif
               }
               else  if (seq.instrument[d] < 2) // track is assigned to dexed
               {
@@ -328,7 +346,7 @@ void sequencer_part1(void)
             { //arp down
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
-
+#ifdef USE_MICROSYNTH
                 handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0 );
 
                 if (seq.arp_speed > 1)
@@ -337,6 +355,7 @@ void sequencer_part1(void)
                   if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
+#endif
               }
               else if (seq.instrument[d] < 2) // track is assigned to dexed
               {
@@ -366,7 +385,7 @@ void sequencer_part1(void)
               {
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
                 {
-
+#ifdef USE_MICROSYNTH
                   handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] , 90, 0);
 
                   if (seq.arp_speed > 1)
@@ -375,6 +394,7 @@ void sequencer_part1(void)
                     if (seq.arp_step >= seq.arp_length)
                       seq.arp_step = 0;
                   }
+#endif
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
                   handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
@@ -398,7 +418,7 @@ void sequencer_part1(void)
               {
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4 ) // track is assigned to Microsynth
                 {
-
+#ifdef USE_MICROSYNTH
                   handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,   seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] , 90, 0);
 
                   if (seq.arp_speed > 1)
@@ -407,6 +427,7 @@ void sequencer_part1(void)
                     if (seq.arp_step >= seq.arp_length)
                       seq.arp_step = 0;
                   }
+#endif
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
                   handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
@@ -433,6 +454,7 @@ void sequencer_part1(void)
               uint8_t rnd1 = random(seq.arp_length);
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
+#ifdef USE_MICROSYNTH
                 handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12) , 90, 0);
 
                 if (seq.arp_speed > 1)
@@ -441,6 +463,7 @@ void sequencer_part1(void)
                   if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
+#endif
               }
               else if (seq.instrument[d] < 2) // track is assigned to dexed
                 handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel , 0 );
@@ -589,8 +612,10 @@ void sequencer_part2(void)
             handleNoteOff(configuration.dexed[seq.instrument[d]].midi_channel, seq.prev_note[d] , 0, 0);
           else if (seq.instrument[d] == 2 && seq.ticks == 7)  //epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] , 0, 0);
+#ifdef USE_MICROSYNTH
           else if (seq.instrument[d] > 2 && seq.instrument[d] < 5)
             handleNoteOff( microsynth[ seq.instrument[d] - 3].midi_channel, seq.prev_note[d], 0, 0);
+#endif
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 14 && seq.instrument[d] < 31 && seq.ticks == 7) // track is for external USB MIDI
           {
@@ -651,9 +676,10 @@ void sequencer_part2(void)
             handleNoteOff(seq.instrument[d] - 30, seq.arp_note_prev, 0, 2);
           }
 #endif
+#ifdef USE_MICROSYNTH
           else if (seq.instrument[d] > 2  ) // track is assigned to Microsynth
             handleNoteOff( microsynth[ seq.instrument[d] - 3].midi_channel, seq.arp_note_prev, 0, 0);
-
+#endif
           seq.noteoffsent[d] = true;
         }
       }
@@ -663,6 +689,7 @@ void sequencer_part2(void)
 
 void update_microsynth_params()
 {
+#ifdef USE_MICROSYNTH
   for (uint8_t d = 0; d < 2; d++)
   {
     if ( microsynth_envelope_osc[d].isActive() )  //pwm down
@@ -777,6 +804,7 @@ void update_microsynth_params()
       }
     }
   }
+#endif
 }
 
 
@@ -1102,15 +1130,15 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
 
-  display.print(" TRK:[");
+  display.print(F(" TRK:["));
   display.print(track_number + 1);
   display.print("] ");
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(" ");
   display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-  display.print(" CHAIN: ");
+  display.print(F(" CHAIN: "));
   display.print(current_chain);
-  display.print("  ");
+  display.print(F("  "));
 
   seq_print_formatted_number( pattern[0] , 2);
   display.write (0xf8);

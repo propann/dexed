@@ -14,7 +14,11 @@ extern void print_voice_settings(int x, int y, uint8_t instance_id, bool fullref
 extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
+
+#ifdef USE_SEQUENCER
 extern sequencer_t seq;
+#endif
+
 extern void border3_large_clear();
 extern void border3_large();
 #ifdef COMPILE_FOR_FLASH
@@ -38,12 +42,15 @@ extern void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char
 extern const char* find_long_drum_name_from_note(uint8_t note);
 extern void print_perfmod_buttons();
 extern void print_perfmod_lables();
-extern microsynth_t  microsynth[NUM_MICROSYNTH];
 extern void print_empty_spaces (uint8_t spaces);
 extern void print_voice_select_default_help();
 extern void playWAVFile(const char *filename);
 extern void handleStop(void);
 extern void handleStart(void);
+
+#ifdef USE_MICROSYNTH
+extern microsynth_t  microsynth[NUM_MICROSYNTH];
+#endif
 
 ts_t ts; //touch screen
 fm_t fm; //file manager
@@ -62,6 +69,7 @@ void helptext_l (const char *str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
+
   display.setCursor (0, DISPLAY_HEIGHT - CHAR_height_small);
   display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
   display.print(str);
@@ -196,12 +204,16 @@ void virtual_keyboard_print_current_instrument()
   else if (ts.virtual_keyboard_instrument == 3)
   {
     display.print(F("MSYNTH1 "));
+#ifdef USE_MICROSYNTH
     ts.virtual_keyboard_midi_channel = microsynth[0].midi_channel;
+#endif
   }
   else if (ts.virtual_keyboard_instrument == 4)
   {
     display.print(F("MSYNTH2 "));
-    ts.virtual_keyboard_midi_channel = microsynth[1].midi_channel;;
+#ifdef USE_MICROSYNTH
+    ts.virtual_keyboard_midi_channel = microsynth[1].midi_channel;
+#endif
   }
   else if (ts.virtual_keyboard_instrument == 5)
   {
