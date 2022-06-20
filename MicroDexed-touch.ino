@@ -127,8 +127,7 @@ AudioAnalyzePeak                ep_peak_l;
 
 #ifdef USE_BRAIDS
 AudioSynthBraids                synthBraids;
-AudioMixer<8>                   braids_mixer_r;
-AudioMixer<8>                   braids_mixer_l;
+//AudioMixer<1>                   braids_mixer;
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -189,12 +188,6 @@ AudioMixer<3>                   reverb_mixer_l;
 #endif
 
 AudioEffectPlateReverb          reverb;
-
-
-//#ifdef USE_BRAIDS
-//AudioMixer<8>                   master_mixer_r;
-//AudioMixer<8>                   master_mixer_l;
-//#endif
 
 #if (defined(USE_FX) && defined(USE_EPIANO)) || ( defined(USE_FX) && defined(USE_MICROSYNTH))
 AudioMixer<7>                   master_mixer_r;
@@ -384,6 +377,15 @@ AudioConnection patchCord[] = {
 #endif
 #endif
 
+#ifdef USE_BRAIDS
+  // {synthBraids, 0, braids_mixer, 0},
+  // {braids_mixer, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS},
+  // {braids_mixer, 0, master_mixer_l, MASTER_MIX_CH_BRAIDS},
+  // {synthBraids, 0, master_mixer_l, MASTER_MIX_CH_BRAIDS},
+  // {synthBraids, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS},
+
+#endif
+
 #ifdef USE_MICROSYNTH
   {microsynth_noise[0], 0, microsynth_envelope_noise[0] , 0},  //noise generator to envelope
   {microsynth_noise[1], 0, microsynth_envelope_noise[1] , 0},
@@ -456,13 +458,6 @@ AudioConnection patchCord[] = {
   {microsynth_mixer_filter_osc[1], 0, microsynth_peak_osc_1, 0}, //osc 2 (inst2) to peak analyzer
   {microsynth_mixer_filter_noise[0], 0, microsynth_peak_noise_0, 0}, // unfiltered noise to mixer
   {microsynth_mixer_filter_noise[1], 0, microsynth_peak_noise_1, 0},
-#endif
-
-#ifdef USE_BRAIDS
-  {synthBraids, 0, braids_mixer_r, 0},
-  {synthBraids, 0, braids_mixer_l, 1},
-  {braids_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS},
-  {braids_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_BRAIDS},
 #endif
 
 };
@@ -701,9 +696,6 @@ void setup()
 
   Serial.println(CrashReport);
   //setup_debug_message();
-
-  // test DIN MIDI out
-  //MIDI.begin();
 
   generate_version_string(version_string, sizeof(version_string));
   Serial.println(F("MicroDexed based on https://github.com/asb2m10/dexed"));
@@ -958,11 +950,6 @@ void setup()
 
 #endif
 
-  //
-  //#ifdef USE_BRAIDS
-  //  //synthBraids.init_braids();
-  //#endif
-
   // Start SD card
 
   sd_card = check_sd_cards();
@@ -1136,6 +1123,12 @@ void setup()
     msz[seq.active_multisample][zone].pan = 20;
     msz[seq.active_multisample][zone].rev = 50;
   }
+
+#ifdef USE_BRAIDS
+  synthBraids.init_braids();
+  //synthBraids.set_braids_shape(27);
+  //synthBraids.set_braids_pitch(22 << 7);
+#endif
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1288,7 +1281,7 @@ void loop()
 
   LCDML.loop();
 
-  if (LCDML.FUNC_getID() > _LCDML_DISP_cnt && seq.running)
+  if ( (LCDML.FUNC_getID() > _LCDML_DISP_cnt && seq.running) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume) && seq.running ) )
     scope.draw_scope(225, 20, 92);
   else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
@@ -1688,6 +1681,19 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
     }
   }
 
+#ifdef USE_BRAIDS
+  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
+  {
+    synthBraids.set_braids_shape(15);
+    synthBraids.set_braids_pitch(inNumber << 7);
+
+#ifdef DEBUG
+    Serial.println("BRAIDS input Note:");
+    Serial.print(inNumber << 7);
+#endif
+  }
+#endif
+
 #ifdef MIDI_DEVICE_USB_HOST
   if (device == 1)
     midi_usb.sendNoteOn(inNumber, inVelocity, inChannel);
@@ -1711,13 +1717,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
     Multi_Sample_Player(inNumber, inVelocity, inChannel);
   }
 #endif
-
-  //#ifdef USE_BRAIDS
-  //  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
-  //  {
-  //    synthBraids.set_braids_pitch(inNumber);
-  //  }
-  //#endif
 
   if (device == 0)
   {
@@ -1975,7 +1974,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 void stop_all_drum_slots()
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
   {
     if (Drum[i]->isPlaying())
@@ -1986,12 +1985,12 @@ void stop_all_drum_slots()
       Drum[i]->setPlaybackRate(1.0);
     }
   }
-  #endif
+#endif
 }
 
 uint8_t drum_get_slot(uint8_t dt)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   bool found = false;
 
   for (uint8_t i = 0; i < NUM_DRUMS; i++)
@@ -2031,7 +2030,7 @@ uint8_t drum_get_slot(uint8_t dt)
   //  #endif
 
   // do not play the sample
-  #endif
+#endif
   return (99);
 }
 

@@ -31,7 +31,7 @@ extern Sd2Card card;
 
 extern char noteNames[12][3];
 
-const float tune_frequencies2_PGM[128] =
+static const float tune_frequencies2_PGM[128] =
 {
   8.1758,    8.6620,    9.1770,    9.7227,    10.3009,    10.9134,    11.5623,    12.2499,
   12.9783,   13.7500,   14.5676,   15.4339,   16.3516,    17.3239,    18.3540,    19.4454,
@@ -75,8 +75,8 @@ typedef struct sequencer_s {
   uint8_t current_track_type_of_active_pattern;
   bool track_mute[NUM_SEQ_TRACKS];
   uint8_t mute_mode = 0;
-  uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
-  uint8_t piano2[13] = {1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
+  const uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
+  const uint8_t piano2[13] = {1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
   int generic_ui_delay;
   bool midi_learn_active = false;
   bool help_text_needs_refresh = false;
@@ -123,7 +123,7 @@ typedef struct sequencer_s {
   int oct_shift = 0;
   uint8_t arp_style = 0; // up, down, up&down, random
 
-  uint8_t arps[6][23] = {
+  const uint8_t arps[6][23] = {
     { 0, 4, 7, 12, 16, 19, 24, 28, 31, 36, 40, 43, 48, 52, 55, 60, 64, 67, 72, 76, 79, 84, 0}, //major
     { 0, 3, 7, 12, 15, 19, 24, 27, 31, 36, 39, 43, 48, 51, 55, 60, 63, 67, 72, 75, 79, 84, 0}, //minor
     { 0, 4, 7, 10, 12, 16, 19, 22, 24, 28, 31, 34, 36, 40, 43, 46, 48, 52, 55, 58, 60, 64, 0}, //seventh
@@ -132,7 +132,7 @@ typedef struct sequencer_s {
     { 0, 4, 7, 11, 12, 16, 19, 23, 24, 28, 31, 35, 36, 40, 43, 47, 48, 52, 55, 59, 60, 64, 0}  //maj7
   };
 
-  char chord_names[7][7] = {
+  const char chord_names[7][7] = {
     {'M', 'a', 'j', 'o', 'r', ' ', ' '}, //major
     {'M', 'i', 'n', 'o', 'r', ' ', ' '},
     {'s', 'e', 'v', 'e', 'n', ' ', ' '},
@@ -154,9 +154,9 @@ typedef struct sequencer_s {
   uint8_t temp_active_menu = 99;
 
   int8_t current_song_step = 0;
-  int8_t current_chain[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99 };
-  int8_t current_pattern[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99 };
-  int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0, 0, 0, 0, 0, 0 };
+  int8_t current_chain[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99, 99, 99 };
+  int8_t current_pattern[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99, 99, 99 };
+  int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   uint8_t prev_note[NUM_SEQ_TRACKS]; // note_offs for every (instr.) track
   uint8_t prev_vel[NUM_SEQ_TRACKS];

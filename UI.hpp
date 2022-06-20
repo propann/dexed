@@ -51,10 +51,10 @@
 #endif
 
 
-#ifdef USE_BRAIDS
+//#ifdef USE_BRAIDS
 //#include <synth_braids.h>
-extern AudioSynthBraids synthBraids;
-#endif
+//extern AudioSynthBraids synthBraids;
+//#endif
 
 #define _LCDML_DISP_cols  display_cols
 #define _LCDML_DISP_rows  display_rows
@@ -187,7 +187,6 @@ extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern AudioSynthNoisePink      microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope      microsynth_envelope_noise[NUM_MICROSYNTH];
-
 #endif
 
 extern AudioEffectPlateReverb         reverb;
@@ -3807,7 +3806,6 @@ void UI_func_note_refresh(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Note Refresh"));
 
-
     UI_update_instance_icons();
   }
 
@@ -5973,7 +5971,7 @@ void seq_printVelGraphBar_single_step(uint8_t step, int color)
   }
 }
 
-#ifdef COMPILE_FOR_PROGMEM
+#if defined (COMPILE_FOR_PROGMEM)
 void UI_draw_waveform_large()  // for progmem
 {
   int xspace = 0;
@@ -6249,7 +6247,10 @@ void UI_func_sample_editor(uint8_t param)
     seq_print_formatted_number (seq.wave_spacing / 2, 2);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+    #if defined(COMPILE_FOR_FLASH)
     UI_draw_waveform_large();
+    #endif
+    
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -11163,7 +11164,7 @@ void UI_func_information(uint8_t param)
 
 void UI_func_braids(uint8_t param)
 {
-#ifdef  UI_func_braid
+#ifdef  USE_BRAIDS
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -11177,17 +11178,12 @@ void UI_func_braids(uint8_t param)
     //display.setTextColor(GREY2);
     //display.setTextColor(RED);
 
-#ifdef USE_BRAIDS
- synthBraids.init_braids();
- 
-#endif
   }
 
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    ;
-
-    
+    setCursor_textGrid(3, 3);
+     
   }
 
   if (LCDML.FUNC_close())     // ****** STABLE END *********
@@ -12883,7 +12879,7 @@ void UI_func_file_manager(uint8_t param)
 }
 #endif
 
-#ifdef COMPILE_FOR_PROGMEM
+#if (defined COMPILE_FOR_PROGMEM)   ||  (defined COMPILE_FOR_SDCARD) 
 void UI_func_file_manager(uint8_t param)
 {
   uint32_t volumesize;

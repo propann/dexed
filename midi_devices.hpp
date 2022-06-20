@@ -403,7 +403,8 @@ void handleClock_MIDI_DEVICE_DIN(void)
 {
   handleClock();
 #ifdef DEBUG
-  Serial.print(F("[MIDI_DIN] Clock"));
+ // Serial.print(F("[MIDI_DIN] Clock"));  //temp phtodo
+ ;
 #endif
   if (configuration.sys.soft_midi_thru == 1)
   {
@@ -421,7 +422,7 @@ void handleClock_MIDI_DEVICE_DIN(void)
 #endif
   }
 #ifdef DEBUG
-  Serial.println();
+ // Serial.println();//temp phtodo
 #endif
 }
 

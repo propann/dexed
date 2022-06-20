@@ -1571,6 +1571,8 @@ bool load_sd_sys_json(void)
 bool save_sd_sys_json(void)
 {
   char filename[CONFIG_FILENAME_LEN];
+//HACK
+ return (true);
 
   if (sd_card > 0)
   {

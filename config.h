@@ -67,7 +67,7 @@
 //*************************************************************************************************
 #define MIDI_DEVICE_DIN Serial1
 #define MIDI_DEVICE_USB 1
-#define MIDI_DEVICE_USB_HOST 1
+#define MIDI_DEVICE_USB_HOST
 
 //*************************************************************************************************
 //* AUDIO HARDWARE SETTINGS
@@ -80,7 +80,7 @@
 
 ////////YOU HAVE TO ENABLE MUTE_PIN WHEN USING I2S_AUDIO WITH PCM5102, OTHERWISE AUDIO WILL BE MUTED PERMANENTLY
 //#define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
-//#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function - 
+//#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function -
 
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -122,7 +122,7 @@
 
 // NUMBER OF PARALLEL SAMPLEDRUMS
 #define NUM_DRUMS 8
-//#define NUM_DRUMS 0
+//#define NUM_DRUMS 0  //Disable Drums
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
@@ -144,14 +144,14 @@
 #define NUM_MULTISAMPLES 10
 #define NUM_MULTISAMPLE_ZONES 8
 
-//// EPIANO
+// EPIANO
 #define USE_EPIANO
 #ifdef USE_EPIANO
 #define NUM_EPIANO_VOICES 16
 #define DEFAULT_EP_MIDI_CHANNEL 3
 #endif
 
-//// MICROSYNTH
+// MICROSYNTH
 #define USE_MICROSYNTH
 #ifdef USE_MICROSYNTH
 #define NUM_MICROSYNTH 2
@@ -286,21 +286,21 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 //#define ENCODER_USE_INTERRUPTS
 #define NUM_ENCODER 2
 #ifdef UI_REVERSE
-  #define ENC_L_PIN_B  29
-  #define ENC_L_PIN_A  28
-  #define BUT_L_PIN    25
+#define ENC_L_PIN_B  29
+#define ENC_L_PIN_A  28
+#define BUT_L_PIN    25
 
-  #define ENC_R_PIN_B  31
-  #define ENC_R_PIN_A  32
-  #define BUT_R_PIN    30
+#define ENC_R_PIN_B  31
+#define ENC_R_PIN_A  32
+#define BUT_R_PIN    30
 #else
-  #define ENC_L_PIN_A  32
-  #define ENC_L_PIN_B  31
-  #define BUT_L_PIN    30
+#define ENC_L_PIN_A  32
+#define ENC_L_PIN_B  31
+#define BUT_L_PIN    30
 
-  #define ENC_R_PIN_A  28
-  #define ENC_R_PIN_B  29
-  #define BUT_R_PIN    25
+#define ENC_R_PIN_A  28
+#define ENC_R_PIN_B  29
+#define BUT_R_PIN    25
 #endif
 
 #define BUT_DEBOUNCE_MS 20
