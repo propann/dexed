@@ -52,6 +52,10 @@ extern void handleStart(void);
 extern microsynth_t  microsynth[NUM_MICROSYNTH];
 #endif
 
+#ifdef USE_BRAIDS
+extern braids_t  braids_osc;
+#endif
+
 ts_t ts; //touch screen
 fm_t fm; //file manager
 dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and release

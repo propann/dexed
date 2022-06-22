@@ -45,16 +45,17 @@
 #include "touch.h"
 #if defined (USE_EPIANO)
 #include "synth_mda_epiano.h"
+extern AudioSynthEPiano               ep;
 #endif
-#if defined (USE_EPIANO) || defined (USE_MICROSYNTH)
+#if defined (USE_EPIANO) || defined (USE_MICROSYNTH) || defined (USE_BRAIDS)
 #include "effect_stereo_panorama.h"
 #endif
 
-
-//#ifdef USE_BRAIDS
-//#include <synth_braids.h>
-//extern AudioSynthBraids synthBraids;
-//#endif
+#ifdef USE_BRAIDS
+#include <synth_braids.h>
+extern AudioSynthBraids*  synthBraids[NUM_BRAIDS];
+extern void braids_update_settings();
+#endif
 
 #define _LCDML_DISP_cols  display_cols
 #define _LCDML_DISP_rows  display_rows
@@ -160,23 +161,24 @@ extern AudioAnalyzePeak               microdexed_peak_0;
 extern AudioAnalyzePeak               microdexed_peak_1;
 #if defined(USE_FX)
 
-#if defined(USE_EPIANO) && defined(USE_MICROSYNTH)
-extern AudioSynthEPiano               ep;
-extern AudioMixer<5>                  reverb_mixer_r;
-extern AudioMixer<5>                  reverb_mixer_l;
+#if defined(USE_EPIANO) || defined(USE_MICROSYNTH) || defined(USE_BRAIDS)
+extern AudioMixer<7>                  reverb_mixer_r;
+extern AudioMixer<7>                  reverb_mixer_l;
 #elif defined(USE_MICROSYNTH)
-extern AudioMixer<4>            microsynth_mixer_filter_osc[NUM_MICROSYNTH];
-extern AudioMixer<4>            microsynth_mixer_filter_noise[NUM_MICROSYNTH];
 extern AudioMixer<5>                  reverb_mixer_r;
 extern AudioMixer<5>                  reverb_mixer_l;
 #elif defined(USE_EPIANO)
-extern AudioSynthEPiano               ep;
 extern AudioMixer<5>                  reverb_mixer_r;
 extern AudioMixer<5>                  reverb_mixer_l;
 #else
 extern AudioMixer<3>                  reverb_mixer_r;
 extern AudioMixer<3>                  reverb_mixer_l;
 #endif
+#endif
+
+#if defined (USE_MICROSYNTH)
+extern AudioMixer<4>            microsynth_mixer_filter_osc[NUM_MICROSYNTH];
+extern AudioMixer<4>            microsynth_mixer_filter_noise[NUM_MICROSYNTH];
 #endif
 
 #ifdef USE_MICROSYNTH
@@ -188,6 +190,18 @@ extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern AudioSynthNoisePink      microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope      microsynth_envelope_noise[NUM_MICROSYNTH];
 #endif
+
+#ifdef USE_BRAIDS
+extern braids_t                        braids_osc;
+extern AudioSynthBraids*               synthBraids[NUM_BRAIDS];
+extern AudioMixer<NUM_BRAIDS>          braids_mixer;
+extern AudioMixer<4>*                  braids_mixer_filter[NUM_BRAIDS];
+extern AudioMixer<2>                   braids_mixer_reverb;
+extern AudioEffectEnvelope*            braids_envelope[NUM_BRAIDS];
+extern AudioFilterStateVariable*       braids_filter[NUM_BRAIDS];
+extern AudioEffectStereoPanorama       braids_stereo_panorama;
+#endif
+
 
 extern AudioEffectPlateReverb         reverb;
 
@@ -212,8 +226,8 @@ extern AudioMixer<2>                   ep_delay_mixer_l;
 extern AudioMixer<7>                   master_mixer_r;
 extern AudioMixer<7>                   master_mixer_l;
 #else
-extern AudioMixer<5>                   master_mixer_r;
-extern AudioMixer<5>                   master_mixer_l;
+extern AudioMixer<8>                   master_mixer_r;
+extern AudioMixer<8>                   master_mixer_l;
 #endif
 extern AudioEffectStereoMono          stereo2mono;
 extern AudioAnalyzePeak               master_peak_r;
@@ -226,7 +240,6 @@ extern char tmp_voice_name[VOICE_NAME_LEN];
 extern char tmp_bank_name[BANK_NAME_LEN];
 extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
-extern bool save_sys_flag;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
 
@@ -391,6 +404,7 @@ void UI_func_portamento_glissando(uint8_t param);
 void UI_func_portamento_time(uint8_t param);
 void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
+void UI_func_not_available(uint8_t param);
 void UI_func_braids(uint8_t param);
 void UI_func_file_manager(uint8_t param);
 void UI_func_custom_mappings(uint8_t param);
@@ -847,7 +861,7 @@ void fill_up_with_spaces_left_window()
 
 void smart_filter(uint8_t dir)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   bool found = false;
 
   //search backwards
@@ -897,7 +911,7 @@ void smart_filter(uint8_t dir)
     else
       activesample = constrain(activesample + 1, 0, NUM_DRUMSET_CONFIG - 2);
   }
-  #endif
+#endif
 }
 
 void border0()  //main Border  default Colors = GREY2/4
@@ -4910,7 +4924,7 @@ void UI_func_drum_reverb_send(uint8_t param)
 
 void UI_func_drum_midi_channel(uint8_t param)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -4938,12 +4952,12 @@ void UI_func_drum_midi_channel(uint8_t param)
   {
     encoderDir[ENC_R].reset();
   }
-  #endif
+#endif
 }
 
 void UI_func_drums_main_volume(uint8_t param)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -4972,11 +4986,11 @@ void UI_func_drums_main_volume(uint8_t param)
   {
     encoderDir[ENC_R].reset();
   }
-  #endif
+#endif
 }
 void UI_func_drum_tune_offset(uint8_t param)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   char displayname[8] = {0, 0, 0, 0, 0, 0, 0};
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -5061,12 +5075,12 @@ void UI_func_drum_tune_offset(uint8_t param)
   {
     encoderDir[ENC_R].reset();
   }
-  #endif
+#endif
 }
 
 void UI_func_drum_pitch(uint8_t param)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   char displayname[8] = {0, 0, 0, 0, 0, 0, 0};
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -5151,7 +5165,7 @@ void UI_func_drum_pitch(uint8_t param)
   {
     encoderDir[ENC_R].reset();
   }
-  #endif
+#endif
 }
 
 void print_custom_mappings()
@@ -5901,7 +5915,11 @@ void seq_sub_print_track_assignments(int x, int y, bool init)
       {
         display.print ("DRUMS/SAMPLE");
       }
-      else if (seq.instrument[track] > 4 && seq.instrument[track] < 21) //external MIDI USB
+      else if (seq.instrument[track] == 5) //Braids
+      {
+        display.print ("BRAIDS OSC");
+      }
+      else if (seq.instrument[track] > 5 && seq.instrument[track] < 21) //external MIDI USB
       {
         display.print ("MIDI USB #");
         seq_print_formatted_number(seq.instrument[track] - 4, 2);
@@ -6247,10 +6265,10 @@ void UI_func_sample_editor(uint8_t param)
     seq_print_formatted_number (seq.wave_spacing / 2, 2);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-    #if defined(COMPILE_FOR_FLASH)
+#if defined(COMPILE_FOR_FLASH)
     UI_draw_waveform_large();
-    #endif
-    
+#endif
+
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -7054,7 +7072,9 @@ void UI_func_seq_vel_editor(uint8_t param)
           display.print(F("MICROSYNTH #1"));
         else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 4)
           display.print(F("MICROSYNTH #2"));
-        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 4 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 21)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 5)
+          display.print(F("BRAIDS OSC. "));
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 5 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 21)
         {
           display.print(F("MIDI USB #"));
           seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 4, 2);
@@ -8717,7 +8737,7 @@ void microsynth_refresh_lower_screen_dynamic_text()
 
 void UI_func_epiano(uint8_t param)
 {
- #ifdef USE_EPIANO
+#ifdef USE_EPIANO
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     // setup function
@@ -9102,7 +9122,7 @@ void UI_func_epiano(uint8_t param)
     //    seq_print_formatted_number(, 2);
     //    setCursor_textGrid_small(44, 22);
     //    seq_print_formatted_number(generic_active_function, 2);
-  
+
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -9111,7 +9131,7 @@ void UI_func_epiano(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-    #endif
+#endif
 }
 
 void UI_func_microsynth(uint8_t param)
@@ -9510,6 +9530,7 @@ void UI_func_microsynth(uint8_t param)
 #endif
 }
 
+
 void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
 {
   uint8_t yspacer = CHAR_height_small + 3;
@@ -9849,7 +9870,8 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
       else if (seq.instrument[x] == 2 )  display.print(F("EP "));
       else if (seq.instrument[x] == 3 )  display.print(F("MS1"));
       else if (seq.instrument[x] == 4 )  display.print(F("MS2"));
-      else if (seq.instrument[x] > 4 && seq.instrument[x] < 15 )
+      else if (seq.instrument[x] == 5 )  display.print(F("BRS"));
+      else if (seq.instrument[x] > 5 && seq.instrument[x] < 15 )
       {
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 5 );
         display.print(F("SMP"));
@@ -11147,52 +11169,355 @@ void UI_func_information(uint8_t param)
 #ifdef COMPILE_FOR_QSPI
     display.print(F("QSPI "));
 #endif
-
   }
-
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
     ;
   }
-
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
   }
 }
 
+void not_available_message()
+{
+  display.fillScreen(COLOR_BACKGROUND);
+  display.setTextSize(2);
+  display.setTextColor(RED);
+  setCursor_textGrid(1, 1);
+  display.print(F("NOT SELECTED TO"));
+  setCursor_textGrid(1, 2);
+  display.print(F("COMPILE INTO THE CODE"));
+  setCursor_textGrid(1, 4);
+  display.setTextColor(GREY2);
+  display.print(F("OR IS NOT YET AVAILABLE"));
+  setCursor_textGrid(1, 6);
+  display.setTextColor(COLOR_SYSTEXT);
+  display.print(F("ENC-L TO GO BACK"));
+  helptext_l("BACK");
+}
 
+#ifdef USE_BRAIDS
 void UI_func_braids(uint8_t param)
 {
-#ifdef  USE_BRAIDS
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
-    encoderDir[ENC_R].reset();
-    border1_clear();
     // setup function
-    setCursor_textGrid(1, 1);
-    display.setTextSize(2);
-     display.print(F("BRAIDS"));
-   
-    setCursor_textGrid(1, 3);
-    //display.setTextColor(GREY2);
-    //display.setTextColor(RED);
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+    seq.cycle_touch_element = 1;
 
+    draw_button_on_grid(45, 1, "MORE" , "PARAM.", 0);
+    virtual_keyboard();
+    virtual_keyboard_print_buttons();
+    virtual_keyboard_print_current_instrument();
+
+    display.setTextSize(1);
+
+    generic_active_function = 0;
+    setCursor_textGrid_small(1, 1);
+    display.setTextColor(RED);
+    display.print(F("BRAIDS"));
+    //update_microsynth_instance_icons();
+    display.setTextColor(GREY1);
+    setCursor_textGrid_small(1, 3);
+    display.print(F("VOLUME"));
+    setCursor_textGrid_small(1, 4);
+    display.print(F("SHAPE"));
+    setCursor_textGrid_small(1, 5);
+    display.print(F("COLOR"));
+    setCursor_textGrid_small(1, 6);
+    display.print(F("TIMBRE"));
+
+    setCursor_textGrid_small(1, 7);
+    display.print(F("COARSE"));
+
+    setCursor_textGrid_small(1, 8);
+    display.print(F("ATTACK"));
+    setCursor_textGrid_small(1, 9);
+    display.print(F("DECAY"));
+    setCursor_textGrid_small(1, 10);
+    display.print(F("SUSTAIN"));
+    setCursor_textGrid_small(1, 11);
+    display.print(F("RELEASE"));
+
+    setCursor_textGrid_small(22, 3);
+    display.print(F("FILTER"));
+    setCursor_textGrid_small(22, 4);
+    display.print(F("FREQ"));
+    setCursor_textGrid_small(22, 5);
+    display.print(F("RES"));
+    setCursor_textGrid_small(32, 5);
+    display.print(F("SPEED"));
+
+    setCursor_textGrid_small(22, 7);
+    display.print(F("REV. SEND"));
+    setCursor_textGrid_small(22, 8);
+    display.print(F("CHR. SEND"));
+    setCursor_textGrid_small(22, 9);
+    display.print(F("DLY. SEND"));
+    setCursor_textGrid_small(22, 10);
+    display.print(F("PANORAMA"));
+    setCursor_textGrid_small(22, 11);
+    display.print(F("MIDI CHN."));
+
+    setCursor_textGrid_small(13, 7);
+    display.print(F("STEPS"));
+
+    setCursor_textGrid_small(16, 8);
+    display.print(F("MS"));
+    setCursor_textGrid_small(16, 9);
+    display.print(F("MS"));
+    setCursor_textGrid_small(16, 10);
+    display.print(F("LEVL"));
+    setCursor_textGrid_small(16, 11);
+    display.print(F("MS"));
+
+    setCursor_textGrid_small(45, 5);
+    display.print(F("FILTERS"));
+
+    // arrows
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    setCursor_textGrid_small(36, 4);
+    display.print(F(">"));
   }
-
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    setCursor_textGrid(3, 3);
-     
-  }
 
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+    {
+      if (LCDML.BT_checkDown())
+      {
+        if ( generic_active_function == 0 )
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 18);
+        else if ( generic_temp_select_menu == 0 )
+          braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + 1, 0, 100);
+        else if ( generic_temp_select_menu == 1 )
+        {
+          braids_osc.algo = constrain(braids_osc.algo + 1, 0, 33);
+          //update_pwm_text();
+        }
+        else if ( generic_temp_select_menu == 2 )
+          braids_osc.color = constrain(braids_osc.color + 1, 0, 254);
+        else if ( generic_temp_select_menu == 3 )
+          braids_osc.timbre = constrain(braids_osc.timbre + 1, 0, 254);
+        else if ( generic_temp_select_menu == 4 )
+          braids_osc.coarse = constrain(braids_osc.coarse + 1, -36, 36);
+
+        else if ( generic_temp_select_menu == 5 )
+          braids_osc.env_attack = constrain(braids_osc.env_attack + 1, 0, 254);
+        else if ( generic_temp_select_menu == 6 )
+          braids_osc.env_decay = constrain(braids_osc.env_decay + 1, 0, 254);
+        else if ( generic_temp_select_menu == 7 )
+          braids_osc.env_sustain = constrain(braids_osc.env_sustain + 1, 0, 50);
+        else if ( generic_temp_select_menu == 8 )
+          braids_osc.env_release = constrain(braids_osc.env_release + 1, 0, 99);
+
+        else if ( generic_temp_select_menu == 9 )
+          braids_osc.filter_mode = constrain(braids_osc.filter_mode + 1, 0, 3);
+        else if ( generic_temp_select_menu == 10 )
+          braids_osc.filter_freq_from = constrain(braids_osc.filter_freq_from + 80, 0, 15000);
+        else if ( generic_temp_select_menu == 11 )
+          braids_osc.filter_freq_to = constrain(braids_osc.filter_freq_to + 80, 0, 15000);
+        else if ( generic_temp_select_menu == 12 )
+          braids_osc.filter_resonance = constrain(braids_osc.filter_resonance + 1, 0, 99);
+        else if ( generic_temp_select_menu == 13 )
+          braids_osc.filter_speed = constrain(braids_osc.filter_speed + 5, 0, 999);
+
+        else if ( generic_temp_select_menu == 14 )
+          braids_osc.rev_send = constrain(braids_osc.rev_send + 1, 0, 127);
+        else if ( generic_temp_select_menu == 15 )
+          braids_osc.chorus_send = constrain(braids_osc.chorus_send + 1, 0, 127);
+        else if ( generic_temp_select_menu == 16 )
+          braids_osc.delay_send = constrain(braids_osc.delay_send + 1, 0, 127);
+        else if ( generic_temp_select_menu == 17 )
+          braids_osc.pan = constrain(braids_osc.pan + 1, PANORAMA_MIN, PANORAMA_MAX);
+        else if ( generic_temp_select_menu == 18 )
+          braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 1, 15);
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        if ( generic_active_function == 0 )
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 18);
+        else if ( generic_temp_select_menu == 0 )
+          braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - 1, 0, 100);
+        else if ( generic_temp_select_menu == 1 )
+        {
+          braids_osc.algo = constrain(braids_osc.algo - 1, 0, 33);
+          //update_pwm_text();
+        }
+        else if ( generic_temp_select_menu == 2 )
+          braids_osc.color = constrain(braids_osc.color - 1, 0, 254);
+        else if ( generic_temp_select_menu == 3 )
+          braids_osc.timbre = constrain(braids_osc.timbre - 1, 0, 254);
+        else if ( generic_temp_select_menu == 4 )
+          braids_osc.coarse = constrain(braids_osc.coarse - 1, -36, 36);
+
+        else if ( generic_temp_select_menu == 5 )
+          braids_osc.env_attack = constrain(braids_osc.env_attack - 1, 0, 254);
+        else if ( generic_temp_select_menu == 6 )
+          braids_osc.env_decay = constrain(braids_osc.env_decay - 1, 0, 254);
+        else if ( generic_temp_select_menu == 7 )
+          braids_osc.env_sustain = constrain(braids_osc.env_sustain - 1, 0, 50);
+        else if ( generic_temp_select_menu == 8 )
+          braids_osc.env_release = constrain(braids_osc.env_release - 1, 0, 99);
+
+        else if ( generic_temp_select_menu == 9 )
+          braids_osc.filter_mode = constrain(braids_osc.filter_mode - 1, 0, 3);
+        else if ( generic_temp_select_menu == 10 )
+          braids_osc.filter_freq_from = constrain(braids_osc.filter_freq_from - 80, 0, 15000);
+        else if ( generic_temp_select_menu == 11 )
+          braids_osc.filter_freq_to = constrain(braids_osc.filter_freq_to - 80, 0, 15000);
+        else if ( generic_temp_select_menu == 12 )
+          braids_osc.filter_resonance = constrain(braids_osc.filter_resonance - 1, 0, 99);
+        else if ( generic_temp_select_menu == 13 )
+          braids_osc.filter_speed = constrain(braids_osc.filter_speed - 5, 0, 999);
+
+        else if ( generic_temp_select_menu == 14 )
+          braids_osc.rev_send = constrain(braids_osc.rev_send - 1, 0, 127);
+        else if ( generic_temp_select_menu == 15 )
+          braids_osc.chorus_send = constrain(braids_osc.chorus_send - 1, 0, 127);
+        else if ( generic_temp_select_menu == 16 )
+          braids_osc.delay_send = constrain(braids_osc.delay_send - 1, 0, 127);
+        else if ( generic_temp_select_menu == 17 )
+          braids_osc.pan = constrain(braids_osc.pan - 1, PANORAMA_MIN, PANORAMA_MAX);
+        else if ( generic_temp_select_menu == 18 )
+          braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 1, 15);
+      }
+    }
+
+    if (LCDML.BT_checkEnter()  && encoderDir[ENC_R].ButtonShort())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    {
+      if ( generic_active_function == 0 )
+        generic_active_function = 1;
+      else
+        generic_active_function = 0;
+    }
+    else if (LCDML.BT_checkEnter())
+    {
+      ;
+    }
+
+    //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    braids_update_settings();
+    if (generic_temp_select_menu == 0)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    print_small_intbar(9, 3,  braids_osc.sound_intensity, 0, 1, 0);
+    if (generic_temp_select_menu == 1)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(RED, COLOR_BACKGROUND);
+    setCursor_textGrid_small(10, 4);
+    seq_print_formatted_number(braids_osc.algo, 2);
+
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor(COLOR_BACKGROUND, GREY1);
+    if (braids_osc.algo == 14)
+      display.print(F("SAWSWARM"));
+
+    if (generic_temp_select_menu == 2)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(10, 5);
+    seq_print_formatted_number(braids_osc.color, 2);
+    if (generic_temp_select_menu == 3)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(10, 6);
+    seq_print_formatted_number(braids_osc.timbre, 2);
+    if (generic_temp_select_menu == 4)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(9, 7);
+    seq_print_formatted_number_signed( braids_osc.coarse, 2);
+
+    if (generic_temp_select_menu == 5)
+    {
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    } else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(10, 8);
+    seq_print_formatted_number( braids_osc.env_attack * 4, 4);
+    if (generic_temp_select_menu == 6)
+    {
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    } else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(10, 9);
+    seq_print_formatted_number( braids_osc.env_decay * 4, 4);
+    if (generic_temp_select_menu == 7) {
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    } else  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(11, 10);
+    seq_print_formatted_number( braids_osc.env_sustain * 2, 3);
+    if (generic_temp_select_menu == 8) {
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    } else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(10, 11);
+    seq_print_formatted_number( braids_osc.env_release * braids_osc.env_release , 4);
+
+
+    if (generic_temp_select_menu == 9)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(RED, COLOR_BACKGROUND);
+    setCursor_textGrid_small(32, 3);
+    if (braids_osc.filter_mode == 0)
+      display.print(F("OFF   "));
+    else if (braids_osc.filter_mode == 1)
+      display.print(F("LP12dB"));
+    else if (braids_osc.filter_mode == 2)
+      display.print(F("BP12dB"));
+    else if (braids_osc.filter_mode == 3)
+      display.print(F("HI12dB"));
+
+    print_small_intbar(32, 4, braids_osc.filter_freq_from / 100, 10, 0, 1);
+    print_small_intbar(38, 4, braids_osc.filter_freq_to / 100, 11, 0, 1);
+    print_small_intbar(27, 5, braids_osc.filter_resonance, 12, 0, 1);
+    print_small_intbar(38, 5, braids_osc.filter_speed / 10, 13, 0, 1);
+
+
+    setCursor_textGrid_small(33, 7);
+    if (generic_temp_select_menu == 14)
+    {
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    } else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    seq_print_formatted_number( braids_osc.rev_send, 3);
+    setCursor_textGrid_small(33, 8);
+
+    if (generic_temp_select_menu == 15)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    seq_print_formatted_number( braids_osc.chorus_send, 3);
+
+    setCursor_textGrid_small(33, 9);
+    if (generic_temp_select_menu == 16)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    seq_print_formatted_number( braids_osc.delay_send, 3);
+
+    if (generic_temp_select_menu == 17)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    print_small_panbar(33, 10, braids_osc.pan, 17);
+
+    if (generic_temp_select_menu == 18)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(34, 11);
+    seq_print_formatted_number( braids_osc.midi_channel, 2);
+
+
+  }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
+    generic_active_function = 99;
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+
+}
+#else
+void UI_func_braids(uint8_t param)
+{
+  if (LCDML.FUNC_setup())
+    not_available_message();
+  if (LCDML.FUNC_close())
+  {
+    display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
   }
-  #endif
 }
-
+#endif
 
 //void UI_func_speedtest(uint8_t param)
 //{ // ILI9341 478 msecs
@@ -12879,7 +13204,7 @@ void UI_func_file_manager(uint8_t param)
 }
 #endif
 
-#if (defined COMPILE_FOR_PROGMEM)   ||  (defined COMPILE_FOR_SDCARD) 
+#if (defined COMPILE_FOR_PROGMEM)   ||  (defined COMPILE_FOR_SDCARD)
 void UI_func_file_manager(uint8_t param)
 {
   uint32_t volumesize;
@@ -13173,11 +13498,11 @@ void print_mixer_text()
   setCursor_textGrid_small(4, 19);
   seq_print_formatted_number(configuration.dexed[1].sound_intensity, 3);
   setCursor_textGrid_small(8, 19);
-  #ifdef USE_MICROSYNTH
+#ifdef USE_MICROSYNTH
   seq_print_formatted_number(microsynth[0].sound_intensity, 3);
   setCursor_textGrid_small(12, 19);
   seq_print_formatted_number(microsynth[1].sound_intensity, 3);
-  #endif
+#endif
   temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
   setCursor_textGrid_small(16, 19);
   seq_print_formatted_number(temp_int, 3);
@@ -13230,12 +13555,12 @@ void UI_func_mixer(uint8_t param)
         }
         else if (seq.temp_active_menu > 1 && seq.temp_active_menu < 4) //microsynth
         {
-          #ifdef USE_MICROSYNTH
+#ifdef USE_MICROSYNTH
           if (LCDML.BT_checkDown())
             microsynth[seq.temp_active_menu - 2].sound_intensity = constrain(microsynth[seq.temp_active_menu - 2].sound_intensity + 1, 0, 100);
           else if (LCDML.BT_checkUp())
             microsynth[seq.temp_active_menu - 2].sound_intensity = constrain(microsynth[seq.temp_active_menu - 2].sound_intensity - 1, 0, 100);
-            #endif
+#endif
         }
         else if (seq.temp_active_menu == 4) //drums
         {
@@ -13294,9 +13619,9 @@ void UI_func_mixer(uint8_t param)
     if (seq.temp_active_menu > 1 && seq.temp_active_menu < 4 && seq.edit_state) // //microsynth
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      #ifdef USE_MICROSYNTH
+#ifdef USE_MICROSYNTH
       display_bar_int("", microsynth[seq.temp_active_menu - 2].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
-      #endif
+#endif
       setCursor_textGrid(1, 1);
       display.print("MICROSYNTH #");
       display.print(seq.temp_active_menu - 2 + 1);
@@ -16421,6 +16746,5 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
   Serial.println(msz[preset_number][zone_number].rootnote);
 #endif
 }
-
 
 #endif

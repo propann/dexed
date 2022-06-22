@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "2.0.0a"
+#define VERSION "0.9.1"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -130,7 +130,6 @@
 
 // NUMBER OF SAMPLES IN DRUMSET
 #define NUM_DRUMSET_CONFIG 71
-//#define NUM_DRUMSET_CONFIG 2
 
 // SEQUENCER
 #define USE_SEQUENCER
@@ -157,7 +156,8 @@
 #define NUM_MICROSYNTH 2
 #endif
 
-//#define USE_BRAIDS  //not there, yet. Not sure if possible at all. If so, only a small part of it could come in.
+//#define USE_BRAIDS  //very early state. not ready for usage
+//#define NUM_BRAIDS 8
 
 #define VIRT_KEYB_YPOS 166
 
@@ -850,6 +850,7 @@ typedef struct epiano_s {
   uint8_t midi_channel;
 } epiano_t;
 
+#ifdef USE_MICROSYNTH
 typedef struct microsynth_s
 {
   int coarse;
@@ -896,6 +897,40 @@ typedef struct microsynth_s
   uint8_t chorus_send;
   uint8_t delay_send;
 } microsynth_t;
+#endif
+
+#ifdef USE_BRAIDS
+typedef struct braids_s
+{
+  uint8_t sound_intensity;
+  uint8_t algo;
+  uint8_t color;
+  uint8_t timbre;
+  int coarse;
+  uint8_t env_attack;
+  uint8_t env_decay;
+  uint8_t env_sustain;
+  uint8_t env_release;
+  uint8_t filter_mode;
+  uint16_t filter_freq_from;
+  uint16_t filter_freq_to;
+  uint8_t filter_resonance;
+  uint16_t filter_speed;
+  uint8_t rev_send;
+  uint8_t chorus_send;
+  uint8_t delay_send;
+  uint8_t midi_channel;
+  uint8_t pan;
+} braids_t;
+#endif
+
+#ifdef USE_BRAIDS
+typedef struct braids_filter_state_s
+{
+  uint16_t filter_freq_last_displayed = 99;
+  uint16_t filter_freq_current;
+} braids_filter_state_t;
+#endif
 
 typedef struct sys_s {
   uint8_t vol;

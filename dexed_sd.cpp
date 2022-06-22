@@ -53,6 +53,11 @@ extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern void microsynth_update_settings(uint8_t instance_id);
 #endif
 
+#ifdef USE_BRAIDS
+extern braids_t braids;
+extern void braids_update_settings();
+#endif
+
 #ifdef USE_SEQUENCER
 #include "sequencer.h"
 extern PeriodicTimer sequencer_timer;
@@ -92,8 +97,6 @@ extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 extern multisample_t ms[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-
-extern bool save_sys_flag;
 
 /******************************************************************************
    SD BANK/VOICE LOADING
@@ -1571,8 +1574,6 @@ bool load_sd_sys_json(void)
 bool save_sd_sys_json(void)
 {
   char filename[CONFIG_FILENAME_LEN];
-//HACK
- return (true);
 
   if (sd_card > 0)
   {
@@ -1607,7 +1608,6 @@ bool save_sd_sys_json(void)
       serializeJsonPretty(data_json, json);
       json.close();
       AudioInterrupts();
-      save_sys_flag = false;
       return (true);
     }
     json.close();

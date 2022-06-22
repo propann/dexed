@@ -55,6 +55,7 @@ extern int8_t midi_decay_dexed[NUM_DEXED];
 extern int8_t midi_decay_microsynth[NUM_MICROSYNTH];
 #endif
 extern void UI_func_microsynth(uint8_t param);
+
 #ifdef USE_MICROSYNTH
 extern AudioSynthWaveform       microsynth_waveform[NUM_MICROSYNTH];
 extern AudioEffectEnvelope      microsynth_envelope_osc[NUM_MICROSYNTH];
@@ -63,6 +64,24 @@ extern AudioEffectEnvelope      microsynth_envelope_noise[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern elapsedMillis microsynth_lfo_delay_timer[2];
+#endif
+
+#ifdef USE_SEQUENCER
+sequencer_t seq;
+#endif
+
+#ifdef USE_MICROSYNTH
+microsynth_t microsynth[2];
+#endif
+
+#ifdef USE_BRAIDS
+extern braids_t braids_osc;
+extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
+#endif
+
+#ifdef USE_BRAIDS
+extern AudioEffectEnvelope*            braids_envelope[NUM_BRAIDS];
+extern AudioFilterStateVariable*       braids_filter[NUM_BRAIDS];
 #endif
 
 extern uint16_t COLOR_SYSTEXT;
@@ -75,13 +94,6 @@ extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
-#ifdef USE_SEQUENCER
-sequencer_t seq;
-#endif
-
-#ifdef USE_MICROSYNTH
-microsynth_t microsynth[2];
-#endif
 multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 multisample_s ms[NUM_MULTISAMPLES] =
 {
@@ -196,7 +208,7 @@ void sequencer_part1(void)
     {
       if ( seq.track_type[d] == 0  && seq.ticks == 0 )
       { // drum track (drum samples and pitched one-shot samples)
-        #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
         if (seq.note_data[  seq.current_pattern[d] ][seq.step] > 0 )
         {
           if (seq.vel[  seq.current_pattern[d] ][seq.step] > 209)  // it is a pitched sample
@@ -208,7 +220,7 @@ void sequencer_part1(void)
           else // else play normal drum sample
             handleNoteOn(drum_midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
         }
-        #endif
+#endif
       }
       else {
         if (seq.note_data[ seq.current_pattern[d]][seq.step] > 0 )
@@ -217,8 +229,14 @@ void sequencer_part1(void)
           {
             if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 && seq.ticks == 0)
             {
+              //Braids Instrument
+              if (seq.instrument[d] ==5) 
+              {
+                handleNoteOn(seq.instrument[d], seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 4);
+              }
+
               //Multisampler Instrument
-              if (seq.instrument[d] > 4 && seq.instrument[d] < 15) // track is for internal MultiSampler
+              if (seq.instrument[d] > 5 && seq.instrument[d] < 15) // track is for internal MultiSampler
               {
                 handleNoteOn(seq.instrument[d] - 5, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 3);
               }
@@ -616,6 +634,10 @@ void sequencer_part2(void)
           else if (seq.instrument[d] > 2 && seq.instrument[d] < 5)
             handleNoteOff( microsynth[ seq.instrument[d] - 3].midi_channel, seq.prev_note[d], 0, 0);
 #endif
+#ifdef USE_BRAIDS
+          else if (seq.instrument[d] ==5 && seq.ticks == 7)
+            handleNoteOff( seq.instrument[d], seq.prev_note[d] , 0, 4);
+#endif
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 14 && seq.instrument[d] < 31 && seq.ticks == 7) // track is for external USB MIDI
           {
@@ -807,6 +829,41 @@ void update_microsynth_params()
 #endif
 }
 
+void update_braids_params()
+{
+#ifdef USE_BRAIDS
+  for (uint8_t d = 0; d < NUM_BRAIDS; d++)
+  {
+    if ( braids_envelope[d]->isActive() )
+    {
+
+      if  (braids_osc.filter_freq_from > braids_osc.filter_freq_to && braids_osc.filter_speed != 0)
+      {
+        if (braids_filter_state[d]->filter_freq_current > braids_osc.filter_freq_to)  //osc filter down
+        {
+          if (int(braids_filter_state[d]->filter_freq_current / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0)
+            braids_filter_state[d]->filter_freq_current = int(braids_filter_state[d]->filter_freq_current / float((1.01 + (braids_osc.filter_speed * 0.001))));
+          else
+            braids_filter_state[d]->filter_freq_current = 0;
+
+          braids_filter[d]->frequency(braids_filter_state[d]->filter_freq_current);
+        }
+      } 
+      else
+      {
+        if (braids_filter_state[d]->filter_freq_current < braids_osc.filter_freq_to && braids_osc.filter_speed != 0)
+        { //osc filter up
+          if (braids_filter_state[d]->filter_freq_current + braids_osc.filter_speed <= 15000)
+            braids_filter_state[d]->filter_freq_current = braids_filter_state[d]->filter_freq_current + braids_osc.filter_speed;
+          else
+            braids_filter_state[d]->filter_freq_current = 15000;
+          braids_filter[d]->frequency(braids_filter_state[d]->filter_freq_current);
+        }
+      }
+    }
+  }
+#endif
+}
 
 void sequencer(void)
 { // Runs in Interrupt Timer. Switches between the Noteon and Noteoff Task, each cycle
@@ -1221,9 +1278,6 @@ void seq_print_current_note_from_step(uint8_t step)
     }
   }
 }
-
-
-
 
 void print_keyboard_small (int xpos, int ypos, uint8_t octave, uint8_t actstep, bool fullredraw)
 {

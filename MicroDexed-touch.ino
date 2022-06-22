@@ -126,8 +126,20 @@ AudioAnalyzePeak                ep_peak_l;
 #endif
 
 #ifdef USE_BRAIDS
-AudioSynthBraids                synthBraids;
-//AudioMixer<1>                   braids_mixer;
+AudioSynthBraids*               synthBraids[NUM_BRAIDS];
+AudioMixer<NUM_BRAIDS>          braids_mixer;
+AudioMixer<4>*                  braids_mixer_filter[NUM_BRAIDS];
+AudioMixer<2>                   braids_mixer_reverb;
+AudioEffectEnvelope*            braids_envelope[NUM_BRAIDS];
+AudioFilterStateVariable*       braids_filter[NUM_BRAIDS];
+AudioEffectStereoPanorama       braids_stereo_panorama;
+uint8_t braids_slot;
+extern void update_braids_params(void);
+#endif
+
+#ifdef USE_BRAIDS
+braids_t braids_osc;
+braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -139,8 +151,8 @@ AudioFilterStateVariable        microsynth_filter_osc[NUM_MICROSYNTH];
 AudioFilterStateVariable        microsynth_filter_noise[NUM_MICROSYNTH];
 AudioEffectStereoPanorama       microsynth_stereo_panorama_osc[NUM_MICROSYNTH];
 AudioEffectStereoPanorama       microsynth_stereo_panorama_noise[NUM_MICROSYNTH];
-AudioMixer<4>                   microsynth_mixer_r;
-AudioMixer<4>                   microsynth_mixer_l;
+AudioMixer<2>                   microsynth_mixer_r;
+AudioMixer<2>                   microsynth_mixer_l;
 AudioMixer<4>                   microsynth_mixer_filter_osc[NUM_MICROSYNTH];
 AudioMixer<4>                   microsynth_mixer_filter_noise[NUM_MICROSYNTH];
 AudioMixer<2>                   microsynth_mixer_reverb;
@@ -178,9 +190,9 @@ AudioAnalyzePeak                microdexed_peak_0;
 AudioAnalyzePeak                microdexed_peak_1;
 
 #if defined(USE_FX)
-#if defined(USE_EPIANO) || defined(USE_MICROSYNTH)
-AudioMixer<5>                   reverb_mixer_r;
-AudioMixer<5>                   reverb_mixer_l;
+#if defined(USE_EPIANO) || defined(USE_MICROSYNTH) || defined(USE_BRAIDS)
+AudioMixer<7>                   reverb_mixer_r;
+AudioMixer<7>                   reverb_mixer_l;
 #else
 AudioMixer<3>                   reverb_mixer_r;
 AudioMixer<3>                   reverb_mixer_l;
@@ -193,8 +205,10 @@ AudioEffectPlateReverb          reverb;
 AudioMixer<7>                   master_mixer_r;
 AudioMixer<7>                   master_mixer_l;
 #else
-AudioMixer<5>                   master_mixer_r;
-AudioMixer<5>                   master_mixer_l;
+//AudioMixer<5>                   master_mixer_r;
+//AudioMixer<5>                   master_mixer_l;
+AudioMixer<8>                   master_mixer_r;
+AudioMixer<8>                   master_mixer_l;
 #endif
 AudioAmplifier                  volume_r;
 AudioAmplifier                  volume_l;
@@ -268,11 +282,9 @@ AudioOutputAnalogStereo         dacOut;
 #ifdef AUDIO_DEVICE_USB
 AudioOutputUSB                  usb1;
 #endif
-
 #if defined(TEENSY_AUDIO_BOARD) && defined(SGTL5000_AUDIO_THRU)
 AudioInputI2S                   i2s1in;
 #endif
-
 
 //
 // Static patching of audio objects
@@ -377,15 +389,6 @@ AudioConnection patchCord[] = {
 #endif
 #endif
 
-#ifdef USE_BRAIDS
-  // {synthBraids, 0, braids_mixer, 0},
-  // {braids_mixer, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS},
-  // {braids_mixer, 0, master_mixer_l, MASTER_MIX_CH_BRAIDS},
-  // {synthBraids, 0, master_mixer_l, MASTER_MIX_CH_BRAIDS},
-  // {synthBraids, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS},
-
-#endif
-
 #ifdef USE_MICROSYNTH
   {microsynth_noise[0], 0, microsynth_envelope_noise[0] , 0},  //noise generator to envelope
   {microsynth_noise[1], 0, microsynth_envelope_noise[1] , 0},
@@ -459,24 +462,27 @@ AudioConnection patchCord[] = {
   {microsynth_mixer_filter_noise[0], 0, microsynth_peak_noise_0, 0}, // unfiltered noise to mixer
   {microsynth_mixer_filter_noise[1], 0, microsynth_peak_noise_1, 0},
 #endif
-
 };
 
 //
 // Dynamic patching of MicroDexed objects
 //
 uint8_t nDynamic = 0;
-#if defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
+#if defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT && defined (USE_BRAIDS)
+AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 8];
+#elif defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 ];
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT == MOD_NO_FILTER_OUTPUT
-AudioConnection* dynamicConnections[NUM_DEXED * 15 + NUM_DRUMS * 4];
+AudioConnection* dynamicConnections[NUM_DEXED * 15 + NUM_DRUMS * 4 ];
 #else
-AudioConnection* dynamicConnections[NUM_DEXED * 4 + NUM_DRUMS * 2];
+AudioConnection* dynamicConnections[NUM_DEXED * 4 + NUM_DRUMS * 2 8];
 #endif
+
 void create_audio_dexed_chain(uint8_t instance_id)
 {
   MicroDexed[instance_id] = new AudioSynthDexed(MAX_NOTES / NUM_DEXED, SAMPLE_RATE);
   mono2stereo[instance_id] = new AudioEffectMonoStereo();
+
 #if defined(USE_FX)
   chorus_modulator[instance_id] = new AudioSynthWaveform();
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
@@ -523,6 +529,38 @@ void create_audio_dexed_chain(uint8_t instance_id)
   Serial.println(instance_id);
 #endif
 }
+
+#ifdef USE_BRAIDS
+void create_audio_braids_chain(uint8_t instance_id)
+{
+  synthBraids[instance_id] = new AudioSynthBraids();
+  braids_envelope[instance_id] = new AudioEffectEnvelope();
+  braids_filter[instance_id] = new AudioFilterStateVariable();
+  braids_mixer_filter[instance_id] = new AudioMixer<4>;
+  dynamicConnections[nDynamic++] = new AudioConnection(*synthBraids[instance_id], 0, *braids_envelope[instance_id], 0);
+  dynamicConnections[nDynamic++] = new AudioConnection(*braids_envelope[instance_id], 0, *braids_filter[instance_id], 0);
+  dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 0, *braids_mixer_filter[instance_id], 0);
+  dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 1, *braids_mixer_filter[instance_id], 1);
+  dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 2, *braids_mixer_filter[instance_id], 2);
+  dynamicConnections[nDynamic++] = new AudioConnection(*braids_envelope[instance_id], 0, *braids_mixer_filter[instance_id], 3); // filter is off
+  dynamicConnections[nDynamic++] = new AudioConnection(*braids_mixer_filter[instance_id], 0, braids_mixer, instance_id);
+
+  if (instance_id == 0)
+  {
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, braids_stereo_panorama, 0);
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, braids_stereo_panorama, 1);
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS);
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_BRAIDS);
+    dynamicConnections[nDynamic++] = new AudioConnection{braids_mixer, 0, braids_mixer_reverb , 0};
+    dynamicConnections[nDynamic++] = new AudioConnection{braids_mixer, 0, braids_mixer_reverb , 1};
+    dynamicConnections[nDynamic++] = new AudioConnection{braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS};
+    dynamicConnections[nDynamic++] = new AudioConnection{braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS};
+  }
+//#ifdef DEBUG
+//  Serial.println(instance_id);
+//#endif
+}
+#endif
 
 //
 // Dynamic patching of Drum objects
@@ -732,6 +770,7 @@ void setup()
   sgtl5000.inputSelect(AUDIO_INPUT_LINEIN);
   sgtl5000.lineInLevel(5);
   //sgtl5000.adcHighPassFilterEnable();
+  //sgtl5000.adcHighPassFilterDisable();
 #endif
 #ifdef SGTL5000_AUDIO_ENHANCE
   sgtl5000.audioPostProcessorEnable();
@@ -797,6 +836,14 @@ void setup()
     Serial.print(F(": "));
     Serial.print(MicroDexed[instance_id]->getMaxNotes());
     Serial.println(F(" voices"));
+  }
+#endif
+
+#ifdef USE_BRAIDS
+  // create dynamic Braids instances
+  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
+  {
+    create_audio_braids_chain(instance_id);
   }
 #endif
 
@@ -870,6 +917,10 @@ void setup()
 #if defined(USE_MICROSYNTH)
   microsynth_update_settings(0);
   microsynth_update_settings(1);
+#endif
+
+#if defined(USE_BRAIDS)
+  braids_update_settings();
 #endif
 
   // Setup effects
@@ -1125,9 +1176,13 @@ void setup()
   }
 
 #ifdef USE_BRAIDS
-  synthBraids.init_braids();
-  //synthBraids.set_braids_shape(27);
-  //synthBraids.set_braids_pitch(22 << 7);
+  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
+  {
+    braids_filter_state[instance_id] = new braids_filter_state_t();
+    synthBraids[instance_id]->init_braids();
+    //synthBraids.set_braids_pitch(48 << 7);
+    braids_osc.algo = 14;
+  }
 #endif
 }
 
@@ -1359,6 +1414,29 @@ void loop()
     }
   }
 #endif
+
+#ifdef USE_BRAIDS
+  update_braids_params();
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
+  {
+    display.setTextSize(1);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+
+    for (uint8_t d = 0; d < NUM_BRAIDS; d++)
+    {
+      if (braids_filter_state[d]->filter_freq_last_displayed != braids_filter_state[d]->filter_freq_current)
+      {
+        if (d>=NUM_BRAIDS/2)
+        setCursor_textGrid_small(49, 7 + d-NUM_BRAIDS/2);
+        else
+        setCursor_textGrid_small(45, 7 + d);
+        seq_print_formatted_number( braids_filter_state[d]->filter_freq_current / 100, 3);
+        braids_filter_state[d]->filter_freq_last_displayed = braids_filter_state[d]->filter_freq_current;
+      }
+    }
+  }
+#endif
+
   if (control_rate > CONTROL_RATE_MS)
   {
     control_rate = 0;
@@ -1436,19 +1514,27 @@ void loop()
         break;
       }
     }
-    //    if (instance_is_playing == false)
-    //    {
-    //      for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
-    //      {
-    //        if (Drum[instance_id]->isPlaying())
-    //        {
-    //          instance_is_playing = true;
-    //          break;
-    //        }
-    //      }
-    //    }
     if (instance_is_playing == false)
+    {
+      for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
+      {
+        if (Drum[instance_id]->isPlaying())
+        {
+          instance_is_playing = true;
+          break;
+        }
+      }
+    }
+    if (instance_is_playing == false)
+    {
       save_sd_sys_json();
+      save_sys = 0;
+      save_sys_flag = false;
+#ifdef DEBUG
+      Serial.println(F("Saved."));
+      //Serial.print(save_sys_flag);
+#endif
+    }
     else
     {
 #ifdef DEBUG
@@ -1678,19 +1764,30 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
       else  if (trk == 4)
         inChannel = microsynth[1].midi_channel;
 #endif
+#ifdef USE_BRAIDS
+      else  if (trk == 5)
+        inChannel = braids_osc.midi_channel;
+#endif
     }
   }
 
 #ifdef USE_BRAIDS
-  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
+  //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
+  if (device == 4  && inNumber < 119)
   {
-    synthBraids.set_braids_shape(15);
-    synthBraids.set_braids_pitch(inNumber << 7);
+    braids_slot++;
+    if (braids_slot > NUM_BRAIDS - 1)
+      braids_slot = 0;
+    synthBraids[braids_slot]->set_braids_pitch((inNumber + braids_osc.coarse) << 7);
+    braids_envelope[braids_slot]->noteOn();
 
-#ifdef DEBUG
-    Serial.println("BRAIDS input Note:");
-    Serial.print(inNumber << 7);
-#endif
+
+    //#ifdef DEBUG
+    //    Serial.println("BRAIDS input Note:");
+    //    Serial.print((inNumber + braids_osc.coarse) << 7);
+    //    Serial.println("Slot:");
+    //    Serial.print(braids_slot);
+    //#endif
   }
 #endif
 
@@ -2062,6 +2159,18 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)
 #endif
     }
   }
+
+#ifdef USE_BRAIDS
+  //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
+  if (device == 4)
+  {
+    // if (braids_slot - 1 >= 0)
+    braids_envelope[braids_slot ]->noteOff();
+    // else
+    //  braids_envelope[0]->noteOff();
+  }
+#endif
+
 
 #ifdef MIDI_DEVICE_USB_HOST
   if (device == 1)
