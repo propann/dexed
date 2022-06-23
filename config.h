@@ -76,11 +76,11 @@
 // Left and right channel audio signal is presented on pins A21 and A22.
 
 //#define AUDIO_DEVICE_USB
-//#define TEENSY_AUDIO_BOARD
+#define TEENSY_AUDIO_BOARD
 
 ////////YOU HAVE TO ENABLE MUTE_PIN WHEN USING I2S_AUDIO WITH PCM5102, OTHERWISE AUDIO WILL BE MUTED PERMANENTLY
-#define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
-#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function -
+//#define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
+//#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function -
 
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -97,7 +97,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-#define REMOTE_CONSOLE  //enable USB Display Mirroring
+//#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -106,8 +106,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-//#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
-#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
+#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
+//#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 //#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
 
@@ -144,11 +144,11 @@
 #define NUM_MULTISAMPLE_ZONES 8
 
 // EPIANO
-//#define USE_EPIANO
-//#ifdef USE_EPIANO
-//#define NUM_EPIANO_VOICES 16
-//#define DEFAULT_EP_MIDI_CHANNEL 3
-//#endif
+#define USE_EPIANO
+#ifdef USE_EPIANO
+#define NUM_EPIANO_VOICES 16
+#define DEFAULT_EP_MIDI_CHANNEL 3
+#endif
 
 // MICROSYNTH
 #define USE_MICROSYNTH
@@ -156,8 +156,8 @@
 #define NUM_MICROSYNTH 2
 #endif
 
-#define USE_BRAIDS  //very early state. not ready for usage
-#define NUM_BRAIDS 8
+//#define USE_BRAIDS  //very early state. not ready for usage
+//#define NUM_BRAIDS 8
 
 #define VIRT_KEYB_YPOS 166
 
