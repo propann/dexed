@@ -9870,7 +9870,7 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
       else if (seq.instrument[x] == 2 )  display.print(F("EP "));
       else if (seq.instrument[x] == 3 )  display.print(F("MS1"));
       else if (seq.instrument[x] == 4 )  display.print(F("MS2"));
-      else if (seq.instrument[x] == 5 )  display.print(F("BRS"));
+      else if (seq.instrument[x] == 5 )  display.print(F("BRD"));
       else if (seq.instrument[x] > 5 && seq.instrument[x] < 15 )
       {
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 5 );
@@ -11406,23 +11406,19 @@ void UI_func_braids(uint8_t param)
     print_small_intbar(9, 3,  braids_osc.sound_intensity, 0, 1, 0);
     if (generic_temp_select_menu == 1)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(RED, COLOR_BACKGROUND);
-    setCursor_textGrid_small(10, 4);
+    setCursor_textGrid_small(9, 4);
     seq_print_formatted_number(braids_osc.algo, 2);
-
+    setCursor_textGrid_small(12, 4);
     display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F(" "));
-    display.setTextColor(COLOR_BACKGROUND, GREY1);
-    if (braids_osc.algo == 14)
-      display.print(F("SAWSWARM"));
-
+    display.print(synthBraids[0]->get_name(braids_osc.algo));
     if (generic_temp_select_menu == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(10, 5);
-    seq_print_formatted_number(braids_osc.color, 2);
+    setCursor_textGrid_small(9, 5);
+    seq_print_formatted_number(braids_osc.color, 3);
     if (generic_temp_select_menu == 3)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(10, 6);
-    seq_print_formatted_number(braids_osc.timbre, 2);
+    setCursor_textGrid_small(9, 6);
+    seq_print_formatted_number(braids_osc.timbre, 3);
     if (generic_temp_select_menu == 4)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(9, 7);
@@ -11495,8 +11491,6 @@ void UI_func_braids(uint8_t param)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(34, 11);
     seq_print_formatted_number( braids_osc.midi_channel, 2);
-
-
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -12072,7 +12066,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
     stop_all_drum_slots();
 
     seq.active_multisample = 0;
-    seq_active_function = 99;
+    seq.active_function = 99;
     seq.temp_select_menu = 0;
     seq.scrollpos = 0;
     calc_low_high(seq.active_multisample);
@@ -12119,7 +12113,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
-      if (seq_active_function == 0 && seq.temp_select_menu == 0)
+      if (seq.active_function == 0 && seq.temp_select_menu == 0)
       {
         if (LCDML.BT_checkDown())
         {
@@ -12131,7 +12125,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
         }
         calc_low_high(seq.active_multisample);
       }
-      if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 6) //file name selection
+      if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 6) //file name selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12144,7 +12138,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
         stop_all_drum_slots();
         fill_msz_from_flash_filename(seq.scrollpos, seq.active_multisample, seq.temp_select_menu - 1);
       }
-      if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 5) //reverb send selection
+      if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 5) //reverb send selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12155,7 +12149,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
           msz[seq.active_multisample][seq.temp_select_menu - 1].rev = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].rev - 1, 0, 100);
         }
       }
-      else if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 4) //pan selection
+      else if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 4) //pan selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12166,7 +12160,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
           msz[seq.active_multisample][seq.temp_select_menu - 1].pan = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].pan - 1, PANORAMA_MIN, PANORAMA_MAX);
         }
       }
-      else if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 3) //volume selection
+      else if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 3) //volume selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12177,7 +12171,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
           msz[seq.active_multisample][seq.temp_select_menu - 1].vol = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].vol - 1, 0, 100);
         }
       }
-      else if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 2) //high selection
+      else if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 2) //high selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12188,7 +12182,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
           msz[seq.active_multisample][seq.temp_select_menu - 1].high = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].high - 1, 12, 127);
         }
       }
-      else if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 1) //low selection
+      else if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 1) //low selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12199,7 +12193,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
           msz[seq.active_multisample][seq.temp_select_menu - 1].low = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].low - 1, 12, 127);
         }
       }
-      else if (seq_active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 0) //root note selection
+      else if (seq.active_function == 0 && seq.temp_select_menu > 0 && seq.selected_track == 0) //root note selection
       {
         if (LCDML.BT_checkDown())
         {
@@ -12210,7 +12204,7 @@ void UI_func_MultiSamplePlay(uint8_t param)
           msz[seq.active_multisample][seq.temp_select_menu - 1].rootnote = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].rootnote - 1, 12, 127);
         }
       }
-      else if (seq_active_function == 99) // no option is selected, scroll parameter rows
+      else if (seq.active_function == 99) // no option is selected, scroll parameter rows
       {
         if (LCDML.BT_checkDown())
         {
@@ -12242,12 +12236,12 @@ void UI_func_MultiSamplePlay(uint8_t param)
     }
     if (LCDML.BT_checkEnter())
     {
-      //if (seq.temp_select_menu == 0 && seq_active_function == 99 && seq.edit_state)
+      //if (seq.temp_select_menu == 0 && seq.active_function == 99 && seq.edit_state)
       //LCDML.OTHER_jumpToFunc(UI_func_set_multisample_name);
-      if (seq_active_function == 99)
-        seq_active_function = 0;
+      if (seq.active_function == 99)
+        seq.active_function = 0;
       else
-        seq_active_function = 99;
+        seq.active_function = 99;
     }
     display.setTextSize(2);
     //if (seq.temp_select_menu == 0 && seq.edit_state == false )

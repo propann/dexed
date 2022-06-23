@@ -66,6 +66,8 @@ extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern elapsedMillis microsynth_lfo_delay_timer[2];
 #endif
 
+
+
 #ifdef USE_SEQUENCER
 sequencer_t seq;
 #endif
@@ -76,7 +78,8 @@ microsynth_t microsynth[2];
 
 #ifdef USE_BRAIDS
 extern braids_t braids_osc;
-extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
+//extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
+extern uint16_t braids_filter_state[NUM_BRAIDS];
 #endif
 
 #ifdef USE_BRAIDS
@@ -839,25 +842,25 @@ void update_braids_params()
 
       if  (braids_osc.filter_freq_from > braids_osc.filter_freq_to && braids_osc.filter_speed != 0)
       {
-        if (braids_filter_state[d]->filter_freq_current > braids_osc.filter_freq_to)  //osc filter down
+        if (braids_filter_state[d] > braids_osc.filter_freq_to)  //osc filter down
         {
-          if (int(braids_filter_state[d]->filter_freq_current / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0)
-            braids_filter_state[d]->filter_freq_current = int(braids_filter_state[d]->filter_freq_current / float((1.01 + (braids_osc.filter_speed * 0.001))));
+          if (int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0)
+            braids_filter_state[d] = int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001))));
           else
-            braids_filter_state[d]->filter_freq_current = 0;
+            braids_filter_state[d] = 0;
 
-          braids_filter[d]->frequency(braids_filter_state[d]->filter_freq_current);
+          braids_filter[d]->frequency(braids_filter_state[d]);
         }
       } 
       else
       {
-        if (braids_filter_state[d]->filter_freq_current < braids_osc.filter_freq_to && braids_osc.filter_speed != 0)
+        if (braids_filter_state[d] < braids_osc.filter_freq_to && braids_osc.filter_speed != 0)
         { //osc filter up
-          if (braids_filter_state[d]->filter_freq_current + braids_osc.filter_speed <= 15000)
-            braids_filter_state[d]->filter_freq_current = braids_filter_state[d]->filter_freq_current + braids_osc.filter_speed;
+          if (braids_filter_state[d] + braids_osc.filter_speed <= 15000)
+            braids_filter_state[d] = braids_filter_state[d] + braids_osc.filter_speed;
           else
-            braids_filter_state[d]->filter_freq_current = 15000;
-          braids_filter[d]->frequency(braids_filter_state[d]->filter_freq_current);
+            braids_filter_state[d] = 15000;
+          braids_filter[d]->frequency(braids_filter_state[d]);
         }
       }
     }

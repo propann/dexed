@@ -139,7 +139,9 @@ extern void update_braids_params(void);
 
 #ifdef USE_BRAIDS
 braids_t braids_osc;
-braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
+//braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
+uint16_t braids_filter_state[NUM_BRAIDS];
+uint16_t braids_filter_state_last_displayed[NUM_BRAIDS];
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -556,9 +558,9 @@ void create_audio_braids_chain(uint8_t instance_id)
     dynamicConnections[nDynamic++] = new AudioConnection{braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS};
     dynamicConnections[nDynamic++] = new AudioConnection{braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS};
   }
-//#ifdef DEBUG
-//  Serial.println(instance_id);
-//#endif
+  //#ifdef DEBUG
+  //  Serial.println(instance_id);
+  //#endif
 }
 #endif
 
@@ -670,6 +672,10 @@ elapsedMillis microsynth_lfo_control_rate;
 elapsedMillis microsynth_lfo_delay_timer[2];
 #endif
 elapsedMillis midi_decay_timer_dexed;
+
+#ifdef USE_BRAIDS
+elapsedMillis braids_lfo_control_rate;
+#endif
 
 
 #if NUM_DEXED>1
@@ -1178,7 +1184,7 @@ void setup()
 #ifdef USE_BRAIDS
   for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
   {
-    braids_filter_state[instance_id] = new braids_filter_state_t();
+    // braids_filter_state[instance_id] = new braids_filter_state_t();
     synthBraids[instance_id]->init_braids();
     //synthBraids.set_braids_pitch(48 << 7);
     braids_osc.algo = 14;
@@ -1416,22 +1422,26 @@ void loop()
 #endif
 
 #ifdef USE_BRAIDS
-  update_braids_params();
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
+  if (braids_lfo_control_rate > BRAIDS_LFO_RATE_MS) //update  filters when played live or by seq.
   {
-    display.setTextSize(1);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-
-    for (uint8_t d = 0; d < NUM_BRAIDS; d++)
+    braids_lfo_control_rate = 0;
+    update_braids_params();
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) )
     {
-      if (braids_filter_state[d]->filter_freq_last_displayed != braids_filter_state[d]->filter_freq_current)
+      display.setTextSize(1);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+
+      for (uint8_t d = 0; d < NUM_BRAIDS; d++)
       {
-        if (d>=NUM_BRAIDS/2)
-        setCursor_textGrid_small(49, 7 + d-NUM_BRAIDS/2);
-        else
-        setCursor_textGrid_small(45, 7 + d);
-        seq_print_formatted_number( braids_filter_state[d]->filter_freq_current / 100, 3);
-        braids_filter_state[d]->filter_freq_last_displayed = braids_filter_state[d]->filter_freq_current;
+        if (braids_filter_state_last_displayed[d] != braids_filter_state[d])
+        {
+          if (d >= NUM_BRAIDS / 2)
+            setCursor_textGrid_small(49, 7 + d - NUM_BRAIDS / 2);
+          else
+            setCursor_textGrid_small(45, 7 + d);
+          seq_print_formatted_number( braids_filter_state[d] / 100, 3);
+          braids_filter_state_last_displayed[d] = braids_filter_state[d];
+        }
       }
     }
   }
@@ -1778,9 +1788,21 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
     braids_slot++;
     if (braids_slot > NUM_BRAIDS - 1)
       braids_slot = 0;
+    
+    if (braids_osc.filter_mode == 0)
+      braids_mixer_filter[braids_slot]->gain(3, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+    else if (braids_osc.filter_mode == 1)
+      braids_mixer_filter[braids_slot]->gain(0, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+    else if (braids_osc.filter_mode == 2)
+      braids_mixer_filter[braids_slot]->gain(1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+    else if (braids_osc.filter_mode == 3)
+      braids_mixer_filter[braids_slot]->gain(2, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+      
+    braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
+    braids_filter[braids_slot]->frequency(braids_osc.filter_freq_from);
+    braids_filter[braids_slot]->resonance(braids_osc.filter_resonance / 20);
     synthBraids[braids_slot]->set_braids_pitch((inNumber + braids_osc.coarse) << 7);
     braids_envelope[braids_slot]->noteOn();
-
 
     //#ifdef DEBUG
     //    Serial.println("BRAIDS input Note:");

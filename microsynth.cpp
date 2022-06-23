@@ -33,6 +33,7 @@ extern short wave_type[9];
 extern AudioSynthBraids*               synthBraids[NUM_BRAIDS];
 extern braids_t  braids_osc;
 //extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
+extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern AudioMixer<NUM_BRAIDS>          braids_mixer;
 extern AudioMixer<4>*                   braids_mixer_filter[NUM_BRAIDS];
 extern AudioMixer<2>                   braids_mixer_reverb;
@@ -42,6 +43,11 @@ extern AudioEffectStereoPanorama       braids_stereo_panorama;
 #endif
 
 extern float volume_transform(float amp);
+
+#ifdef USE_SEQUENCER
+#include "sequencer.h"
+extern sequencer_t seq;
+#endif
 
 void microsynth_update_settings(uint8_t instance_id)
 {
@@ -110,11 +116,6 @@ void braids_update_settings()
     braids_envelope[instance_id]->sustain(braids_osc.env_sustain / 50.1);
     braids_envelope[instance_id]->release( braids_osc.env_release * braids_osc.env_release );
 
-    braids_filter[instance_id]->frequency(braids_osc.filter_freq_from);
-    braids_filter[instance_id]->resonance(braids_osc.filter_resonance / 20);
-
-//braids_filter_state[instance_id]->filter_freq_current = braids_osc.filter_freq_from;
-
     braids_mixer_filter[instance_id]->gain(0, 0.0);
     braids_mixer_filter[instance_id]->gain(1, 0.0);
     braids_mixer_filter[instance_id]->gain(2, 0.0);
@@ -127,6 +128,13 @@ void braids_update_settings()
       braids_mixer_filter[instance_id]->gain(1, 1.0);
     else if (braids_osc.filter_mode == 3)
       braids_mixer_filter[instance_id]->gain(2, 1.0);
+
+    if (seq.running == false)
+    {
+      braids_filter[instance_id]->frequency(braids_osc.filter_freq_from);
+      braids_filter[instance_id]->resonance(braids_osc.filter_resonance / 20);
+      braids_filter_state[instance_id] = braids_osc.filter_freq_from;
+    }
   }
 
 #endif
