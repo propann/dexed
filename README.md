@@ -6,7 +6,10 @@
 
 ## This is the development fork of MicroDexed with TFT Touch Display, "nextgen" UI and advanced sequencer
 
-### This build requires a Teensy 4.1,  Teensy Audio Shield, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
+### This build requires a Teensy 4.1,  PCM5102 Audio Board, 320x240 ILI9341 SPI Display with XPT2046 Touchscreen and a serial Flash Chip.
+
+* The Flash Chip is presoldered on a small PCB attachment for <2$. You do not require to solder any SMD part by yourself anymore.
+<p>
 
 MicroDexed started as a Teensy based, 6-operator-FM-synthesizer. The first generation is still maintained at: https://codeberg.org/dcoredump/MicroDexed
 
@@ -37,10 +40,10 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 * YouTube playlist about the development:<br>
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
->Latest news, 19/06/2022:
+>Latest news, 24/06/2022:
 > 	
 >[<span>&#10003;</span>] Started modularization of the code. Every User has different opinions what is important to have in an audio device. Memory on the Teensy however is limited, so you can not have everything at once, what we can think of.
-Currently, this restructure is far from complete, but it is an start. <p>Also you now have the option to change your DAC to the (most likely) next prefered DAC, the PCM 5102.
+Currently, this restructure is far from complete, but it is an start. 
 ><p>
 >About the modularization:
 >
@@ -78,9 +81,6 @@ https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Changelog
 https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Troubleshooting-Guide-and-FAQ
 
 ## Installation/Compile Instructions
-
-* Your Flash Chip should be soldered on the TEENSY AUDIO BOARD, not on the Teensy 4.1 backside. The SerialFlash Library will not work with a Chip on the Teensy. For development, currently in use is a:
-WINBOND W25Q128FVSG SERIAL FLASH MEMORY 3V 128M-BIT
 
 * Copy Libraries from /third-party to you Arduino / Teensy Library Directory (On Mac: usualy in your Home Directory/Documents/Arduino/libraries), if not already existing there.
 
