@@ -1,104 +1,60 @@
-**UPDATE 27/05/2022:**
-
-These are the build instructions for the newest version (V2), using low height pin socket rows instead of IC sockets.
-The improvements for this version are mostly of cosmetic nature so there will be no functional difference.
-<br>
-**However be warned that it will not be trivial to convert to this version. It is possible but requires some time/effort and desoldering tools to swap sockets and headers later.**
-
-Advantages :
-
-1.  Device height reduced by 2mm: Faster 3d print times, a little less bulky looking device.
-2.  no double / stacked special connector for the display, replaced by 1 standard connector.
-3.  much stronger pin binding for teensy and audio board to the PCB.
-4.  no more pin bending tricks required, pin locations are exactly where they are supposed to be.
-<br>
-
-<p>
-    
-> MicroDexed-touch is still in early development. However, these instructions should not change much in general in their steps. Some building/case parts and "look" might change rapidly.
+>MicroDexed-touch is still in early development. However, these instructions should not change much in general in their steps. Some building/case parts and "look" might change rapidly.
     
 <p> 
 
 <br>
 <p>
     
-**Build instructions for newest version (V2)**
+**Build instructions for current version**
     
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front.png" >
 <br>
 PCB Front
-<p>
+<br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/back.png" >
 <br>
 PCB Back
 <p>
+<br>
+<p>
+You can get the PCB from:
+<p>
+    
+https://www.pcbway.com/project/shareproject/MicroDexed_Touch_current_version_with_PCM5102_d643a695.html
+<br><p>
+<a href="https://www.pcbway.com/project/shareproject/MicroDexed_Touch_current_version_with_PCM5102_d643a695.html"><img src="https://pcbwayfile.s3.us-west-2.amazonaws.com/web/22/06/24/0636194052824.png" alt="PCB from PCBWay" /></a>
+
+<br>
+<p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/resistors.png" >
 <br>
-Begin with the resistors. You need 4, the values are printed on the board and are also listed in the BOM. 2x 47 Ohms, 1x 220 Ohms, 1x470 Ohms. It does not matter, in which (horizontal) direction you put them in. At the botton, put in the 1N4148 diode. Make sure the cathode is pointing to the left side.
+        
+Let's begin with the resistors. You need 4, the values are printed on the board and are also listed in the BOM. 2x 47 Ohms, 1x 220 Ohms, 1x470 Ohms. For resistors, it does not matter, in which direction you put them in. At the botton, put in the 1N4148 diode. Make sure the cathode is pointing to the left side.
     
 <p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/6n138.png" >
 <br>
 This is the 6n138 optocoupler for MIDI. Make sure pin 1 is on the top left. Your chip will either have a notch at the top side or a circle mark at the first pin. You can use an old-school IC socket, solder it in directly or use a socket with (round) precision pins. All of these 3 methods should work fine.
-<p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/jumpers.png" >
-<br>
-Nothing special about all of the 2-pin jumpers. Solder 2 pin horizontal pin headers for all of them. 
-<p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoderconnector.png" >
 
-For the 2 encoder connections, it is advised to use vertical pin headers - Also, depending on your encoders, for example if they have a small PCB on their bottom to connect the pins instead directly to the decoder, it might be a good idea to solder the pin headers very lowly as seen in this image.<p>
-This way they will use the free space "above" the encoder's PCBs and won't collide with them.  
-<p>
 
-<br>
-
-**Audio Board FLASH chip**
-<p>
-
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/flash.jpg" >
-    <br>
-    <p>
-It is suggested to put on the flash chip first since this requires most attention and anything soldered before will get in the way.
-        <br>
-        It is possible to add it afterwards, however it might be a little more difficult to reach its small pins. 
-       <br>
-    If you already have experience how to solder SMD parts do what works best for you.
-        <p>
-    However if you didn't solder small pins like this before, the suggestion is to first tin all the pads, then place the chip carefully above the tinned pins. 
-        <p>
-        Then solder only one pin first and check how all the other pins line up to the pads.
-            <br>
-            Make corrections by resoldering the first pin until the other pins match their pads well enough. Then solder all remaining pins, one after another and double check after each steps if the allignment still fits.
-            <br>
-            In the picture above it does not line up 100%, however it is good enough to work.
-            <br>Do not try to make this look better than necessary, overheating and killing the chip is worse than having it aligned "perfectly". 
-   <br><p>
-   <br>
-<p>
-    
 **MAIN PIN HEADER / SOCKETS**
     
 <br><p>
-For the Teensy and for the Audio Board, in this build we will use pin socket rows instead of the old-school IC sockets. The sockets will be soldered to the main PCB.<p>
+For the Teensy, the PCM 5102 and the external Flash Chip, we will use pin socket rows instead of IC sockets. The sockets will be soldered to the main PCB.<p>
  <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pinsandsocket.png" >
     
 As the counterpart, we will use traditional rows of pin headers with the pins of the short side of the plastic spacer snipped off. 
 <br>We keep only the side with the longer pins.
 <br>
-Since the top side of Teensy and Audio Board will be blocked by the plastic spacers, you solder the pins on to the bottom side of Teensy and Audio Board. This is the reason, why the pins are seemingly 2-3mm longer than they need to be for the sockets but the soldering will take up (some) of this extra space.<p>
+Since the top side of Teensy will be blocked by the plastic spacers, you solder the pins on to the bottom side of Teensy. This is the reason, why the pins are seemingly 2-3mm longer than they need to be for the sockets but the soldering will take up (some) of this extra space.<p>
 
  <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-teensy.png" >
     <br>
  For the Teensy we need 2 pieces of 24 pins.<br>
-  
- <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/cut-pins-audio.png" >
-     <br>
- For the Audio Board we need 2 pieces with 14 pins.
  
 <p>
-So for all 4 rows, 2 for the Teensy and 2 for the Audio Board, leave the plastic spacers exactly where they are at factory and snip off the short pin side, directly above the plastic spacer. <p>
+So for both rows, leave the plastic spacers exactly where they are at factory and snip off the short pin side, directly above the plastic spacer. <p>
 This is tedious. Take your time and take breaks when necessary.
 <br>
     
@@ -107,17 +63,42 @@ Please take care to not hurt yourself or others while you snip the pins. These p
 
     
 <p>
-After all 4 long rows are cut like in the pictures above, we will do the same procedure to a much smaller 4 pin row and a 3 pin row.
+After the 2 long rows are cut like in the pictures above, we will do the same procedure to a much smaller row for the flash board, 2 for the PCM5102 and the USB Host Connector.
+<br>Note that we are not connecting the SCK pin for the PCM5102 so no pin/header is required there.
 <p>
 
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/jumpers.png" >
+<br>
+    The Display uses a different kind of connector, do not solder in a low row socket there.
+    <br>
+    The remaining headers/jumpers are regular pin headers, you do not have to cut them.
+    
+ 
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoderconnector.png" >
+
+ <p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-with-sockets2.png" >
+     
+For the 2 encoder connections, it is advised to use vertical pin headers - Also, depending on your encoders, for example if they have a small PCB on their bottom to connect the pins instead directly to the decoder, it might be a good idea to solder the pin headers very lowly as seen in this image.<p>
+This way they will use the free space "above" the encoder's PCBs and won't collide with them.  
+<p>
+
+**ENCODERS**
+<br><p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoder.jpg" >
+    <br>
+    Use standard dupont connectors for the encoders. 1 pin is ground, then the 2 encoder pins, then the the pin for the button.
+> If you are using encoders on small pcbs and you experience unwanted "button push" events, try to remove any resistors from the pcbs. They aren't neccessary as debouncing is done in software.
+>
+<p>
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/allsockets.png" >
 
-The 4 pin row is for USB MIDI and is located at the top between the 2 Teensy pin rows.
+The small 4 pin row between the 2 large Teensy pin rows is for USB MIDI HOST. Do not forget to put in the socked and also the counterpart pin headers on the Teensy.
 <br>
-The 3 pin row is for Audio Line Out and is on the right side of the Audio Board.
  
-Put in the sockets on the PCB and test fit with the Teensy and Audio Board if everything lines up before you solder the sockets and pin rows.
+Put in the sockets on the PCB and test fit with the Teensy if everything lines up before you solder the sockets and pin rows.
 <br>
 
 It is a suggestion to solder only the first and last pin of every row, test if it fits and then solder all remaining pins.
@@ -133,15 +114,56 @@ Teensy with pin headers
 Teensy with pin headers and sockets loosely attached to test fit.
 <br><p>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/audiowithheader.png" >
-<br>
-Audio Board with pin headers
+ **AUDIO**
 <p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/audiowithheaderandsockets.png" >
-<br>
-Audio Board with pin headers and sockets loosely attached to test fit.
-<br>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm1.png" >  
 <p>
+Do the same kind of connector for the PCM5102 Board. Snip of the short side of the header pins. Do no connection for the SCK pin to the main PCB. Instead, close the 2 small pads on the top side to force SCK to ground - This will tell the PCM5102 to run it's own, internal clock signal.
+<bp>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm3.png" > 
+<p>
+      If any of the solder bridge pads on the backside come closed by factory, remove all of them with desoldering wick or your prefered  desoldering tool/method. 
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm2.png" > 
+<p>
+Front viel with pin headers attached
+<br>  
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm4.png" >  
+<p> Top view with pin headers attached
+
+<br>  
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-with-flash.png" >  
+<p> Flash board attached to main PCB
+    
+<br>  
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-with-flash2.png" >  
+<p> Flash board attached to main PCB
+<p>
+<br>    
+**FLASH chip**
+<p>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/external-flash1.png" >
+    
+Instead of manually soldering the Flash Chip to the Teensy Audio Board as we did in the previous generation, we go for this plug-and-play, 2$ board that already has a Flash Chip soldered on by factory. So you only need to solder standard size pins/connectors.
+Do the same procedure as for the Teensy for the connection to the main PCB. Use pin headers, leave the plastic spacers exactly where they are at factory and snip off the short pin side, directly above the plastic spacer. 
+    
+     
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/external-flash2.png" >
+<p>
+    Flash board with pin headers soldered, backside
+<p>    
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/external-flash3.png" >
+    
+    <p>
+    Flash board with pin headers soldered, frontside
+        <p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/external-flash4.png" >
+<p>
+Flash board with pin headers soldered, frontside
+<p>
+    
 <p><br>
     
 **DISPLAY**
@@ -170,14 +192,9 @@ It does not matter if there is a small gap between the lid/display and the pin s
 <br>
 <br><p>
   
-**ENCODERS**
-<br><p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoder.jpg" >
-    <br>
-    Use standard dupont connectors for the encoders. 1 pin is ground, then the 2 encoder pins, then the the pin for the button.
-<p>
+
    
-   <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bottomcaseandlidwithdisplay.png" >
+   <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bottomcaseandlidwithdisplay.png">
 <br>
     Take off the metal lid from the SD card reader on the TFT backside. These larger type of SD card are outdated and we already have 2 MICRO SD Card readers available. 
     <br>You can solder it off more carefully if you really think you need it back on sometime in the future. 
@@ -195,10 +212,6 @@ At this stage, it should be possible to do a first test.
 >
 
 <br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/finalwithcomponents1.png" >
-<br>
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/finalwithcomponents2.png" >
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/finalwithencoders.png" >
 <br>
@@ -227,7 +240,7 @@ At this stage, it should be possible to do a first test.
 <br>
   https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/CASE-KNOB.stl
 <br>   
-     Files last updated: 04/06/2022
+     Files last updated: 24/06/2022
    <br>
    <p>
    <br>
@@ -269,9 +282,25 @@ At this stage, it should be possible to do a first test.
 <p>
 <br>
 
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-assembled1.png" >
+<br>
+PCB with all on board components ready
+<p>
+        
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-assembled3.png" >
+<br>
+PCB with all on board components ready
+<p>
+        
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-assembled4.png" >
+<br>
+PCB with all on board components ready, view from rear connector side
+    <p>
+        
+    
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png" >
 <br>
-    <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final2.png" >
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final2.png" >
 <br>
     Final Assembly
 <p>
