@@ -10,7 +10,7 @@ using namespace braids;
 class AudioSynthBraids: public AudioStream
 {
 public:
-        AudioSynthBraids(): AudioStream(0, NULL), kAudioBlockSize(AUDIO_BLOCK_SAMPLES), magnitude(55536.0) { }
+        AudioSynthBraids(): AudioStream(0, NULL), kAudioBlockSize(AUDIO_BLOCK_SAMPLES), magnitude(65536.0) { }
         ~AudioSynthBraids() { }
 
         void set_braids_shape(int16_t shape) {
@@ -41,6 +41,10 @@ public:
     			}
       		osc.Strike();
       	}
+    const char* get_name(uint8_t n)
+       {
+         return (settings.metadata(SETTING_OSCILLATOR_SHAPE).strings[n]);
+       }
         inline void init_braids(){
             // Initializes the objects
             osc.Init();
