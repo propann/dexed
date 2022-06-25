@@ -39,10 +39,31 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 * Mutable Instruments Braids Oscillator - with up to 8 voice polyphony, added envelopes and filters, with everything of the core features, except the wavetables
 
-* YouTube playlist about the development:<br>
+YouTube playlist about the development:<br>
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
->Latest news, 24/06/2022:
+>Latest news, 25/06/2022:
+>
+- [x] Braids can now be played by USB MIDI (serial MIDI untested) with 8 voices polyphony
+- [x] Braids now handles Envelopes start/ends correctly, even when playing polyphonic (live or by sequencer)
+- [x] Braids now saves /loads it's state, together with a performance
+- [x] Touch Keyboard is now working on Braids page and can be selected as the playing instrument
+- [x] Fixed Microsynth Noise OSC not playing correctly
+- [x] Notice : The Code now defaults to compile for PCM5102. If you still want to use the Teensy Audio Board, change it in config.h
+- [x] If you have unusual crashes when playing from external USB MIDI Devices, check if your power supply is sufficient. A Power Adaptor / USB Powerbank with 1A is enough, however a standard USB2 PC Port with only 500mA might not work stable with additional, external devices connected to Microdexed.
+- [x] Updated FAQ
+
+>24/06/2022: Testing with the newly arrived (but already outdated) PCB that features the PCM5102 was sucessful. Also the external SPI Flash module is working as intended. We will switch to this configuration since as a audio appliance, it makes sense to get rid of all avoidable noise issues.
+
+>- [x] Braids is now working with 8 voices polyphony
+- [x] added Envelopes and filters to Braids
+- [x] tested external SPI Flash module
+- [x] tested purple PCM5102 board
+- [x] updated STL files
+- [x] updated BOM and Instructions
+
+
+>24/06/2022:
 > 	
 >[<span>&#10003;</span>] Started modularization of the code. Every User has different opinions what is important to have in an audio device. Memory on the Teensy however is limited, so you can not have everything at once, what we can think of.
 Currently, this restructure is far from complete, but it is an start. 
