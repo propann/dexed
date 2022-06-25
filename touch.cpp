@@ -184,7 +184,7 @@ void virtual_keyboard_print_current_instrument()
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.setCursor ( 17 * CHAR_width_small, 16 * CHAR_height_small );
-  if (ts.virtual_keyboard_instrument < 7)
+  if (ts.virtual_keyboard_instrument < 8)
     display.print(F("PLAYING"));
   else
   {
@@ -229,12 +229,17 @@ void virtual_keyboard_print_current_instrument()
     display.print(F("DRUMS   "));
     ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
   }
-  else if (ts.virtual_keyboard_instrument > 6)
+  else if (ts.virtual_keyboard_instrument == 7)
+  {
+    display.print(F("BRAIDS "));
+    ts.virtual_keyboard_midi_channel = braids_osc.midi_channel;
+  }
+  else if (ts.virtual_keyboard_instrument > 7)
   {
     display.print(ts.virtual_keyboard_instrument - 7);
     display.print(" ");
 
-    show_small_font( 18 * CHAR_height_small + 1, 20 * CHAR_width_small, 7,  find_long_drum_name_from_note( ts.virtual_keyboard_instrument - 7 + 210) );
+    show_small_font( 18 * CHAR_height_small + 1, 20 * CHAR_width_small, 7,  find_long_drum_name_from_note( ts.virtual_keyboard_instrument - 8 + 210) );
 
     ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
   }
@@ -262,10 +267,10 @@ void virtual_keyboard_key_on ()
               halftones = halftones + 1;
           }
           // handleNoteOn_MIDI_DEVICE_DIN(configuration.dexed[selected_instance_id].midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
-          if (ts.virtual_keyboard_instrument > 6) //pitched samples
+          if (ts.virtual_keyboard_instrument > 7) //pitched samples
           {
-            set_sample_pitch(ts.virtual_keyboard_instrument - 7, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x + halftones - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
-            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 7 , 100 );
+            set_sample_pitch(ts.virtual_keyboard_instrument - 8, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x + halftones - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
+            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8 , 100 );
           }
           else
             handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
@@ -285,10 +290,10 @@ void virtual_keyboard_key_on ()
           if (ts.virtual_keyboard_state_black[x] == 0)
           {
             ts.virtual_keyboard_state_black[x] = 254;
-            if (ts.virtual_keyboard_instrument > 6) //pitched samples
+            if (ts.virtual_keyboard_instrument > 7) //pitched samples
             {
-              set_sample_pitch(ts.virtual_keyboard_instrument - 7, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
-              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 7 , 100);
+              set_sample_pitch(ts.virtual_keyboard_instrument - 8, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x - 72) / 12.00)*get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8 , 100);
             }
             else
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x , 120);
@@ -428,7 +433,7 @@ void touch_button_oct_down()
 void touch_button_inst_up()
 {
   ts.virtual_keyboard_instrument++;
-  if (ts.virtual_keyboard_instrument > 10)ts.virtual_keyboard_instrument = 10;
+  if (ts.virtual_keyboard_instrument > 12)ts.virtual_keyboard_instrument = 12;
   virtual_keyboard_print_current_instrument();
   ts.update_virtual_keyboard_octave = true;
 }
@@ -993,4 +998,37 @@ void handle_touchscreen_arpeggio()
     }
   }
   seq.generic_ui_delay++;
+}
+
+void handle_touchscreen_braids()
+{
+  if (touch.touched())
+  {
+    get_scaled_touch_point();
+
+        seq.cycle_touch_element = 1;
+       
+      seq.generic_ui_delay = 0;
+   
+    if ( ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
+    {
+      touch_check_all_keyboard_buttons();
+    }
+   
+    if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && seq.cycle_touch_element == 1)
+    {
+      virtual_keyboard_key_on();
+    }
+  }
+  if (touch.touched() == false )
+  {
+    if ( ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
+    {
+      print_virtual_keyboard_octave();
+      ts.update_virtual_keyboard_octave = false;
+    }
+   
+  }
+  seq.generic_ui_delay++;
+  virtual_keyboard_update_all_key_states();
 }

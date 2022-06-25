@@ -54,9 +54,10 @@ extern void microsynth_update_settings(uint8_t instance_id);
 #endif
 
 #ifdef USE_BRAIDS
-extern braids_t braids;
+extern braids_t     braids_osc;
 extern void braids_update_settings();
 #endif
+
 
 #ifdef USE_SEQUENCER
 #include "sequencer.h"
@@ -512,7 +513,7 @@ bool save_sd_bank(const char* bank_filename, uint8_t* data)
 
 bool load_sd_drummappings_json(uint8_t number)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   if (number < 0)
     return (false);
 
@@ -573,13 +574,13 @@ bool load_sd_drummappings_json(uint8_t number)
 #endif
     }
   }
-  #endif
+#endif
   return (false);
 }
 
 bool save_sd_drummappings_json(uint8_t number)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   char filename[CONFIG_FILENAME_LEN];
   number = constrain(number, 0, 99);
 
@@ -659,7 +660,7 @@ bool save_sd_drummappings_json(uint8_t number)
  ******************************************************************************/
 bool load_sd_drumsettings_json(uint8_t number)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   if (number < 0)
     return (false);
 
@@ -728,13 +729,13 @@ bool load_sd_drumsettings_json(uint8_t number)
 #endif
     }
   }
-  #endif
+#endif
   return (false);
 }
 
 bool save_sd_drumsettings_json(uint8_t number)
 {
-  #if NUM_DRUMS > 0
+#if NUM_DRUMS > 0
   char filename[CONFIG_FILENAME_LEN];
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
@@ -1625,6 +1626,155 @@ bool save_sd_sys_json(void)
   return (false);
 }
 
+
+/******************************************************************************
+   SD BRAIDS
+ ******************************************************************************/
+bool load_sd_braids_json(uint8_t number)
+{
+
+  if (number < 0)
+    return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    char filename[CONFIG_FILENAME_LEN];
+
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
+
+    // first check if file exists...
+
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      Serial.print(F("Found braids configuration"));
+#endif
+      json = SD.open(filename);
+      if (json)
+      {
+        deserializeJson(data_json, json);
+
+        json.close();
+        AudioInterrupts();
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+        Serial.println(F("Read JSON data:"));
+        //serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+
+        braids_osc.sound_intensity = data_json["vol"];
+        braids_osc.algo = data_json["algo"];
+        braids_osc.color = data_json["color"];
+        braids_osc.timbre = data_json["timbre"];
+        braids_osc.coarse = data_json["coarse"];
+        braids_osc.env_attack = data_json["attack"];
+        braids_osc.env_decay = data_json["decay"];
+        braids_osc.env_sustain = data_json["sustain"];
+        braids_osc.env_release = data_json["release"];
+        braids_osc.filter_mode = data_json["filter_mode"];
+        braids_osc.filter_freq_from = data_json["freq_from"];
+        braids_osc.filter_freq_to = data_json["freq_to"];
+        braids_osc.filter_resonance = data_json["res"];
+        braids_osc.filter_speed = data_json["filter_speed"];
+        braids_osc.rev_send = data_json["rev"];
+        braids_osc.chorus_send = data_json["chorus"];
+        braids_osc.delay_send = data_json["delay"];
+        braids_osc.midi_channel = data_json["midi"];
+        braids_osc.pan = data_json["pan"];
+
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E : Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+bool save_sd_braids_json(uint8_t number)
+{
+   char filename[CONFIG_FILENAME_LEN];
+  if (sd_card > 0)
+  {
+    File json;
+    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
+#ifdef DEBUG
+    Serial.print(F("Saving braids"));
+    Serial.print(number);
+    Serial.print(F(" to "));
+    Serial.println(filename);
+#endif
+
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      data_json["vol"]= braids_osc.sound_intensity;
+      data_json["algo"] = braids_osc.algo;
+      data_json["color"] = braids_osc.color;
+      data_json["timbre"] = braids_osc.timbre;
+      data_json["coarse"] = braids_osc.coarse;
+      data_json["attack"] = braids_osc.env_attack ;
+      data_json["decay"] = braids_osc.env_decay;
+      data_json["sustain"] = braids_osc.env_sustain;
+      data_json["release"] = braids_osc.env_release;
+      data_json["filter_mode"] = braids_osc.filter_mode;
+      data_json["freq_from"] = braids_osc.filter_freq_from;
+      data_json["freq_to"] = braids_osc.filter_freq_to;
+      data_json["res"] = braids_osc.filter_resonance;
+      data_json["filter_speed"] = braids_osc.filter_speed;
+      data_json["rev"] = braids_osc.rev_send;
+      data_json["chorus"] = braids_osc.chorus_send;
+      data_json["delay"] = braids_osc.delay_send;
+      data_json["midi"] = braids_osc.midi_channel;
+      data_json["pan"] = braids_osc.pan;
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+      Serial.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      Serial.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
 /******************************************************************************
    SD SEQUENCER
  ******************************************************************************/
@@ -2082,6 +2232,7 @@ bool save_sd_performance_json(uint8_t number)
   save_sd_fx_json(number);
   save_sd_epiano_json(number);
   save_sd_multisample_presets_json(number);
+  save_sd_braids_json(number);
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -2152,11 +2303,11 @@ bool save_sd_performance_json(uint8_t number)
       json.close();
       AudioInterrupts();
       if (seq_was_running == true )
-{
+      {
         handleStart();
-      dac_unmute();
-      return (true);
-}
+        dac_unmute();
+        return (true);
+      }
     }
     //json.close();
     //AudioInterrupts();
@@ -2428,7 +2579,7 @@ bool load_sd_performance_json(uint8_t number)
   load_sd_transpose_json(number);
   load_sd_chain_json(number);
   load_sd_multisample_presets_json(number);
-
+  load_sd_braids_json(number);
   configuration.sys.performance_number = number;
 
   if (sd_card > 0)

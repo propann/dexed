@@ -14,12 +14,9 @@ public:
         ~AudioSynthBraids() { }
 
         void set_braids_shape(int16_t shape) {
-      		shapebraids = shape;
-          // Trims the shape to the valid values
-          shapebraids = shapebraids >= MACRO_OSC_SHAPE_QUESTION_MARK ? MACRO_OSC_SHAPE_QUESTION_MARK : shapebraids<0 ? 0 : shapebraids;
 
           // Sets the shape
-          MacroOscillatorShape osc_shape = static_cast<MacroOscillatorShape>(shapebraids);
+          MacroOscillatorShape osc_shape = static_cast<MacroOscillatorShape>(shape);
           osc.set_shape(osc_shape);
       	}
 

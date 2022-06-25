@@ -11204,7 +11204,7 @@ void UI_func_braids(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
     seq.cycle_touch_element = 1;
 
-    draw_button_on_grid(45, 1, "MORE" , "PARAM.", 0);
+    //draw_button_on_grid(45, 1, "MORE" , "PARAM.", 0);
     virtual_keyboard();
     virtual_keyboard_print_buttons();
     virtual_keyboard_print_current_instrument();
@@ -11291,7 +11291,7 @@ void UI_func_braids(uint8_t param)
           braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + 1, 0, 100);
         else if ( generic_temp_select_menu == 1 )
         {
-          braids_osc.algo = constrain(braids_osc.algo + 1, 0, 33);
+          braids_osc.algo = constrain(braids_osc.algo + 1, 0, 42);
           //update_pwm_text();
         }
         else if ( generic_temp_select_menu == 2 )
@@ -11300,7 +11300,6 @@ void UI_func_braids(uint8_t param)
           braids_osc.timbre = constrain(braids_osc.timbre + 1, 0, 254);
         else if ( generic_temp_select_menu == 4 )
           braids_osc.coarse = constrain(braids_osc.coarse + 1, -36, 36);
-
         else if ( generic_temp_select_menu == 5 )
           braids_osc.env_attack = constrain(braids_osc.env_attack + 1, 0, 254);
         else if ( generic_temp_select_menu == 6 )
@@ -11309,7 +11308,6 @@ void UI_func_braids(uint8_t param)
           braids_osc.env_sustain = constrain(braids_osc.env_sustain + 1, 0, 50);
         else if ( generic_temp_select_menu == 8 )
           braids_osc.env_release = constrain(braids_osc.env_release + 1, 0, 99);
-
         else if ( generic_temp_select_menu == 9 )
           braids_osc.filter_mode = constrain(braids_osc.filter_mode + 1, 0, 3);
         else if ( generic_temp_select_menu == 10 )
@@ -11320,7 +11318,6 @@ void UI_func_braids(uint8_t param)
           braids_osc.filter_resonance = constrain(braids_osc.filter_resonance + 1, 0, 99);
         else if ( generic_temp_select_menu == 13 )
           braids_osc.filter_speed = constrain(braids_osc.filter_speed + 5, 0, 999);
-
         else if ( generic_temp_select_menu == 14 )
           braids_osc.rev_send = constrain(braids_osc.rev_send + 1, 0, 127);
         else if ( generic_temp_select_menu == 15 )
@@ -11330,7 +11327,7 @@ void UI_func_braids(uint8_t param)
         else if ( generic_temp_select_menu == 17 )
           braids_osc.pan = constrain(braids_osc.pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         else if ( generic_temp_select_menu == 18 )
-          braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 1, 15);
+          braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 1, 16);
       }
       else if (LCDML.BT_checkUp())
       {
@@ -11340,7 +11337,7 @@ void UI_func_braids(uint8_t param)
           braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - 1, 0, 100);
         else if ( generic_temp_select_menu == 1 )
         {
-          braids_osc.algo = constrain(braids_osc.algo - 1, 0, 33);
+          braids_osc.algo = constrain(braids_osc.algo - 1, 0, 42);
           //update_pwm_text();
         }
         else if ( generic_temp_select_menu == 2 )
@@ -11349,7 +11346,6 @@ void UI_func_braids(uint8_t param)
           braids_osc.timbre = constrain(braids_osc.timbre - 1, 0, 254);
         else if ( generic_temp_select_menu == 4 )
           braids_osc.coarse = constrain(braids_osc.coarse - 1, -36, 36);
-
         else if ( generic_temp_select_menu == 5 )
           braids_osc.env_attack = constrain(braids_osc.env_attack - 1, 0, 254);
         else if ( generic_temp_select_menu == 6 )
@@ -11358,7 +11354,6 @@ void UI_func_braids(uint8_t param)
           braids_osc.env_sustain = constrain(braids_osc.env_sustain - 1, 0, 50);
         else if ( generic_temp_select_menu == 8 )
           braids_osc.env_release = constrain(braids_osc.env_release - 1, 0, 99);
-
         else if ( generic_temp_select_menu == 9 )
           braids_osc.filter_mode = constrain(braids_osc.filter_mode - 1, 0, 3);
         else if ( generic_temp_select_menu == 10 )
@@ -11369,7 +11364,6 @@ void UI_func_braids(uint8_t param)
           braids_osc.filter_resonance = constrain(braids_osc.filter_resonance - 1, 0, 99);
         else if ( generic_temp_select_menu == 13 )
           braids_osc.filter_speed = constrain(braids_osc.filter_speed - 5, 0, 999);
-
         else if ( generic_temp_select_menu == 14 )
           braids_osc.rev_send = constrain(braids_osc.rev_send - 1, 0, 127);
         else if ( generic_temp_select_menu == 15 )
@@ -11379,7 +11373,7 @@ void UI_func_braids(uint8_t param)
         else if ( generic_temp_select_menu == 17 )
           braids_osc.pan = constrain(braids_osc.pan - 1, PANORAMA_MIN, PANORAMA_MAX);
         else if ( generic_temp_select_menu == 18 )
-          braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 1, 15);
+          braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 1, 16);
       }
     }
 

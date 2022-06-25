@@ -729,6 +729,7 @@ extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
 extern void handle_touchscreen_color_edit(void);
 extern void handle_touchscreen_arpeggio(void);
+extern void handle_touchscreen_braids(void);
 
 /***********************************************************************
    SETUP
@@ -1422,6 +1423,11 @@ void loop()
 #endif
 
 #ifdef USE_BRAIDS
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids))
+  {
+    handle_touchscreen_braids();
+    scope.draw_scope(250, -14, 60);
+  }
   if (braids_lfo_control_rate > BRAIDS_LFO_RATE_MS) //update  filters when played live or by seq.
   {
     braids_lfo_control_rate = 0;
@@ -1783,26 +1789,23 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
-  if (device == 4  && inNumber < 119)
+  if ((device == 4  && inNumber < 119) || (device == 0 && inChannel == braids_osc.midi_channel && inNumber < 119))
   {
     braids_slot++;
     if (braids_slot > NUM_BRAIDS - 1)
       braids_slot = 0;
-    
+
     if (braids_osc.filter_mode == 0)
       braids_mixer_filter[braids_slot]->gain(3, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
-    else if (braids_osc.filter_mode == 1)
-      braids_mixer_filter[braids_slot]->gain(0, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
-    else if (braids_osc.filter_mode == 2)
-      braids_mixer_filter[braids_slot]->gain(1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
-    else if (braids_osc.filter_mode == 3)
-      braids_mixer_filter[braids_slot]->gain(2, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
-      
+    else
+      braids_mixer_filter[braids_slot]->gain(braids_osc.filter_mode - 1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+
     braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
     braids_filter[braids_slot]->frequency(braids_osc.filter_freq_from);
     braids_filter[braids_slot]->resonance(braids_osc.filter_resonance / 20);
     synthBraids[braids_slot]->set_braids_pitch((inNumber + braids_osc.coarse) << 7);
     braids_envelope[braids_slot]->noteOn();
+    braids_osc.note_buffer[braids_slot] = inNumber;
 
     //#ifdef DEBUG
     //    Serial.println("BRAIDS input Note:");
@@ -2184,12 +2187,13 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
-  if (device == 4)
+  if (inChannel == braids_osc.midi_channel || device == 4)
   {
-    // if (braids_slot - 1 >= 0)
-    braids_envelope[braids_slot ]->noteOff();
-    // else
-    //  braids_envelope[0]->noteOff();
+    for (uint8_t i = 0; i < NUM_BRAIDS; i++)
+    {
+      if (inNumber == braids_osc.note_buffer[i])
+        braids_envelope[i]->noteOff();
+    }
   }
 #endif
 

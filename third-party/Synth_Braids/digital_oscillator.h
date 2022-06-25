@@ -196,20 +196,20 @@ struct SvfState {
   int32_t lp;
 };
 
-//struct DigitalModulationState {
-//  uint32_t symbol_phase;
-//  uint16_t symbol_count;
-//  int32_t filter_state;
-//  uint8_t data_byte;
-//};
-//
-//struct ClockedNoiseState {
-//  uint32_t cycle_phase;
-//  uint32_t cycle_phase_increment;
-//  uint32_t rng_state;
-//  int32_t seed;
-//  int16_t sample;
-//};
+struct DigitalModulationState {
+  uint32_t symbol_phase;
+  uint16_t symbol_count;
+  int32_t filter_state;
+  uint8_t data_byte;
+};
+
+struct ClockedNoiseState {
+  uint32_t cycle_phase;
+  uint32_t cycle_phase_increment;
+  uint32_t rng_state;
+  int32_t seed;
+  int16_t sample;
+};
 
 struct HatState {
   uint32_t phase[6];
@@ -229,8 +229,8 @@ union DigitalOscillatorState {
   ToyState toy;
   SvfState svf;
   AdditiveState add;
-//  DigitalModulationState dmd;
-//  ClockedNoiseState clk;
+  DigitalModulationState dmd;
+  ClockedNoiseState clk;
   HatState hat;
   HarmonicsState hrm;
   uint32_t modulator_phase;
@@ -326,7 +326,7 @@ class DigitalOscillator {
   void RenderKick(const uint8_t*, int16_t*, size_t);
   void RenderSnare(const uint8_t*, int16_t*, size_t);
   void RenderCymbal(const uint8_t*, int16_t*, size_t);
-  void RenderQuestionMark(const uint8_t*, int16_t*, size_t);
+//  void RenderQuestionMark(const uint8_t*, int16_t*, size_t);
 
   // void RenderYourAlgo(const uint8_t*, int16_t*, size_t);
 

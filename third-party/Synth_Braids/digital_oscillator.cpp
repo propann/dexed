@@ -1563,7 +1563,7 @@ static const WavetableDefinition wavetable_definitions[] = {
 //    *buffer++ = sample;
 //  }
 //}
-//
+
 //void DigitalOscillator::RenderWaveMap(
 //    const uint8_t* sync,
 //    int16_t* buffer,
@@ -1585,7 +1585,7 @@ static const WavetableDefinition wavetable_definitions[] = {
 //
 //  for (size_t i = 0; i < 2; ++i) {
 //    for (size_t j = 0; j < 2; ++j) {
-//      uint16_t wave_index =  (wave_coordinate[0] + i) * 16 + (wave_coordinate[1] + j);
+//      uint16_t wave_index = (wave_coordinate[0] + i) * 16 + (wave_coordinate[1] + j);
 //      wave[i][j] = wt_waves + wt_map[wave_index] * 129;
 //    }
 //  }
@@ -1611,21 +1611,21 @@ static const WavetableDefinition wavetable_definitions[] = {
 //    *buffer++ = sample;
 //  }
 //}
-//
+
 //static const uint8_t wave_line[] = {
 //  187, 179, 154, 155, 135, 134, 137, 19, 24, 3, 8, 66, 79, 25, 180, 174, 64,
 //  127, 198, 15, 10, 7, 11, 0, 191, 192, 115, 238, 237, 236, 241, 47, 70, 76,
 //  235, 26, 133, 208, 34, 175, 183, 146, 147, 148, 150, 151, 152, 153, 117,
 //  138, 32, 33, 35, 125, 199, 201, 30, 31, 193, 27, 29, 21, 18, 182
 //};
-//
-//
+
+
 //static const uint8_t mini_wave_line[] = {
 //  157, 161, 171, 188, 189, 191, 192, 193, 196, 198, 201, 234, 232,
 //  229, 226, 224, 1, 2, 3, 4, 5, 8, 12, 32, 36, 42, 47, 252, 254, 141, 139,
 //  135, 174
 //};
-//
+
 //void DigitalOscillator::RenderWaveLine(
 //    const uint8_t* sync,
 //    int16_t* buffer,
@@ -1944,74 +1944,74 @@ void DigitalOscillator::RenderTwinPeaksNoise(
   state_.pno.filter_state[1][1] = y22;
 }
 
-//void DigitalOscillator::RenderClockedNoise(
-//    const uint8_t* sync,
-//    int16_t* buffer,
-//    size_t size) {
-//  ClockedNoiseState* state = &state_.clk;
-//
-//  if ((parameter_[1] > previous_parameter_[1] + 64) ||
-//      (parameter_[1] < previous_parameter_[1] - 64)) {
-//    previous_parameter_[1] = parameter_[1];
-//  }
-//  if ((parameter_[0] > previous_parameter_[0] + 16) ||
-//      (parameter_[0] < previous_parameter_[0] - 16)) {
-//    previous_parameter_[0] = parameter_[0];
-//  }
-//
-//
-//  if (strike_) {
-//    state->seed = Random::GetWord();
-//    strike_ = false;
-//  }
-//
-//  // Shift the range of the Coarse knob to reach higher clock rates, close
-//  // to the sample rate.
-//  uint32_t phase = phase_;
-//  uint32_t phase_increment = phase_increment_;
-//  for (size_t i = 0; i < 3; ++i) {
-//    if (phase_increment < (1UL << 31)) {
-//      phase_increment <<= 1;
-//    }
-//  }
-//
-//  // Compute the period of the random generator.
-//  state->cycle_phase_increment = ComputePhaseIncrement(
-//      previous_parameter_[0] - 16384) << 1;
-//
-//  // Compute the number of quantization steps
-//  uint32_t num_steps = 1 + (previous_parameter_[1] >> 10);
-//  if (num_steps == 1) {
-//    num_steps = 2;
-//  }
-//  uint32_t quantizer_divider = 65536 / num_steps;
-//  while (size--) {
-//    phase += phase_increment;
-//    if (*sync++) {
-//      phase = 0;
-//    }
-//
-//    // Clock.
-//    if (phase < phase_increment) {
-//      state->rng_state = state->rng_state * 1664525L + 1013904223L;
-//      state->cycle_phase += state->cycle_phase_increment;
-//      // Enforce period
-//      if (state->cycle_phase < state->cycle_phase_increment) {
-//        state->rng_state = state->seed;
-//        // Make the period an integer.
-//        state->cycle_phase = state->cycle_phase_increment;
-//      }
-//      uint16_t sample = state->rng_state;
-//      sample -= sample % quantizer_divider;
-//      sample += quantizer_divider >> 1;
-//      state->sample = sample;
-//      // Make the clock rate an exact divisor of the sample rate.
-//      phase = phase_increment;
-//    }
-//    *buffer++ = state->sample;
-//  }
-//  phase_ = phase;
-//}
+void DigitalOscillator::RenderClockedNoise(
+    const uint8_t* sync,
+    int16_t* buffer,
+    size_t size) {
+  ClockedNoiseState* state = &state_.clk;
+
+  if ((parameter_[1] > previous_parameter_[1] + 64) ||
+      (parameter_[1] < previous_parameter_[1] - 64)) {
+    previous_parameter_[1] = parameter_[1];
+  }
+  if ((parameter_[0] > previous_parameter_[0] + 16) ||
+      (parameter_[0] < previous_parameter_[0] - 16)) {
+    previous_parameter_[0] = parameter_[0];
+  }
+
+
+  if (strike_) {
+    state->seed = Random::GetWord();
+    strike_ = false;
+  }
+
+  // Shift the range of the Coarse knob to reach higher clock rates, close
+  // to the sample rate.
+  uint32_t phase = phase_;
+  uint32_t phase_increment = phase_increment_;
+  for (size_t i = 0; i < 3; ++i) {
+    if (phase_increment < (1UL << 31)) {
+      phase_increment <<= 1;
+    }
+  }
+
+  // Compute the period of the random generator.
+  state->cycle_phase_increment = ComputePhaseIncrement(
+      previous_parameter_[0] - 16384) << 1;
+
+  // Compute the number of quantization steps
+  uint32_t num_steps = 1 + (previous_parameter_[1] >> 10);
+  if (num_steps == 1) {
+    num_steps = 2;
+  }
+  uint32_t quantizer_divider = 65536 / num_steps;
+  while (size--) {
+    phase += phase_increment;
+    if (*sync++) {
+      phase = 0;
+    }
+
+    // Clock.
+    if (phase < phase_increment) {
+      state->rng_state = state->rng_state * 1664525L + 1013904223L;
+      state->cycle_phase += state->cycle_phase_increment;
+      // Enforce period
+      if (state->cycle_phase < state->cycle_phase_increment) {
+        state->rng_state = state->seed;
+        // Make the period an integer.
+        state->cycle_phase = state->cycle_phase_increment;
+      }
+      uint16_t sample = state->rng_state;
+      sample -= sample % quantizer_divider;
+      sample += quantizer_divider >> 1;
+      state->sample = sample;
+      // Make the clock rate an exact divisor of the sample rate.
+      phase = phase_increment;
+    }
+    *buffer++ = state->sample;
+  }
+  phase_ = phase;
+}
 
 void DigitalOscillator::RenderGranularCloud(
     const uint8_t* sync,
@@ -2182,54 +2182,56 @@ void DigitalOscillator::RenderParticleNoise(
 static const int32_t kConstellationQ[] = { 23100, -23100, -23100, 23100 };
 static const int32_t kConstellationI[] = { 23100, 23100, -23100, -23100 };
 
-//void DigitalOscillator::RenderDigitalModulation(
-//    const uint8_t* sync,
-//    int16_t* buffer,
-//    size_t size) {
-//  uint32_t phase = phase_;
-//  uint32_t increment = phase_increment_;
-//
-//  uint32_t symbol_stream_phase = state_.dmd.symbol_phase;
-//  uint32_t symbol_stream_phase_increment = ComputePhaseIncrement(
-//      pitch_ - 1536 + ((parameter_[0] - 32767) >> 3));
-//  uint8_t data_byte = state_.dmd.data_byte;
-//
-//  if (strike_) {
-//    state_.dmd.symbol_count = 0;
-//    strike_ = false;
-//  }
-//
-//  while (size--) {
-//    phase += increment;
-//    symbol_stream_phase += symbol_stream_phase_increment;
-//    if (symbol_stream_phase < symbol_stream_phase_increment) {
-//      ++state_.dmd.symbol_count;
-//      if (!(state_.dmd.symbol_count & 3)) {
-//        if (state_.dmd.symbol_count >= (64 + 4 * 256)) {
-//          state_.dmd.symbol_count = 0;
-//        }
-//        if (state_.dmd.symbol_count < 32) {
-//          data_byte = 0x00;
-//        } else if (state_.dmd.symbol_count < 48) {
-//          data_byte = 0x99;
-//        } else if (state_.dmd.symbol_count < 64) {
-//          data_byte = 0xcc;
-//        } else {
-//          state_.dmd.filter_state = (state_.dmd.filter_state * 3 +   static_cast<int32_t>(parameter_[1])) >> 2;
-//          data_byte = state_.dmd.filter_state >> 7;
-//        }
-//      } else {
-//        data_byte >>= 2;
-//      }
-//    }
-//    int16_t i = Interpolate824(wav_sine, phase);
-//    int16_t q = Interpolate824(wav_sine, phase + (1 << 30));
-//    *buffer++ = (kConstellationQ[data_byte & 3] * q >> 15) +   (kConstellationI[data_byte & 3] * i >> 15);
-//  }
-//  phase_ = phase;
-//  state_.dmd.symbol_phase = symbol_stream_phase;
-//  state_.dmd.data_byte = data_byte;
-//}
+void DigitalOscillator::RenderDigitalModulation(
+    const uint8_t* sync,
+    int16_t* buffer,
+    size_t size) {
+  uint32_t phase = phase_;
+  uint32_t increment = phase_increment_;
+
+  uint32_t symbol_stream_phase = state_.dmd.symbol_phase;
+  uint32_t symbol_stream_phase_increment = ComputePhaseIncrement(
+      pitch_ - 1536 + ((parameter_[0] - 32767) >> 3));
+  uint8_t data_byte = state_.dmd.data_byte;
+
+  if (strike_) {
+    state_.dmd.symbol_count = 0;
+    strike_ = false;
+  }
+
+  while (size--) {
+    phase += increment;
+    symbol_stream_phase += symbol_stream_phase_increment;
+    if (symbol_stream_phase < symbol_stream_phase_increment) {
+      ++state_.dmd.symbol_count;
+      if (!(state_.dmd.symbol_count & 3)) {
+        if (state_.dmd.symbol_count >= (64 + 4 * 256)) {
+          state_.dmd.symbol_count = 0;
+        }
+        if (state_.dmd.symbol_count < 32) {
+          data_byte = 0x00;
+        } else if (state_.dmd.symbol_count < 48) {
+          data_byte = 0x99;
+        } else if (state_.dmd.symbol_count < 64) {
+          data_byte = 0xcc;
+        } else {
+          state_.dmd.filter_state = (state_.dmd.filter_state * 3 + \
+              static_cast<int32_t>(parameter_[1])) >> 2;
+          data_byte = state_.dmd.filter_state >> 7;
+        }
+      } else {
+        data_byte >>= 2;
+      }
+    }
+    int16_t i = Interpolate824(wav_sine, phase);
+    int16_t q = Interpolate824(wav_sine, phase + (1 << 30));
+    *buffer++ = (kConstellationQ[data_byte & 3] * q >> 15) + \
+        (kConstellationI[data_byte & 3] * i >> 15);
+  }
+  phase_ = phase;
+  state_.dmd.symbol_phase = symbol_stream_phase;
+  state_.dmd.data_byte = data_byte;
+}
 
 //void DigitalOscillator::RenderQuestionMark(
 //    const uint8_t* sync,
@@ -2554,13 +2556,13 @@ DigitalOscillator::RenderFn DigitalOscillator::fn_table_[] = {
 //  &DigitalOscillator::RenderWaveParaphonic,
   &DigitalOscillator::RenderFilteredNoise,
   &DigitalOscillator::RenderTwinPeaksNoise,
-//  &DigitalOscillator::RenderClockedNoise,
+  &DigitalOscillator::RenderClockedNoise,
   &DigitalOscillator::RenderGranularCloud,
   &DigitalOscillator::RenderParticleNoise,
-//  &DigitalOscillator::RenderDigitalModulation,
+  &DigitalOscillator::RenderDigitalModulation,
   // &DigitalOscillator::RenderYourAlgo,
 
-//  &DigitalOscillator::RenderQuestionMark
+//&DigitalOscillator::RenderQuestionMark
 };
 
 }  // namespace braids

@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.0"
+#define VERSION "1.3.1"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -338,6 +338,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define EPIANO_CONFIG_NAME "epiano"
 #define MICROSYNTH_CONFIG_NAME "msynth"
 #define MULTISAMPLE_PRESETS_CONFIG_NAME "msp_presets"
+#define BRAIDS_CONFIG_NAME "braids"
 
 #define MAX_PERF_MOD 30
 
@@ -922,6 +923,7 @@ typedef struct braids_s
   uint8_t delay_send;
   uint8_t midi_channel;
   uint8_t pan;
+  uint8_t note_buffer[NUM_BRAIDS];
 } braids_t;
 #endif
 
