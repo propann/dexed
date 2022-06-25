@@ -693,11 +693,7 @@ void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
       display.drawPixel(x + i, y, (byte & 0x80) ? color : bg);
     }
   }
-
 }
-
-
-
 
 
 // create menu
@@ -11408,9 +11404,11 @@ void UI_func_braids(uint8_t param)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(RED, COLOR_BACKGROUND);
     setCursor_textGrid_small(9, 4);
     seq_print_formatted_number(braids_osc.algo, 2);
-    setCursor_textGrid_small(12, 4);
+    setCursor_textGrid_small(13, 4);
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.print(synthBraids[0]->get_name(braids_osc.algo));
+    
+    //braids_print (synthBraids[0]->get_name(braids_osc.algo)[i],i);
     if (generic_temp_select_menu == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(9, 5);
