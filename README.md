@@ -37,6 +37,8 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 * Track Print/Recording - work in progress
 
+* Mutable Instruments Braids Oscillator - with up to 8 voice polyphony, added envelopes and filters, with everything of the core features, except the wavetables
+
 * YouTube playlist about the development:<br>
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
