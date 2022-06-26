@@ -720,6 +720,7 @@ extern void getNoteName(char* noteName, uint8_t noteNumber);
 extern void update_midi_learn_button(void);
 custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 extern void print_custom_mappings(void);
+extern void handle_touchscreen_menu(void);
 extern void handle_touchscreen_mute_matrix(void);
 extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_pattern_editor(void);
@@ -1343,8 +1344,11 @@ void loop()
 
   LCDML.loop();
 
-  if ( (LCDML.FUNC_getID() > _LCDML_DISP_cnt && seq.running) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume) && seq.running ) )
+  if ( LCDML.FUNC_getID() > _LCDML_DISP_cnt  || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)  )
+  {
     scope.draw_scope(225, 20, 92);
+    handle_touchscreen_menu();
+  }
   else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
     handle_touchscreen_voice_select();

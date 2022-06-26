@@ -47,6 +47,12 @@ extern void print_voice_select_default_help();
 extern void playWAVFile(const char *filename);
 extern void handleStop(void);
 extern void handleStart(void);
+extern void UI_func_load_performance(uint8_t param);
+extern void UI_func_save_performance(uint8_t param);
+extern void UI_func_seq_pattern_editor(uint8_t param);
+extern void UI_func_mixer(uint8_t param);
+extern void UI_func_song(uint8_t param);
+extern void UI_func_voice_select(uint8_t param);
 
 #ifdef USE_MICROSYNTH
 extern microsynth_t  microsynth[NUM_MICROSYNTH];
@@ -231,7 +237,7 @@ void virtual_keyboard_print_current_instrument()
   }
   else if (ts.virtual_keyboard_instrument == 7)
   {
-    display.print(F("BRAIDS "));
+    display.print(F("BRAIDS   "));
 #ifdef USE_BRAIDS
     ts.virtual_keyboard_midi_channel = braids_osc.midi_channel;
 #endif
@@ -1008,15 +1014,15 @@ void handle_touchscreen_braids()
   {
     get_scaled_touch_point();
 
-        seq.cycle_touch_element = 1;
-       
-      seq.generic_ui_delay = 0;
-   
+    seq.cycle_touch_element = 1;
+
+    seq.generic_ui_delay = 0;
+
     if ( ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
     }
-   
+
     if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && seq.cycle_touch_element == 1)
     {
       virtual_keyboard_key_on();
@@ -1029,8 +1035,137 @@ void handle_touchscreen_braids()
       print_virtual_keyboard_octave();
       ts.update_virtual_keyboard_octave = false;
     }
-   
+
   }
   seq.generic_ui_delay++;
   virtual_keyboard_update_all_key_states();
+}
+
+void draw_menu_ui_icons()
+{
+  draw_button_on_grid(2, 18, "DEXED", "VOICE", 0);
+  draw_button_on_grid(13, 18, "SONG", "EDIT", 0);
+  draw_button_on_grid(24, 18, "PATT", "EDIT", 0);
+  if (seq.running)
+    draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
+  else
+    draw_button_on_grid(45, 18, "SEQ.", "START", 1);
+
+  draw_button_on_grid(2, 25, "LOAD", "PERF", 0);
+  draw_button_on_grid(13, 25, "SAVE", "PERF", 0);
+  draw_button_on_grid(45, 25, "MAIN", "MIX", 0);
+  draw_button_on_grid(45, 11, "", "", 99); //print keyboard icon
+}
+void handle_touchscreen_menu()
+{
+  if (ts.touch_ui_drawn_in_menu == false)
+  {
+    if (ts.keyb_in_menu_activated)
+    {
+      virtual_keyboard();
+      virtual_keyboard_print_buttons();
+      virtual_keyboard_print_current_instrument();
+      seq.cycle_touch_element = 1;
+    }
+    else
+    {
+      draw_menu_ui_icons();
+    }
+    ts.touch_ui_drawn_in_menu = true;
+  }
+  if (touch.touched() )
+  {
+    get_scaled_touch_point();
+
+    if (seq.generic_ui_delay > 8000)
+    {
+      if (check_button_on_grid(45, 11) )
+      {
+        border3_large_clear();
+        ts.keyb_in_menu_activated = !ts.keyb_in_menu_activated;
+        if (ts.keyb_in_menu_activated)
+        {
+          virtual_keyboard();
+          virtual_keyboard_print_buttons();
+          virtual_keyboard_print_current_instrument();
+          draw_button_on_grid(45, 11, "KEYB", "OFF", 0);
+          seq.cycle_touch_element = 1;
+        }
+        else
+        {
+          draw_menu_ui_icons();
+        }
+      }
+      if (ts.keyb_in_menu_activated == false)
+      {
+        if (check_button_on_grid(2, 18) )
+        {
+          LCDML.OTHER_jumpToFunc(UI_func_voice_select);
+        }
+
+        else if (check_button_on_grid(13, 18) )
+        {
+          LCDML.OTHER_jumpToFunc(UI_func_song);
+
+        }
+        else if (check_button_on_grid(24, 18) )
+        {
+          LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+        }
+        else if (check_button_on_grid(45, 18) )
+        {
+          if (seq.running)
+          {
+            handleStop();
+            draw_button_on_grid(45, 18, "SEQ.", "START", 1);
+          }
+          else
+          {
+            handleStart();
+            draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
+          }
+        }
+        else if (check_button_on_grid(2, 25) )
+        {
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
+          LCDML.OTHER_jumpToFunc(UI_func_load_performance);
+        }
+        else if (check_button_on_grid(13, 26) )
+        {
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
+          LCDML.OTHER_jumpToFunc(UI_func_save_performance);
+
+        }
+        else if (check_button_on_grid(45, 25) )
+        {
+          LCDML.OTHER_jumpToFunc(UI_func_mixer);
+        }
+        seq.generic_ui_delay = 0;
+      }
+    }
+    if ( ts.update_virtual_keyboard_octave == false && ts.keyb_in_menu_activated)
+    {
+      touch_check_all_keyboard_buttons();
+    }
+
+    if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && ts.keyb_in_menu_activated)
+    {
+      virtual_keyboard_key_on();
+    }
+    ts.touch_ui_drawn_in_menu = true;
+  }
+  if (touch.touched() == false )
+  {
+    if ( ts.update_virtual_keyboard_octave && ts.keyb_in_menu_activated)
+    {
+      print_virtual_keyboard_octave();
+      ts.update_virtual_keyboard_octave = false;
+    }
+
+  }
+  seq.generic_ui_delay++;
+  if (ts.keyb_in_menu_activated)
+    virtual_keyboard_update_all_key_states();
 }

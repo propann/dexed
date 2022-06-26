@@ -506,13 +506,13 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, u
     //draw white keys
     for (uint8_t i = 0; i < 7; i++)
     {
-      display.fillRect( x * CHAR_width_small + 6 * i, y + 23, 5, 15, COLOR_SYSTEXT); // pianoroll white key
+      display.fillRect( x * CHAR_width_small + 6 * i, y*CHAR_height_small + 14, 5, 15, COLOR_SYSTEXT); // pianoroll white key
     }
     for (uint8_t i = 0; i < 11; i++)
     {
       if (seq.piano[i] == 1)
       {
-        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y + 23, 4, 8, COLOR_BACKGROUND); // BLACK key
+        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y*CHAR_height_small + 14, 4, 8, COLOR_BACKGROUND); // BLACK key
         offcount++;
         if (offcount == 5)offcount = 0;
       }
@@ -2070,6 +2070,7 @@ void lcdml_menu_clear(void)
 {
   if (seq.menu_status == 0)
     border1_clear();
+    ts.touch_ui_drawn_in_menu=false;
 }
 
 void lcdml_menu_display(void)
@@ -8742,19 +8743,7 @@ void UI_func_epiano(uint8_t param)
     display.setTextSize(1);
     helptext_l("BACK");
     helptext_r("< > SELECT PARAM");
-
-    if (seq.cycle_touch_element != 1)
-    {
-      draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
-    }
-    else
-    {
-      draw_button_on_grid(45, 1, "MORE" , "PARAM.", 0);
-      virtual_keyboard();
-      virtual_keyboard_print_buttons();
-      virtual_keyboard_print_current_instrument();
-    }
-
+    display.setTextSize(1);
     generic_active_function = 0;
     setCursor_textGrid_small(1, 1);
     display.setTextColor(RED);
@@ -8770,7 +8759,6 @@ void UI_func_epiano(uint8_t param)
     display.setTextColor(GREY2);
     setCursor_textGrid_small(1, 7);
     display.print(F("AUDIO"));
-
     display.setTextColor(GREY1);
     setCursor_textGrid_small(1, 9);
     display.print(F("DECAY"));
@@ -9016,10 +9004,6 @@ void UI_func_epiano(uint8_t param)
 
     print_small_intbar(13, 3, configuration.epiano.sound_intensity, 0, 1, 0);
     ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
-    {
-      setCursor_textGrid_small(13, 3);
-      display.print(F("DISABLED"));
-    }
     print_small_panbar(13, 4, configuration.epiano.pan, 1);
     ep_stereo_panorama.panorama(mapfloat(configuration.epiano.pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
     setModeColor(2);
@@ -11203,8 +11187,6 @@ void UI_func_braids(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     seq.cycle_touch_element = 1;
-
-    //draw_button_on_grid(45, 1, "MORE" , "PARAM.", 0);
     virtual_keyboard();
     virtual_keyboard_print_buttons();
     virtual_keyboard_print_current_instrument();
@@ -11401,7 +11383,7 @@ void UI_func_braids(uint8_t param)
     setCursor_textGrid_small(13, 4);
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.print(synthBraids[0]->get_name(braids_osc.algo));
-    
+
     //braids_print (synthBraids[0]->get_name(braids_osc.algo)[i],i);
     if (generic_temp_select_menu == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
