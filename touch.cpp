@@ -232,7 +232,9 @@ void virtual_keyboard_print_current_instrument()
   else if (ts.virtual_keyboard_instrument == 7)
   {
     display.print(F("BRAIDS "));
+#ifdef USE_BRAIDS
     ts.virtual_keyboard_midi_channel = braids_osc.midi_channel;
+#endif
   }
   else if (ts.virtual_keyboard_instrument > 7)
   {

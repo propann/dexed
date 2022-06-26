@@ -1630,6 +1630,7 @@ bool save_sd_sys_json(void)
 /******************************************************************************
    SD BRAIDS
  ******************************************************************************/
+#ifdef USE_BRAIDS
 bool load_sd_braids_json(uint8_t number)
 {
 
@@ -1774,6 +1775,7 @@ bool save_sd_braids_json(uint8_t number)
   AudioInterrupts();
   return (false);
 }
+#endif
 
 /******************************************************************************
    SD SEQUENCER
@@ -2232,7 +2234,9 @@ bool save_sd_performance_json(uint8_t number)
   save_sd_fx_json(number);
   save_sd_epiano_json(number);
   save_sd_multisample_presets_json(number);
+#ifdef USE_BRAIDS
   save_sd_braids_json(number);
+#endif
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -2579,7 +2583,9 @@ bool load_sd_performance_json(uint8_t number)
   load_sd_transpose_json(number);
   load_sd_chain_json(number);
   load_sd_multisample_presets_json(number);
+#ifdef USE_BRAIDS
   load_sd_braids_json(number);
+#endif
   configuration.sys.performance_number = number;
 
   if (sd_card > 0)
