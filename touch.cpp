@@ -251,8 +251,8 @@ void virtual_keyboard_print_current_instrument()
 
     ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
   }
-
 }
+
 void virtual_keyboard_key_on ()
 {
   int offcount = 0;
@@ -1013,16 +1013,12 @@ void handle_touchscreen_braids()
   if (touch.touched())
   {
     get_scaled_touch_point();
-
     seq.cycle_touch_element = 1;
-
     seq.generic_ui_delay = 0;
-
     if ( ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
     }
-
     if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && seq.cycle_touch_element == 1)
     {
       virtual_keyboard_key_on();
@@ -1050,7 +1046,6 @@ void draw_menu_ui_icons()
     draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
   else
     draw_button_on_grid(45, 18, "SEQ.", "START", 1);
-
   draw_button_on_grid(2, 25, "LOAD", "PERF", 0);
   draw_button_on_grid(13, 25, "SAVE", "PERF", 0);
   draw_button_on_grid(45, 25, "MAIN", "MIX", 0);
@@ -1066,10 +1061,12 @@ void handle_touchscreen_menu()
       virtual_keyboard_print_buttons();
       virtual_keyboard_print_current_instrument();
       seq.cycle_touch_element = 1;
+      seq.generic_ui_delay = 0;
     }
     else
     {
       draw_menu_ui_icons();
+      seq.generic_ui_delay = 0;
     }
     ts.touch_ui_drawn_in_menu = true;
   }
@@ -1102,11 +1099,9 @@ void handle_touchscreen_menu()
         {
           LCDML.OTHER_jumpToFunc(UI_func_voice_select);
         }
-
         else if (check_button_on_grid(13, 18) )
         {
           LCDML.OTHER_jumpToFunc(UI_func_song);
-
         }
         else if (check_button_on_grid(24, 18) )
         {
@@ -1142,14 +1137,13 @@ void handle_touchscreen_menu()
         {
           LCDML.OTHER_jumpToFunc(UI_func_mixer);
         }
-        seq.generic_ui_delay = 0;
       }
+      seq.generic_ui_delay = 0;
     }
     if ( ts.update_virtual_keyboard_octave == false && ts.keyb_in_menu_activated)
     {
       touch_check_all_keyboard_buttons();
     }
-
     if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && ts.keyb_in_menu_activated)
     {
       virtual_keyboard_key_on();
@@ -1163,7 +1157,6 @@ void handle_touchscreen_menu()
       print_virtual_keyboard_octave();
       ts.update_virtual_keyboard_octave = false;
     }
-
   }
   seq.generic_ui_delay++;
   if (ts.keyb_in_menu_activated)

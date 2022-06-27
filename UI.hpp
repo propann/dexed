@@ -506,13 +506,13 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, u
     //draw white keys
     for (uint8_t i = 0; i < 7; i++)
     {
-      display.fillRect( x * CHAR_width_small + 6 * i, y*CHAR_height_small + 14, 5, 15, COLOR_SYSTEXT); // pianoroll white key
+      display.fillRect( x * CHAR_width_small + 6 * i, y*CHAR_height_small + 16, 5, 15, COLOR_SYSTEXT); // pianoroll white key
     }
     for (uint8_t i = 0; i < 11; i++)
     {
       if (seq.piano[i] == 1)
       {
-        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y*CHAR_height_small + 14, 4, 8, COLOR_BACKGROUND); // BLACK key
+        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y*CHAR_height_small + 16, 4, 8, COLOR_BACKGROUND); // BLACK key
         offcount++;
         if (offcount == 5)offcount = 0;
       }
@@ -11373,6 +11373,7 @@ void UI_func_braids(uint8_t param)
 
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     braids_update_settings();
+     display.setTextSize(1);
     if (generic_temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     print_small_intbar(9, 3,  braids_osc.sound_intensity, 0, 1, 0);

@@ -27,7 +27,7 @@ typedef struct ts_s
   uint8_t  temp_col_sat = 240, temp_col_bright = 240;
   int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
-  uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums
+  uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums 7=braids, 8- pitched samples
   uint8_t virtual_keyboard_midi_channel = 1;
 
   TS_Point p;
