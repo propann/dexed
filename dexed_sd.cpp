@@ -99,6 +99,10 @@ extern uint16_t COLOR_PITCHSMP;
 extern multisample_t ms[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
+DMAMEM     StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+File json;
+char filename[CONFIG_FILENAME_LEN];
+
 /******************************************************************************
    SD BANK/VOICE LOADING
  ******************************************************************************/
@@ -517,14 +521,9 @@ bool load_sd_drummappings_json(uint8_t number)
   if (number < 0)
     return (false);
 
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
 
     // first check if file exists...
@@ -581,14 +580,9 @@ bool load_sd_drummappings_json(uint8_t number)
 bool save_sd_drummappings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
-  char filename[CONFIG_FILENAME_LEN];
-  number = constrain(number, 0, 99);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    number = constrain(number, 0, 99);
     if (check_performance_directory(number))
     {
       sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
@@ -664,14 +658,9 @@ bool load_sd_drumsettings_json(uint8_t number)
   if (number < 0)
     return (false);
 
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
 
     // first check if file exists...
@@ -736,14 +725,9 @@ bool load_sd_drumsettings_json(uint8_t number)
 bool save_sd_drumsettings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
-  char filename[CONFIG_FILENAME_LEN];
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     if (check_performance_directory(number))
     {
       sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
@@ -818,15 +802,9 @@ bool save_sd_drumsettings_json(uint8_t number)
  ******************************************************************************/
 bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
-  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
 
     // first check if file exists...
@@ -911,14 +889,9 @@ bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 
 bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
-  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
 
 #ifdef DEBUG
@@ -1001,15 +974,9 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
 #ifdef USE_MICROSYNTH
-  char filename[CONFIG_FILENAME_LEN];
-
-  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
 
     // first check if file exists...
@@ -1091,14 +1058,9 @@ bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
 #ifdef USE_MICROSYNTH
-  char filename[CONFIG_FILENAME_LEN];
-
-  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
 
 #ifdef DEBUG
@@ -1182,9 +1144,6 @@ bool load_sd_fx_json(uint8_t number)
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
     // first check if file exists...
@@ -1274,15 +1233,12 @@ bool load_sd_fx_json(uint8_t number)
 
 bool save_sd_fx_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   save_sd_drumsettings_json(number);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
 #ifdef DEBUG
@@ -1360,13 +1316,9 @@ bool save_sd_fx_json(uint8_t number)
  ******************************************************************************/
 bool load_sd_epiano_json(uint8_t number)
 {
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
 
     // first check if file exists...
@@ -1437,14 +1389,9 @@ bool load_sd_epiano_json(uint8_t number)
 
 bool save_sd_epiano_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
 
 #ifdef DEBUG
@@ -1511,9 +1458,6 @@ bool load_sd_sys_json(void)
 {
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
     sprintf(filename, "/%s.json", SYS_CONFIG_NAME);
 
     // first check if file exists...
@@ -1574,12 +1518,8 @@ bool load_sd_sys_json(void)
 
 bool save_sd_sys_json(void)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s.json", SYS_CONFIG_NAME);
 
 #ifdef DEBUG
@@ -1633,16 +1573,12 @@ bool save_sd_sys_json(void)
 #ifdef USE_BRAIDS
 bool load_sd_braids_json(uint8_t number)
 {
-
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
 
     // first check if file exists...
@@ -1713,11 +1649,8 @@ bool load_sd_braids_json(uint8_t number)
 
 bool save_sd_braids_json(uint8_t number)
 {
-   char filename[CONFIG_FILENAME_LEN];
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving braids"));
@@ -1785,12 +1718,10 @@ bool load_sd_chain_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
     // first check if file exists...
     AudioNoInterrupts();
@@ -1838,16 +1769,12 @@ bool load_sd_chain_json(uint8_t number)
 
 bool save_sd_chain_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
 
+    int count = 0;
     int total = sizeof(seq.chain);
     int columns = sizeof(seq.chain[0]);
     int rows = total / columns;
@@ -1886,12 +1813,10 @@ bool load_sd_transpose_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
     // first check if file exists...
     AudioNoInterrupts();
@@ -1939,16 +1864,12 @@ bool load_sd_transpose_json(uint8_t number)
 
 bool save_sd_transpose_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
 
+    int count = 0;
     int total = sizeof(seq.chain_transpose);
     int columns = sizeof(seq.chain_transpose[0]);
     int rows = total / columns;
@@ -1988,12 +1909,10 @@ bool load_sd_song_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
     // first check if file exists...
     AudioNoInterrupts();
@@ -2045,16 +1964,12 @@ bool load_sd_song_json(uint8_t number)
 
 bool save_sd_song_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
 
+    int count = 0;
     int total = sizeof(seq.song);
     int columns = sizeof(seq.song[0]);
     int rows = total / columns;
@@ -2091,14 +2006,9 @@ bool save_sd_song_json(uint8_t number)
 
 bool save_sd_seq_sub_vel_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer velocity "));
@@ -2106,6 +2016,7 @@ bool save_sd_seq_sub_vel_json(uint8_t number)
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
+    int count = 0;
     int total = sizeof(seq.vel);
     int columns = sizeof(seq.vel[0]);
     int rows = total / columns;
@@ -2148,14 +2059,9 @@ bool save_sd_seq_sub_vel_json(uint8_t number)
 
 bool save_sd_seq_sub_patterns_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer patterns "));
@@ -2163,6 +2069,7 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
+    int count = 0;
     int total = sizeof(seq.note_data);
     int columns = sizeof(seq.note_data[0]);
     int rows = total / columns;
@@ -2205,7 +2112,6 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
 
 bool save_sd_performance_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
   bool seq_was_running = false;
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
@@ -2250,8 +2156,6 @@ bool save_sd_performance_json(uint8_t number)
   }
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer config "));
@@ -2372,14 +2276,10 @@ bool check_performance_directory(uint8_t number)
 
 void get_sd_performance_name_json(uint8_t number)
 {
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   memset(seq.name_temp, 0, FILENAME_LEN);
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 
     // first check if file exists...
@@ -2424,13 +2324,10 @@ bool load_sd_seq_sub_vel_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 
     // first check if file exists...
@@ -2492,13 +2389,10 @@ bool load_sd_seq_sub_patterns_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 
     // first check if file exists...
@@ -2590,9 +2484,6 @@ bool load_sd_performance_json(uint8_t number)
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
     // first check if file exists...
     if (SD.exists(filename))
@@ -3075,10 +2966,6 @@ bool save_sd_multisample_presets_json(uint8_t number)
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 #ifdef DEBUG
@@ -3149,10 +3036,6 @@ bool load_sd_multisample_presets_json(uint8_t number)
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 

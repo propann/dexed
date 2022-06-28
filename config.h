@@ -146,18 +146,21 @@
 // EPIANO
 #define USE_EPIANO
 #ifdef USE_EPIANO
-#define NUM_EPIANO_VOICES 16
-#define DEFAULT_EP_MIDI_CHANNEL 3
+  #define NUM_EPIANO_VOICES 16
+  #define DEFAULT_EP_MIDI_CHANNEL 3
 #endif
 
 // MICROSYNTH
 #define USE_MICROSYNTH
 #ifdef USE_MICROSYNTH
-#define NUM_MICROSYNTH 2
+  #define NUM_MICROSYNTH 2
 #endif
 
+// BRAIDS
 //#define USE_BRAIDS  //very early state. not ready for usage
-//#define NUM_BRAIDS 8
+#ifdef USE_BRAIDS
+  #define NUM_BRAIDS 8
+#endif
 
 #define VIRT_KEYB_YPOS 166
 
