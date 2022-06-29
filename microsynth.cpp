@@ -49,7 +49,7 @@ extern float volume_transform(float amp);
 extern sequencer_t seq;
 #endif
 
-void microsynth_update_settings(uint8_t instance_id)
+FLASHMEM void microsynth_update_settings(uint8_t instance_id)
 {
 #ifdef USE_MICROSYNTH
   microsynth_mixer_filter_osc[instance_id].gain(0, 0.0);
@@ -98,7 +98,7 @@ void microsynth_update_settings(uint8_t instance_id)
 #endif
 }
 
-void braids_update_settings()
+FLASHMEM void braids_update_settings()
 {
 #ifdef USE_BRAIDS
 

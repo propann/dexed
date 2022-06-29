@@ -30,7 +30,7 @@
 static XPT2046_Touchscreen 	*isrPinptr;
 void isrPin(void);
 
-bool XPT2046_Touchscreen::begin(SPIClass &wspi)
+FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 {
 	_pspi = &wspi;
 	_pspi->begin();

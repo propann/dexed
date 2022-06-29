@@ -99,11 +99,15 @@ extern uint16_t COLOR_PITCHSMP;
 extern multisample_t ms[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
+File json;
+char filename[CONFIG_FILENAME_LEN];
+const char* sError = "*ERROR*";
+
 /******************************************************************************
    SD BANK/VOICE LOADING
  ******************************************************************************/
 
-bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
+FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
   Serial.printf("load voice, bank [%d] - voice [%d]\n", b, v + 1);
@@ -126,8 +130,8 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     AudioInterrupts();
     if (!sysex_dir)
     {
-      strcpy(g_bank_name[instance_id], "*ERROR*");
-      strcpy(g_voice_name[instance_id], "*ERROR*");
+      strcpy(g_bank_name[instance_id], sError);
+      strcpy(g_voice_name[instance_id], sError);
 
 #ifdef DEBUG
       Serial.print(F("E : Cannot open "));
@@ -149,8 +153,8 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
       entry.close();
       sysex_dir.close();
       AudioInterrupts();
-      strcpy(g_bank_name[instance_id], "*ERROR*");
-      strcpy(g_voice_name[instance_id], "*ERROR*");
+      strcpy(g_bank_name[instance_id], sError);
+      strcpy(g_voice_name[instance_id], sError);
       return (false);
     }
 
@@ -202,7 +206,7 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
       return (ret);
     }
     else {
-      strcpy(g_voice_name[instance_id], "*ERROR*");
+      strcpy(g_voice_name[instance_id], sError);
 #ifdef DEBUG
       Serial.println(F("E : Cannot load voice data"));
 #endif
@@ -215,12 +219,12 @@ bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     return true;
   }
 
-  strcpy(g_bank_name[instance_id], "*ERROR*");
-  strcpy(g_voice_name[instance_id], "*ERROR*");
+  strcpy(g_bank_name[instance_id], sError);
+  strcpy(g_voice_name[instance_id], sError);
   return false;
 }
 
-bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
+FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
   Serial.printf("save_sd_voice, b:%d - d:%d\n", b, v);
@@ -278,7 +282,7 @@ bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
   return (false);
 }
 
-bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
+FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
 {
   uint16_t n;
   int32_t bulk_checksum_calc = 0;
@@ -363,7 +367,7 @@ bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
   return (true);
 }
 
-bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
+FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
 {
   uint16_t n;
   int32_t bulk_checksum_calc = 0;
@@ -431,7 +435,7 @@ bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
   return (true);
 }
 
-bool save_sd_bank(const char* bank_filename, uint8_t* data)
+FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data)
 {
   char tmp[FILENAME_LEN];
   char tmp2[FILENAME_LEN];
@@ -511,20 +515,15 @@ bool save_sd_bank(const char* bank_filename, uint8_t* data)
    SD DRUM CUSTOM MAPPINGS
  ******************************************************************************/
 
-bool load_sd_drummappings_json(uint8_t number)
+FLASHMEM bool load_sd_drummappings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
   if (number < 0)
     return (false);
 
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
 
     // first check if file exists...
@@ -540,6 +539,7 @@ bool load_sd_drummappings_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -578,17 +578,12 @@ bool load_sd_drummappings_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_drummappings_json(uint8_t number)
+FLASHMEM bool save_sd_drummappings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
-  char filename[CONFIG_FILENAME_LEN];
-  number = constrain(number, 0, 99);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    number = constrain(number, 0, 99);
     if (check_performance_directory(number))
     {
       sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
@@ -610,6 +605,7 @@ bool save_sd_drummappings_json(uint8_t number)
       json = SD.open(filename, FILE_WRITE);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS; i++)
         {
           data_json["type"][i] = custom_midi_map[i].type;
@@ -658,20 +654,15 @@ bool save_sd_drummappings_json(uint8_t number)
 /******************************************************************************
    SD DRUMSETTINGS
  ******************************************************************************/
-bool load_sd_drumsettings_json(uint8_t number)
+FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
   if (number < 0)
     return (false);
 
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
 
     // first check if file exists...
@@ -687,6 +678,7 @@ bool load_sd_drumsettings_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -733,17 +725,12 @@ bool load_sd_drumsettings_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_drumsettings_json(uint8_t number)
+FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
-  char filename[CONFIG_FILENAME_LEN];
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     if (check_performance_directory(number))
     {
       sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
@@ -765,6 +752,7 @@ bool save_sd_drumsettings_json(uint8_t number)
       json = SD.open(filename, FILE_WRITE);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         data_json["drums_volume"] = seq.drums_volume;
         for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1; i++)
         {
@@ -816,17 +804,11 @@ bool save_sd_drumsettings_json(uint8_t number)
 /******************************************************************************
    SD VOICECONFIG
  ******************************************************************************/
-bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
+FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
-  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
 
     // first check if file exists...
@@ -842,6 +824,7 @@ bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -909,16 +892,11 @@ bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
   return (false);
 }
 
-bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
+FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
-  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
 
 #ifdef DEBUG
@@ -937,6 +915,7 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["bank"] = configuration.dexed[instance_id].bank;
       data_json["voice"] = configuration.dexed[instance_id].voice;
       data_json["lowest_note"] = configuration.dexed[instance_id].lowest_note;
@@ -998,18 +977,12 @@ bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 /******************************************************************************
    SD MICROSYNTH
  ******************************************************************************/
-bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
+FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
 #ifdef USE_MICROSYNTH
-  char filename[CONFIG_FILENAME_LEN];
-
-  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
+    ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
 
     // first check if file exists...
@@ -1025,6 +998,7 @@ bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -1088,17 +1062,12 @@ bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 
 }
 
-bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
+FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
 #ifdef USE_MICROSYNTH
-  char filename[CONFIG_FILENAME_LEN];
-
-  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s%d.json", PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
 
 #ifdef DEBUG
@@ -1117,6 +1086,7 @@ bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["sound_intensity"] = microsynth[instance_id].sound_intensity;
       data_json["wave"] = microsynth[instance_id].wave;
       data_json["coarse"] = microsynth[instance_id].coarse;
@@ -1174,7 +1144,7 @@ bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 /******************************************************************************
    SD FX
  ******************************************************************************/
-bool load_sd_fx_json(uint8_t number)
+FLASHMEM bool load_sd_fx_json(uint8_t number)
 {
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
@@ -1182,9 +1152,6 @@ bool load_sd_fx_json(uint8_t number)
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
     // first check if file exists...
@@ -1200,6 +1167,7 @@ bool load_sd_fx_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -1272,17 +1240,14 @@ bool load_sd_fx_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_fx_json(uint8_t number)
+FLASHMEM bool save_sd_fx_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
   save_sd_drumsettings_json(number);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
 #ifdef DEBUG
@@ -1298,6 +1263,7 @@ bool save_sd_fx_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       for (uint8_t i = 0; i < MAX_DEXED; i++)
       {
         data_json["filter_cutoff"][i] = configuration.fx.filter_cutoff[i];
@@ -1358,15 +1324,11 @@ bool save_sd_fx_json(uint8_t number)
 /******************************************************************************
    SD EPIANO
  ******************************************************************************/
-bool load_sd_epiano_json(uint8_t number)
+FLASHMEM bool load_sd_epiano_json(uint8_t number)
 {
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
 
     // first check if file exists...
@@ -1382,6 +1344,7 @@ bool load_sd_epiano_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -1435,16 +1398,11 @@ bool load_sd_epiano_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_epiano_json(uint8_t number)
+FLASHMEM bool save_sd_epiano_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
 
 #ifdef DEBUG
@@ -1460,6 +1418,7 @@ bool save_sd_epiano_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["decay"] = configuration.epiano.decay;
       data_json["release"] = configuration.epiano.release;
       data_json["hardness"] = configuration.epiano.hardness;
@@ -1507,13 +1466,10 @@ bool save_sd_epiano_json(uint8_t number)
 /******************************************************************************
    SD SYS
  ******************************************************************************/
-bool load_sd_sys_json(void)
+FLASHMEM bool load_sd_sys_json(void)
 {
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
     sprintf(filename, "/%s.json", SYS_CONFIG_NAME);
 
     // first check if file exists...
@@ -1527,6 +1483,7 @@ bool load_sd_sys_json(void)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -1572,14 +1529,10 @@ bool load_sd_sys_json(void)
   return (false);
 }
 
-bool save_sd_sys_json(void)
+FLASHMEM bool save_sd_sys_json(void)
 {
-  char filename[CONFIG_FILENAME_LEN];
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s.json", SYS_CONFIG_NAME);
 
 #ifdef DEBUG
@@ -1593,6 +1546,7 @@ bool save_sd_sys_json(void)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["vol"] = configuration.sys.vol;
       data_json["mono"] = configuration.sys.mono;
       data_json["soft_midi_thru"] = configuration.sys.soft_midi_thru;
@@ -1631,22 +1585,17 @@ bool save_sd_sys_json(void)
    SD BRAIDS
  ******************************************************************************/
 #ifdef USE_BRAIDS
-bool load_sd_braids_json(uint8_t number)
+FLASHMEM bool load_sd_braids_json(uint8_t number)
 {
-
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
 
     // first check if file exists...
-
     AudioNoInterrupts();
     if (SD.exists(filename))
     {
@@ -1657,6 +1606,7 @@ bool load_sd_braids_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -1711,13 +1661,10 @@ bool load_sd_braids_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_braids_json(uint8_t number)
+FLASHMEM bool save_sd_braids_json(uint8_t number)
 {
-   char filename[CONFIG_FILENAME_LEN];
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving braids"));
@@ -1732,6 +1679,7 @@ bool save_sd_braids_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["vol"]= braids_osc.sound_intensity;
       data_json["algo"] = braids_osc.algo;
       data_json["color"] = braids_osc.color;
@@ -1781,16 +1729,14 @@ bool save_sd_braids_json(uint8_t number)
    SD SEQUENCER
  ******************************************************************************/
 
-bool load_sd_chain_json(uint8_t number)
+FLASHMEM bool load_sd_chain_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
     // first check if file exists...
     AudioNoInterrupts();
@@ -1800,6 +1746,7 @@ bool load_sd_chain_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -1836,18 +1783,14 @@ bool load_sd_chain_json(uint8_t number)
 }
 
 
-bool save_sd_chain_json(uint8_t number)
+FLASHMEM bool save_sd_chain_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
 
+    int count = 0;
     int total = sizeof(seq.chain);
     int columns = sizeof(seq.chain[0]);
     int rows = total / columns;
@@ -1857,6 +1800,7 @@ bool save_sd_chain_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       for (uint8_t i = 0; i < rows; i++)
       {
         for (uint8_t j = 0; j < columns; j++) {
@@ -1882,16 +1826,14 @@ bool save_sd_chain_json(uint8_t number)
   return (false);
 }
 
-bool load_sd_transpose_json(uint8_t number)
+FLASHMEM bool load_sd_transpose_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
     // first check if file exists...
     AudioNoInterrupts();
@@ -1901,6 +1843,7 @@ bool load_sd_transpose_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -1937,18 +1880,14 @@ bool load_sd_transpose_json(uint8_t number)
 }
 
 
-bool save_sd_transpose_json(uint8_t number)
+FLASHMEM bool save_sd_transpose_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
 
+    int count = 0;
     int total = sizeof(seq.chain_transpose);
     int columns = sizeof(seq.chain_transpose[0]);
     int rows = total / columns;
@@ -1958,6 +1897,7 @@ bool save_sd_transpose_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       for (uint8_t i = 0; i < rows; i++)
       {
         for (uint8_t j = 0; j < columns; j++) {
@@ -1984,16 +1924,14 @@ bool save_sd_transpose_json(uint8_t number)
 }
 
 
-bool load_sd_song_json(uint8_t number)
+FLASHMEM bool load_sd_song_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
     // first check if file exists...
     AudioNoInterrupts();
@@ -2003,6 +1941,7 @@ bool load_sd_song_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -2043,18 +1982,14 @@ bool load_sd_song_json(uint8_t number)
 }
 
 
-bool save_sd_song_json(uint8_t number)
+FLASHMEM bool save_sd_song_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
 
+    int count = 0;
     int total = sizeof(seq.song);
     int columns = sizeof(seq.song[0]);
     int rows = total / columns;
@@ -2064,6 +1999,7 @@ bool save_sd_song_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       for (uint8_t i = 0; i < rows; i++)
       {
         for (uint8_t j = 0; j < columns; j++) {
@@ -2089,16 +2025,11 @@ bool save_sd_song_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_seq_sub_vel_json(uint8_t number)
+FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer velocity "));
@@ -2106,6 +2037,7 @@ bool save_sd_seq_sub_vel_json(uint8_t number)
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
+    int count = 0;
     int total = sizeof(seq.vel);
     int columns = sizeof(seq.vel[0]);
     int rows = total / columns;
@@ -2115,6 +2047,7 @@ bool save_sd_seq_sub_vel_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       for (uint8_t i = 0; i < rows; i++)
       {
         for (uint8_t j = 0; j < columns; j++) {
@@ -2146,16 +2079,11 @@ bool save_sd_seq_sub_vel_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_seq_sub_patterns_json(uint8_t number)
+FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
-  int count = 0;
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer patterns "));
@@ -2163,6 +2091,7 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
     Serial.print(F(" to "));
     Serial.println(filename);
 #endif
+    int count = 0;
     int total = sizeof(seq.note_data);
     int columns = sizeof(seq.note_data[0]);
     int rows = total / columns;
@@ -2172,6 +2101,7 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       for (uint8_t i = 0; i < rows; i++)
       {
         for (uint8_t j = 0; j < columns; j++) {
@@ -2203,9 +2133,8 @@ bool save_sd_seq_sub_patterns_json(uint8_t number)
   return (false);
 }
 
-bool save_sd_performance_json(uint8_t number)
+FLASHMEM bool save_sd_performance_json(uint8_t number)
 {
-  char filename[CONFIG_FILENAME_LEN];
   bool seq_was_running = false;
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
 
@@ -2250,8 +2179,6 @@ bool save_sd_performance_json(uint8_t number)
   }
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 #ifdef DEBUG
     Serial.print(F("Saving sequencer config "));
@@ -2265,6 +2192,7 @@ bool save_sd_performance_json(uint8_t number)
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["seq_tempo_ms"] = seq.tempo_ms ;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_speed"] = seq.arp_speed;
@@ -2329,7 +2257,7 @@ bool save_sd_performance_json(uint8_t number)
   return (false);
 }
 
-bool check_performance_directory(uint8_t number)
+FLASHMEM bool check_performance_directory(uint8_t number)
 {
   char dir[CONFIG_FILENAME_LEN];
 
@@ -2372,14 +2300,10 @@ bool check_performance_directory(uint8_t number)
 
 void get_sd_performance_name_json(uint8_t number)
 {
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   memset(seq.name_temp, 0, FILENAME_LEN);
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 
     // first check if file exists...
@@ -2389,10 +2313,10 @@ void get_sd_performance_name_json(uint8_t number)
       // ... and if: load
 
       json = SD.open(filename);
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       if (json)
       {
         deserializeJson(data_json, json);
-
         json.close();
         AudioInterrupts();
       }
@@ -2420,17 +2344,14 @@ void get_sd_performance_name_json(uint8_t number)
   }
 }
 
-bool load_sd_seq_sub_vel_json(uint8_t number)
+FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 
     // first check if file exists...
@@ -2447,6 +2368,7 @@ bool load_sd_seq_sub_vel_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -2488,17 +2410,14 @@ bool load_sd_seq_sub_vel_json(uint8_t number)
   return (false);
 }
 
-bool load_sd_seq_sub_patterns_json(uint8_t number)
+FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 
     // first check if file exists...
@@ -2515,6 +2434,7 @@ bool load_sd_seq_sub_patterns_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
 
         json.close();
@@ -2558,7 +2478,7 @@ bool load_sd_seq_sub_patterns_json(uint8_t number)
   return (false);
 }
 
-bool load_sd_performance_json(uint8_t number)
+FLASHMEM bool load_sd_performance_json(uint8_t number)
 {
 #if defined(USE_SEQUENCER)
   bool seq_was_running = false;
@@ -2590,9 +2510,6 @@ bool load_sd_performance_json(uint8_t number)
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
     // first check if file exists...
     if (SD.exists(filename))
@@ -2606,6 +2523,7 @@ bool load_sd_performance_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
@@ -2720,7 +2638,7 @@ bool load_sd_performance_json(uint8_t number)
   return (false);
 }
 
-bool check_sd_performance_exists(uint8_t number)
+FLASHMEM bool check_sd_performance_exists(uint8_t number)
 {
   if (number < 0)
     return (false);
@@ -2754,7 +2672,7 @@ bool check_sd_performance_exists(uint8_t number)
 /******************************************************************************
    HELPER FUNCTIONS
  ******************************************************************************/
-bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
+FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
 {
   uint16_t n;
   int32_t bulk_checksum_calc = 0;
@@ -2848,7 +2766,7 @@ bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
   return (true);
 }
 
-bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len)
+FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len)
 {
 #ifdef DEBUG
   Serial.print(F("Storing SYSEX format 0x"));
@@ -2903,7 +2821,7 @@ bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len)
   return (true);
 }
 
-bool get_bank_name(uint8_t b, char* bank_name) {
+FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
 #ifdef DEBUG
   Serial.printf("get bank name for bank [%d]\n", b);
 #endif
@@ -2921,7 +2839,7 @@ bool get_bank_name(uint8_t b, char* bank_name) {
     AudioInterrupts();
     if (!sysex_dir)
     {
-      strcpy(bank_name, "*ERROR*");
+      strcpy(bank_name, sError);
 
 #ifdef DEBUG
       Serial.print(F("E : Cannot open "));
@@ -2939,7 +2857,7 @@ bool get_bank_name(uint8_t b, char* bank_name) {
 
     if (entry.isDirectory())
     {
-      strcpy(bank_name, "*ERROR*");
+      strcpy(bank_name, sError);
       AudioNoInterrupts();
       entry.close();
       sysex_dir.close();
@@ -2958,11 +2876,11 @@ bool get_bank_name(uint8_t b, char* bank_name) {
     return true;
   }
 
-  strcpy(bank_name, "*ERROR*");
+  strcpy(bank_name, sError);
   return false;
 }
 
-bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
+FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 #ifdef DEBUG
   Serial.printf("get voice name for voice [%d]\n", v + 1);
 #endif
@@ -2980,7 +2898,7 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     AudioInterrupts();
     if (!sysex_dir)
     {
-      strcpy(voice_name, "*ERROR*");
+      strcpy(voice_name, sError);
 
 #ifdef DEBUG
       Serial.print(F("E : Cannot open "));
@@ -2998,7 +2916,7 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 
     if (entry.isDirectory())
     {
-      strcpy(voice_name, "*ERROR*");
+      strcpy(voice_name, sError);
       AudioNoInterrupts();
       entry.close();
       sysex_dir.close();
@@ -3030,7 +2948,7 @@ bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     return true;
   }
 
-  strcpy(voice_name, "*ERROR*");
+  strcpy(voice_name, sError);
   return false;
 }
 
@@ -3052,7 +2970,7 @@ void strip_extension(const char* s, char* target, uint8_t len)
   strcpy(tmp, s);
   token = strtok(tmp, ".");
   if (token == NULL)
-    strcpy(target, "*ERROR*");
+    strcpy(target, sError);
   else
     strcpy(target, token);
 
@@ -3068,17 +2986,13 @@ void string_toupper(char* s)
   }
 }
 
-bool save_sd_multisample_presets_json(uint8_t number)
+FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
 {
   if (number < 0)
     return (false);
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 #ifdef DEBUG
@@ -3099,6 +3013,8 @@ bool save_sd_multisample_presets_json(uint8_t number)
     if (json)
     {
       char zone_filename[CONFIG_FILENAME_LEN];
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+
       for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++)
       {
         data_json[i]["name"] = ms[i].name;
@@ -3142,17 +3058,13 @@ bool save_sd_multisample_presets_json(uint8_t number)
   return (false);
 }
 
-bool load_sd_multisample_presets_json(uint8_t number)
+FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
 {
   if (number < 0)
     return (false);
 
   if (sd_card > 0)
   {
-    File json;
-    StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-    char filename[CONFIG_FILENAME_LEN];
-
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 
@@ -3171,6 +3083,7 @@ bool load_sd_multisample_presets_json(uint8_t number)
       json = SD.open(filename);
       if (json)
       {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();

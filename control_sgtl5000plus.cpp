@@ -22,12 +22,13 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#ifdef SGTL5000_AUDIO_ENHANCE
 
 #include <Arduino.h>
 #include <Audio.h>
 #include "control_sgtl5000plus.h"
 
-void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
+FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
 {
   num_bands = constrain(n, 1, 7);
 
@@ -102,7 +103,7 @@ void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
   }
 }
 
-void AudioControlSGTL5000Plus::setEQType(uint8_t band, uint8_t ft)
+FLASHMEM void AudioControlSGTL5000Plus::setEQType(uint8_t band, uint8_t ft)
 {
   if (filter_type && _enabled != false)
   {
@@ -111,7 +112,7 @@ void AudioControlSGTL5000Plus::setEQType(uint8_t band, uint8_t ft)
   }
 }
 
-void AudioControlSGTL5000Plus::setEQFc(uint8_t band, float frq)
+FLASHMEM void AudioControlSGTL5000Plus::setEQFc(uint8_t band, float frq)
 {
   if (Fc && _enabled != false)
   {
@@ -120,7 +121,7 @@ void AudioControlSGTL5000Plus::setEQFc(uint8_t band, float frq)
   }
 }
 
-void AudioControlSGTL5000Plus::setEQQ(uint8_t band, float q)
+FLASHMEM void AudioControlSGTL5000Plus::setEQQ(uint8_t band, float q)
 {
   if (Q && _enabled != false)
   {
@@ -131,7 +132,7 @@ void AudioControlSGTL5000Plus::setEQQ(uint8_t band, float q)
 
 // Calculate Q: http://www.sengpielaudio.com/calculator-bandwidth.htm
 //              http://jdm12.ch/Audio/EQ_BPF-Q-bandwidth.asp
-void AudioControlSGTL5000Plus::setEQBandwidth(uint8_t band, float bw)
+FLASHMEM void AudioControlSGTL5000Plus::setEQBandwidth(uint8_t band, float bw)
 {
   if (Q && Fc && _enabled != false)
   {
@@ -140,7 +141,7 @@ void AudioControlSGTL5000Plus::setEQBandwidth(uint8_t band, float bw)
   }
 }
 
-void AudioControlSGTL5000Plus::setEQGain(uint8_t band, float gain)
+FLASHMEM void AudioControlSGTL5000Plus::setEQGain(uint8_t band, float gain)
 {
   if (peakGainDB && _enabled != false)
   {
@@ -149,7 +150,7 @@ void AudioControlSGTL5000Plus::setEQGain(uint8_t band, float gain)
   }
 }
 
-void AudioControlSGTL5000Plus::commitFilter(uint8_t band)
+FLASHMEM void AudioControlSGTL5000Plus::commitFilter(uint8_t band)
 {
   int filter[5] = {0, 0, 0, 0, 0};
 
@@ -162,7 +163,7 @@ void AudioControlSGTL5000Plus::commitFilter(uint8_t band)
   eqFilter(band, filter);
 }
 
-void AudioControlSGTL5000Plus::show_params(uint8_t band)
+FLASHMEM void AudioControlSGTL5000Plus::show_params(uint8_t band)
 {
   if (_enabled == false)
   {
@@ -185,3 +186,4 @@ void AudioControlSGTL5000Plus::show_params(uint8_t band)
 //    Serial.println();
   }
 }
+#endif
