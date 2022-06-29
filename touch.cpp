@@ -1161,4 +1161,6 @@ void handle_touchscreen_menu()
   seq.generic_ui_delay++;
   if (ts.keyb_in_menu_activated)
     virtual_keyboard_update_all_key_states();
+  display.setTextSize(2);
+  display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
 }

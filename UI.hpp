@@ -265,14 +265,14 @@ bool menu_select_toggle;
 float temp_float;
 
 PROGMEM const char cc_names[8][12] = { "Volume     ",
-                               "Panorama   ",
-                               "Bank Select",
-                               "Reverb Send",
-                               "Seq. Start ",
-                               "Seq. Stop  ",
-                               "Seq. RECORD",
-                               "Panic Dexed"
-                             };
+                                       "Panorama   ",
+                                       "Bank Select",
+                                       "Reverb Send",
+                                       "Seq. Start ",
+                                       "Seq. Stop  ",
+                                       "Seq. RECORD",
+                                       "Panic Dexed"
+                                     };
 
 PROGMEM const uint8_t cc_dest_values[8] = { 7, 10, 32, 91, 200, 201, 202, 203 };
 
@@ -506,13 +506,13 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, u
     //draw white keys
     for (uint8_t i = 0; i < 7; i++)
     {
-      display.fillRect( x * CHAR_width_small + 6 * i, y*CHAR_height_small + 16, 5, 15, COLOR_SYSTEXT); // pianoroll white key
+      display.fillRect( x * CHAR_width_small + 6 * i, y * CHAR_height_small + 16, 5, 15, COLOR_SYSTEXT); // pianoroll white key
     }
     for (uint8_t i = 0; i < 11; i++)
     {
       if (seq.piano[i] == 1)
       {
-        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y*CHAR_height_small + 16, 4, 8, COLOR_BACKGROUND); // BLACK key
+        display.fillRect( x * CHAR_width_small + 4 * i - offset[offcount], y * CHAR_height_small + 16, 4, 8, COLOR_BACKGROUND); // BLACK key
         offcount++;
         if (offcount == 5)offcount = 0;
       }
@@ -1629,7 +1629,7 @@ void setup_ui(void)
 
   // Enable Menu Rollover
   //LCDML.MENU_enRollover();
-  
+
   //Enable Screensaver (screensaver menu function, time to activate in ms)
   LCDML.SCREEN_enable(mFunc_screensaver, 200000);
   //LCDML.SCREEN_enable(mFunc_screensaver, 7000); //quick test time
@@ -2072,7 +2072,7 @@ void lcdml_menu_clear(void)
 {
   if (seq.menu_status == 0)
     border1_clear();
-    ts.touch_ui_drawn_in_menu=false;
+  ts.touch_ui_drawn_in_menu = false;
 }
 
 void lcdml_menu_display(void)
@@ -11375,7 +11375,7 @@ void UI_func_braids(uint8_t param)
 
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     braids_update_settings();
-     display.setTextSize(1);
+    display.setTextSize(1);
     if (generic_temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     print_small_intbar(9, 3,  braids_osc.sound_intensity, 0, 1, 0);
@@ -16188,7 +16188,7 @@ void UI_func_format_flash(uint8_t param)
 
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
-    border3_large_clear();
+    display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     helptext_r ("FORMAT");
     helptext_l ("BACK");
@@ -16348,7 +16348,7 @@ void UI_func_clear_song(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
-    border3_large_clear();
+    display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     helptext_r ("CLEAR SONG");
     helptext_l ("BACK");
@@ -16404,7 +16404,7 @@ void UI_func_clear_song_chains(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
-    border3_large_clear();
+    display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     helptext_r ("CLEAR ALL CHAINS");
     helptext_l ("BACK");
