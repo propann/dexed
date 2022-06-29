@@ -57,7 +57,10 @@ Enhancements to Multisample Playback
 <br>
 Sample Editor
 <p>
-
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/braids.png" >
+<br>
+(parts of) Mutable Instruments Braids Oscillator(s)
+<p>
 
 >Latest news, 29/06/2022:
 >
