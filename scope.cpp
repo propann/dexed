@@ -10,7 +10,7 @@ extern uint16_t COLOR_BACKGROUND;
 extern sequencer_t seq;
 #endif
 
-void Realtime_Scope::FillArray() {
+FLASHMEM void Realtime_Scope::FillArray() {
   __disable_irq();
   uint16_t i = 0;
   do {
@@ -22,7 +22,7 @@ void Realtime_Scope::FillArray() {
   __enable_irq();
 }
 
-void Realtime_Scope::AddtoBuffer(int16_t *audio)
+FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio)
 {
   const int16_t *end = audio + AUDIO_BLOCK_SAMPLES;
   __disable_irq();
@@ -40,7 +40,7 @@ void Realtime_Scope::AddtoBuffer(int16_t *audio)
     FillArray();
 }
 
-void Realtime_Scope::update(void)
+FLASHMEM void Realtime_Scope::update(void)
 {
   //if (msecs < 6000) return;
   audio_block_t *block;
@@ -52,7 +52,7 @@ void Realtime_Scope::update(void)
   }
 }
 
-void Realtime_Scope::clear(void)
+FLASHMEM void Realtime_Scope::clear(void)
 {
    for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
     {
@@ -60,7 +60,7 @@ void Realtime_Scope::clear(void)
     }
 }
 
-void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
+FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
   if (scope_delay > 252)
   {
     uint16_t i = 0;

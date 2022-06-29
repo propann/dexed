@@ -480,7 +480,7 @@ AudioConnection* dynamicConnections[NUM_DEXED * 15 + NUM_DRUMS * 4 ];
 AudioConnection* dynamicConnections[NUM_DEXED * 4 + NUM_DRUMS * 2 8];
 #endif
 
-void create_audio_dexed_chain(uint8_t instance_id)
+FLASHMEM void create_audio_dexed_chain(uint8_t instance_id)
 {
   MicroDexed[instance_id] = new AudioSynthDexed(MAX_NOTES / NUM_DEXED, SAMPLE_RATE);
   mono2stereo[instance_id] = new AudioEffectMonoStereo();
@@ -533,7 +533,7 @@ void create_audio_dexed_chain(uint8_t instance_id)
 }
 
 #ifdef USE_BRAIDS
-void create_audio_braids_chain(uint8_t instance_id)
+FLASHMEM void create_audio_braids_chain(uint8_t instance_id)
 {
   synthBraids[instance_id] = new AudioSynthBraids();
   braids_envelope[instance_id] = new AudioEffectEnvelope();
@@ -568,7 +568,7 @@ void create_audio_braids_chain(uint8_t instance_id)
 // Dynamic patching of Drum objects
 //
 #if NUM_DRUMS > 0
-void create_audio_drum_chain(uint8_t instance_id)
+FLASHMEM void create_audio_drum_chain(uint8_t instance_id)
 {
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
@@ -611,7 +611,7 @@ void create_audio_drum_chain(uint8_t instance_id)
 }
 #endif
 
-void create_audio_sd_wav_preview_chain()
+FLASHMEM void create_audio_sd_wav_preview_chain()
 {
   //sd_WAV[instance_id] = new AudioPlaySdWav();
   //sd_WAV = new AudioPlaySdWav();
@@ -1176,21 +1176,21 @@ void setup()
   scope.clear();
 
   // temporary set volumes for 1. multisample until load/save is in place
-  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++)
-  {
-    msz[seq.active_multisample][zone].vol = 100;
-    msz[seq.active_multisample][zone].pan = 20;
-    msz[seq.active_multisample][zone].rev = 50;
-  }
+//  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++)
+//  {
+//    msz[seq.active_multisample][zone].vol = 100;
+//    msz[seq.active_multisample][zone].pan = 20;
+//    msz[seq.active_multisample][zone].rev = 50;
+//  }
 
 #ifdef USE_BRAIDS
-  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
-  {
-    // braids_filter_state[instance_id] = new braids_filter_state_t();
-    synthBraids[instance_id]->init_braids();
-    //synthBraids.set_braids_pitch(48 << 7);
-    braids_osc.algo = 14;
-  }
+//  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
+//  {
+//    // braids_filter_state[instance_id] = new braids_filter_state_t();
+//    synthBraids[instance_id]->init_braids();
+//    //synthBraids.set_braids_pitch(48 << 7);
+//    braids_osc.algo = 14;
+//  }
 #endif
 }
 
@@ -1265,7 +1265,7 @@ void handle_touchscreen_mixer()
   }
 }
 
-void sub_step_recording()
+FLASHMEM void sub_step_recording()
 {
   if (seq.running == false)
   {
@@ -1522,9 +1522,9 @@ void loop()
   // SAVE-SYS-EVENT-HANDLING
   if (save_sys > SAVE_SYS_MS && save_sys_flag == true)
   {
-#ifdef DEBUG
+  #ifdef DEBUG
     Serial.println(F("Check if we can save configuration.sys"));
-#endif
+  #endif
     bool instance_is_playing = false;
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
@@ -1550,16 +1550,16 @@ void loop()
       save_sd_sys_json();
       save_sys = 0;
       save_sys_flag = false;
-#ifdef DEBUG
+  #ifdef DEBUG
       Serial.println(F("Saved."));
       //Serial.print(save_sys_flag);
-#endif
+  #endif
     }
     else
     {
-#ifdef DEBUG
+  #ifdef DEBUG
       Serial.println(F("System is playing, next try..."));
-#endif
+  #endif
       save_sys = 0;
     }
   }
@@ -1665,7 +1665,7 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
 }
 #endif
 
-void learn_key(byte inChannel, byte inNumber)
+FLASHMEM void learn_key(byte inChannel, byte inNumber)
 {
   uint8_t found = 199;
 
@@ -1713,7 +1713,7 @@ void learn_key(byte inChannel, byte inNumber)
   print_custom_mappings();
 }
 
-void learn_cc(byte inChannel, byte inNumber)
+FLASHMEM void learn_cc(byte inChannel, byte inNumber)
 {
   uint8_t found = 199;
   for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
@@ -3052,7 +3052,7 @@ void handleClock(void)
   midi_bpm_counter++;
 }
 
-void dac_mute(void)
+FLASHMEM void dac_mute(void)
 {
 #ifdef TEENSY_AUDIO_BOARD
   sgtl5000.lineOutLevel(0.0);
@@ -3065,7 +3065,7 @@ void dac_mute(void)
   seq.DAC_mute_state = true;
 }
 
-void dac_unmute(void)
+FLASHMEM void dac_unmute(void)
 {
 #ifdef TEENSY_AUDIO_BOARD
   sgtl5000.lineOutLevel(SGTL5000_LINEOUT_LEVEL);
@@ -3194,7 +3194,7 @@ void handleSystemReset(void)
 /******************************************************************************
   MIDI HELPER
 ******************************************************************************/
-bool checkMidiChannel(byte inChannel, uint8_t instance_id)
+FLASHMEM bool checkMidiChannel(byte inChannel, uint8_t instance_id)
 {
   // check for MIDI channel
   if (configuration.dexed[instance_id].midi_channel == MIDI_CHANNEL_OMNI)
@@ -3218,7 +3218,7 @@ bool checkMidiChannel(byte inChannel, uint8_t instance_id)
   return (true);
 }
 
-void init_MIDI_send_CC(void)
+FLASHMEM void init_MIDI_send_CC(void)
 {
 #ifdef DEBUG
   Serial.println("init_MIDI_send_CC() : ");
@@ -3239,7 +3239,7 @@ void init_MIDI_send_CC(void)
   VOLUME HELPER
 ******************************************************************************/
 
-void set_drums_volume(float vol)
+FLASHMEM void set_drums_volume(float vol)
 {
   master_mixer_r.gain(MASTER_MIX_CH_DRUMS, vol);
   master_mixer_l.gain(MASTER_MIX_CH_DRUMS, vol);
@@ -3297,7 +3297,7 @@ void set_volume(uint8_t v, uint8_t m)
   EEPROM HELPER
 ******************************************************************************/
 
-void initial_values(bool init)
+FLASHMEM void initial_values(bool init)
 {
   uint16_t _m_;
 
@@ -3357,7 +3357,7 @@ void initial_values(bool init)
 #endif
 }
 
-void check_configuration(void)
+FLASHMEM void check_configuration(void)
 {
   check_configuration_sys();
   check_configuration_fx();
@@ -3366,7 +3366,7 @@ void check_configuration(void)
   check_configuration_epiano();
 }
 
-void check_configuration_sys(void)
+FLASHMEM void check_configuration_sys(void)
 {
   configuration.sys.vol = constrain(configuration.sys.vol, VOLUME_MIN, VOLUME_MAX);
   configuration.sys.mono = constrain(configuration.sys.mono, MONO_MIN, MONO_MAX);
@@ -3376,7 +3376,7 @@ void check_configuration_sys(void)
   configuration.sys.load_at_startup_performance = constrain(configuration.sys.load_at_startup_performance, STARTUP_NUM_MIN, STARTUP_NUM_MAX);
 }
 
-void check_configuration_fx(void)
+FLASHMEM void check_configuration_fx(void)
 {
 
   configuration.fx.reverb_lowpass = constrain(configuration.fx.reverb_lowpass, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX);
@@ -3420,7 +3420,7 @@ void check_configuration_fx(void)
 #endif
 }
 
-void check_configuration_dexed(uint8_t instance_id)
+FLASHMEM void check_configuration_dexed(uint8_t instance_id)
 {
   configuration.dexed[instance_id].bank = constrain(configuration.dexed[instance_id].bank, 0, MAX_BANKS - 1);
   configuration.dexed[instance_id].voice = constrain(configuration.dexed[instance_id].voice, 0, MAX_VOICES - 1);
@@ -3455,7 +3455,7 @@ void check_configuration_dexed(uint8_t instance_id)
   configuration.dexed[instance_id].op_enabled = constrain(configuration.dexed[instance_id].op_enabled, OP_ENABLED_MIN, OP_ENABLED_MAX);
 }
 
-void check_configuration_epiano(void)
+FLASHMEM void check_configuration_epiano(void)
 {
   configuration.epiano.decay = constrain(configuration.epiano.decay, EP_DECAY_MIN, EP_DECAY_MAX);
   configuration.epiano.release = constrain(configuration.epiano.release, EP_RELEASE_MIN, EP_RELEASE_MAX);
@@ -3478,7 +3478,7 @@ void check_configuration_epiano(void)
   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel, EP_MIDI_CHANNEL_MIN, EP_MIDI_CHANNEL_MAX);
 }
 
-void init_configuration(void)
+FLASHMEM void init_configuration(void)
 {
 #ifdef DEBUG
   Serial.println(F("INITIALIZING CONFIGURATION"));
@@ -3811,7 +3811,7 @@ void set_fx_params(void)
   init_MIDI_send_CC();
 }
 
-void set_voiceconfig_params(uint8_t instance_id)
+FLASHMEM void set_voiceconfig_params(uint8_t instance_id)
 {
   // INIT PEAK MIXER
   //microdexed_peak_mixer.gain(instance_id, 1.0);
@@ -3835,7 +3835,7 @@ void set_voiceconfig_params(uint8_t instance_id)
   mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 }
 
-void set_epiano_params(void)
+FLASHMEM void set_epiano_params(void)
 {
 #if defined(USE_EPIANO)
 #ifdef DEBUG
@@ -3862,7 +3862,7 @@ void set_epiano_params(void)
 #endif
 }
 
-void set_sys_params(void)
+FLASHMEM void set_sys_params(void)
 {
   // set initial volume
   set_volume(configuration.sys.vol, configuration.sys.mono);
@@ -3925,7 +3925,7 @@ uint32_t crc32(byte * calc_start, uint16_t calc_bytes) // base code from https:/
   return (crc);
 }
 
-void generate_version_string(char* buffer, uint8_t len)
+FLASHMEM void generate_version_string(char* buffer, uint8_t len)
 {
   char tmp[3];
 
@@ -3946,7 +3946,7 @@ void generate_version_string(char* buffer, uint8_t len)
 #endif
 }
 
-uint8_t check_sd_cards(void)
+FLASHMEM uint8_t check_sd_cards(void)
 {
   uint8_t ret = 0;
 
@@ -4050,7 +4050,7 @@ uint8_t check_sd_cards(void)
   return ret;
 }
 
-void check_and_create_directories(void)
+FLASHMEM void check_and_create_directories(void)
 {
   if (sd_card > 0)
   {
@@ -4145,7 +4145,7 @@ void check_and_create_directories(void)
   DEBUG HELPER
 ******************************************************************************/
 #if defined (DEBUG) && defined (SHOW_CPU_LOAD_MSEC)
-void show_cpu_and_mem_usage(void)
+FLASHMEM void show_cpu_and_mem_usage(void)
 {
   uint32_t sum_xrun = 0;
   uint16_t sum_render_time_max = 0;
@@ -4220,7 +4220,7 @@ void show_cpu_and_mem_usage(void)
 #endif
 
 #ifdef DEBUG
-void show_configuration(void)
+FLASHMEM void show_configuration(void)
 {
   Serial.println();
   Serial.println(F("CONFIGURATION : "));
@@ -4292,7 +4292,7 @@ void show_configuration(void)
   Serial.flush();
 }
 
-void show_patch(uint8_t instance_id)
+FLASHMEM void show_patch(uint8_t instance_id)
 {
   char vn[VOICE_NAME_LEN];
 

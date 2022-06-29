@@ -258,13 +258,13 @@ uint16_t COLOR_PITCHSMP = 0x159A;
 
 elapsedMillis back_from_volume;
 uint8_t instance_num[8][8];
-const char accepted_chars[] = " _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-abcdefghijklmnopqrstuvwxyz";
+PROGMEM const char accepted_chars[] = " _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-abcdefghijklmnopqrstuvwxyz";
 
 int temp_int;
 bool menu_select_toggle;
 float temp_float;
 
-const char cc_names[8][12] = { "Volume     ",
+PROGMEM const char cc_names[8][12] = { "Volume     ",
                                "Panorama   ",
                                "Bank Select",
                                "Reverb Send",
@@ -274,9 +274,9 @@ const char cc_names[8][12] = { "Volume     ",
                                "Panic Dexed"
                              };
 
-const uint8_t cc_dest_values[8] = { 7, 10, 32, 91, 200, 201, 202, 203 };
+PROGMEM const uint8_t cc_dest_values[8] = { 7, 10, 32, 91, 200, 201, 202, 203 };
 
-const uint8_t scroll_bar[5][17] = {
+PROGMEM const uint8_t scroll_bar[5][17] = {
   {B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001}, // scrollbar top
   {B11111111, B11111111, B11111111, B11111111, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001}, // scroll state 1
   {B10000001, B10000001, B10000001, B10000001, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001}, // scroll state 2
@@ -284,7 +284,7 @@ const uint8_t scroll_bar[5][17] = {
   {B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B11111111, B11111111, B11111111, B11111111}  // scrollbar bottom
 };
 
-const uint8_t block_bar[8][15] = {
+PROGMEM const uint8_t block_bar[8][15] = {
   {B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000},
   {B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000},
   {B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000},
@@ -295,7 +295,7 @@ const uint8_t block_bar[8][15] = {
   {B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111}
 };
 
-const uint8_t meter_bar[8][8] = {
+PROGMEM const uint8_t meter_bar[8][8] = {
   {B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000},
   {B01000000, B01000000, B01000000, B01000000, B01000000, B01000000, B01000000, B01000000},
   {B00100000, B00100000, B00100000, B00100000, B00100000, B00100000, B00100000, B00100000},
@@ -306,7 +306,7 @@ const uint8_t meter_bar[8][8] = {
   {B00000001, B00000001, B00000001, B00000001, B00000001, B00000001, B00000001, B00000001}
 };
 
-const uint8_t special_chars[24][8] = {
+PROGMEM const uint8_t special_chars[24][8] = {
   {B11111111, B11110111, B11100111, B11110111, B11110111, B11110111, B11110111, B11111111}, //  [0] 1 small invers
   {B11111111, B11110111, B11101011, B11111011, B11110111, B11101111, B11100011, B11111111}, //  [1] 2 small invers
   {B11111, B11011, B10011, B11011, B11011, B11011, B11011, B11111}, //  [2] 1 OP invers
@@ -1549,7 +1549,7 @@ typedef struct qix_s
 qix_s qix;
 
 // *********************************************************************
-void mFunc_screensaver(uint8_t param) //qix screensaver
+FLASHMEM void mFunc_screensaver(uint8_t param) //qix screensaver
 // *********************************************************************
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -1567,6 +1567,7 @@ void mFunc_screensaver(uint8_t param) //qix screensaver
     if (LCDML.BT_checkAny()   ) // check if any button is pressed (enter, up, down, left, right)
     {
       LCDML.FUNC_goBackToMenu();  // leave this function
+      return;
     }
     qix.counthue = qix.counthue + 1;
     if (qix.counthue > 359 - (qix_num * 3))
@@ -1625,10 +1626,11 @@ void setup_ui(void)
 
   // LCDMenuLib Setup
   LCDML_setup(_LCDML_DISP_cnt);
+
   // Enable Menu Rollover
   //LCDML.MENU_enRollover();
+  
   //Enable Screensaver (screensaver menu function, time to activate in ms)
-
   LCDML.SCREEN_enable(mFunc_screensaver, 200000);
   //LCDML.SCREEN_enable(mFunc_screensaver, 7000); //quick test time
 }
@@ -2482,7 +2484,7 @@ void UI_func_colors(uint8_t param)
 }
 
 #ifdef USE_FX
-void UI_func_reverb_roomsize(uint8_t param)
+FLASHMEM void UI_func_reverb_roomsize(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2512,7 +2514,7 @@ void UI_func_reverb_roomsize(uint8_t param)
 }
 
 #if USE_PLATEREVERB != 1
-void UI_func_reverb_damping(uint8_t param)
+FLASHMEM void UI_func_reverb_damping(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2540,7 +2542,7 @@ void UI_func_reverb_damping(uint8_t param)
   }
 }
 #else
-void UI_func_reverb_lowpass(uint8_t param)
+FLASHMEM void UI_func_reverb_lowpass(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2572,7 +2574,7 @@ void UI_func_reverb_lowpass(uint8_t param)
   }
 }
 
-void UI_func_reverb_lodamp(uint8_t param)
+FLASHMEM void UI_func_reverb_lodamp(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2602,7 +2604,7 @@ void UI_func_reverb_lodamp(uint8_t param)
   }
 }
 
-void UI_func_reverb_hidamp(uint8_t param)
+FLASHMEM void UI_func_reverb_hidamp(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2632,7 +2634,7 @@ void UI_func_reverb_hidamp(uint8_t param)
   }
 }
 
-void UI_func_reverb_diffusion(uint8_t param)
+FLASHMEM void UI_func_reverb_diffusion(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2663,7 +2665,7 @@ void UI_func_reverb_diffusion(uint8_t param)
 }
 #endif // PLATEREVERB != 1
 
-void UI_func_reverb_level(uint8_t param)
+FLASHMEM void UI_func_reverb_level(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2692,7 +2694,7 @@ void UI_func_reverb_level(uint8_t param)
   }
 }
 
-void UI_func_chorus_frequency(uint8_t param)
+FLASHMEM void UI_func_chorus_frequency(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2729,7 +2731,7 @@ void UI_func_chorus_frequency(uint8_t param)
   }
 }
 
-void UI_func_chorus_waveform(uint8_t param)
+FLASHMEM void UI_func_chorus_waveform(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2778,7 +2780,7 @@ void UI_func_chorus_waveform(uint8_t param)
   }
 }
 
-void UI_func_chorus_depth(uint8_t param)
+FLASHMEM void UI_func_chorus_depth(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2817,7 +2819,7 @@ void UI_func_chorus_depth(uint8_t param)
   }
 }
 
-void UI_func_chorus_level(uint8_t param)
+FLASHMEM void UI_func_chorus_level(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2867,7 +2869,7 @@ void UI_func_chorus_level(uint8_t param)
   }
 }
 
-void UI_func_delay_time(uint8_t param)
+FLASHMEM void UI_func_delay_time(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -2957,7 +2959,7 @@ void UI_func_delay_time(uint8_t param)
   }
 }
 
-void UI_func_delay_feedback(uint8_t param)
+FLASHMEM void UI_func_delay_feedback(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3004,7 +3006,7 @@ void UI_func_delay_feedback(uint8_t param)
   }
 }
 
-void UI_func_delay_level(uint8_t param)
+FLASHMEM void UI_func_delay_level(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3051,7 +3053,7 @@ void UI_func_delay_level(uint8_t param)
   }
 }
 
-void UI_func_reverb_send(uint8_t param)
+FLASHMEM void UI_func_reverb_send(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3099,7 +3101,7 @@ void UI_func_reverb_send(uint8_t param)
   }
 }
 
-void UI_func_filter_cutoff(uint8_t param)
+FLASHMEM void UI_func_filter_cutoff(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3146,7 +3148,7 @@ void UI_func_filter_cutoff(uint8_t param)
   }
 }
 
-void UI_func_filter_resonance(uint8_t param)
+FLASHMEM void UI_func_filter_resonance(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3194,7 +3196,7 @@ void UI_func_filter_resonance(uint8_t param)
 }
 #endif
 
-void UI_func_transpose(uint8_t param)
+FLASHMEM void UI_func_transpose(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3237,7 +3239,7 @@ void UI_func_transpose(uint8_t param)
   }
 }
 
-void UI_func_tune(uint8_t param)
+FLASHMEM void UI_func_tune(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3285,7 +3287,7 @@ void UI_func_tune(uint8_t param)
   }
 }
 
-void UI_func_midi_channel(uint8_t param)
+FLASHMEM void UI_func_midi_channel(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3441,7 +3443,7 @@ void UI_func_highest_note(uint8_t param)
   }
 }
 
-void UI_func_sound_intensity(uint8_t param)
+FLASHMEM void UI_func_sound_intensity(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3490,7 +3492,7 @@ void UI_func_sound_intensity(uint8_t param)
   }
 }
 
-void UI_func_panorama(uint8_t param)
+FLASHMEM void UI_func_panorama(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3544,7 +3546,7 @@ void UI_func_panorama(uint8_t param)
   }
 }
 
-void UI_func_favorites(uint8_t param)
+FLASHMEM void UI_func_favorites(uint8_t param)
 {
   static uint8_t old_favorites;
 
@@ -3608,7 +3610,7 @@ void UI_func_favorites(uint8_t param)
   }
 }
 
-void UI_func_stereo_mono(uint8_t param)
+FLASHMEM void UI_func_stereo_mono(uint8_t param)
 {
   static uint8_t old_mono;
 
@@ -3683,7 +3685,7 @@ void UI_func_stereo_mono(uint8_t param)
   }
 }
 
-void UI_func_polyphony(uint8_t param)
+FLASHMEM void UI_func_polyphony(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3753,7 +3755,7 @@ void UI_func_polyphony(uint8_t param)
   }
 }
 
-void UI_func_mono_poly(uint8_t param)
+FLASHMEM void UI_func_mono_poly(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3944,7 +3946,7 @@ void UI_func_pb_step(uint8_t param)
   }
 }
 
-void UI_func_mw_range(uint8_t param)
+FLASHMEM void UI_func_mw_range(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3986,7 +3988,7 @@ void UI_func_mw_range(uint8_t param)
   }
 }
 
-void UI_func_mw_assign(uint8_t param)
+FLASHMEM void UI_func_mw_assign(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4056,7 +4058,7 @@ void UI_func_mw_assign(uint8_t param)
   }
 }
 
-void UI_func_mw_mode(uint8_t param)
+FLASHMEM void UI_func_mw_mode(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4111,7 +4113,7 @@ void UI_func_mw_mode(uint8_t param)
   }
 }
 
-void UI_func_fc_range(uint8_t param)
+FLASHMEM void UI_func_fc_range(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4153,7 +4155,7 @@ void UI_func_fc_range(uint8_t param)
   }
 }
 
-void UI_func_fc_assign(uint8_t param)
+FLASHMEM void UI_func_fc_assign(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4223,7 +4225,7 @@ void UI_func_fc_assign(uint8_t param)
   }
 }
 
-void UI_func_fc_mode(uint8_t param)
+FLASHMEM void UI_func_fc_mode(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4278,7 +4280,7 @@ void UI_func_fc_mode(uint8_t param)
   }
 }
 
-void UI_func_bc_range(uint8_t param)
+FLASHMEM void UI_func_bc_range(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4320,7 +4322,7 @@ void UI_func_bc_range(uint8_t param)
   }
 }
 
-void UI_func_bc_assign(uint8_t param)
+FLASHMEM void UI_func_bc_assign(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4390,7 +4392,7 @@ void UI_func_bc_assign(uint8_t param)
   }
 }
 
-void UI_func_bc_mode(uint8_t param)
+FLASHMEM void UI_func_bc_mode(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4445,7 +4447,7 @@ void UI_func_bc_mode(uint8_t param)
   }
 }
 
-void UI_func_at_range(uint8_t param)
+FLASHMEM void UI_func_at_range(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4486,7 +4488,7 @@ void UI_func_at_range(uint8_t param)
   }
 }
 
-void UI_func_at_assign(uint8_t param)
+FLASHMEM void UI_func_at_assign(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4556,7 +4558,7 @@ void UI_func_at_assign(uint8_t param)
   }
 }
 
-void UI_func_at_mode(uint8_t param)
+FLASHMEM void UI_func_at_mode(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4611,7 +4613,7 @@ void UI_func_at_mode(uint8_t param)
   }
 }
 
-void UI_func_portamento_mode(uint8_t param)
+FLASHMEM void UI_func_portamento_mode(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4669,7 +4671,7 @@ void UI_func_portamento_mode(uint8_t param)
   }
 }
 
-void UI_func_portamento_glissando(uint8_t param)
+FLASHMEM void UI_func_portamento_glissando(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4721,7 +4723,7 @@ void UI_func_portamento_glissando(uint8_t param)
   }
 }
 
-void UI_func_portamento_time(uint8_t param)
+FLASHMEM void UI_func_portamento_time(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {

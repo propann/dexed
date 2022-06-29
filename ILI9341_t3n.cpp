@@ -520,7 +520,7 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 #define MADCTL_BGR 0x08
 #define MADCTL_MH 0x04
 
-void ILI9341_t3n::setRotation(uint8_t m) {
+FLASHMEM void ILI9341_t3n::setRotation(uint8_t m) {
   rotation = m % 4; // can't be higher than 3
   beginSPITransaction(_SPI_CLOCK);
   writecommand_cont(ILI9341_MADCTL);
