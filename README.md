@@ -64,7 +64,7 @@ Sample Editor
 >- [x]improved memory management to free up RAM (currently, now everything fits into Teensy memory)
 >- [x]refactoring of MIDI code to remove duplications
 >
- 25/06/2022:
+>25/06/2022:
 >
 >- [x] Braids can now be played by USB MIDI (serial MIDI untested) with 8 voices polyphony
 >- [x] Braids now handles Envelopes start/ends correctly, even when playing polyphonic (live or by sequencer)
