@@ -42,7 +42,29 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 YouTube playlist about the development:<br>
 https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 
->Latest news, 25/06/2022:
+
+upcoming features/work in progess:
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multiband.png" >
+<br>
+Multiband Compressor/Waveshaper
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multi_sampler.png" >
+<br>
+Enhancements to Multisample Playback
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/sample_editor.png" >
+<br>
+Sample Editor
+<p>
+
+
+>Latest news, 29/06/2022:
+>
+>- [x]improved memory management to free up RAM (currently, now everything fits into Teensy memory)
+>- [x]refactoring of MIDI code to remove duplications
+>
+ 25/06/2022:
 >
 >- [x] Braids can now be played by USB MIDI (serial MIDI untested) with 8 voices polyphony
 >- [x] Braids now handles Envelopes start/ends correctly, even when playing polyphonic (live or by sequencer)

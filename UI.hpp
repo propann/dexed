@@ -13488,6 +13488,7 @@ void print_mixer_text()
   setCursor_textGrid_small(47, 19);
   seq_print_formatted_number(configuration.sys.vol, 3);
 }
+
 void UI_func_mixer(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
