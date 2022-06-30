@@ -75,7 +75,7 @@ extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 
-void helptext_l (const char *str)
+FLASHMEM void helptext_l (const char *str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
@@ -94,7 +94,7 @@ void helptext_l (const char *str)
   ts.old_helptext_length[0] = l;
 }
 
-void helptext_r (const char *str)
+FLASHMEM void helptext_r (const char *str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
@@ -111,7 +111,7 @@ void helptext_r (const char *str)
   ts.old_helptext_length[1] = l;
 }
 
-void helptext_c (const char *str)
+FLASHMEM void helptext_c (const char *str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
@@ -627,7 +627,7 @@ void handle_touchscreen_voice_select()
   virtual_keyboard_update_all_key_states();
 }
 
-void handle_touchscreen_pattern_editor()
+FLASHMEM void handle_touchscreen_pattern_editor()
 {
   if (touch.touched())
   {
@@ -687,7 +687,7 @@ void handle_touchscreen_pattern_editor()
   virtual_keyboard_update_all_key_states();
 }
 
-void handle_touchscreen_microsynth()
+FLASHMEM void handle_touchscreen_microsynth()
 {
   if (touch.touched())
   {
@@ -737,7 +737,7 @@ void handle_touchscreen_microsynth()
   virtual_keyboard_update_all_key_states();
 }
 
-void print_file_manager_buttons()
+FLASHMEM void print_file_manager_buttons()
 {
   if (fm.sd_mode == 0)
     draw_button_on_grid(1, 25, "BROWSE", "FILES", 1);
@@ -774,7 +774,7 @@ void print_file_manager_buttons()
   }
 
 }
-void handle_touchscreen_file_manager()
+FLASHMEM void handle_touchscreen_file_manager()
 {
   if (touch.touched())
   {
@@ -845,7 +845,7 @@ void handle_touchscreen_file_manager()
     ts.block_screen_update = false;
 }
 
-void update_midi_learn_button()
+FLASHMEM void update_midi_learn_button()
 {
   if (seq.midi_learn_active == true)
   {
@@ -858,7 +858,7 @@ void update_midi_learn_button()
   }
 }
 
-void handle_touchscreen_custom_mappings()
+FLASHMEM void handle_touchscreen_custom_mappings()
 {
   if (touch.touched() && ts.block_screen_update == false)
   {
@@ -876,7 +876,7 @@ void handle_touchscreen_custom_mappings()
     ts.block_screen_update = false;
 }
 
-void handle_touchscreen_cc_mappings()
+FLASHMEM void handle_touchscreen_cc_mappings()
 {
   if (touch.touched() && ts.block_screen_update == false)
   {
@@ -894,7 +894,7 @@ void handle_touchscreen_cc_mappings()
     ts.block_screen_update = false;
 }
 
-void handle_touchscreen_color_edit()
+FLASHMEM void handle_touchscreen_color_edit()
 {
   if (touch.touched())
   {
@@ -925,7 +925,7 @@ void handle_touchscreen_color_edit()
   }
 }
 
-void handle_touchscreen_mute_matrix()
+FLASHMEM void handle_touchscreen_mute_matrix()
 {
   if (touch.touched())
   {
@@ -990,7 +990,7 @@ void handle_touchscreen_mute_matrix()
   seq.generic_ui_delay++;
 }
 
-void handle_touchscreen_arpeggio()
+FLASHMEM void handle_touchscreen_arpeggio()
 {
   if (touch.touched())
   {
@@ -1008,7 +1008,7 @@ void handle_touchscreen_arpeggio()
   seq.generic_ui_delay++;
 }
 
-void handle_touchscreen_braids()
+FLASHMEM void handle_touchscreen_braids()
 {
   if (touch.touched())
   {
@@ -1037,7 +1037,7 @@ void handle_touchscreen_braids()
   virtual_keyboard_update_all_key_states();
 }
 
-void draw_menu_ui_icons()
+FLASHMEM void draw_menu_ui_icons()
 {
   draw_button_on_grid(2, 18, "DEXED", "VOICE", 0);
   draw_button_on_grid(13, 18, "SONG", "EDIT", 0);
@@ -1051,7 +1051,7 @@ void draw_menu_ui_icons()
   draw_button_on_grid(45, 25, "MAIN", "MIX", 0);
   draw_button_on_grid(45, 11, "", "", 99); //print keyboard icon
 }
-void handle_touchscreen_menu()
+FLASHMEM void handle_touchscreen_menu()
 {
   if (ts.touch_ui_drawn_in_menu == false)
   {
