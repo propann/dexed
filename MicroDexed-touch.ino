@@ -1194,7 +1194,7 @@ void setup()
 #endif
 }
 
-void draw_volmeter(int x, int y, uint8_t arr, float value)
+FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value)
 {
   int height;
   //draw text
@@ -1235,7 +1235,7 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
   }
 }
 
-void handle_touchscreen_mixer()
+FLASHMEM void handle_touchscreen_mixer()
 {
   if (scope.scope_delay % 60 == 0)
   {
@@ -3582,7 +3582,7 @@ FLASHMEM void init_configuration(void)
   eeprom_update();
 }
 
-void eeprom_update(void)
+FLASHMEM void eeprom_update(void)
 {
   EEPROM.update(EEPROM_START_ADDRESS, (EEPROM_MARKER & 0xff00) >> 8);
   EEPROM.update(EEPROM_START_ADDRESS + 1, EEPROM_MARKER & 0xff);
@@ -3657,7 +3657,7 @@ float get_sample_reverb_send(uint8_t sample)
   return (drum_config[sample].reverb_send);
 }
 
-uint8_t find_drum_number_from_note(uint8_t note)
+FLASHMEM uint8_t find_drum_number_from_note(uint8_t note)
 {
   uint8_t number = 0;
   for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++)
@@ -3671,7 +3671,7 @@ uint8_t find_drum_number_from_note(uint8_t note)
   return number;
 }
 
-void set_fx_params(void)
+FLASHMEM void set_fx_params(void)
 {
 #if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
@@ -3888,7 +3888,7 @@ void _softRestart(void)
   return (pow(value, 2.2));
   }*/
 
-float midi_volume_transform(uint8_t midi_amp)
+FLASHMEM float midi_volume_transform(uint8_t midi_amp)
 {
 #ifdef DEBUG
   Serial.print(F("midi_amp = "));
@@ -3899,12 +3899,12 @@ float midi_volume_transform(uint8_t midi_amp)
   return powf(midi_amp / 127.0, 4);
 }
 
-float volume_transform(float amp)
+FLASHMEM float volume_transform(float amp)
 {
   return powf(amp, 4);
 }
 
-uint32_t crc32(byte * calc_start, uint16_t calc_bytes) // base code from https://www.arduino.cc/en/Tutorial/EEPROMCrc
+FLASHMEM uint32_t crc32(byte * calc_start, uint16_t calc_bytes) // base code from https://www.arduino.cc/en/Tutorial/EEPROMCrc
 {
   const uint32_t crc_table[16] =
   {

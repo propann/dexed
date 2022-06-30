@@ -1098,7 +1098,7 @@ const char* seq_find_shortname(uint8_t sstep)
   return shortname;
 }
 
-void print_voice_settings_in_pattern_editor(int x, int y)
+FLASHMEM void print_voice_settings_in_pattern_editor(int x, int y)
 {
   display.setTextSize(1);
   display.setCursor(x, y);
@@ -1120,7 +1120,7 @@ void print_voice_settings_in_pattern_editor(int x, int y)
   display.setTextSize(2);
 }
 
-void update_pattern_number_in_tracker(uint8_t tracknumber)
+FLASHMEM void update_pattern_number_in_tracker(uint8_t tracknumber)
 {
   setCursor_textGrid_small(9 + 6 * tracknumber, 3);
 
@@ -2194,7 +2194,7 @@ void lcdml_menu_display(void)
  ***********************************************************************/
 
 
-void colors_screen_update_text_preview()
+FLASHMEM void colors_screen_update_text_preview()
 {
   display.setTextSize(1);
   helptext_l("BACK");
@@ -2236,7 +2236,7 @@ void colors_screen_update_text_preview()
   display.print(F("INSTR"));
 }
 
-void setModeColor(uint8_t selected_option)
+FLASHMEM void setModeColor(uint8_t selected_option)
 {
   if (generic_temp_select_menu == selected_option)
   {
@@ -2249,7 +2249,7 @@ void setModeColor(uint8_t selected_option)
   }
 }
 
-void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero)
+FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero)
 {
   setCursor_textGrid_small(x, y);
   setModeColor( selected_option);
@@ -2271,7 +2271,7 @@ void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selec
   }
 }
 
-void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option)
+FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option)
 {
   setCursor_textGrid_small(x, y);
   setModeColor( selected_option);
@@ -2295,7 +2295,7 @@ void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selec
   display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 1.60 , 10 * y + 1, 3 , 5, COLOR_PITCHSMP );
 }
 
-void colors_screen_update()
+FLASHMEM void colors_screen_update()
 {
   int y = CHAR_height;
 
@@ -2379,7 +2379,7 @@ void colors_screen_update()
   }
 }
 
-void UI_func_colors(uint8_t param)
+FLASHMEM void UI_func_colors(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3345,7 +3345,7 @@ void getNoteName(char* noteName, uint8_t noteNumber)
   }
 }
 
-void UI_func_lowest_note(uint8_t param)
+FLASHMEM void UI_func_lowest_note(uint8_t param)
 {
   char note_name[4];
 
@@ -3394,7 +3394,7 @@ void UI_func_lowest_note(uint8_t param)
   }
 }
 
-void UI_func_highest_note(uint8_t param)
+FLASHMEM void UI_func_highest_note(uint8_t param)
 {
   char note_name[4];
 
@@ -3862,7 +3862,7 @@ void UI_func_note_refresh(uint8_t param)
   }
 }
 
-void UI_func_pb_range(uint8_t param)
+FLASHMEM void UI_func_pb_range(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -3904,7 +3904,7 @@ void UI_func_pb_range(uint8_t param)
   }
 }
 
-void UI_func_pb_step(uint8_t param)
+FLASHMEM void UI_func_pb_step(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
@@ -4921,7 +4921,7 @@ void UI_func_drum_reverb_send(uint8_t param)
   }
 }
 
-void UI_func_drum_midi_channel(uint8_t param)
+FLASHMEM void UI_func_drum_midi_channel(uint8_t param)
 {
 #if NUM_DRUMS > 0
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -4954,7 +4954,7 @@ void UI_func_drum_midi_channel(uint8_t param)
 #endif
 }
 
-void UI_func_drums_main_volume(uint8_t param)
+FLASHMEM void UI_func_drums_main_volume(uint8_t param)
 {
 #if NUM_DRUMS > 0
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -4987,7 +4987,8 @@ void UI_func_drums_main_volume(uint8_t param)
   }
 #endif
 }
-void UI_func_drum_tune_offset(uint8_t param)
+
+FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
 {
 #if NUM_DRUMS > 0
   char displayname[8] = {0, 0, 0, 0, 0, 0, 0};
@@ -5077,7 +5078,7 @@ void UI_func_drum_tune_offset(uint8_t param)
 #endif
 }
 
-void UI_func_drum_pitch(uint8_t param)
+FLASHMEM void UI_func_drum_pitch(uint8_t param)
 {
 #if NUM_DRUMS > 0
   char displayname[8] = {0, 0, 0, 0, 0, 0, 0};
