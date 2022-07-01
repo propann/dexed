@@ -480,6 +480,7 @@ void UI_func_format_flash(uint8_t param);
 void UI_func_test(uint8_t param);
 void UI_func_MultiSamplePlay(uint8_t param);
 void UI_func_sample_editor(uint8_t param);
+void splash_screen();
 
 char* basename(const char* filename);
 
@@ -1620,6 +1621,9 @@ void setup_ui(void)
 #else
   display.setRotation(3);
 #endif
+  // welcome screen :)
+  splash_screen();
+
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.fillScreen(COLOR_BACKGROUND);
@@ -16718,6 +16722,105 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
   Serial.print(F(" root: "));
   Serial.println(msz[preset_number][zone_number].rootnote);
 #endif
+}
+
+#define COLOR_BLACK    0x0000
+#define COLOR_BLUE     0x001F
+#define COLOR_RED      0xF800
+#define COLOR_GREEN    0x07E0
+#define COLOR_CYAN     0x07FF
+#define COLOR_MAGENTA  0xF81F
+#define COLOR_YELLOW   0xFFE0
+#define COLOR_WHITE    0xFFFF
+
+FLASHMEM void splash_draw_header() {
+  display.fillRect( 3, 3, 313, 2, COLOR_YELLOW);
+  display.setCursor(6, 10);
+  display.setTextSize(1);
+  display.print(F("micro"));
+  display.fillRect( 3, 25, 313, 2, COLOR_YELLOW);
+}
+FLASHMEM void splash_draw_D() {
+  display.fillRect( 3, 34, 89, 2, COLOR_BLUE);
+  display.fillRect( 3, 39, 97, 2, COLOR_BLUE);
+  display.fillRect( 3, 44, 102, 2, COLOR_BLUE);
+  display.fillRect( 3, 49, 25, 2, COLOR_BLUE); display.fillRect( 83, 49, 27, 2, COLOR_BLUE);
+  display.fillRect( 3, 54, 25, 2, COLOR_BLUE); display.fillRect( 87, 54, 26, 2, COLOR_BLUE);
+  display.fillRect( 3, 59, 25, 2, COLOR_BLUE); display.fillRect( 90, 59, 25, 2, COLOR_BLUE);
+  display.fillRect( 3, 64, 25, 2, COLOR_BLUE); display.fillRect( 92, 64, 25, 2, COLOR_BLUE);
+  display.fillRect( 3, 69, 25, 2, COLOR_BLUE); display.fillRect( 94, 69, 25, 2, COLOR_BLUE);
+  display.fillRect( 3, 74, 25, 2, COLOR_BLUE); display.fillRect( 95, 74, 24, 2, COLOR_BLUE);
+  display.fillRect( 3, 79, 25, 2, COLOR_BLUE); display.fillRect( 94, 79, 25, 2, COLOR_BLUE);
+  display.fillRect( 3, 84, 25, 2, COLOR_BLUE); display.fillRect( 92, 84, 25, 2, COLOR_BLUE);
+  display.fillRect( 3, 89, 25, 2, COLOR_BLUE); display.fillRect( 90, 89, 25, 2, COLOR_BLUE);
+  display.fillRect( 3, 94, 25, 2, COLOR_BLUE); display.fillRect( 87, 94, 26, 2, COLOR_BLUE);
+  display.fillRect( 3, 99, 25, 2, COLOR_BLUE); display.fillRect( 83, 99, 27, 2, COLOR_BLUE);
+  display.fillRect( 3, 104, 102, 2, COLOR_BLUE);
+  display.fillRect( 3, 109, 97, 2, COLOR_BLUE);
+  display.fillRect( 3, 114, 89, 2, COLOR_BLUE);
+}
+FLASHMEM void splash_draw_X() {
+  uint16_t colors[2] = {COLOR_CYAN, COLOR_WHITE};
+
+  for (uint8_t i = 0; i < 20; i++) {
+    for (uint8_t c = 0; c < 2; c++) {
+      display.fillRect( 107, 34, 27, 2, colors[c]); display.fillRect( 186, 34, 27, 2, colors[c]);
+      display.fillRect( 112, 39, 27, 2, colors[c]); display.fillRect( 181, 39, 27, 2, colors[c]);
+      display.fillRect( 117, 44, 27, 2, colors[c]); display.fillRect( 176, 44, 27, 2, colors[c]);
+      display.fillRect( 122, 49, 27, 2, colors[c]); display.fillRect( 172, 49, 27, 2, colors[c]);
+      display.fillRect( 127, 54, 27, 2, colors[c]); display.fillRect( 167, 54, 27, 2, colors[c]);
+      display.fillRect( 132, 59, 27, 2, colors[c]); display.fillRect( 162, 59, 27, 2, colors[c]);
+      display.fillRect( 137, 64, 46, 2, colors[c]);
+      display.fillRect( 142, 69, 36, 2, colors[c]);
+      display.fillRect( 147, 74, 26, 2, colors[c]);
+      display.fillRect( 142, 79, 36, 2, colors[c]);
+      display.fillRect( 137, 84, 46, 2, colors[c]);
+      display.fillRect( 132, 89, 27, 2, colors[c]); display.fillRect( 162, 89, 28, 2, colors[c]);
+      display.fillRect( 127, 94, 27, 2, colors[c]); display.fillRect( 167, 94, 28, 2, colors[c]);
+      display.fillRect( 122, 99, 27, 2, colors[c]); display.fillRect( 172, 99, 27, 2, colors[c]);
+      display.fillRect( 117, 104, 27, 2, colors[c]); display.fillRect( 176, 104, 27, 2, colors[c]);
+      display.fillRect( 112, 109, 27, 2, colors[c]); display.fillRect( 181, 109, 28, 2, colors[c]);
+      display.fillRect( 107, 114, 27, 2, colors[c]); display.fillRect( 186, 114, 27, 2, colors[c]);
+      delay(80);
+    }
+  }
+}
+FLASHMEM void splash_draw_reverseD() {
+  display.fillRect( 227, 34, 89, 2, COLOR_BLUE);
+  display.fillRect( 220, 39, 97, 2, COLOR_BLUE);
+  display.fillRect( 214, 44, 102, 2, COLOR_BLUE);
+  display.fillRect( 291, 49, 25, 2, COLOR_BLUE); display.fillRect( 210, 49, 27, 2, COLOR_BLUE);
+  display.fillRect( 291, 54, 25, 2, COLOR_BLUE); display.fillRect( 207, 54, 26, 2, COLOR_BLUE);
+  display.fillRect( 291, 59, 25, 2, COLOR_BLUE); display.fillRect( 204, 59, 25, 2, COLOR_BLUE);
+  display.fillRect( 291, 64, 25, 2, COLOR_BLUE); display.fillRect( 202, 64, 25, 2, COLOR_BLUE);
+  display.fillRect( 291, 69, 25, 2, COLOR_BLUE); display.fillRect( 200, 69, 25, 2, COLOR_BLUE);
+  display.fillRect( 291, 74, 25, 2, COLOR_BLUE); display.fillRect( 199, 74, 24, 2, COLOR_BLUE);
+  display.fillRect( 291, 79, 25, 2, COLOR_BLUE); display.fillRect( 200, 79, 25, 2, COLOR_BLUE);
+  display.fillRect( 291, 84, 25, 2, COLOR_BLUE); display.fillRect( 202, 84, 25, 2, COLOR_BLUE);
+  display.fillRect( 291, 89, 25, 2, COLOR_BLUE); display.fillRect( 204, 89, 25, 2, COLOR_BLUE);
+  display.fillRect( 291, 94, 25, 2, COLOR_BLUE); display.fillRect( 207, 94, 26, 2, COLOR_BLUE);
+  display.fillRect( 291, 99, 25, 2, COLOR_BLUE); display.fillRect( 210, 99, 27, 2, COLOR_BLUE);
+  display.fillRect( 214, 104, 102, 2, COLOR_BLUE);
+  display.fillRect( 220, 109, 97, 2, COLOR_BLUE);
+  display.fillRect( 227, 114, 89, 2, COLOR_BLUE);
+}
+FLASHMEM void splash_screen() {
+  display.fillScreen(COLOR_BACKGROUND);
+
+  splash_draw_header();
+  splash_draw_D();
+  splash_draw_reverseD();
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextSize(1);
+  display.setCursor(0, 140);
+  display.print(F("(c) 2018-2021 H. WIRTZ"));
+  display.setCursor(0, 150);
+  display.print(F("(c) 2021-2022 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
+
+  splash_draw_X();
+
+//  delay(60000);
 }
 
 #endif
