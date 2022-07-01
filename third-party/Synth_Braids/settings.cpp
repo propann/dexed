@@ -41,14 +41,14 @@ const SettingsData kInitSettings = {
   MACRO_OSC_SHAPE_CSAW,
 
   RESOLUTION_16_BIT,
-  SAMPLE_RATE_48K,
+  SAMPLE_RATE_44K,
 
   0,  // AD->timbre
   false,  // Trig source
   1,  // Trig delay
   false,  // Meta modulation
 
-  PITCH_RANGE_EXTERNAL,
+  PITCH_RANGE_440,
   2,
   0,  // Quantizer is off
   false,
@@ -63,12 +63,12 @@ const SettingsData kInitSettings = {
   0,  // AD->VCA
   0,  // Quantizer root
 
-  50,
-  15401,
-  2048,
+  // 50,
+  // 15401,
+  // 2048,
 
-  { 0, 0 },
-  { 32768, 32768 },
+  // { 0, 0 },
+  // { 32768, 32768 },
   "GREETINGS FROM MUTABLE INSTRUMENTS *EDIT ME*",
 };
 
@@ -88,14 +88,14 @@ void Settings::Init() {
         value <= setting_metadata.max_value;
   }
   settings_within_range = settings_within_range && data_.magic_byte == 'M';
-  for (int i = 0; i < 2; ++i) {
-    settings_within_range = settings_within_range && \
-        data_.parameter_cv_scale[i] > 16384;
-    settings_within_range = settings_within_range && \
-        data_.parameter_cv_offset[i] < 8000;
-    settings_within_range = settings_within_range && \
-        data_.parameter_cv_offset[i] > -8000;
-  }
+  // for (int i = 0; i < 2; ++i) {
+  //   settings_within_range = settings_within_range && \
+  //       data_.parameter_cv_scale[i] > 16384;
+  //   settings_within_range = settings_within_range && \
+  //       data_.parameter_cv_offset[i] < 8000;
+  //   settings_within_range = settings_within_range && \
+  //       data_.parameter_cv_offset[i] > -8000;
+  // }
   if (!settings_within_range) {
     Reset();
   }
