@@ -2298,7 +2298,7 @@ FLASHMEM bool check_performance_directory(uint8_t number)
   return (false);
 }
 
-void get_sd_performance_name_json(uint8_t number)
+FLASHMEM void get_sd_performance_name_json(uint8_t number)
 {
   memset(seq.name_temp, 0, FILENAME_LEN);
   if (sd_card > 0)
@@ -2962,7 +2962,7 @@ uint8_t calc_checksum(uint8_t* data, uint16_t len)
   return (bulk_checksum_calc & 0x7f);
 }
 
-void strip_extension(const char* s, char* target, uint8_t len)
+FLASHMEM void strip_extension(const char* s, char* target, uint8_t len)
 {
   char tmp[CONFIG_FILENAME_LEN];
   char* token;
@@ -2977,7 +2977,7 @@ void strip_extension(const char* s, char* target, uint8_t len)
   target[len] = '\0';
 }
 
-void string_toupper(char* s)
+FLASHMEM void string_toupper(char* s)
 {
   while (*s)
   {
