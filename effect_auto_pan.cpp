@@ -29,7 +29,7 @@
 // Written by Holger Wirtz
 // 20191205 - initial version
 
-static const audio_block_t zeroblock = {
+PROGMEM static const audio_block_t zeroblock = {
   0, 0, 0, {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 #if AUDIO_BLOCK_SAMPLES > 16
