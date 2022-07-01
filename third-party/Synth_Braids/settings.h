@@ -113,6 +113,7 @@ enum SampleRate {
   SAMPLE_RATE_16K,
   SAMPLE_RATE_24k,
   SAMPLE_RATE_32k,
+  SAMPLE_RATE_44K,
   SAMPLE_RATE_48K,
   SAMPLE_RATE_96K,
   SAMPLE_RATE_LAST
@@ -179,12 +180,12 @@ struct SettingsData {
   uint8_t ad_vca;
   uint8_t quantizer_root;
 
-  int32_t pitch_cv_offset;
-  int32_t pitch_cv_scale;
-  int32_t fm_cv_offset;
+  // int32_t pitch_cv_offset;
+  // int32_t pitch_cv_scale;
+  // int32_t fm_cv_offset;
 
-  int16_t parameter_cv_offset[2];
-  uint16_t parameter_cv_scale[2];
+  // int16_t parameter_cv_offset[2];
+  // uint16_t parameter_cv_scale[2];
 
   char marquee_text[55];
   char magic_byte;
@@ -273,54 +274,54 @@ class Settings {
   inline const SettingsData& data() const { return data_; }
   inline SettingsData* mutable_data() { return &data_; }
 
-  void Calibrate(
-      int32_t adc_code_c2,
-      int32_t adc_code_c4,
-      int32_t adc_code_fm,
-      int32_t adc_code_p0_min,
-      int32_t adc_code_p0_max,
-      int32_t adc_code_p1_min,
-      int32_t adc_code_p1_max) {
-    if (adc_code_c4 != adc_code_c2) {
-      int32_t scale = (24 * 128 * 4096L) / (adc_code_c4 - adc_code_c2);
-      data_.pitch_cv_scale = scale;
-      data_.pitch_cv_offset = (60 << 7) -
-          (scale * ((adc_code_c2 + adc_code_c4) >> 1) >> 12);
-      data_.fm_cv_offset = adc_code_fm;
-    }
+//   void Calibrate(
+//       int32_t adc_code_c2,
+//       int32_t adc_code_c4,
+//       int32_t adc_code_fm,
+//       int32_t adc_code_p0_min,
+//       int32_t adc_code_p0_max,
+//       int32_t adc_code_p1_min,
+//       int32_t adc_code_p1_max) {
+//     // if (adc_code_c4 != adc_code_c2) {
+//     //   int32_t scale = (24 * 128 * 4096L) / (adc_code_c4 - adc_code_c2);
+//     //   data_.pitch_cv_scale = scale;
+//     //   data_.pitch_cv_offset = (60 << 7) -
+//     //       (scale * ((adc_code_c2 + adc_code_c4) >> 1) >> 12);
+//     //   data_.fm_cv_offset = adc_code_fm;
+//     // }
 
-    // int32_t min_code[2] = { adc_code_p0_min, adc_code_p1_min };
-    // int32_t max_code[2] = { adc_code_p0_max, adc_code_p1_max };
-    //
-    // for (int i = 0; i < 2; ++i) {
-    //   int32_t d = max_code[i] - min_code[i];
-    //   if (d > 3700) {
-    //     int32_t scale = (32768 * 4106) / d;
-    //     int32_t offset = -(min_code[i] * scale >> 12) - 40;
-    //     data_.parameter_cv_offset[i] = offset;
-    //     data_.parameter_cv_scale[i] = scale;
-    //   }
-    // }
-    Save();
-  }
+//     // int32_t min_code[2] = { adc_code_p0_min, adc_code_p1_min };
+//     // int32_t max_code[2] = { adc_code_p0_max, adc_code_p1_max };
+//     //
+//     // for (int i = 0; i < 2; ++i) {
+//     //   int32_t d = max_code[i] - min_code[i];
+//     //   if (d > 3700) {
+//     //     int32_t scale = (32768 * 4106) / d;
+//     //     int32_t offset = -(min_code[i] * scale >> 12) - 40;
+//     //     data_.parameter_cv_offset[i] = offset;
+//     //     data_.parameter_cv_scale[i] = scale;
+//     //   }
+//     // }
+// //    Save();
+//   }
 
-  inline int32_t adc_to_pitch(int32_t pitch_adc_code) const {
-    if (data_.pitch_range == PITCH_RANGE_EXTERNAL ||
-        data_.pitch_range == PITCH_RANGE_LFO) {
-      pitch_adc_code = pitch_adc_code * data_.pitch_cv_scale >> 12;
-      pitch_adc_code += data_.pitch_cv_offset;
-    } else if (data_.pitch_range == PITCH_RANGE_FREE) {
-      pitch_adc_code = (pitch_adc_code - 1638);
-      pitch_adc_code = pitch_adc_code * data_.pitch_cv_scale >> 12;
-      pitch_adc_code += 60 << 7;
-    } else if (data_.pitch_range == PITCH_RANGE_440) {
-      pitch_adc_code = 69 << 7;
-    } else {
-      pitch_adc_code = (pitch_adc_code - 1638) * 9 >> 1;
-      pitch_adc_code += 60 << 7;
-    }
-    return pitch_adc_code;
-  }
+  // inline int32_t adc_to_pitch(int32_t pitch_adc_code) const {
+  //   if (data_.pitch_range == PITCH_RANGE_EXTERNAL ||
+  //       data_.pitch_range == PITCH_RANGE_LFO) {
+  //     pitch_adc_code = pitch_adc_code * data_.pitch_cv_scale >> 12;
+  //     pitch_adc_code += data_.pitch_cv_offset;
+  //   } else if (data_.pitch_range == PITCH_RANGE_FREE) {
+  //     pitch_adc_code = (pitch_adc_code - 1638);
+  //     pitch_adc_code = pitch_adc_code * data_.pitch_cv_scale >> 12;
+  //     pitch_adc_code += 60 << 7;
+  //   } else if (data_.pitch_range == PITCH_RANGE_440) {
+  //     pitch_adc_code = 69 << 7;
+  //   } else {
+  //     pitch_adc_code = (pitch_adc_code - 1638) * 9 >> 1;
+  //     pitch_adc_code += 60 << 7;
+  //   }
+  //   return pitch_adc_code;
+  // }
 
   inline int32_t pitch_transposition() const {
     int32_t t = data_.pitch_range == PITCH_RANGE_LFO ? -36 << 7 : 0;
@@ -328,20 +329,20 @@ class Settings {
     return t;
   }
 
-  inline int32_t adc_to_fm(int32_t fm_adc_code) const {
-    fm_adc_code -= data_.fm_cv_offset;
-    fm_adc_code = fm_adc_code * 7680 >> 12;
-    if (data_.pitch_range == PITCH_RANGE_440) {
-      fm_adc_code = 0;
-    }
-    return fm_adc_code;
-  }
+  // inline int32_t adc_to_fm(int32_t fm_adc_code) const {
+  //   fm_adc_code -= data_.fm_cv_offset;
+  //   fm_adc_code = fm_adc_code * 7680 >> 12;
+  //   if (data_.pitch_range == PITCH_RANGE_440) {
+  //     fm_adc_code = 0;
+  //   }
+  //   return fm_adc_code;
+  // }
 
-  inline int32_t adc_to_parameter(int index, int32_t adc_code) const {
-    int32_t scale = static_cast<int32_t>(data_.parameter_cv_scale[index]);
-    int32_t offset = static_cast<int32_t>(data_.parameter_cv_offset[index]);
-    return (scale * adc_code >> 12) + offset;
-  }
+  // inline int32_t adc_to_parameter(int index, int32_t adc_code) const {
+  //   int32_t scale = static_cast<int32_t>(data_.parameter_cv_scale[index]);
+  //   int32_t offset = static_cast<int32_t>(data_.parameter_cv_offset[index]);
+  //   return (scale * adc_code >> 12) + offset;
+  // }
 
   inline bool paques() const {
     return paques_;
