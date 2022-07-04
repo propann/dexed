@@ -69,6 +69,10 @@ using namespace TeensyTimerTool;
 #include "microsynth.h"
 #endif
 
+#ifdef USE_MULTIBAND
+#include "effect_dynamics.h"
+#endif
+
 #include "midi_devices.hpp"
 #include "synth_dexed.h"
 #include "dexed_sd.h"
@@ -105,6 +109,10 @@ bool checkMidiChannel(byte inChannel, uint8_t instance_id);
 
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
+
+#ifdef USE_MULTIBAND
+extern void handle_touchscreen_multiband();
+#endif
 
 //uint16_t COLOR_BACKGROUND = 0x0000;
 //uint16_t COLOR_SYSTEXT = 0xFFFF;
@@ -222,6 +230,10 @@ AudioMixer<2>                   audio_thru_mixer_r;
 AudioMixer<2>                   audio_thru_mixer_l;
 #endif
 
+#ifdef USE_MULTIBAND
+AudioMixer<2>                   finalized_mixer_r;
+AudioMixer<2>                   finalized_mixer_l;
+#endif
 
 AudioPlaySdWav                  sd_WAV;
 
@@ -288,6 +300,55 @@ AudioOutputUSB                  usb1;
 AudioInputI2S                   i2s1in;
 #endif
 
+#ifdef USE_MULTIBAND
+AudioFilterBiquad mb_filter_l_0;
+AudioFilterBiquad mb_filter_l_1;
+AudioFilterBiquad mb_filter_l_2;
+AudioFilterBiquad mb_filter_l_3;
+AudioFilterBiquad mb_filter_r_0;
+AudioFilterBiquad mb_filter_r_1;
+AudioFilterBiquad mb_filter_r_2;
+AudioFilterBiquad mb_filter_r_3;
+
+AudioEffectDynamics    mb_compressor_l_0;
+AudioEffectDynamics    mb_compressor_l_1;
+AudioEffectDynamics    mb_compressor_l_2;
+AudioEffectDynamics    mb_compressor_l_3;
+
+AudioEffectDynamics    mb_compressor_r_0;
+AudioEffectDynamics    mb_compressor_r_1;
+AudioEffectDynamics    mb_compressor_r_2;
+AudioEffectDynamics    mb_compressor_r_3;
+
+AudioMixer<4>              mb_mixer_l;
+AudioMixer<4>              mb_mixer_r;
+
+AudioConnection          patchCord3(mb_filter_l_0, 0, mb_compressor_l_0, 0);
+AudioConnection          patchCord4(mb_filter_l_1, 0, mb_compressor_l_1, 0);
+AudioConnection          patchCord5(mb_filter_l_2, 0, mb_compressor_l_2, 0);
+AudioConnection          patchCord6(mb_filter_l_3, 0, mb_compressor_l_3, 0);
+
+AudioConnection          patchCord7(mb_filter_r_0, 0, mb_compressor_r_0, 0);
+AudioConnection          patchCord8(mb_filter_r_1, 0, mb_compressor_r_1, 0);
+AudioConnection          patchCord9(mb_filter_r_2, 0, mb_compressor_r_2, 0);
+AudioConnection          patchCord10(mb_filter_r_3, 0, mb_compressor_r_3, 0);
+
+AudioConnection          patchCord11(mb_compressor_l_0, 0, mb_mixer_l, 0);
+AudioConnection          patchCord12(mb_compressor_l_1, 0, mb_mixer_l, 1);
+AudioConnection          patchCord13(mb_compressor_l_2, 0, mb_mixer_l, 2);
+AudioConnection          patchCord14(mb_compressor_l_3, 0, mb_mixer_l, 3);
+
+AudioConnection          patchCord15(mb_compressor_r_0, 0, mb_mixer_r, 0);
+AudioConnection          patchCord16(mb_compressor_r_1, 0, mb_mixer_r, 1);
+AudioConnection          patchCord17(mb_compressor_r_2, 0, mb_mixer_r, 2);
+AudioConnection          patchCord18(mb_compressor_r_3, 0, mb_mixer_r, 3);
+
+AudioAnalyzePeak                mb_before_l;
+AudioAnalyzePeak                mb_before_r;
+AudioAnalyzePeak                mb_after_l;
+AudioAnalyzePeak                mb_after_r;
+#endif
+
 //
 // Static patching of audio objects
 //
@@ -301,12 +362,24 @@ AudioConnection patchCord[] = {
   {reverb, 1, master_mixer_l, MASTER_MIX_CH_REVERB},
 #endif
 #endif
-  {master_mixer_r, volume_r},
   {master_mixer_l, volume_l},
-  {volume_r, 0, stereo2mono, 0},
+  {master_mixer_r, volume_r},
   {volume_l, 0, stereo2mono, 1},
-  {stereo2mono, 0, master_peak_r, 0},
+  {volume_r, 0, stereo2mono, 0},
+
+#ifdef USE_MULTIBAND
+  {master_mixer_l, 0, master_peak_l, 0},
+  {master_mixer_r, 0, master_peak_r, 0},
+
+  {master_mixer_l, 0, mb_before_l, 0},
+  {master_mixer_r, 0, mb_before_r, 0},
+
+  {mb_mixer_l, 0, mb_after_l, 0},
+  {mb_mixer_r, 0, mb_after_r, 0},
+#else
   {stereo2mono, 0, master_peak_l, 0},
+  {stereo2mono, 0, master_peak_r, 0},
+#endif
 
   //Realtime Scope
   {stereo2mono, 0, scope, 0},
@@ -314,12 +387,61 @@ AudioConnection patchCord[] = {
   // Outputs
 #if defined(TEENSY_AUDIO_BOARD)
 #ifndef SGTL5000_AUDIO_THRU
+
+#ifdef USE_MULTIBAND
+ {stereo2mono, 0, finalized_mixer_l, 0},
+  {stereo2mono, 1, finalized_mixer_r, 0},
+
+  {master_mixer_l, 0, mb_filter_l_0, 0},
+  {master_mixer_r, 0, mb_filter_r_0, 0},
+
+  {master_mixer_l, 0, mb_filter_l_1, 0},
+  {master_mixer_r, 0, mb_filter_r_1, 0},
+
+  {master_mixer_l, 0, mb_filter_l_2, 0},
+  {master_mixer_r, 0, mb_filter_r_2, 0},
+
+  {master_mixer_l, 0, mb_filter_l_3, 0},
+  {master_mixer_r, 0, mb_filter_r_3, 0},
+
+  {mb_mixer_l, 0, finalized_mixer_l, 1},
+  {mb_mixer_r, 0, finalized_mixer_r, 1},
+
+  {finalized_mixer_l, 0, i2s1, 0},
+  {finalized_mixer_r, 0, i2s1, 1},
+#else
   {stereo2mono, 0, i2s1, 0},
   {stereo2mono, 1, i2s1, 1},
 #endif
+#endif
 #elif defined (I2S_AUDIO_ONLY)
+
+#ifdef USE_MULTIBAND
+  {stereo2mono, 0, finalized_mixer_l, 0},
+  {stereo2mono, 1, finalized_mixer_r, 0},
+
+  {master_mixer_l, 0, mb_filter_l_0, 0},
+  {master_mixer_r, 0, mb_filter_r_0, 0},
+
+  {master_mixer_l, 0, mb_filter_l_1, 0},
+  {master_mixer_r, 0, mb_filter_r_1, 0},
+
+  {master_mixer_l, 0, mb_filter_l_2, 0},
+  {master_mixer_r, 0, mb_filter_r_2, 0},
+
+  {master_mixer_l, 0, mb_filter_l_3, 0},
+  {master_mixer_r, 0, mb_filter_r_3, 0},
+
+  {mb_mixer_l, 0, finalized_mixer_l, 1},
+  {mb_mixer_r, 0, finalized_mixer_r, 1},
+
+  {finalized_mixer_l, 0, i2s1, 0},
+  {finalized_mixer_r, 0, i2s1, 1},
+#else
   {stereo2mono, 0, i2s1, 0},
   {stereo2mono, 1, i2s1, 1},
+#endif
+
 #elif defined(TGA_AUDIO_BOARD)
   {stereo2mono, 0, i2s1, 0},
   {stereo2mono, 1, i2s1, 1},
@@ -1136,6 +1258,13 @@ void setup()
   audio_thru_mixer_l.gain(3, 0.0);
 #endif
 
+#ifdef USE_MULTIBAND
+  finalized_mixer_l.gain(0, VOL_MAX_FLOAT);  //normal output, mute multiband
+  finalized_mixer_r.gain(0, VOL_MAX_FLOAT);
+  finalized_mixer_l.gain(1, 0);
+  finalized_mixer_r.gain(1, 0);
+#endif
+
 #ifdef DEBUG
   Serial.println(F("<setup end>"));
 #endif
@@ -1194,21 +1323,23 @@ void setup()
 #endif
 }
 
-FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value)
+void draw_volmeter(int x, int y, uint8_t arr, float value)
 {
   int height;
   //draw text
   display.setCursor(x, y + 4);
-  if (value == 0 || value > 0.16)
-  {
-    height = 0;
-    seq_print_formatted_number( 0, 3 );
-  }
-  else
-  {
-    height = mapfloat(value, 0.0, 0.13, 0, 99);
+//if  (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
+//  {
+//    if (value == 0 || value > 0.16)
+//    {
+//      height = 0;
+//      seq_print_formatted_number( 0, 3 );
+//    }
+//  }
+//  else
+height = mapfloat(value, 0.0, 1.0, 0, 99);
     seq_print_formatted_number( height, 3 );
-  }
+ 
   //draw bar
   if (height > ts.displayed_peak[arr])
   {
@@ -1233,6 +1364,13 @@ FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value)
       ts.displayed_peak[arr] = ts.displayed_peak[arr] - 1;
     }
   }
+}
+
+FLASHMEM void clear_volmeter(int x, int y)
+{
+  // display.drawFastHLine ( x, y - height + z, 19, GREEN  );
+  display.fillRect ( x, y - 100, 19, 100, COLOR_BACKGROUND );
+
 }
 
 FLASHMEM void handle_touchscreen_mixer()
@@ -1346,10 +1484,15 @@ void loop()
 
   if ( LCDML.FUNC_getID() > _LCDML_DISP_cnt  || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)  )
   {
-    scope.draw_scope(225, 20, 92);
     handle_touchscreen_menu();
+    scope.draw_scope(225, 18, 92);
   }
-  else  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+  else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_comp) )
+  {
+    scope.draw_scope(188, -5, 128);
+    handle_touchscreen_multiband();
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
     handle_touchscreen_voice_select();
     scope.draw_scope(216, 32, 103);
@@ -1522,9 +1665,9 @@ void loop()
   // SAVE-SYS-EVENT-HANDLING
   if (save_sys > SAVE_SYS_MS && save_sys_flag == true)
   {
-  #ifdef DEBUG
+#ifdef DEBUG
     Serial.println(F("Check if we can save configuration.sys"));
-  #endif
+#endif
     bool instance_is_playing = false;
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     {
@@ -1550,16 +1693,16 @@ void loop()
       save_sd_sys_json();
       save_sys = 0;
       save_sys_flag = false;
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.println(F("Saved."));
       //Serial.print(save_sys_flag);
-  #endif
+#endif
     }
     else
     {
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.println(F("System is playing, next try..."));
-  #endif
+#endif
       save_sys = 0;
     }
   }

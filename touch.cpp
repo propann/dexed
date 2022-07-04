@@ -5,6 +5,12 @@
 #include <LCDMenuLib2.h>
 #include "ILI9341_t3n.h"
 
+#ifdef USE_MULTIBAND
+#include "scope.h"
+#include <Audio.h>
+#include "template_mixer.hpp"
+#endif
+
 extern ILI9341_t3n display;
 extern config_t configuration;
 extern uint8_t selected_instance_id;
@@ -60,6 +66,25 @@ extern microsynth_t  microsynth[NUM_MICROSYNTH];
 
 #ifdef USE_BRAIDS
 extern braids_t  braids_osc;
+#endif
+
+#ifdef USE_MULTIBAND
+extern void mb_set_mutes();
+extern bool mb_solo_low;
+extern bool mb_solo_mid;
+extern bool mb_solo_upper_mid;
+extern bool mb_solo_high;
+extern Realtime_Scope  scope;
+extern AudioAnalyzePeak                mb_before_l;
+extern AudioAnalyzePeak                mb_before_r;
+extern AudioAnalyzePeak                mb_after_l;
+extern AudioAnalyzePeak                mb_after_r;
+extern void draw_volmeter(int x, int y, uint8_t arr, float value);
+extern AudioMixer<4>              mb_mixer_l;
+extern AudioMixer<4>              mb_mixer_r;
+extern bool multiband_active;
+extern uint8_t generic_active_function;
+extern uint8_t generic_temp_select_menu;
 #endif
 
 ts_t ts; //touch screen
@@ -184,9 +209,8 @@ void print_current_chord()
   }
 }
 
-void virtual_keyboard_print_current_instrument()
+FLASHMEM void virtual_keyboard_print_current_instrument()
 {
-
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.setCursor ( 17 * CHAR_width_small, 16 * CHAR_height_small );
@@ -253,7 +277,7 @@ void virtual_keyboard_print_current_instrument()
   }
 }
 
-void virtual_keyboard_key_on ()
+FLASHMEM void virtual_keyboard_key_on ()
 {
   int offcount = 0;
   uint8_t halftones = 0;
@@ -316,7 +340,7 @@ void virtual_keyboard_key_on ()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-void virtual_keyboard_key_off_white ( uint8_t note)
+FLASHMEM void virtual_keyboard_key_off_white ( uint8_t note)
 {
 
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
@@ -344,7 +368,7 @@ void virtual_keyboard_key_off_white ( uint8_t note)
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-void virtual_keyboard_key_off_black ( uint8_t note)
+FLASHMEM void virtual_keyboard_key_off_black ( uint8_t note)
 {
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
@@ -361,7 +385,7 @@ void virtual_keyboard_key_off_black ( uint8_t note)
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-void virtual_keyboard ()
+FLASHMEM void virtual_keyboard ()
 {
   int offcount = 0;
   uint8_t oct_count = 0;
@@ -396,7 +420,7 @@ void virtual_keyboard ()
   display.setTextSize(2);
 }
 
-void print_virtual_keyboard_octave ()
+FLASHMEM void print_virtual_keyboard_octave ()
 {
   uint8_t oct_count = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
@@ -426,26 +450,26 @@ bool check_button_on_grid(uint8_t x, uint8_t y)
   else return false;
 }
 
-void touch_button_oct_up()
+FLASHMEM void touch_button_oct_up()
 {
   ts.virtual_keyboard_octave++;
   if (ts.virtual_keyboard_octave > 8)ts.virtual_keyboard_octave = 8;
   ts.update_virtual_keyboard_octave = true;
 }
-void touch_button_oct_down()
+FLASHMEM void touch_button_oct_down()
 {
   ts.virtual_keyboard_octave--;
   if (ts.virtual_keyboard_octave < 1)ts.virtual_keyboard_octave = 1;
   ts.update_virtual_keyboard_octave = true;
 }
-void touch_button_inst_up()
+FLASHMEM void touch_button_inst_up()
 {
   ts.virtual_keyboard_instrument++;
   if (ts.virtual_keyboard_instrument > 12)ts.virtual_keyboard_instrument = 12;
   virtual_keyboard_print_current_instrument();
   ts.update_virtual_keyboard_octave = true;
 }
-void touch_button_inst_down()
+FLASHMEM void touch_button_inst_down()
 {
   ts.virtual_keyboard_instrument--;
   if (ts.virtual_keyboard_instrument < 1)ts.virtual_keyboard_instrument = 1;
@@ -453,7 +477,7 @@ void touch_button_inst_down()
   ts.update_virtual_keyboard_octave = true;
 }
 
-void touch_check_all_keyboard_buttons()
+FLASHMEM void touch_check_all_keyboard_buttons()
 {
   if (check_button_on_grid(1, 16) )
     touch_button_oct_down();
@@ -466,7 +490,7 @@ void touch_check_all_keyboard_buttons()
     touch_button_inst_up();
 }
 
-void virtual_keyboard_update_all_key_states()
+FLASHMEM void virtual_keyboard_update_all_key_states()
 {
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 27 )
@@ -1051,6 +1075,7 @@ FLASHMEM void draw_menu_ui_icons()
   draw_button_on_grid(45, 25, "MAIN", "MIX", 0);
   draw_button_on_grid(45, 11, "", "", 99); //print keyboard icon
 }
+
 FLASHMEM void handle_touchscreen_menu()
 {
   if (ts.touch_ui_drawn_in_menu == false)
@@ -1164,3 +1189,137 @@ FLASHMEM void handle_touchscreen_menu()
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
 }
+
+FLASHMEM void toggle_generic_active_function()
+{
+  if (generic_active_function == 0 )
+    generic_active_function = 1;
+  else
+    generic_active_function = 0;
+}
+
+#ifdef USE_MULTIBAND
+FLASHMEM void handle_touchscreen_multiband()
+{
+  if (touch.touched() )
+  {
+    get_scaled_touch_point();
+
+    if (seq.generic_ui_delay > 5000 && multiband_active)
+    {
+      if (check_button_on_grid(12, 8) )
+      {
+        mb_solo_high = !mb_solo_high;
+        if (mb_solo_high)
+        {
+          draw_button_on_grid(9, 8, "SOLO", "ON", mb_solo_high + 1 );
+        }
+        else
+          draw_button_on_grid(9, 8, "SOLO", "  ", mb_solo_high );
+      }
+      else if (check_button_on_grid(12, 14) )
+      {
+        mb_solo_upper_mid = !mb_solo_upper_mid;
+        if (mb_solo_upper_mid)
+        {
+          draw_button_on_grid(9, 14, "SOLO", "ON", mb_solo_upper_mid + 1 );
+        }
+        else
+          draw_button_on_grid(9, 14, "SOLO", "  ", mb_solo_upper_mid );
+      }
+      else if (check_button_on_grid(12, 20) )
+      {
+        mb_solo_mid = !mb_solo_mid;
+        if (mb_solo_mid)
+        {
+          draw_button_on_grid(9, 20, "SOLO", "ON", mb_solo_mid + 1 );
+        }
+        else
+          draw_button_on_grid(9, 20, "SOLO", "  ", mb_solo_mid );
+      }
+      else if (check_button_on_grid(12, 26) )
+      {
+        mb_solo_low = !mb_solo_low;
+        if (mb_solo_low)
+        {
+          draw_button_on_grid(9, 26, "SOLO", "ON", mb_solo_low + 1 );
+        }
+        else
+          draw_button_on_grid(9, 26, "SOLO", "  ", mb_solo_low );
+      }
+      if (mb_solo_low && mb_solo_upper_mid && mb_solo_mid && mb_solo_high )
+      {
+        mb_solo_low = false;
+        mb_solo_mid = false;
+        mb_solo_upper_mid = false;
+        mb_solo_high = false;
+        draw_button_on_grid(9, 8, "SOLO", "   ", mb_solo_high );
+        draw_button_on_grid(9, 14, "SOLO", "   ", mb_solo_upper_mid );
+        draw_button_on_grid(9, 20, "SOLO", "   ", mb_solo_mid );
+        draw_button_on_grid(9, 26, "SOLO", "   ", mb_solo_low );
+      }
+      mb_set_mutes();
+
+      if (check_button_on_grid(38, 8) )
+      {
+        toggle_generic_active_function();
+        generic_temp_select_menu = 7;
+
+      }
+      else if (check_button_on_grid(38, 14) )
+      {
+        toggle_generic_active_function();
+        generic_temp_select_menu = 12;
+
+      }
+      else if (check_button_on_grid(38, 20) )
+      {
+        toggle_generic_active_function();
+        generic_temp_select_menu = 17;
+
+      }
+      else if (check_button_on_grid(38, 26) )
+      {
+        toggle_generic_active_function();
+        generic_temp_select_menu = 22;
+      }
+      seq.generic_ui_delay = 0;
+    }
+  }
+  if (touch.touched() == false )
+  {
+    ;
+  }
+  seq.generic_ui_delay++;
+  display.setTextSize(1);
+  display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
+  if (scope.scope_delay % 60 == 0)
+  {
+    float l, r;
+    l = mb_before_l.read();
+    r = mb_before_r.read();
+    draw_volmeter(CHAR_width_small * 1 , 228, 10, l );
+    draw_volmeter(CHAR_width_small * 5, 228, 11, r );
+
+    if (multiband_active)
+    {
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 16, mb_after_l.read() );
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 17, mb_after_r.read() );
+    }
+    else
+    {
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 14, l );
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 15, r );
+    }
+  }
+  display.setTextSize(2);
+  display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
+}
+#else
+FLASHMEM void handle_touchscreen_multiband()
+{
+ ;
+}
+#endif
+
+

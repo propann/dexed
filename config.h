@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.2"
+#define VERSION "1.3.4"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -78,9 +78,11 @@
 //#define AUDIO_DEVICE_USB
 //#define TEENSY_AUDIO_BOARD
 
-////////YOU HAVE TO ENABLE MUTE_PIN WHEN USING I2S_AUDIO WITH PCM5102, OTHERWISE AUDIO WILL BE MUTED PERMANENTLY
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
-#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function -
+
+#ifdef I2S_AUDIO_ONLY
+#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function
+#endif
 
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -97,7 +99,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-//#define REMOTE_CONSOLE  //enable USB Display Mirroring
+#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -106,8 +108,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
-//#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
+//#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
+#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 //#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
 
@@ -161,6 +163,9 @@
 #ifdef USE_BRAIDS
   #define NUM_BRAIDS 8
 #endif
+
+// MULTIBAND COMPRESSOR
+#define USE_MULTIBAND
 
 #define VIRT_KEYB_YPOS 166
 

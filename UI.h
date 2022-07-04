@@ -153,7 +153,8 @@ LCDML_add(119, LCDML_0, 11, "MultiSamplePlay", UI_func_MultiSamplePlay);
 LCDML_add(120, LCDML_0, 12, "Sample Editor", UI_func_sample_editor);
 LCDML_add(121, LCDML_0, 13, "Info", UI_func_information);
 LCDML_add(122, LCDML_0, 14, "Braids", UI_func_braids);
-LCDML_addAdvanced(123, LCDML_0, 15, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced (124 , LCDML_0   , 16  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 124
+LCDML_add(123, LCDML_0, 15, "Multiband Comp", UI_func_multiband_comp);
+LCDML_addAdvanced(124, LCDML_0, 16, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced (125 , LCDML_0   , 17  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 125
 #endif

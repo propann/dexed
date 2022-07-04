@@ -36,7 +36,7 @@ typedef struct ts_s
   bool update_virtual_keyboard_octave;
   bool switch_active_instance;
   bool block_screen_update;
-  uint8_t displayed_peak[14];
+  uint8_t displayed_peak[20];
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu=false;
   bool keyb_in_menu_activated=false;
