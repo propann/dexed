@@ -108,8 +108,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-//#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
-#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
+#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
+//#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 //#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
 
