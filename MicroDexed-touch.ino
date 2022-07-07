@@ -389,7 +389,7 @@ AudioConnection patchCord[] = {
 #ifndef SGTL5000_AUDIO_THRU
 
 #ifdef USE_MULTIBAND
- {stereo2mono, 0, finalized_mixer_l, 0},
+  {stereo2mono, 0, finalized_mixer_l, 0},
   {stereo2mono, 1, finalized_mixer_r, 0},
 
   {master_mixer_l, 0, mb_filter_l_0, 0},
@@ -1305,21 +1305,21 @@ void setup()
   scope.clear();
 
   // temporary set volumes for 1. multisample until load/save is in place
-//  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++)
-//  {
-//    msz[seq.active_multisample][zone].vol = 100;
-//    msz[seq.active_multisample][zone].pan = 20;
-//    msz[seq.active_multisample][zone].rev = 50;
-//  }
+  //  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++)
+  //  {
+  //    msz[seq.active_multisample][zone].vol = 100;
+  //    msz[seq.active_multisample][zone].pan = 20;
+  //    msz[seq.active_multisample][zone].rev = 50;
+  //  }
 
 #ifdef USE_BRAIDS
-//  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
-//  {
-//    // braids_filter_state[instance_id] = new braids_filter_state_t();
-//    synthBraids[instance_id]->init_braids();
-//    //synthBraids.set_braids_pitch(48 << 7);
-//    braids_osc.algo = 14;
-//  }
+  //  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
+  //  {
+  //    // braids_filter_state[instance_id] = new braids_filter_state_t();
+  //    synthBraids[instance_id]->init_braids();
+  //    //synthBraids.set_braids_pitch(48 << 7);
+  //    braids_osc.algo = 14;
+  //  }
 #endif
 }
 
@@ -1328,18 +1328,18 @@ void draw_volmeter(int x, int y, uint8_t arr, float value)
   int height;
   //draw text
   display.setCursor(x, y + 4);
-//if  (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
-//  {
-//    if (value == 0 || value > 0.16)
-//    {
-//      height = 0;
-//      seq_print_formatted_number( 0, 3 );
-//    }
-//  }
-//  else
-height = mapfloat(value, 0.0, 1.0, 0, 99);
-    seq_print_formatted_number( height, 3 );
- 
+  //if  (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
+  //  {
+  //    if (value == 0 || value > 0.16)
+  //    {
+  //      height = 0;
+  //      seq_print_formatted_number( 0, 3 );
+  //    }
+  //  }
+  //  else
+  height = mapfloat(value, 0.0, 1.0, 0, 99);
+  seq_print_formatted_number( height, 3 );
+
   //draw bar
   if (height > ts.displayed_peak[arr])
   {
@@ -1487,11 +1487,13 @@ void loop()
     handle_touchscreen_menu();
     scope.draw_scope(225, 18, 92);
   }
+#ifdef USE_MULTIBAND
   else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_comp) )
   {
     scope.draw_scope(188, -5, 128);
     handle_touchscreen_multiband();
   }
+#endif
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
   {
     handle_touchscreen_voice_select();

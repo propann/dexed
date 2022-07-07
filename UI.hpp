@@ -1671,6 +1671,9 @@ void setup_ui(void)
   display.setRotation(3);
 #endif
 
+  // welcome screen :)
+  //splash_screen();
+
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
   display.fillScreen(COLOR_BACKGROUND);
@@ -11215,6 +11218,25 @@ void UI_func_information(uint8_t param)
   }
 }
 
+FLASHMEM void not_available_message()
+{
+  display.fillScreen(COLOR_BACKGROUND);
+  display.setTextSize(2);
+  display.setTextColor(RED);
+  setCursor_textGrid(1, 1);
+  display.print(F("NOT SELECTED TO"));
+  setCursor_textGrid(1, 2);
+  display.print(F("COMPILE INTO THE CODE"));
+  setCursor_textGrid(1, 4);
+  display.setTextColor(GREY2);
+  display.print(F("OR IS NOT YET AVAILABLE"));
+  setCursor_textGrid(1, 6);
+  display.setTextColor(COLOR_SYSTEXT);
+  display.print(F("ENC-L TO GO BACK"));
+  helptext_l("BACK");
+}
+
+#ifdef USE_MULTIBAND
 FLASHMEM void  print_mb_params()
 {
   display.setTextSize(1);
@@ -11260,10 +11282,10 @@ FLASHMEM void  print_mb_params()
   display.print(mb_global_ratio);
   display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(" ");
-
-
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_set_mutes()
 {
   if (mb_solo_low)
@@ -11318,7 +11340,9 @@ FLASHMEM void mb_set_mutes()
     mb_mixer_r.gain(3, 0.9 + mb_global_gain );
   }
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_set_master()
 {
   if (multiband_active)
@@ -11336,7 +11360,9 @@ FLASHMEM void mb_set_master()
     finalized_mixer_r.gain(1, 0);
   }
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_set_compressor()
 {
   mb_compressor_l_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
@@ -11453,7 +11479,9 @@ FLASHMEM void mb_set_compressor()
   //  mb_filter_r_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
   //}
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_print_solo_buttons()
 {
   if (generic_temp_select_menu == 3 && generic_active_function == 0  )
@@ -11488,7 +11516,9 @@ FLASHMEM void mb_print_solo_buttons()
     else draw_button_on_grid(9, 26, "SOLO", "  ", mb_solo_low );
   }
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_print_threshold_buttons()
 {
   char temp_char[4];
@@ -11520,7 +11550,9 @@ FLASHMEM void mb_print_threshold_buttons()
   else if (generic_temp_select_menu == 21 )
     draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low , temp_char, 10), 0 );
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_print_freq_and_q()
 {
   for (int y = 0; y < 4; y++)
@@ -11611,7 +11643,9 @@ FLASHMEM void mb_print_freq_and_q()
     }
   }
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void mb_clear_caches()
 {
   memset(ts.displayed_peak, 0, sizeof(ts.displayed_peak));
@@ -11620,7 +11654,9 @@ FLASHMEM void mb_clear_caches()
   clear_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228);
   clear_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228);
 }
+#endif
 
+#ifdef USE_MULTIBAND
 FLASHMEM void UI_func_multiband_comp(uint8_t param)
 {
   char temp_char[4];
@@ -11859,24 +11895,18 @@ FLASHMEM void UI_func_multiband_comp(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
-
-FLASHMEM void not_available_message()
+#else
+FLASHMEM void UI_func_multiband_comp(uint8_t param)
 {
-  display.fillScreen(COLOR_BACKGROUND);
-  display.setTextSize(2);
-  display.setTextColor(RED);
-  setCursor_textGrid(1, 1);
-  display.print(F("NOT SELECTED TO"));
-  setCursor_textGrid(1, 2);
-  display.print(F("COMPILE INTO THE CODE"));
-  setCursor_textGrid(1, 4);
-  display.setTextColor(GREY2);
-  display.print(F("OR IS NOT YET AVAILABLE"));
-  setCursor_textGrid(1, 6);
-  display.setTextColor(COLOR_SYSTEXT);
-  display.print(F("ENC-L TO GO BACK"));
-  helptext_l("BACK");
+  if (LCDML.FUNC_setup())
+    not_available_message();
+  if (LCDML.FUNC_close())
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+  }
 }
+#endif
 
 #ifdef USE_BRAIDS
 FLASHMEM void UI_func_braids(uint8_t param)
@@ -17511,5 +17541,4 @@ FLASHMEM void splash_screen() {
 
   splash_draw_X();
 }
-
 #endif

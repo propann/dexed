@@ -1190,6 +1190,7 @@ FLASHMEM void handle_touchscreen_menu()
   display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
 }
 
+#ifdef USE_MULTIBAND
 FLASHMEM void toggle_generic_active_function()
 {
   if (generic_active_function == 0 )
@@ -1197,6 +1198,7 @@ FLASHMEM void toggle_generic_active_function()
   else
     generic_active_function = 0;
 }
+#endif
 
 #ifdef USE_MULTIBAND
 FLASHMEM void handle_touchscreen_multiband()
@@ -1321,5 +1323,3 @@ FLASHMEM void handle_touchscreen_multiband()
  ;
 }
 #endif
-
-

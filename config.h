@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.4"
+#define VERSION "1.3.5"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -99,7 +99,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-#define REMOTE_CONSOLE  //enable USB Display Mirroring
+//#define REMOTE_CONSOLE  //enable USB Display Mirroring
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000

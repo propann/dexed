@@ -343,7 +343,7 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color) {
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
-  delayMicroseconds(20); //necessary to avoid random pixels in remote console
+  delayMicroseconds(60); //necessary to avoid random pixels in remote console
 #endif
 
   beginSPITransaction(_SPI_CLOCK);
@@ -480,7 +480,7 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     Serial.write(highByte(color));
     Serial.write(lowByte(color));
     Serial.write(88);
-    delayMicroseconds(20); //necessary to avoid random pixels in remote console
+   delayMicroseconds(50); //necessary to avoid random pixels in remote console
   } else  //is fillscreen
   {
     Serial.write(99);
@@ -1005,7 +1005,7 @@ void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
   Serial.write(c);
   Serial.write(size_x);
   Serial.write(88);
-  // delayMicroseconds(20); //necessary to avoid random pixels in remote console
+  // delayMicroseconds(60); //necessary to avoid random pixels in remote console
 #endif
   if (fgcolor == bgcolor) {
     // This transparent approach is only about 20% faster
