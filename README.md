@@ -54,7 +54,7 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 ### PCB is available from PCBWAY
 
-If you register and pay as a new user at PCBWAY with this Invite link, you should get $5 New User Free Credit - so you can order it practically one time for "free", except shipping and customs cost etc.
+If you register and pay as a new user at PCBWAY with this Invite link, you should get $5 "New User Free Credit" - so you can order 5 PCB pieces for "free", except shipping and customs cost etc.
     
 [https://www.pcbway.com/setinvite.aspx?inviteid=565384](https://www.pcbway.com/setinvite.aspx?inviteid=565384)
 
