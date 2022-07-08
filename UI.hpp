@@ -1604,58 +1604,65 @@ FLASHMEM void mFunc_screensaver(uint8_t param) //qix screensaver
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
+    encoderDir[ENC_R].reset();
     // remmove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
     display.fillScreen(0);
     qix.counthue = random(358);
     // setup function
-    LCDML.FUNC_setLoopInterval(20);  // starts a trigger event for the loop function every 20 milliseconds
+    LCDML.FUNC_setLoopInterval(18);  // starts a trigger event for the loop function every 20 milliseconds
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    // if (LCDML.BT_checkAny() || touch.touched() == true   ) // check if any button is pressed (enter, up, down, left, right)
-    if (LCDML.BT_checkAny()   ) // check if any button is pressed (enter, up, down, left, right)
+    if (LCDML.BT_checkAny() || touch.touched() == true  ) // check if any button is pressed (enter, up, down, left, right)
     {
+      LCDML.SCREEN_resetTimer();
       LCDML.FUNC_goBackToMenu();  // leave this function
-      return;
     }
-    qix.counthue = qix.counthue + 1;
-    if (qix.counthue > 359 - (qix_num * 3))
-      qix.counthue = qix_num * 3;
+    else
+    {
+      qix.counthue = qix.counthue + 1;
+      if (qix.counthue > 359 - (qix_num * 3))
+        qix.counthue = qix_num * 3;
 
-    display.drawLine (qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1] , 0 );
-    for (uint8_t j = 0; j < qix_num - 1; j++)
-    {
-      display.drawLine (qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(qix.counthue - (qix_num * 3) + j * 3 , 254, 254)    );
-    }
-    for (uint8_t j = qix_num - 1; j >= 1; j--)
-    {
-      qix.x0s[j] = qix.x0s[j - 1];
-      qix.x1s[j] = qix.x1s[j - 1];
-      qix.y0s[j] = qix.y0s[j - 1];
-      qix.y1s[j] = qix.y1s[j - 1];
-    }
-    qix.x0s[0] += qix.dx0;
-    qix.x1s[0] += qix.dx1;
-    qix.y0s[0] += qix.dy0;
-    qix.y1s[0] += qix.dy1;
+      display.drawLine (qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1] , 0 );
+      for (uint8_t j = 0; j < qix_num - 1; j++)
+      {
+        display.drawLine (qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(qix.counthue - (qix_num * 3) + j * 3 , 254, 254)    );
+      }
+      for (uint8_t j = qix_num - 1; j >= 1; j--)
+      {
+        qix.x0s[j] = qix.x0s[j - 1];
+        qix.x1s[j] = qix.x1s[j - 1];
+        qix.y0s[j] = qix.y0s[j - 1];
+        qix.y1s[j] = qix.y1s[j - 1];
+      }
+      qix.x0s[0] += qix.dx0;
+      qix.x1s[0] += qix.dx1;
+      qix.y0s[0] += qix.dy0;
+      qix.y1s[0] += qix.dy1;
 #define limit(v, dv, max_v) {\
     if (v < 0) { v = 0; dv = (rand() & 6) + 4; } \
     if (v >= max_v) { v = max_v - 1; dv = -(rand() & 6) - 4; } \
   }
-    limit(qix.x0s[0], qix.dx0, TFT_HEIGHT);
-    limit(qix.x1s[0], qix.dx1, TFT_HEIGHT);
-    limit(qix.y0s[0], qix.dy0, TFT_WIDTH);
-    limit(qix.y1s[0], qix.dy1, TFT_WIDTH);
+      limit(qix.x0s[0], qix.dx0, TFT_HEIGHT);
+      limit(qix.x1s[0], qix.dx1, TFT_HEIGHT);
+      limit(qix.y0s[0], qix.dy0, TFT_WIDTH);
+      limit(qix.y1s[0], qix.dy1, TFT_WIDTH);
 #undef limit
+    }
   }
   if (LCDML.FUNC_close())         // ****** STABLE END *********
   {
+    encoderDir[ENC_L].reset();
+    encoderDir[ENC_R].reset();
+    LCDML.SCREEN_resetTimer();
     display.fillScreen(COLOR_BACKGROUND);
     if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 )
       LCDML.OTHER_jumpToID(LCDML.MENU_getLastActiveFunctionID());
     else
-      LCDML.MENU_goRoot();
+      LCDML.FUNC_goBackToMenu();  // leave this function
+    //  LCDML.MENU_goRoot();
   }
 }
 
@@ -1686,7 +1693,7 @@ void setup_ui(void)
 
   //Enable Screensaver (screensaver menu function, time to activate in ms)
   LCDML.SCREEN_enable(mFunc_screensaver, 200000);
-  //LCDML.SCREEN_enable(mFunc_screensaver, 7000); //quick test time
+  //LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
 }
 
 void toggle_sequencer_play_status()
