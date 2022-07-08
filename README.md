@@ -52,7 +52,13 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 [https://signal.group/#CjQKID8_6_bax5W1WS2rcq7NokgSckC0kxh8uPdo20X_S4hKEhBnZ-9ZbTvMT2vacLZqn92N](https://signal.group/#CjQKID8_6_bax5W1WS2rcq7NokgSckC0kxh8uPdo20X_S4hKEhBnZ-9ZbTvMT2vacLZqn92N)
 
+### PCB is available from PCBWAY
 
+If you register and pay as a new user at PCBWAY with this Invite link, you should get $5 New User Free Credit - so you can order it practically one time for "free", except shipping and customs cost etc.
+    
+[https://www.pcbway.com/setinvite.aspx?inviteid=565384](https://www.pcbway.com/setinvite.aspx?inviteid=565384)
+
+<a href="https://www.pcbway.com/project/shareproject/MicroDexed_Touch_current_version_with_PCM5102_d643a695.html"><img src="https://www.pcbway.com/project/img/images/frompcbway-1220.png" alt="PCB from PCBWay" /></a>
 
 ### upcoming features/work in progess:
 
