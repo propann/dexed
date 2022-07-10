@@ -112,6 +112,8 @@ extern XPT2046_Touchscreen touch;
 extern void sequencer(void);
 extern bool check_sd_performance_exists(uint8_t number);
 extern SdVolume volume;
+extern elapsedMillis record_timer;
+uint16_t record_x_pos;
 
 extern config_t configuration;
 extern void set_volume(uint8_t v, uint8_t m);
@@ -163,6 +165,9 @@ extern void get_sd_performance_name_json(uint8_t number);
 extern bool save_sd_performance_json(uint8_t p);
 extern dexed_live_mod_t dexed_live_mod;
 uint8_t activesample;
+extern File frec;
+extern AudioRecordQueue   record_queue_l;
+extern AudioRecordQueue   record_queue_r;
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -285,6 +290,8 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
+
+void sd_card_count_files_from_directory(File dir);
 
 /***********************************************************************
    GLOBAL
@@ -450,6 +457,7 @@ void UI_func_information(uint8_t param);
 void UI_func_not_available(uint8_t param);
 void UI_func_braids(uint8_t param);
 void UI_func_multiband_comp(uint8_t param);
+void UI_func_recorder(uint8_t param);
 void UI_func_file_manager(uint8_t param);
 void UI_func_custom_mappings(uint8_t param);
 void UI_func_cc_mappings(uint8_t param);
@@ -6094,7 +6102,7 @@ void UI_draw_waveform_large()  // for progmem
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 void UI_draw_waveform_large()  // for flash
 {
-  display.fillRect(1, 2 * (CHAR_height_small + 2), DISPLAY_WIDTH - 2, 153, COLOR_BACKGROUND);
+  display.fillRect(1, 4 * (CHAR_height_small + 2), DISPLAY_WIDTH - 2, 133, COLOR_BACKGROUND);
   uint16_t xspace = 1;
   short samplevalue = 0;
   uint32_t current_pos = 0;
@@ -6103,131 +6111,190 @@ void UI_draw_waveform_large()  // for flash
   uint16_t overview_factor = 0;
   char filename[26];
   uint32_t filesize;
-  SerialFlash.opendir();
-  if (temp_int > 0 )
+  if (fm.sample_source == 1) //FLASH
   {
-    for (int f = 0; f < temp_int; f++)
+    SerialFlash.opendir();
+    if (temp_int > 0 )
     {
-      if (SerialFlash.readdir(filename, sizeof(filename), filesize))
-        ;
-      else
-        break;
+      for (int f = 0; f < temp_int; f++)
+      {
+        if (SerialFlash.readdir(filename, sizeof(filename), filesize))
+          ;
+        else
+          break;
+      }
     }
-  }
-  SerialFlashFile f = SerialFlash.open(filename);
-  show_smallfont_noGrid( CHAR_height_small + 2, CHAR_width_small * 14 , 16, filename );
-  unsigned long filelength = f.size();
-  setCursor_textGrid_small(32, 1);
-  display.setTextColor( GREY1, COLOR_BACKGROUND);
-  display.print (filelength / 1024);
-  display.setTextColor( GREY2, COLOR_BACKGROUND);
-  display.print(" KB  ");
-  f.seek(44);
-  char buf[256];
-  overview_factor = (filelength / 140);
-  if ( overview_factor % 2 != 0)
-    overview_factor = overview_factor - 1;
+    SerialFlashFile f = SerialFlash.open(filename);
 
-  while (xspace < DISPLAY_WIDTH - 1 &&  current_pos + 44 + 256 < filelength)
-  {
-    f.read(buf, 256);
-    samplevalue = (( buf[ 1 ] * 256) + buf[0] ) ;
+    show_smallfont_noGrid( CHAR_height_small + 2, CHAR_width_small * 14 , 16, filename );
+    unsigned long filelength = f.size();
+    setCursor_textGrid_small(32, 1);
+    display.setTextColor( GREY1, COLOR_BACKGROUND);
+    display.print (filelength / 1024);
+    display.setTextColor( GREY2, COLOR_BACKGROUND);
+    display.print(" KB  ");
+    f.seek(44);
+    char buf[256];
+    overview_factor = (filelength / 140);
+    if ( overview_factor % 2 != 0)
+      overview_factor = overview_factor - 1;
+
+    while (xspace < DISPLAY_WIDTH - 1 &&  current_pos + 44 + 256 < filelength)
     {
-      display.drawLine( xspace - 1, oldy, xspace , samplevalue / 700 + 120, GREEN );
-      oldy = samplevalue / 700 + 120;
-      xspace = xspace + 1;
+      f.read(buf, 256);
+      samplevalue = (( buf[ 1 ] * 256) + buf[0] ) ;
+      {
+        display.drawLine( xspace - 1, oldy, xspace , samplevalue / 700 + 120, GREEN );
+        oldy = samplevalue / 700 + 120;
+        xspace = xspace + 1;
+      }
+      current_pos = current_pos + seq.wave_spacing * seq.wave_spacing;
+      f.seek(44 + current_pos);
     }
-    current_pos = current_pos + seq.wave_spacing * seq.wave_spacing;
-    f.seek(44 + current_pos);
-  }
-  end_zoomed_x_position = current_pos;
-  if (xspace < DISPLAY_WIDTH - 1)
-    display.drawLine(xspace, 71, xspace, 170, RED);
-  display.drawLine( xspace, 120, DISPLAY_WIDTH - 1 , 120, GREY2 );
-  if (xspace < DISPLAY_WIDTH - CHAR_width_small * 3 - 3)
-  {
-    display.setCursor(xspace + 3, 170 - CHAR_height_small + 1);
-    display.print("END");
-  }
-  xspace = 1;
-  current_pos = 0;
-  oldy = 50;
-  display.drawRect(168, 30, 142, 40, COLOR_PITCHSMP);
-  display.fillRect(169, 31, (end_zoomed_x_position) / 140, 38, RED);
-  display.fillRect(170 + (end_zoomed_x_position) / 140, 31, 139 - (end_zoomed_x_position) / 140, 38, DX_DARKCYAN);
-
-  while (xspace + 168 < DISPLAY_WIDTH - 12 &&  (current_pos + 44 ) < filelength) // draw overview
-  {
-
-    f.read(buf, 256);
-    samplevalue = (( buf[ 1 ] * 256) + buf[0] ) ;
+    end_zoomed_x_position = current_pos;
+    if (xspace < DISPLAY_WIDTH - 1)
+      display.drawLine(xspace, 71, xspace, 170, RED);
+    display.drawLine( xspace, 120, DISPLAY_WIDTH - 1 , 120, GREY2 );
+    if (xspace < DISPLAY_WIDTH - CHAR_width_small * 3 - 3)
     {
-      display.drawLine( 168 + (xspace - 1), oldy, 168 + xspace , samplevalue / 1800 + 120 - 70, COLOR_SYSTEXT );
-
-      oldy = samplevalue / 1800 + 120 - 70;
-      xspace = xspace + 1;
+      display.setCursor(xspace + 3, 170 - CHAR_height_small + 1);
+      display.print("END");
     }
-    current_pos = current_pos + overview_factor ;
-    f.seek(44 + current_pos);
+    xspace = 1;
+    current_pos = 0;
+    oldy = 50;
+    display.drawRect(168, 30, 142, 40, COLOR_PITCHSMP);
+    display.fillRect(169, 31, (end_zoomed_x_position) / 140, 38, RED);
+    display.fillRect(170 + (end_zoomed_x_position) / 140, 31, 139 - (end_zoomed_x_position) / 140, 38, DX_DARKCYAN);
+
+    while (xspace + 168 < DISPLAY_WIDTH - 12 &&  (current_pos + 44 ) < filelength) // draw overview
+    {
+
+      f.read(buf, 256);
+      samplevalue = (( buf[ 1 ] * 256) + buf[0] ) ;
+      {
+        display.drawLine( 168 + (xspace - 1), oldy, 168 + xspace , samplevalue / 1800 + 120 - 70, COLOR_SYSTEXT );
+
+        oldy = samplevalue / 1800 + 120 - 70;
+        xspace = xspace + 1;
+      }
+      current_pos = current_pos + overview_factor ;
+      f.seek(44 + current_pos);
+    }
+
+    f.close();
+  }
+  else if (fm.sample_source == 0) //SD
+  {
+    File f;
+    File mydir = SD.open("/DRUMS");
+    for (uint16_t f = 0; f < temp_int; f++)
+    {
+      fm.sd_entry.close();
+      fm.sd_entry = mydir.openNextFile();
+      // if (! fm.sd_entry)  break;
+    }
+    f = fm.sd_entry;
+
+    show_smallfont_noGrid( CHAR_height_small + 2, CHAR_width_small * 14 , 16, f.name() );
+    unsigned long filelength = f.size();
+    setCursor_textGrid_small(32, 1);
+    display.setTextColor( GREY1, COLOR_BACKGROUND);
+    display.print (filelength / 1024);
+    display.setTextColor( GREY2, COLOR_BACKGROUND);
+    display.print(" KB  ");
+    f.seek(44);
+    char buf[256];
+    overview_factor = (filelength / 140);
+    if ( overview_factor % 2 != 0)
+      overview_factor = overview_factor - 1;
+
+    while (xspace < DISPLAY_WIDTH - 1 &&  current_pos + 44 + 256 < filelength)
+    {
+      f.read(buf, 256);
+      samplevalue = (( buf[ 1 ] * 256) + buf[0] ) ;
+      {
+        display.drawLine( xspace - 1, oldy, xspace , samplevalue / 700 + 120, GREEN );
+        oldy = samplevalue / 700 + 120;
+        xspace = xspace + 1;
+      }
+      current_pos = current_pos + seq.wave_spacing * seq.wave_spacing;
+      f.seek(44 + current_pos);
+    }
+    end_zoomed_x_position = current_pos;
+    if (xspace < DISPLAY_WIDTH - 1)
+      display.drawLine(xspace, 71, xspace, 170, RED);
+    display.drawLine( xspace, 120, DISPLAY_WIDTH - 1 , 120, GREY2 );
+    if (xspace < DISPLAY_WIDTH - CHAR_width_small * 3 - 3)
+    {
+      display.setCursor(xspace + 3, 170 - CHAR_height_small + 1);
+      display.print("END");
+    }
+    xspace = 1;
+    current_pos = 0;
+    oldy = 50;
+    display.drawRect(168, 30, 142, 40, COLOR_PITCHSMP);
+    display.fillRect(169, 31, (end_zoomed_x_position) / 140, 38, RED);
+    display.fillRect(170 + (end_zoomed_x_position) / 140, 31, 139 - (end_zoomed_x_position) / 140, 38, DX_DARKCYAN);
+
+    while (xspace + 168 < DISPLAY_WIDTH - 12 &&  (current_pos + 44 ) < filelength) // draw overview
+    {
+
+      f.read(buf, 256);
+      samplevalue = (( buf[ 1 ] * 256) + buf[0] ) ;
+      {
+        display.drawLine( 168 + (xspace - 1), oldy, 168 + xspace , samplevalue / 1800 + 120 - 70, COLOR_SYSTEXT );
+
+        oldy = samplevalue / 1800 + 120 - 70;
+        xspace = xspace + 1;
+      }
+      current_pos = current_pos + overview_factor ;
+      f.seek(44 + current_pos);
+    }
+
+    f.close();
   }
 
-  f.close();
+
 }
 #endif
-
-//#define TOP_LINE     30
-//#define WAVFORM_CTR  80
-//#define WAVFORM_HT  100
-//#define MID_LINE    135
-//#define ANALYZE_Y   200
-//#define ANALYZE_HT   60
-//#define BOTTOM_LINE 205
 
 //WAV_audio wav_audio;
 //WAV_frame wav_frame;
 //WAV_file  wav_file;
 
-//void fill_init_wav()
-//{
-//  // Set up the initial test waveform
-//  //wav_audio.fillWaveform(440, 0);  // 440Hz = A4
-//  double two_pi_scaled = 2 * PI / 16;
-//  int16_t sample;
-//  for (int i = 0; i < WAV_MAX_SAMPLES; i++)
-//  {
-//    sample = (int16_t)(30000 * sin((double)i * two_pi_scaled));
-//    wav_audio.setSample(i, 0, sample);
-//    //if (i < 400) Serial.println(sample);
-//  }
-//}
+void sample_editor_update_file_counts()
+{
+  if (fm.sample_source == 1) // source = FLASH
+  {
+    SerialFlash.opendir();
+    while (1)
+    {
+      char filename[25];
+      uint32_t filesize;
 
-//void UI_draw_waveform_large2()
-//{
-//
-//  //fill_init_wav();
-//
-//  double scale_ht = (double)WAVFORM_HT / (wav_audio.header.bits_per_sample == 8 ? 256.0 : 65536.0);
-//  uint16_t skip = 1;
-//
-//  display.fillRect(0, TOP_LINE + 1, DISPLAY_WIDTH, WAVFORM_HT, COLOR_BACKGROUND);
-//
-//  for (uint16_t i = 0; i < DISPLAY_WIDTH - 1; i ++)
-//  {
-//    display.drawLine(i, WAVFORM_CTR - wav_audio.getNormalizedSample(i * skip, 0) * scale_ht, i + 1, WAVFORM_CTR - wav_audio.getNormalizedSample((i + 1) * skip, 0) * scale_ht, GREEN);
-//
-//    if (wav_audio.header.num_channels > 1)
-//    {
-//      display.drawLine(i, WAVFORM_CTR - wav_audio.getNormalizedSample(i * 32, 1) * scale_ht, i + 1, WAVFORM_CTR - wav_audio.getNormalizedSample((i + 1) * 32, 1) * scale_ht, RED);
-//    }
-//  }
-//}
-
+      if (SerialFlash.readdir(filename, sizeof(filename), filesize))
+      {
+        fm.flash_sum_files++;
+      } else
+      {
+        break; // no more files
+      }
+    }
+  }
+  else if (fm.sample_source == 0) // source = SD CARD
+  {
+    File rootdir = SD.open("/DRUMS");
+    sd_card_count_files_from_directory(rootdir);
+  }
+}
 void UI_func_sample_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     // setup function
     fm.flash_sum_files = 0;
+    fm.sd_sum_files = 0;
     generic_menu = 0;
     generic_active_function = 0;
     if (temp_int == 0)
@@ -6245,26 +6312,17 @@ void UI_func_sample_editor(uint8_t param)
     setCursor_textGrid_small(42, 1);
     display.print("SCALE:");
 
+    setCursor_textGrid_small(1, 3);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(F("SOURCE:"));
+
     draw_button_on_grid(1, 23, "SAMPLE",  "START", 0);
     draw_button_on_grid(9, 23, "SAMPLE",  "END", 0);
 
     draw_button_on_grid(17, 23, "LOOP",  "START", 0);
     draw_button_on_grid(25, 23, "LOOP",  "END", 0);
+    sample_editor_update_file_counts();
 
-    SerialFlash.opendir();
-    while (1)
-    {
-      char filename[25];
-      uint32_t filesize;
-
-      if (SerialFlash.readdir(filename, sizeof(filename), filesize))
-      {
-        fm.flash_sum_files++;
-      } else
-      {
-        break; // no more files
-      }
-    }
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -6272,49 +6330,72 @@ void UI_func_sample_editor(uint8_t param)
     {
       if ( generic_menu == 0 && generic_active_function == 0)
       {
-        if (LCDML.BT_checkDown())
-          temp_int = constrain(temp_int + 1, 1, fm.flash_sum_files);
-        else if (LCDML.BT_checkUp())
-          temp_int = constrain(temp_int - 1, 1, fm.flash_sum_files);
+        if (fm.sample_source == 1)
+        {
+          if (LCDML.BT_checkDown())
+            temp_int = constrain(temp_int + 1, 1, fm.flash_sum_files);
+          else if (LCDML.BT_checkUp())
+            temp_int = constrain(temp_int - 1, 1, fm.flash_sum_files);
+        }
+        else if (fm.sample_source == 0)
+        {
+          if (LCDML.BT_checkDown())
+            temp_int = constrain(temp_int + 1, 1, fm.sd_sum_files);
+          else if (LCDML.BT_checkUp())
+            temp_int = constrain(temp_int - 1, 1, fm.sd_sum_files);
+        }
       }
-      else if ( generic_menu == 0 && generic_active_function == 99 )
+      else if ( generic_menu == 0 && generic_active_function == 1 )
       {
         if (LCDML.BT_checkDown())
           seq.wave_spacing = constrain(seq.wave_spacing + 2, 2, 96);
         else if (LCDML.BT_checkUp())
           seq.wave_spacing = constrain(seq.wave_spacing - 2, 2, 96);
       }
+      else if ( generic_menu == 0 && generic_active_function == 2 )
+      {
+        if (LCDML.BT_checkDown() || LCDML.BT_checkUp())
+        {
+          if (fm.sample_source == 0)
+            fm.sample_source = 1;
+          else
+            fm.sample_source = 0;
+          sample_editor_update_file_counts();
+        }
+      }
+      else if ( generic_menu == 1 )
+      {
+        if (LCDML.BT_checkDown())
+          generic_active_function = constrain(generic_active_function + 1, 0, 2);
+        else if (LCDML.BT_checkUp())
+          generic_active_function = constrain(generic_active_function - 1, 0, 2);
+      }
     }
     if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
-      if ( generic_menu == 0 && generic_active_function == 99)
-      {
-        generic_active_function = 0;
-      } else if ( generic_menu == 0 && generic_active_function == 0)
-      {
-        generic_active_function = 99;
-      }
-      else if (generic_menu > 0 && generic_active_function == 99)
-      {
-        generic_active_function = 1;
-      }
+      if ( generic_menu == 0)
+        generic_menu = 1;
       else
-        generic_active_function = 99;
+        generic_menu = 0;
     }
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
     setCursor_textGrid_small(9, 1);
     display.setTextColor( COLOR_PITCHSMP, COLOR_BACKGROUND);
     seq_print_formatted_number (temp_int , 3);
+
     if (generic_active_function == 0)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
+
     setCursor_textGrid_small(8, 1);
     display.print("[");
     setCursor_textGrid_small(12, 1);
     display.print("]");
-    if (generic_active_function == 99)
+
+    if (generic_active_function == 1)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -6325,11 +6406,25 @@ void UI_func_sample_editor(uint8_t param)
     setCursor_textGrid_small(49, 1);
     seq_print_formatted_number (seq.wave_spacing / 2, 2);
 
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-#if defined(COMPILE_FOR_FLASH)
-    UI_draw_waveform_large();
-#endif
+    if (generic_active_function == 2)
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(9, 3);
+    display.print("[");
+    setCursor_textGrid_small(19, 3);
+    display.print("]");
 
+    setCursor_textGrid_small(10, 3);
+    display.setTextColor( COLOR_PITCHSMP, COLOR_BACKGROUND);
+    if (fm.sample_source == 0)
+      display.print("SD - CARD");
+    else if (fm.sample_source == 1)
+      display.print("EXT.FLASH");
+
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+
+    UI_draw_waveform_large();
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -11914,6 +12009,191 @@ FLASHMEM void UI_func_multiband_comp(uint8_t param)
   }
 }
 #endif
+
+
+void startRecording()
+{
+  display.setTextSize(2);
+  record_x_pos = 0;
+  record_timer = 0;
+  if (SD.exists("RECORD.RAW")) {
+    // The SD library writes new data to the end of the
+    // file, so to start a new recording, the old file
+    // must be deleted before new data is written.
+    SD.remove("RECORD.RAW");
+  }
+  frec = SD.open("RECORD.RAW", FILE_WRITE);
+  display.setTextColor(GREY2, COLOR_BACKGROUND );
+  setCursor_textGrid(9, 5);
+  display.print(F("             "));
+  setCursor_textGrid(9, 5);
+  display.print(frec.name());
+  helptext_r ("PUSH TO STOP");
+
+  if (frec) {
+    record_queue_l.begin();
+    record_queue_r.begin();
+    fm.wav_recorder_mode = 1;
+  }
+}
+
+// write all 512 bytes to the SD card
+void continueRecording()
+{
+  if (record_queue_l.available() >= 2 && record_queue_r.available() >= 2)
+  {
+    byte buffer[512];
+    byte bufferL[256];
+    byte bufferR[256];
+    memcpy(bufferL, record_queue_l.readBuffer(), 256);
+    memcpy(bufferR, record_queue_r.readBuffer(), 256);
+    record_queue_l.freeBuffer();
+    record_queue_r.freeBuffer();
+    int b = 0;
+    for (int i = 0; i < 512; i += 4) {
+      buffer[i] = bufferL[b];
+      buffer[i + 1] = bufferL[b + 1];
+      buffer[i + 2] = bufferR[b];
+      buffer[i + 3] = bufferR[b + 1];
+      b = b + 2;
+    }
+    frec.write(buffer, 512);
+
+    if (record_timer % 6 == 0)
+    {
+      record_x_pos++;
+      if (record_x_pos > DISPLAY_WIDTH - 1)
+        record_x_pos = 0;
+
+      short samplevalue = 0;
+      samplevalue = (( bufferL[ 1 ] * 256) + bufferL[0] ) ;
+      display.drawLine( record_x_pos  , 175 - 50, record_x_pos , 175 + 50, GREY4 );
+      display.drawLine( record_x_pos  , 175, record_x_pos , samplevalue / 700 + 175, GREEN );
+    }
+  }
+
+  uint32_t seconds = record_timer / 1000, minutes, hours;
+  minutes = seconds / 60;
+  seconds %= 60;
+  hours = minutes / 60;
+  minutes %= 60;
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND );
+  setCursor_textGrid(9, 6);
+  seq_print_formatted_number(hours , 2);
+  setCursor_textGrid(12, 6);
+  seq_print_formatted_number(minutes , 2);
+  setCursor_textGrid(15, 6);
+  seq_print_formatted_number(seconds , 2);
+}
+
+void stopRecording() {
+  char tmp[6];
+
+  record_queue_l.end();
+  record_queue_r.end();
+  if (fm.wav_recorder_mode == 1)
+  {
+    while (record_queue_l.available() > 0 && record_queue_r.available() > 0)
+    {
+      record_queue_l.readBuffer();
+      record_queue_l.freeBuffer();
+      record_queue_r.readBuffer();
+      record_queue_r.freeBuffer();
+    }
+    setCursor_textGrid(9, 5);
+    display.setTextColor(GREY1, COLOR_BACKGROUND );
+    display.print( "SAVED ");
+    if (frec.size() / 1024 / 1024 > 0)
+    {
+      sprintf(tmp, "%3d", int(frec.size() / 1024 / 1024));
+      display.print(tmp);
+      display.print( " MB  ");
+    }
+    else if (int(frec.size() / 1024) > 0)
+    {
+      sprintf(tmp, "%3d", int(frec.size() / 1024));
+      display.print(tmp);
+      display.print( " KB  ");
+    }
+
+    frec.close(); // close file
+    fm.wav_recorder_mode = 0;
+    //helptext_r ("PUSH TO RECORD");
+    display.setTextColor(COLOR_SYSTEXT);
+  }
+}
+
+FLASHMEM void UI_func_recorder(uint8_t param)
+{
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    generic_active_function = 0;
+    display.fillScreen(COLOR_BACKGROUND);
+    display.setTextColor(COLOR_SYSTEXT);
+    display.setTextSize(2);
+    setCursor_textGrid(1, 1);
+    display.print(F("AUDIO RECORDER"));
+    setCursor_textGrid(1, 4);
+    display.print(F("STATUS:"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND );
+    setCursor_textGrid(9, 6);
+    seq_print_formatted_number(0 , 2);
+    setCursor_textGrid(11, 6);
+    display.print(":");
+    setCursor_textGrid(12, 6);
+    seq_print_formatted_number(0 , 2);
+    setCursor_textGrid(14, 6);
+    display.print(":");
+    setCursor_textGrid(15, 6);
+    seq_print_formatted_number(0 , 2);
+
+  }
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
+    {
+      if (LCDML.BT_checkDown())
+      {
+        ;
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        ;
+      }
+
+      if (LCDML.BT_checkEnter()  )  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      {
+        if (fm.wav_recorder_mode == 0)
+          startRecording();
+        else if (fm.wav_recorder_mode == 1)
+          stopRecording();
+      }
+    }
+    helptext_r ("PUSH TO RECORD");
+    helptext_l ("BACK");
+    display.setTextColor(GREEN, COLOR_BACKGROUND );
+    display.setTextSize(2);
+
+    setCursor_textGrid(9, 4);
+    if (fm.wav_recorder_mode == 0)
+      display.print(F("READY TO RECORD"));
+    else
+    {
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("NOW RECORDING     "));
+      display.setTextColor(COLOR_SYSTEXT);
+    }
+
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextSize(2);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
 
 #ifdef USE_BRAIDS
 FLASHMEM void UI_func_braids(uint8_t param)

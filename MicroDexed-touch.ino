@@ -349,6 +349,11 @@ AudioAnalyzePeak                mb_after_l;
 AudioAnalyzePeak                mb_after_r;
 #endif
 
+// WAV/AUDIO Recording
+AudioRecordQueue         record_queue_l;
+AudioRecordQueue         record_queue_r;
+File frec;
+
 //
 // Static patching of audio objects
 //
@@ -437,6 +442,11 @@ AudioConnection patchCord[] = {
 
   {finalized_mixer_l, 0, i2s1, 0},
   {finalized_mixer_r, 0, i2s1, 1},
+
+  // WAV RECORDER
+  {finalized_mixer_l, 0, record_queue_l , 0},
+  {finalized_mixer_r, 0, record_queue_r , 0},
+
 #else
   {stereo2mono, 0, i2s1, 0},
   {stereo2mono, 1, i2s1, 1},
@@ -754,6 +764,7 @@ elapsedMillis midi_bpm_timer;
 elapsedMillis long_button_pressed;
 elapsedMillis control_rate;
 elapsedMillis save_sys;
+elapsedMillis record_timer;
 bool save_sys_flag = false;
 uint8_t active_voices[NUM_DEXED];
 uint8_t midi_voices[NUM_DEXED];
@@ -1482,7 +1493,12 @@ void loop()
 
   LCDML.loop();
 
-  if ( LCDML.FUNC_getID() > _LCDML_DISP_cnt  || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)  )
+  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_recorder) )
+  {
+    if (fm.wav_recorder_mode == 1)
+      continueRecording();
+  }
+  else if ( LCDML.FUNC_getID() > _LCDML_DISP_cnt  || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)  )
   {
     handle_touchscreen_menu();
     scope.draw_scope(225, 18, 92);
