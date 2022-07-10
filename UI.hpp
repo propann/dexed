@@ -168,6 +168,7 @@ uint8_t activesample;
 extern File frec;
 extern AudioRecordQueue   record_queue_l;
 extern AudioRecordQueue   record_queue_r;
+extern char filename[CONFIG_FILENAME_LEN];
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -12016,18 +12017,20 @@ void startRecording()
   display.setTextSize(2);
   record_x_pos = 0;
   record_timer = 0;
-  if (SD.exists("RECORD.RAW")) {
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid(11, 6);
+  display.print(":");
+  setCursor_textGrid(14, 6);
+  display.print(":");
+  setCursor_textGrid(17, 6);
+  display.print("    ");
+  if (SD.exists(filename)) {
     // The SD library writes new data to the end of the
     // file, so to start a new recording, the old file
     // must be deleted before new data is written.
-    SD.remove("RECORD.RAW");
+    SD.remove(filename);
   }
-  frec = SD.open("RECORD.RAW", FILE_WRITE);
-  display.setTextColor(GREY2, COLOR_BACKGROUND );
-  setCursor_textGrid(9, 5);
-  display.print(F("             "));
-  setCursor_textGrid(9, 5);
-  display.print(frec.name());
+  frec = SD.open(filename, FILE_WRITE);
   helptext_r ("PUSH TO STOP");
 
   if (frec) {
@@ -12078,7 +12081,7 @@ void continueRecording()
   hours = minutes / 60;
   minutes %= 60;
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND );
+  display.setTextColor(GREY2, COLOR_BACKGROUND );
   setCursor_textGrid(9, 6);
   seq_print_formatted_number(hours , 2);
   setCursor_textGrid(12, 6);
@@ -12101,19 +12104,22 @@ void stopRecording() {
       record_queue_r.readBuffer();
       record_queue_r.freeBuffer();
     }
-    setCursor_textGrid(9, 5);
-    display.setTextColor(GREY1, COLOR_BACKGROUND );
+    setCursor_textGrid(9, 6);
+    display.setTextColor(GREY2, COLOR_BACKGROUND );
     display.print( "SAVED ");
+    display.setTextColor(RED, COLOR_BACKGROUND );
     if (frec.size() / 1024 / 1024 > 0)
     {
-      sprintf(tmp, "%3d", int(frec.size() / 1024 / 1024));
+      sprintf(tmp, "%03d", int(frec.size() / 1024 / 1024));
       display.print(tmp);
+      display.setTextColor(GREY2, COLOR_BACKGROUND );
       display.print( " MB  ");
     }
     else if (int(frec.size() / 1024) > 0)
     {
-      sprintf(tmp, "%3d", int(frec.size() / 1024));
+      sprintf(tmp, "%03d", int(frec.size() / 1024));
       display.print(tmp);
+      display.setTextColor(GREY2, COLOR_BACKGROUND );
       display.print( " KB  ");
     }
 
@@ -12136,7 +12142,9 @@ FLASHMEM void UI_func_recorder(uint8_t param)
     display.print(F("AUDIO RECORDER"));
     setCursor_textGrid(1, 4);
     display.print(F("STATUS:"));
-    display.setTextColor(GREY1, COLOR_BACKGROUND );
+    setCursor_textGrid(1, 5);
+    display.print(F("FILE:"));
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid(9, 6);
     seq_print_formatted_number(0 , 2);
     setCursor_textGrid(11, 6);
@@ -12155,11 +12163,11 @@ FLASHMEM void UI_func_recorder(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
-        ;
+        temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 254);
       }
       else if (LCDML.BT_checkUp())
       {
-        ;
+        temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 254);
       }
 
       if (LCDML.BT_checkEnter()  )  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -12170,7 +12178,7 @@ FLASHMEM void UI_func_recorder(uint8_t param)
           stopRecording();
       }
     }
-    helptext_r ("PUSH TO RECORD");
+    helptext_r ("+/- FILE, PUSH TO RECORD");
     helptext_l ("BACK");
     display.setTextColor(GREEN, COLOR_BACKGROUND );
     display.setTextSize(2);
@@ -12182,9 +12190,12 @@ FLASHMEM void UI_func_recorder(uint8_t param)
     {
       display.setTextColor(RED, COLOR_BACKGROUND);
       display.print(F("NOW RECORDING     "));
-      display.setTextColor(COLOR_SYSTEXT);
     }
 
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
+    sprintf(filename, "REC_%03d.RAW", temp_int);
+    setCursor_textGrid(9, 5);
+    display.print(filename);
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -12192,6 +12203,7 @@ FLASHMEM void UI_func_recorder(uint8_t param)
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
+    temp_int = 0;
   }
 }
 
