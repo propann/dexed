@@ -39,7 +39,7 @@
 			<button id=btnRecord>&#128308; Record video</button>
 			<button id=btnRecordAudio>&#127908; Record audio</button>
 		</div>
-		<canvas width=320 height=240></canvas>
+		<canvas width=640 height=480></canvas>
 		<hr>
 		<h4>MD remote</h4>
 		<div>
@@ -91,7 +91,7 @@ if ("serial" in navigator) {
 				// dataBits: 8,
 				// stopBits: 1,
 				// parity: 'none',
-				// bufferSize: 512
+				bufferSize: 4096,
 				flowControlOptional: "hardware"
 			});
 
@@ -237,6 +237,150 @@ function readbgcolor(bgcolh, bgcoll) {
 	r = (((bgcolor) & 0xF800) >>> 8) & 0xFF;
 	bgcolor = "rgb("+r+","+g+","+b+")";
 }
+
+
+function bitRead(b, bitPos) {
+	const x = b & (1 << bitPos);
+	return x == 0 ? 0 : 1;
+}
+
+function drawChar(x, y, ch, col, bg, size) {
+	for (let i = 0; i < 5; i++) { // Char bitmap = 5 columns
+
+		let line = font[ch*5+i];
+		for (let j = 0; j < 8; j++, line >>= 1) {
+			if ( bitRead(line, 0) == 1  ) {
+				ctxVideo.fillStyle = c;
+				if (size == 1 ) {
+					ctxVideo.fillRect((x + i)*2, (y + j)*2, 2, 2);
+				} else {
+					ctxVideo.fillRect(x*2+i*4, y*2 + j*4, 4, 4);
+				}
+			}
+			else if ( bitRead(line, 0) == 0 && bg != col ) {
+				ctxVideo.fillStyle = bgcolor;
+				if (size == 1 ) {
+					ctxVideo.fillRect((x + i)*2, (y + j)*2, 2, 2);
+				} else {
+					ctxVideo.fillRect(x*2+i*4, y*2 + j*4, 4, 4);
+				}
+			}
+		}
+	}
+
+	if (bg != col) { // If opaque, draw vertical line for last column
+		ctxVideo.fillStyle = bgcolor;
+		if (size == 1 ) {
+			ctxVideo.fillRect((x + 5)*2, y *2, 2, 16);
+		}
+		else {
+			ctxVideo.fillRect(x*2 + 5*4, y *2, 4, 32);
+		}
+	}
+}
+
+const FRAME_START = 99;
+const FRAME_END = 88;
+
+function process(data) {
+    for (let i = 0; i < data.length; i++) {
+		const b = data[i];
+
+		switch (b) {
+			case FRAME_END:
+				const cmd = _buffer[1];
+				switch(cmd) {
+					case 90:
+						_frameLength = 8;
+						break;
+					case 91:
+					case 92:
+						_frameLength = 10;
+						break;
+					case 93:
+						_frameLength = 4;
+						break;
+					case 94:
+					case 95:
+						_frameLength = 12;
+						break;
+					default:
+						_frameLength = -1;
+						break;
+				}
+
+				// end of frame ?
+				if(_i === _frameLength && _buffer[0] === FRAME_START) {
+					_processFrame(_buffer.subarray(1, _i));
+					_i = 0;
+				} else {
+					_buffer[_i++] = b;
+				}
+				break;
+
+			default:
+				_buffer[_i++] = b;
+				break;
+		}
+
+    }
+}
+
+function _processFrame(frame) {
+	switch(frame[0]) {
+		case 90: // draw pixel
+			x = frame[1]*256 + frame[2];
+			y = frame[3]*256 + frame[4];
+			readcolor(frame[5], frame[6]);
+			ctxVideo.fillRect(x*2, y*2, 2, 2);
+			break;
+
+		case 91: // draw vline
+			x = frame[1]*256 + frame[2];
+			y = frame[3]*256 + frame[4];
+			h = frame[5]*256 + frame[6];
+			readcolor(frame[7], frame[8]);
+			ctxVideo.fillRect(x*2, y*2, 2, h*2);
+			break;
+
+		case 92: // draw hline
+			x = frame[1]*256 + frame[2];
+			y = frame[3]*256 + frame[4];
+			w = frame[5]*256 + frame[6];
+			readcolor(frame[7], frame[8]);
+			ctxVideo.fillRect(x*2, y*2, w*2, 2);
+			break;
+
+		case 93: // fill screen
+			readcolor(frame[1], frame[2]);
+			ctxVideo.fillRect(0, 0, 640, 480);
+			break;
+
+		case 94: // fill rect
+			x = frame[1]*256 + frame[2];
+			y = frame[3]*256 + frame[4];
+			w = frame[5]*256 + frame[6];
+			h = frame[7]*256 + frame[8];
+			readcolor(frame[9], frame[10]);
+			ctxVideo.fillRect(x*2, y*2, w*2, h*2);
+			break;
+
+		case 95: // draw char
+			x = frame[1]*256 + frame[2];
+			y = frame[3]*256 + frame[4];
+			readcolor(frame[5], frame[6]);
+			readbgcolor(frame[7], frame[8]);
+			ch = frame[9];
+			size = frame[10];
+			drawChar(x, y, ch, c, bgcolor, size);
+			break;
+
+		default:
+			console.error('command not supported', cmd);
+			break;
+	}
+}
+
 
 // 5x7 font
 const font = [
@@ -497,154 +641,6 @@ const font = [
   0x00, 0x3C, 0x3C, 0x3C, 0x3C,
   0x00, 0x00, 0x00, 0x00, 0x00 // #255 NBSP
   ];
-
-function bitRead(b, bitPos) {
-	const x = b & (1 << bitPos);
-	return x == 0 ? 0 : 1;
-}
-
-function drawChar(x, y, ch, col, bg, size) {
-	for (let i = 0; i < 5; i++) { // Char bitmap = 5 columns
-
-		let line = font[ch*5+i];
-		for (let j = 0; j < 8; j++, line >>= 1) {
-			if ( bitRead(line, 0) == 1  ) {
-				ctxVideo.fillStyle = c;
-				if (size == 1 ) {
-					// ctxVideo.fillRect((x + i)*2, (y + j)*2, 2, 2);
-					ctxVideo.fillRect((x + i), (y + j), 1, 1);
-				} else {
-					// ctxVideo.fillRect(x*2+i*4, y*2 + j*4, 4, 4);
-					ctxVideo.fillRect(x*1+i*2, y + j*2, 2, 2);
-				}
-			}
-			else if ( bitRead(line, 0) == 0 && bg != col ) {
-				ctxVideo.fillStyle = bgcolor;
-				if (size == 1 ) {
-					// ctxVideo.fillRect((x + i)*2, (y + j)*2, 2, 2);
-					ctxVideo.fillRect((x + i), (y + j), 1, 1);
-				} else {
-					// ctxVideo.fillRect(x*2+i*4, y*2 + j*4, 4, 4);
-					ctxVideo.fillRect(x+i*2, y + j*2, 2, 2);
-				}
-			}
-		}
-	}
-
-	if (bg != col) { // If opaque, draw vertical line for last column
-		ctxVideo.fillStyle = bgcolor;
-		if (size == 1 )
-			ctxVideo.fillRect((x + 5)*2, y *2, 2, 16);
-		else
-			ctxVideo.fillRect(x*2 + 5*4, y *2, 4, 32);
-	}
-}
-
-const FRAME_START = 99;
-const FRAME_END = 88;
-
-function process(data) {
-    for (let i = 0; i < data.length; i++) {
-		const b = data[i];
-
-		switch (b) {
-			case FRAME_END:
-				const cmd = _buffer[1];
-				switch(cmd) {
-					case 90:
-						_frameLength = 8;
-						break;
-					case 91:
-					case 92:
-						_frameLength = 10;
-						break;
-					case 93:
-						_frameLength = 4;
-						break;
-					case 94:
-					case 95:
-						_frameLength = 12;
-						break;
-					default:
-						_frameLength = -1;
-						break;
-				}
-
-				// end of frame ?
-				if(_i === _frameLength && _buffer[0] === FRAME_START) {
-					_processFrame(_buffer.subarray(1, _i));
-					_i = 0;
-				} else {
-					_buffer[_i++] = b;
-				}
-				break;
-
-			default:
-				_buffer[_i++] = b;
-				break;
-		}
-
-    }
-}
-
-function _processFrame(frame) {
-	switch(frame[0]) {
-		case 90: // draw pixel
-			x = frame[1]*256 + frame[2];
-			y = frame[3]*256 + frame[4];
-			readcolor(frame[5], frame[6]);
-			// ctxVideo.fillRect(x*2, y*2, 2, 2);
-			ctxVideo.fillRect(x, y, 1, 1);
-			break;
-
-		case 91: // draw vline
-			x = frame[1]*256 + frame[2];
-			y = frame[3]*256 + frame[4];
-			h = frame[5]*256 + frame[6];
-			readcolor(frame[7], frame[8]);
-			// ctxVideo.fillRect(x*2, y*2, 2, h*2);
-			ctxVideo.fillRect(x, y, 1, h);
-			break;
-
-		case 92: // draw hline
-			x = frame[1]*256 + frame[2];
-			y = frame[3]*256 + frame[4];
-			w = frame[5]*256 + frame[6];
-			readcolor(frame[7], frame[8]);
-			// ctxVideo.fillRect(x*2, y*2, w*2, 2);
-			ctxVideo.fillRect(x, y, w, 1);
-			break;
-
-		case 93: // fill screen
-			readcolor(frame[1], frame[2]);
-			ctxVideo.fillRect(0, 0, 320, 320);
-			break;
-
-		case 94: // fill rect
-			x = frame[1]*256 + frame[2];
-			y = frame[3]*256 + frame[4];
-			w = frame[5]*256 + frame[6];
-			h = frame[7]*256 + frame[8];
-			readcolor(frame[9], frame[10]);
-			// ctxVideo.fillRect(x*2, y*2, w*2, h*2);
-			ctxVideo.fillRect(x, y, w, h);
-			break;
-
-		case 95: // draw char
-			x = frame[1]*256 + frame[2];
-			y = frame[3]*256 + frame[4];
-			readcolor(frame[5], frame[6]);
-			readbgcolor(frame[7], frame[8]);
-			ch = frame[9];
-			size = frame[10];
-			drawChar(x, y, ch, c, bgcolor, size);
-			break;
-
-		default:
-			console.error('command not supported', cmd);
-			break;
-	}
-}
 </script>
 <script type="module">
 	// Enable WebMidi.js and trigger the onEnabled() function when ready
@@ -664,18 +660,10 @@ function _processFrame(frame) {
 			// 	WebMidi.inputs.forEach((device, index) => {
 			//  		document.body.innerHTML+= `${index}: ${device.name} <br>`;
 			// 	});
-	
+
 		//   const mySynth = WebMidi.inputs[0];
 			const mySynthInput = WebMidi.getInputByName("MicroDexed")
 			const mySynthOutput = WebMidi.getOutputByName("MicroDexed")
-
-			const dexed1 = mySynthOutput.channels[6];
-
-			// for (let i = 0; i < 10; i++) {
-			// 	dexed1.sendNoteOn("C3");
-			// 	await sleep(500);
-			// 	dexed1.sendNoteOff("C3");
-			// }
 
 			const btnSequencer = document.querySelector('#btnSequencer');
 
@@ -706,14 +694,11 @@ function sleep(ms) {
 }
   </script>
   <script type="module">
-	// Audio
+	// Web Audio
 	let ctxAudio;
-	let audioEnabled = false;
-	// window.addEventListener('load', initAudio, false);
 
 async function startAudio(attempts = 1) {
-    if (ctxAudio || !audioEnabled)
-        return;
+    if (ctxAudio) return;
 
     try {
 		const optionsAudioCtx = {
@@ -729,15 +714,16 @@ async function startAudio(attempts = 1) {
                 break;
 
             if (--attempts > 0) {
-                await wait(300);
+                await sleep(300);
             } else {
                 break;
             }
         }
 
         if (!deviceId)
-            throw new Error('MD not found');
-console.log('deviceId', deviceId)
+            throw new Error('MicroDexed not found');
+
+		// console.log('deviceId', deviceId)
 
         streamAudio = await navigator.mediaDevices
             .getUserMedia({ audio: {
@@ -752,7 +738,6 @@ console.log('deviceId', deviceId)
 
         if (ctxAudio.state !== 'running') {
 			ctxAudio && ctxAudio.resume();
-            // waitForUserGesture();
 	    }
 
 		let recording = false;
@@ -798,29 +783,28 @@ console.log('deviceId', deviceId)
         stopAudio();
     }
 
-    if (!audioEnabled) {
-        stopAudio();
-    }
+    // if (!audioEnabled) {
+    //     stopAudio();
+    // }
 }
 
 btnAudio.addEventListener('click', async () => {
 	if (!ctxAudio) {
-		enable();
 		btnAudio.textContent = 'Stop audio'
-		//startAudio(10);
+		startAudio(10);
 	} else {
 		btnAudio.textContent = 'Start audio'
-		disable();
+		stopAudio();
 	}
 });
 
 async function findDeviceId() {
     const devices = await navigator.mediaDevices.enumerateDevices();
-console.log(devices)
+	// console.log(devices)
     return devices
         .filter(d =>
             d.kind === 'audioinput' &&
-            /MicroDexed/.test(d.label) &&
+            (/MicroDexed/.test(d.label) || /Teensy MIDI\/Audio/.test(d.label)) &&
             d.deviceId !== 'default' &&
             d.deviceId !== 'communications')
         .map(d => d.deviceId)[0];
@@ -830,51 +814,6 @@ async function stopAudio() {
     ctxAudio && await ctxAudio.close().catch(() => {});
     ctxAudio = null;
 }
-
-function waitForUserGesture() {
-    const events = ['keydown', 'mousedown', 'touchstart'];
-
-    function resume() {
-        ctxAudio && ctxAudio.resume();
-        events.forEach(e => {
-            off(document, e, resume)
-		});
-    }
-
-    events.forEach(e => {
-        on(document, e, resume);
-	});
-}
-
-function enable() {
-    if (audioEnabled)
-        return;
-
-	audioEnabled = true;
-    startAudio();
-}
-function disable() {
-    audioEnabled = false;
-    stopAudio();
-}
-function on(target, eventType, action, useCapture) {
-    if (typeof target === 'string') {
-        target = document.querySelectorAll(target);
-    } else if (!(target instanceof Array)) {
-        target = [target];
-    }
-
-    for (const element of target) {
-        element.addEventListener(eventType, action, useCapture);
-    }
-}
-function off(target, eventType, action, useCapture) {
-    target.removeEventListener(eventType, action, useCapture);
-}
-function wait(time) {
-    return new Promise(resolve => setTimeout(resolve, time));
-}
-
 </script>
   </body>
 </html>
