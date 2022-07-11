@@ -5981,23 +5981,23 @@ void seq_sub_print_track_assignments(int x, int y, bool init)
       {
         display.print ("MICROSYNTH 2");
       }
-      else if (seq.track_type[track] == 0 && seq.instrument[track] < 5) //drums/samples
-      {
-        display.print ("DRUMS/SAMPLE");
-      }
       else if (seq.instrument[track] == 5) //Braids
       {
         display.print ("BRAIDS OSC");
       }
-      else if (seq.instrument[track] > 5 && seq.instrument[track] < 21) //external MIDI USB
+      else if ( seq.instrument[track] > 5 && seq.instrument[track] < 16) //multisamples
+      {
+        display.print ("MULTISAMPLE");
+      }
+      else if (seq.instrument[track] > 15 && seq.instrument[track] < 32) //external MIDI USB
       {
         display.print ("MIDI USB #");
-        seq_print_formatted_number(seq.instrument[track] - 4, 2);
+        seq_print_formatted_number(seq.instrument[track] - 15, 2);
       }
-      else if (seq.instrument[track] > 20 && seq.instrument[track] < 37) //external MIDI MINI JACK/DIN
+      else if (seq.instrument[track] > 31 && seq.instrument[track] < 48) //external MIDI MINI JACK/DIN
       {
         display.print ("MIDI DIN #");
-        seq_print_formatted_number(seq.instrument[track] - 20, 2);
+        seq_print_formatted_number(seq.instrument[track] - 31, 2);
       }
       else
       {
@@ -6112,6 +6112,7 @@ void UI_draw_waveform_large()  // for flash
   uint16_t overview_factor = 0;
   char filename[26];
   uint32_t filesize;
+
   if (fm.sample_source == 1) //FLASH
   {
     SerialFlash.opendir();
@@ -6668,9 +6669,9 @@ void seq_sub_display_menu_logic()
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.instrument[i] = constrain(seq.instrument[i] + 1, 0, 36);
+          seq.instrument[i] = constrain(seq.instrument[i] + 1, 0, 47);
         else if (LCDML.BT_checkUp())
-          seq.instrument[i] = constrain(seq.instrument[i] - 1, 0, 36);
+          seq.instrument[i] = constrain(seq.instrument[i] - 1, 0, 47);
       }
     }
     else if (seq.active_function == 1 && seq.menu == 37) // edit auto/manual advance in step recorder
@@ -7231,15 +7232,19 @@ void UI_func_seq_vel_editor(uint8_t param)
           display.print(F("MICROSYNTH #2"));
         else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 5)
           display.print(F("BRAIDS OSC. "));
-        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 5 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 21)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 5 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 16)
+        { display.print(F("MULTISMP "));
+          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 6, 2);
+        }
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 15 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 32)
         {
           display.print(F("MIDI USB #"));
-          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 4, 2);
+          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 15, 2);
         }
-        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 20 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 37)
+        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 31 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 48)
         {
           display.print(F("MIDI DIN #"));
-          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 20, 2);
+          seq_print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 31, 2);
         }
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print(F(" ?"));
@@ -10011,15 +10016,15 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
       else if (seq.instrument[x] == 3 )  display.print(F("MS1"));
       else if (seq.instrument[x] == 4 )  display.print(F("MS2"));
       else if (seq.instrument[x] == 5 )  display.print(F("BRD"));
-      else if (seq.instrument[x] > 5 && seq.instrument[x] < 15 )
+      else if (seq.instrument[x] > 5 && seq.instrument[x] < 16 )
       {
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 5 );
         display.print(F("SMP"));
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.instrument[x] - 4, 2);
+        seq_print_formatted_number(seq.instrument[x] - 6, 2);
       }
-      else if (seq.instrument[x] > 14 && seq.instrument[x] < 31)
+      else if (seq.instrument[x] > 15 && seq.instrument[x] < 32)
       {
         if (seq.tracktype_or_instrument_assign == 2)
         {
@@ -10028,9 +10033,9 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
         }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.instrument[x] - 14, 2);
+        seq_print_formatted_number(seq.instrument[x] - 15, 2);
       }
-      else if (seq.instrument[x] > 30 && seq.instrument[x] < 47)
+      else if (seq.instrument[x] > 31 && seq.instrument[x] < 48)
       {
         if (seq.tracktype_or_instrument_assign == 2)
         {
@@ -10039,7 +10044,7 @@ void sub_song_print_instruments(uint16_t front, uint16_t back)
         }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small)*x ,  CHAR_height_small * 6 );
         display.print(F("#"));
-        seq_print_formatted_number(seq.instrument[x] - 30, 2);
+        seq_print_formatted_number(seq.instrument[x] - 31, 2);
       }
       else display.print(F("???"));
     }
@@ -10185,7 +10190,7 @@ void UI_func_song(uint8_t param)
           }
           else if (seq.tracktype_or_instrument_assign == 2) //select instruments for track
           {
-            if (seq.instrument[seq.selected_track] < 46)
+            if (seq.instrument[seq.selected_track] < 47)
               seq.instrument[seq.selected_track]++;
           }
           else if (seq.tracktype_or_instrument_assign == 6) // tracktype change

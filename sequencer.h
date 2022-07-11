@@ -104,7 +104,7 @@ typedef struct sequencer_s {
   uint8_t UI_last_seq_step;
   uint8_t note_editor_view = 99; // 0 = list/tracker view, 1 = pianoroll
   bool noteoffsent[NUM_SEQ_TRACKS] = {false, false, false, false, false, false, false, false};
-  uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-14 MultiSample 15-30 = MIDI OUT USB, 31-46 MIDI OUT DIN
+  uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
   uint8_t step = 0;
   bool running = false;
   bool recording = false;

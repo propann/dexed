@@ -1925,7 +1925,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
        ( seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level)))
   {
     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
-    //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-14 MultiSample 15-30 = MIDI OUT USB, 31-46 MIDI OUT DIN
+    // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
 
     if (seq.current_track_type_of_active_pattern == 0) // drums
       inChannel = DRUM_MIDI_CHANNEL;
