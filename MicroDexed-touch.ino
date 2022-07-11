@@ -3247,6 +3247,18 @@ void handleStart(void)
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
   seq.running = true;
 
+#ifdef MIDI_DEVICE_USB_HOST
+    midi_usb.sendRealTime(midi::Start);
+#endif
+
+#ifdef MIDI_DEVICE_DIN
+    midi_serial.sendRealTime(midi::Start);
+#endif
+
+#ifdef MIDI_DEVICE_USB
+    usbMIDI.sendRealTime(midi::Start);
+#endif
+
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
   {
     print_arp_start_stop_button();
@@ -3310,6 +3322,18 @@ void handleStop(void)
   microsynth_envelope_osc[1].noteOff();
   microsynth_envelope_noise[0].noteOff();
   microsynth_envelope_noise[1].noteOff();
+#endif
+
+#ifdef MIDI_DEVICE_USB_HOST
+    midi_usb.sendRealTime(midi::Stop);
+#endif
+
+#ifdef MIDI_DEVICE_DIN
+    midi_serial.sendRealTime(midi::Stop);
+#endif
+
+#ifdef MIDI_DEVICE_USB
+    usbMIDI.sendRealTime(midi::Stop);
 #endif
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
