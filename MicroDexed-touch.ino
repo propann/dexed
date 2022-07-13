@@ -1314,24 +1314,6 @@ void setup()
   }
 
   scope.clear();
-
-  // temporary set volumes for 1. multisample until load/save is in place
-  //  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++)
-  //  {
-  //    msz[seq.active_multisample][zone].vol = 100;
-  //    msz[seq.active_multisample][zone].pan = 20;
-  //    msz[seq.active_multisample][zone].rev = 50;
-  //  }
-
-#ifdef USE_BRAIDS
-  //  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
-  //  {
-  //    // braids_filter_state[instance_id] = new braids_filter_state_t();
-  //    synthBraids[instance_id]->init_braids();
-  //    //synthBraids.set_braids_pitch(48 << 7);
-  //    braids_osc.algo = 14;
-  //  }
-#endif
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -1504,7 +1486,7 @@ void loop()
     scope.draw_scope(225, 18, 92);
   }
 #ifdef USE_MULTIBAND
-  else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_comp) )
+  else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics) )
   {
     scope.draw_scope(188, -5, 128);
     handle_touchscreen_multiband();
@@ -1792,7 +1774,7 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
 #endif
 
-        Drum[slot]->setPlaybackRate(  (float)pow (2, (inNumber - msz[presetslot][y].rootnote - 12) / 12.00)   );
+        Drum[slot]->setPlaybackRate(  powf  (2.0, (inNumber - msz[presetslot][y].rootnote ) / 12.0 ) );
         Drum[slot]->playWav( msz[presetslot][y].name );
 
         if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
@@ -1810,16 +1792,16 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
                             3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
         }
       }
-      //      else
-      //      {
-      //        if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
-      //        {
-      //          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-      //                            (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
-      //          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
-      //                            3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
-      //        }
-      //      }
+            else
+            {
+              if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+              {
+                display.fillRect (2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+                                  (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
+                display.fillRect (2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
+                                  3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+              }
+            }
     }
   }
 #endif
@@ -1961,9 +1943,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
       braids_slot = 0;
 
     if (braids_osc.filter_mode == 0)
-      braids_mixer_filter[braids_slot]->gain(3, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+      braids_mixer_filter[braids_slot]->gain(3, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.5, 1.2)));
     else
-      braids_mixer_filter[braids_slot]->gain(braids_osc.filter_mode - 1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.6, VOL_MAX_FLOAT)));
+      braids_mixer_filter[braids_slot]->gain(braids_osc.filter_mode - 1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.5, 1.2)));
 
     braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
     braids_filter[braids_slot]->frequency(braids_osc.filter_freq_from);

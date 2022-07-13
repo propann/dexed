@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.6"
+#define VERSION "1.3.7"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -148,20 +148,20 @@
 // EPIANO
 #define USE_EPIANO
 #ifdef USE_EPIANO
-  #define NUM_EPIANO_VOICES 16
-  #define DEFAULT_EP_MIDI_CHANNEL 3
+#define NUM_EPIANO_VOICES 16
+#define DEFAULT_EP_MIDI_CHANNEL 3
 #endif
 
 // MICROSYNTH
 #define USE_MICROSYNTH
 #ifdef USE_MICROSYNTH
-  #define NUM_MICROSYNTH 2
+#define NUM_MICROSYNTH 2
 #endif
 
 // BRAIDS
-//#define USE_BRAIDS  //very early state. not ready for usage
+#define USE_BRAIDS  //very early state. not ready for usage
 #ifdef USE_BRAIDS
-  #define NUM_BRAIDS 8
+#define NUM_BRAIDS 8
 #endif
 
 // MULTIBAND COMPRESSOR

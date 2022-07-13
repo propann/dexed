@@ -1638,6 +1638,7 @@ FLASHMEM bool load_sd_braids_json(uint8_t number)
         braids_osc.midi_channel = data_json["midi"];
         braids_osc.pan = data_json["pan"];
 
+        braids_update_settings();
         return (true);
       }
 #ifdef DEBUG
@@ -1680,7 +1681,7 @@ FLASHMEM bool save_sd_braids_json(uint8_t number)
     if (json)
     {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-      data_json["vol"]= braids_osc.sound_intensity;
+      data_json["vol"] = braids_osc.sound_intensity;
       data_json["algo"] = braids_osc.algo;
       data_json["color"] = braids_osc.color;
       data_json["timbre"] = braids_osc.timbre;
@@ -2234,12 +2235,10 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       serializeJsonPretty(data_json, json);
       json.close();
       AudioInterrupts();
+      dac_unmute();
       if (seq_was_running == true )
-      {
         handleStart();
-        dac_unmute();
-        return (true);
-      }
+      return (true);
     }
     //json.close();
     //AudioInterrupts();
@@ -2996,7 +2995,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving multisample presets "));
+    Serial.print(F("Saving multisample slot "));
     Serial.print(number);
     Serial.print(F(" to "));
     Serial.println(filename);
@@ -3004,7 +3003,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
     AudioNoInterrupts();
     if (SD.exists(filename)) {
 #ifdef DEBUG
-      Serial.println("remove old drum mapping file");
+      Serial.println("remove old multisample file");
 #endif
       SD.begin();
       SD.remove(filename);

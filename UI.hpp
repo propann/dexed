@@ -54,24 +54,24 @@ extern void braids_update_settings();
 #endif
 
 #ifdef USE_MULTIBAND
-uint16_t mb_cross_freq_low = 220;
+uint16_t mb_cross_freq_low = 140;
 uint16_t mb_cross_freq_mid = 2100;
 uint16_t mb_cross_freq_upper_mid = 5200;
 uint16_t mb_cross_freq_high = 8600;
-float mb_global_gain = 0;
-float mb_gain_low = 0.80;
-float mb_gain_mid = -0.10;
+float mb_global_gain = 2.0;
+float mb_gain_low = 0.10;
+float mb_gain_mid = 0.10;
 float mb_gain_upper_mid = 0.10;
-float mb_gain_high = 1.10;
+float mb_gain_high = 0.80;
 bool multiband_active = false;
-uint8_t mb_threshold_low = 11;
-uint8_t mb_threshold_mid = 14;
-uint8_t mb_threshold_upper_mid = 9;
-uint8_t mb_threshold_high = 11;
-float mb_q_low = 0.50;
-float mb_q_mid = 0.50;
-float mb_q_upper_mid = 0.50;
-float mb_q_high = 0.70;
+uint8_t mb_threshold_low = 5;
+uint8_t mb_threshold_mid = 15;
+uint8_t mb_threshold_upper_mid = 12;
+uint8_t mb_threshold_high = 2;
+float mb_q_low = 0.30;
+float mb_q_mid = 0.10;
+float mb_q_upper_mid = 0.10;
+float mb_q_high = 0.50;
 bool mb_solo_low;
 bool mb_solo_mid;
 bool mb_solo_upper_mid;
@@ -457,7 +457,7 @@ void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
 void UI_func_not_available(uint8_t param);
 void UI_func_braids(uint8_t param);
-void UI_func_multiband_comp(uint8_t param);
+void UI_func_multiband_dynamics(uint8_t param);
 void UI_func_recorder(uint8_t param);
 void UI_func_file_manager(uint8_t param);
 void UI_func_custom_mappings(uint8_t param);
@@ -11398,8 +11398,8 @@ FLASHMEM void mb_set_mutes()
 {
   if (mb_solo_low)
   {
-    mb_mixer_l.gain(0, VOL_MAX_FLOAT + mb_global_gain );
-    mb_mixer_r.gain(0, VOL_MAX_FLOAT + mb_global_gain );
+    mb_mixer_l.gain(0, VOL_MAX_FLOAT + mb_global_gain + mb_gain_low);
+    mb_mixer_r.gain(0, VOL_MAX_FLOAT + mb_global_gain + mb_gain_low);
   }
   else
   {
@@ -11408,8 +11408,8 @@ FLASHMEM void mb_set_mutes()
   }
   if (mb_solo_mid)
   {
-    mb_mixer_l.gain(1, VOL_MAX_FLOAT + mb_global_gain );
-    mb_mixer_r.gain(1, VOL_MAX_FLOAT + mb_global_gain );
+    mb_mixer_l.gain(1, VOL_MAX_FLOAT + mb_global_gain + mb_gain_mid);
+    mb_mixer_r.gain(1, VOL_MAX_FLOAT + mb_global_gain + mb_gain_mid);
   }
   else
   {
@@ -11418,8 +11418,8 @@ FLASHMEM void mb_set_mutes()
   }
   if (mb_solo_upper_mid)
   {
-    mb_mixer_l.gain(2, VOL_MAX_FLOAT + mb_global_gain );
-    mb_mixer_r.gain(2, VOL_MAX_FLOAT + mb_global_gain );
+    mb_mixer_l.gain(2, VOL_MAX_FLOAT + mb_global_gain + mb_gain_upper_mid);
+    mb_mixer_r.gain(2, VOL_MAX_FLOAT + mb_global_gain + mb_gain_upper_mid);
   }
   else
   {
@@ -11428,8 +11428,8 @@ FLASHMEM void mb_set_mutes()
   }
   if (mb_solo_high)
   {
-    mb_mixer_l.gain(3, VOL_MAX_FLOAT + mb_global_gain );
-    mb_mixer_r.gain(3, VOL_MAX_FLOAT + mb_global_gain );
+    mb_mixer_l.gain(3, VOL_MAX_FLOAT + mb_global_gain + mb_gain_high);
+    mb_mixer_r.gain(3, VOL_MAX_FLOAT + mb_global_gain + mb_gain_high);
   }
   else
   {
@@ -11438,14 +11438,14 @@ FLASHMEM void mb_set_mutes()
   }
   if (mb_solo_low == false && mb_solo_upper_mid == false && mb_solo_mid == false && mb_solo_high == false)
   {
-    mb_mixer_l.gain(0, 0.9 + mb_global_gain );
-    mb_mixer_r.gain(0, 0.9 + mb_global_gain );
-    mb_mixer_l.gain(1, 0.9 + mb_global_gain );
-    mb_mixer_r.gain(1, 0.9 + mb_global_gain );
-    mb_mixer_l.gain(2, 0.9 + mb_global_gain );
-    mb_mixer_r.gain(2, 0.9 + mb_global_gain );
-    mb_mixer_l.gain(3, 0.9 + mb_global_gain );
-    mb_mixer_r.gain(3, 0.9 + mb_global_gain );
+    mb_mixer_l.gain(0, 1.0 + mb_global_gain + mb_gain_low);
+    mb_mixer_r.gain(0, 1.0 + mb_global_gain + mb_gain_low);
+    mb_mixer_l.gain(1, 1.0 + mb_global_gain + mb_gain_mid);
+    mb_mixer_r.gain(1, 1.0 + mb_global_gain + mb_gain_mid);
+    mb_mixer_l.gain(2, 1.0 + mb_global_gain + mb_gain_upper_mid);
+    mb_mixer_r.gain(2, 1.0 + mb_global_gain + mb_gain_upper_mid);
+    mb_mixer_l.gain(3, 1.0 + mb_global_gain + mb_gain_high);
+    mb_mixer_r.gain(3, 1.0 + mb_global_gain + mb_gain_high);
   }
 }
 #endif
@@ -11473,83 +11473,44 @@ FLASHMEM void mb_set_master()
 #ifdef USE_MULTIBAND
 FLASHMEM void mb_set_compressor()
 {
-  mb_compressor_l_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
-  mb_compressor_r_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
-
-  mb_compressor_l_1.compression(mb_threshold_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_mid);
-  mb_compressor_r_1.compression(mb_threshold_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_mid);
-
-  mb_compressor_l_2.compression(mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_upper_mid);
-  mb_compressor_r_2.compression(mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_upper_mid);
-
-  mb_compressor_l_3.compression(mb_threshold_high * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_high);
-  mb_compressor_r_3.compression(mb_threshold_high * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_high);
-
-  //  mb_compressor_l_0.limit(-12.0f, 0.03f , 0.2f  );
-  //  mb_compressor_r_0.limit(-12.0f, 0.03f , 0.2f  );
+  //  mb_compressor_l_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
+  //  mb_compressor_r_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
   //
-  //  mb_compressor_l_1.limit(-12.0f, 0.03f , 0.2f );
-  //  mb_compressor_r_1.limit(-12.0f, 0.03f , 0.2f );
+  //  mb_compressor_l_1.compression(mb_threshold_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_mid);
+  //  mb_compressor_r_1.compression(mb_threshold_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_mid);
   //
-  //  mb_compressor_l_2.limit(-12.0f, 0.03f , 0.2f );
-  //  mb_compressor_r_2.limit(-12.0f, 0.03f , 0.2f );
+  //  mb_compressor_l_2.compression(mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_upper_mid);
+  //  mb_compressor_r_2.compression(mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_upper_mid);
   //
-  //  mb_compressor_l_3.limit(-12.0f, 0.03f , 0.2f );
-  //  mb_compressor_r_3.limit(-12.0f, 0.03f , 0.2f );
-
-  //   mb_compressor_l_0.limit(mb_threshold_low * -1, 0.03f , 0.2f  );
-  //  mb_compressor_r_0.limit(mb_threshold_low * -1, 0.03f , 0.2f  );
-  //
-  //  mb_compressor_l_1.limit(mb_threshold_mid * -1, 0.03f , 0.2f );
-  //  mb_compressor_r_1.limit(mb_threshold_mid * -1, 0.03f , 0.2f );
-  //
-  //  mb_compressor_l_2.limit(mb_threshold_upper_mid * -1, 0.03f , 0.2f );
-  //  mb_compressor_r_2.limit(mb_threshold_upper_mid * -1, 0.03f , 0.2f );
-  //
-  //  mb_compressor_l_3.limit(mb_threshold_high * -1, 0.03f , 0.2f );
-  //  mb_compressor_r_3.limit(mb_threshold_high * -1, 0.03f , 0.2f );
+  //  mb_compressor_l_3.compression(mb_threshold_high * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_high);
+  //  mb_compressor_r_3.compression(mb_threshold_high * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_high);
 
 
-  //  if (mb_filtermode == 0)
-  //  {
+  mb_compressor_l_0.limit(mb_threshold_low * -1, 0.03f , 0.2f  );
+  mb_compressor_r_0.limit(mb_threshold_low * -1, 0.03f , 0.2f  );
+
+  mb_compressor_l_1.limit(mb_threshold_mid * -1, 0.03f , 0.2f );
+  mb_compressor_r_1.limit(mb_threshold_mid * -1, 0.03f , 0.2f );
+
+  mb_compressor_l_2.limit(mb_threshold_upper_mid * -1, 0.03f , 0.2f );
+  mb_compressor_r_2.limit(mb_threshold_upper_mid * -1, 0.03f , 0.2f );
+
+  mb_compressor_l_3.limit(mb_threshold_high * -1, 0.03f , 0.2f );
+  mb_compressor_r_3.limit(mb_threshold_high * -1, 0.03f , 0.2f );
+
   mb_filter_l_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
   mb_filter_r_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
-  //    mb_filter_l_0.setLowpass(1, 0, 0);
-  //    mb_filter_r_0.setLowpass(1, 0, 0);
-  //    mb_filter_l_0.setLowpass(2, 0, 0);
-  //    mb_filter_r_0.setLowpass(2, 0, 0);
-  //    mb_filter_l_0.setLowpass(3, 0, 0);
-  //    mb_filter_r_0.setLowpass(3, 0, 0);
 
   mb_filter_l_1.setBandpass(0, mb_cross_freq_mid, mb_q_mid);
   mb_filter_r_1.setBandpass(0, mb_cross_freq_mid, mb_q_mid);
-  //    mb_filter_l_1.setLowpass(1, 0, 0);
-  //    mb_filter_r_1.setLowpass(1, 0, 0);
-  //    mb_filter_l_1.setLowpass(2, 0, 0);
-  //    mb_filter_r_1.setLowpass(2, 0, 0);
-  //    mb_filter_l_1.setLowpass(3, 0, 0);
-  //    mb_filter_r_1.setLowpass(3, 0, 0);
 
   mb_filter_l_2.setBandpass(0, mb_cross_freq_upper_mid, mb_q_upper_mid);
   mb_filter_r_2.setBandpass(0, mb_cross_freq_upper_mid, mb_q_upper_mid);
-  //    mb_filter_l_2.setLowpass(1, 0, 0);
-  //    mb_filter_r_2.setLowpass(1, 0, 0);
-  //    mb_filter_l_2.setLowpass(2, 0, 0);
-  //    mb_filter_r_2.setLowpass(2, 0, 0);
-  //    mb_filter_l_2.setLowpass(3, 0, 0);
-  //    mb_filter_r_2.setLowpass(3, 0, 0);
 
   mb_filter_l_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
   mb_filter_r_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
-  //    mb_filter_l_3.setLowpass(1, 0, 0);
-  //    mb_filter_r_3.setLowpass(1, 0, 0);
-  //    mb_filter_l_3.setLowpass(2, 0, 0);
-  //    mb_filter_r_3.setLowpass(2, 0, 0);
-  //    mb_filter_l_3.setLowpass(3, 0, 0);
-  //    mb_filter_r_3.setLowpass(3, 0, 0);
-  //}
-  //else
-  //{
+
+
   //  mb_filter_l_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
   //  mb_filter_r_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
   //  mb_filter_l_0.setLowpass(1, mb_cross_freq_low, mb_q_low * 2);
@@ -11585,7 +11546,7 @@ FLASHMEM void mb_set_compressor()
   //  mb_filter_r_3.setHighpass(2, mb_cross_freq_high, mb_q_high);
   //  mb_filter_l_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
   //  mb_filter_r_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
-  //}
+
 }
 #endif
 
@@ -11765,7 +11726,7 @@ FLASHMEM void mb_clear_caches()
 #endif
 
 #ifdef USE_MULTIBAND
-FLASHMEM void UI_func_multiband_comp(uint8_t param)
+FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
 {
   char temp_char[4];
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -11845,7 +11806,7 @@ FLASHMEM void UI_func_multiband_comp(uint8_t param)
           mb_clear_caches();
         }
         else if ( generic_temp_select_menu == 1 )
-          mb_global_gain = constrain(mb_global_gain + 0.1, -2, 8);
+          mb_global_gain = constrain(mb_global_gain + 0.2, -2, 12);
         else if ( generic_temp_select_menu == 2 )
           mb_global_ratio = constrain(mb_global_ratio + ENCODER[ENC_R].speed() , 1, 60);
         else if ( generic_temp_select_menu == 3 )
@@ -11899,7 +11860,7 @@ FLASHMEM void UI_func_multiband_comp(uint8_t param)
           mb_clear_caches();
         }
         else if ( generic_temp_select_menu == 1 )
-          mb_global_gain = constrain(mb_global_gain - 0.1, -2, 8);
+          mb_global_gain = constrain(mb_global_gain - 0.2, -2, 12);
         else if ( generic_temp_select_menu == 2 )
           mb_global_ratio = constrain(mb_global_ratio - ENCODER[ENC_R].speed() , 1, 60);
         else if ( generic_temp_select_menu == 3 )
@@ -12004,7 +11965,7 @@ FLASHMEM void UI_func_multiband_comp(uint8_t param)
   }
 }
 #else
-FLASHMEM void UI_func_multiband_comp(uint8_t param)
+FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
 {
   if (LCDML.FUNC_setup())
     not_available_message();
@@ -12504,6 +12465,7 @@ FLASHMEM void UI_func_braids(uint8_t param)
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     generic_active_function = 99;
+    seq.cycle_touch_element = 0;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -13071,8 +13033,8 @@ void UI_func_MultiSamplePlay(uint8_t param)
   if (LCDML.FUNC_setup())         // ****** SETUP *********
   {
     //test is this prevents crashing
-    handleStop();
-    stop_all_drum_slots();
+    //handleStop();
+    //stop_all_drum_slots();
 
     seq.active_multisample = 0;
     seq.active_function = 99;
@@ -13097,7 +13059,8 @@ void UI_func_MultiSamplePlay(uint8_t param)
     display.print(F("SAMPLER"));
     display.setTextSize(1);
 #if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
-    print_flash_stats();
+    if (seq.running == false)
+      print_flash_stats();
 #endif
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 

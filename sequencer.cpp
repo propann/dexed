@@ -98,18 +98,20 @@ extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
 multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-multisample_s ms[NUM_MULTISAMPLES] =
-{
-  {
-    "MultiPiano"
-  },
-  {
-    "StringPad"
-  },
-  {
-    "empty"
-  },
-};
+multisample_s ms[NUM_MULTISAMPLES];
+
+//multisample_s ms[NUM_MULTISAMPLES] =
+//{
+//  {
+//    "MultiPiano"
+//  },
+//  {
+//    "StringPad"
+//  },
+//  {
+//    "empty"
+//  },
+//};
 
 void seq_live_recording(void)
 {
@@ -195,7 +197,7 @@ uint8_t find_longest_chain()
 
 void sequencer_part1(void)
 {
-  //seq_live_recording();
+  seq_live_recording();
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     int tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};

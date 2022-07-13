@@ -102,7 +102,7 @@ class AudioEffectDynamics : public AudioStream
 
     //Enables automatic makeup gain setting
     //headroom is in dbFS
-    void autoMakeupGain(float headroom = 6.0f) {
+    void autoMakeupGain(float headroom = 1.0f) {
       mgAutoEnabled = true;
       mgHeadroom = constrain(headroom, 0.0f, 60.0f);
       computeMakeupGain();
