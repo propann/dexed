@@ -1792,16 +1792,16 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot)
                             3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
         }
       }
-            else
-            {
-              if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
-              {
-                display.fillRect (2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                                  (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
-                display.fillRect (2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
-                                  3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
-              }
-            }
+      else
+      {
+        if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) )
+        {
+          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+                            (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5 , 5, get_multisample_zone_color(y));
+          display.fillRect (2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1 ,  185 + y * 5 + 1,
+                            3.5 + 1 , 5 - 2, COLOR_SYSTEXT);
+        }
+      }
     }
   }
 #endif
@@ -3237,6 +3237,12 @@ void handleStart(void)
   seq.arp_note = 0;
   seq.arp_chord = 0;
 
+#ifdef USE_MULTIBAND
+  mb_set_mutes();
+  mb_set_compressor();
+  mb_set_master();
+#endif
+
   if (seq.loop_start == 99)  // no loop start set, start at step 0
     seq.current_song_step = 0;
   else
@@ -3246,15 +3252,15 @@ void handleStart(void)
   seq.running = true;
 
 #ifdef MIDI_DEVICE_USB_HOST
-    midi_usb.sendRealTime(midi::Start);
+  midi_usb.sendRealTime(midi::Start);
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-    midi_serial.sendRealTime(midi::Start);
+  midi_serial.sendRealTime(midi::Start);
 #endif
 
 #ifdef MIDI_DEVICE_USB
-    usbMIDI.sendRealTime(midi::Start);
+  usbMIDI.sendRealTime(midi::Start);
 #endif
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
@@ -3323,15 +3329,15 @@ void handleStop(void)
 #endif
 
 #ifdef MIDI_DEVICE_USB_HOST
-    midi_usb.sendRealTime(midi::Stop);
+  midi_usb.sendRealTime(midi::Stop);
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-    midi_serial.sendRealTime(midi::Stop);
+  midi_serial.sendRealTime(midi::Stop);
 #endif
 
 #ifdef MIDI_DEVICE_USB
-    usbMIDI.sendRealTime(midi::Stop);
+  usbMIDI.sendRealTime(midi::Stop);
 #endif
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))

@@ -11510,7 +11510,6 @@ FLASHMEM void mb_set_compressor()
   mb_filter_l_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
   mb_filter_r_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
 
-
   //  mb_filter_l_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
   //  mb_filter_r_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
   //  mb_filter_l_0.setLowpass(1, mb_cross_freq_low, mb_q_low * 2);

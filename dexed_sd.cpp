@@ -66,6 +66,31 @@ extern void sequencer();
 extern sequencer_t seq;
 #endif
 
+#ifdef USE_MULTIBAND
+extern uint16_t mb_cross_freq_low;
+extern uint16_t mb_cross_freq_mid;
+extern uint16_t mb_cross_freq_upper_mid;
+extern uint16_t mb_cross_freq_high;
+extern float mb_global_gain;
+extern float mb_gain_low;
+extern float mb_gain_mid;
+extern float mb_gain_upper_mid;
+extern float mb_gain_high;
+extern bool multiband_active;
+extern uint8_t mb_threshold_low;
+extern uint8_t mb_threshold_mid;
+extern uint8_t mb_threshold_upper_mid;
+extern uint8_t mb_threshold_high;
+extern float mb_q_low;
+extern float mb_q_mid;
+extern float mb_q_upper_mid;
+extern float mb_q_high;
+extern bool mb_solo_low;
+extern bool mb_solo_mid;
+extern bool mb_solo_upper_mid;
+extern bool mb_solo_high;
+extern uint8_t mb_global_ratio;
+#endif
 
 extern float midi_volume_transform(uint8_t midi_amp);
 extern void set_sample_note(uint8_t sample, uint8_t note);
@@ -1727,6 +1752,160 @@ FLASHMEM bool save_sd_braids_json(uint8_t number)
 #endif
 
 /******************************************************************************
+   SD MULTIBAND
+ ******************************************************************************/
+#ifdef USE_MULTIBAND
+FLASHMEM bool load_sd_multiband_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+
+  if (sd_card > 0)
+  {
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTIBAND_CONFIG_NAME);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      Serial.print(F("Found multiband configuration"));
+#endif
+      json = SD.open(filename);
+      if (json)
+      {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+        deserializeJson(data_json, json);
+
+        json.close();
+        AudioInterrupts();
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+        Serial.println(F("Read JSON data:"));
+        //serializeJsonPretty(data_json, Serial);
+        Serial.println();
+#endif
+
+        mb_cross_freq_low = data_json["f_low"];
+        mb_cross_freq_mid = data_json["f_mid"];
+        mb_cross_freq_upper_mid = data_json["f_upper_mid"];
+        mb_cross_freq_high = data_json["f_high"];
+        mb_global_gain = data_json["g_gain"];
+        mb_gain_low = data_json["g_low"];
+        mb_gain_mid = data_json["g_mid"];
+        mb_gain_upper_mid = data_json["g_upper_mid"];
+        mb_gain_high = data_json["g_high"];
+        multiband_active = data_json["active"];
+        mb_threshold_low = data_json["t_low"];
+        mb_threshold_mid = data_json["t_mid"];
+        mb_threshold_upper_mid = data_json["t_upper_mid"];
+        mb_threshold_low = data_json["t_low"];
+        mb_q_low = data_json["q_low"];
+        mb_q_mid = data_json["q_mid"];
+        mb_q_upper_mid = data_json["q_upper_mid"];
+        mb_q_high = data_json["q_high"];
+        mb_solo_low = data_json["s_low"];
+        mb_solo_mid = data_json["s_mid"];
+        mb_solo_upper_mid = data_json["s_upper_mid"];
+        mb_solo_high = data_json["s_high"];
+        mb_global_ratio = data_json["g_ratio"];
+
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        Serial.print(F("E : Cannot open "));
+        Serial.print(filename);
+        Serial.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      Serial.print(F("No "));
+      Serial.print(filename);
+      Serial.println(F(" available."));
+#endif
+    }
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+FLASHMEM bool save_sd_multiband_json(uint8_t number)
+{
+  if (sd_card > 0)
+  {
+    sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, MULTIBAND_CONFIG_NAME);
+#ifdef DEBUG
+    Serial.print(F("Saving multiband"));
+    Serial.print(number);
+    Serial.print(F(" to "));
+    Serial.println(filename);
+#endif
+
+    AudioNoInterrupts();
+    SD.begin();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+
+      data_json["f_low"] = mb_cross_freq_low;
+      data_json["f_mid"] = mb_cross_freq_mid;
+      data_json["f_upper_mid"] = mb_cross_freq_upper_mid;
+      data_json["f_high"] = mb_cross_freq_high;
+      data_json["g_gain"] = mb_global_gain;
+      data_json["g_low"] = mb_gain_low;
+      data_json["g_mid"] = mb_gain_mid;
+      data_json["g_upper_mid"] = mb_gain_upper_mid;
+      data_json["g_high"] = mb_gain_high;
+      data_json["active"] = multiband_active;
+      data_json["t_low"] = mb_threshold_low;
+      data_json["t_mid"] = mb_threshold_mid;
+      data_json["t_upper_mid"] = mb_threshold_upper_mid;
+      data_json["t_low"] = mb_threshold_low;
+      data_json["q_low"] = mb_q_low;
+      data_json["q_mid"] = mb_q_mid;
+      data_json["q_upper_mid"] = mb_q_upper_mid;
+      data_json["q_high"] = mb_q_high;
+      data_json["s_low"] = mb_solo_low;
+      data_json["s_mid"] = mb_solo_mid;
+      data_json["s_upper_mid"] = mb_solo_upper_mid;
+      data_json["s_high"] = mb_solo_high;
+      data_json["g_ratio"] = mb_global_ratio;
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+      Serial.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      Serial.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    Serial.print(F("E : Cannot open "));
+    Serial.print(filename);
+    Serial.println(F(" on SD."));
+#endif
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+#endif
+
+/******************************************************************************
    SD SEQUENCER
  ******************************************************************************/
 
@@ -2167,6 +2346,9 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
 #ifdef USE_BRAIDS
   save_sd_braids_json(number);
 #endif
+#ifdef USE_MULTIBAND
+  save_sd_multiband_json(number);
+#endif
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -2504,6 +2686,9 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
   load_sd_multisample_presets_json(number);
 #ifdef USE_BRAIDS
   load_sd_braids_json(number);
+#endif
+#ifdef USE_MULTIBAND
+  load_sd_multiband_json(number);
 #endif
   configuration.sys.performance_number = number;
 

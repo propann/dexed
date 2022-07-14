@@ -347,6 +347,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define MICROSYNTH_CONFIG_NAME "msynth"
 #define MULTISAMPLE_PRESETS_CONFIG_NAME "msp_presets"
 #define BRAIDS_CONFIG_NAME "braids"
+#define MULTIBAND_CONFIG_NAME "multiband"
 
 #define MAX_PERF_MOD 30
 

@@ -85,6 +85,9 @@ extern AudioMixer<4>              mb_mixer_r;
 extern bool multiband_active;
 extern uint8_t generic_active_function;
 extern uint8_t generic_temp_select_menu;
+extern void mb_set_mutes();
+extern void mb_set_master();
+extern void mb_set_compressor();
 #endif
 
 ts_t ts; //touch screen
@@ -1072,6 +1075,10 @@ FLASHMEM void draw_menu_ui_icons()
     draw_button_on_grid(45, 18, "SEQ.", "START", 1);
   draw_button_on_grid(2, 25, "LOAD", "PERF", 0);
   draw_button_on_grid(13, 25, "SAVE", "PERF", 0);
+  if (multiband_active)
+    draw_button_on_grid(35, 25, "MULTI", "BAND", 2);
+  else
+    draw_button_on_grid(35, 25, "MULTI", "BAND", 0);
   draw_button_on_grid(45, 25, "MAIN", "MIX", 0);
   draw_button_on_grid(45, 11, "", "", 99); //print keyboard icon
 }
@@ -1161,6 +1168,17 @@ FLASHMEM void handle_touchscreen_menu()
         else if (check_button_on_grid(45, 25) )
         {
           LCDML.OTHER_jumpToFunc(UI_func_mixer);
+        }
+        else if (check_button_on_grid(35, 25) )
+        {
+          multiband_active = !multiband_active;
+          if (multiband_active)
+            draw_button_on_grid(35, 25, "MULTI", "BAND", 2);
+          else
+            draw_button_on_grid(35, 25, "MULTI", "BAND", 0);
+          mb_set_mutes();
+          mb_set_master();
+          mb_set_compressor();
         }
       }
       seq.generic_ui_delay = 0;
@@ -1320,6 +1338,6 @@ FLASHMEM void handle_touchscreen_multiband()
 #else
 FLASHMEM void handle_touchscreen_multiband()
 {
- ;
+  ;
 }
 #endif
