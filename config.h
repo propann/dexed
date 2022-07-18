@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.7"
+#define VERSION "1.3.8"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -99,7 +99,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-//#define REMOTE_CONSOLE  //enable USB Display Mirroring
+//#define REMOTE_CONSOLE  //enable USB Display Mirroring - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -108,8 +108,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip soldered to the audio board
-//#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip available on the audio board
+#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip 
+//#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 //#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
 

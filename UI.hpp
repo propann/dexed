@@ -9784,7 +9784,7 @@ void UI_func_seq_tracker(uint8_t param)
     UI_toplineInfoText( 1);
     display.setCursor(1, 2);
     display.setTextColor(COLOR_SYSTEXT);
-    display.print (F("TRACKER "));
+    display.print (F("TRACKER"));
     display.setCursor(CHAR_width_small * 10, 2);
     display.print (F("CHAIN"));
     display.setCursor(CHAR_width_small * 41, 2);
@@ -10116,7 +10116,7 @@ void UI_func_song(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT);
     display.print (F("SONG"));
 
-    show_small_font(10, 1, 11, seq.name);
+    show_small_font(10, 1, 10, seq.name);
     //print loop
     print_song_loop();
     //print song length
@@ -10137,7 +10137,9 @@ void UI_func_song(uint8_t param)
     display.setCursor(CHAR_width_small * 11, 1);
     display.print (F("LOOP"));
     display.setCursor(CHAR_width_small * 21, 1);
-    display.print (F("SLEN LC"));
+    display.print (F("SLEN"));
+    display.setCursor(CHAR_width_small * 26, 1);
+    display.print (F("LC"));
 
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.setCursor(40 * CHAR_width_small  ,  CHAR_height_small * 6 );
@@ -11011,7 +11013,9 @@ void UI_func_seq_mute_matrix(uint8_t param)
     display.setTextSize(1);
     display.setCursor(1, 2);
     display.setTextColor(COLOR_SYSTEXT);
-    display.print ("MUTE MATRIX");
+    display.print ("MUTE");
+    display.setCursor(1+5*CHAR_width_small, 2);
+    display.print ("MATRIX");
     helptext_l("BACK");
     helptext_r ("TOUCH SCREEN TO MUTE/UNMUTE");
   }
@@ -16697,10 +16701,10 @@ inline void display_bar_int(const char* title, uint32_t value, float factor, int
 void display_bar_float(const char* title, float value, float factor, int32_t min_value, int32_t max_value, uint8_t size_number, uint8_t size_fraction, bool zeros, bool sign, bool init)
 {
   uint8_t size;
-  float v;
-  float _vi = 0.0;
-  uint8_t vf;
-  uint8_t vi;
+  //float v;
+  //float _vi = 0.0;
+  //uint8_t vf;
+  //uint8_t vi;
 
   if (size_fraction == 0)
     size = size_number;
@@ -16709,9 +16713,9 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
   if (sign == true)
     size++;
 
-  v = float((value - min_value) * (display_cols - size)) / (max_value - min_value);
-  vf = uint8_t(modff(v, &_vi) * 10.0 + 0.5);
-  vi = uint8_t(_vi);
+  //v = float((value - min_value) * (display_cols - size)) / (max_value - min_value);
+  //vf = uint8_t(modff(v, &_vi) * 10.0 + 0.5);
+  //vi = uint8_t(_vi);
 
   if (sign == true)
     size += 1;
@@ -16726,20 +16730,24 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
 
   // Bar
 
-  if (vi == 0)
+  //if (vi == 0)
+  if (value == 0)
   {
-    drawBitmap(  CHAR_width , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t i = vi + 1; i < display_cols - size ; i++)
-      display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
+    //drawBitmap(  CHAR_width , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
+    //for (uint8_t i = vi + 1; i < display_cols - size ; i++)
+    //display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
+    display.fillRect( CHAR_width , 2 * CHAR_height, 12 * CHAR_width, CHAR_height - 2, COLOR_BACKGROUND );
   }
   else
   {
-    for (uint8_t i = 0; i < vi; i++)
-      drawBitmap(  CHAR_width + i * 8 , 2 * CHAR_height, block_bar[7], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND); // full block
-    if (vi < display_cols - size)
-      drawBitmap(  CHAR_width + vi * 8 , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    for (uint8_t i = vi + 1; i < display_cols + 1 - size; i++)
-      display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
+    //    for (uint8_t i = 0; i < vi; i++)
+    //      drawBitmap(  CHAR_width + i * 8 , 2 * CHAR_height, block_bar[7], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND); // full block
+    //    if (vi < display_cols - size)
+    //      drawBitmap(  CHAR_width + vi * 8 , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
+    //    for (uint8_t i = vi + 1; i < display_cols + 1 - size; i++)
+    //      display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
+    display.fillRect( CHAR_width , 2 * CHAR_height, value * 1.43, CHAR_height - 2, COLOR_SYSTEXT );
+    display.fillRect( CHAR_width + value * 1.43 , 2 * CHAR_height, (max_value - value) * 1.43 + 1, CHAR_height - 2, COLOR_BACKGROUND );
   }
 }
 

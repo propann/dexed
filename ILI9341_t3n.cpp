@@ -19,6 +19,8 @@
 #include "ILI9341_t3n.h"
 #include <SPI.h>
 
+extern uint16_t COLOR_BACKGROUND;
+
 // 5x7 font
 PROGMEM const unsigned char font[] = {
   0x00, 0x00, 0x00, 0x00, 0x00,//
@@ -163,7 +165,7 @@ PROGMEM const unsigned char font[] = {
   0x60, 0x1C, 0x03, 0x1C, 0x60,  // BRAIDS TRIANGLE
   0x7f, 0x01, 0x01, 0x01, 0x7f,  // BRAIDS SQUARE
   0x78, 0x08, 0x08, 0x08, 0x78,  // BRAIDS BABY SQUARE
-  0x40, 0x40, 0x7F, 0x01, 0x7F,  // BRAIDS PULSE  0x7D, 0x12, 0x11, 0x12, 0x7D A-umlaut 
+  0x40, 0x40, 0x7F, 0x01, 0x7F,  // BRAIDS PULSE  0x7D, 0x12, 0x11, 0x12, 0x7D A-umlaut
   0xF0, 0x28, 0x25, 0x28, 0xF0,
   0x7C, 0x54, 0x55, 0x45, 0x00,
   0x20, 0x54, 0x54, 0x7C, 0x54,
@@ -480,7 +482,7 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     Serial.write(highByte(color));
     Serial.write(lowByte(color));
     Serial.write(88);
-   delayMicroseconds(50); //necessary to avoid random pixels in remote console
+    delayMicroseconds(50); //necessary to avoid random pixels in remote console
   } else  //is fillscreen
   {
     Serial.write(99);
@@ -1007,7 +1009,21 @@ void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
   Serial.write(88);
   // delayMicroseconds(60); //necessary to avoid random pixels in remote console
 #endif
-  if (fgcolor == bgcolor) {
+  if (c == 32)
+  {
+    if (fgcolor == bgcolor)
+    {
+      if (size_x == 2)
+        fillRect(x, y, CHAR_width, CHAR_height - 1 , COLOR_BACKGROUND);
+      else
+        fillRect(x, y, CHAR_width_small, CHAR_height_small  , COLOR_BACKGROUND);
+    }
+    else if (size_x == 2)
+      fillRect(x, y, CHAR_width, CHAR_height - 1 , bgcolor);
+    else
+      fillRect(x, y, CHAR_width_small, CHAR_height_small  , bgcolor);
+  }
+  else if (fgcolor == bgcolor) {
     // This transparent approach is only about 20% faster
     if ((size_x == 1) && (size_y == 1)) {
       uint8_t mask = 0x01;
