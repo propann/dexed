@@ -1531,6 +1531,11 @@ void loop()
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
   }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction( UI_func_information))
+  {
+    if (seq.running)
+      scope.draw_scope(203, 138, 108);
+  }
 #ifdef USE_MICROSYNTH
   if (microsynth_lfo_control_rate > MICROSYNTH_LFO_RATE_MS) //update lfos, filters etc. when played live or by seq.
   {
@@ -1562,7 +1567,6 @@ void loop()
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_small(42, 9);
       seq_print_formatted_number( microsynth[0].lfo_delay , 4);
-
       setCursor_textGrid_small(42, 10);
       seq_print_formatted_number( microsynth[0].lfo_fade, 4);
     }
@@ -2093,8 +2097,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
           microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
           microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
-          microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse]  );
-          microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] ;
+
+          //microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] );
+          //microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse];
+          // 440 * (2 ^ ((x - 69) / 12))
+          //   microsynth_waveform[instance_id].frequency( (440.0 * powf(2.0, (float)(inNumber + microsynth[instance_id].coarse - 69) * 0.08333333)));
+          //   microsynth[instance_id].osc_freq_current = (440.0 * powf(2.0, (float)(inNumber + microsynth[instance_id].coarse - 69) * 0.08333333));
+
+
+          microsynth_waveform[instance_id].frequency( (440.0 * powf(2.0, (float)(inNumber + microsynth[instance_id].coarse - 69) * 0.08333333 + microsynth[instance_id].detune / 100 ) ));
+          microsynth[instance_id].osc_freq_current = (440.0 * powf(2.0, (float)(inNumber + microsynth[instance_id].coarse - 69) * 0.08333333 + microsynth[instance_id].detune / 100 ) );
+
 
           microsynth_envelope_osc[instance_id].noteOn();
           microsynth_lfo_delay_timer[instance_id] = 0;

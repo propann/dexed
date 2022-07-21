@@ -100,19 +100,6 @@ extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 multisample_s ms[NUM_MULTISAMPLES];
 
-//multisample_s ms[NUM_MULTISAMPLES] =
-//{
-//  {
-//    "MultiPiano"
-//  },
-//  {
-//    "StringPad"
-//  },
-//  {
-//    "empty"
-//  },
-//};
-
 void seq_live_recording(void)
 {
   //record to sequencer if sequencer menu is active and recording is active

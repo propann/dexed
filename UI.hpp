@@ -533,7 +533,8 @@ void UI_func_format_flash(uint8_t param);
 void UI_func_test(uint8_t param);
 void UI_func_MultiSamplePlay(uint8_t param);
 void UI_func_sample_editor(uint8_t param);
-void splash_screen();
+void splash_screen1();
+void splash_screen2();
 
 char* basename(const char* filename);
 
@@ -1183,7 +1184,7 @@ FLASHMEM void update_pattern_number_in_tracker(uint8_t tracknumber)
 {
   setCursor_textGrid_small(9 + 6 * tracknumber, 3);
 
-  if (seq.current_pattern[tracknumber] < 100)
+  if (seq.current_pattern[tracknumber] < 99 && seq.current_chain[tracknumber] != 99)
   {
     set_pattern_content_type_color( seq.current_pattern[tracknumber] );
     seq_print_formatted_number( seq.current_pattern[tracknumber], 2);
@@ -1501,44 +1502,47 @@ void update_display_functions_while_seq_running()
     }
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  // print currently playing notes/chords/drums
     {
-      display.setCursor(CHAR_width_small * 6 + (4 * d)*CHAR_width_small , CHAR_height_small * 4   );
-      set_pattern_content_type_color( seq.current_pattern[d] );
-      if (seq.content_type[seq.current_pattern[d]] > 0) //it is a Inst. pattern
+      if (seq.current_chain[d] != 99)
       {
-        if (seq.note_data [seq.current_pattern[d]][seq.step] > 12 &&
-            seq.note_data [seq.current_pattern[d]][seq.step] != 130 &&
-            seq.note_data[seq.current_pattern[d]][seq.step] != 99)
+        display.setCursor(CHAR_width_small * 6 + (4 * d)*CHAR_width_small , CHAR_height_small * 4   );
+        set_pattern_content_type_color( seq.current_pattern[d] );
+        if (seq.content_type[seq.current_pattern[d]] > 0) //it is a Inst. pattern
         {
-          display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][0] );
-          if (noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] != '\0' )
+          if (seq.note_data [seq.current_pattern[d]][seq.step] > 12 &&
+              seq.note_data [seq.current_pattern[d]][seq.step] != 130 &&
+              seq.note_data[seq.current_pattern[d]][seq.step] != 99)
           {
-            display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] );
-          }
-          display.print( (seq.note_data [seq.current_pattern[d]][seq.step] / 12) - 1);
-        }
-        else if ( seq.note_data [seq.current_pattern[d]][seq.step] == 130) //latch
-          display.print(F("LAT"));
-        else
-          display.print(F("   "));
-
-      } else //it is a drum pattern
-
-        if ( seq.vel[seq.current_pattern[d]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
-        {
-          bool found = false;
-          for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
-          {
-            if (seq.note_data[seq.current_pattern[d]][seq.step] == drum_config[n].midinote)
+            display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][0] );
+            if (noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] != '\0' )
             {
-              display.print( drum_config[n].shortname);
-              found = true;
-              break;
+              display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] );
             }
+            display.print( (seq.note_data [seq.current_pattern[d]][seq.step] / 12) - 1);
           }
-          if (found == false) display.print(F( "- "));
-        }
-        else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
-          display.print(F("PS"));
+          else if ( seq.note_data [seq.current_pattern[d]][seq.step] == 130) //latch
+            display.print(F("LAT"));
+          else
+            display.print(F("   "));
+
+        } else //it is a drum pattern
+
+          if ( seq.vel[seq.current_pattern[d]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
+          {
+            bool found = false;
+            for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
+            {
+              if (seq.note_data[seq.current_pattern[d]][seq.step] == drum_config[n].midinote)
+              {
+                display.print( drum_config[n].shortname);
+                found = true;
+                break;
+              }
+            }
+            if (found == false) display.print(F( "- "));
+          }
+          else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
+            display.print(F("PS"));
+      }
     }
     //print currently playing chain steps
     print_playing_chains();
@@ -1550,42 +1554,45 @@ void update_display_functions_while_seq_running()
     {
       for (uint8_t x = 0; x < 4; x++)
       {
-        display.setCursor( (2 * CHAR_width_small) + x * (CHAR_width_small * 14), 4 + (10 * CHAR_height_small) + (y * (CHAR_height_small * 8)) );
-        set_pattern_content_type_color( seq.current_pattern[track_count] );
-        if (seq.content_type[seq.current_pattern[track_count]] > 0) //it is a Inst. pattern
+        if (seq.current_chain[track_count] != 99)
         {
-          if (seq.note_data [seq.current_pattern[track_count]][seq.step] > 12 &&
-              seq.note_data [seq.current_pattern[track_count]][seq.step] != 130 &&
-              seq.note_data[seq.current_pattern[track_count]][seq.step] != 99)
+          display.setCursor( (2 * CHAR_width_small) + x * (CHAR_width_small * 14), 4 + (10 * CHAR_height_small) + (y * (CHAR_height_small * 8)) );
+          set_pattern_content_type_color( seq.current_pattern[track_count] );
+          if (seq.content_type[seq.current_pattern[track_count]] > 0) //it is a Inst. pattern
           {
-            display.print(noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][0] );
-            if (noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][1] != '\0' )
+            if (seq.note_data [seq.current_pattern[track_count]][seq.step] > 12 &&
+                seq.note_data [seq.current_pattern[track_count]][seq.step] != 130 &&
+                seq.note_data[seq.current_pattern[track_count]][seq.step] != 99)
             {
-              display.print(noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][1] );
-            }
-            display.print( (seq.note_data [seq.current_pattern[track_count]][seq.step] / 12) - 1);
-          }
-          else if ( seq.note_data [seq.current_pattern[track_count]][seq.step] == 130) //latch
-            display.print(F("LAT"));
-          else
-            display.print(F("   "));
-        } else //it is a drum pattern
-          if ( seq.vel[seq.current_pattern[track_count]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
-          {
-            bool found = false;
-            for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
-            {
-              if (seq.note_data[seq.current_pattern[track_count]][seq.step] == drum_config[n].midinote)
+              display.print(noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][0] );
+              if (noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][1] != '\0' )
               {
-                display.print( drum_config[n].shortname);
-                found = true;
-                break;
+                display.print(noteNames[seq.note_data [seq.current_pattern[track_count]][seq.step] % 12 ][1] );
               }
+              display.print( (seq.note_data [seq.current_pattern[track_count]][seq.step] / 12) - 1);
             }
-            if (found == false) display.print(F( "- "));
-          }
-          else if ( seq.vel[seq.current_pattern[track_count]][seq.step] > 209) //pitched sample
-            display.print(F("PS"));
+            else if ( seq.note_data [seq.current_pattern[track_count]][seq.step] == 130) //latch
+              display.print(F("LAT"));
+            else
+              display.print(F("   "));
+          } else //it is a drum pattern
+            if ( seq.vel[seq.current_pattern[track_count]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
+            {
+              bool found = false;
+              for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
+              {
+                if (seq.note_data[seq.current_pattern[track_count]][seq.step] == drum_config[n].midinote)
+                {
+                  display.print( drum_config[n].shortname);
+                  found = true;
+                  break;
+                }
+              }
+              if (found == false) display.print(F( "- "));
+            }
+            else if ( seq.vel[seq.current_pattern[track_count]][seq.step] > 209) //pitched sample
+              display.print(F("PS"));
+        }
         track_count++;
       }
     }
@@ -9681,10 +9688,11 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
   uint8_t yspacer = CHAR_height_small + 3;
   uint8_t ycount = 0;
   display.setTextSize(1);
+
   for (uint8_t y = 0; y < 16; y++)
   {
     // print data byte of current step
-    if (track_number == seq.selected_track && y == seq.scrollpos)  //print velocity of active pattern-step
+    if (track_number == seq.selected_track && y == seq.scrollpos && seq.current_chain[track_number] != 99) //print velocity of active pattern-step
     {
       if (seq.edit_state)
         display.setTextColor( COLOR_SYSTEXT, RED);
@@ -9705,8 +9713,9 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
 
     /// -- update all other columns --
 
+
     display.setCursor(xpos, ypos + ycount * yspacer);
-    if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0)
+    if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0 && seq.current_chain[track_number] != 99)
     {
       if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_SYSTEXT, RED);
@@ -9718,9 +9727,9 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     }
     else
     {
-      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos && seq.current_chain[track_number] != 99)
         display.setTextColor( COLOR_SYSTEXT, RED);
-      else if (track_number == seq.selected_track && y == seq.scrollpos)
+      else if (track_number == seq.selected_track && y == seq.scrollpos && seq.current_chain[track_number] != 99)
         display.setTextColor( COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY3, COLOR_BACKGROUND);
@@ -9728,7 +9737,7 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     }
     display.setCursor(xpos + 2 * CHAR_width_small, ypos + ycount * yspacer);
     if (seq.note_data[ seq.current_pattern[track_number]][y] != 99 && seq.note_data[ seq.current_pattern[track_number]][y] != 0
-        && seq.note_data[ seq.current_pattern[track_number]][y] != 130 )
+        && seq.note_data[ seq.current_pattern[track_number]][y] != 130 && seq.current_chain[track_number] != 99)
     {
       if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_SYSTEXT, RED);
@@ -9738,7 +9747,7 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
         set_pattern_content_type_color( seq.current_pattern[track_number] );
       seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y]  , 3);
     }
-    else if (seq.note_data[ seq.current_pattern[track_number]][y] == 0 )  //empty
+    else if (seq.note_data[ seq.current_pattern[track_number]][y] == 0 && seq.current_chain[track_number] != 99) //empty
     {
       if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_SYSTEXT, RED);
@@ -9748,7 +9757,7 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
         display.setTextColor(GREY2, COLOR_BACKGROUND);
       seq_print_formatted_number(  seq.note_data[ seq.current_pattern[track_number]][y]  , 3);
     }
-    else if (seq.note_data[ seq.current_pattern[track_number]][y] == 130 )  //Latch
+    else if (seq.note_data[ seq.current_pattern[track_number]][y] == 130 && seq.current_chain[track_number] != 99) //Latch
     {
       if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
         display.setTextColor( COLOR_SYSTEXT, RED);
@@ -9760,9 +9769,9 @@ void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
     }
     else
     {
-      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos)
+      if (seq.edit_state && track_number == seq.selected_track && y == seq.scrollpos && seq.current_chain[track_number] != 99)
         display.setTextColor( COLOR_SYSTEXT, RED);
-      else if (track_number == seq.selected_track && y == seq.scrollpos)
+      else if (track_number == seq.selected_track && y == seq.scrollpos && seq.current_chain[track_number] != 99)
         display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
       else
         display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -9800,8 +9809,11 @@ void UI_func_seq_tracker(uint8_t param)
 
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  //print chain steps
     {
-      display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
-      seq_print_formatted_number(  seq.chain_counter[d]  , 2);
+      if (seq.current_chain[d] != 99)
+      {
+        display.setCursor(CHAR_width_small * 16 + (CHAR_width_small * 3)*d , 2);
+        seq_print_formatted_number(  seq.chain_counter[d]  , 2);
+      }
       //  display.setCursor(CHAR_width_small * 16+ (CHAR_width_small*3)*d , 2);
       //  seq_print_formatted_number( get_chain_length_from_current_track(d)  , 2);
     }
@@ -9811,13 +9823,16 @@ void UI_func_seq_tracker(uint8_t param)
       seq.current_chain[x] = seq.song[x][seq.current_song_step];
       seq.current_pattern[x] = seq.chain[  seq.current_chain[x] ] [ seq.chain_counter[x] ];
 
+
       setCursor_textGrid_small(6 + 6 * x, 2);
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display.print (F("TRK:"));
       display.print (x + 1);
       setCursor_textGrid_small(6 + 6 * x, 3);
       display.print ("PAT");
-      update_pattern_number_in_tracker(x);
+      if (seq.current_chain[x] != 99)
+        update_pattern_number_in_tracker(x);
+
     }
     display.setTextColor(DARKGREEN, COLOR_BACKGROUND);
     for (uint8_t y = 0; y < 16; y++) {
@@ -11014,7 +11029,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
     display.setCursor(1, 2);
     display.setTextColor(COLOR_SYSTEXT);
     display.print ("MUTE");
-    display.setCursor(1+5*CHAR_width_small, 2);
+    display.setCursor(1 + 5 * CHAR_width_small, 2);
     display.print ("MATRIX");
     helptext_l("BACK");
     helptext_r ("TOUCH SCREEN TO MUTE/UNMUTE");
@@ -11295,12 +11310,12 @@ void UI_func_information(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     generate_version_string(version_string, sizeof(version_string));
-    display.setCursor(3 + (CHAR_width_small * 4), CHAR_height_small * 22);
+    display.setCursor(1 + CHAR_width_small * 4, CHAR_height_small * 19);
     display.setTextSize(1);
     display.print(version_string);
-    display.setCursor(3 + (CHAR_width_small * 4), CHAR_height_small * 24);
+    display.setCursor(1 + CHAR_width_small * 4, CHAR_height_small * 21);
     display.print(sd_string);
-    display.setCursor(3 + (CHAR_width_small * 4), CHAR_height_small * 26);
+    display.setCursor(1 + CHAR_width_small * 4, CHAR_height_small * 23);
     display.setTextColor(GREY2);
     display.print(F("COMPILED FOR "));
     display.setTextColor(RED);
@@ -11316,12 +11331,90 @@ void UI_func_information(uint8_t param)
 #ifdef COMPILE_FOR_QSPI
     display.print(F("QSPI "));
 #endif
-    splash_screen();
+    display.setCursor(1 + CHAR_width_small * 4, CHAR_height_small * 25);
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+#ifdef DEBUG
+    display.setTextColor(COLOR_SYSTEXT, RED);
+#endif
+    display.print(F("DEBUG"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+#ifdef REMOTE_CONSOLE
+    display.setTextColor(COLOR_SYSTEXT, RED);
+#endif
+    display.print(F("REMOTE_CON"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor(  GREY1 );
+    display.print(F("SPD:"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND );
+    display.print(SERIAL_SPEED);
+    display.setCursor(1 + CHAR_width_small * 4, CHAR_height_small * 27);
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+#ifdef I2S_AUDIO_ONLY
+    display.setTextColor(COLOR_SYSTEXT, GREY2);
+#endif
+    display.print(F("I2S"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+
+#ifdef TEENSY_AUDIO_BOARD
+    display.setTextColor(COLOR_SYSTEXT, GREY2);
+#endif
+    display.print(F("T_AUDIO"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+
+#ifdef MIDI_DEVICE_DIN
+    display.setTextColor(COLOR_SYSTEXT, GREY2);
+#endif
+    display.print(F("MIDI DIN"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+
+#ifdef MIDI_DEVICE_USB
+    display.setTextColor(COLOR_SYSTEXT, GREY2);
+#endif
+    display.print(F("MIDI USB"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+
+#ifdef MIDI_DEVICE_USB_HOST
+    display.setTextColor(COLOR_SYSTEXT, GREY2);
+#endif
+    display.print(F("USB HOST"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+
+#ifdef AUDIO_DEVICE_USB
+    display.setTextColor(COLOR_SYSTEXT, GREY2);
+#endif
+    display.print(F("AUDIO USB"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F(" "));
+    display.setTextColor( COLOR_BACKGROUND, GREY2 );
+
     helptext_l ("BACK");
+    randomSeed(analogRead(0));
+    if (random(2) == 0)
+      splash_screen2();
+    else
+      splash_screen1();
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
-    ;
+    if (LCDML.BT_checkEnter()  )  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    {
+      ;
+    }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -17721,11 +17814,74 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
 #endif
 }
 
-extern uint16_t COLOR_BACKGROUND;
-extern uint16_t COLOR_SYSTEXT;
-extern uint16_t COLOR_INSTR;
-extern uint16_t COLOR_DRUMS;
-extern uint16_t COLOR_PITCHSMP;
+static const uint8_t splash_image[3033] = {
+  20, 20, 38, 0, 13, 242, 20, 3, 255, 188, 20, 129, 56, 0, 13, 242, 20, 3, 255, 188, 20, 129, 56, 0, 13, 242, 20, 3, 255, 188, 20, 129, 56, 0, 13, 242, 20, 3, 255, 188, 20, 129, 56, 0, 7, 121, 138, 128, 128, 148, 94, 20, 130, 81, 0, 20, 34, 128, 148, 94, 0, 0, 7, 121, 138, 128, 128, 148, 94, 0, 0, 0, 64, 152, 20, 23, 128, 152, 64, 0, 0, 7, 121, 138, 20, 18, 128, 146, 98, 0, 0, 34, 142, 130, 20, 21, 128, 152, 64, 20, 128, 187, 0, 20, 35, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 25, 255, 128, 0, 0, 13, 242, 20, 20, 255, 197, 0, 0, 67, 20, 24, 255, 128, 20, 128, 187, 0, 20, 35, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 25, 255, 128, 0, 0, 13, 242, 255, 254, 20, 18, 255, 195, 0, 0, 67, 20, 24, 255, 128, 20, 128, 187, 0, 20, 35, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 25, 255, 128, 0, 0, 13, 242, 255, 254, 20, 18, 255, 197, 0, 0, 67, 20, 24, 255, 128, 20, 128, 187, 0, 20, 3, 255, 237, 181, 187, 20, 5, 188, 187, 181, 237, 20, 3, 255, 237, 181, 187, 20, 5, 188, 187, 181, 237, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 206, 178, 20, 17, 188, 223, 94, 0, 0, 13, 242, 255, 254, 255, 255, 223, 176, 20, 13, 188, 216, 143, 0, 0, 67, 20, 3, 255, 252, 192, 183, 20, 10, 188, 186, 183, 239, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 128, 20, 18, 0, 67, 20, 3, 255, 242, 13, 20, 13, 0, 188, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 128, 20, 18, 0, 67, 20, 3, 255, 242, 14, 20, 13, 0, 190, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 3, 255, 243, 14, 20, 13, 0, 191, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 3, 255, 243, 14, 20, 13, 0, 191, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 3, 255, 242, 14, 20, 13, 0, 191, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 3, 255, 242, 14, 20, 13, 0, 191, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 67, 20, 22, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 3, 255, 242, 13, 20, 13, 0, 188, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 4, 255, 117, 38, 20, 17, 67, 80, 34, 0, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 3, 255, 246, 78, 52, 20, 10, 67, 62, 51, 209, 20, 3, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 25, 255, 128, 0, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 24, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 25, 255, 128, 0, 0, 13, 242, 255, 254, 255, 255, 130, 20, 18, 0, 67, 20, 24, 255, 128, 20, 128, 187, 0, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 20, 9, 0, 188, 20, 3, 255, 188, 0, 0, 13, 242, 20, 3, 255, 188, 0, 0, 0, 128, 20, 25, 255, 128, 0, 0, 13, 242, 20, 3, 255, 130, 20, 18, 0, 67, 20, 24, 255, 128, 20, 128, 187, 0, 188, 188, 188, 217, 138, 20, 9, 0, 138, 217, 188, 188, 217, 138, 20, 9, 0, 138, 217, 188, 188, 217, 138, 0, 0, 10, 178, 203, 188, 188, 217, 138, 0, 0, 0, 94, 223, 20, 23, 188, 223, 94, 0, 0, 10, 178, 202, 187, 188, 223, 95, 20, 18, 0, 50, 209, 192, 20, 21, 188, 223, 94, 20, 133, 187, 0, 20, 62, 13, 15, 10, 20, 13, 0, 1, 12, 14, 20, 48, 13, 15, 7, 20, 110, 0, 3, 14, 20, 61, 13, 14, 3, 20, 9, 0, 20, 62, 242, 247, 236, 201, 167, 124, 95, 31, 20, 8, 0, 13, 229, 255, 20, 48, 242, 255, 231, 90, 20, 52, 0, 13, 47, 51, 20, 48, 48, 57, 24, 0, 0, 0, 64, 255, 247, 20, 59, 242, 243, 247, 220, 187, 144, 113, 69, 4, 20, 4, 0, 20, 69, 255, 200, 67, 20, 6, 0, 13, 242, 20, 52, 255, 185, 13, 20, 49, 0, 42, 110, 126, 123, 20, 48, 121, 144, 61, 0, 0, 0, 67, 20, 68, 255, 240, 138, 14, 0, 0, 0, 20, 71, 255, 177, 13, 20, 4, 0, 13, 242, 20, 54, 255, 112, 20, 48, 0, 36, 35, 23, 20, 49, 24, 29, 12, 0, 0, 0, 67, 20, 70, 255, 250, 86, 0, 0, 20, 72, 255, 242, 68, 20, 3, 0, 13, 242, 20, 55, 255, 178, 32, 20, 104, 0, 67, 20, 72, 255, 165, 1, 20, 73, 255, 254, 31, 0, 0, 0, 13, 242, 20, 57, 255, 137, 20, 40, 0, 14, 28, 20, 55, 24, 29, 12, 0, 0, 0, 67, 20, 73, 255, 165, 20, 74, 255, 103, 0, 0, 0, 13, 242, 20, 58, 255, 212, 27, 20, 36, 0, 4, 60, 112, 119, 20, 55, 114, 136, 57, 0, 0, 0, 67, 20, 73, 255, 241, 20, 60, 188, 187, 184, 212, 20, 10, 255, 145, 0, 0, 0, 7, 121, 138, 20, 45, 128, 123, 120, 215, 20, 10, 255, 119, 20, 35, 0, 61, 104, 85, 79, 20, 55, 81, 96, 40, 0, 0, 0, 50, 209, 192, 20, 56, 188, 186, 191, 196, 196, 236, 20, 10, 255, 20, 63, 0, 121, 20, 9, 255, 155, 20, 54, 0, 117, 20, 10, 255, 234, 61, 20, 32, 0, 6, 9, 20, 127, 0, 12, 232, 20, 9, 255, 20, 63, 0, 84, 20, 9, 255, 151, 20, 55, 0, 28, 206, 20, 10, 255, 161, 1, 20, 128, 161, 0, 203, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 57, 0, 156, 20, 10, 255, 227, 33, 20, 24, 0, 8, 27, 25, 20, 6, 24, 22, 30, 44, 17, 20, 121, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 58, 0, 21, 163, 20, 10, 255, 180, 30, 20, 20, 0, 5, 60, 110, 123, 20, 6, 118, 117, 125, 114, 58, 8, 20, 121, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 60, 0, 105, 20, 11, 255, 78, 20, 19, 0, 51, 92, 78, 69, 20, 6, 70, 74, 71, 19, 20, 123, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 61, 0, 28, 205, 20, 10, 255, 161, 1, 20, 16, 0, 3, 3, 20, 128, 136, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 63, 0, 89, 234, 20, 9, 255, 241, 102, 20, 128, 154, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 64, 0, 1, 161, 20, 10, 255, 205, 28, 20, 8, 0, 5, 44, 50, 20, 6, 47, 45, 48, 67, 49, 20, 128, 129, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 66, 0, 89, 20, 11, 255, 153, 20, 6, 0, 46, 106, 134, 130, 20, 6, 128, 132, 128, 82, 23, 20, 128, 129, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 67, 0, 36, 128, 136, 20, 6, 129, 123, 156, 167, 50, 20, 4, 0, 15, 65, 60, 45, 20, 7, 47, 53, 28, 20, 128, 131, 0, 209, 20, 9, 255, 20, 63, 0, 91, 20, 9, 255, 151, 20, 128, 232, 0, 209, 20, 9, 255, 20, 8, 67, 71, 68, 9, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 1, 23, 26, 20, 46, 24, 29, 15, 20, 17, 0, 12, 13, 20, 18, 0, 3, 5, 20, 71, 0, 18, 74, 68, 20, 6, 67, 79, 40, 20, 52, 0, 209, 20, 20, 255, 37, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 5, 98, 112, 20, 46, 104, 121, 64, 20, 17, 0, 6, 137, 243, 211, 187, 20, 5, 193, 194, 203, 161, 70, 55, 71, 71, 70, 70, 87, 64, 15, 20, 17, 0, 35, 84, 20, 46, 70, 84, 35, 0, 0, 0, 67, 20, 9, 255, 154, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 5, 90, 103, 20, 46, 95, 112, 59, 20, 18, 0, 4, 162, 20, 10, 255, 248, 172, 114, 117, 120, 126, 85, 9, 20, 18, 0, 59, 140, 20, 46, 118, 140, 59, 0, 0, 0, 67, 20, 9, 255, 152, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 5, 88, 100, 20, 46, 93, 109, 58, 20, 20, 0, 36, 81, 20, 6, 70, 69, 66, 95, 86, 24, 23, 25, 24, 2, 20, 19, 0, 12, 29, 20, 46, 24, 29, 12, 0, 0, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 5, 88, 100, 20, 46, 93, 109, 58, 20, 112, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 5, 88, 100, 20, 46, 93, 109, 58, 20, 19, 0, 5, 5, 4, 4, 4, 3, 36, 35, 12, 15, 20, 4, 16, 17, 17, 17, 10, 20, 19, 0, 2, 6, 20, 46, 5, 6, 2, 0, 0, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 5, 102, 116, 20, 46, 108, 127, 67, 20, 18, 0, 53, 103, 98, 96, 96, 95, 89, 136, 246, 255, 247, 240, 20, 5, 242, 254, 242, 78, 20, 18, 0, 48, 114, 20, 46, 96, 114, 48, 0, 0, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 0, 0, 0, 3, 65, 74, 20, 46, 69, 81, 42, 20, 16, 0, 7, 65, 108, 99, 95, 20, 3, 96, 86, 109, 218, 20, 10, 255, 183, 26, 20, 16, 0, 48, 114, 20, 46, 96, 114, 48, 0, 0, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 71, 0, 11, 21, 5, 3, 20, 5, 5, 0, 0, 66, 237, 20, 10, 255, 120, 20, 15, 0, 2, 6, 20, 46, 5, 6, 2, 0, 0, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 84, 0, 1, 160, 20, 10, 255, 202, 35, 20, 67, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 66, 0, 2, 6, 20, 7, 5, 3, 10, 21, 4, 20, 5, 0, 85, 252, 20, 10, 255, 108, 20, 66, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 65, 0, 47, 96, 100, 20, 6, 96, 94, 107, 100, 40, 20, 8, 0, 117, 20, 10, 255, 225, 67, 20, 64, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 63, 0, 8, 74, 109, 101, 94, 20, 6, 96, 103, 85, 21, 20, 10, 0, 47, 239, 20, 10, 255, 145, 20, 63, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 63, 0, 11, 19, 4, 4, 20, 8, 5, 1, 20, 12, 0, 3, 146, 20, 10, 255, 223, 45, 20, 61, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 92, 0, 38, 205, 20, 10, 255, 162, 8, 20, 59, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 58, 0, 5, 44, 50, 20, 6, 47, 46, 48, 67, 42, 20, 21, 0, 112, 20, 10, 255, 241, 86, 20, 58, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 57, 0, 38, 105, 134, 130, 20, 6, 128, 132, 130, 82, 16, 20, 22, 0, 27, 216, 20, 10, 255, 179, 2, 20, 56, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 91, 20, 9, 255, 151, 20, 56, 0, 11, 60, 60, 45, 20, 7, 47, 52, 30, 20, 25, 0, 1, 95, 231, 20, 9, 255, 230, 95, 20, 55, 0, 67, 20, 9, 255, 151, 20, 52, 0, 209, 20, 20, 255, 35, 20, 51, 0, 84, 20, 9, 255, 151, 20, 99, 0, 181, 20, 10, 255, 202, 18, 20, 53, 0, 67, 20, 9, 255, 151, 20, 52, 0, 203, 20, 19, 255, 253, 29, 20, 51, 0, 112, 20, 9, 255, 153, 20, 3, 0, 20, 58, 5, 2, 14, 24, 3, 20, 33, 0, 96, 247, 20, 9, 255, 238, 67, 20, 52, 0, 67, 20, 9, 255, 144, 20, 51, 0, 4, 228, 20, 20, 255, 145, 114, 20, 48, 128, 116, 144, 247, 20, 9, 255, 150, 0, 0, 0, 4, 84, 95, 20, 54, 88, 87, 90, 109, 86, 35, 20, 35, 0, 11, 167, 20, 10, 255, 171, 108, 20, 45, 128, 152, 64, 0, 0, 0, 67, 20, 9, 255, 203, 108, 127, 20, 47, 128, 126, 115, 197, 20, 85, 255, 118, 0, 0, 0, 5, 95, 108, 20, 53, 100, 99, 112, 119, 77, 9, 20, 38, 0, 66, 236, 20, 57, 255, 128, 0, 0, 0, 67, 20, 73, 255, 249, 20, 74, 255, 43, 0, 0, 0, 5, 88, 100, 20, 51, 93, 92, 97, 115, 95, 27, 20, 42, 0, 144, 20, 56, 255, 128, 0, 0, 0, 67, 20, 73, 255, 184, 20, 73, 255, 114, 20, 3, 0, 5, 88, 100, 20, 51, 93, 111, 106, 64, 5, 20, 44, 0, 81, 226, 20, 54, 255, 128, 0, 0, 0, 67, 20, 72, 255, 214, 22, 20, 71, 255, 216, 40, 20, 4, 0, 5, 88, 100, 20, 48, 93, 92, 98, 113, 76, 13, 20, 48, 0, 95, 20, 53, 255, 128, 0, 0, 0, 67, 20, 71, 255, 127, 0, 0, 20, 69, 255, 238, 97, 20, 6, 0, 5, 88, 100, 20, 47, 93, 92, 109, 112, 49, 20, 51, 0, 57, 224, 20, 51, 255, 128, 0, 0, 0, 67, 20, 69, 255, 181, 32, 0, 0, 0, 20, 64, 255, 252, 227, 212, 154, 59, 20, 8, 0, 5, 88, 100, 20, 46, 93, 94, 99, 75, 19, 20, 54, 0, 132, 20, 50, 255, 128, 0, 0, 0, 67, 20, 64, 255, 240, 218, 193, 111, 18, 20, 4, 0,
+};
+
+/*************************************************************************
+  RLE_Uncompress() - Uncompress a block of data using an RLE decoder.
+   in      - Input (compressed) buffer.
+   out     - Output (uncompressed) buffer. This buffer must be large
+             enough to hold the uncompressed data.
+   insize  - Number of input bytes.
+*************************************************************************/
+
+void RLE_Uncompress( const unsigned char *in, unsigned char *out,
+                     unsigned int insize )
+{
+  unsigned char marker, symbol;
+  unsigned int  i, inpos, outpos, count;
+
+  /* Do we have anything to uncompress? */
+  if ( insize < 1 )
+  {
+    return;
+  }
+  /* Get marker symbol from input stream */
+  inpos = 0;
+  marker = in[ inpos ++ ];
+
+  /* Main decompression loop */
+  outpos = 0;
+  do
+  {
+    symbol = in[ inpos ++ ];
+    if ( symbol == marker )
+    {
+      /* We had a marker byte */
+      count = in[ inpos ++ ];
+      if ( count <= 2 )
+      {
+        /* Counts 0, 1 and 2 are used for marker byte repetition
+           only */
+        for ( i = 0; i <= count; ++ i )
+        {
+          out[ outpos ++ ] = marker;
+        }
+      }
+      else
+      {
+        if ( count & 0x80 )
+        {
+          count = ((count & 0x7f) << 8) + in[ inpos ++ ];
+        }
+        symbol = in[ inpos ++ ];
+        for ( i = 0; i <= count; ++ i )
+        {
+          out[ outpos ++ ] = symbol;
+
+        }
+      }
+    }
+    else
+    {
+      /* No marker, plain copy */
+      out[ outpos ++ ] = symbol;
+    }
+  }
+
+  while ( inpos < insize );
+}
 
 FLASHMEM void splash_draw_header() {
 
@@ -17758,7 +17914,7 @@ FLASHMEM void splash_draw_D() {
 FLASHMEM void splash_draw_X() {
   uint16_t colors[2] = {COLOR_PITCHSMP, COLOR_SYSTEXT};
 
-  for (uint8_t i = 0; i < 20; i++) {
+  for (uint8_t i = 0; i < 5; i++) {
     for (uint8_t c = 0; c < 2; c++) {
       display.fillRect( 107, 34, 27, 2, colors[c]); display.fillRect( 186, 34, 27, 2, colors[c]);
       display.fillRect( 112, 39, 27, 2, colors[c]); display.fillRect( 181, 39, 27, 2, colors[c]);
@@ -17800,19 +17956,105 @@ FLASHMEM void splash_draw_reverseD() {
   display.fillRect( 220, 109, 96, 2, COLOR_PITCHSMP);
   display.fillRect( 227, 114, 89, 2, COLOR_PITCHSMP);
 }
-FLASHMEM void splash_screen() {
 
+FLASHMEM void splash_screen1() {
   splash_draw_header();
   splash_draw_D();
   splash_draw_reverseD();
-
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
-  display.setCursor(3, 140);
+  display.setCursor(3, 127);
   display.print(F("(c) 2018-2021 H. WIRTZ"));
-  display.setCursor(3, 150);
+  display.setCursor(3, 139);
   display.print(F("(c) 2021-2022 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
-
   splash_draw_X();
 }
+
+FLASHMEM void splash_screen2() {
+  unsigned char splash[23360]; RLE_Uncompress( splash_image, splash, 3033);
+  uint16_t c;
+  uint16_t color;
+  display.setTextColor(COLOR_SYSTEXT);
+  display.setTextSize(1);
+  display.setCursor(1, 100);
+  display.print(F("(c) 2018-2021 H. WIRTZ"));
+  display.setCursor(1, 110);
+  display.print(F("(c) 2021-2022 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
+  display.setCursor(1 + CHAR_width_small * 4, 130);
+  display.setTextColor(GREY2);
+  display.print(F("https://codeberg.org/positionhigh/"));
+  for (uint8_t r = 0; r < 8; r++)
+  {
+    for (uint8_t y = 0 + r; y < 73; y = y + 8)
+    {
+      for (uint16_t x = 0; x < DISPLAY_WIDTH; x++)
+      {
+        if (splash[x + y * DISPLAY_WIDTH] != 0)
+        {
+          if (splash[x + y * DISPLAY_WIDTH] > 130 || y < 26 || (x < 163 && y < 46) || x > 241 || x < 80  || (x > 189 && y > 64) )
+            color = RGB24toRGB565(splash[x + y * DISPLAY_WIDTH], splash[x + y * DISPLAY_WIDTH], splash[x + y * DISPLAY_WIDTH]);
+          else
+            color = RGB24toRGB565(0, splash[x + y * DISPLAY_WIDTH] * 1.5, splash[x + y * DISPLAY_WIDTH]);
+          for (uint16_t s = 3; s < 200; s++)
+          {
+            if (splash[x + y * DISPLAY_WIDTH] == splash[(x + s) + y * DISPLAY_WIDTH] && x + s < DISPLAY_WIDTH)
+              c++;
+            else break;
+          }
+          if (c > 0)
+          {
+            display.fillRect(x, y, c + 1, 1, color);
+            x = x + c;
+          }
+          else
+            display.drawPixel(x, y, color);
+        }
+        c = 0;
+        if (y < 26 && x > 132)
+          break;
+      }
+    }
+    delay(30);
+  }
+}
+
+////////////////////////////////////////RGB VERSION///////////////////////////////////////
+//FLASHMEM void splash_screen2() {
+//  unsigned char splash[70080]; RLE_Uncompress( splash_image, splash, 9859);
+//  uint16_t x2;
+//  uint16_t c;
+//  uint16_t color;
+//  uint16_t w = DISPLAY_WIDTH * 3;
+//  for (uint8_t y = 0; y < 73; y++)
+//  {
+//    x2 = 0;
+//    for (uint16_t x = 0; x < w; x = x + 3)
+//    {
+//      if (splash[x + 1 + y * w] != 0)
+//      {
+//      //  color = RGB24toRGB565(splash[x + y * w], splash[x + 1 + y * w], splash[x + 2 + y * w] );
+//        color = RGB24toRGB565(splash[x + y * w], splash[x + 1 + y * w], splash[x + y * w] );
+//        for (uint16_t s = 3; s < 200; s = s + 3)
+//        {
+//          if (splash[x + 1 + y * w] == splash[(x + 1 + s) + y * w] && x + s < w)
+//            c++;
+//          else break;
+//        }
+//        if (c > 0)
+//        {
+//          display.fillRect(x2, y, c + 1, 1, color);
+//          x = x + 3 * c;
+//          x2 = x2 + c;
+//        }
+//        else
+//          display.drawPixel(x2, y, color);
+//      }
+//      x2++;
+//      c = 0;
+//      if (y < 26 && x2 > 132)
+//        break;
+//    }
+//  }
+//}
+
 #endif
