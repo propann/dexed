@@ -2093,8 +2093,18 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
           microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
           microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
-          microsynth_waveform[instance_id].frequency(  tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse]  );
-          microsynth[instance_id].osc_freq_current = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse] ;
+
+          float noteFreq = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse];
+          float tunedFreq = 0;
+          if (microsynth[instance_id].detune < 0) {
+            float prevSemitoneFreq = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse -1];
+            tunedFreq = (noteFreq - prevSemitoneFreq) * microsynth[instance_id].detune * 0.01;
+          } else {
+            float nextSemitoneFreq = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse +1];
+            tunedFreq = (nextSemitoneFreq - noteFreq) * microsynth[instance_id].detune * 0.01;
+          }
+          microsynth_waveform[instance_id].frequency(noteFreq + tunedFreq);
+          microsynth[instance_id].osc_freq_current = noteFreq + tunedFreq;
 
           microsynth_envelope_osc[instance_id].noteOn();
           microsynth_lfo_delay_timer[instance_id] = 0;

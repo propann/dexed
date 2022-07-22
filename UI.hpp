@@ -9465,7 +9465,7 @@ void UI_func_microsynth(uint8_t param)
         else if ( generic_temp_select_menu == 2 )
           microsynth[microsynth_selected_instance].coarse = constrain(microsynth[microsynth_selected_instance].coarse - 1, -36, 36);
         else if ( generic_temp_select_menu == 3 )
-          microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune - 1, -127, 127);
+          microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune - 1, -99, 99);
         else if ( generic_temp_select_menu == 4 )
           microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack - 1, 0, 254);
         else if ( generic_temp_select_menu == 5 )
