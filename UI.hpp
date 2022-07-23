@@ -357,7 +357,7 @@ PROGMEM const uint8_t meter_bar[8][8] = {
   {B00000001, B00000001, B00000001, B00000001, B00000001, B00000001, B00000001, B00000001}
 };
 
-PROGMEM const uint8_t special_chars[24][8] = {
+PROGMEM const uint8_t special_chars[25][8] = {
   {B11111111, B11110111, B11100111, B11110111, B11110111, B11110111, B11110111, B11111111}, //  [0] 1 small invers
   {B11111111, B11110111, B11101011, B11111011, B11110111, B11101111, B11100011, B11111111}, //  [1] 2 small invers
   {B11111, B11011, B10011, B11011, B11011, B11011, B11011, B11111}, //  [2] 1 OP invers
@@ -381,7 +381,8 @@ PROGMEM const uint8_t special_chars[24][8] = {
   {B00000000, B01111000, B11111100, B11111100, B11111100, B11111100, B01111000, B00000000}, // [20] Record Symbol
   {B00000000, B00000000, B01111100, B01111100, B01111100, B01111100, B01111100, B00000000}, // [21] Stop Symbol
   {B11111111, B11000011, B11011011, B11000011, B11011111, B11011111, B11011111, B11111111}, // [22] Pitched Sample
-  {B00000000, B00000000, B00000000, B01110000, B11111111, B11111111, B11111111, B11111111}  // [23] File Folder
+  {B00000000, B00000000, B00000000, B01110000, B11111111, B11111111, B11111111, B11111111}, // [23] File Folder
+  {B00111000, B01111100, B11111110, B11111111, B10011001, B10011001, B10011111, B10011111}  // [24] root/home
 };
 
 short wave_type[9] = {
@@ -537,6 +538,9 @@ void splash_screen1();
 void splash_screen2();
 
 char* basename(const char* filename);
+uint8_t x_pos_menu_header_layer[8];
+uint8_t x_pos_previous_menu_header;
+uint8_t last_menu_depth = 99;
 
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
@@ -657,6 +661,22 @@ void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str)
   display.print(tmp);
 }
 
+void show_uppercase_no_grid(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str)
+{
+  char tmp[STRING_BUFFER_SIZE];
+  char *s = tmp;
+  uint8_t l = strlen(str);
+  memset(tmp, 0, sizeof(tmp));
+  memset(tmp, 0x20, field_size); // blank
+  if (l > field_size)
+    l = field_size;
+  strncpy(s, str, l);
+  for (uint8_t i = 0; i < l; ++i)
+    tmp[i] = toupper(tmp[i]);
+  display.setCursor(pos_x, pos_y );
+  display.print(tmp);
+}
+
 void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char *str)
 {
   char tmp[STRING_BUFFER_SIZE];
@@ -680,6 +700,36 @@ void show_small_font(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, long num)
 {
   char _buf10[STRING_BUFFER_SIZE];
   show_small_font(pos_y, pos_x, field_size, itoa(num, _buf10, 10) );
+}
+
+void drawHome( const uint8_t bitmap[])
+{
+  byte w = 8;
+  byte h = 8;
+  byte x = CHAR_width + 1;
+  byte y = 5;
+  uint16_t color;
+  int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+  uint8_t byte = 0;
+
+  for (int16_t j = 0; j < h; j++, y++) {
+    if (j < 3)
+      color = 0xFBA0; //roof color
+    else
+      color = COLOR_SYSTEXT;
+    for (int16_t i = 0; i < w; i++) {
+      if (i & 7)
+        byte <<= 1;
+      else
+        byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
+      if (byte & 0x80)
+        display.drawPixel(x + i, y, color);
+
+    }
+  }
+  display.drawPixel(CHAR_width + 4, 4, 0xFBA0); //roof top
+  display.drawLine(CHAR_width , 8, CHAR_width , 12, COLOR_SYSTEXT);
+  display.drawLine(CHAR_width - 1, 13, CHAR_width + 9, 13, MIDDLEGREEN);
 }
 
 void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
@@ -900,6 +950,15 @@ bool  g_LCDML_CONTROL_button_prev[NUM_ENCODER] = {HIGH, HIGH};
 uint8_t g_LCDML_CONTROL_prev[NUM_ENCODER] = {0, 0};
 bool menu_init = true;
 
+void fill_up_with_spaces_menu_header(int xpos)
+{
+  display.setCursor(xpos, 7);
+  do
+  {
+    display.print(" ");
+  } while (display.getCursorX() < 29 * CHAR_width_small);
+}
+
 void fill_up_with_spaces_right_window()
 {
   do {
@@ -986,7 +1045,9 @@ void border2()  //upper right
 
 void border1_clear() //upper left
 {
-  display.fillRect(1,  1, CHAR_width * 19 - 1, CHAR_height * 5 - 1, COLOR_BACKGROUND);
+  //display.fillRect(1,  1, CHAR_width * 19 - 1, CHAR_height * 5 - 1, COLOR_BACKGROUND);
+  //display.fillRect(100,  3, 14,8, GREY1);
+  display.fillRect(1,  CHAR_height, CHAR_width * 19 - 1, CHAR_height * 4 - 1, COLOR_BACKGROUND);
 }
 void border2_clear()  //upper right
 {
@@ -2157,11 +2218,11 @@ void lcdml_menu_display(void)
   // update content
   // ***************
   if (LCDML.DISP_checkMenuUpdate()) {
-
     // declaration of some variables
     // ***************
+
     // content variable
-    char content_text[_LCDML_DISP_cols];  // save the content text of every menu element
+    char content_text[_LCDML_DISP_cols];  // save the content text of current menu element
     // menu element object
     LCDMenuLib2_menu *tmp;
     // some limit values
@@ -2169,9 +2230,63 @@ void lcdml_menu_display(void)
     uint8_t maxi = _LCDML_DISP_rows + i;
     uint8_t n = 0;
 
+    //not good to draw it in the main loop - but otherwise it currently will not get drawn when returning from a page // ph-todo
+    drawHome(special_chars[24]); 
+    
     // check if this element has children
     if ((tmp = LCDML.MENU_getDisplayedObj()) != NULL)
     {
+      // Display a header with the parent element name
+      display.setTextSize(1);
+      display.setTextColor(GREY1, COLOR_BACKGROUND);
+
+      if (LCDML.MENU_getLayer() == 0)
+      {
+        // this is displayed when no header is available
+        //x_pos_menu_header_layer[0] = CHAR_width;
+        //show_smallfont_noGrid(7, x_pos_menu_header_layer[LCDML.MENU_getLayer()], 4, "ROOT");
+        //drawHome(special_chars[24]);
+        x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1] = CHAR_width + 12;
+        last_menu_depth = LCDML.MENU_getLayer();
+        fill_up_with_spaces_menu_header(x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1]);
+        display.setCursor (0, DISPLAY_HEIGHT - CHAR_height_small);
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        display.print( "    ");
+      }
+      else if ( LCDML.MENU_getLayer() > last_menu_depth)
+      {
+        display.setCursor( x_pos_menu_header_layer[LCDML.MENU_getLayer()], 7);
+        display.setTextColor(RED, COLOR_BACKGROUND);
+        display.print(">");
+        display.setTextColor( GREY1, COLOR_BACKGROUND);
+        LCDML_getContent( content_text, LCDML.MENU_getParentID());
+        show_uppercase_no_grid(7,  display.getCursorX(), strlen(content_text), content_text);
+
+        x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1] = display.getCursorX();
+        fill_up_with_spaces_menu_header(x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1]);
+        display.setCursor (0, DISPLAY_HEIGHT - CHAR_height_small);
+        display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+        display.print( "BACK");
+
+      }
+
+      else  if ( LCDML.MENU_getLayer() < last_menu_depth)
+      {
+        //        last_menu_depth = LCDML.MENU_getLayer();
+        //        last_menu_depth--;
+        //        last_menu_depth=0;
+        //        x_pos_menu_header = x_pos_previous_menu_header;
+        //        display.setTextColor( COLOR_SYSTEXT);
+        //   LCDML_getContent( content_text, LCDML.MENU_getParentID());
+        //   show_uppercase_no_grid(7,  x_pos_menu_header_layer[LCDML.MENU_getLayer()], strlen(content_text), content_text);
+        //   display.setTextColor( COLOR_SYSTEXT, GREEN);
+        //   fill_up_with_spaces_menu_header(x_pos_menu_header);
+        //   last_menu_depth = LCDML.MENU_getLayer();
+        //   show(8, 1, 5, LCDML.MENU_getLayer());
+      }
+      // display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
+      // show(7, 1, 5, x_pos_menu_header);
+
       display.setTextSize(2);
 
       // loop to display lines
@@ -2216,7 +2331,6 @@ void lcdml_menu_display(void)
       }
     }
   }
-
   if (LCDML.DISP_checkMenuCursorUpdate())
   {
     // init vars
