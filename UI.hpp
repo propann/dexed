@@ -956,7 +956,7 @@ void fill_up_with_spaces_menu_header(int xpos)
   do
   {
     display.print(" ");
-  } while (display.getCursorX() < 29 * CHAR_width_small);
+  } while (display.getCursorX() < 35 * CHAR_width_small);
 }
 
 void fill_up_with_spaces_right_window()
@@ -971,7 +971,7 @@ void fill_up_with_spaces_left_window()
   do
   {
     display.print(" ");
-  } while (display.getCursorX() < 35 * CHAR_width_small);
+  } while (display.getCursorX() < 36 * CHAR_width_small);
 }
 
 void smart_filter(uint8_t dir)
@@ -2232,7 +2232,8 @@ void lcdml_menu_display(void)
 
     //not good to draw it in the main loop - but otherwise it currently will not get drawn when returning from a page // ph-todo
     drawHome(special_chars[24]); 
-    
+     display.fillRect(14 * CHAR_width + 11, 5, 21, 9, COLOR_BACKGROUND ); //hack ph-todo
+     
     // check if this element has children
     if ((tmp = LCDML.MENU_getDisplayedObj()) != NULL)
     {
@@ -14903,6 +14904,7 @@ void UI_func_velocity_level(uint8_t param)
 
 void UI_update_instance_icons()
 {
+   display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND ); //hack ph-todo
   display.setTextSize(1);
   if (selected_instance_id == 0)
   {
