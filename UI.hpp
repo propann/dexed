@@ -1026,9 +1026,7 @@ void border2()  //upper right
 
 void border1_clear() //upper left
 {
-  //display.fillRect(1,  1, CHAR_width * 19 - 1, CHAR_height * 5 - 1, COLOR_BACKGROUND);
-  //display.fillRect(100,  3, 14,8, GREY1);
-  display.fillRect(1,  CHAR_height, CHAR_width * 19 - 1, CHAR_height * 4 - 1, COLOR_BACKGROUND);
+  display.fillRect(1,  CHAR_height, CHAR_width * 19 - 1, CHAR_height * 4, COLOR_BACKGROUND);
 }
 void border2_clear()  //upper right
 {
@@ -1055,7 +1053,6 @@ void border3_large_clear()  //lower left+right as one window
 {
   display.fillRect(1, CHAR_height * 6 - 3 , DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 6 + 3,  COLOR_BACKGROUND);
 }
-
 
 uint8_t seq_find_drum_data_from_note(uint8_t note)
 {
@@ -2225,9 +2222,6 @@ void lcdml_menu_display(void)
       if (LCDML.MENU_getLayer() == 0)
       {
         // this is displayed when no header is available
-        //x_pos_menu_header_layer[0] = CHAR_width;
-        //show_smallfont_noGrid(7, x_pos_menu_header_layer[LCDML.MENU_getLayer()], 4, "ROOT");
-        //drawHome(special_chars[24]);
         x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1] = CHAR_width + 12;
         last_menu_depth = LCDML.MENU_getLayer();
         fill_up_with_spaces_menu_header(x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1]);
