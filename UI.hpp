@@ -2209,9 +2209,9 @@ void lcdml_menu_display(void)
     uint8_t n = 0;
 
     //not good to draw it in the main loop - but otherwise it currently will not get drawn when returning from a page // ph-todo
-    drawHome(special_chars[24]); 
-     display.fillRect(14 * CHAR_width + 11, 5, 21, 9, COLOR_BACKGROUND ); //hack ph-todo
-     
+    drawHome(special_chars[24]);
+    display.fillRect(14 * CHAR_width + 11, 5, 21, 9, COLOR_BACKGROUND ); //hack ph-todo
+
     // check if this element has children
     if ((tmp = LCDML.MENU_getDisplayedObj()) != NULL)
     {
@@ -2299,7 +2299,7 @@ void lcdml_menu_display(void)
 
       //clear menu lines if menu content < display lines
       if (i < _LCDML_DISP_rows) {
-        display.fillRect(CHAR_width, CHAR_height * (i+1), CHAR_width * (_LCDML_DISP_cols - 2), CHAR_height * (_LCDML_DISP_rows - i), COLOR_BACKGROUND);
+        display.fillRect(CHAR_width, CHAR_height * (i + 1)-1, CHAR_width * (_LCDML_DISP_cols - 2), CHAR_height * (_LCDML_DISP_rows - i), COLOR_BACKGROUND);
       }
     }
   }
@@ -2313,13 +2313,12 @@ void lcdml_menu_display(void)
     uint8_t scrollItemSize    = scrollbarHeight / n_menuItems;
     uint8_t scroll_pos_offset = 0;
 
-    if (scroll_pos == n_menuItems-1 && (scrollItemSize * n_menuItems != scrollbarHeight)) {
+    if (scroll_pos == n_menuItems - 1 && (scrollItemSize * n_menuItems != scrollbarHeight)) {
       scroll_pos_offset = scrollbarHeight - scrollItemSize * n_menuItems;
     }
-
-    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width +1, CHAR_height+1, 6, scrollbarHeight-2, COLOR_BACKGROUND); // Empty inside scrollbar
-    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width +2, CHAR_height + scroll_pos * scrollItemSize + scroll_pos_offset, 4, scrollItemSize, COLOR_SYSTEXT); // Draw scrollbar
-    display.drawRect((_LCDML_DISP_cols - 2) * CHAR_width, CHAR_height, 8, scrollbarHeight, COLOR_SYSTEXT); // Draw scrollbar borders
+    display.drawRect((_LCDML_DISP_cols - 2) * CHAR_width, CHAR_height, 8, scrollbarHeight-1, COLOR_SYSTEXT); // Draw scrollbar borders
+    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 1, CHAR_height + 1, 6, scrollbarHeight - 3, COLOR_BACKGROUND); // Empty inside scrollbar
+    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 2, CHAR_height + scroll_pos * scrollItemSize + scroll_pos_offset, 4, scrollItemSize-1, COLOR_SYSTEXT); // Draw scrollbar
   }
 }
 
@@ -14848,7 +14847,7 @@ void UI_func_velocity_level(uint8_t param)
 
 void UI_update_instance_icons()
 {
-   display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND ); //hack ph-todo
+  display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND ); //hack ph-todo
   display.setTextSize(1);
   if (selected_instance_id == 0)
   {
