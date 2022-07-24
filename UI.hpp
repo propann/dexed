@@ -2299,7 +2299,7 @@ void lcdml_menu_display(void)
 
       //clear menu lines if menu content < display lines
       if (i < _LCDML_DISP_rows) {
-        display.fillRect(CHAR_width, CHAR_height * (i + 1) - 1, CHAR_width * (_LCDML_DISP_cols - 2), CHAR_height * (_LCDML_DISP_rows - i), COLOR_BACKGROUND);
+        display.fillRect(CHAR_width, CHAR_height * (i + 1) - 1 , CHAR_width * (_LCDML_DISP_cols - 2), CHAR_height * (_LCDML_DISP_rows - i), COLOR_BACKGROUND);
       }
     }
   }
@@ -2311,15 +2311,10 @@ void lcdml_menu_display(void)
     uint8_t scroll_pos        = LCDML.MENU_getCursorPosAbs();
     float scrollbarHeight     = CHAR_height * n_max;
     float scrollItemSize      = scrollbarHeight / n_menuItems;
-    //uint8_t scroll_pos_offset = 0;
-
-    //    if (scroll_pos == n_menuItems - 1 && (scrollItemSize * n_menuItems != scrollbarHeight)) {
-    //      scroll_pos_offset = scrollbarHeight - scrollItemSize * n_menuItems;
-    //    }
 
     display.drawRect((_LCDML_DISP_cols - 2) * CHAR_width, CHAR_height, 8, scrollbarHeight - 1, COLOR_SYSTEXT); // Draw scrollbar borders
     display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 1, CHAR_height + 1, 6, scrollbarHeight - 3, COLOR_BACKGROUND); // Empty inside scrollbar
-    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 2, CHAR_height + scroll_pos * scrollItemSize, 4, scrollItemSize - 1, COLOR_SYSTEXT); // Draw scrollbar
+    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 1, CHAR_height + scroll_pos * scrollItemSize, 6, scrollItemSize - 1, COLOR_SYSTEXT); // Draw scrollbar
   }
 }
 

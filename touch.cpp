@@ -1073,8 +1073,8 @@ FLASHMEM void draw_menu_ui_icons()
     draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
   else
     draw_button_on_grid(45, 18, "SEQ.", "START", 1);
-  draw_button_on_grid(2, 25, "LOAD", "PERF", 0);
-  draw_button_on_grid(13, 25, "SAVE", "PERF", 0);
+  draw_button_on_grid(13, 25, "LOAD", "PERF", 0);
+  draw_button_on_grid(24, 25, "SAVE", "PERF", 0);
   if (multiband_active)
     draw_button_on_grid(35, 25, "MULTI", "BAND", 2);
   else
@@ -1152,13 +1152,13 @@ FLASHMEM void handle_touchscreen_menu()
             draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
           }
         }
-        else if (check_button_on_grid(2, 25) )
+        else if (check_button_on_grid(13, 25) )
         {
           display.setTextSize(2);
           display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
           LCDML.OTHER_jumpToFunc(UI_func_load_performance);
         }
-        else if (check_button_on_grid(13, 26) )
+        else if (check_button_on_grid(24, 25) )
         {
           display.setTextSize(2);
           display.setTextColor(COLOR_SYSTEXT , COLOR_BACKGROUND);
