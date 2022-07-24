@@ -262,7 +262,7 @@
 #define DISPLAY_HEIGHT 240
 
 #define display_cols  20
-#define display_rows  4
+#define display_rows  6
 #define CHAR_width 12
 #define CHAR_height 17
 #define CHAR_width_small 6
