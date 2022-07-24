@@ -1017,7 +1017,7 @@ void border0()  //main Border  default Colors = GREY2/4
 
 void border1() //upper left
 {
-  display.drawRect(0, 0, CHAR_width * 18, CHAR_height * 6 - 3, GREY4);
+  display.drawRect(0, 0, CHAR_width * 18, CHAR_height * display_rows - 3, GREY4);
 }
 void border2()  //upper right
 {
@@ -1026,7 +1026,7 @@ void border2()  //upper right
 
 void border1_clear() //upper left
 {
-  display.fillRect(1,  CHAR_height, CHAR_width * 19 - 1, CHAR_height * 4, COLOR_BACKGROUND);
+  display.fillRect(1,  CHAR_height, CHAR_width * 19 - 1, CHAR_height * display_rows, COLOR_BACKGROUND);
 }
 void border2_clear()  //upper right
 {
