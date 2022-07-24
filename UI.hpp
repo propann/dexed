@@ -327,25 +327,6 @@ PROGMEM const char cc_names[8][12] = { "Volume     ",
 
 PROGMEM const uint8_t cc_dest_values[8] = { 7, 10, 32, 91, 200, 201, 202, 203 };
 
-PROGMEM const uint8_t scroll_bar[5][17] = {
-  {B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001}, // scrollbar top
-  {B11111111, B11111111, B11111111, B11111111, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001}, // scroll state 1
-  {B10000001, B10000001, B10000001, B10000001, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001}, // scroll state 2
-  {B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B10000001, B10000001, B10000001}, // scroll state 3
-  {B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B10000001, B11111111, B11111111, B11111111, B11111111}  // scrollbar bottom
-};
-
-PROGMEM const uint8_t block_bar[8][15] = {
-  {B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000},
-  {B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000},
-  {B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000, B11000000},
-  {B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000, B11100000},
-  {B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000, B11110000},
-  {B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100, B11111100},
-  {B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110, B11111110},
-  {B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111, B11111111}
-};
-
 PROGMEM const uint8_t meter_bar[8][8] = {
   {B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000},
   {B01000000, B01000000, B01000000, B01000000, B01000000, B01000000, B01000000, B01000000},
@@ -2335,48 +2316,21 @@ void lcdml_menu_display(void)
   if (LCDML.DISP_checkMenuCursorUpdate())
   {
     // init vars
-    uint8_t n_max             = (LCDML.MENU_getChilds() >= _LCDML_DISP_rows) ? _LCDML_DISP_rows : (LCDML.MENU_getChilds());
-    uint8_t scrollbar_min     = 0;
-    uint8_t scrollbar_max     = LCDML.MENU_getChilds();
-    uint8_t scrollbar_cur_pos = LCDML.MENU_getCursorPosAbs();
-    uint8_t scroll_pos        = ((1.*n_max * _LCDML_DISP_rows) / (scrollbar_max - 1) * scrollbar_cur_pos);
+    uint8_t n_menuItems       = LCDML.MENU_getChilds();
+    uint8_t n_max             = (n_menuItems >= _LCDML_DISP_rows) ? _LCDML_DISP_rows : n_menuItems;
+    uint8_t scroll_pos        = LCDML.MENU_getCursorPosAbs();
+    uint8_t scrollbarHeight   = CHAR_height * n_max;
+    uint8_t scrollItemSize    = scrollbarHeight / n_menuItems;
+    uint8_t scroll_pos_offset = 0;
 
-    // display rows
-    for (uint8_t n = 0; n < n_max; n++)
-    {
-      // delete or reset scrollbar
-      if (_LCDML_DISP_cfg_scrollbar == 1)
-      {
-        if (scrollbar_max > n_max) {
-          drawBitmap( (_LCDML_DISP_cols - 2) * CHAR_width , (n + 1) * CHAR_height, scroll_bar[0], 8, 17, COLOR_SYSTEXT, COLOR_BACKGROUND);
-        }
-        else
-        {
-          display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width , (n + 1) * CHAR_height , 10, 17 , COLOR_BACKGROUND); // Clear scrollbar
-        }
-      }
+    if (scroll_pos == n_menuItems-1 && (scrollItemSize * n_menuItems != scrollbarHeight)) {
+      scroll_pos_offset = scrollbarHeight - scrollItemSize * n_menuItems;
     }
-    // display scrollbar
-    if (_LCDML_DISP_cfg_scrollbar == 1) {
-      if (scrollbar_max > n_max) {
-        //set scroll position
-        if (scrollbar_cur_pos == scrollbar_min) {
-          // min pos
-          drawBitmap( (_LCDML_DISP_cols - 2) * CHAR_width , CHAR_height, scroll_bar[1], 8, 17, COLOR_SYSTEXT, COLOR_BACKGROUND);
-        } else if (scrollbar_cur_pos == (scrollbar_max - 1)) {
-          // max pos
-          drawBitmap( (_LCDML_DISP_cols - 2) * CHAR_width , (n_max ) * CHAR_height, scroll_bar[4], 8, 17, COLOR_SYSTEXT, COLOR_BACKGROUND);
-        } else {
-          // between
-          drawBitmap( (_LCDML_DISP_cols - 2) * CHAR_width , (scroll_pos / n_max + 1) * CHAR_height, scroll_bar[(uint8_t)(scroll_pos % n_max) + 1], 8, 17, COLOR_SYSTEXT, COLOR_BACKGROUND);
-        }
-      }
-      else
-        display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width , CHAR_height * 4, 11, 17  , COLOR_BACKGROUND); //Clear scrollbar bottom if menu options are lower than row count
-    }
+
+    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width +1, CHAR_height+1, 6, scrollbarHeight-2, COLOR_BACKGROUND); // Empty scrollbar
+    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width +2, CHAR_height + scroll_pos * scrollItemSize + scroll_pos_offset, 4, scrollItemSize, COLOR_SYSTEXT); // Draw scrollbar
+    display.drawRect((_LCDML_DISP_cols - 2) * CHAR_width, CHAR_height, 8, scrollbarHeight, COLOR_SYSTEXT); // Draw scrollbar borders
   }
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.fillRect(CHAR_width * 18 - 1, 5, CHAR_width * 2 + 9, 9, COLOR_BACKGROUND); //clear upper right chars/icons
 }
 
 //####################################################################################################################################################################################################
@@ -16938,23 +16892,13 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
   display_float(value * factor, size_number, size_fraction, zeros, false, sign); // TBD
 
   // Bar
-
   //if (vi == 0)
   if (value == 0)
   {
-    //drawBitmap(  CHAR_width , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //for (uint8_t i = vi + 1; i < display_cols - size ; i++)
-    //display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
     display.fillRect( CHAR_width , 2 * CHAR_height, 12 * CHAR_width, CHAR_height - 2, COLOR_BACKGROUND );
   }
   else
   {
-    //    for (uint8_t i = 0; i < vi; i++)
-    //      drawBitmap(  CHAR_width + i * 8 , 2 * CHAR_height, block_bar[7], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND); // full block
-    //    if (vi < display_cols - size)
-    //      drawBitmap(  CHAR_width + vi * 8 , 2 * CHAR_height, block_bar[ (uint8_t)(vf / 1.25 - 0.5)  ], 8, 15, COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //    for (uint8_t i = vi + 1; i < display_cols + 1 - size; i++)
-    //      display.fillRect( CHAR_width + i * 8, 2 * CHAR_height, 8, 15, COLOR_BACKGROUND ); //empty block
     display.fillRect( CHAR_width , 2 * CHAR_height, value * 1.43, CHAR_height - 2, COLOR_SYSTEXT );
     display.fillRect( CHAR_width + value * 1.43 , 2 * CHAR_height, (max_value - value) * 1.43 + 1, CHAR_height - 2, COLOR_BACKGROUND );
   }
@@ -18087,7 +18031,8 @@ FLASHMEM void splash_screen1() {
 }
 
 FLASHMEM void splash_screen2() {
-  unsigned char splash[23360]; RLE_Uncompress( splash_image, splash, 3033);
+  unsigned char splash[23360];
+  RLE_Uncompress( splash_image, splash, 3033);
   uint16_t c;
   uint16_t color;
   display.setTextColor(COLOR_SYSTEXT);
