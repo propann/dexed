@@ -2304,7 +2304,9 @@ void lcdml_menu_display(void)
       } while (((tmp = tmp->getSibling(1)) != NULL) && (i < maxi));
 
       //clear menu lines if menu content < display lines
-      display.fillRect(CHAR_width, CHAR_height * ++i, CHAR_width * (_LCDML_DISP_cols - 2), CHAR_height * i, COLOR_BACKGROUND);
+      if (i < _LCDML_DISP_rows) {
+        display.fillRect(CHAR_width, CHAR_height * (i+1), CHAR_width * (_LCDML_DISP_cols - 2), CHAR_height * (_LCDML_DISP_rows - i), COLOR_BACKGROUND);
+      }
     }
   }
   if (LCDML.DISP_checkMenuCursorUpdate())
