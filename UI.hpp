@@ -517,6 +517,8 @@ void UI_func_MultiSamplePlay(uint8_t param);
 void UI_func_sample_editor(uint8_t param);
 void splash_screen1();
 void splash_screen2();
+void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y);
+void displayOp(char id, int x, int y, char link, char fb);
 
 char* basename(const char* filename);
 uint8_t x_pos_menu_header_layer[8];
@@ -18102,5 +18104,413 @@ FLASHMEM void splash_screen2() {
 //    }
 //  }
 //}
+
+float scalex = 1;
+float scaley = 1;
+int UI_FM_offset_x = 0;
+int UI_FM_offset_y = 0;
+#define LINE_SZ 3
+
+void displayOp(char id, int _gridX, int _gridY, char link, char fb) {
+  //  bool opOn = opStatus[6-id] == '1';
+  bool opOn = true;
+
+  int x = _gridX * 25;
+  x += 3 + UI_FM_offset_x;
+  int y = _gridY * 21;
+  y += 5 + UI_FM_offset_y;
+
+  // Draw OP
+  display.fillRect(x, y, 16, 12, _gridY == 3 ? MIDDLEGREEN : DX_DARKCYAN);
+  display.setTextSize(1);
+  if ( opOn ) {
+    display.setTextColor(COLOR_SYSTEXT, _gridY == 3 ? MIDDLEGREEN : DX_DARKCYAN);
+  } else {
+    display.setTextColor(RED, GREY4);
+  }
+  //  g.drawText(t, x, y, 16, 12, Justification::centred, true);
+  display.setCursor(x + 5, y + 2);
+  display.print(id + 0);
+
+  // Draw lines
+  uint16_t color;
+  if ( opOn ) {
+    color = GREY1;
+  } else {
+    color = RED;
+  }
+
+  switch (link) {
+    case 0 : // LINE DOWN
+      // g.drawLine(x+8, y+12, x+8, y+21, LINE_SZ);
+      display.fillRect(x + 7, y + 12, 3, 9, color);
+      break;
+    case 1: // ARROW TO RIGHT
+      // g.drawLine(x+8, y+12, x+8,  y+18, LINE_SZ);
+      // g.drawLine(x+7, y+18, x+34, y+18, LINE_SZ);
+      display.fillRect(x + 7, y + 12, 3, 6, color);
+      display.fillRect(x + 7, y + 18, 27, 3, color);
+      break;
+    case 2: // ARROW TO RIGHT JOIN
+      // g.drawLine(x+8,  y+12, x+8, y+19, LINE_SZ);
+      display.fillRect(x + 7, y + 12, 3, 9, color);
+      break;
+    case 3: // ARROW TO RIGHT AND DOWN
+      // g.drawLine(x+8, y+12, x+8, y+21, LINE_SZ);
+      // g.drawLine(x+7, y+18, x+34, y+18, LINE_SZ);
+      // g.drawLine(x+34, y+17, x+34, y+21, LINE_SZ);
+      display.fillRect(x + 7, y + 12, 3, 9, color);
+      display.fillRect(x + 7, y + 18, 27, 3, color);
+      display.fillRect(x + 34, y + 18, 3, 4, color);
+      break;
+    case 4: // ARROW TO RIGHT+LEFT AND DOWN
+      // g.drawLine(x+8, y+12, x+8, y+21, LINE_SZ);
+      // g.drawLine(x+7, y+18, x+34, y+18, LINE_SZ);
+      // g.drawLine(x+34, y+17, x+34, y+21, LINE_SZ);
+      // g.drawLine(x-17, y+18, x+8, y+18, LINE_SZ);
+      // g.drawLine(x-17, y+17, x-17, y+21, LINE_SZ);
+      display.fillRect(x + 7, y + 12, 3, 9, color);
+      display.fillRect(x + 7, y + 18, 27, 3, color);
+      display.fillRect(x + 34, y + 18, 27, 4, color);
+      display.fillRect(x - 17, y + 18, 25, 3, color);
+      display.fillRect(x - 17, y + 17, 3, 4, color);
+      break;
+    case 6:
+      // g.drawLine(x+8, y+12, x+8,  y+18, LINE_SZ);
+      // g.drawLine(x+7, y+18, x+58, y+18, LINE_SZ);
+      display.fillRect(x + 7, y + 12, 3, 6, color);
+      display.fillRect(x + 7, y + 18, 51, 3, color);
+      break;
+    case 7: // ARROW TO LEFT
+      // g.drawLine(x+8,  y+12, x+8, y+19, LINE_SZ);
+      // g.drawLine(x-17, y+18, x+9, y+18, LINE_SZ);
+      display.fillRect(x + 7,  y + 12, 3, 6, color);
+      display.fillRect(x - 17, y + 18, 26, 3, color);
+      break;
+  }
+
+  switch (fb) {
+    case 0:
+      break;
+    case 1: // single OP feedback
+      // g.drawLine(x+7, y, x+8, y-5, LINE_SZ);
+      // g.drawLine(x+8, y-4, x+21, y-4, LINE_SZ);
+      // g.drawLine(x+20, y-4, x+20, y+15, LINE_SZ);
+      // g.drawLine(x+19, y+15, x+20, y+16, LINE_SZ);
+      // g.drawLine(x+8, y+15, x+20, y+15, LINE_SZ);
+      display.fillRect(x + 7, y - 6, 3, 6, color);
+      display.fillRect(x + 7, y - 6, 12, 3, color);
+      display.fillRect(x + 19, y - 6, 3, 24, color);
+      //      display.fillRect(x+19, y+15, 2, 2, color);
+      display.fillRect(x + 7, y + 15, 12, 3, color);
+      break;
+    case 2: // ALGO 4: 3 OPs feedback
+      //       g.drawLine(x+7, y, x+8, y-5, LINE_SZ);
+      //       g.drawLine(x+8, y-4, x+20, y-4, LINE_SZ);
+      //       g.drawLine(x+19, y-4, x+19, y+59, LINE_SZ);
+      //       g.drawLine(x+8, y+58, x+19, y+58, LINE_SZ);
+      display.fillRect(x + 7, y - 6, 3, 7, color);
+      display.fillRect(x + 7, y - 6, 12, 3, color);
+      display.fillRect(x + 19, y - 6, 3, 66, color);
+      display.fillRect(x + 7, y + 57, 12, 3, color);
+      break;
+    case 3: // ALGO 6: 2 OPs feedback
+      //       g.drawLine(x+7, y, x+8, y-5, LINE_SZ);
+      //       g.drawLine(x+8, y-4, x+20, y-4, LINE_SZ);
+      //       g.drawLine(x+19, y-4, x+19, y+37, LINE_SZ);
+      //       g.drawLine(x+8, y+36, x+19, y+36, LINE_SZ);
+      display.fillRect(x + 7, y - 6, 3, 6, color);
+      display.fillRect(x + 7, y - 6, 12, 3, color);
+      display.fillRect(x + 19, y - 6, 3, 45, color);
+      display.fillRect(x + 7, y + 36, 12, 3, color);
+      break;
+    case 4: // single OP feedback to the left
+      //       g.drawLine(x+7, y, x+8, y-5, LINE_SZ);
+      //       g.drawLine(x+8, y-4, x-4, y-4, LINE_SZ);
+      //       g.drawLine(x-3, y-4, x-3, y+15, LINE_SZ);
+      //       g.drawLine(x-3, y+15, x+8, y+15, LINE_SZ);
+      //       g.drawLine(x+8, y+15, x+8, y+12, LINE_SZ);
+      display.fillRect(x + 7, y - 6, 3, 6, color);
+      display.fillRect(x - 5, y - 6, 12, 3, color);
+      display.fillRect(x - 5, y - 6, 3, 24, color);
+//      display.fillRect(x - 5, y + 15, 12, 3, color);
+      display.fillRect(x - 5, y + 15, 12, 3, color);
+      break;
+  }
+
+}
+
+void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
+  UI_FM_offset_x = x;
+  UI_FM_offset_y = y+3;
+
+  display.drawRect(x, y, 155, 100, GREY3);
+  display.setCursor(x+2, y+2);
+  display.setTextSize(2);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//  uint8_t algo = MicroDexed[selected_instance_id]->getAlgorithm();
+  display.print(algo + 1);
+
+  switch (algo) {
+    case 0:
+      displayOp(6, 3, 0, 0, 1);
+      displayOp(5, 3, 1, 0, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 1:
+      displayOp(6, 3, 0, 0, 0);
+      displayOp(5, 3, 1, 0, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 1);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 2:
+      displayOp(6, 3, 1, 0, 1);
+      displayOp(5, 3, 2, 0, 0);
+      displayOp(4, 3, 3, 2, 0);
+      displayOp(3, 2, 1, 0, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 3:
+      displayOp(6, 3, 1, 0, 2);
+      displayOp(5, 3, 2, 0, 0);
+      displayOp(4, 3, 3, 2, 0);
+      displayOp(3, 2, 1, 0, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 4:
+      displayOp(6, 4, 2, 0, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 1, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 5:
+      displayOp(6, 4, 2, 0, 3);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 1, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 6:
+      displayOp(6, 4, 1, 0, 1);
+      displayOp(5, 4, 2, 7, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 7:
+      displayOp(6, 4, 1, 0, 0);
+      displayOp(5, 4, 2, 7, 0);
+      displayOp(4, 3, 2, 0, 4);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 8:
+      displayOp(6, 4, 1, 0, 0);
+      displayOp(5, 4, 2, 7, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 1);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 9:
+      displayOp(6, 2, 2, 0, 0);
+      displayOp(5, 1, 2, 1, 0);
+      displayOp(4, 2, 3, 1, 0);
+      displayOp(3, 3, 1, 0, 1);
+      displayOp(2, 3, 2, 0, 0);
+      displayOp(1, 3, 3, 2, 0);
+      break;
+    case 10:
+      displayOp(6, 2, 2, 0, 1);
+      displayOp(5, 1, 2, 1, 0);
+      displayOp(4, 2, 3, 1, 0);
+      displayOp(3, 3, 1, 0, 0);
+      displayOp(2, 3, 2, 0, 0);
+      displayOp(1, 3, 3, 2, 0);
+      break;
+    case 11:
+      displayOp(6, 3, 2, 7, 0);
+      displayOp(5, 2, 2, 0, 0);
+      displayOp(4, 1, 2, 1, 0);
+      displayOp(3, 2, 3, 6, 0);
+      displayOp(2, 4, 2, 0, 1);
+      displayOp(1, 4, 3, 2, 0);
+      break;
+    case 12:
+      displayOp(6, 3, 2, 7, 1);
+      displayOp(5, 2, 2, 0, 0);
+      displayOp(4, 1, 2, 1, 0);
+      displayOp(3, 2, 3, 6, 0);
+      displayOp(2, 4, 2, 0, 0);
+      displayOp(1, 4, 3, 2, 0);
+      break;
+    case 13:
+      displayOp(6, 3, 1, 0, 1);
+      displayOp(5, 2, 1, 1, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 14:
+      displayOp(6, 3, 1, 0, 0);
+      displayOp(5, 2, 1, 1, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 2, 0);
+      displayOp(2, 2, 2, 0, 4);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 15:
+      displayOp(6, 4, 1, 0, 1);
+      displayOp(5, 4, 2, 7, 0);
+      displayOp(4, 3, 1, 0, 0);
+      displayOp(3, 3, 2, 0, 0);
+      displayOp(2, 2, 2, 1, 0);
+      displayOp(1, 3, 3, 0, 0);
+      break;
+    case 16:
+      displayOp(6, 4, 1, 0, 0);
+      displayOp(5, 4, 2, 7, 0);
+      displayOp(4, 3, 1, 0, 0);
+      displayOp(3, 3, 2, 0, 0);
+      displayOp(2, 2, 2, 1, 4);
+      displayOp(1, 3, 3, 0, 0);
+      break;
+    case 17:
+      displayOp(6, 4, 0, 0, 0);
+      displayOp(5, 4, 1, 0, 0);
+      displayOp(4, 4, 2, 7, 0);
+      displayOp(3, 3, 2, 0, 4);
+      displayOp(2, 2, 2, 1, 0);
+      displayOp(1, 3, 3, 0, 0);
+      break;
+    case 18:
+      displayOp(6, 3, 2, 3, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 1, 0, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 19:
+      displayOp(6, 4, 2, 0, 0);
+      displayOp(5, 3, 2, 1, 0);
+      displayOp(4, 4, 3, 2, 0);
+      displayOp(3, 1, 2, 3, 1);
+      displayOp(2, 2, 3, 6, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 20:
+      displayOp(6, 3, 2, 3, 0);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 1, 2, 3, 1);
+      displayOp(2, 2, 3, 1, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 21:
+      displayOp(6, 3, 2, 4, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 3, 1, 0);
+      displayOp(2, 1, 2, 0, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 22: // CC
+      displayOp(6, 3, 2, 3, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 2, 0, 0);
+      displayOp(2, 2, 3, 1, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 23: // CC
+      displayOp(6, 3, 2, 4, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 3, 1, 0);
+      displayOp(2, 1, 3, 1, 0);
+      displayOp(1, 0, 3, 1, 0);
+      break;
+    case 24: // CC
+      displayOp(6, 3, 2, 3, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 3, 1, 0);
+      displayOp(2, 1, 3, 1, 0);
+      displayOp(1, 0, 3, 1, 0);
+      break;
+    case 25:
+      displayOp(6, 4, 2, 0, 1);
+      displayOp(5, 3, 2, 1, 0);
+      displayOp(4, 4, 3, 2, 0);
+      displayOp(3, 2, 2, 0, 0);
+      displayOp(2, 2, 3, 6, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 26:
+      displayOp(6, 4, 2, 0, 0);
+      displayOp(5, 3, 2, 1, 0);
+      displayOp(4, 4, 3, 2, 0);
+      displayOp(3, 2, 2, 0, 1);
+      displayOp(2, 2, 3, 6, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 27:
+      displayOp(6, 4, 3, 2, 0);
+      displayOp(5, 3, 1, 0, 1);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 1, 0);
+      displayOp(2, 2, 2, 0, 0);
+      displayOp(1, 2, 3, 1, 0);
+      break;
+    case 28:
+      displayOp(6, 4, 2, 0, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 1, 0);
+      displayOp(2, 2, 3, 1, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 29:
+      displayOp(6, 4, 3, 2, 0);
+      displayOp(5, 3, 1, 0, 1);
+      displayOp(4, 3, 2, 0, 0);
+      displayOp(3, 3, 3, 1, 0);
+      displayOp(2, 2, 3, 1, 0);
+      displayOp(1, 1, 3, 1, 0);
+      break;
+    case 30:
+      displayOp(6, 4, 2, 0, 1);
+      displayOp(5, 4, 3, 2, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 3, 1, 0);
+      displayOp(2, 1, 3, 1, 0);
+      displayOp(1, 0, 3, 1, 0);
+      break;
+    case 31:
+      displayOp(6, 5, 3, 2, 1);
+      displayOp(5, 4, 3, 1, 0);
+      displayOp(4, 3, 3, 1, 0);
+      displayOp(3, 2, 3, 1, 0);
+      displayOp(2, 1, 3, 1, 0);
+      displayOp(1, 0, 3, 1, 0);
+      break;
+    default:
+      break;
+  }
+}
 
 #endif
