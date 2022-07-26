@@ -18244,7 +18244,7 @@ void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
   UI_FM_offset_x = x;
   UI_FM_offset_y = y+3;
 
-  display.drawRect(x, y, 155, 100, GREY3);
+//  display.drawRect(x, y, 155, 100, GREY3);
   display.setCursor(x+2, y+2);
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
