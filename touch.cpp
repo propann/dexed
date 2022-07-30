@@ -16,7 +16,7 @@ extern config_t configuration;
 extern uint8_t selected_instance_id;
 extern void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity);
 extern void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity);
-extern void print_voice_settings(int x, int y, uint8_t instance_id, bool fullrefresh);
+extern void print_voice_settings(bool fullrefresh);
 extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
@@ -35,7 +35,7 @@ extern void flash_printDirectory(File flash_currentDirectory);
 #endif
 extern void sd_printDirectory(File currentDirectory);
 extern uint8_t find_longest_chain();
-extern void seq_print_formatted_number(uint16_t v, uint8_t l);
+extern void print_formatted_number(uint16_t v, uint8_t l);
 extern void virtual_keyboard_print_buttons();
 extern void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, uint8_t color);
 extern void seq_pattern_editor_update_dynamic_elements();
@@ -59,6 +59,7 @@ extern void UI_func_seq_pattern_editor(uint8_t param);
 extern void UI_func_mixer(uint8_t param);
 extern void UI_func_song(uint8_t param);
 extern void UI_func_voice_select(uint8_t param);
+extern void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id);
 
 #ifdef USE_MICROSYNTH
 extern microsynth_t  microsynth[NUM_MICROSYNTH];
@@ -533,41 +534,48 @@ void handle_touchscreen_voice_select()
 
     if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 31000 )
     {
-      if (check_button_on_grid(1, 22))
-      {
-        if (dexed_live_mod.active_button != 1)
-          dexed_live_mod.active_button = 1;
+  if (check_button_on_grid(37,1))
+        {
+         save_favorite(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+        }
         else
-          dexed_live_mod.active_button = 0;
+
+      if (selected_instance_id == 0)
+      {
+        if (check_button_on_grid(2, 25))
+        {
+          if (dexed_live_mod.active_button != 1)
+            dexed_live_mod.active_button = 1;
+          else
+            dexed_live_mod.active_button = 0;
+        }
+        else if (check_button_on_grid(11, 25))
+        {
+          if (dexed_live_mod.active_button != 2)
+            dexed_live_mod.active_button = 2;
+          else
+            dexed_live_mod.active_button = 0;
+        }
       }
-      else if (check_button_on_grid(14, 22))
+      else  if (selected_instance_id == 1)
       {
-        if (dexed_live_mod.active_button != 2)
-          dexed_live_mod.active_button = 2;
-        else
-          dexed_live_mod.active_button = 0;
-      }
-      else if (check_button_on_grid(28, 22))
-      {
-        if (dexed_live_mod.active_button != 3)
-          dexed_live_mod.active_button = 3;
-        else
-          dexed_live_mod.active_button = 0;
-      }
-      else if (check_button_on_grid(41, 22))
-      {
-        if (dexed_live_mod.active_button != 4)
-          dexed_live_mod.active_button = 4;
-        else
-          dexed_live_mod.active_button = 0;
+        if (check_button_on_grid(2, 25))
+        {
+          if (dexed_live_mod.active_button != 3)
+            dexed_live_mod.active_button = 3;
+          else
+            dexed_live_mod.active_button = 0;
+        }
+        else if (check_button_on_grid(11, 25))
+        {
+          if (dexed_live_mod.active_button != 4)
+            dexed_live_mod.active_button = 4;
+          else
+            dexed_live_mod.active_button = 0;
+        }
       }
       else
         dexed_live_mod.active_button = 0;
-
-      if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 3)
-        selected_instance_id = 0;
-      else if (dexed_live_mod.active_button > 2 && dexed_live_mod.active_button < 5)
-        selected_instance_id = 1;
 
       if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 5)
       {
@@ -583,8 +591,8 @@ void handle_touchscreen_voice_select()
       {
         print_voice_select_default_help();
       }
-      print_voice_settings(CHAR_width_small, 104, 0, false);
-      print_voice_settings(CHAR_width_small + 160, 104, 1, false);
+      print_voice_settings(false);
+
       print_perfmod_buttons();
       print_perfmod_lables();
       seq.generic_ui_delay = 0;
@@ -596,10 +604,10 @@ void handle_touchscreen_voice_select()
       {
         seq.cycle_touch_element = 0;
 
-        display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
+        //display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
         draw_button_on_grid(45, 1, "", "", 99); //print keyboard icon
-        print_voice_settings(CHAR_width_small, 104, 0, true);
-        print_voice_settings(CHAR_width_small + 160, 104, 1, true);
+        print_voice_settings(true);
+
         print_perfmod_buttons();
         print_perfmod_lables();
         print_voice_select_default_help();
@@ -620,16 +628,7 @@ void handle_touchscreen_voice_select()
     {
       touch_check_all_keyboard_buttons();
     }
-    else if (ts.p.y > 92  && ts.p.y < 165 && ts.p.x < 320 / 2 && ts.switch_active_instance == false && seq.cycle_touch_element != 1)
-    {
-      selected_instance_id = 0;
-      ts.switch_active_instance = true;
-    }
-    else if (ts.p.y > 92  && ts.p.y < 165 && ts.p.x > 320 / 2 && ts.switch_active_instance == false && seq.cycle_touch_element != 1)
-    {
-      selected_instance_id = 1;
-      ts.switch_active_instance = true;
-    }
+
     if (ts.p.x > 1 && ts.p.y > VIRT_KEYB_YPOS && seq.cycle_touch_element == 1)
     {
       virtual_keyboard_key_on();
@@ -642,13 +641,11 @@ void handle_touchscreen_voice_select()
       print_virtual_keyboard_octave();
       ts.update_virtual_keyboard_octave = false;
     }
-    if ( ts.switch_active_instance && seq.cycle_touch_element != 1)
-    {
-      UI_update_instance_icons();
-      print_voice_settings(CHAR_width_small, 104, 0, 0);
-      print_voice_settings(CHAR_width_small + 160, 104, 1, 0);
-      ts.switch_active_instance = false;
-    }
+    //    if ( ts.switch_active_instance && seq.cycle_touch_element != 1)
+    //    {
+    //      UI_update_instance_icons();
+    //      print_voice_settings(CHAR_width_small, 104, selected_instance_id, 0);
+    //    }
   }
   seq.generic_ui_delay++;
   virtual_keyboard_update_all_key_states();
@@ -1341,3 +1338,48 @@ FLASHMEM void handle_touchscreen_multiband()
   ;
 }
 #endif
+
+extern int temp_int;
+
+FLASHMEM void handle_touchscreen_sample_editor()
+{
+  if (touch.touched() )
+  {
+    get_scaled_touch_point();
+
+    if (seq.generic_ui_delay > 10 )
+    {
+      if (check_button_on_grid(45, 23) && fm.sample_preview_playing == false)
+      {
+        draw_button_on_grid(45, 23, "PLAY",  "SAMPLE", 2);
+ 
+        if (fm.sample_source == 1) //FLASH
+        {
+           char filename[26];
+            uint32_t filesize;
+          SerialFlash.opendir();
+          if (temp_int > 0 )
+          {
+            for (int f = 0; f < temp_int; f++)
+            {
+              if (SerialFlash.readdir(filename, sizeof(filename), filesize))
+                ;
+              else
+                break;
+            }
+          }
+          
+          fm.sample_screen_position_x=0;
+          fm.sample_preview_playing=true;
+          playWAVFile(filename);
+        }
+      }
+      seq.generic_ui_delay = 0;
+    }
+  }
+  if (touch.touched() == false )
+  {
+    ;
+  }
+  seq.generic_ui_delay++;
+}

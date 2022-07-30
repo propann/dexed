@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.82"
+#define VERSION "1.3.9"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -99,7 +99,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-#define REMOTE_CONSOLE  //enable USB Display Mirroring - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
+//#define REMOTE_CONSOLE  //enable USB Display Mirroring - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -754,6 +754,9 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define EP_MIDI_CHANNEL_DEFAULT 3
 #endif
 
+// Number of samples in each delay line
+#define BRAIDS_FLANGE_DELAY_LENGTH (6*AUDIO_BLOCK_SAMPLES)
+
 #define FAVORITES_NUM_MIN 0
 #define FAVORITES_NUM_MAX 100
 #define FAVORITES_NUM_DEFAULT 0
@@ -928,7 +931,8 @@ typedef struct braids_s
   uint8_t filter_resonance;
   uint16_t filter_speed;
   uint8_t rev_send;
-  uint8_t chorus_send;
+  uint8_t flanger;
+    uint8_t flanger_spread;
   uint8_t delay_send;
   uint8_t midi_channel;
   uint8_t pan;
@@ -971,7 +975,7 @@ enum master_mixer_ports {
   MASTER_MIX_CH_EPIANO,
   MASTER_MIX_CH_MICROSYNTH,
   MASTER_MIX_CH_BRAIDS,
-  MASTER_MIX_CH_SD_FILE_PREVIEW,
+  MASTER_MIX_CH_WAV_PREVIEW,
 };
 
 enum reverb_mixer_ports {

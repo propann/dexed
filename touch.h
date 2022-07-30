@@ -34,7 +34,6 @@ typedef struct ts_s
   uint8_t virtual_keyboard_state_white[11];
   uint8_t virtual_keyboard_state_black[17];
   bool update_virtual_keyboard_octave;
-  bool switch_active_instance;
   bool block_screen_update;
   uint8_t displayed_peak[20];
   uint8_t old_helptext_length[3];
@@ -47,7 +46,21 @@ typedef struct ts_s
 typedef struct fm_s
 {
   uint8_t wav_recorder_mode=0;
-  uint8_t sample_source=0; // 0 = SD, 1 = FLASH
+
+#ifdef COMPILE_FOR_SDCARD
+uint8_t sample_source=0; // 0 = SD, 1 = FLASH
+#endif
+
+#ifdef COMPILE_FOR_PROGMEM
+uint8_t sample_source=0; // 0 = SD, 1 = FLASH
+#endif
+
+#ifdef COMPILE_FOR_FLASH
+uint8_t sample_source=1; // 0 = SD, 1 = FLASH
+#endif
+
+int sample_screen_position_x=0;
+  bool sample_preview_playing;
   uint16_t sd_sum_files = 0;
   File sd_currentDirectory;
   File sd_entry;

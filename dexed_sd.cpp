@@ -1658,7 +1658,8 @@ FLASHMEM bool load_sd_braids_json(uint8_t number)
         braids_osc.filter_resonance = data_json["res"];
         braids_osc.filter_speed = data_json["filter_speed"];
         braids_osc.rev_send = data_json["rev"];
-        braids_osc.chorus_send = data_json["chorus"];
+        braids_osc.flanger = data_json["flanger"];
+        braids_osc.flanger_spread = data_json["flanger_spread"];
         braids_osc.delay_send = data_json["delay"];
         braids_osc.midi_channel = data_json["midi"];
         braids_osc.pan = data_json["pan"];
@@ -1721,7 +1722,8 @@ FLASHMEM bool save_sd_braids_json(uint8_t number)
       data_json["res"] = braids_osc.filter_resonance;
       data_json["filter_speed"] = braids_osc.filter_speed;
       data_json["rev"] = braids_osc.rev_send;
-      data_json["chorus"] = braids_osc.chorus_send;
+      data_json["flanger"] = braids_osc.flanger;
+      data_json["flanger_spread"] = braids_osc.flanger_spread;
       data_json["delay"] = braids_osc.delay_send;
       data_json["midi"] = braids_osc.midi_channel;
       data_json["pan"] = braids_osc.pan;

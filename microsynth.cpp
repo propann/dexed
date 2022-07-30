@@ -40,6 +40,11 @@ extern AudioMixer<2>                   braids_mixer_reverb;
 extern AudioEffectEnvelope*            braids_envelope[NUM_BRAIDS];
 extern AudioFilterStateVariable*        braids_filter[NUM_BRAIDS];
 extern AudioEffectStereoPanorama       braids_stereo_panorama;
+extern AudioEffectFlange   braids_flanger_r;
+extern AudioEffectFlange   braids_flanger_l;
+extern int braids_flanger_idx;
+extern int braids_flanger_depth;
+extern double braids_flanger_freq;
 #endif
 
 extern float volume_transform(float amp);
@@ -101,6 +106,17 @@ FLASHMEM void microsynth_update_settings(uint8_t instance_id)
 FLASHMEM void braids_update_settings()
 {
 #ifdef USE_BRAIDS
+
+  if (braids_osc.flanger > 0)
+  {
+    braids_flanger_r.voices(braids_flanger_idx, braids_flanger_depth, (float)braids_osc.flanger * 0.003);
+    braids_flanger_l.voices(braids_flanger_idx, braids_flanger_depth, (float)braids_osc.flanger * 0.003 + (braids_osc.flanger_spread * 0.001));
+  }
+  else
+  {
+    braids_flanger_r.voices(FLANGE_DELAY_PASSTHRU, 0, 0);
+    braids_flanger_l.voices(FLANGE_DELAY_PASSTHRU, 0, 0);
+  }
 
   braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));

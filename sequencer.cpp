@@ -80,6 +80,7 @@ microsynth_t microsynth[2];
 extern braids_t braids_osc;
 //extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
 extern uint16_t braids_filter_state[NUM_BRAIDS];
+
 #endif
 
 #ifdef USE_BRAIDS
@@ -824,6 +825,7 @@ void update_microsynth_params()
 void update_braids_params()
 {
 #ifdef USE_BRAIDS
+
   for (uint8_t d = 0; d < NUM_BRAIDS; d++)
   {
     if ( braids_envelope[d]->isActive() )
@@ -905,7 +907,7 @@ int get_pattern_content_type_color(uint8_t pattern)
   return col;
 }
 
-void seq_print_formatted_number (uint16_t number, uint8_t length)
+void print_formatted_number (uint16_t number, uint8_t length)
 {
   if (length == 4)
   {
@@ -934,7 +936,7 @@ void seq_print_formatted_number (uint16_t number, uint8_t length)
   }
 }
 
-void seq_print_formatted_number_signed (int number, uint8_t length)
+void print_formatted_number_signed (int number, uint8_t length)
 {
 
   if (number > -1)
@@ -1004,7 +1006,7 @@ void print_chord_name (uint8_t currentstep)
 //      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 //    else
 //      display.setTextColor(GREEN, COLOR_BACKGROUND);
-//    //seq_print_formatted_number (buffer[step + count] , 2);
+//    //print_formatted_number (buffer[step + count] , 2);
 //    count++;
 //  }
 //}
@@ -1189,13 +1191,13 @@ void print_merged_pattern_pianoroll (int xpos, int ypos, uint8_t track_number)
   display.print(current_chain);
   display.print(F("  "));
 
-  seq_print_formatted_number( pattern[0] , 2);
+  print_formatted_number( pattern[0] , 2);
   display.write (0xf8);
-  seq_print_formatted_number( pattern[1] , 2);
+  print_formatted_number( pattern[1] , 2);
   display.write (0xf8);
-  seq_print_formatted_number( pattern[2] , 2);
+  print_formatted_number( pattern[2] , 2);
   display.write (0xf8);
-  seq_print_formatted_number( pattern[3]  , 2);
+  print_formatted_number( pattern[3]  , 2);
   display.print(" ");
 
   //    if (pattern[0] < NUM_SEQ_PATTERN && pattern[1] < NUM_SEQ_PATTERN
