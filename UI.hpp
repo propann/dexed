@@ -6761,6 +6761,7 @@ void UI_func_seq_vel_editor(uint8_t param)
   {
     // setup function
 
+draw_button_on_grid(45, 20, "", "", 0);
     if (seq.menu_status != 1)
     {
       display.fillScreen(COLOR_BACKGROUND);
@@ -8102,8 +8103,10 @@ void seq_pattern_editor_update_dynamic_elements()
       draw_button_on_grid(36, 20, "PLAYNG", "SONG", 0);
     else  // play only current pattern
       draw_button_on_grid(36, 20, "LOOP", "PATT", 2);
-
+ if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) )
     draw_button_on_grid(45, 20, "JUMP", "TOOLS", 0);
+    else
+    draw_button_on_grid(45, 20, "-", "-", 0);
 
     draw_button_on_grid(36, 26, "SONG", "EDITOR", 0);
     draw_button_on_grid(45, 26, "-", "-", 0);
@@ -8153,6 +8156,124 @@ uint8_t find_track_in_song_where_pattern_is_used(uint8_t pattern)
   return result;
 }
 
+void pattern_editor_menu_0()
+{
+  display.setTextSize(2);
+  if (seq.menu == 0)  //sound select menu
+  {
+    print_current_sample_and_pitch_buffer();
+    if (seq.active_function != 99)
+      display.setTextColor(RED, COLOR_BACKGROUND);
+    else
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid(11, 0);
+    display.print(" ");
+    setCursor_textGrid(13, 0);
+    display.print(" ");
+    setCursor_textGrid(0, 0);
+    display.print("[");
+    if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
+    {
+      //UI_draw_waveform(activesample);
+      if (activesample < NUM_DRUMSET_CONFIG - 1)
+      {
+        if (drum_config[activesample].midinote < 210)
+          display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+        else
+          display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+
+        show(0, 1, 9, basename(drum_config[activesample].name));
+        if (seq.active_function != 99)
+          display.setTextColor(RED, COLOR_BACKGROUND);
+        else
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      } else if (activesample == NUM_DRUMSET_CONFIG - 1) {
+        setCursor_textGrid(1, 0);
+        display.print(F("EMPTY    "));
+      } else if (activesample == NUM_DRUMSET_CONFIG ) {
+        setCursor_textGrid(1, 0);
+        display.print(F("Clear Pat"));
+      } else if (activesample == NUM_DRUMSET_CONFIG + 1) {
+        setCursor_textGrid(1, 0);
+        display.print(F("Clear All"));
+      }
+      else if (activesample == NUM_DRUMSET_CONFIG + 2) {
+        setCursor_textGrid(1, 0);
+        display.print(F("Copy Pat."));
+      }
+      else if (activesample == NUM_DRUMSET_CONFIG + 3) {
+        setCursor_textGrid(1, 0);
+        display.print(F("Swap Pat"));
+      }
+      else if (activesample == NUM_DRUMSET_CONFIG + 4) {
+        setCursor_textGrid(1, 0);
+        display.print(F("Fill Pat."));
+      }
+      else if (activesample == NUM_DRUMSET_CONFIG + 5) {
+        setCursor_textGrid(1, 0);
+        display.print(F("Transpose"));
+      }
+      setCursor_textGrid(10, 0);
+      display.print("]");
+    } else //Inst. Mode
+    {
+      if (temp_int < 109)
+      {
+        setCursor_textGrid(2, 0);
+        display.print("    ");
+        setCursor_textGrid(1, 0);
+        if (seq.content_type[seq.active_pattern] == 1) //Inst
+        {
+          display.print(noteNames[temp_int % 12 ]);
+          display.print( (temp_int / 12) - 1);
+        }
+        else if (seq.content_type[seq.active_pattern] == 2) //Chord
+        {
+          // print_chord_name(seq.menu - 3);
+          setCursor_textGrid(1, 0);
+          display.print(noteNames[temp_int % 12 ]);
+          display.print( (temp_int / 12) - 1);
+        }
+      } else if (temp_int == 109)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("EMPTY    "));
+      } else if (temp_int == 110)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("LATCH    "));
+      } else if (temp_int == 111)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("ClearPat."));
+      } else if (temp_int == 112)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("Clear All"));
+      } else if (temp_int == 113)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("Copy Pat."));
+      }  else if (temp_int == 114)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("Swap Pat."));
+      } else if (temp_int == 115)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("Fill Pat."));
+      } else if (temp_int == 116)
+      {
+        setCursor_textGrid(1, 0);
+        display.print(F("Transpose"));
+      }
+      setCursor_textGrid(10, 0);
+      display.print("]");
+    }
+  }
+
+}
+
 void UI_func_seq_pattern_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup())         // ****** SETUP *********
@@ -8160,6 +8281,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
     // setup function
     seq.menu = 3;
 
+if (seq.cycle_touch_element!=1)
+ draw_button_on_grid(45, 20, "JUMP", "TOOLS", 0);
 
     if (seq.menu_status != 2)
     {
@@ -8287,6 +8410,13 @@ void UI_func_seq_pattern_editor(uint8_t param)
     }
     if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
+
+      if ( seq.menu == 0 && seq.active_function == 0)
+       { 
+        if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) )
+        draw_button_on_grid(45, 20, "JUMP", "TOOLS", 0);
+         display.setTextSize(2);
+       }
       if ( seq.menu == 0 && seq.active_function == 99)
       {
         seq.active_function = 0;
@@ -8422,117 +8552,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
 
     display.setTextSize(2);
     if (seq.menu == 0)  //sound select menu
-    {
-      print_current_sample_and_pitch_buffer();
-      if (seq.active_function != 99)
-        display.setTextColor(RED, COLOR_BACKGROUND);
-      else
-        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      setCursor_textGrid(11, 0);
-      display.print(" ");
-      setCursor_textGrid(13, 0);
-      display.print(" ");
-      setCursor_textGrid(0, 0);
-      display.print("[");
-      if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
-      {
-        //UI_draw_waveform(activesample);
-        if (activesample < NUM_DRUMSET_CONFIG - 1)
-        {
-          if (drum_config[activesample].midinote < 210)
-            display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-          else
-            display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+      pattern_editor_menu_0();
 
-          show(0, 1, 9, basename(drum_config[activesample].name));
-          if (seq.active_function != 99)
-            display.setTextColor(RED, COLOR_BACKGROUND);
-          else
-            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        } else if (activesample == NUM_DRUMSET_CONFIG - 1) {
-          setCursor_textGrid(1, 0);
-          display.print(F("EMPTY    "));
-        } else if (activesample == NUM_DRUMSET_CONFIG ) {
-          setCursor_textGrid(1, 0);
-          display.print(F("Clear Pat"));
-        } else if (activesample == NUM_DRUMSET_CONFIG + 1) {
-          setCursor_textGrid(1, 0);
-          display.print(F("Clear All"));
-        }
-        else if (activesample == NUM_DRUMSET_CONFIG + 2) {
-          setCursor_textGrid(1, 0);
-          display.print(F("Copy Pat."));
-        }
-        else if (activesample == NUM_DRUMSET_CONFIG + 3) {
-          setCursor_textGrid(1, 0);
-          display.print(F("Swap Pat"));
-        }
-        else if (activesample == NUM_DRUMSET_CONFIG + 4) {
-          setCursor_textGrid(1, 0);
-          display.print(F("Fill Pat."));
-        }
-        else if (activesample == NUM_DRUMSET_CONFIG + 5) {
-          setCursor_textGrid(1, 0);
-          display.print(F("Transpose"));
-        }
-        setCursor_textGrid(10, 0);
-        display.print("]");
-      } else //Inst. Mode
-      {
-        if (temp_int < 109)
-        {
-          setCursor_textGrid(2, 0);
-          display.print("    ");
-          setCursor_textGrid(1, 0);
-          if (seq.content_type[seq.active_pattern] == 1) //Inst
-          {
-            display.print(noteNames[temp_int % 12 ]);
-            display.print( (temp_int / 12) - 1);
-          }
-          else if (seq.content_type[seq.active_pattern] == 2) //Chord
-          {
-            // print_chord_name(seq.menu - 3);
-            setCursor_textGrid(1, 0);
-            display.print(noteNames[temp_int % 12 ]);
-            display.print( (temp_int / 12) - 1);
-          }
-        } else if (temp_int == 109)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("EMPTY    "));
-        } else if (temp_int == 110)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("LATCH    "));
-        } else if (temp_int == 111)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("ClearPat."));
-        } else if (temp_int == 112)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("Clear All"));
-        } else if (temp_int == 113)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("Copy Pat."));
-        }  else if (temp_int == 114)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("Swap Pat."));
-        } else if (temp_int == 115)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("Fill Pat."));
-        } else if (temp_int == 116)
-        {
-          setCursor_textGrid(1, 0);
-          display.print(F("Transpose"));
-        }
-        setCursor_textGrid(10, 0);
-        display.print("]");
-      }
-    }
     else if (seq.menu == 1)
     {
       display.setTextColor(GREY2, COLOR_BACKGROUND);

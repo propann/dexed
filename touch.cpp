@@ -20,6 +20,7 @@ extern void print_voice_settings(bool fullrefresh);
 extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
+extern void pattern_editor_menu_0();
 
 #ifdef USE_SEQUENCER
 extern sequencer_t seq;
@@ -56,10 +57,12 @@ extern void handleStart(void);
 extern void UI_func_load_performance(uint8_t param);
 extern void UI_func_save_performance(uint8_t param);
 extern void UI_func_seq_pattern_editor(uint8_t param);
+extern void UI_func_seq_vel_editor(uint8_t param);
 extern void UI_func_mixer(uint8_t param);
 extern void UI_func_song(uint8_t param);
 extern void UI_func_voice_select(uint8_t param);
 extern void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id);
+extern uint8_t activesample;
 
 #ifdef USE_MICROSYNTH
 extern microsynth_t  microsynth[NUM_MICROSYNTH];
@@ -702,9 +705,24 @@ FLASHMEM void handle_touchscreen_pattern_editor()
         draw_button_on_grid(36, 20, "LOOP", "PATT", 2);
       seq.generic_ui_delay = 0;
     }
-    else if (check_button_on_grid(36,26) && seq.generic_ui_delay > 12000 ) // jump song editor
+    else if (check_button_on_grid(36, 26) && seq.generic_ui_delay > 12000 ) // jump song editor
     {
-       LCDML.OTHER_jumpToFunc(UI_func_song);
+      LCDML.OTHER_jumpToFunc(UI_func_song);
+      seq.generic_ui_delay = 0;
+    }
+    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) )
+     if (check_button_on_grid(45, 20) && seq.generic_ui_delay > 12000 ) // jump pattern editor functions
+    {
+      
+      draw_button_on_grid(45, 20, "JUMP", "TOOLS", 2);
+       
+{
+    activesample = NUM_DRUMSET_CONFIG;
+      seq.menu = 0;
+      seq.active_function = 0;
+      pattern_editor_menu_0();
+}
+
       seq.generic_ui_delay = 0;
     }
 
