@@ -154,9 +154,10 @@ LCDML_add(120, LCDML_0_15, 6, "Startup Perform.", UI_func_startup_performance);
 LCDML_add(121, LCDML_0_15, 7, "Startup Page", UI_func_startup_page);
 LCDML_add(122, LCDML_0_15, 8, "Screen Colors", UI_func_colors);
 LCDML_add(123, LCDML_0_15, 9, "FORMAT FLASH", UI_func_format_flash);
-LCDML_add(124, LCDML_0_15, 10, "TEST Menu", UI_func_test);
-LCDML_add(125, LCDML_0, 16, "Info", UI_func_information);
-LCDML_addAdvanced(126, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced (127 , LCDML_0   , 18  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 127
+LCDML_add(124, LCDML_0_15, 10, "TEST Audio Mute", UI_func_test_mute);
+LCDML_add(125, LCDML_0_15, 11, "TEST PSRAM", UI_func_test_psram);
+LCDML_add(126, LCDML_0, 16, "Info", UI_func_information);
+LCDML_addAdvanced(127, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced (128 , LCDML_0   , 18  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 128
 #endif

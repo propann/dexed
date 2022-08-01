@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.3.9"
+#define VERSION "1.4"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -75,7 +75,7 @@
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
 
-//#define AUDIO_DEVICE_USB
+#define AUDIO_DEVICE_USB
 //#define TEENSY_AUDIO_BOARD
 
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs

@@ -472,9 +472,15 @@ AudioConnection patchCord[] = {
   {stereo2mono, 0, dacOut, 0},
   {stereo2mono, 1, dacOut, 1},
 #endif
+
 #ifdef AUDIO_DEVICE_USB
+#ifdef USE_MULTIBAND
+  {finalized_mixer_l, 0, usb1, 0},
+  {finalized_mixer_r, 0, usb1, 1},
+#else
   {stereo2mono, 0, usb1, 0},
   {stereo2mono, 1, usb1, 1},
+#endif
 #endif
 
 #if defined(TEENSY_AUDIO_BOARD) && defined(SGTL5000_AUDIO_THRU)
@@ -3391,6 +3397,9 @@ void handleStop(void)
   seq.recording = false;
   seq.note_in = 0;
   seq.step = 0;
+
+  if (seq.play_mode == false)  // if 
+  {
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     seq.chain_counter[d] = 0;
@@ -3401,6 +3410,7 @@ void handleStop(void)
   else
     seq.current_song_step = seq.loop_start;
 #endif
+  }
 
 #if defined(USE_MICROSYNTH)
   microsynth_envelope_osc[0].noteOff();

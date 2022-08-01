@@ -2490,7 +2490,7 @@ FLASHMEM void get_sd_performance_name_json(uint8_t number)
     sprintf(filename, "/%s/%d/%s.json", PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 
     // first check if file exists...
-    AudioNoInterrupts();
+    //AudioNoInterrupts();
     if (SD.exists(filename))
     {
       // ... and if: load
@@ -2501,7 +2501,7 @@ FLASHMEM void get_sd_performance_name_json(uint8_t number)
       {
         deserializeJson(data_json, json);
         json.close();
-        AudioInterrupts();
+        //AudioInterrupts();
       }
       if (data_json["seq_name"][0] != 0) {
         for (uint8_t i = 0; i < FILENAME_LEN; i++) {
@@ -2830,7 +2830,7 @@ FLASHMEM bool check_sd_performance_exists(uint8_t number)
     return (false);
 
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-  AudioNoInterrupts();
+  //AudioNoInterrupts();
   if (sd_card > 0)
   {
     char filename[CONFIG_FILENAME_LEN];
@@ -2840,17 +2840,17 @@ FLASHMEM bool check_sd_performance_exists(uint8_t number)
     // check if file exists...
     if (SD.exists(filename))
     {
-      AudioInterrupts();
+      //AudioInterrupts();
       return (true);
     } else
     {
-      AudioInterrupts();
+      //AudioInterrupts();
       return (false);
     }
   }
   else
   {
-    AudioInterrupts();
+    //AudioInterrupts();
     return (false);
   }
 }

@@ -189,9 +189,12 @@ void sequencer_part1(void)
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     int tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
+    if (seq.play_mode==false) // play mode full song 
+    {
     seq.current_chain[d] = seq.song[d][seq.current_song_step];
     seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
-
+    }
+   
     if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] < NUM_CHAINS )
       tr[d] = seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
     else if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] < NUM_CHAINS * 2 )
@@ -541,6 +544,8 @@ void sequencer_part1(void)
     {
       seq.step = 0;
 
+if (seq.play_mode==false) // play mode = full song
+{
       bool songstep_increased = false;
 
       for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
@@ -603,6 +608,7 @@ void sequencer_part1(void)
         if (songstep_increased == true )
           seq.chain_counter[d] = 0;
       }
+}
     }
   }
 }

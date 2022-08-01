@@ -534,48 +534,48 @@ void handle_touchscreen_voice_select()
 
     if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 31000 )
     {
-  if (check_button_on_grid(37,1))
-        {
-         save_favorite(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-        }
-        else
-
-      if (selected_instance_id == 0)
+      if (check_button_on_grid(37, 1))
       {
-        if (check_button_on_grid(2, 25))
-        {
-          if (dexed_live_mod.active_button != 1)
-            dexed_live_mod.active_button = 1;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-        else if (check_button_on_grid(11, 25))
-        {
-          if (dexed_live_mod.active_button != 2)
-            dexed_live_mod.active_button = 2;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-      }
-      else  if (selected_instance_id == 1)
-      {
-        if (check_button_on_grid(2, 25))
-        {
-          if (dexed_live_mod.active_button != 3)
-            dexed_live_mod.active_button = 3;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-        else if (check_button_on_grid(11, 25))
-        {
-          if (dexed_live_mod.active_button != 4)
-            dexed_live_mod.active_button = 4;
-          else
-            dexed_live_mod.active_button = 0;
-        }
+        save_favorite(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
       }
       else
-        dexed_live_mod.active_button = 0;
+
+        if (selected_instance_id == 0)
+        {
+          if (check_button_on_grid(2, 25))
+          {
+            if (dexed_live_mod.active_button != 1)
+              dexed_live_mod.active_button = 1;
+            else
+              dexed_live_mod.active_button = 0;
+          }
+          else if (check_button_on_grid(11, 25))
+          {
+            if (dexed_live_mod.active_button != 2)
+              dexed_live_mod.active_button = 2;
+            else
+              dexed_live_mod.active_button = 0;
+          }
+        }
+        else  if (selected_instance_id == 1)
+        {
+          if (check_button_on_grid(2, 25))
+          {
+            if (dexed_live_mod.active_button != 3)
+              dexed_live_mod.active_button = 3;
+            else
+              dexed_live_mod.active_button = 0;
+          }
+          else if (check_button_on_grid(11, 25))
+          {
+            if (dexed_live_mod.active_button != 4)
+              dexed_live_mod.active_button = 4;
+            else
+              dexed_live_mod.active_button = 0;
+          }
+        }
+        else
+          dexed_live_mod.active_button = 0;
 
       if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 5)
       {
@@ -690,6 +690,24 @@ FLASHMEM void handle_touchscreen_pattern_editor()
       }
       seq.generic_ui_delay = 0;
     }
+    else if (check_button_on_grid(36, 20) && seq.generic_ui_delay > 12000 ) // toggle seq. playmode song/pattern only
+    {
+      if (seq.play_mode)
+        seq.play_mode = false;
+      else
+        seq.play_mode = true;
+      if (seq.play_mode == false) // is in full song more
+        draw_button_on_grid(36, 20, "PLAYNG", "SONG", 0);
+      else  // play only current pattern
+        draw_button_on_grid(36, 20, "LOOP", "PATT", 2);
+      seq.generic_ui_delay = 0;
+    }
+    else if (check_button_on_grid(36,26) && seq.generic_ui_delay > 12000 ) // jump song editor
+    {
+       LCDML.OTHER_jumpToFunc(UI_func_song);
+      seq.generic_ui_delay = 0;
+    }
+
     if ( ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
@@ -1352,11 +1370,11 @@ FLASHMEM void handle_touchscreen_sample_editor()
       if (check_button_on_grid(45, 23) && fm.sample_preview_playing == false)
       {
         draw_button_on_grid(45, 23, "PLAY",  "SAMPLE", 2);
- 
+
         if (fm.sample_source == 1) //FLASH
         {
-           char filename[26];
-            uint32_t filesize;
+          char filename[26];
+          uint32_t filesize;
           SerialFlash.opendir();
           if (temp_int > 0 )
           {
@@ -1368,9 +1386,9 @@ FLASHMEM void handle_touchscreen_sample_editor()
                 break;
             }
           }
-          
-          fm.sample_screen_position_x=0;
-          fm.sample_preview_playing=true;
+
+          fm.sample_screen_position_x = 0;
+          fm.sample_preview_playing = true;
           playWAVFile(filename);
         }
       }
