@@ -3398,8 +3398,6 @@ void handleStop(void)
   seq.note_in = 0;
   seq.step = 0;
 
-  if (seq.play_mode == false)  // if 
-  {
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     seq.chain_counter[d] = 0;
@@ -3410,8 +3408,7 @@ void handleStop(void)
   else
     seq.current_song_step = seq.loop_start;
 #endif
-  }
-
+  
 #if defined(USE_MICROSYNTH)
   microsynth_envelope_osc[0].noteOff();
   microsynth_envelope_osc[1].noteOff();

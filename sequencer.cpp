@@ -66,7 +66,8 @@ extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern elapsedMillis microsynth_lfo_delay_timer[2];
 #endif
 
-
+extern uint8_t find_first_song_step_with_pattern(uint8_t pattern);
+extern uint8_t find_first_chain_step_with_pattern(uint8_t pattern);
 
 #ifdef USE_SEQUENCER
 sequencer_t seq;
@@ -189,12 +190,39 @@ void sequencer_part1(void)
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
     int tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
-    if (seq.play_mode==false) // play mode full song 
+    if (seq.play_mode == false) // play mode: full song
     {
-    seq.current_chain[d] = seq.song[d][seq.current_song_step];
-    seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
+      seq.track_mute[d] = false;
+      seq.current_chain[d] = seq.song[d][seq.current_song_step];
+      seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
     }
-   
+    else if (seq.play_mode) // play mode: pattern only
+    {
+      if (seq.hunt_pattern == false)
+      {
+        seq.track_mute[d] = false;
+       seq.current_chain[d] = seq.song[d][seq.current_song_step];
+        seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
+      }
+      else if (seq.hunt_pattern)
+      {
+        seq.current_song_step = find_first_song_step_with_pattern(seq.active_pattern);
+        if (get_chain_length_from_current_track(d) >= find_first_chain_step_with_pattern(seq.active_pattern))
+        {
+          seq.chain_counter[d] = find_first_chain_step_with_pattern(seq.active_pattern);
+          seq.track_mute[d] = false;
+        }
+        else if (get_chain_length_from_current_track(d) == 1)
+        {
+          seq.chain_counter[d] = 0;
+          seq.track_mute[d] = false;
+        }
+        else
+          seq.track_mute[d] = true;
+        seq.current_chain[d] = seq.song[d][seq.current_song_step];
+        seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
+      }
+    }
     if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] < NUM_CHAINS )
       tr[d] = seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]];
     else if (seq.chain_transpose[ seq.current_chain[d]][seq.chain_counter[d]] < NUM_CHAINS * 2 )
@@ -226,7 +254,7 @@ void sequencer_part1(void)
             if (seq.note_data[ seq.current_pattern[d]][seq.step] != 130 && seq.ticks == 0)
             {
               //Braids Instrument
-              if (seq.instrument[d] ==5) 
+              if (seq.instrument[d] == 5)
               {
                 handleNoteOn(seq.instrument[d], seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 4);
               }
@@ -544,71 +572,71 @@ void sequencer_part1(void)
     {
       seq.step = 0;
 
-if (seq.play_mode==false) // play mode = full song
-{
-      bool songstep_increased = false;
-
-      for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+      if (seq.play_mode == false) // play mode = full song
       {
-        if (  get_chain_length_from_current_track(d) >  seq.chain_counter[d]  )
-          seq.chain_counter[d]++;
+        bool songstep_increased = false;
 
-        if (get_chain_length_from_current_track(d) > 0 && get_chain_length_from_current_track(d) == seq.chain_counter[d] &&
-            seq.chain_counter[d] < find_longest_chain())
-          seq.chain_counter[d] = 0;
-
-        if (seq.loop_end == 99) // no loop set
+        for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
         {
-          if (seq.current_song_step >= get_song_length() )
-          {
-            seq.current_song_step = 0;
-            seq.chain_counter[d] = 0;
-          }
-        }
-        else
-        {
-          if (seq.loop_start == seq.loop_end && seq.current_song_step > seq.loop_start) //loop only a single step
-          {
-            seq.current_song_step = seq.loop_start;
-            seq.chain_counter[d] = 0;
-          }
+          if (  get_chain_length_from_current_track(d) >  seq.chain_counter[d]  )
+            seq.chain_counter[d]++;
 
-          // if loop is on and changed during playback and new loop values are lower than current playing range, get back into the new loop range
-          else  if (seq.loop_start > seq.loop_end && seq.current_song_step == seq.loop_start + 1) //start is higher than end - > loop around
-          {
-            seq.current_song_step = 0;
+          if (get_chain_length_from_current_track(d) > 0 && get_chain_length_from_current_track(d) == seq.chain_counter[d] &&
+              seq.chain_counter[d] < find_longest_chain())
             seq.chain_counter[d] = 0;
-          }
-          else if (seq.loop_start > seq.loop_end && seq.current_song_step == seq.loop_end + 1 && seq.loop_start != seq.loop_end + 1) //end is lower than start, jump to start at end
-          {
-            seq.current_song_step = seq.loop_start;
-            seq.chain_counter[d] = 0;
-          }
-          else if (seq.loop_start < seq.loop_end && seq.current_song_step >= seq.loop_end + 1  ) //normal case, loop from end to start
-          {
-            seq.current_song_step = seq.loop_start;
-            seq.chain_counter[d] = 0;
-          }
 
-          else if (seq.current_song_step >= get_song_length()  && seq.current_song_step > seq.loop_start && seq.current_song_step > seq.loop_end)
+          if (seq.loop_end == 99) // no loop set
           {
-            seq.current_song_step = 0;
+            if (seq.current_song_step >= get_song_length() )
+            {
+              seq.current_song_step = 0;
+              seq.chain_counter[d] = 0;
+            }
+          }
+          else
+          {
+            if (seq.loop_start == seq.loop_end && seq.current_song_step > seq.loop_start) //loop only a single step
+            {
+              seq.current_song_step = seq.loop_start;
+              seq.chain_counter[d] = 0;
+            }
+
+            // if loop is on and changed during playback and new loop values are lower than current playing range, get back into the new loop range
+            else  if (seq.loop_start > seq.loop_end && seq.current_song_step == seq.loop_start + 1) //start is higher than end - > loop around
+            {
+              seq.current_song_step = 0;
+              seq.chain_counter[d] = 0;
+            }
+            else if (seq.loop_start > seq.loop_end && seq.current_song_step == seq.loop_end + 1 && seq.loop_start != seq.loop_end + 1) //end is lower than start, jump to start at end
+            {
+              seq.current_song_step = seq.loop_start;
+              seq.chain_counter[d] = 0;
+            }
+            else if (seq.loop_start < seq.loop_end && seq.current_song_step >= seq.loop_end + 1  ) //normal case, loop from end to start
+            {
+              seq.current_song_step = seq.loop_start;
+              seq.chain_counter[d] = 0;
+            }
+
+            else if (seq.current_song_step >= get_song_length()  && seq.current_song_step > seq.loop_start && seq.current_song_step > seq.loop_end)
+            {
+              seq.current_song_step = 0;
+              seq.chain_counter[d] = 0;
+            }
+          }
+          if ( seq.chain_counter[d]  == find_longest_chain() && songstep_increased == false )
+          {
+            seq.current_song_step++;
+            for (uint8_t z = 0; z < NUM_SEQ_TRACKS; z++)
+            {
+              seq.chain_counter[z] = 0;
+            }
+            songstep_increased = true;
+          }
+          if (songstep_increased == true )
             seq.chain_counter[d] = 0;
-          }
         }
-        if ( seq.chain_counter[d]  == find_longest_chain() && songstep_increased == false )
-        {
-          seq.current_song_step++;
-          for (uint8_t z = 0; z < NUM_SEQ_TRACKS; z++)
-          {
-            seq.chain_counter[z] = 0;
-          }
-          songstep_increased = true;
-        }
-        if (songstep_increased == true )
-          seq.chain_counter[d] = 0;
       }
-}
     }
   }
 }
@@ -634,7 +662,7 @@ void sequencer_part2(void)
             handleNoteOff( microsynth[ seq.instrument[d] - 3].midi_channel, seq.prev_note[d], 0, 0);
 #endif
 #ifdef USE_BRAIDS
-          else if (seq.instrument[d] ==5 && seq.ticks == 7)
+          else if (seq.instrument[d] == 5 && seq.ticks == 7)
             handleNoteOff( seq.instrument[d], seq.prev_note[d] , 0, 4);
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
@@ -848,7 +876,7 @@ void update_braids_params()
 
           braids_filter[d]->frequency(braids_filter_state[d]);
         }
-      } 
+      }
       else
       {
         if (braids_filter_state[d] < braids_osc.filter_freq_to && braids_osc.filter_speed != 0)

@@ -8122,7 +8122,7 @@ void seq_pattern_editor_update_dynamic_elements()
     draw_button_on_grid(45, 20, "-", "-", 0);
 
     draw_button_on_grid(36, 26, "SONG", "EDITOR", 0);
-    draw_button_on_grid(45, 26, "-", "-", 0);
+    draw_button_on_grid(45, 26, "HUNT", "PATT", 0);
 
     if (seq.content_type[seq.active_pattern] == 0) //Drum Mode
     {
@@ -8163,6 +8163,48 @@ uint8_t find_track_in_song_where_pattern_is_used(uint8_t pattern)
           break;
         }
 
+      }
+    }
+  }
+  return result;
+}
+
+uint8_t find_first_song_step_with_pattern(uint8_t pattern)
+{
+  uint8_t result = 99;
+  for (uint8_t s = 0; s < SONG_LENGTH; s++)
+  {
+    for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)
+    {
+      for (uint8_t c = 0; c < 16; c++)
+      {
+        if (seq.chain[ seq.song[t][s] ][c] == pattern )
+        {
+          result = s;
+          return result;
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+uint8_t find_first_chain_step_with_pattern(uint8_t pattern)
+{
+  uint8_t result = 99;
+  for (uint8_t s = 0; s < SONG_LENGTH; s++)
+  {
+    for (uint8_t t = 0; t < NUM_SEQ_TRACKS; t++)
+    {
+      for (uint8_t c = 0; c < 16; c++)
+      {
+        if (seq.chain[ seq.song[t][s] ][c] == pattern )
+        {
+          result = c;
+          return result;
+          break;
+        }
       }
     }
   }
@@ -11334,6 +11376,7 @@ void UI_func_load_performance(uint8_t param)
           load_sd_performance_json(temp_int);
           seq.state_last_loadsave = temp_int;
           setCursor_textGrid(1, 2);
+          seq.play_mode=false;
           display.setTextColor(GREEN, COLOR_BACKGROUND);
           display.print(F("Done.           "));
         }

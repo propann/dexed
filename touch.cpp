@@ -700,10 +700,28 @@ FLASHMEM void handle_touchscreen_pattern_editor()
         seq.play_mode = false;
       else
         seq.play_mode = true;
+
       if (seq.play_mode == false) // is in full song more
+      {
         draw_button_on_grid(36, 20, "PLAYNG", "SONG", 0);
+        seq.hunt_pattern = false;
+        draw_button_on_grid(45, 26, "HUNT", "PATT", 0);
+      }
       else  // play only current pattern
         draw_button_on_grid(36, 20, "LOOP", "PATT", 2);
+      seq.generic_ui_delay = 0;
+    }
+     else if (check_button_on_grid(45,26) && seq.generic_ui_delay > 12000 ) // hunt pattern 
+    {
+      if (seq.hunt_pattern)
+        seq.hunt_pattern = false;
+      else
+        seq.hunt_pattern = true;
+
+      if (seq.hunt_pattern == false) 
+        draw_button_on_grid(45, 26, "HUNT", "PATT", 0);
+      else  // play only current pattern
+        draw_button_on_grid(45, 26, "HUNT", "PATT", 2);
       seq.generic_ui_delay = 0;
     }
     else if (check_button_on_grid(36, 26) && seq.generic_ui_delay > 12000 ) // jump song editor
