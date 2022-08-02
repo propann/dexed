@@ -7529,13 +7529,13 @@ void seq_sub_copy_swap ()
       seq.active_function = 0;
       activesample = 0;
       temp_int = seq.note_data[seq.active_pattern][0];
-      setCursor_textGrid(15, 1);
+      setCursor_textGrid(14, 0);
       display.print(" ");
-      setCursor_textGrid(18, 1);
+      setCursor_textGrid(17, 0);
       display.print(" ");
-      setCursor_textGrid(2, 1);
+      setCursor_textGrid(1, 0);
       display.print(F("         "));
-      setCursor_textGrid(17, 2);
+      setCursor_textGrid(16, 1);
       display.print(F("  "));
       seq_refresh_display_play_status();
       seq_printAllSeqSteps();
@@ -7557,33 +7557,40 @@ void seq_sub_copy_swap ()
       seq.menu = 0;
       seq.active_function = 0;
       activesample = 0;
-      setCursor_textGrid(15, 1);
+      border3_clear();
+       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+      print_content_type();
+      display.setTextSize(2);
+      setCursor_textGrid(14, 0);
       display.print(" ");
-      setCursor_textGrid(18, 1);
+      setCursor_textGrid(17, 0);
       display.print(" ");
-      setCursor_textGrid(2, 1);
+      setCursor_textGrid(1, 0);
       display.print(F("         "));
-      setCursor_textGrid(17, 2);
+      setCursor_textGrid(16, 1);
       display.print("  ");
       temp_int = seq.note_data[seq.active_pattern][0];
       seq_refresh_display_play_status();
       seq_printAllSeqSteps();
-      print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+        if (seq.content_type[seq.active_pattern] == 0)  
+    print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+    else
+    print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
     }
 
     if ( seq.menu == 0 && seq.active_function == 0)
     {
       if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 3) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 114) )
       { //swap patterns: Active pattern <-> destination pattern
-        setCursor_textGrid(1, 1);
-        display.print("SwapPattern:");
+        setCursor_textGrid(0, 0);
+        display.print(F("SwapPattern: "));
         temp_int = seq.active_pattern + 1;
         if (temp_int > NUM_SEQ_PATTERN - 1)temp_int = 0;
         seq.menu = 30;
       }
       else if ( (  seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 2) || ( seq.content_type[seq.active_pattern] > 0 && temp_int == 113) )
       { //copy pattern
-        setCursor_textGrid(1, 1);
+        setCursor_textGrid(0, 0);
         display.print(F("Copy Pattern:"));
         temp_int = seq.active_pattern + 1;
         if (temp_int > NUM_SEQ_PATTERN - 1)temp_int = 0;
@@ -7595,24 +7602,24 @@ void seq_sub_copy_swap ()
 
   if (seq.menu == 31)
   { //copy pattern
-    setCursor_textGrid(15, 1);
+    setCursor_textGrid(14, 0);
     display.print("[");
-    setCursor_textGrid(18, 1);
+    setCursor_textGrid(17, 0);
     display.print("]");
-    setCursor_textGrid(1, 2);
+    setCursor_textGrid(0, 1);
     display.print(F("          to: [  ]"));
-    setCursor_textGrid(16, 2);
+    setCursor_textGrid(15, 1);
     print_formatted_number(temp_int, 2);
   }
   else if (seq.menu == 30)
   { //swap pattern
-    setCursor_textGrid(15, 1);
+    setCursor_textGrid(14, 0);
     display.print("[");
-    setCursor_textGrid(18, 1);
+    setCursor_textGrid(17, 0);
     display.print("]");
-    setCursor_textGrid(1, 2);
-    display.print(F("        with: [  ]"));
-    setCursor_textGrid(16, 2);
+    setCursor_textGrid(0, 1);
+    display.print(F("       with:  [  ]"));
+    setCursor_textGrid(15, 1);
     print_formatted_number(temp_int, 2);
   }
 }
@@ -7695,22 +7702,24 @@ void seq_sub_pattern_fill ()
       seq.active_function = 0;
       activesample = 0;
       temp_int = seq.note_data[seq.active_pattern][0];
-      setCursor_textGrid(2, 1);
+      setCursor_textGrid(1, 0);
       display.print("         ");
-      setCursor_textGrid(17, 2);
+      setCursor_textGrid(16, 1);
       display.print("  ");
       seq_refresh_display_play_status();
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
-      print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
-
+       if (seq.content_type[seq.active_pattern] == 0)  
+    print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+    else
+    print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
     }
     else if ( seq.menu == 0 && seq.active_function == 0)
     {
 
       if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 4) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 115) )
       { //fill patterns
-        setCursor_textGrid(1, 1);
+        setCursor_textGrid(0, 0);
         display.print(F("Fill Pattern:"));
         seq.menu = 32;
         seq.temp_select_menu = 0;
@@ -7722,11 +7731,9 @@ void seq_sub_pattern_fill ()
 
   if (seq.menu == 33)  //editor step 2
   { //fill pattern 2nd parameter
-    setCursor_textGrid(6, 2);
+    setCursor_textGrid(5, 1);
     display.print(" ");
-    setCursor_textGrid(13, 2);
-    display.print(" ");
-    setCursor_textGrid(13, 2);
+    setCursor_textGrid(12, 1);
     display.print("[");
     if (seq.temp_active_menu == 0) display.print(F(" 1/4"));
     else if (seq.temp_active_menu == 1) display.print(F(" 1/8"));
@@ -7737,26 +7744,26 @@ void seq_sub_pattern_fill ()
   { //fill pattern
     if (seq.content_type[seq.active_pattern] == 0)
     { //drum
-      setCursor_textGrid(1, 2);
+      setCursor_textGrid(0, 1);
       display.print("with [");
-      show(2, 7, 6, basename(drum_config[seq.temp_select_menu].name));
-      setCursor_textGrid(13, 2);
+      show(1, 6, 6, basename(drum_config[seq.temp_select_menu].name));
+      setCursor_textGrid(12, 1);
       display.print("]");
-      setCursor_textGrid(14, 2);
+      setCursor_textGrid(13, 1);
       if (seq.temp_active_menu == 0) display.print(F(" 1/4"));
       else if (seq.temp_active_menu == 1) display.print(F(" 1/8"));
       else if (seq.temp_active_menu == 2) display.print(F("1/16"));
     }
     else
     { //inst
-      setCursor_textGrid(1, 2);
+      setCursor_textGrid(0, 1);
       display.print("with [");
       display.print(noteNames[seq.temp_select_menu % 12 ]);
       display.print( (seq.temp_select_menu / 12) - 1);
-      display.print(" ");
-      setCursor_textGrid(13, 2);
+      display.print(F("   "));
+      setCursor_textGrid(12, 1);
       display.print("]");
-      setCursor_textGrid(14, 2);
+      setCursor_textGrid(13, 1);
       if (seq.temp_active_menu == 0) display.print(F(" 1/4"));
       else if (seq.temp_active_menu == 1) display.print(F(" 1/8"));
       else if (seq.temp_active_menu == 2) display.print(F("1/16"));
@@ -7789,23 +7796,23 @@ void seq_sub_pattern_transpose ()
       seq.active_function = 0;
       activesample = 0;
       temp_int = seq.note_data[seq.active_pattern][0];
-      setCursor_textGrid(16, 1);
+      setCursor_textGrid(14, 1);
       print_formatted_number(seq.active_pattern, 2);
       seq_refresh_display_play_status();
       seq_printAllSeqSteps();
-      setCursor_textGrid(2, 1);
+      setCursor_textGrid(2, 0);
       display.print("         ");
-      setCursor_textGrid(15, 1);
+      setCursor_textGrid(13, 0);
       display.print(" ");
-      setCursor_textGrid(18, 1);
+      setCursor_textGrid(16, 0);
       display.print(" ");
     }
     if ( seq.menu == 0 && seq.active_function == 0)
     {
       if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 5) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 116) )
       { //transpose pattern
-        setCursor_textGrid(1, 1);
-        display.print(F("Transpose:   [ 00]"));
+        setCursor_textGrid(1, 0);
+        display.print(F("Transpose: [ 00] "));
         for (uint8_t i = 0; i < 16; i++)
         {
           seq.data_buffer[i] = seq.note_data[seq.active_pattern][i];
@@ -7822,7 +7829,7 @@ void seq_sub_pattern_transpose ()
   if (seq.menu == 34 && seq.active_function == 94)
   { //transpose
     char displayname[4] = {0, 0, 0, 0};
-    setCursor_textGrid(14, 1);
+    setCursor_textGrid(12, 0);
     display.print("[");
     if (temp_int > 0) {
       display.print("+");
@@ -7838,20 +7845,26 @@ void seq_sub_pattern_transpose ()
     display.print("]");
     for (uint8_t i = 0; i < 16; i++)
     {
-      if (seq.content_type[seq.active_pattern] == 0) { //drums
+      if (seq.content_type[seq.active_pattern] == 0) 
+      { //drums
         if (seq.data_buffer[i] != 0 && seq.data_buffer[i] + temp_int >= 0 && seq.data_buffer[i] + temp_int < 254
             && seq.vel[seq.active_pattern][i] >= 210 ) // pitched drums only
           seq.note_data[seq.active_pattern][i] = seq.data_buffer[i] + temp_int;
       }
       else
         //instruments
-        if (seq.content_type[seq.active_pattern] > 0) {
+        if (seq.content_type[seq.active_pattern] > 0)
+        {
           if (seq.data_buffer[i] != 0 && seq.data_buffer[i] != 130 && seq.data_buffer[i] + temp_int > 0 && seq.data_buffer[i] + temp_int < 254)
             seq.note_data[seq.active_pattern][i] = seq.data_buffer[i] + temp_int;
         }
     }
     seq_printAllSeqSteps();
-    print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+    if (seq.content_type[seq.active_pattern] == 0)  
+    print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+    else
+    print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
+    
   }
 }
 
@@ -8218,14 +8231,13 @@ void pattern_editor_menu_0()
     } else //Inst. Mode
     {
       if (temp_int < 109)
-      {
-        setCursor_textGrid(2, 0);
-        display.print("    ");
+      { 
         setCursor_textGrid(1, 0);
         if (seq.content_type[seq.active_pattern] == 1) //Inst
         {
           display.print(noteNames[temp_int % 12 ]);
           display.print( (temp_int / 12) - 1);
+          display.print(F("  "));
         }
         else if (seq.content_type[seq.active_pattern] == 2) //Chord
         {
@@ -8233,6 +8245,7 @@ void pattern_editor_menu_0()
           setCursor_textGrid(1, 0);
           display.print(noteNames[temp_int % 12 ]);
           display.print( (temp_int / 12) - 1);
+          display.print(F("  "));
         }
       } else if (temp_int == 109)
       {
@@ -8269,9 +8282,13 @@ void pattern_editor_menu_0()
       }
       setCursor_textGrid(10, 0);
       display.print("]");
+      if (temp_int == 108)
+      {
+        setCursor_textGrid(5, 0);
+        display.print(F("  "));
+      } 
     }
   }
-
 }
 
 void UI_func_seq_pattern_editor(uint8_t param)

@@ -97,6 +97,7 @@ extern void mb_set_compressor();
 ts_t ts; //touch screen
 fm_t fm; //file manager
 dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and release
+extern int temp_int;
 
 extern uint16_t COLOR_BACKGROUND;
 extern uint16_t COLOR_SYSTEXT;
@@ -711,20 +712,27 @@ FLASHMEM void handle_touchscreen_pattern_editor()
       seq.generic_ui_delay = 0;
     }
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) )
-     if (check_button_on_grid(45, 20) && seq.generic_ui_delay > 12000 ) // jump pattern editor functions
-    {
-      
-      draw_button_on_grid(45, 20, "JUMP", "TOOLS", 2);
-       
-{
-    activesample = NUM_DRUMSET_CONFIG;
-      seq.menu = 0;
-      seq.active_function = 0;
-      pattern_editor_menu_0();
-}
+      if (check_button_on_grid(45, 20) && seq.generic_ui_delay > 12000 ) // jump pattern editor functions
+      {
 
-      seq.generic_ui_delay = 0;
-    }
+       if (seq.content_type[seq.active_pattern]==0)
+        {
+          draw_button_on_grid(45, 20, "JUMP", "TOOLS", 2);
+          activesample = NUM_DRUMSET_CONFIG;
+          seq.menu = 0;
+          seq.active_function = 0;
+          pattern_editor_menu_0();
+        }
+        else
+        {
+          draw_button_on_grid(45, 20, "JUMP", "TOOLS", 2);
+          temp_int = 111;
+          seq.menu = 0;
+          seq.active_function = 0;
+          pattern_editor_menu_0();
+        }
+        seq.generic_ui_delay = 0;
+      }
 
     if ( ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
     {
