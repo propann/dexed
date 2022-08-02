@@ -160,8 +160,7 @@ This project lives from the contributions of C++ developers, testers, reviewers.
 
 ## If you want to donate to this project, please check out this link:
 
-<script src="https://liberapay.com/positionhigh/widgets/button.js"></script>
-<noscript><a href="https://liberapay.com/positionhigh/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
+<a href="https://liberapay.com/positionhigh/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
 
 ## CURRENT Screenshots:
 
