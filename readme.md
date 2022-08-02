@@ -46,7 +46,9 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 [https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 ](https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl)
 
+## If you want to donate to this project, please check out this link:
 
+<a href="https://liberapay.com/positionhigh/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
 
 ### User Chat group
 
@@ -157,10 +159,6 @@ This project lives from the contributions of C++ developers, testers, reviewers.
 
 ## SURVEY / POLL: Let us know what you want to see
 [https://www.supersurvey.com/poll4335406x48364DD1-136](https://www.supersurvey.com/poll4335406x48364DD1-136)
-
-## If you want to donate to this project, please check out this link:
-
-<a href="https://liberapay.com/positionhigh/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
 
 ## CURRENT Screenshots:
 
