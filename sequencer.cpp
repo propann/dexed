@@ -201,7 +201,7 @@ void sequencer_part1(void)
       if (seq.hunt_pattern == false)
       {
         seq.track_mute[d] = false;
-       seq.current_chain[d] = seq.song[d][seq.current_song_step];
+        seq.current_chain[d] = seq.song[d][seq.current_song_step];
         seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
       }
       else if (seq.hunt_pattern)
@@ -1379,37 +1379,37 @@ void print_single_pattern_pianoroll_in_pattern_editor (int xpos, int ypos, uint8
   display.setTextColor(COLOR_SYSTEXT);
   for (from_step = 0; from_step < to_step; from_step++)
   {
-    // if ( (ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note))) > 5 * CHAR_height + 10 )
-    // {
-
-    if ( seq.note_data[pattern][from_step] != 0 && seq.note_data[pattern][from_step]  != 130)
+    if ( (ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note))) > 4 * CHAR_height + 8 )
     {
-      if (from_step == actstep)
-        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
-      else
-        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_INSTR  );
-      last_valid_note = seq.note_data[pattern][from_step];
-    }
-    else if ( seq.note_data[pattern][from_step]  == 130) //last valid note was latch
-    {
-      if (from_step == actstep)
-        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * ( last_valid_note  - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
-      else
-        display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * ( last_valid_note  - lowest_note) ) , 5, 5, GREEN  );
-    }
-    else if (  from_step == actstep)
-    {
-      // if (last_valid_note != 0)
-      display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_SYSTEXT );
-    }
-    if (from_step < 15 )
-    {
-      if ( seq.note_data[pattern][from_step + 1] == 0)
+      if ( seq.note_data[pattern][from_step] != 0 && seq.note_data[pattern][from_step]  != 130)
       {
-        if (seq.piano[last_valid_note % 12 - lowest_note] == 0 ) // is a white key
-          display.fillRect  ( xpos + 36 + (from_step + 1) * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREY3); // GRID white key
+        if (from_step == actstep)
+          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
         else
-          display.fillRect  ( xpos + 36 + (from_step + 1) * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREY4); // GRID black key
+          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (seq.note_data[pattern][from_step] - lowest_note) ) , 5, 5, COLOR_INSTR  );
+        last_valid_note = seq.note_data[pattern][from_step];
+      }
+      else if ( seq.note_data[pattern][from_step]  == 130) //last valid note was latch
+      {
+        if (from_step == actstep)
+          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * ( last_valid_note  - lowest_note) ) , 5, 5, COLOR_SYSTEXT  );
+        else
+          display.fillRect ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * ( last_valid_note  - lowest_note) ) , 5, 5, GREEN  );
+      }
+      else if (  from_step == actstep)
+      {
+        // if (last_valid_note != 0)
+        display.fillRect  ( xpos + 36 + from_step * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, COLOR_SYSTEXT );
+      }
+      if (from_step < 15 )
+      {
+        if ( seq.note_data[pattern][from_step + 1] == 0)
+        {
+          if (seq.piano[last_valid_note % 12 - lowest_note] == 0 ) // is a white key
+            display.fillRect  ( xpos + 36 + (from_step + 1) * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREY3); // GRID white key
+          else
+            display.fillRect  ( xpos + 36 + (from_step + 1) * 10,  ypos - 10 - (8.15 * notes_display_shift )  - (8.15 * (last_valid_note - lowest_note) ) , 5, 5, GREY4); // GRID black key
+        }
       }
     }
   }
