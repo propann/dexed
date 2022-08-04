@@ -1454,14 +1454,14 @@ void update_display_functions_while_seq_running()
     { //update static cursor while moving cursor running in pattern editor
       setCursor_textGrid(seq.menu - 3, 1);
       display.setTextSize(2);
-      display.setTextColor(GREEN, GREY2);
+      display.setTextColor(COLOR_SYSTEXT, RED);
       display.print(seq_find_shortname(seq.menu - 3)[0]);
     }
     else  if ( seq.menu < 16 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
     { //update static cursor while moving cursor running in vel editor
       setCursor_textGrid(seq.menu - 1, 1);
       display.setTextSize(2);
-      display.setTextColor(GREEN, GREY2);
+      display.setTextColor(COLOR_SYSTEXT, RED);
       display.print(seq_find_shortname(seq.menu - 1)[0]);
     }
 
@@ -6323,8 +6323,6 @@ void UI_draw_waveform_large()  // for flash
 
     f.close();
   }
-
-
 }
 #endif
 
@@ -6526,26 +6524,6 @@ void print_edit_mode()
       display.setTextColor(COLOR_SYSTEXT, PINK);
       display.print(F("VEL./CHORDS"));
     }
-    //    else if (seq.menu == 19)
-    //    {
-    //      display.setTextColor(COLOR_BACKGROUND, RED);
-    //      display.print(F("CONT. TYPE "));
-    //      //      display.setCursor(175 , 71 - 17);
-    //      //      display.setTextColor(DARKGREEN, COLOR_SYSTEXT);
-    //      //      display.print(seq.active_pattern);
-    //      //      display.print(" ");
-    //    }
-    //    else if (seq.menu > 20 && seq.menu < 29)
-    //    {
-    //      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    //      display.print(F("TRACK TYPE "));
-    //    }
-    //    else if (seq.menu > 28 && seq.menu < 37)
-    //    {
-    //      display.setTextColor(COLOR_BACKGROUND, DX_DARKCYAN);
-    //      display.print(F("DEXED/EP A."));
-    //    }
-
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
   {
@@ -6718,28 +6696,6 @@ void seq_sub_display_menu_logic()
         seq.note_editor_view = 1;
     }
   }
-  //  for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++)  // select track type
-  //  {
-  //    if (seq.active_function == 1 && seq.menu == 21 + i) // edit track type
-  //    {
-  //      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-  //      {
-  //        if (LCDML.BT_checkDown())
-  //          seq.track_type[i] = constrain(seq.track_type[i] + 1, 0, 3);
-  //        else if (LCDML.BT_checkUp())
-  //          seq.track_type[i] = constrain(seq.track_type[i] - 1, 0, 3);
-  //      }
-  //    }
-  //    else if (seq.active_function == 1 && seq.menu == 21 + i + NUM_SEQ_TRACKS) // edit dexed/instrument assign
-  //    {
-  //      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-  //      {
-  //        if (LCDML.BT_checkDown())
-  //          seq.instrument[i] = constrain(seq.instrument[i] + 1, 0, 47);
-  //        else if (LCDML.BT_checkUp())
-  //          seq.instrument[i] = constrain(seq.instrument[i] - 1, 0, 47);
-  //      }
-  //    }
 
   if (seq.active_function == 1 && seq.menu == 20) // edit auto/manual advance in step recorder
   {
@@ -6992,7 +6948,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.print(" ");
 
       setCursor_textGrid(0, 1);
-      display.setTextColor(GREEN, GREY2);
+      display.setTextColor(COLOR_SYSTEXT,RED);
       setCursor_textGrid(0, 1);
       display.print(seq_find_shortname(0)[0] );
 
@@ -7001,12 +6957,12 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.print(seq_find_shortname(1)[0] );
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-//      if (seq.vel[seq.active_pattern][seq.menu - 1] < 210 && seq.content_type[seq.active_pattern] < 2) //it is a normal sample
-//      {
-//        sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
-//        setCursor_textGrid(4, 0);
-//        display.print(tmp);                     //phtodo
-//      }
+      //      if (seq.vel[seq.active_pattern][seq.menu - 1] < 210 && seq.content_type[seq.active_pattern] < 2) //it is a normal sample
+      //      {
+      //        sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
+      //        setCursor_textGrid(4, 0);
+      //        display.print(tmp);                     //phtodo
+      //      }
     }
     else if (seq.menu > 1 && seq.menu < 17 )
     {
@@ -7020,7 +6976,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.print(seq_find_shortname(seq.menu - 2)[0] );
 
       setCursor_textGrid(seq.menu - 1 , 1);
-      display.setTextColor(GREEN, GREY2);
+      display.setTextColor(COLOR_SYSTEXT,RED);
       display.print(seq_find_shortname(seq.menu - 1)[0] );
       set_pattern_content_type_color(seq.active_pattern);
 
@@ -7153,7 +7109,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       else
       {
         setCursor_textGrid(0, 0);
-        display.print("              ");
+        display.print(F("              "));
         if (seq.menu - 1 > 0)
           seq_printVelGraphBar_single_step(seq.menu - 2, GREY1); //previous
         if (seq.menu - 1 < 15)
@@ -7185,7 +7141,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         display.setTextSize(2);
         setCursor_textGrid(15 , 1);
         display.print(seq_find_shortname(15)[0] );
-       display.setTextSize(1);
+        display.setTextSize(1);
         display.setCursor(0, 3 * CHAR_height + 17);
         display.setTextColor(GREEN, COLOR_BACKGROUND);
         display.print(F("EDIT CONTENT TYPE OF PAT. "));
@@ -7197,14 +7153,12 @@ void UI_func_seq_vel_editor(uint8_t param)
       print_edit_mode();
       display.setTextSize(1);
       if (seq.active_function != 1)
-      display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+        display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
       else
-      display.setTextColor(COLOR_SYSTEXT,RED);
+        display.setTextColor(COLOR_SYSTEXT, RED);
       display.setCursor(0, CHAR_height * 3 + 3);
-      
       display.print("CONT.TYPE:");
       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
-
       print_content_type();
       display.setTextSize(2);
       seq_printAllSeqSteps();
@@ -7217,7 +7171,6 @@ void UI_func_seq_vel_editor(uint8_t param)
       }
       else
         print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
-      //seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
 
     else if (seq.menu > 19  && seq.menu < 21) // sub menus functions
@@ -7234,112 +7187,6 @@ void UI_func_seq_vel_editor(uint8_t param)
       // disable menu 19 end
     }
 
-    //      print_edit_mode();
-    //      display.setTextSize(1);
-    //      display.setCursor(0, 3 * CHAR_height + 17);
-    //      if (seq.active_function != 1)
-    //      {
-    //        display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //        display.print(F("EDIT THE TRACK TYPE OF "));
-    //        display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //        display.print(F("TRACK "));
-    //        display.print( seq.menu - 20);
-    //        display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //        display.print(F(" ?  "));
-    //
-    //        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //        display.setTextSize(2);
-    //      } else
-    //      {
-    //        display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //        display.print("ASSIGN TRACK TYPE : ");
-    //
-    //        set_track_type_color(seq.menu - 21);
-    //
-    //        if (seq.track_type[seq.menu - 21] == 0 )   display.print(F("Drums"));
-    //        else if (seq.track_type[seq.menu - 21] == 1 ) display.print(F("Instr."));
-    //        else if (seq.track_type[seq.menu - 21] == 2 ) display.print(F("Chord"));
-    //        else if (seq.track_type[seq.menu - 21] == 3 ) display.print(F("Arpeggio"));
-    //        display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //        display.print(" ?    ");
-    //        display.setTextSize(2);
-    //      }
-    //      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
-    //    }
-
-    //    else if (seq.menu > 20 + NUM_SEQ_TRACKS  && seq.menu < 21 + 2 * NUM_SEQ_TRACKS) // sub menus functions: assign dexed/other synth instance to tracks
-    //    {
-    //      print_edit_mode();
-    //      display.setTextSize(1);
-    //      display.setCursor(0, 3 * CHAR_height + 17);
-    //      if (seq.active_function != 1)
-    //      {
-    //        if (seq.track_type[seq.menu - 21 - NUM_SEQ_TRACKS] > 0 )
-    //        {
-    //          display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //          display.print(F("ASSIGN NEW INSTR. TO "));
-    //          display.setTextColor( COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //          display.print(F("TRACK "));
-    //          display.print( seq.menu - 20 - NUM_SEQ_TRACKS);
-    //          display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //          display.print(F(" ? "));
-    //          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //          fill_up_with_spaces_left_window();
-    //          display.setTextSize(2);
-    //        }
-    //        else
-    //        {
-    //          display.setTextColor( COLOR_BACKGROUND, COLOR_DRUMS);
-    //          display.print(F("TRACK TYPE"));
-    //          display.setTextColor(RED, COLOR_BACKGROUND);
-    //          display.print(F(" T"));
-    //          display.print( seq.menu - 20 - NUM_SEQ_TRACKS);
-    //          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //          display.print(F(" IS SET FOR "));
-    //          display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-    //          display.print(F("DRUMS/SMP"));
-    //        }
-    //      }
-    //      else
-    //      {
-    //        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //        display.print(F("SET TRACK TO: "));
-    //        display.setTextColor(GREEN, COLOR_BACKGROUND);
-    //        if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 2)
-    //        {
-    //          display.print(F("DEXED #"));
-    //          display.print(seq.instrument[seq.menu - 21 - 8] + 1);
-    //        }
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 2)
-    //          display.print(F("ELEC.PIANO"));
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 3)
-    //          display.print(F("MICROSYNTH #1"));
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 4)
-    //          display.print(F("MICROSYNTH #2"));
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] == 5)
-    //          display.print(F("BRAIDS OSC. "));
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 5 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 16)
-    //        { display.print(F("MULTISMP "));
-    //          print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 6, 2);
-    //        }
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 15 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 32)
-    //        {
-    //          display.print(F("MIDI USB #"));
-    //          print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 15, 2);
-    //        }
-    //        else if (seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] > 31 && seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] < 48)
-    //        {
-    //          display.print(F("MIDI DIN #"));
-    //          print_formatted_number(seq.instrument[seq.menu - 21 - NUM_SEQ_TRACKS] - 31, 2);
-    //        }
-    //        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //        display.print(F(" ?"));
-    //        fill_up_with_spaces_left_window();
-    //      }
-    //      seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
-    //    }
-
-
     else if (seq.menu == 16 )
     {
       display.setTextSize(1);
@@ -7347,11 +7194,9 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setCursor(0, CHAR_height * 3 + 3);
       display.print(F("CONT.TYPE:"));
       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
-
       print_content_type();
       display.setTextSize(2);
       print_edit_mode();
-      //seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
 
     if (seq.menu == 20 ) //edit step record
@@ -7367,15 +7212,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         display.setTextSize(2);
         setCursor_textGrid(15 , 1);
         display.print(seq_find_shortname(15)[0] );
-        //display.setCursor(0, 3 * CHAR_height + 17);
-        //display.setTextSize(1);
 
-        //            display.setTextColor(GREEN, COLOR_BACKGROUND);
-        //            display.print(F("EDIT CONTENT TYPE OF PATTERN "));
-        //            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        //            display.print(seq.active_pattern);
-        //            display.setTextColor(GREEN, COLOR_BACKGROUND);
-        //            display.print(" ? ");
         display.setCursor(0, 3 * CHAR_height + 17);
         display.setTextSize(1);
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -7402,24 +7239,6 @@ void UI_func_seq_vel_editor(uint8_t param)
         display.print ("KEEP CUR. STEP");
     }
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
-
-    //    if (seq.menu == 37 )
-    //    {
-    //      //seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
-    //      if (seq.active_function == 1)
-    //        display.setTextColor(COLOR_SYSTEXT, RED);
-    //      else
-    //        display.setTextColor(COLOR_BACKGROUND, RED);
-    //    }
-    //    else
-    //      display.setTextColor(RED, COLOR_BACKGROUND);
-    //    display.setCursor(CHAR_width_small * 36,  11 * (CHAR_height_small + 2) + 10  );
-
-    //    display.setCursor(CHAR_width_small * 20,  11 * (CHAR_height_small + 2) + 10  );
-    //    display.print( seq.menu);
-    //    display.print( "  ");
-
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
@@ -8752,7 +8571,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
         setCursor_textGrid(0, 1);
       else
         setCursor_textGrid(seq.menu - 3, 1);
-      display.setTextColor(GREEN, GREY2);
+      display.setTextColor(COLOR_SYSTEXT, RED);
       display.print(seq_find_shortname(seq.menu - 3)[0]);
       if (seq.menu > 3)
       {
