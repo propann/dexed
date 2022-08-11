@@ -317,7 +317,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 29, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 2);
+                  handleNoteOn(seq.instrument[d] - 31, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 2);
                 }
 #endif
               }
@@ -378,7 +378,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 29, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 2);
+                handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 2);
 
               }
 #endif
@@ -415,7 +415,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 29, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 2);
+                handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 2);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift] ;
@@ -451,7 +451,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 29, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 2);
+                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 2);
                 }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] ;
@@ -485,7 +485,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 29, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 2);
+                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 2);
                 }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] ;
@@ -521,7 +521,7 @@ void sequencer_part1(void)
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 29, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 2);
+                handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 2);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12);
@@ -668,7 +668,7 @@ void sequencer_part2(void)
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 15 && seq.instrument[d] < 32 && seq.ticks == 7) // track is for external USB MIDI
           {
-            handleNoteOff(seq.instrument[d] - 14, seq.prev_note[d] , 0, 1);
+            handleNoteOff(seq.instrument[d] - 15, seq.prev_note[d] , 0, 1);
           }
 #endif
 #ifdef MIDI_DEVICE_DIN
@@ -693,7 +693,7 @@ void sequencer_part2(void)
               else if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
               {
 
-                handleNoteOff(seq.instrument[d] - 14, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 1);
+                handleNoteOff(seq.instrument[d] - 15, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 1);
               }
 #endif
 #ifdef MIDI_DEVICE_DIN
@@ -716,7 +716,7 @@ void sequencer_part2(void)
           else if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
           {
 
-            handleNoteOff(seq.instrument[d] - 14, seq.arp_note_prev, 0, 1);
+            handleNoteOff(seq.instrument[d] - 15, seq.arp_note_prev, 0, 1);
           }
 #endif
 #ifdef MIDI_DEVICE_DIN

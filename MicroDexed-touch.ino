@@ -2049,11 +2049,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   if (device == 2)
   {
     midi_serial.sendNoteOn(inNumber, inVelocity, inChannel);
-    //#ifdef DEBUG
-    //    Serial.print(F(" DIN OUT Channel:"));
-    //    Serial.print(inChannel);
-    //    Serial.println(" ");
-    //#endif
+//    #ifdef DEBUG
+//        Serial.print(F(" DIN OUT Channel:"));
+//        Serial.print(inChannel);
+//        Serial.println(" ");
+//        Serial.print(F(" DIN inNumber:"));
+//        Serial.print(inNumber);
+//        Serial.println(" ");
+//        Serial.print(F(" DIN inVelocity:"));
+//        Serial.print(inVelocity);
+//        Serial.println(" ");
+//    #endif
   }
 #endif
 
