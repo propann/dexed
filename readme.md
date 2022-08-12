@@ -17,6 +17,8 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 * "Large" Graphical Interface, view and edit multiple Parameters in one Screen
 
+* Use external MIDI gear over USB or MIDI Mini Jack (DIN MIDI with adaptor) from 2 x 16 MIDI Channels in the Sequencer
+
 * Map MIDI CC to external MIDI Devices to control Input/Parameters
 
 * Loading, playing and editing multi-sampled instruments or layered instruments in a "live" mode or played by the sequencer. Auto detection sample zones but also can be edited manually
