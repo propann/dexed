@@ -892,6 +892,7 @@ extern void handle_touchscreen_color_edit(void);
 extern void handle_touchscreen_arpeggio(void);
 extern void handle_touchscreen_braids(void);
 extern void handle_touchscreen_sample_editor(void);
+extern void sequencer_part2(void);
 
 /***********************************************************************
    SETUP
@@ -3372,6 +3373,7 @@ void handleStop(void)
 #if defined(USE_SEQUENCER)
   if (seq.running)
   {
+    sequencer_part2();
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
     {
       //      scope.clear();
