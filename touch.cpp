@@ -1081,7 +1081,7 @@ FLASHMEM void handle_touchscreen_arpeggio()
   if (touch.touched())
   {
     get_scaled_touch_point();
-    if (check_button_on_grid(42, 15) && seq.generic_ui_delay > 3000 )
+    if (check_button_on_grid(2, 16) && seq.generic_ui_delay > 3000 )
     {
       if (seq.running)
         handleStop();

@@ -65,7 +65,11 @@ typedef struct multisample_zone_s {
   uint8_t rev;        // reverb send
 } multisample_zone_t;
 
+
 typedef struct sequencer_s {
+  bool euclidean_state[16];
+  uint8_t euclidean_offset=5;
+  bool euclidean_active;
   bool DAC_mute_state = false;
   bool play_mode;  // false = song, true = current pattern only
   bool hunt_pattern=false;

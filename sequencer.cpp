@@ -192,7 +192,7 @@ void sequencer_part1(void)
     int tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
     if (seq.play_mode == false) // play mode: full song
     {
-      seq.track_mute[d] = false;
+      //seq.track_mute[d] = false;
       seq.current_chain[d] = seq.song[d][seq.current_song_step];
       seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
     }
@@ -200,7 +200,7 @@ void sequencer_part1(void)
     {
       if (seq.hunt_pattern == false)
       {
-        seq.track_mute[d] = false;
+        //seq.track_mute[d] = false;
         seq.current_chain[d] = seq.song[d][seq.current_song_step];
         seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
       }
@@ -210,15 +210,15 @@ void sequencer_part1(void)
         if (get_chain_length_from_current_track(d) >= find_first_chain_step_with_pattern(seq.active_pattern))
         {
           seq.chain_counter[d] = find_first_chain_step_with_pattern(seq.active_pattern);
-          seq.track_mute[d] = false;
+          //seq.track_mute[d] = false;
         }
         else if (get_chain_length_from_current_track(d) == 1)
         {
           seq.chain_counter[d] = 0;
-          seq.track_mute[d] = false;
+          //seq.track_mute[d] = false;
         }
         else
-          seq.track_mute[d] = true;
+          //seq.track_mute[d] = true;
         seq.current_chain[d] = seq.song[d][seq.current_song_step];
         seq.current_pattern[d] = seq.chain[  seq.current_chain[d] ] [ seq.chain_counter[d] ];
       }
@@ -341,7 +341,8 @@ void sequencer_part1(void)
           }
         }
         // after here not triggered by a key input -  arp only
-        if (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max)
+        if ( (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max && seq.euclidean_active==false) ||
+        (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max && seq.euclidean_active && seq.euclidean_state[seq.step] ) )
         { //Arp
           if (  (seq.arp_speed == 0 && seq.ticks == 0)  ||  (seq.arp_speed == 1 && seq.arp_counter == 0 && seq.ticks == 0) ||
                 (seq.arp_speed == 2 && seq.ticks == 0) || (seq.arp_speed == 2 && seq.ticks == 2) || (seq.arp_speed == 2 && seq.ticks == 4) || (seq.arp_speed == 2 && seq.ticks == 6) ||

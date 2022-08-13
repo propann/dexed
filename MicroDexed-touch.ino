@@ -1577,8 +1577,6 @@ void loop()
       scope.draw_scope(203, 138, 108);
   }
 
-
-
 #ifdef COMPILE_FOR_FLASH
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sample_editor))
   {

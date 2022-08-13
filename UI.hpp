@@ -170,6 +170,7 @@ extern AudioRecordQueue   record_queue_l;
 extern AudioRecordQueue   record_queue_r;
 extern char filename[CONFIG_FILENAME_LEN];
 extern void psram_test();
+void draw_euclidean_circle();
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -1469,10 +1470,11 @@ void update_display_functions_while_seq_running()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) //is in UI of Arpeggiator
   {
-    display.setTextSize(2);
-    setCursor_textGrid_large(11, 8);
+    display.setTextSize(1);
+    setCursor_textGrid_small(12, 11);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     print_current_chord();
+    draw_euclidean_circle();
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker)) //is in UI of Tracker
   {
@@ -6948,7 +6950,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.print(" ");
 
       setCursor_textGrid(0, 1);
-      display.setTextColor(COLOR_SYSTEXT,RED);
+      display.setTextColor(COLOR_SYSTEXT, RED);
       setCursor_textGrid(0, 1);
       display.print(seq_find_shortname(0)[0] );
 
@@ -6976,7 +6978,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.print(seq_find_shortname(seq.menu - 2)[0] );
 
       setCursor_textGrid(seq.menu - 1 , 1);
-      display.setTextColor(COLOR_SYSTEXT,RED);
+      display.setTextColor(COLOR_SYSTEXT, RED);
       display.print(seq_find_shortname(seq.menu - 1)[0] );
       set_pattern_content_type_color(seq.active_pattern);
 
@@ -10949,21 +10951,234 @@ void arp_refresh_display_play_status()
   if (seq.running == false )
   {
     //play symbol
-    drawBitmap(24 * CHAR_width - 4 , CHAR_height * 7 + 6, special_chars[19], 8, 8, GREEN);
+    drawBitmap(4 * CHAR_width - 4 , CHAR_height * 8 - 2 , special_chars[19], 8, 8, GREEN);
   }  else if (seq.running == true )
   {
     //stop symbol
-    drawBitmap(24 * CHAR_width - 4, CHAR_height * 7 + 6, special_chars[21], 8, 8, COLOR_SYSTEXT);
+    drawBitmap(4 * CHAR_width - 4, CHAR_height * 8 - 2 , special_chars[21], 8, 8, COLOR_SYSTEXT);
   }
 }
 
 void print_arp_start_stop_button()
 {
   if (seq.running)
-    draw_button_on_grid( 42, 15, "SEQ.", "STOP", 1 );
+    draw_button_on_grid( 2, 16, "SEQ.", "STOP", 1 );
   else
-    draw_button_on_grid( 42, 15, "SEQ.", "START", 0 );
+    draw_button_on_grid( 2, 16, "SEQ.", "START", 0 );
   arp_refresh_display_play_status();
+}
+
+void draw_euclidean_circle()
+{
+  uint8_t r = 61;
+  int a = 300;
+  int b = 210;
+  for (int i = 0; i < 16; i++)
+  {
+    double t = 2 * PI * i / 16;
+    int x = (int) a + r * cos(t);
+    int y = (int) b + r * sin(t);
+    if (i>3)
+    {
+    if ( seq.euclidean_state[i-4] )
+      display.fillCircle(x - r, y - r,  10, RED);
+    else
+      display.fillCircle(x - r, y - r,  10, GREY3);
+    }
+    else
+    {
+    if ( seq.euclidean_state[i+12] )
+      display.fillCircle(x - r, y - r,  10, RED);
+    else
+      display.fillCircle(x - r, y - r,  10, GREY3);
+    }
+  }
+  r = 41;
+  a = 300 - 20;
+  b = 210 - 20;
+  for (int i = 0; i < 16; i++)
+  {
+    double t = 2 * PI * i / 16;
+    int x = (int) a + r * cos(t);
+    int y = (int) b + r * sin(t);
+    if (seq.step > 4 )
+    {
+      if (i == seq.step - 5  )
+        display.fillCircle(x - r, y - r,  6, RED);
+      else
+        display.fillCircle(x - r, y - r,  6, GREY3);
+    }
+    else
+    {
+      if (i == seq.step + 11  )
+        display.fillCircle(x - r, y - r,  6, RED);
+      else
+        display.fillCircle(x - r, y - r,  6, GREY3);
+    }
+  }
+}
+
+//----------------------------- Euclid calculation functions ---------------------------------------//
+//--- the three functions below are taken directly from http://clsound.com/euclideansequenc.html ---//
+//--- acknowledgment to Craig Lee ------------------------------------------------------------------//
+
+//------------Function to right rotate n by d bits---------------------------------//
+uint16_t rightRotate(int shift, uint16_t value, uint8_t pattern_length) {
+  uint16_t mask = ((1 << pattern_length) - 1);
+  value &= mask;
+  return ((value >> shift) | (value << (pattern_length - shift))) & mask;
+}
+
+//----1---------Function to find the binary length of a number by counting bitwise-------//
+int findlength(unsigned int bnry) {
+  boolean lengthfound = false;
+  int length = 1; // no number can have a length of zero - single 0 has a length of one, but no 1s for the sytem to count
+  for (int q = 32; q >= 0; q--) {
+    int r = bitRead(bnry, q);
+    if (r == 1 && lengthfound == false) {
+      length = q + 1;
+      lengthfound = true;
+    }
+  }
+  return length;
+}
+
+//-----2--------Function to concatenate two binary numbers bitwise----------------------//
+unsigned int ConcatBin(unsigned int bina, unsigned int binb) {
+  int binb_len = findlength(binb);
+  unsigned int sum = (bina << binb_len);
+  sum = sum | binb;
+  return sum;
+}
+
+//------3-------------------Euclidean bit sorting funciton-------------------------------//
+unsigned int euclid(int n, int k, int o) { // inputs: n=total, k=beats, o = offset
+  int pauses = n - k;
+  int pulses = k;
+  int offset = o;
+  int steps = n;
+  int per_pulse = pauses / k;
+  int remainder = pauses % pulses;
+  unsigned int workbeat[n];
+  unsigned int outbeat;
+  uint16_t outbeat2;
+  int workbeat_count = n;
+  int a;
+  int b;
+  int trim_count;
+
+  for (a = 0; a < n; a++) { // Populate workbeat with unsorted pulses and pauses
+    if (a < pulses) {
+      workbeat[a] = 1;
+    }
+    else {
+      workbeat[a] = 0;
+    }
+  }
+
+  if (per_pulse > 0 && remainder < 2) { // Handle easy cases where there is no or only one remainer
+    for (a = 0; a < pulses; a++) {
+      for (b = workbeat_count - 1; b > workbeat_count - per_pulse - 1; b--) {
+        workbeat[a] = ConcatBin(workbeat[a], workbeat[b]);
+      }
+      workbeat_count = workbeat_count - per_pulse;
+    }
+
+    outbeat = 0; // Concatenate workbeat into outbeat - according to workbeat_count
+    for (a = 0; a < workbeat_count; a++) {
+      outbeat = ConcatBin(outbeat, workbeat[a]);
+    }
+
+    if (offset > 0) {
+      outbeat2 = rightRotate(offset, outbeat, steps); // Add offset to the step pattern
+    }
+    else {
+      outbeat2 = outbeat;
+    }
+
+    return outbeat2;
+  }
+
+  else {
+    if (pulses == 0) {
+      pulses = 1;  // Prevent crashes when k=0 and n goes from 0 to 1
+    }
+    int groupa = pulses;
+    int groupb = pauses;
+    int iteration = 0;
+    if (groupb <= 1) {
+    }
+
+    while (groupb > 1) { //main recursive loop
+
+      if (groupa > groupb) { // more Group A than Group B
+        int a_remainder = groupa - groupb; // what will be left of groupa once groupB is interleaved
+        trim_count = 0;
+        for (a = 0; a < groupa - a_remainder; a++) { //count through the matching sets of A, ignoring remaindered
+          workbeat[a] = ConcatBin(workbeat[a], workbeat[workbeat_count - 1 - a]);
+          trim_count++;
+        }
+        workbeat_count = workbeat_count - trim_count;
+
+        groupa = groupb;
+        groupb = a_remainder;
+      }
+
+      else if (groupb > groupa) { // More Group B than Group A
+        int b_remainder = groupb - groupa; // what will be left of group once group A is interleaved
+        trim_count = 0;
+        for (a = workbeat_count - 1; a >= groupa + b_remainder; a--) { //count from right back through the Bs
+          workbeat[workbeat_count - a - 1] = ConcatBin(workbeat[workbeat_count - a - 1], workbeat[a]);
+
+          trim_count++;
+        }
+        workbeat_count = workbeat_count - trim_count;
+        groupb = b_remainder;
+      }
+
+      else if (groupa == groupb) { // groupa = groupb
+        trim_count = 0;
+        for (a = 0; a < groupa; a++) {
+          workbeat[a] = ConcatBin(workbeat[a], workbeat[workbeat_count - 1 - a]);
+          trim_count++;
+        }
+        workbeat_count = workbeat_count - trim_count;
+        groupb = 0;
+      }
+
+      else {
+        //Serial.println("ERROR");
+      }
+      iteration++;
+    }
+
+    outbeat = 0; // Concatenate workbeat into outbeat - according to workbeat_count
+    for (a = 0; a < workbeat_count; a++) {
+      outbeat = ConcatBin(outbeat, workbeat[a]);
+    }
+
+    if (offset > 0) {
+      outbeat2 = rightRotate(offset, outbeat, steps); // Add offset to the step pattern
+    }
+    else {
+      outbeat2 = outbeat;
+    }
+
+    return outbeat2;
+  }
+}
+//------------------end euclidian math-------------------------------------//
+
+void show_euclidean()
+{
+  for (uint8_t i = 0; i < 16; i++)
+  {
+    if (bitRead(euclid(16, seq.arp_length, 16 - seq.euclidean_offset), i)  )
+      seq.euclidean_state[i] = true;
+    else
+      seq.euclidean_state[i] = false;
+  }
+  draw_euclidean_circle();
 }
 
 void UI_func_arpeggio(uint8_t param)
@@ -10974,30 +11189,36 @@ void UI_func_arpeggio(uint8_t param)
     seq.temp_select_menu = 0;
     seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
-    display.setTextSize(2);
+    display.setTextSize(1);
     seq.active_function = 0;
     setCursor_textGrid_large(1, 1);
     display.setTextColor(RED);
     display.print(F("ARPEGGIO SETTINGS"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_large( 1, 4);
+    setCursor_textGrid_small( 2, 4);
     display.print(F("LENGTH"));
-    setCursor_textGrid_large(14, 4);
+    setCursor_textGrid_small(15, 4);
     display.print(F("STEPS"));
-    setCursor_textGrid_large( 1, 5);
+    setCursor_textGrid_small( 2, 5);
     display.print(F("STYLE"));
-    setCursor_textGrid_large( 1, 6);
+    setCursor_textGrid_small( 2, 6);
     display.print(F("SPEED"));
+    setCursor_textGrid_small( 2, 7);
+    display.print(F("OFFSET"));
+    setCursor_textGrid_small( 2, 8);
+    display.print(F("MODE"));
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    setCursor_textGrid_large(1, 8);
+    setCursor_textGrid_small(2, 11);
     display.print(F("PLAYING:"));
-    setCursor_textGrid_large(10, 8);
+    setCursor_textGrid_small(11, 11);
     display.print(F("["));
-    setCursor_textGrid_large(18, 8);
+    setCursor_textGrid_small(19, 11);
     display.print(F("]"));
     print_arp_start_stop_button();
     helptext_l("BACK");
     display.setTextSize(2);
+    show_euclidean();
+
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
   {
@@ -11006,24 +11227,33 @@ void UI_func_arpeggio(uint8_t param)
       if (LCDML.BT_checkDown())
       {
         if ( seq.active_function == 0 )
-          seq.temp_select_menu = constrain(seq.temp_select_menu + 1, 0, 2);
+          seq.temp_select_menu = constrain(seq.temp_select_menu + 1, 0, 4);
         else if ( seq.temp_select_menu == 0 )
-          seq.arp_length = constrain(seq.arp_length + ENCODER[ENC_R].speed(), 0, 9);
+          seq.arp_length = constrain(seq.arp_length + ENCODER[ENC_R].speed(), 0, 16);
         else if ( seq.temp_select_menu == 1 )
           seq.arp_style = constrain(seq.arp_style + ENCODER[ENC_R].speed(), 0, 3);
         else if ( seq.temp_select_menu == 2 )
           seq.arp_speed = constrain(seq.arp_speed + ENCODER[ENC_R].speed(), 0, 3);
+        else if ( seq.temp_select_menu == 3 )
+          seq.euclidean_offset = constrain(seq.euclidean_offset + ENCODER[ENC_R].speed(), 0, 15);
+        else if ( seq.temp_select_menu == 4 )
+          seq.euclidean_active = !seq.euclidean_active;
+
       }
       else if (LCDML.BT_checkUp())
       {
         if ( seq.active_function == 0 )
-          seq.temp_select_menu = constrain(seq.temp_select_menu - 1, 0, 2);
+          seq.temp_select_menu = constrain(seq.temp_select_menu - 1, 0, 4);
         else if ( seq.temp_select_menu == 0 )
-          seq.arp_length = constrain(seq.arp_length - ENCODER[ENC_R].speed(), 0, 9);
+          seq.arp_length = constrain(seq.arp_length - ENCODER[ENC_R].speed(), 0, 16);
         else if ( seq.temp_select_menu == 1 )
           seq.arp_style = constrain(seq.arp_style - ENCODER[ENC_R].speed(), 0, 3);
         else if ( seq.temp_select_menu == 2 )
           seq.arp_speed = constrain(seq.arp_speed - ENCODER[ENC_R].speed(), 0, 3);
+        else if ( seq.temp_select_menu == 3 )
+          seq.euclidean_offset = constrain(seq.euclidean_offset - ENCODER[ENC_R].speed(), 0, 15);
+        else if ( seq.temp_select_menu == 4 )
+          seq.euclidean_active = !seq.euclidean_active;
       }
     }
     if (LCDML.BT_checkEnter()  && encoderDir[ENC_R].ButtonShort())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -11032,24 +11262,22 @@ void UI_func_arpeggio(uint8_t param)
         seq.active_function = 1;
       else
         seq.active_function = 0;
-
     }
-
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
+    show_euclidean();
     if ( seq.active_function == 0 )
       helptext_r("< > SELECT OPTION TO EDIT");
     else
       helptext_r("< > EDIT VALUE");
-    display.setTextSize(2);
+    display.setTextSize(1);
     if (seq.temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_large(10, 4);
+    setCursor_textGrid_small(11, 4);
     if (seq.arp_length == 0)
       display.print("ALL");
     else
       print_formatted_number( seq.arp_length, 3);//play all elements or from 1-xx elements
-    setCursor_textGrid_large(10, 5);
+    setCursor_textGrid_small(11, 5);
     for (uint8_t i = 0; i < 4; i++)
     {
       if (i == seq.arp_style && seq.temp_select_menu == 1)
@@ -11057,7 +11285,7 @@ void UI_func_arpeggio(uint8_t param)
       else if (i == seq.arp_style)
         display.setTextColor(RED, GREY3);
       else if (seq.temp_select_menu == 1)
-        display.setTextColor(COLOR_BACKGROUND, GREY3); else display.setTextColor(GREY1, GREY3);
+        display.setTextColor(COLOR_BACKGROUND, GREY3); else display.setTextColor(GREY2, GREY3);
       display.print( seq.arp_style_names[i][0] );
       display.print( seq.arp_style_names[i][1] );
       display.print( seq.arp_style_names[i][2] );
@@ -11066,17 +11294,46 @@ void UI_func_arpeggio(uint8_t param)
     }
     if (seq.temp_select_menu == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_large(10, 6);
+    setCursor_textGrid_small(11, 6);
     if (seq.arp_speed == 0)display.print("1/16 ");
     else if (seq.arp_speed == 1)display.print("1/8  ");
     else if (seq.arp_speed == 2)display.print("1/32 ");
     else if (seq.arp_speed == 3)display.print("1/64 ");
+
+    if (seq.temp_select_menu == 3)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(11, 7);
+    print_formatted_number( seq.euclidean_offset, 2);
+
+    if (seq.temp_select_menu != 4)
+    {
+      setCursor_textGrid_small(11, 8);
+      if (seq.euclidean_active)
+        display.setTextColor(GREY2, GREY3); else display.setTextColor(RED, GREY3);
+      display.print("LINEAR");
+      setCursor_textGrid_small(18, 8);
+      if (seq.euclidean_active)
+        display.setTextColor(RED, GREY3); else display.setTextColor(GREY2, GREY3);
+      display.print("EUCLIDEAN");
+    }
+    else
+    {
+      setCursor_textGrid_small(11, 8);
+      if (seq.euclidean_active)
+        display.setTextColor(GREY2, GREY3); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.print("LINEAR");
+      setCursor_textGrid_small(18, 8);
+      if (seq.euclidean_active)
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND); else display.setTextColor(GREY2, GREY3);
+      display.print("EUCLIDEAN");
+    }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
     seq.menu = 0;
     seq.active_function = 99;
     encoderDir[ENC_R].reset();
+
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -11230,30 +11487,30 @@ void UI_func_load_performance(uint8_t param)
       }
       else print_empty_spaces(11);
 
-      for (uint8_t nextslot = 1; nextslot < 5; nextslot++)
-      {
-        display.setTextColor(GREY3, COLOR_BACKGROUND);
-        setCursor_textGrid(1, 2 + nextslot);
-        if (temp_int + nextslot < 100)
-        {
-          sprintf(tmp, "[%2d] ", temp_int + nextslot);
-          display.print(tmp);
-          if (check_sd_performance_exists(temp_int + nextslot))
-          {
-            get_sd_performance_name_json(temp_int + nextslot);
-            if ( seq.name_temp[0] != 0 )
-              show(2 + nextslot, 6, 11, seq.name_temp);
-            else
-              display.print(F(" -- DATA --"));
-          }
-          else print_empty_spaces(11);
-        }
-        else
-        {
-          setCursor_textGrid(1, 2 + nextslot);
-          print_empty_spaces(11);
-        }
-      }
+      //      for (uint8_t nextslot = 1; nextslot < 5; nextslot++)
+      //      {
+      //        display.setTextColor(GREY3, COLOR_BACKGROUND);
+      //        setCursor_textGrid(1, 2 + nextslot);
+      //        if (temp_int + nextslot < 100)
+      //        {
+      //          sprintf(tmp, "[%2d] ", temp_int + nextslot);
+      //          display.print(tmp);
+      //          if (check_sd_performance_exists(temp_int + nextslot))
+      //          {
+      //            get_sd_performance_name_json(temp_int + nextslot);
+      //            if ( seq.name_temp[0] != 0 )
+      //              show(2 + nextslot, 6, 11, seq.name_temp);
+      //            else
+      //              display.print(F(" -- DATA --"));
+      //          }
+      //          else print_empty_spaces(11);
+      //        }
+      //        else
+      //        {
+      //          setCursor_textGrid(1, 2 + nextslot);
+      //          print_empty_spaces(11);
+      //        }
+      //      }
     }
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********

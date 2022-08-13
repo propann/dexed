@@ -146,7 +146,7 @@ class ILI9341_t3n : public Print {
     uint16_t readScanLine();
     void setFrameRateControl(uint8_t mode);
 
-   
+
     void writeRect(int16_t x, int16_t y, int16_t w, int16_t h,
                    const uint16_t *pcolors);
 
@@ -176,6 +176,12 @@ class ILI9341_t3n : public Print {
 
     // from Adafruit_GFX.h
 
+    void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
+    void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
+                          uint16_t color);
+    void fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
+    void fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
+                          int16_t delta, uint16_t color);
     void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w,
                     int16_t h, uint16_t color);
     void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
@@ -196,7 +202,7 @@ class ILI9341_t3n : public Print {
     uint8_t getTextSizeX();
     uint8_t getTextSizeY();
     uint8_t getTextSize();
-   
+
     // setOrigin sets an offset in display pixels where drawing to (0,0) will
     // appear
     // for example: setOrigin(10,10); drawPixel(5,5); will cause a pixel to be
@@ -255,12 +261,12 @@ class ILI9341_t3n : public Print {
     void drawFontChar(unsigned int c);
     void drawGFXFontChar(unsigned int c);
 
-//    void getTextBounds(const uint8_t *buffer, uint16_t len, int16_t x, int16_t y,
-//                       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
-//    void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1,
-//                       int16_t *y1, uint16_t *w, uint16_t *h);
-//    void getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
-//                       int16_t *y1, uint16_t *w, uint16_t *h);
+    //    void getTextBounds(const uint8_t *buffer, uint16_t len, int16_t x, int16_t y,
+    //                       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
+    //    void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1,
+    //                       int16_t *y1, uint16_t *w, uint16_t *h);
+    //    void getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
+    //                       int16_t *y1, uint16_t *w, uint16_t *h);
     //int16_t strPixelLen(const char *str, uint16_t cb = 0xffff); // optional number of characters...
 
     // added support for drawing strings/numbers/floats with centering
@@ -301,13 +307,13 @@ class ILI9341_t3n : public Print {
         (_displayclipx1 == _displayclipx2 || _displayclipy1 == _displayclipy2);
       _standard = (_displayclipx1 == 0) && (_displayclipx2 == _width) &&
                   (_displayclipy1 == 0) && (_displayclipy2 == _height);
-     
+
     }
 
     uint16_t textcolor, textbgcolor;
     uint32_t textcolorPrexpanded, textbgcolorPrexpanded;
     uint8_t textsize_x, textsize_y, rotation;
-   
+
     uint32_t padX;
 
     uint8_t _rst;
@@ -316,7 +322,7 @@ class ILI9341_t3n : public Print {
     uint8_t _miso, _mosi, _sclk;
 
     ///////////////////////////////
-   
+
 
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__)
     uint8_t pending_rx_count = 0; // hack ...
@@ -461,7 +467,7 @@ class ILI9341_t3n : public Print {
     }
 
 #endif
-   
+
 };
 
 #ifndef ILI9341_swap
