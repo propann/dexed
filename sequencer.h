@@ -122,7 +122,6 @@ typedef struct sequencer_s {
   uint8_t note_in_velocity;
   int transpose = 0;
   uint8_t last_drawn_sample = 99;
-  uint8_t chord_dexed_inst = 0;
   uint8_t chord_vel = 60;
   uint8_t chord_key_ammount = 4;
   uint8_t element_shift = 0;

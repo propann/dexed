@@ -5628,9 +5628,6 @@ void UI_func_seq_settings(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT);
     setCursor_textGrid_small(1, 10);
     display.print(F( "CHRD/ARP VELOCITY"));
-    setCursor_textGrid_small(1, 11);
-    display.print(F("CHORD INSTRUMENT"));
-
     display.setTextColor(GREY2);
     setCursor_textGrid_small(1, 13);
     display.print("LIVE TRANSPOSE");
@@ -5706,17 +5703,8 @@ void UI_func_seq_settings(uint8_t param)
           seq.chord_vel = constrain(seq.chord_vel - 1, 10, 120);
       }
     }
-    else if (temp_int == 5 && menu_select_toggle) // edit default chord instrument
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.chord_dexed_inst = constrain(seq.chord_dexed_inst + 1, 0, 4);
-        else if (LCDML.BT_checkUp())
-          seq.chord_dexed_inst = constrain(seq.chord_dexed_inst - 1, 0, 4);
-      }
-    }
-    else if (temp_int == 6 && menu_select_toggle)
+
+    else if (temp_int == 5 && menu_select_toggle)
     {
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up() ) )
       {
@@ -5726,7 +5714,7 @@ void UI_func_seq_settings(uint8_t param)
           seq.transpose = constrain(seq.transpose - ENCODER[ENC_R].speed(), 24, 60);
       }
     }
-    else if (temp_int == 7 && menu_select_toggle)
+    else if (temp_int == 6 && menu_select_toggle)
     {
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) )
       {
@@ -5742,9 +5730,9 @@ void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) )
       {
         if (LCDML.BT_checkDown())
-          temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 7);
+          temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 6);
         else if (LCDML.BT_checkUp())
-          temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 7);
+          temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 6);
       }
     }
     if (LCDML.BT_checkEnter())
@@ -5776,19 +5764,6 @@ void UI_func_seq_settings(uint8_t param)
     print_formatted_number(seq.chord_vel, 3);
     if (temp_int == 5)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(23, 11);
-    if (seq.chord_dexed_inst == 0)
-      display.print(F( "DEXED1"));
-    else if (seq.chord_dexed_inst == 1)
-      display.print(F( "DEXED2"));
-    else if (seq.chord_dexed_inst == 2)
-      display.print(F( "EPIANO"));
-    else if (seq.chord_dexed_inst == 3)
-      display.print(F( "SYNTH1"));
-    else if (seq.chord_dexed_inst == 4)
-      display.print(F( "SYNTH2"));
-    if (temp_int == 6)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 15);
     if (seq.transpose != 0)
     {
@@ -5804,20 +5779,18 @@ void UI_func_seq_settings(uint8_t param)
       setCursor_textGrid_small(29, 15);
       display.print(F("OFF"));
     }
-
-
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(13, 19);
     sprintf(displayname, "%03d", seq.tempo_ms / 1000);
     display.print(displayname);
-    if (temp_int == 7)
+    if (temp_int == 6)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 19);
     sprintf(displayname, "%03d", seq.bpm);
     display.print(displayname);
     seq.tempo_ms = 60000000 / seq.bpm / 4;
 
-    if (temp_int == 7)
+    if (temp_int == 6)
     {
       for (uint8_t i = 0; i < MAX_DEXED; i++)
       {

@@ -2386,7 +2386,6 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       data_json["arp_volume_fade"] = seq.arp_volume_fade;
       data_json["arp_style"] = seq.arp_style;
       data_json["seq_chord_vel"] = seq.chord_vel;
-      data_json["seq_chord_dexed_inst"] = seq.chord_dexed_inst;
       data_json["seq_transpose"] = seq.transpose;
       data_json["chord_key_ammount"] = seq.chord_key_ammount;
       data_json["seq_oct_shift"] = seq.oct_shift;
@@ -2751,7 +2750,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.arp_volume_fade = data_json["arp_volume_fade"];
         seq.arp_style = data_json["arp_style"];
         seq.chord_vel = data_json["seq_chord_vel"];
-        seq.chord_dexed_inst = data_json["seq_chord_dexed_inst"] ;
         seq.transpose = data_json["seq_transpose"];
         seq.chord_key_ammount = data_json["chord_key_ammount"];
         seq.oct_shift = data_json["seq_oct_shift"];

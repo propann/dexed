@@ -305,7 +305,7 @@ void sequencer_part1(void)
               for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
               {
                 if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 0);
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 0);
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
                   handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 0);
 
@@ -373,7 +373,7 @@ void sequencer_part1(void)
               }
               else  if (seq.instrument[d] < 2) // track is assigned to dexed
               {
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 0);
               }
               else if (seq.instrument[d] == 2) // track is assigned for epiano
                 handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel , 0);
@@ -415,7 +415,7 @@ void sequencer_part1(void)
               }
               else if (seq.instrument[d] < 2) // track is assigned to dexed
               {
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
               }
               else if (seq.instrument[d] == 2) // track is assigned for epiano
                 handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
@@ -459,7 +459,7 @@ void sequencer_part1(void)
 #endif
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
                   handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
 #ifdef MIDI_DEVICE_USB_HOST
@@ -498,7 +498,7 @@ void sequencer_part1(void)
 #endif
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
                   handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
 #ifdef MIDI_DEVICE_USB_HOST
@@ -540,7 +540,7 @@ void sequencer_part1(void)
               }
 #endif
               else if (seq.instrument[d] < 2) // track is assigned to dexed
-                handleNoteOn(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel , 0 );
+                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel , 0 );
               else if (seq.instrument[d] == 2) // track is assigned to epiano
                 handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 0);
 #ifdef MIDI_DEVICE_USB_HOST
@@ -718,7 +718,7 @@ void sequencer_part2(void)
             for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
             {
               if (seq.instrument[d] < 2) //dexed
-                handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 0);
+                handleNoteOff(configuration.dexed[seq.instrument[d]].midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 0);
               else if (seq.instrument[d] == 2)
                 handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 0);
 #ifdef MIDI_DEVICE_USB_HOST
@@ -746,7 +746,7 @@ void sequencer_part2(void)
         if (seq.track_type[d] == 3  )
         { //Arp
           if (seq.instrument[d] < 2 && seq.ticks == 7) //dexed
-            handleNoteOff(configuration.dexed[seq.chord_dexed_inst].midi_channel, seq.arp_note_prev, 0, 0);
+            handleNoteOff(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note_prev, 0, 0);
           else if (seq.instrument[d] == 2 && seq.ticks == 7)  //epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.arp_note_prev, 0, 0);
 #ifdef MIDI_DEVICE_USB_HOST
