@@ -10978,19 +10978,19 @@ void draw_euclidean_circle()
     double t = 2 * PI * i / 16;
     int x = (int) a + r * cos(t);
     int y = (int) b + r * sin(t);
-    if (i>3)
+    if (i > 3)
     {
-    if ( seq.euclidean_state[i-4] )
-      display.fillCircle(x - r, y - r,  10, RED);
-    else
-      display.fillCircle(x - r, y - r,  10, GREY3);
+      if ( seq.euclidean_state[i - 4] )
+        display.fillCircle(x - r, y - r,  10, RED);
+      else
+        display.fillCircle(x - r, y - r,  10, GREY3);
     }
     else
     {
-    if ( seq.euclidean_state[i+12] )
-      display.fillCircle(x - r, y - r,  10, RED);
-    else
-      display.fillCircle(x - r, y - r,  10, GREY3);
+      if ( seq.euclidean_state[i + 12] )
+        display.fillCircle(x - r, y - r,  10, RED);
+      else
+        display.fillCircle(x - r, y - r,  10, GREY3);
     }
   }
   r = 41;
@@ -11169,7 +11169,7 @@ unsigned int euclid(int n, int k, int o) { // inputs: n=total, k=beats, o = offs
 }
 //------------------end euclidian math-------------------------------------//
 
-void show_euclidean()
+void update_euclidean()
 {
   for (uint8_t i = 0; i < 16; i++)
   {
@@ -11178,6 +11178,11 @@ void show_euclidean()
     else
       seq.euclidean_state[i] = false;
   }
+}
+
+void show_euclidean()
+{
+  update_euclidean();
   draw_euclidean_circle();
 }
 

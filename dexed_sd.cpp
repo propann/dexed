@@ -47,6 +47,7 @@ extern void check_configuration_dexed(uint8_t instance_id);
 extern void check_configuration_performance(void);
 extern void check_configuration_fx(void);
 extern void check_configuration_epiano(void);
+extern void update_euclidean(void);
 
 #ifdef USE_MICROSYNTH
 extern microsynth_t microsynth[NUM_MICROSYNTH];
@@ -2390,6 +2391,8 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       data_json["chord_key_ammount"] = seq.chord_key_ammount;
       data_json["seq_oct_shift"] = seq.oct_shift;
       data_json["seq_element_shift"] = seq.element_shift;
+      data_json["euclidean_active"] = seq.euclidean_active;
+      data_json["euclidean_offset"] = seq.euclidean_offset;
       data_json["COLOR_SYSTEXT"] = COLOR_SYSTEXT;
       data_json["COLOR_SYSTEXT_ACCENT"] = COLOR_SYSTEXT_ACCENT;
       data_json["COLOR_BACKGROUND"] = COLOR_BACKGROUND;
@@ -2753,7 +2756,8 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.chord_key_ammount = data_json["chord_key_ammount"];
         seq.oct_shift = data_json["seq_oct_shift"];
         seq.element_shift = data_json["seq_element_shift"];
-
+        seq.euclidean_active = data_json["euclidean_active"];
+        seq.euclidean_offset = data_json["euclidean_offset"];
         if (data_json["COLOR_SYSTEXT"] != data_json["COLOR_BACKGROUND"])
         {
           COLOR_SYSTEXT = data_json["COLOR_SYSTEXT"];
@@ -2786,6 +2790,9 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         dac_unmute();
 
 #if defined(USE_SEQUENCER)
+
+        if (seq.euclidean_active)
+          update_euclidean();
 
         for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
         {
