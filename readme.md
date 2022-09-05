@@ -71,6 +71,7 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
 <br>
 Euclidean Arps
 <p>
+<br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multiband.png" >
 <br>
 Multiband Compressor/Waveshaper
