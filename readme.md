@@ -66,6 +66,11 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
 
 ### upcoming features/work in progess:
 
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/euc1.png" >
+<br>
+Euclidean Arps
+<p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multiband.png" >
 <br>
 Multiband Compressor/Waveshaper
