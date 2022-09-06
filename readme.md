@@ -66,7 +66,10 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
 
 ### upcoming features/work in progess:
 
-
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/chance1.png" >
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/chance2.png" >
+<br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/euc1.png" >
 <br>
 Euclidean Arps
@@ -170,8 +173,6 @@ This project lives from the contributions of C++ developers, testers, reviewers.
 
 ## CURRENT Screenshots:
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/chance1.png" >
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/chance2.png" >
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-002771.png" >
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-002496.png" >
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-004831.png" >
