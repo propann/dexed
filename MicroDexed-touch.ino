@@ -1316,6 +1316,12 @@ void setup()
   finalized_mixer_r.gain(1, 0);
 #endif
 
+  for (uint8_t pat = 0; pat < NUM_SEQ_PATTERN; pat++)
+  {
+    seq.pat_chance[pat] = 100;
+    seq.pat_vel_variation[pat] = 0;
+  }
+
 #ifdef DEBUG
   Serial.println(F("<setup end>"));
 #endif
@@ -2048,17 +2054,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   if (device == 2)
   {
     midi_serial.sendNoteOn(inNumber, inVelocity, inChannel);
-//    #ifdef DEBUG
-//        Serial.print(F(" DIN OUT Channel:"));
-//        Serial.print(inChannel);
-//        Serial.println(" ");
-//        Serial.print(F(" DIN inNumber:"));
-//        Serial.print(inNumber);
-//        Serial.println(" ");
-//        Serial.print(F(" DIN inVelocity:"));
-//        Serial.print(inVelocity);
-//        Serial.println(" ");
-//    #endif
+    //    #ifdef DEBUG
+    //        Serial.print(F(" DIN OUT Channel:"));
+    //        Serial.print(inChannel);
+    //        Serial.println(" ");
+    //        Serial.print(F(" DIN inNumber:"));
+    //        Serial.print(inNumber);
+    //        Serial.println(" ");
+    //        Serial.print(F(" DIN inVelocity:"));
+    //        Serial.print(inVelocity);
+    //        Serial.println(" ");
+    //    #endif
   }
 #endif
 
@@ -3414,7 +3420,7 @@ void handleStop(void)
   else
     seq.current_song_step = seq.loop_start;
 #endif
-  
+
 #if defined(USE_MICROSYNTH)
   microsynth_envelope_osc[0].noteOff();
   microsynth_envelope_osc[1].noteOff();

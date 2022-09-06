@@ -320,6 +320,9 @@ typedef struct sequencer_s {
 
   uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 , 0, 0}; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
 
+uint8_t pat_chance[NUM_SEQ_PATTERN];
+uint8_t pat_vel_variation[NUM_SEQ_PATTERN];
+    
 } sequencer_t;
 
 #endif

@@ -471,6 +471,7 @@ void UI_func_set_performance_name(uint8_t param);
 void UI_func_set_multisample_name(uint8_t param);
 void UI_func_volume(uint8_t param);
 void UI_func_smart_filter(uint8_t param);
+void UI_func_seq_probabilities(uint8_t param);
 void UI_func_mixer(uint8_t param);
 void UI_func_song(uint8_t param);
 void UI_func_drum_midi_channel(uint8_t param);
@@ -5318,6 +5319,176 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
     encoderDir[ENC_R].reset();
   }
 #endif
+}
+
+void pattern_preview_in_probability_editor(uint8_t line, uint8_t patternno)
+{
+  display.setTextSize(1);
+  seq.active_pattern = patternno;
+  display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
+  if (patternno == 99)
+  {
+    display.print(F("EMPTY "));
+  }
+  display.setTextColor(GREY1, GREY4);
+  display.print("[");
+  for (uint8_t i = 0; i < 16; i++)
+  {
+    if ( seq.vel[patternno][i] > 209 )
+      display.setTextColor(COLOR_PITCHSMP, GREY4);
+    else
+    {
+      if (seq.content_type[patternno] == 0) //Drumpattern
+        display.setTextColor(COLOR_DRUMS, GREY4);
+      else if (seq.content_type[patternno] == 1) //Instrument Pattern
+        display.setTextColor(COLOR_INSTR, GREY4);
+      else if (seq.content_type[patternno] == 2 || seq.content_type[patternno] == 3) //  chord or arp pattern
+        display.setTextColor(COLOR_CHORDS, GREY4);
+    }
+    if (patternno == 99)
+      display.print(F(" "));
+    else
+      display.print(seq_find_shortname(i)[0]);
+  }
+  display.setTextColor(GREY1, GREY4);
+  display.print("]");
+}
+
+void print_probabilities()
+{
+  for (uint8_t y = 0; y <  15; y++)
+  {
+    display.setTextSize(1);
+    if (y == temp_int - generic_temp_select_menu && generic_menu == 0)
+      display.setTextColor(  RED, GREY4);
+    else
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+    setCursor_textGrid_small(1, y + 6);
+    print_formatted_number(y + generic_temp_select_menu, 2);
+    setCursor_textGrid_small(11, y + 6);
+
+    if (y == temp_int - generic_temp_select_menu && generic_menu == 1)
+      display.setTextColor(  RED, GREY4);
+    print_formatted_number(seq.pat_chance[y + generic_temp_select_menu] , 3);
+    display.print(F(" %"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+    setCursor_textGrid_small(20, y + 6);
+
+    if ((y == temp_int - generic_temp_select_menu && generic_menu == 2) || ( y == temp_int - generic_temp_select_menu && generic_menu == 0))
+      display.setTextColor(  RED, GREY4);
+    else
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+    print_formatted_number(seq.pat_vel_variation[y + generic_temp_select_menu] , 3);
+    display.print(F(" %"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(29, y + 6);
+    pattern_preview_in_probability_editor(y + 6, y + generic_temp_select_menu);
+  }
+}
+
+void UI_func_seq_probabilities(uint8_t param)
+{
+  display.setTextSize(1);
+
+  if (LCDML.FUNC_setup())         // ****** SETUP *********
+  {
+    temp_int = 0;
+    generic_temp_select_menu = 0;
+    generic_menu = 0;
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+    helptext_l("BACK");
+    helptext_r("SELECT PATTERN");
+    //scrollbar - not implemented, yet
+    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 8 * CHAR_height_small - 4, CHAR_width_small * 2, 12 * 12 , COLOR_SYSTEXT);
+    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3 + 1, 8 * CHAR_height_small + 1 - 4, CHAR_width_small * 2 - 2, 6 * 12, GREY2);
+    display.setCursor(1 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 3);
+    display.setTextColor(COLOR_INSTR);
+    display.print(F("INSTR  "));
+    display.setTextColor(COLOR_DRUMS);
+    display.print(F("DRUM/SMP  "));
+    display.setTextColor(COLOR_PITCHSMP);
+    display.print(F("PITCHED SAMPLE  "));
+    display.setTextColor(COLOR_CHORDS);
+    display.print(F("CHORD  "));
+    display.setTextColor(COLOR_ARP);
+    display.print(F("ARP"));
+
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.setTextSize(1);
+    setCursor_textGrid_small(1, 1);
+    display.print(F("SEQUENCER PLAY PROBABILITIES"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+    setCursor_textGrid_small(1, 4);
+    display.print(F("PATTERN   CHANCE   VEL.+-   PREVIEW"));
+  }
+  if (LCDML.FUNC_loop())          // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
+    {
+      if (LCDML.BT_checkDown())
+      {
+        if ( generic_menu == 0)
+        {
+          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN);
+          if (generic_temp_select_menu < NUM_SEQ_PATTERN - 14 && temp_int > 14)
+            generic_temp_select_menu++;
+        }
+        else if ( generic_menu == 1)
+        {
+          seq.pat_chance[temp_int] = constrain(seq.pat_chance[temp_int] + 1, 0, 100);
+        }
+        else if ( generic_menu == 2)
+        {
+          seq.pat_vel_variation[temp_int] = constrain(seq.pat_vel_variation[temp_int] + 1, 0, 100);
+        }
+
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        if ( generic_menu == 0)
+        {
+          temp_int = constrain(temp_int - 1, 0, NUM_SEQ_PATTERN);
+          if (generic_temp_select_menu > 0  )
+            generic_temp_select_menu--;
+        }
+        else if ( generic_menu == 1)
+        {
+          seq.pat_chance[temp_int] = constrain(seq.pat_chance[temp_int] - 1, 0, 100);
+
+        }
+        else  if ( generic_menu == 2)
+        {
+          seq.pat_vel_variation[temp_int] = constrain(seq.pat_vel_variation[temp_int] - 1, 0, 100);
+        }
+      }
+    }
+    if (LCDML.BT_checkEnter())
+    {
+      generic_menu++;
+      if (generic_menu > 2)
+        generic_menu = 0;
+
+      if (generic_menu == 0)
+        helptext_r("SELECT PATTERN");
+      else if (generic_menu == 1)
+        helptext_r("SET PROBABILITY");
+      else if (generic_menu == 2)
+        helptext_r("SET VEL. VARIATION");
+
+    }
+    print_probabilities();
+
+  }
+  if (LCDML.FUNC_close())     // ****** STABLE END *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+  }
 }
 
 void print_custom_mappings()
