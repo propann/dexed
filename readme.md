@@ -70,28 +70,7 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/chance2.png" >
 <br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/euc1.png" >
-<br>
-Euclidean Arps
 <p>
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multiband.png" >
-<br>
-Multiband Compressor/Waveshaper
-<p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multi_sampler.png" >
-<br>
-Enhancements to Multisample Playback
-<p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/sample_editor.png" >
-<br>
-Sample Editor
-<p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/braids.png" >
-<br>
-(parts of) Mutable Instruments Braids Oscillator(s)
-<p>
-
 ## Development Status:
 
 ### Hardware:
@@ -173,6 +152,27 @@ This project lives from the contributions of C++ developers, testers, reviewers.
 
 ## CURRENT Screenshots:
 
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/euc1.png" >
+<br>
+Euclidean Arps
+<p>
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multiband.png" >
+<br>
+Multiband Compressor/Waveshaper
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/multi_sampler.png" >
+<br>
+Enhancements to Multisample Playback
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/sample_editor.png" >
+<br>
+Sample Editor
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/braids.png" >
+<br>
+(parts of) Mutable Instruments Braids Oscillator(s)
+<br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-002771.png" >
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-002496.png" >
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/addon/microDexedRemoteConsole/Screenshots/microdexed-004831.png" >
