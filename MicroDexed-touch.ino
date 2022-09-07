@@ -1316,12 +1316,6 @@ void setup()
   finalized_mixer_r.gain(1, 0);
 #endif
 
-  for (uint8_t pat = 0; pat < NUM_SEQ_PATTERN; pat++)
-  {
-    seq.pat_chance[pat] = 100;
-    seq.pat_vel_variation[pat] = 0;
-  }
-
 #ifdef DEBUG
   Serial.println(F("<setup end>"));
 #endif

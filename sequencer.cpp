@@ -158,8 +158,6 @@ uint8_t get_chain_length_from_current_track(uint8_t tr)
   return stepcounter;
 }
 
-
-
 uint8_t find_longest_chain()
 {
   uint8_t longest = 0;
@@ -182,6 +180,45 @@ uint8_t find_longest_chain()
       longest = stepcounter;
   }
   return longest;
+}
+
+bool check_probability(uint8_t patt)
+{
+  if (seq.pat_chance[patt] == 100)
+    return true;
+  else
+  {
+    uint8_t r = random(99);
+
+    if (r <= seq.pat_chance[patt] )
+      return true;
+    else
+      return false;
+  }
+}
+
+int check_vel_variation(uint8_t patt, uint8_t in_velocity)
+{
+  if (seq.pat_vel_variation[patt] == 0)
+    return in_velocity;
+  else
+  {
+    int result = in_velocity;
+    uint8_t rnd = random(seq.pat_vel_variation[patt]);
+    uint8_t d = random(1); // + or - velocity
+
+    if (d == 0 )
+      result = in_velocity + rnd * -1;
+    else
+      result = in_velocity + rnd;
+
+    if (result >= 127)
+      result = 127;
+    else if (result < 0)
+      result = 0;
+
+    return result;
+  }
 }
 
 void sequencer_part1(void)
@@ -239,10 +276,14 @@ void sequencer_part1(void)
           {
             // Drum[slot]->setPlaybackRate( pow (2, (inNote - 72) / 12.00) * drum_config[sample].pitch ); get_sample_vol_max(sample)
             set_sample_pitch(seq.vel[  seq.current_pattern[d] ][seq.step] - 210 , (float)pow (2, (seq.note_data[  seq.current_pattern[d] ][seq.step] - 72 + tr[d] ) / 12.00) * get_sample_p_offset( seq.vel[  seq.current_pattern[d] ][seq.step] - 210 ) );
-            handleNoteOn(drum_midi_channel, seq.vel[  seq.current_pattern[d] ][seq.step] , 90, 0 );
+            if (check_probability(seq.current_pattern[d]))
+              handleNoteOn(drum_midi_channel, seq.vel[  seq.current_pattern[d] ][seq.step] , check_vel_variation( seq.current_pattern[d], 90), 0 );
+
           }
           else // else play normal drum sample
-            handleNoteOn(drum_midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
+            if (check_probability(seq.current_pattern[d]))
+              handleNoteOn(drum_midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] , check_vel_variation( seq.current_pattern[d], seq.vel[  seq.current_pattern[d] ][seq.step]), 0);
+          //handleNoteOn(drum_midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
         }
 #endif
       }
@@ -256,37 +297,53 @@ void sequencer_part1(void)
               //Braids Instrument
               if (seq.instrument[d] == 5)
               {
-                handleNoteOn(seq.instrument[d], seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 4);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d], seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d] ][seq.step]), 4);
               }
 
               //Multisampler Instrument
               if (seq.instrument[d] > 5 && seq.instrument[d] < 16) // track is for internal MultiSampler
               {
-                handleNoteOn(seq.instrument[d] - 6, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 3);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 6, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d] ][seq.step]), 3);
               }
               else if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
               {
 #ifdef MIDI_DEVICE_USB_HOST
-                handleNoteOn(seq.instrument[d] - 15, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 1);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 15, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d] ][seq.step]), 1);
 #endif
               }
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
 #ifdef MIDI_DEVICE_DIN
-                handleNoteOn(seq.instrument[d] - 31, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], seq.vel[  seq.current_pattern[d] ][seq.step], 2);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 31, seq.note_data[ seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d] ][seq.step]), 2);
 #endif
               }
               else if (seq.instrument[d] < 2) // track is assigned to dexed
-                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
+              {
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d] ][seq.step]), 0);
+              }
               else if (seq.instrument[d] == 2) // track is assigned to epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , seq.vel[  seq.current_pattern[d] ][seq.step], 0);
+              {
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.epiano.midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]  , check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d] ][seq.step]), 0);
+              }
 #ifdef USE_MICROSYNTH
               else if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned for Microsynth
               {
                 if (seq.note_data[seq.current_pattern[d] ][seq.step] == MIDI_C8)  // is noise only, do not transpose note
-                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step]   , microsynth[ seq.instrument[d] - 3 ].sound_intensity, 0 );
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.note_data[ seq.current_pattern[d] ][seq.step]   , check_vel_variation(seq.current_pattern[d], microsynth[ seq.instrument[d] - 3 ].sound_intensity), 0 );
+                }
                 else  //allow transpose
-                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] , microsynth[ seq.instrument[d] - 3 ].sound_intensity, 0 );
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.note_data[ seq.current_pattern[d] ][seq.step] + tr[d] , check_vel_variation(seq.current_pattern[d], microsynth[ seq.instrument[d] - 3 ].sound_intensity), 0 );
+                }
               }
 #endif
 
@@ -305,26 +362,34 @@ void sequencer_part1(void)
               for (uint8_t x = seq.element_shift; x < seq.element_shift + seq.chord_key_ammount; x++) //play chord notes
               {
                 if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 0);
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                }
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
-                  handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 0);
-
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(configuration.epiano.midi_channel,  seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                }
 #ifdef USE_BRAIDS
                 else if (seq.instrument[d] == 5)  //Chords: Braids
                 {
-                  handleNoteOn(seq.instrument[d], seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x],  seq.chord_vel, 4);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d], seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d]   + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x],  check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
                 else  if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 15, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 1);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d] - 15, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
                 }
 #endif
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 31, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], seq.chord_vel, 2);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d] - 31, seq.note_data[  seq.current_pattern[d] ][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[  seq.current_pattern[d] ][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
                 }
 #endif
               }
@@ -361,7 +426,8 @@ void sequencer_part1(void)
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
 #ifdef USE_MICROSYNTH
-                handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] , seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)) , 0);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] , seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)) , 0);
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
                 if (seq.arp_speed > 1)
                 {
@@ -373,27 +439,34 @@ void sequencer_part1(void)
               }
               else  if (seq.instrument[d] < 2) // track is assigned to dexed
               {
-                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
               }
               else if (seq.instrument[d] == 2) // track is assigned for epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel , 0);
+              {
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel) , 0);
+              }
 #ifdef MIDI_DEVICE_USB_HOST
               else  if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
               {
-                handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 1);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
               }
 #endif
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 2);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
 
               }
 #endif
 #ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5)  //Arp up: Braids
               {
-                handleNoteOn(seq.instrument[d],  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.chord_vel, 4);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d],  seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift] ;
@@ -403,7 +476,8 @@ void sequencer_part1(void)
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
 #ifdef USE_MICROSYNTH
-                handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0 );
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0 );
 
                 if (seq.arp_speed > 1)
                 {
@@ -415,27 +489,33 @@ void sequencer_part1(void)
               }
               else if (seq.instrument[d] < 2) // track is assigned to dexed
               {
-                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
               }
               else if (seq.instrument[d] == 2) // track is assigned for epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 0);
+              {
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+              }
 #ifdef MIDI_DEVICE_USB_HOST
               else  if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
               {
-
-                handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 1);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
               }
 #endif
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 2);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
               }
 #endif
 #ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5)  //Arp down : Braids
               {
-                handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.chord_vel, 4);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift] ;
@@ -448,7 +528,8 @@ void sequencer_part1(void)
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
                 {
 #ifdef USE_MICROSYNTH
-                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] , 90, 0);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] , check_vel_variation( seq.current_pattern[d], 90), 0);
 
                   if (seq.arp_speed > 1)
                   {
@@ -459,25 +540,34 @@ void sequencer_part1(void)
 #endif
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                }
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
-                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 0);
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                }
 #ifdef MIDI_DEVICE_USB_HOST
                 else  if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 1);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
                 }
 #endif
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 2);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
                 }
 #endif
 #ifdef USE_BRAIDS
                 else if (seq.instrument[d] == 5)  //Arp up-down: Braids
                 {
-                  handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], seq.chord_vel, 4);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step ] ;
@@ -487,7 +577,8 @@ void sequencer_part1(void)
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4 ) // track is assigned to Microsynth
                 {
 #ifdef USE_MICROSYNTH
-                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,   seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] , 90, 0);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,   seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] , check_vel_variation( seq.current_pattern[d], 90), 0);
 
                   if (seq.arp_speed > 1)
                   {
@@ -498,20 +589,28 @@ void sequencer_part1(void)
 #endif
                 }
                 else if (seq.instrument[d] < 2) // track is assigned to dexed
-                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
+                {
+                  if (check_probability(seq.current_pattern[d]))
+
+                    handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                }
                 else if (seq.instrument[d] == 2) // track is assigned to epiano
-                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 0);
+                {
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                }
 #ifdef MIDI_DEVICE_USB_HOST
                 else  if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
                 {
-
-                  handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 1);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
                 }
 #endif
 #ifdef MIDI_DEVICE_DIN
                 else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
                 {
-                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], seq.chord_vel, 2);
+                  if (check_probability(seq.current_pattern[d]))
+                    handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
                 }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step ] ;
@@ -523,7 +622,8 @@ void sequencer_part1(void)
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4) // track is assigned to Microsynth
               {
 #ifdef USE_MICROSYNTH
-                handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12) , 90, 0);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn( microsynth[ seq.instrument[d] - 3 ].midi_channel,  seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12) , check_vel_variation( seq.current_pattern[d], 90), 0);
 
                 if (seq.arp_speed > 1)
                 {
@@ -536,24 +636,33 @@ void sequencer_part1(void)
 #ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5)  //Arp random: Braids
               {
-                handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 4);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
 #endif
               else if (seq.instrument[d] < 2) // track is assigned to dexed
-                handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel , 0 );
+              {
+                if (check_probability(seq.current_pattern[d]))
+
+                  handleNoteOn(configuration.dexed[seq.instrument[d]].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel) , 0 );
+              }
               else if (seq.instrument[d] == 2) // track is assigned to epiano
-                handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 0);
+              {
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(configuration.epiano.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+              }
 #ifdef MIDI_DEVICE_USB_HOST
               else  if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
               {
-
-                handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 1);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
               }
 #endif
 #ifdef MIDI_DEVICE_DIN
               else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
               {
-                handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), seq.chord_vel, 2);
+                if (check_probability(seq.current_pattern[d]))
+                  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12);

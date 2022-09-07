@@ -2412,6 +2412,11 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       for (uint8_t i = 0; i < FILENAME_LEN; i++) {
         data_json["seq_name"][i] = seq.name[i];
       }
+      for (uint8_t pat = 0; pat < NUM_SEQ_PATTERN; pat++)
+      {
+        data_json["chance"][pat] = seq.pat_chance[pat];
+        data_json["vel_variation"][pat] = seq.pat_vel_variation[pat];
+      }
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
@@ -2743,6 +2748,21 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
           }
         }
 
+
+        for (uint8_t pat = 0; pat < NUM_SEQ_PATTERN; pat++)
+        {
+          if (data_json["chance"][pat] > 0)
+          {
+            seq.pat_chance[pat] = data_json["chance"][pat];
+            seq.pat_vel_variation[pat] = data_json["vel_variation"][pat];
+          }
+          else
+          {
+            seq.pat_chance[pat] = 100;
+            seq.pat_vel_variation[pat] = 0;
+          }
+        }
+
         seq.tempo_ms = data_json["seq_tempo_ms"] ;
         seq.bpm = data_json["seq_bpm"];
         seq.arp_speed = data_json["arp_speed"] ;
@@ -2767,7 +2787,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
           COLOR_DRUMS = data_json["COLOR_DRUMS"];
           COLOR_PITCHSMP = data_json["COLOR_PITCHSMP"];
         }
-
         AudioNoInterrupts();
         for (uint8_t instance_id = 0;  instance_id < NUM_DEXED; instance_id++)
         {
@@ -2776,7 +2795,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
           Serial.print(instance_id + 1);
           Serial.print(F(" for sequencer"));
 #endif
-
           load_sd_microsynth_json(number, instance_id);
           load_sd_voiceconfig_json(number, instance_id);
           load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
@@ -2796,7 +2814,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         {
           seq.chain_counter[d] = 0;
         }
-
         if (seq_was_running)
         {
           //sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
