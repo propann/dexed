@@ -5354,13 +5354,21 @@ void pattern_preview_in_probability_editor(uint8_t line, uint8_t patternno)
   display.print("]");
 }
 
-void print_probabilities()
+
+FLASHMEM void UI_func_draw_scrollbar(uint16_t x, uint16_t y, uint16_t sb_height, uint8_t nb_total_items, uint8_t current_item)
 {
-  for (uint8_t y = 0; y <  15; y++)
+  uint8_t sb_item_height = sb_height / nb_total_items;
+  display.fillRect(x, y, CHAR_width_small, sb_height, GREY2);
+  display.fillRect(x, y + current_item * sb_item_height, CHAR_width_small, current_item == nb_total_items - 1 ? sb_height - sb_item_height * (nb_total_items - 1) : sb_item_height, COLOR_SYSTEXT);
+}
+
+FLASHMEM void print_probabilities()
+{
+  for (uint8_t y = 0; y < 15; y++)
   {
     display.setTextSize(1);
     if (y == temp_int - generic_temp_select_menu && generic_menu == 0)
-      display.setTextColor(  RED, GREY4);
+      display.setTextColor(RED, GREY4);
     else
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
@@ -5369,7 +5377,7 @@ void print_probabilities()
     setCursor_textGrid_small(11, y + 6);
 
     if (y == temp_int - generic_temp_select_menu && generic_menu == 1)
-      display.setTextColor(  RED, GREY4);
+      display.setTextColor(RED, GREY4);
     print_formatted_number(seq.pat_chance[y + generic_temp_select_menu] , 3);
     display.print(F(" %"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -5377,7 +5385,7 @@ void print_probabilities()
     setCursor_textGrid_small(20, y + 6);
 
     if ((y == temp_int - generic_temp_select_menu && generic_menu == 2) || ( y == temp_int - generic_temp_select_menu && generic_menu == 0))
-      display.setTextColor(  RED, GREY4);
+      display.setTextColor(RED, GREY4);
     else
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
@@ -5387,9 +5395,12 @@ void print_probabilities()
     setCursor_textGrid_small(29, y + 6);
     pattern_preview_in_probability_editor(y + 6, y + generic_temp_select_menu);
   }
+
+  //scrollbar
+  UI_func_draw_scrollbar(DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 8 * CHAR_height_small - 4, 14 * (CHAR_height_small + 2) + 7, NUM_SEQ_PATTERN, temp_int);
 }
 
-void UI_func_seq_probabilities(uint8_t param)
+FLASHMEM void UI_func_seq_probabilities(uint8_t param)
 {
   display.setTextSize(1);
 
@@ -5402,9 +5413,6 @@ void UI_func_seq_probabilities(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
     helptext_l("BACK");
     helptext_r("SELECT PATTERN");
-    //scrollbar - not implemented, yet
-    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 8 * CHAR_height_small - 4, CHAR_width_small * 2, 12 * 12 , COLOR_SYSTEXT);
-    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3 + 1, 8 * CHAR_height_small + 1 - 4, CHAR_width_small * 2 - 2, 6 * 12, GREY2);
     display.setCursor(1 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 3);
     display.setTextColor(COLOR_INSTR);
     display.print(F("INSTR  "));
@@ -5434,8 +5442,8 @@ void UI_func_seq_probabilities(uint8_t param)
       {
         if ( generic_menu == 0)
         {
-          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN);
-          if (generic_temp_select_menu < NUM_SEQ_PATTERN - 14 && temp_int > 14)
+          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN - 1);
+          if (generic_temp_select_menu < NUM_SEQ_PATTERN - 1 - 14 && temp_int > 14)
             generic_temp_select_menu++;
         }
         else if ( generic_menu == 1)
@@ -5452,7 +5460,7 @@ void UI_func_seq_probabilities(uint8_t param)
       {
         if ( generic_menu == 0)
         {
-          temp_int = constrain(temp_int - 1, 0, NUM_SEQ_PATTERN);
+          temp_int = constrain(temp_int - 1, 0, NUM_SEQ_PATTERN - 1);
           if (generic_temp_select_menu > 0  )
             generic_temp_select_menu--;
         }
@@ -5481,8 +5489,8 @@ void UI_func_seq_probabilities(uint8_t param)
         helptext_r("SET VEL. VARIATION");
 
     }
-    print_probabilities();
 
+    print_probabilities();
   }
   if (LCDML.FUNC_close())     // ****** STABLE END *********
   {
