@@ -7578,6 +7578,7 @@ void seq_sub_copy_swap ()
       seq.active_function = 0;
       activesample = 0;
       temp_int = seq.note_data[seq.active_pattern][0];
+      display.setTextSize(2);
       setCursor_textGrid(14, 0);
       display.print(" ");
       setCursor_textGrid(17, 0);
@@ -7607,6 +7608,7 @@ void seq_sub_copy_swap ()
       seq.active_function = 0;
       activesample = 0;
       border3_clear();
+      display.setTextSize(2);
       display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
       print_content_type();
       display.setTextSize(2);
@@ -7632,6 +7634,7 @@ void seq_sub_copy_swap ()
       if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 3) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 114) )
       { //swap patterns: Active pattern <-> destination pattern
         setCursor_textGrid(0, 0);
+        display.setTextSize(2);
         display.print(F("SwapPattern: "));
         temp_int = seq.active_pattern + 1;
         if (temp_int > NUM_SEQ_PATTERN - 1)temp_int = 0;
@@ -7640,6 +7643,7 @@ void seq_sub_copy_swap ()
       else if ( (  seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 2) || ( seq.content_type[seq.active_pattern] > 0 && temp_int == 113) )
       { //copy pattern
         setCursor_textGrid(0, 0);
+        display.setTextSize(2);
         display.print(F("Copy Pattern:"));
         temp_int = seq.active_pattern + 1;
         if (temp_int > NUM_SEQ_PATTERN - 1)temp_int = 0;
@@ -7651,6 +7655,7 @@ void seq_sub_copy_swap ()
 
   if (seq.menu == 31)
   { //copy pattern
+    display.setTextSize(2);
     setCursor_textGrid(14, 0);
     display.print("[");
     setCursor_textGrid(17, 0);
@@ -7662,6 +7667,7 @@ void seq_sub_copy_swap ()
   }
   else if (seq.menu == 30)
   { //swap pattern
+    display.setTextSize(2);
     setCursor_textGrid(14, 0);
     display.print("[");
     setCursor_textGrid(17, 0);
@@ -7752,6 +7758,7 @@ void seq_sub_pattern_fill ()
       activesample = 0;
       temp_int = seq.note_data[seq.active_pattern][0];
       setCursor_textGrid(1, 0);
+      display.setTextSize(2);
       display.print("         ");
       setCursor_textGrid(16, 1);
       display.print("  ");
@@ -7769,6 +7776,7 @@ void seq_sub_pattern_fill ()
       if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 4) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 115) )
       { //fill patterns
         setCursor_textGrid(0, 0);
+        display.setTextSize(2);
         display.print(F("Fill Pattern:"));
         seq.menu = 32;
         seq.temp_select_menu = 0;
@@ -7781,6 +7789,7 @@ void seq_sub_pattern_fill ()
   if (seq.menu == 33)  //editor step 2
   { //fill pattern 2nd parameter
     setCursor_textGrid(5, 1);
+    display.setTextSize(2);
     display.print(" ");
     setCursor_textGrid(12, 1);
     display.print("[");
@@ -7794,6 +7803,7 @@ void seq_sub_pattern_fill ()
     if (seq.content_type[seq.active_pattern] == 0)
     { //drum
       setCursor_textGrid(0, 1);
+      display.setTextSize(2);
       display.print("with [");
       show(1, 6, 6, basename(drum_config[seq.temp_select_menu].name));
       setCursor_textGrid(12, 1);
@@ -7806,6 +7816,7 @@ void seq_sub_pattern_fill ()
     else
     { //inst
       setCursor_textGrid(0, 1);
+      display.setTextSize(2);
       display.print("with [");
       display.print(noteNames[seq.temp_select_menu % 12 ]);
       display.print( (seq.temp_select_menu / 12) - 1);
@@ -7849,6 +7860,7 @@ void seq_sub_pattern_transpose ()
       print_formatted_number(seq.active_pattern, 2);
       seq_refresh_display_play_status();
       seq_printAllSeqSteps();
+      display.setTextSize(2);
       setCursor_textGrid(2, 0);
       display.print("         ");
       setCursor_textGrid(13, 0);
@@ -7861,6 +7873,7 @@ void seq_sub_pattern_transpose ()
       if ( (seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 5) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 116) )
       { //transpose pattern
         setCursor_textGrid(1, 0);
+        display.setTextSize(2);
         display.print(F("Transpose: [ 00] "));
         for (uint8_t i = 0; i < 16; i++)
         {
@@ -7879,6 +7892,7 @@ void seq_sub_pattern_transpose ()
   { //transpose
     char displayname[4] = {0, 0, 0, 0};
     setCursor_textGrid(12, 0);
+    display.setTextSize(2);
     display.print("[");
     if (temp_int > 0) {
       display.print("+");
