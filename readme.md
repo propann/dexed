@@ -52,7 +52,9 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 <a href="https://liberapay.com/positionhigh/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
 
-### User Chat group
+### User Chat groups
+
+[https://discord.gg/XCYk5P8GzF](https://discord.gg/XCYk5P8GzF)
 
 [https://signal.group/#CjQKID8_6_bax5W1WS2rcq7NokgSckC0kxh8uPdo20X_S4hKEhBnZ-9ZbTvMT2vacLZqn92N](https://signal.group/#CjQKID8_6_bax5W1WS2rcq7NokgSckC0kxh8uPdo20X_S4hKEhBnZ-9ZbTvMT2vacLZqn92N)
 
