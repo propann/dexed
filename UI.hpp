@@ -751,7 +751,6 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
                 uint16_t bg) {
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
-
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -761,9 +760,7 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
       display.drawPixel(x + i, y, (byte & 0x80) ? color : bg);
     }
   }
-
 }
-
 
 void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
                 int16_t h, uint16_t color) {
@@ -781,7 +778,6 @@ void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
         display.drawPixel(x + i, y, color);
     }
   }
-
 }
 
 void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
@@ -800,7 +796,6 @@ void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
     }
   }
 }
-
 
 // create menu
 LCDML_createMenu(_LCDML_DISP_cnt);
@@ -1252,56 +1247,56 @@ FLASHMEM void update_pattern_number_in_tracker(uint8_t tracknumber)
 
 void print_live_probability_pattern_info()
 {
-    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  // print track numbers, patterns and currently playing notes/chords/drums
+  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  // print track numbers, patterns and currently playing notes/chords/drums
+  {
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(22 + (4 * d) , 0  );
+    print_formatted_number(  d + 1, 1);
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    if (seq.current_chain[d] != 99)
     {
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(22 + (4 * d) ,0  );
-      print_formatted_number(  d+1, 1);
-      display.setTextColor(GREY1, COLOR_BACKGROUND);
-      if (seq.current_chain[d] != 99)
+      setCursor_textGrid_small(22 + (4 * d) , 1  );
+      print_formatted_number(  seq.current_pattern[d], 2);
+      setCursor_textGrid_small( 22 + (4 * d) ,  2   );
+      set_pattern_content_type_color( seq.current_pattern[d] );
+      if (seq.content_type[seq.current_pattern[d]] > 0) //it is a Inst. pattern
       {
-        setCursor_textGrid_small(22 + (4 * d) , 1  );
-        print_formatted_number(  seq.current_pattern[d], 2);
-        setCursor_textGrid_small( 22 + (4 * d) ,  2   );
-        set_pattern_content_type_color( seq.current_pattern[d] );
-        if (seq.content_type[seq.current_pattern[d]] > 0) //it is a Inst. pattern
+        if (seq.note_data [seq.current_pattern[d]][seq.step] > 12 &&
+            seq.note_data [seq.current_pattern[d]][seq.step] != 130 &&
+            seq.note_data[seq.current_pattern[d]][seq.step] != 99)
         {
-          if (seq.note_data [seq.current_pattern[d]][seq.step] > 12 &&
-              seq.note_data [seq.current_pattern[d]][seq.step] != 130 &&
-              seq.note_data[seq.current_pattern[d]][seq.step] != 99)
+          display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][0] );
+          if (noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] != '\0' )
           {
-            display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][0] );
-            if (noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] != '\0' )
-            {
-              display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] );
-            }
-            display.print( (seq.note_data [seq.current_pattern[d]][seq.step] / 12) - 1);
+            display.print(noteNames[seq.note_data [seq.current_pattern[d]][seq.step] % 12 ][1] );
           }
-          else if ( seq.note_data [seq.current_pattern[d]][seq.step] == 130) //latch
-            display.print(F("LAT"));
-          else
-            display.print(F("   "));
+          display.print( (seq.note_data [seq.current_pattern[d]][seq.step] / 12) - 1);
+        }
+        else if ( seq.note_data [seq.current_pattern[d]][seq.step] == 130) //latch
+          display.print(F("LAT"));
+        else
+          display.print(F("   "));
 
-        } else //it is a drum pattern
+      } else //it is a drum pattern
 
-          if ( seq.vel[seq.current_pattern[d]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
+        if ( seq.vel[seq.current_pattern[d]][seq.step] < 210 ) //is Drumtrack and not a pitched sample
+        {
+          bool found = false;
+          for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
           {
-            bool found = false;
-            for (uint8_t n = 0; n < NUM_DRUMSET_CONFIG - 1; n++)
+            if (seq.note_data[seq.current_pattern[d]][seq.step] == drum_config[n].midinote)
             {
-              if (seq.note_data[seq.current_pattern[d]][seq.step] == drum_config[n].midinote)
-              {
-                display.print( drum_config[n].shortname);
-                found = true;
-                break;
-              }
+              display.print( drum_config[n].shortname);
+              found = true;
+              break;
             }
-            if (found == false) display.print(F( "- "));
           }
-          else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
-            display.print(F("PS"));
-      }
+          if (found == false) display.print(F( "- "));
+        }
+        else if ( seq.vel[seq.current_pattern[d]][seq.step] > 209) //pitched sample
+          display.print(F("PS"));
     }
+  }
 }
 void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, uint8_t currentstep)
 {
@@ -1881,6 +1876,23 @@ void lcdml_menu_control(void)
   // Volatile Variables
   long g_LCDML_CONTROL_Encoder_position[NUM_ENCODER] = {ENCODER[ENC_R].read(), ENCODER[ENC_L].read()};
   bool button[NUM_ENCODER] = {digitalRead(BUT_R_PIN), digitalRead(BUT_L_PIN)};
+
+#ifdef USB_KEYPAD  // USB KEYPAD CONTROL TEST
+  if (USB_KEY != 0)
+  {
+    delay(30);  /// Workaround, otherwise USB keypad input is ridiculous fast and unusable
+    switch (USB_KEY)
+    {
+      case 211     : g_LCDML_CONTROL_Encoder_position[ENC_L] = -4; break;
+      case 218     : g_LCDML_CONTROL_Encoder_position[ENC_L] = 4; break;
+      case 43      : button[ENC_L] = LOW; break;
+
+      case 214     : g_LCDML_CONTROL_Encoder_position[ENC_R] = -4; break;
+      case 217     : g_LCDML_CONTROL_Encoder_position[ENC_R] = 4; break;
+      case 10      : button[ENC_R] = LOW; break;
+    }
+  }
+#endif
 
   /************************************************************************************
     Basic encoder handling (from LCDMenuLib2)
@@ -5510,8 +5522,8 @@ FLASHMEM void UI_func_seq_probabilities(uint8_t param)
       {
         if ( generic_menu == 0)
         {
-          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN-1);
-          if (generic_temp_select_menu < NUM_SEQ_PATTERN-1 - 14 && temp_int > 14)
+          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN - 1);
+          if (generic_temp_select_menu < NUM_SEQ_PATTERN - 1 - 14 && temp_int > 14)
             generic_temp_select_menu++;
         }
         else if ( generic_menu == 1)
@@ -5528,7 +5540,7 @@ FLASHMEM void UI_func_seq_probabilities(uint8_t param)
       {
         if ( generic_menu == 0)
         {
-          temp_int = constrain(temp_int - 1, 0, NUM_SEQ_PATTERN-1);
+          temp_int = constrain(temp_int - 1, 0, NUM_SEQ_PATTERN - 1);
           if (generic_temp_select_menu > 0  )
             generic_temp_select_menu--;
         }

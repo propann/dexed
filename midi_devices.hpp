@@ -53,6 +53,15 @@ MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, MIDI_DEVICE_DIN, midi_serial, MicroD
 USBHost usb_host;
 MIDIDevice midi_usb(usb_host);
 #endif
+
+#ifdef USB_KEYPAD
+//USBHost usb_host;
+//USBHub hub1(usb_host);
+KeyboardController keyboard1(usb_host);
+//USBHIDParser hid1(usb_host);
+//USBHIDParser hid2(usb_host);
+#endif
+
 /* #ifdef MIDI_DEVICE_USB
   static const unsigned sUsbTransportBufferSize = 16;
   typedef midi::UsbTransport<sUsbTransportBufferSize> UsbTransport;
@@ -89,7 +98,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
 {
   char text[10];
 
-  switch(event) {
+  switch (event) {
     case midi::NoteOn:
       seq.note_in = inData1;
       seq.note_in_velocity = inData2;
@@ -133,8 +142,8 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
   if (configuration.sys.soft_midi_thru == 1)
   {
 #ifdef MIDI_DEVICE_USB
-    if(strcmp(MIDI_BY_USB, midi_device)) {
-      switch(event) {
+    if (strcmp(MIDI_BY_USB, midi_device)) {
+      switch (event) {
         case midi::NoteOn:
           usbMIDI.sendNoteOn(inData1, inData2, inChannel);
           break;
@@ -159,15 +168,15 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
         default:
           break;
       }
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_USB"));
-  #endif
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-    if(strcmp(MIDI_BY_DIN, midi_device)) {
-      switch(event) {
+    if (strcmp(MIDI_BY_DIN, midi_device)) {
+      switch (event) {
         case midi::NoteOn:
           midi_serial.sendNoteOn(inData1, inData2, inChannel);
           break;
@@ -192,15 +201,15 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
         default:
           break;
       }
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_DIN"));
-  #endif
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_USB_HOST
-    if(strcmp(MIDI_BY_USB_HOST, midi_device)) {
-      switch(event) {
+    if (strcmp(MIDI_BY_USB_HOST, midi_device)) {
+      switch (event) {
         case midi::NoteOn:
           midi_usb.sendNoteOn(inData1, inData2, inChannel);
           break;
@@ -225,9 +234,9 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
         default:
           break;
       }
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_USB_HOST"));
-  #endif
+#endif
     }
 #endif
   }
@@ -247,29 +256,29 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
   if (configuration.sys.soft_midi_thru == 1)
   {
 #ifdef MIDI_DEVICE_USB
-    if(strcmp(MIDI_BY_USB, midi_device)) {
-        usbMIDI.sendSysEx(len, data);
-  #ifdef DEBUG
-        Serial.print(F(" THRU->MIDI_USB"));
-  #endif
+    if (strcmp(MIDI_BY_USB, midi_device)) {
+      usbMIDI.sendSysEx(len, data);
+#ifdef DEBUG
+      Serial.print(F(" THRU->MIDI_USB"));
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-    if(strcmp(MIDI_BY_DIN, midi_device)) {
-        midi_serial.sendSysEx(len, data);
-  #ifdef DEBUG
-        Serial.print(F(" THRU->MIDI_DIN"));
-  #endif
+    if (strcmp(MIDI_BY_DIN, midi_device)) {
+      midi_serial.sendSysEx(len, data);
+#ifdef DEBUG
+      Serial.print(F(" THRU->MIDI_DIN"));
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_USB_HOST
-    if(strcmp(MIDI_BY_USB_HOST, midi_device)) {
-        midi_usb.sendSysEx(len, data);
-  #ifdef DEBUG
-        Serial.print(F(" THRU->MIDI_USB_HOST"));
-  #endif
+    if (strcmp(MIDI_BY_USB_HOST, midi_device)) {
+      midi_usb.sendSysEx(len, data);
+#ifdef DEBUG
+      Serial.print(F(" THRU->MIDI_USB_HOST"));
+#endif
     }
 #endif
   }
@@ -283,7 +292,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
 {
   char text[10];
 
-  switch(event) {
+  switch (event) {
     case midi::TimeCodeQuarterFrame:
       handleTimeCodeQuarterFrame(inData1);
       strcpy(text, "TimeCodeQuarterFrame");
@@ -307,8 +316,8 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
   if (configuration.sys.soft_midi_thru == 1)
   {
 #ifdef MIDI_DEVICE_USB
-    if(strcmp(MIDI_BY_USB, midi_device)) {
-      switch(event) {
+    if (strcmp(MIDI_BY_USB, midi_device)) {
+      switch (event) {
         case midi::TimeCodeQuarterFrame:
           usbMIDI.sendTimeCodeQuarterFrame(0xF1, inData1);
           break;
@@ -321,15 +330,15 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
         default:
           break;
       }
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_USB"));
-  #endif
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-    if(strcmp(MIDI_BY_DIN, midi_device)) {
-      switch(event) {
+    if (strcmp(MIDI_BY_DIN, midi_device)) {
+      switch (event) {
         case midi::TimeCodeQuarterFrame:
           midi_serial.sendTimeCodeQuarterFrame(inData1);
           break;
@@ -342,15 +351,15 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
         default:
           break;
       }
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_DIN"));
-  #endif
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_USB_HOST
-    if(strcmp(MIDI_BY_USB_HOST, midi_device)) {
-      switch(event) {
+    if (strcmp(MIDI_BY_USB_HOST, midi_device)) {
+      switch (event) {
         case midi::TimeCodeQuarterFrame:
           midi_usb.sendTimeCodeQuarterFrame(0xF1, inData1);
           break;
@@ -363,9 +372,9 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
         default:
           break;
       }
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_USB_HOST"));
-  #endif
+#endif
     }
 #endif
   }
@@ -379,7 +388,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event)
 {
   char text[10];
 
-  switch(event) {
+  switch (event) {
     case midi::Clock:
       handleClock();
       strcpy(text, "Clock");
@@ -415,29 +424,29 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event)
   if (configuration.sys.soft_midi_thru == 1)
   {
 #ifdef MIDI_DEVICE_USB
-    if(strcmp(MIDI_BY_USB, midi_device)) {
+    if (strcmp(MIDI_BY_USB, midi_device)) {
       usbMIDI.sendRealTime(event);
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_USB"));
-  #endif
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-    if(strcmp(MIDI_BY_DIN, midi_device)) {
+    if (strcmp(MIDI_BY_DIN, midi_device)) {
       midi_serial.sendRealTime(event);
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_DIN"));
-  #endif
+#endif
     }
 #endif
 
 #ifdef MIDI_DEVICE_USB_HOST
-    if(strcmp(MIDI_BY_USB_HOST, midi_device)) {
+    if (strcmp(MIDI_BY_USB_HOST, midi_device)) {
       midi_usb.sendRealTime(event);
-  #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(F(" THRU->MIDI_USB_HOST"));
-  #endif
+#endif
     }
 #endif
   }
@@ -453,13 +462,13 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event)
 //   handleRealTimeSystem();
 // #ifdef DEBUG
 //   switch(midi_device) {
-//     case MIDI_DIN: 
+//     case MIDI_DIN:
 //       Serial.print(F("[MIDI_DIN] RealTimeSystem"));
 //       break;
-//     case MIDI_USB_HOST: 
+//     case MIDI_USB_HOST:
 //       Serial.print(F("[MIDI_USB_HOST] RealTimeSystem"));
 //       break;
-//     case USB_MIDI: 
+//     case USB_MIDI:
 //       Serial.print(F("[USB_MIDI] RealTimeSystem"));
 //       break;
 //   }
@@ -900,6 +909,144 @@ FLASHMEM void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value)
 /*****************************************
    HELPER FUNCTIONS
  *****************************************/
+
+#ifdef USB_KEYPAD
+uint8_t USB_KEY = 0;
+
+void OnPress(int key)
+{
+  USB_KEY = key;
+
+//  switch (key) {
+//    case KEYD_UP       : Serial.print("UP"); break;
+//    case KEYD_DOWN    : Serial.print("DN"); break;
+//    case KEYD_LEFT     : Serial.print("LEFT"); break;
+//    case KEYD_RIGHT   : Serial.print("RIGHT"); break;
+//
+//    default: Serial.print((char)key); break;
+//  }
+//  Serial.print("'  ");
+//  Serial.print(key);
+//  Serial.print(" MOD: ");
+//  Serial.print(keyboard1.getModifiers(), HEX);
+//  Serial.print(" OEM: ");
+//  Serial.print(keyboard1.getOemKey(), HEX);
+//  Serial.print(" LEDS: ");
+  //Serial.print((char)keyboard1.getKey());
+  //Serial.print("  ");
+  //Serial.print((char)keyboard2.getKey());
+  //Serial.println();
+}
+
+//void ShowHIDExtrasPress(uint32_t top, uint16_t key)
+//{
+//  Serial.print("HID (");
+//  Serial.print(top, HEX);
+//  Serial.print(") key press:");
+//  Serial.print(key, HEX);
+//  if (top == 0xc0000) {
+//    switch (key) {
+//      case  0x20 : Serial.print(" - +10"); break;
+//      case  0x21 : Serial.print(" - +100"); break;
+//      case  0x36 : Serial.print(" - Function Buttons"); break;
+//      case  0x40 : Serial.print(" - Menu"); break;
+//      case  0x41 : Serial.print(" - Menu  Pick"); break;
+//      case  0x42 : Serial.print(" - Menu Up"); break;
+//      case  0x43 : Serial.print(" - Menu Down"); break;
+//      case  0x44 : Serial.print(" - Menu Left"); break;
+//      case  0x45 : Serial.print(" - Menu Right"); break;
+//      case  0x46 : Serial.print(" - Menu Escape"); break;
+//    }
+//  }
+//  Serial.println();
+//}
+
+//void OnHIDExtrasPress(uint32_t top, uint16_t key)
+//{
+//#ifdef KEYBOARD_INTERFACE
+//  if (top == 0xc0000) {
+//    Keyboard.press(0XE400 | key);
+//#ifndef KEYMEDIA_INTERFACE
+//#error "KEYMEDIA_INTERFACE is Not defined"
+//#endif
+//  }
+//#endif
+//#ifdef SHOW_KEYBOARD_DATA
+//  ShowHIDExtrasPress(top, key);
+//#endif
+//}
+
+void OnHIDExtrasRelease(uint32_t top, uint16_t key)
+{
+#ifdef KEYBOARD_INTERFACE
+  if (top == 0xc0000) {
+    Keyboard.release(0XE400 | key);
+  }
+#endif
+//#ifdef SHOW_KEYBOARD_DATA
+//  Serial.print("HID (");
+//  Serial.print(top, HEX);
+//  Serial.print(") key release:");
+//  Serial.println(key, HEX);
+//#endif
+}
+
+void OnRawPress(uint8_t keycode) {
+#ifdef KEYBOARD_INTERFACE
+  if (keyboard_leds != keyboard_last_leds) {
+    //Serial.printf("New LEDS: %x\n", keyboard_leds);
+    keyboard_last_leds = keyboard_leds;
+    keyboard1.LEDS(keyboard_leds);
+  }
+  if (keycode >= 103 && keycode < 111) {
+    // one of the modifier keys was pressed, so lets turn it
+    // on global..
+    uint8_t keybit = 1 << (keycode - 103);
+    keyboard_modifiers |= keybit;
+    Keyboard.set_modifier(keyboard_modifiers);
+  } else {
+    if (keyboard1.getModifiers() != keyboard_modifiers) {
+#ifdef SHOW_KEYBOARD_DATA
+      Serial.printf("Mods mismatch: %x != %x\n", keyboard_modifiers, keyboard1.getModifiers());
+#endif
+      keyboard_modifiers = keyboard1.getModifiers();
+      Keyboard.set_modifier(keyboard_modifiers);
+    }
+    Keyboard.press(0XF000 | keycode);
+  }
+#endif
+//#ifdef SHOW_KEYBOARD_DATA
+//  Serial.print("OnRawPress keycode: ");
+//  Serial.print(keycode, HEX);
+//  Serial.print(" Modifiers: ");
+//  Serial.println(keyboard_modifiers, HEX);
+//#endif
+}
+
+void OnRawRelease(uint8_t keycode) {
+  
+  USB_KEY = 0;
+  
+#ifdef KEYBOARD_INTERFACE
+  if (keycode >= 103 && keycode < 111) {
+    // one of the modifier keys was pressed, so lets turn it
+    // on global..
+    uint8_t keybit = 1 << (keycode - 103);
+    keyboard_modifiers &= ~keybit;
+    Keyboard.set_modifier(keyboard_modifiers);
+  } else {
+    Keyboard.release(0XF000 | keycode);
+  }
+#endif
+//#ifdef SHOW_KEYBOARD_DATA
+//  Serial.print("OnRawRelease keycode: ");
+//  Serial.print(keycode, HEX);
+//  Serial.print(" Modifiers: ");
+//  Serial.println(keyboard1.getModifiers(), HEX);
+//#endif
+}
+#endif
+
 FLASHMEM void setup_midi_devices(void)
 {
 #ifdef MIDI_DEVICE_DIN
@@ -932,6 +1079,15 @@ FLASHMEM void setup_midi_devices(void)
   // start up USB host
 #ifdef MIDI_DEVICE_USB_HOST
   usb_host.begin();
+
+#ifdef USB_KEYPAD
+  keyboard1.attachPress(OnPress);
+  keyboard1.attachRawPress(OnRawPress);
+  keyboard1.attachRawRelease(OnRawRelease);
+  //keyboard1.attachExtrasPress(OnHIDExtrasPress);
+  //keyboard1.attachExtrasRelease(OnHIDExtrasRelease);
+#endif
+
   midi_usb.setHandleNoteOn(handleNoteOn_MIDI_DEVICE_USB_HOST);
   midi_usb.setHandleNoteOff(handleNoteOff_MIDI_DEVICE_USB_HOST);
   midi_usb.setHandleControlChange(handleControlChange_MIDI_DEVICE_USB_HOST);
@@ -1038,9 +1194,9 @@ FLASHMEM void send_sysex_bank(uint8_t midi_channel, uint8_t* bank_data)
   // Sysex bank dump is splitted due to Windows USB driver limitations
   usbMIDI.sendSysEx(2048, bank_data, true); // Send to USB MIDI
   delay(50);
-  usbMIDI.sendSysEx(2048, bank_data+2048, true);
+  usbMIDI.sendSysEx(2048, bank_data + 2048, true);
   delay(50);
-  usbMIDI.sendSysEx(8, bank_data+4096, true);
+  usbMIDI.sendSysEx(8, bank_data + 4096, true);
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
   midi_usb.sendSysEx(4104, bank_data); // Send to USB-HOST MIDI
