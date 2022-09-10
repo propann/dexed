@@ -797,6 +797,26 @@ void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
   }
 }
 
+FLASHMEM void drawScrollbar(uint16_t x, uint16_t y, uint8_t sbNbLines, uint8_t nbTotalItems, uint8_t currentItem, uint8_t sbLineHeight)
+{
+  uint8_t n_max             = (nbTotalItems >= sbNbLines) ? sbNbLines : nbTotalItems;
+  float sbHeight            = sbLineHeight * n_max;
+  float sbItemSize      = sbHeight / nbTotalItems;
+  if(sbLineHeight > 10) {
+    // big font
+    display.fillRect(x, y, CHAR_width_small, sbHeight - 1, GREY2);
+    display.fillRect(x, y + currentItem * sbItemSize, CHAR_width_small, sbItemSize, COLOR_SYSTEXT);  
+  } else {
+    display.fillRect(x, y, CHAR_width_small, sbHeight - 2, GREY2);
+    int8_t posOffset = 0;
+    if(currentItem == nbTotalItems-1)
+      posOffset = -1;
+//    if(currentItem > 0 && currentItem < nbTotalItems -1)
+//      posOffset = -1;
+    display.fillRect(x, y + currentItem * sbItemSize + posOffset, CHAR_width_small, sbItemSize, COLOR_SYSTEXT);    
+  }
+}
+
 // create menu
 LCDML_createMenu(_LCDML_DISP_cnt);
 
@@ -2396,16 +2416,7 @@ void lcdml_menu_display(void)
   }
   if (LCDML.DISP_checkMenuCursorUpdate())
   {
-    // init vars
-    uint8_t n_menuItems       = LCDML.MENU_getChilds();
-    uint8_t n_max             = (n_menuItems >= _LCDML_DISP_rows) ? _LCDML_DISP_rows : n_menuItems;
-    uint8_t scroll_pos        = LCDML.MENU_getCursorPosAbs();
-    float scrollbarHeight     = CHAR_height * n_max;
-    float scrollItemSize      = scrollbarHeight / n_menuItems;
-
-    display.drawRect((_LCDML_DISP_cols - 2) * CHAR_width, CHAR_height, 8, scrollbarHeight - 1, COLOR_SYSTEXT); // Draw scrollbar borders
-    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 1, CHAR_height + 1, 6, scrollbarHeight - 3, COLOR_BACKGROUND); // Empty inside scrollbar
-    display.fillRect((_LCDML_DISP_cols - 2) * CHAR_width + 1, CHAR_height + scroll_pos * scrollItemSize, 6, scrollItemSize - 1, COLOR_SYSTEXT); // Draw scrollbar
+    drawScrollbar((_LCDML_DISP_cols - 2) * CHAR_width + CHAR_width_small, CHAR_height, 6, LCDML.MENU_getChilds(), LCDML.MENU_getCursorPosAbs(), CHAR_height);
   }
 }
 
@@ -5423,17 +5434,9 @@ void pattern_preview_in_probability_editor(uint8_t line, uint8_t patternno)
   display.print("]");
 }
 
-
-FLASHMEM void UI_func_draw_scrollbar(uint16_t x, uint16_t y, uint16_t sb_height, uint8_t nb_total_items, uint8_t current_item)
-{
-  uint8_t sb_item_height = sb_height / nb_total_items;
-  display.fillRect(x, y, CHAR_width_small, sb_height, GREY2);
-  display.fillRect(x, y + current_item * sb_item_height, CHAR_width_small, current_item == nb_total_items - 1 ? sb_height - sb_item_height * (nb_total_items - 1) : sb_item_height, COLOR_SYSTEXT);
-}
-
 FLASHMEM void print_probabilities()
 {
-  for (uint8_t y = 0; y < 15; y++)
+  for (uint8_t y = 0; y < 14; y++)
   {
     display.setTextSize(1);
     if (y == temp_int - generic_temp_select_menu && generic_menu == 0)
@@ -5469,7 +5472,7 @@ FLASHMEM void print_probabilities()
   }
 
   //scrollbar
-  UI_func_draw_scrollbar(DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 8 * CHAR_height_small - 4, 14 * (CHAR_height_small + 2) + 7, NUM_SEQ_PATTERN, temp_int);
+  drawScrollbar(DISPLAY_WIDTH - 6 - CHAR_width_small, 6 * (CHAR_height_small + 2), 14, NUM_SEQ_PATTERN, temp_int, CHAR_height_small + 2);
 }
 
 FLASHMEM void UI_func_seq_probabilities(uint8_t param)
@@ -5522,8 +5525,8 @@ FLASHMEM void UI_func_seq_probabilities(uint8_t param)
       {
         if ( generic_menu == 0)
         {
-          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN - 1);
-          if (generic_temp_select_menu < NUM_SEQ_PATTERN - 1 - 14 && temp_int > 14)
+          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN-1);
+          if (generic_temp_select_menu < NUM_SEQ_PATTERN-1 - 13 && temp_int > 13)
             generic_temp_select_menu++;
         }
         else if ( generic_menu == 1)
@@ -5625,6 +5628,9 @@ void print_custom_mappings()
       }
     }
   }
+
+  //scrollbar
+  drawScrollbar(DISPLAY_WIDTH - 6 - CHAR_width_small, 7 * (CHAR_height_small + 2), 10, NUM_CUSTOM_MIDI_MAPPINGS, 0, CHAR_height_small + 4);
 }
 
 void UI_func_custom_mappings(uint8_t param)
@@ -5653,10 +5659,6 @@ void UI_func_custom_mappings(uint8_t param)
     display.print(F("]"));
     display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
     display.print(F(" TO LEARN "));
-
-    //scrollbar - not implemented, yet
-    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 9 * CHAR_height_small, CHAR_width_small * 2, 13 * 12 + 6, COLOR_SYSTEXT);
-    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3 + 1, 9 * CHAR_height_small + 1, CHAR_width_small * 2 - 2, 6 * 12, GREY2);
 
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -5715,9 +5717,6 @@ void UI_func_cc_mappings(uint8_t param)
     display.print("CUSTOM DEXED CC");
     display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
     draw_button_on_grid(45, 1, "MIDI",  "LEARN", 0);
-    //scrollbar
-    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3, 9 * CHAR_height_small, CHAR_width_small * 2, 13 * 12 + 6, COLOR_SYSTEXT);
-    display.fillRect (DISPLAY_WIDTH - 4 - CHAR_width_small * 3 + 1, 9 * CHAR_height_small + 1, CHAR_width_small * 2 - 2, 6 * 12, GREY2);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(1, 6);
