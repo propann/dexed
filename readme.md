@@ -56,7 +56,7 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 [https://discord.gg/XCYk5P8GzF](https://discord.gg/XCYk5P8GzF)
 
-[https://matrix.to/#/#microdexed:matrix.org](https://matrix.to/#/#microdexed:matrix.org)
+[https://signal.group/#CjQKID8_6_bax5W1WS2rcq7NokgSckC0kxh8uPdo20X_S4hKEhBnZ-9ZbTvMT2vacLZqn92N](https://signal.group/#CjQKID8_6_bax5W1WS2rcq7NokgSckC0kxh8uPdo20X_S4hKEhBnZ-9ZbTvMT2vacLZqn92N)
 
 ### PCB is available from PCBWAY
 
