@@ -135,7 +135,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
       break;
   }
 #ifdef DEBUG
-  Serial.printf("[%s] %s", midi_device, text);
+  Serial.printf_P(PSTR("[%s] %s"), midi_device, text);
 #endif
 
   // MIDI THRU
@@ -249,7 +249,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
 void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device) {
   handleSystemExclusive(data, len);
 #ifdef DEBUG
-  Serial.printf("[%s] SysEx", midi_device);
+  Serial.printf_P(PSTR("[%s] SysEx"), midi_device);
 #endif
 
   // MIDI THRU
@@ -309,7 +309,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
       break;
   }
 #ifdef DEBUG
-  Serial.printf("[%s] %s", midi_device, text);
+  Serial.printf_P(PSTR("[%s] %s"), midi_device, text);
 #endif
 
   // MIDI THRU
@@ -417,7 +417,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event)
       break;
   }
 #ifdef DEBUG
-  Serial.printf("[%s] %s", midi_device, text);
+  Serial.printf_P(PSTR("[%s] %s"), midi_device, text);
 #endif
 
   // MIDI THRU
@@ -917,45 +917,45 @@ void OnPress(int key)
 {
   USB_KEY = key;
 
-//  switch (key) {
-//    case KEYD_UP       : Serial.print("UP"); break;
-//    case KEYD_DOWN    : Serial.print("DN"); break;
-//    case KEYD_LEFT     : Serial.print("LEFT"); break;
-//    case KEYD_RIGHT   : Serial.print("RIGHT"); break;
-//
-//    default: Serial.print((char)key); break;
-//  }
-//  Serial.print("'  ");
-//  Serial.print(key);
-//  Serial.print(" MOD: ");
-//  Serial.print(keyboard1.getModifiers(), HEX);
-//  Serial.print(" OEM: ");
-//  Serial.print(keyboard1.getOemKey(), HEX);
-//  Serial.print(" LEDS: ");
+  //  switch (key) {
+  //    case KEYD_UP       : Serial.print(F("UP")); break;
+  //    case KEYD_DOWN    : Serial.print(F("DN")); break;
+  //    case KEYD_LEFT     : Serial.print(F("LEFT")); break;
+  //    case KEYD_RIGHT   : Serial.print(F("RIGHT")); break;
+  //
+  //    default: Serial.print((char)key); break;
+  //  }
+  //  Serial.print(F("'  "));
+  //  Serial.print(key);
+  //  Serial.print(F(" MOD: "));
+  //  Serial.print(keyboard1.getModifiers(), HEX);
+  //  Serial.print(F(" OEM: "));
+  //  Serial.print(keyboard1.getOemKey(), HEX);
+  //  Serial.print(F(" LEDS: "));
   //Serial.print((char)keyboard1.getKey());
-  //Serial.print("  ");
+  //Serial.print(F("  "));
   //Serial.print((char)keyboard2.getKey());
   //Serial.println();
 }
 
 //void ShowHIDExtrasPress(uint32_t top, uint16_t key)
 //{
-//  Serial.print("HID (");
+//  Serial.print(F("HID ("));
 //  Serial.print(top, HEX);
-//  Serial.print(") key press:");
+//  Serial.print(F(") key press:"));
 //  Serial.print(key, HEX);
 //  if (top == 0xc0000) {
 //    switch (key) {
-//      case  0x20 : Serial.print(" - +10"); break;
-//      case  0x21 : Serial.print(" - +100"); break;
-//      case  0x36 : Serial.print(" - Function Buttons"); break;
-//      case  0x40 : Serial.print(" - Menu"); break;
-//      case  0x41 : Serial.print(" - Menu  Pick"); break;
-//      case  0x42 : Serial.print(" - Menu Up"); break;
-//      case  0x43 : Serial.print(" - Menu Down"); break;
-//      case  0x44 : Serial.print(" - Menu Left"); break;
-//      case  0x45 : Serial.print(" - Menu Right"); break;
-//      case  0x46 : Serial.print(" - Menu Escape"); break;
+//      case  0x20 : Serial.print(F(" - +10")); break;
+//      case  0x21 : Serial.print(F(" - +100")); break;
+//      case  0x36 : Serial.print(F(" - Function Buttons")); break;
+//      case  0x40 : Serial.print(F(" - Menu")); break;
+//      case  0x41 : Serial.print(F(" - Menu  Pick")); break;
+//      case  0x42 : Serial.print(F(" - Menu Up")); break;
+//      case  0x43 : Serial.print(F(" - Menu Down")); break;
+//      case  0x44 : Serial.print(F(" - Menu Left")); break;
+//      case  0x45 : Serial.print(F(" - Menu Right")); break;
+//      case  0x46 : Serial.print(F(" - Menu Escape")); break;
 //    }
 //  }
 //  Serial.println();
@@ -983,18 +983,18 @@ void OnHIDExtrasRelease(uint32_t top, uint16_t key)
     Keyboard.release(0XE400 | key);
   }
 #endif
-//#ifdef SHOW_KEYBOARD_DATA
-//  Serial.print("HID (");
-//  Serial.print(top, HEX);
-//  Serial.print(") key release:");
-//  Serial.println(key, HEX);
-//#endif
+  //#ifdef SHOW_KEYBOARD_DATA
+  //  Serial.print(F("HID ("));
+  //  Serial.print(top, HEX);
+  //  Serial.print(F(") key release:"));
+  //  Serial.println(key, HEX);
+  //#endif
 }
 
 void OnRawPress(uint8_t keycode) {
 #ifdef KEYBOARD_INTERFACE
   if (keyboard_leds != keyboard_last_leds) {
-    //Serial.printf("New LEDS: %x\n", keyboard_leds);
+    //Serial.printf_p(PSTR("New LEDS: %x\n"), keyboard_leds);
     keyboard_last_leds = keyboard_leds;
     keyboard1.LEDS(keyboard_leds);
   }
@@ -1007,7 +1007,7 @@ void OnRawPress(uint8_t keycode) {
   } else {
     if (keyboard1.getModifiers() != keyboard_modifiers) {
 #ifdef SHOW_KEYBOARD_DATA
-      Serial.printf("Mods mismatch: %x != %x\n", keyboard_modifiers, keyboard1.getModifiers());
+      Serial.printf_p(PSTR("Mods mismatch: %x != %x\n"), keyboard_modifiers, keyboard1.getModifiers());
 #endif
       keyboard_modifiers = keyboard1.getModifiers();
       Keyboard.set_modifier(keyboard_modifiers);
@@ -1015,18 +1015,18 @@ void OnRawPress(uint8_t keycode) {
     Keyboard.press(0XF000 | keycode);
   }
 #endif
-//#ifdef SHOW_KEYBOARD_DATA
-//  Serial.print("OnRawPress keycode: ");
-//  Serial.print(keycode, HEX);
-//  Serial.print(" Modifiers: ");
-//  Serial.println(keyboard_modifiers, HEX);
-//#endif
+  //#ifdef SHOW_KEYBOARD_DATA
+  //  Serial.print(F("OnRawPress keycode: "));
+  //  Serial.print(keycode, HEX);
+  //  Serial.print(F(" Modifiers: "));
+  //  Serial.println(keyboard_modifiers, HEX);
+  //#endif
 }
 
 void OnRawRelease(uint8_t keycode) {
-  
+
   USB_KEY = 0;
-  
+
 #ifdef KEYBOARD_INTERFACE
   if (keycode >= 103 && keycode < 111) {
     // one of the modifier keys was pressed, so lets turn it
@@ -1038,12 +1038,12 @@ void OnRawRelease(uint8_t keycode) {
     Keyboard.release(0XF000 | keycode);
   }
 #endif
-//#ifdef SHOW_KEYBOARD_DATA
-//  Serial.print("OnRawRelease keycode: ");
-//  Serial.print(keycode, HEX);
-//  Serial.print(" Modifiers: ");
-//  Serial.println(keyboard1.getModifiers(), HEX);
-//#endif
+  //#ifdef SHOW_KEYBOARD_DATA
+  //  Serial.print(F("OnRawRelease keycode: "));
+  //  Serial.print(keycode, HEX);
+  //  Serial.print(F(" Modifiers: "));
+  //  Serial.println(keyboard1.getModifiers(), HEX);
+  //#endif
 }
 #endif
 
