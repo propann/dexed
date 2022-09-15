@@ -11683,7 +11683,7 @@ void UI_func_load_performance(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Load Performance"));
     setCursor_textGrid(1, 2);
-    sprintf(tmp, "[%2d]", param);
+    snprintf_P(tmp, strlen(tmp), PSTR("[%2d]"), param);
     display.print(tmp);
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -11726,7 +11726,7 @@ void UI_func_load_performance(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(1, 2);
       char tmp[10];
-      sprintf(tmp, "[%2d] ", temp_int);
+      snprintf_P(tmp, strlen(tmp), PSTR("[%2d] "), temp_int);
       display.print(tmp);
       if (check_sd_performance_exists(temp_int))
       {
@@ -11802,7 +11802,7 @@ void UI_func_save_performance(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Save Performance"));
     setCursor_textGrid(1, 2);
-    sprintf(tmp, "[%2d] ", temp_int);
+    snprintf_P(tmp, strlen(tmp), PSTR("[%2d] "), temp_int);
     display.print(tmp);
 
     if (check_sd_performance_exists(temp_int))
@@ -11860,7 +11860,7 @@ void UI_func_save_performance(uint8_t param)
 
             mode = 0;
             setCursor_textGrid(1, 2);
-            sprintf(tmp, "[%2d]   ", temp_int);
+            snprintf_P(tmp, strlen(tmp), PSTR("[%2d]   "), temp_int);
             display.print(tmp);
           }
         }
@@ -11873,7 +11873,7 @@ void UI_func_save_performance(uint8_t param)
         else
           overwrite = false;
         setCursor_textGrid(1, 2);
-        sprintf(tmp, "[%2d] ", temp_int);
+        snprintf_P(tmp, strlen(tmp), PSTR("[%2d] "), temp_int);
         display.print(tmp);
         setCursor_textGrid(6, 2);
         if (overwrite == false)
@@ -12782,14 +12782,14 @@ void stopRecording() {
     display.setTextColor(RED, COLOR_BACKGROUND );
     if (frec.size() / 1024 / 1024 > 0)
     {
-      sprintf(tmp, "%03d", int(frec.size() / 1024 / 1024));
+      snprintf_P(tmp, strlen(tmp), PSTR("%03d"), int(frec.size() / 1024 / 1024));
       display.print(tmp);
       display.setTextColor(GREY2, COLOR_BACKGROUND );
       display.print( " MB  ");
     }
     else if (int(frec.size() / 1024) > 0)
     {
-      sprintf(tmp, "%03d", int(frec.size() / 1024));
+      snprintf_P(tmp, strlen(tmp), PSTR("%03d"), int(frec.size() / 1024));
       display.print(tmp);
       display.setTextColor(GREY2, COLOR_BACKGROUND );
       display.print( " KB  ");
@@ -12865,7 +12865,7 @@ FLASHMEM void UI_func_recorder(uint8_t param)
     }
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-    sprintf(filename, "REC_%03d.RAW", temp_int);
+    snprintf_P(filename, strlen(filename), PSTR("REC_%03d.RAW"), temp_int);
     setCursor_textGrid(9, 5);
     display.print(filename);
   }
@@ -13294,19 +13294,19 @@ void sd_printDirectory(File currentDirectory)
       display.setCursor (CHAR_width_small * 21, f * 11  + 6 * 11  );
       if (fm.sd_entry.size() / 1024 / 1024 > 0)
       {
-        sprintf(tmp, "%4d", int(fm.sd_entry.size() / 1024 / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(fm.sd_entry.size() / 1024 / 1024));
         display.print(tmp);
         display.print( " MB");
       }
       else if (int(fm.sd_entry.size() / 1024) > 0)
       {
-        sprintf(tmp, "%4d", int(fm.sd_entry.size() / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(fm.sd_entry.size() / 1024));
         display.print(tmp);
         display.print( " KB");
       }
       else
       {
-        sprintf(tmp, "%4d", int(fm.sd_entry.size()));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(fm.sd_entry.size()));
         display.print(tmp);
         display.print(" B ");
       }
@@ -13359,19 +13359,19 @@ void flash_printDirectory()  //SPI FLASH
 
       if (filesize / 1024 / 1024 > 0)
       {
-        sprintf(tmp, "%4d", int(filesize / 1024 / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(filesize / 1024 / 1024));
         display.print(tmp);
         display.print( " MB");
       }
       else if (int(filesize / 1024) > 0)
       {
-        sprintf(tmp, "%4d", int(filesize / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(filesize / 1024));
         display.print(tmp);
         display.print( " KB");
       }
       else
       {
-        sprintf(tmp, "%4d", int(filesize));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(filesize));
         display.print(tmp);
         display.print(" B ");
       }
