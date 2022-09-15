@@ -802,18 +802,18 @@ FLASHMEM void drawScrollbar(uint16_t x, uint16_t y, uint8_t sbNbLines, uint8_t n
   uint8_t n_max             = (nbTotalItems >= sbNbLines) ? sbNbLines : nbTotalItems;
   float sbHeight            = sbLineHeight * n_max;
   float sbItemSize      = sbHeight / nbTotalItems;
-  if(sbLineHeight > 10) {
+  if (sbLineHeight > 10) {
     // big font
     display.fillRect(x, y, CHAR_width_small, sbHeight - 1, GREY2);
-    display.fillRect(x, y + currentItem * sbItemSize, CHAR_width_small, sbItemSize, COLOR_SYSTEXT);  
+    display.fillRect(x, y + currentItem * sbItemSize, CHAR_width_small, sbItemSize, COLOR_SYSTEXT);
   } else {
     display.fillRect(x, y, CHAR_width_small, sbHeight - 2, GREY2);
     int8_t posOffset = 0;
-    if(currentItem == nbTotalItems-1)
+    if (currentItem == nbTotalItems - 1)
       posOffset = -1;
-//    if(currentItem > 0 && currentItem < nbTotalItems -1)
-//      posOffset = -1;
-    display.fillRect(x, y + currentItem * sbItemSize + posOffset, CHAR_width_small, sbItemSize, COLOR_SYSTEXT);    
+    //    if(currentItem > 0 && currentItem < nbTotalItems -1)
+    //      posOffset = -1;
+    display.fillRect(x, y + currentItem * sbItemSize + posOffset, CHAR_width_small, sbItemSize, COLOR_SYSTEXT);
   }
 }
 
@@ -1984,7 +1984,7 @@ void lcdml_menu_control(void)
       else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= LONG_BUTTON_PRESS)
       {
 #ifdef DEBUG
-        Serial.println("ENC-R long released");
+        Serial.println(F("ENC-R long released"));
 #endif
         //LCDML.BT_quit();
         encoderDir[ENC_R].ButtonLong(true);
@@ -2003,7 +2003,7 @@ void lcdml_menu_control(void)
   if (encoderDir[ENC_R].ButtonPressed() == true && (millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= LONG_BUTTON_PRESS)
   {
 #ifdef DEBUG
-    Serial.println("ENC-R long recognized");
+    Serial.println(F("ENC-R long recognized"));
 #endif
     encoderDir[ENC_R].ButtonLong(true);
 
@@ -3567,14 +3567,17 @@ void getNoteName(char* noteName, uint8_t noteNumber)
   char notes [12][3] = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
   uint8_t oct_index = noteNumber - 12;
   if (noteNumber == 130) //it is a latched note
-    sprintf(noteName, "L");
+  {
+    noteName[0] = 'L';
+    noteName[1] = '\0';
+  }
   else
   {
     noteNumber -= 21;
     if ( notes[noteNumber % 12][1] == '\0')
-      sprintf(noteName, "%1s-%1d", notes[noteNumber % 12], oct_index / 12);
+      snprintf_P(noteName, strlen(noteName), PSTR("%1s-%1d"), notes[noteNumber % 12], oct_index / 12);
     else
-      sprintf(noteName, "%2s%1d", notes[noteNumber % 12], oct_index / 12);
+      snprintf_P(noteName, strlen(noteName), PSTR("%2s%1d"), notes[noteNumber % 12], oct_index / 12);
   }
 }
 
@@ -5075,7 +5078,7 @@ void UI_func_drum_reverb_send(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Drum Rev. Send"));
     setCursor_textGrid(2, 2);
-    sprintf(displayname, "%02d", activesample);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
     display.print(displayname);
     show(2, 5, 7, basename(drum_config[activesample].name));
   }
@@ -5127,10 +5130,10 @@ void UI_func_drum_reverb_send(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      sprintf(displayname, "%02d", activesample);
+      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
       display.print(displayname);
       show(2, 5, 7, basename(drum_config[activesample].name));
-      sprintf(displayname, "%03d", (int)(drum_config[activesample].reverb_send * 100) );
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].reverb_send * 100) );
       setCursor_textGrid(13, 2);
       display.print(displayname);
     } else {
@@ -5142,7 +5145,7 @@ void UI_func_drum_reverb_send(uint8_t param)
       display.print("[");
       setCursor_textGrid(16, 2);
       display.print("]");
-      sprintf(displayname, "%03d", temp_int);
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
       setCursor_textGrid(13, 2);
       display.print(displayname);
       drum_config[activesample].reverb_send = mapfloat(temp_int, 0, 100, 0.0, 1.0);
@@ -5232,7 +5235,7 @@ FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("DrumSmp. Tune"));
     setCursor_textGrid(2, 2);
-    sprintf(displayname, "%02d", activesample);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
     display.print(displayname);
     show(2, 5, 8, basename(drum_config[activesample].name));
   }
@@ -5282,10 +5285,10 @@ FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      sprintf(displayname, "%02d", activesample);
+      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
       display.print(displayname);
       show(2, 5, 8, basename(drum_config[activesample].name));
-      sprintf(displayname, "%03d", (int)(drum_config[activesample].p_offset * 200) );
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].p_offset * 200) );
       setCursor_textGrid(14, 2);
       display.print(displayname);
     } else {
@@ -5298,7 +5301,7 @@ FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
       display.print("[");
       setCursor_textGrid(17, 2);
       display.print("]");
-      sprintf(displayname, "%03d", temp_int);
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
       setCursor_textGrid(14, 2);
       display.print(displayname);
       drum_config[activesample].p_offset = temp_float;
@@ -5322,7 +5325,7 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("DrumSmp. Pitch"));
     setCursor_textGrid(2, 2);
-    sprintf(displayname, "%02d", activesample);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
     display.print(displayname);
     show(2, 5, 8, basename(drum_config[activesample].name));
   }
@@ -5372,10 +5375,10 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      sprintf(displayname, "%02d", activesample);
+      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
       display.print(displayname);
       show(2, 5, 8, basename(drum_config[activesample].name));
-      sprintf(displayname, "%03d", (int)(drum_config[activesample].pitch * 200) );
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].pitch * 200) );
       setCursor_textGrid(14, 2);
       display.print(displayname);
     } else {
@@ -5388,7 +5391,7 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
       display.print("[");
       setCursor_textGrid(17, 2);
       display.print("]");
-      sprintf(displayname, "%03d", temp_int);
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
       setCursor_textGrid(14, 2);
       display.print(displayname);
       drum_config[activesample].pitch = temp_float;
@@ -5525,8 +5528,8 @@ FLASHMEM void UI_func_seq_probabilities(uint8_t param)
       {
         if ( generic_menu == 0)
         {
-          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN-1);
-          if (generic_temp_select_menu < NUM_SEQ_PATTERN-1 - 13 && temp_int > 13)
+          temp_int = constrain(temp_int + 1, 0, NUM_SEQ_PATTERN - 1);
+          if (generic_temp_select_menu < NUM_SEQ_PATTERN - 1 - 13 && temp_int > 13)
             generic_temp_select_menu++;
         }
         else if ( generic_menu == 1)
@@ -5691,7 +5694,7 @@ void UI_func_custom_mappings(uint8_t param)
     display.print("]");
     setCursor_textGrid_small(3, 3);
 
-    sprintf(displayname, "%02d", activesample);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
     display.print(displayname);
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
     show_small_font(4 * CHAR_height_small - 2, 9 * CHAR_width_small, 13, basename(drum_config[activesample].name));
@@ -5764,7 +5767,7 @@ void UI_func_drum_volume(uint8_t param)
     display.print(F("DrumSmp. Volume"));
 
     setCursor_textGrid(2, 2);
-    sprintf(displayname, "%02d", activesample);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
     display.print(displayname);
     show(2, 4, 8, basename(drum_config[activesample].name));
 
@@ -5817,10 +5820,10 @@ void UI_func_drum_volume(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      sprintf(displayname, "%02d", activesample);
+      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
       display.print(displayname);
       show(2, 5, 7, basename(drum_config[activesample].name));
-      sprintf(displayname, "%03d", (int)(drum_config[activesample].vol_max * 100) );
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].vol_max * 100) );
       setCursor_textGrid(13, 2);
       display.print(displayname);
     } else {
@@ -5833,7 +5836,7 @@ void UI_func_drum_volume(uint8_t param)
       display.print("[");
       setCursor_textGrid(16, 2);
       display.print("]");
-      sprintf(displayname, "%03d", temp_int);
+      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
       setCursor_textGrid(13, 2);
       display.print(displayname);
       drum_config[activesample].vol_max = temp_float;
@@ -5998,7 +6001,7 @@ void UI_func_seq_settings(uint8_t param)
     if (temp_int == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 6);
-    sprintf(displayname, "%02d", seq.oct_shift);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), seq.oct_shift);
     display.print(displayname);
     if (temp_int == 1)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -6007,12 +6010,12 @@ void UI_func_seq_settings(uint8_t param)
     if (temp_int == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 8);
-    sprintf(displayname, "%02d", seq.chord_key_ammount);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), seq.chord_key_ammount);
     display.print(displayname);
     if (temp_int == 3)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 9);
-    sprintf(displayname, "%02d", seq.arp_num_notes_max);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), seq.arp_num_notes_max);
     display.print(displayname);
     if (temp_int == 4)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -6037,12 +6040,12 @@ void UI_func_seq_settings(uint8_t param)
     }
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(13, 19);
-    sprintf(displayname, "%03d", seq.tempo_ms / 1000);
+    snprintf_P(displayname, strlen(displayname), PSTR("%03d"), seq.tempo_ms / 1000);
     display.print(displayname);
     if (temp_int == 6)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 19);
-    sprintf(displayname, "%03d", seq.bpm);
+    snprintf_P(displayname, strlen(displayname), PSTR("%03d"), seq.bpm);
     display.print(displayname);
     seq.tempo_ms = 60000000 / seq.bpm / 4;
 
@@ -6079,7 +6082,7 @@ void UI_func_drum_pan(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("DrmSmp. Panorama"));
     setCursor_textGrid(2, 2);
-    sprintf(displayname, "%02d", activesample);
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
     display.print(displayname);
     show(2, 5, 6, basename(drum_config[activesample].name));
   }
@@ -6130,7 +6133,7 @@ void UI_func_drum_pan(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      sprintf(displayname, "%02d", activesample);
+      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
       display.print(displayname);
       show(2, 5, 6, basename(drum_config[activesample].name));
     } else {
@@ -6154,7 +6157,7 @@ void UI_func_drum_pan(uint8_t param)
     else {
       display.print("C");
     }
-    sprintf(displayname, "%02d", abs(temp_int));
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), abs(temp_int));
     setCursor_textGrid(14, 2);
     display.print( displayname);
   }
@@ -7243,7 +7246,7 @@ void UI_func_seq_vel_editor(uint8_t param)
           {
             display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
             display.print("V:");
-            sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
+            snprintf_P(tmp, strlen(tmp), PSTR("%03d"), seq.vel[seq.active_pattern][seq.menu - 1]);
             display.print(tmp);
             display.print(" ");
             display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
@@ -7299,7 +7302,7 @@ void UI_func_seq_vel_editor(uint8_t param)
             {
               setCursor_textGrid(0, 0);
               display.print(F("Vel:"));
-              sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
+              snprintf_P(tmp, strlen(tmp), PSTR("%03d"), seq.vel[seq.active_pattern][seq.menu - 1]);
               setCursor_textGrid(4, 0);
               display.print(tmp);
               display.print(" ");
@@ -7914,7 +7917,7 @@ void seq_sub_pattern_transpose ()
     else {
       display.print(" ");
     }
-    sprintf(displayname, "%02d", abs(temp_int));
+    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), abs(temp_int));
     display.print( displayname);
     display.print("]");
     for (uint8_t i = 0; i < 16; i++)
@@ -11680,7 +11683,7 @@ void UI_func_load_performance(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Load Performance"));
     setCursor_textGrid(1, 2);
-    sprintf(tmp, "[%2d]", param);
+    snprintf_P(tmp, strlen(tmp), PSTR("[%2d]"), param);
     display.print(tmp);
   }
   if (LCDML.FUNC_loop())          // ****** LOOP *********
@@ -11723,7 +11726,7 @@ void UI_func_load_performance(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(1, 2);
       char tmp[10];
-      sprintf(tmp, "[%2d] ", temp_int);
+      snprintf_P(tmp, strlen(tmp), PSTR("[%2d] "), temp_int);
       display.print(tmp);
       if (check_sd_performance_exists(temp_int))
       {
@@ -11799,7 +11802,7 @@ void UI_func_save_performance(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Save Performance"));
     setCursor_textGrid(1, 2);
-    sprintf(tmp, "[%2d] ", temp_int);
+    snprintf_P(tmp, strlen(tmp), PSTR("[%2d] "), temp_int);
     display.print(tmp);
 
     if (check_sd_performance_exists(temp_int))
@@ -11857,7 +11860,7 @@ void UI_func_save_performance(uint8_t param)
 
             mode = 0;
             setCursor_textGrid(1, 2);
-            sprintf(tmp, "[%2d]   ", temp_int);
+            snprintf_P(tmp, strlen(tmp), PSTR("[%2d]   "), temp_int);
             display.print(tmp);
           }
         }
@@ -11870,7 +11873,7 @@ void UI_func_save_performance(uint8_t param)
         else
           overwrite = false;
         setCursor_textGrid(1, 2);
-        sprintf(tmp, "[%2d] ", temp_int);
+        snprintf_P(tmp, strlen(tmp), PSTR("[%2d] "), temp_int);
         display.print(tmp);
         setCursor_textGrid(6, 2);
         if (overwrite == false)
@@ -12779,14 +12782,14 @@ void stopRecording() {
     display.setTextColor(RED, COLOR_BACKGROUND );
     if (frec.size() / 1024 / 1024 > 0)
     {
-      sprintf(tmp, "%03d", int(frec.size() / 1024 / 1024));
+      snprintf_P(tmp, strlen(tmp), PSTR("%03d"), int(frec.size() / 1024 / 1024));
       display.print(tmp);
       display.setTextColor(GREY2, COLOR_BACKGROUND );
       display.print( " MB  ");
     }
     else if (int(frec.size() / 1024) > 0)
     {
-      sprintf(tmp, "%03d", int(frec.size() / 1024));
+      snprintf_P(tmp, strlen(tmp), PSTR("%03d"), int(frec.size() / 1024));
       display.print(tmp);
       display.setTextColor(GREY2, COLOR_BACKGROUND );
       display.print( " KB  ");
@@ -12862,7 +12865,7 @@ FLASHMEM void UI_func_recorder(uint8_t param)
     }
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND );
-    sprintf(filename, "REC_%03d.RAW", temp_int);
+    snprintf_P(filename, strlen(filename), PSTR("REC_%03d.RAW"), temp_int);
     setCursor_textGrid(9, 5);
     display.print(filename);
   }
@@ -13291,19 +13294,19 @@ void sd_printDirectory(File currentDirectory)
       display.setCursor (CHAR_width_small * 21, f * 11  + 6 * 11  );
       if (fm.sd_entry.size() / 1024 / 1024 > 0)
       {
-        sprintf(tmp, "%4d", int(fm.sd_entry.size() / 1024 / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(fm.sd_entry.size() / 1024 / 1024));
         display.print(tmp);
         display.print( " MB");
       }
       else if (int(fm.sd_entry.size() / 1024) > 0)
       {
-        sprintf(tmp, "%4d", int(fm.sd_entry.size() / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(fm.sd_entry.size() / 1024));
         display.print(tmp);
         display.print( " KB");
       }
       else
       {
-        sprintf(tmp, "%4d", int(fm.sd_entry.size()));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(fm.sd_entry.size()));
         display.print(tmp);
         display.print(" B ");
       }
@@ -13356,19 +13359,19 @@ void flash_printDirectory()  //SPI FLASH
 
       if (filesize / 1024 / 1024 > 0)
       {
-        sprintf(tmp, "%4d", int(filesize / 1024 / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(filesize / 1024 / 1024));
         display.print(tmp);
         display.print( " MB");
       }
       else if (int(filesize / 1024) > 0)
       {
-        sprintf(tmp, "%4d", int(filesize / 1024));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(filesize / 1024));
         display.print(tmp);
         display.print( " KB");
       }
       else
       {
-        sprintf(tmp, "%4d", int(filesize));
+        snprintf_P(tmp, strlen(tmp), PSTR("%4d"), int(filesize));
         display.print(tmp);
         display.print(" B ");
       }
@@ -13522,7 +13525,7 @@ void print_flash_stats()
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("USED: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  sprintf(tmp, "%05d", int(sum_used));
+  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(sum_used));
   display.print(tmp);
   display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
   display.print(" KB");
@@ -13531,7 +13534,7 @@ void print_flash_stats()
   display.print("TOTAL: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   chipsize = SerialFlash.capacity(buf);
-  sprintf(tmp, "%05d", int(chipsize / 1024));
+  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(chipsize / 1024));
   display.print(tmp);
 
   display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
@@ -13546,7 +13549,7 @@ void print_flash_stats()
   display.print("FREE: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-  sprintf(tmp, "%05d", int(chipsize / 1024 - sum_used) );
+  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(chipsize / 1024 - sum_used) );
   display.print(tmp);
   display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
   display.print(" KB");
@@ -13562,13 +13565,13 @@ void print_flash_stats()
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("USED: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  sprintf(tmp, "%05d", int(myfs.usedSize() / 1024));
+  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(myfs.usedSize() / 1024));
   display.print(tmp);
   display.print(" KB");
   display.setCursor (CHAR_width_small * 37 , 3 * CHAR_height_small   );
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("TOTAL: ");
-  sprintf(tmp, "%05d", int(myfs.totalSize() / 1024));
+  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(myfs.totalSize() / 1024));
   display.print(tmp);
   display.print(" KB");
 }
@@ -15531,14 +15534,14 @@ void print_perfmod_lables()
   else
     display.setTextColor(GREY1, GREY2);
   display.setCursor( 5 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
-  sprintf(tmp, "%03d", dexed_live_mod.attack_mod[selected_instance_id]);
+  snprintf_P(tmp, strlen(tmp), PSTR("%03d"), dexed_live_mod.attack_mod[selected_instance_id]);
   display.print(tmp);
   if (dexed_live_mod.active_button == 2 || dexed_live_mod.active_button == 4)
     display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
   else
     display.setTextColor(GREY1, GREY2);
   display.setCursor( 14 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
-  sprintf(tmp, "%03d", dexed_live_mod.release_mod[selected_instance_id]);
+  snprintf_P(tmp, strlen(tmp), PSTR("%03d"), dexed_live_mod.release_mod[selected_instance_id]);
   display.print(tmp);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
@@ -16752,7 +16755,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
 #endif
             char tmp[FILENAME_LEN];
             strcpy(tmp, receive_bank_filename);
-            sprintf(receive_bank_filename, "/%d/%s.syx", bank_number, tmp);
+            snprintf_P(receive_bank_filename, strlen(receive_bank_filename), PSTR("/%d/%s.syx"), bank_number, tmp);
 #ifdef DEBUG
             Serial.print(F("Receiving into bank "));
             Serial.print(bank_number);
@@ -16957,17 +16960,17 @@ void UI_func_sysex_send_bank(uint8_t param)
 
       get_bank_name(bank_number, tmp_bank_name);
 #ifdef DEBUG
-      Serial.printf("send bank sysex %d - bank:[%s]\n", bank_number, tmp_bank_name);
+      Serial.printf_P(PSTR("send bank sysex %d - bank:[%s]\n"), bank_number, tmp_bank_name);
 #endif
       show(2, 1, 2, bank_number);
       show(2, 4, 10, tmp_bank_name);
     }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
-      if (strcmp("*ERROR*", tmp_bank_name) != 0)
+      if (strcmp_P(PSTR("*ERROR*"), tmp_bank_name) != 0)
       {
         char filename[FILENAME_LEN];
-        sprintf(filename, "/%d/%s.syx", bank_number, tmp_bank_name);
+        snprintf_P(filename, strlen(filename), PSTR("/%d/%s.syx"), bank_number, tmp_bank_name);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
@@ -17102,7 +17105,7 @@ void UI_func_sysex_send_voice(uint8_t param)
           if (strcmp("*ERROR*", tmp_bank_name) != 0)
           {
             char filename[FILENAME_LEN];
-            sprintf(filename, "/%d/%s.syx", bank_number, tmp_bank_name);
+            snprintf_P(filename, strlen(filename), PSTR("/%d/%s.syx"), bank_number, tmp_bank_name);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
             Serial.print(voice_number);
@@ -17833,9 +17836,9 @@ uint8_t search_accepted_char(uint8_t c)
   {
 #ifdef DEBUG
     Serial.print(i, DEC);
-    Serial.print(":");
+    Serial.print(F(":"));
     Serial.print(c);
-    Serial.print("==");
+    Serial.print(F("=="));
     Serial.println(accepted_chars[i], DEC);
 #endif
     if (c == accepted_chars[i])
@@ -17852,33 +17855,28 @@ void display_int(int16_t var, uint8_t size, bool zeros, bool brackets, bool sign
 void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool zeros, bool brackets, bool sign)
 {
   char s[display_cols + 1];
-  char f[display_cols + 1];
 
   if (size_fraction > 0)
   {
     if (zeros == true && sign == true)
-      sprintf(f, "%%+0%d.%df", size_number + size_fraction + 2, size_fraction);
+      snprintf_P(s, strlen(s), PSTR("%+0*.*f"), size_number + size_fraction + 2, size_fraction, var);
     else if (zeros == true && sign == false)
-      sprintf(f, "%%+0%d.%df", size_number + size_fraction + 1, size_fraction);
+      snprintf_P(s, strlen(s), PSTR("%0*.*f"), size_number + size_fraction + 1, size_fraction, var);
     else if (zeros == false && sign == true)
-      sprintf(f, "%%+%d.%df", size_number + size_fraction + 2, size_fraction);
+      snprintf_P(s, strlen(s), PSTR("%+*.*f"), size_number + size_fraction + 2, size_fraction, var);
     else if (zeros == false && sign == false)
-      sprintf(f, "%%%d.%df", size_number + size_fraction + 1, size_fraction);
-
-    sprintf(s, f, var);
+      snprintf_P(s, strlen(s), PSTR("%*.*f"), size_number + size_fraction + 1, size_fraction, var);
   }
   else
   {
     if (zeros == true && sign == true)
-      sprintf(f, "%%+0%dd", size_number + 1);
+      snprintf_P(s, strlen(s), PSTR("%+0*d"), size_number + 1, var);
     else if (zeros == true && sign == false)
-      sprintf(f, "%%%0dd", size_number);
+      snprintf_P(s, strlen(s), PSTR("%0*d"), size_number, var);
     else if (zeros == false && sign == true)
-      sprintf(f, "%%+%dd", size_number + 1);
+      snprintf_P(s, strlen(s), PSTR("%+*d"), size_number + 1, var);
     else if (zeros == false && sign == false)
-      sprintf(f, "%%%dd", size_number);
-
-    sprintf(s, f, int(var));
+      snprintf_P(s, strlen(s), PSTR("%*d"), size_number, var);
   }
 
   if (brackets == true)
@@ -17886,8 +17884,9 @@ void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool z
     char tmp[display_cols + 1];
 
     strcpy(tmp, s);
-    sprintf(s, "[%s]", tmp);
+    snprintf_P(s, strlen(s), PSTR("[%s]"), tmp);
   }
+
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(s);
   display.setTextColor(COLOR_SYSTEXT);
@@ -17926,7 +17925,12 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
 
   // Value
   display.setCursor( CHAR_width * (display_cols - size - 3), CHAR_height * 2);
-  display_float(value * factor, size_number, size_fraction, zeros, false, sign); // TBD
+  //display_float(value * factor, size_number, size_fraction, zeros, false, sign); // TBD
+  char s[display_cols + 1];
+  snprintf_P(s, strlen(s), PSTR("%+1.1f"), value * factor);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(s);
+  display.setTextColor(COLOR_SYSTEXT);
 
   // Bar
   //if (vi == 0)
@@ -17974,7 +17978,12 @@ void display_meter_float(const char* title, float value, float factor, float off
 
   // Value
   display.setCursor( (display_cols - size - 3)*CHAR_width, CHAR_height * 2);
-  display_float((value + offset) * factor, size_number, size_fraction, zeros, false, sign);
+  //display_float((value + offset) * factor, size_number, size_fraction, zeros, false, sign);
+  char s[display_cols + 1];
+  snprintf_P(s, strlen(s), PSTR("%+1.1f"), value * factor);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(s);
+  display.setTextColor(COLOR_SYSTEXT);
 
   // Bar
 
@@ -18340,7 +18349,7 @@ bool check_favorite(uint8_t b, uint8_t v, uint8_t instance_id)
   File myFav;
   if (sd_card > 0)
   {
-    sprintf(tmp, "/%s/%d/%d.fav", FAV_CONFIG_PATH, b, v);
+    snprintf_P(tmp, strlen(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
 #ifdef DEBUG
     Serial.print(F("check if Voice is a Favorite: "));
     Serial.print(tmp);
@@ -18700,7 +18709,7 @@ void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id)
   if (sd_card > 0)
   {
     display.setTextSize(1);
-    sprintf(tmp, "/%s/%d/%d.fav", FAV_CONFIG_PATH, b, v);
+    snprintf_P(tmp, strlen(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
     if (SD.exists(tmp))
     { //is Favorite
       //fav symbol
@@ -18729,7 +18738,7 @@ bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id)
 
   if (sd_card > 0)
   {
-    sprintf(tmp, "/%s/%d", FAV_CONFIG_PATH, b);
+    snprintf_P(tmp, strlen(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
 #ifdef DEBUG
     Serial.print(F("check if there is a Favorite in Bank: "));
     Serial.print(tmp);
@@ -18767,8 +18776,8 @@ void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id)
   uint8_t i = 0, countfavs = 0;
   if (sd_card > 0)
   {
-    sprintf(tmp, "/%s/%d/%d.fav", FAV_CONFIG_PATH, b, v);
-    sprintf(tmpfolder, "/%s/%d", FAV_CONFIG_PATH, b);
+    snprintf_P(tmp, strlen(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
+    snprintf_P(tmpfolder, strlen(tmpfolder), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
 #ifdef DEBUG
     Serial.println(F("Save Favorite to SD card..."));
     Serial.println(tmp);
@@ -18800,14 +18809,14 @@ void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id)
     { // delete the file, is no longer a favorite
       SD.remove(tmp);
 #ifdef DEBUG
-      Serial.println("Removed from Favorites...");
+      Serial.println(F("Removed from Favorites..."));
 #endif
       for (i = 0; i < 32; i++) { //if no other favs exist in current bank, remove folder
-        sprintf(tmp, "/%s/%d/%d.fav", FAV_CONFIG_PATH, b, i);
+        snprintf_P(tmp, strlen(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp)) countfavs++;
       }
       if (countfavs == 0) {
-        sprintf(tmp, "/%s/%d", FAV_CONFIG_PATH, b);
+        snprintf_P(tmp, strlen(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
         SD.rmdir(tmp);
 #ifdef DEBUG
         Serial.println(F("Fav count in bank:"));
@@ -18877,11 +18886,11 @@ void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t pre
     if (result > 0) {
       memcpy(root_note, filename + ms.MatchStart + 1, ms.MatchLength - 1);
 #ifdef DEBUG
-      Serial.print("Found match at: ");
+      Serial.print(F("Found match at: "));
       Serial.println(ms.MatchStart + 1);
-      Serial.print("Match length: ");
+      Serial.print(F("Match length: "));
       Serial.println(ms.MatchLength - 1);
-      Serial.print("Match root note: ");
+      Serial.print(F("Match root note: "));
       Serial.println(root_note);
 #endif
 

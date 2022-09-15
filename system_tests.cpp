@@ -10,7 +10,7 @@ uint8_t psram_test_dline = 7;
 void fill_up_with_spaces_psram()
 {
   do {
-    display.print(" ");
+    display.print(F(" "));
   } while (display.getCursorX() < 52 * CHAR_width_small);
 }
 
@@ -21,13 +21,13 @@ FLASHMEM void psram_test()
   uint8_t size = external_psram_size;
   setCursor_textGrid_small(2, 5);
   display.setTextColor(GREEN, COLOR_BACKGROUND);
-  sprintf(text1, "FOUND %d MB CHIP", size);
+  snprintf_P(text1, strlen(text1), PSTR("FOUND %d MB CHIP"), size);
   display.print(text1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (size == 0) return;
   const float clocks[4] = {396.0f, 720.0f, 664.62f, 528.0f};
   const float frequency = clocks[(CCM_CBCMR >> 8) & 3] / (float)(((CCM_CBCMR >> 29) & 7) + 1);
-  sprintf(text1, " (%03d MHz)", (int)frequency);
+  snprintf_P(text1, strlen(text1), PSTR(" (%03d MHz)"), (int)frequency);
   display.print(text1);
   fill_up_with_spaces_psram();
   memory_begin = (uint32_t *)(0x70000000);
@@ -97,7 +97,7 @@ FLASHMEM void psram_test()
   fill_up_with_spaces_psram();
   psram_test_dline++;
   setCursor_textGrid_small(2, psram_test_dline);
-  sprintf(text1, "Test ran for %lu seconds", msec / 1000);
+  snprintf_P(text1, strlen(text1), PSTR("Test ran for %lu seconds"), msec / 1000);
   display.print(text1);
   fill_up_with_spaces_psram();
   psram_test_dline++;
@@ -116,7 +116,7 @@ FLASHMEM bool psram_fail_message(volatile uint32_t *location, uint32_t actual, u
   psram_test_dline++;
   setCursor_textGrid_small(2, psram_test_dline);
   display.setTextColor(RED, COLOR_BACKGROUND);
-  sprintf(text1, "Error at %lu, read %lu but expected %lu", (uint32_t)location, actual, expected);
+  snprintf_P(text1, strlen(text1), PSTR("Error at %lu, read %lu but expected %lu"), (uint32_t)location, actual, expected);
   display.print(text1);
   fill_up_with_spaces_psram();
   psram_test_dline++;
@@ -131,7 +131,7 @@ FLASHMEM bool psram_check_fixed_pattern(uint32_t pattern)
   char text1[40];
   setCursor_textGrid_small(2, psram_test_dline);
   volatile uint32_t *p;
-  sprintf(text1, "testing with fixed pattern %lu", pattern);
+  snprintf_P(text1, strlen(text1), PSTR("testing with fixed pattern %lu"), pattern);
   display.print(text1);
   fill_up_with_spaces_psram();
   for (p = memory_begin; p < memory_end; p++) {
@@ -155,7 +155,7 @@ FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed)
   setCursor_textGrid_small(2, psram_test_dline);
   volatile uint32_t *p;
   uint32_t reg;
-  sprintf(text1, "Testing pseudo-random sequence, seed=%lu", seed);
+  snprintf_P(text1, strlen(text1), PSTR("Testing pseudo-random sequence, seed=%lu"), seed);
   display.print(text1);
   fill_up_with_spaces_psram();
   reg = seed;

@@ -1017,12 +1017,12 @@ void setup()
   }
 
   if (!braids_flanger_r.begin(braids_r_delayline, BRAIDS_FLANGE_DELAY_LENGTH, braids_flanger_idx, braids_flanger_depth, braids_flanger_freq)) {
-    Serial.println("AudioEffectFlanger - right channel begin failed");
+    Serial.println(F("AudioEffectFlanger - right channel begin failed"));
     while (1);
   }
 
   if (!braids_flanger_l.begin(braids_l_delayline, BRAIDS_FLANGE_DELAY_LENGTH, braids_flanger_idx, braids_flanger_depth, braids_flanger_freq)) {
-    Serial.println("AudioEffectFlanger - left channel begin failed");
+    Serial.println(F("AudioEffectFlanger - left channel begin failed"));
     while (1);
   }
   // Initially the flanger effect is off.
@@ -1170,21 +1170,21 @@ void setup()
   diskSize = PROG_FLASH_SIZE;
   // Serial (QSPI) Flash Init
 #ifdef DEBUG
-  Serial.println("Initializing Flash Chip");
+  Serial.println(F("Initializing Flash Chip"));
 #endif
   //if (!myfs.begin(diskSize)) { //progmem
   if (!myfs.begin()) {
 #ifdef DEBUG
-    Serial.printf("Error starting %s\n", szDiskMem);
+    Serial.printf_P(PSTR"Error starting %s\n"), szDiskMem);
 #endif
     while ( 1 );
   }
 
 #endif
 
-  // Start SD card
+// Start SD card
 
-  sd_card = check_sd_cards();
+sd_card = check_sd_cards();
 
   if (sd_card < 1)
   {
@@ -2051,13 +2051,13 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
     //    #ifdef DEBUG
     //        Serial.print(F(" DIN OUT Channel:"));
     //        Serial.print(inChannel);
-    //        Serial.println(" ");
+    //        Serial.println(F);
     //        Serial.print(F(" DIN inNumber:"));
     //        Serial.print(inNumber);
-    //        Serial.println(" ");
+    //        Serial.println();
     //        Serial.print(F(" DIN inVelocity:"));
     //        Serial.print(inVelocity);
-    //        Serial.println(" ");
+    //        Serial.println();
     //    #endif
   }
 #endif
@@ -2260,7 +2260,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 
-                sprintf(temp_name, "%s.wav", drum_config[d].name);
+                snprintf_P(temp_name, strlen(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
@@ -2892,9 +2892,9 @@ void handleSystemExclusive(byte * sysex, uint len)
       {
 #ifdef DEBUG
         Serial.println(F("SysEx Voice parameter: "));
-        Serial.print("Parameter #");
+        Serial.print(F("Parameter #"));
         Serial.print(sysex[4] + ((sysex[3] & 0x03) * 128), DEC);
-        Serial.print(" Value: ");
+        Serial.print(F(" Value: "));
         Serial.println(sysex[5], DEC);
 #endif
         MicroDexed[instance_id]->setVoiceDataElement(sysex[4] + ((sysex[3] & 0x03) * 128), sysex[5]);
@@ -3488,7 +3488,7 @@ FLASHMEM bool checkMidiChannel(byte inChannel, uint8_t instance_id)
 FLASHMEM void init_MIDI_send_CC(void)
 {
 #ifdef DEBUG
-  Serial.println("init_MIDI_send_CC() : ");
+  Serial.println(F("init_MIDI_send_CC(): "));
 #endif
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, configuration.dexed[selected_instance_id].sound_intensity);
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, configuration.dexed[selected_instance_id].pan);
@@ -4258,25 +4258,25 @@ FLASHMEM uint8_t check_sd_cards(void)
 #endif
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        sprintf(sd_string, "%-5s", "SD1");
+        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("SD1"));
 #ifdef DEBUG
         Serial.println(F("SD1"));
 #endif
         break;
       case SD_CARD_TYPE_SD2:
-        sprintf(sd_string, "%-5s", "SD2");
+        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("SD2"));
 #ifdef DEBUG
         Serial.println(F("SD2"));
 #endif
         break;
       case SD_CARD_TYPE_SDHC:
-        sprintf(sd_string, "%-5s", "SD2");
+        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("SD2"));
 #ifdef DEBUG
         Serial.println(F("SDHC"));
 #endif
         break;
       default:
-        sprintf(sd_string, "%-5s", "UKNW");
+        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("UKNW"));
 #ifdef DEBUG
         Serial.println(F("Unknown"));
 #endif
@@ -4307,7 +4307,7 @@ FLASHMEM uint8_t check_sd_cards(void)
     Serial.println(volumesize);
 #endif
 
-    sprintf(sd_string + 5, "FAT %2d %02dGB", volume.fatType(), int(volumesize));
+    snprintf_P(sd_string + 5, strlen(sd_string), PSTR("FAT %2d %02dGB"), volume.fatType(), int(volumesize));
   }
 
 #ifdef DEBUG
@@ -4330,7 +4330,7 @@ FLASHMEM void check_and_create_directories(void)
     // create directories for banks
     for (i = 0; i < MAX_BANKS; i++)
     {
-      sprintf(tmp, "/%d", i);
+      snprintf_P(tmp, strlen(tmp), PSTR("/%d"), i);
       if (!SD.exists(tmp))
       {
 #ifdef DEBUG
@@ -4341,7 +4341,7 @@ FLASHMEM void check_and_create_directories(void)
       }
     }
 
-    sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
+    snprintf_P(tmp, strlen(tmp), PSTR("/%s"), PERFORMANCE_CONFIG_PATH);
     if (!SD.exists(tmp))
     {
 #ifdef DEBUG
@@ -4399,9 +4399,6 @@ FLASHMEM void check_and_create_directories(void)
       SD.mkdir(tmp);
       }
     */
-
-
-
   }
 #ifdef DEBUG
   Serial.println(F("SD card check end"));
@@ -4671,7 +4668,7 @@ void SerialPrintFormatInt3(uint8_t num)
 {
   char buf[4];
   memset(buf, 0, 4);
-  sprintf(buf, " % 3d", num);
+  snprintf_P(buf, strlen(buf), PSTR("%3d"), num);
   Serial.print(buf);
 }
 
