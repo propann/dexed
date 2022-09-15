@@ -1354,6 +1354,14 @@ sd_card = check_sd_cards();
   }
 
   scope.clear();
+  
+#ifdef USB_GAMEPAD
+  gamepad_buttons_neutral = joysticks[0].getButtons();
+  gamepad_0_neutral = joysticks[0].getAxis(0);
+  gamepad_1_neutral = joysticks[0].getAxis(1);
+ 
+#endif
+
 }
 
 void draw_volmeter(int x, int y, uint8_t arr, float value)
@@ -4330,7 +4338,7 @@ FLASHMEM void check_and_create_directories(void)
     // create directories for banks
     for (i = 0; i < MAX_BANKS; i++)
     {
-      snprintf_P(tmp, strlen(tmp), PSTR("/%d"), i);
+      sprintf(tmp, "/%d", i);
       if (!SD.exists(tmp))
       {
 #ifdef DEBUG
@@ -4341,7 +4349,7 @@ FLASHMEM void check_and_create_directories(void)
       }
     }
 
-    snprintf_P(tmp, strlen(tmp), PSTR("/%s"), PERFORMANCE_CONFIG_PATH);
+    sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
     if (!SD.exists(tmp))
     {
 #ifdef DEBUG
@@ -4668,6 +4676,7 @@ void SerialPrintFormatInt3(uint8_t num)
 {
   char buf[4];
   memset(buf, 0, 4);
+  //sprintf(buf, " % 3d", num);
   snprintf_P(buf, strlen(buf), PSTR("%3d"), num);
   Serial.print(buf);
 }

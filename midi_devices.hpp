@@ -33,6 +33,26 @@ extern config_t configuration;
 extern sequencer_t seq;
 #endif
 
+#ifdef USB_GAMEPAD
+extern int temp_int;
+extern uint8_t GAMEPAD_UP_0 ;
+extern uint8_t GAMEPAD_UP_1;
+extern uint32_t GAMEPAD_UP_BUTTONS;
+extern uint8_t GAMEPAD_DOWN_0;
+extern uint8_t GAMEPAD_DOWN_1 ;
+extern uint32_t GAMEPAD_DOWN_BUTTONS;
+extern uint8_t GAMEPAD_RIGHT_0 ;
+extern uint8_t GAMEPAD_RIGHT_1 ;
+extern uint32_t GAMEPAD_RIGTH_BUTTONS;
+extern uint8_t GAMEPAD_LEFT_0 ;
+extern uint8_t GAMEPAD_LEFT_1 ;
+extern uint32_t GAMEPAD_LEFT_BUTTONS;
+extern uint32_t  GAMEPAD_SELECT ;
+extern uint32_t  GAMEPAD_START ;
+extern uint32_t  GAMEPAD_BUTTON_A ;
+extern uint32_t  GAMEPAD_BUTTON_B;
+#endif
+
 /* #if defined(MIDI_DEVICE_USB)
   #include <midi_UsbTransport.h>
   #endif */
@@ -60,6 +80,28 @@ MIDIDevice midi_usb(usb_host);
 KeyboardController keyboard1(usb_host);
 //USBHIDParser hid1(usb_host);
 //USBHIDParser hid2(usb_host);
+#endif
+
+#ifdef USB_GAMEPAD
+USBHub hub1(usb_host);
+USBHIDParser hid1(usb_host);
+
+#define COUNT_JOYSTICKS 1
+JoystickController joysticks[COUNT_JOYSTICKS](usb_host);
+uint32_t gamepad_buttons_prev = 0;
+
+USBDriver *drivers[] = {&hub1, &joysticks[0], &joysticks[1], &joysticks[2], &joysticks[3], &hid1};
+#define CNT_DEVICES (sizeof(drivers)/sizeof(drivers[0]))
+
+bool driver_active[CNT_DEVICES] = {false, false, false, false};
+
+// Lets also look at HID Input devices
+USBHIDInput *hiddrivers[] = {&joysticks[0], &joysticks[1], &joysticks[2], &joysticks[3]};
+#define CNT_HIDDEVICES (sizeof(hiddrivers)/sizeof(hiddrivers[0]))
+const char * hid_driver_names[CNT_DEVICES] = {"joystick[0H]", "joystick[1H]", "joystick[2H]", "joystick[3H]"};
+bool hid_driver_active[CNT_DEVICES] = {false};
+bool show_changed_only = true;
+uint64_t joystick_full_notify_mask = (uint64_t) - 1;
 #endif
 
 /* #ifdef MIDI_DEVICE_USB
@@ -1046,6 +1088,66 @@ void OnRawRelease(uint8_t keycode) {
   //#endif
 }
 #endif
+
+#ifdef USB_GAMEPAD
+void USB_GAMEPAD_stats()
+{
+  if (Serial.available()) {
+
+    int ch = Serial.read(); // get the first char.
+    while (Serial.read() != -1) ;
+    if ((ch == 'b') || (ch == 'B')) {
+      Serial.println("Only notify on Basic Axis changes");
+      for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
+        joysticks[joystick_index].axisChangeNotifyMask(0x3ff);
+    } else if ((ch == 'f') || (ch == 'F')) {
+      Serial.println("Only notify on Full Axis changes");
+      for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
+        joysticks[joystick_index].axisChangeNotifyMask(joystick_full_notify_mask);
+
+    } else {
+      if (show_changed_only) {
+        show_changed_only = false;
+        Serial.println("\n*** Show All fields mode ***");
+      } else {
+        show_changed_only = true;
+        Serial.println("\n*** Show only changed fields mode ***");
+      }
+    }
+  }
+
+  for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++) {
+    if (joysticks[joystick_index].available()) {
+      uint64_t axis_mask = joysticks[joystick_index].axisMask();
+      uint64_t axis_changed_mask = joysticks[joystick_index].axisChangedMask();
+      uint32_t buttons = joysticks[joystick_index].getButtons();
+      Serial.printf("Joystick(%d): buttons = %x", joystick_index, buttons);
+
+      if (show_changed_only) {
+        for (uint8_t i = 0; axis_changed_mask != 0; i++, axis_changed_mask >>= 1) {
+          if (axis_changed_mask & 1) {
+            Serial.printf(" %d:%d", i, joysticks[joystick_index].getAxis(i));
+          }
+        }
+      } else {
+        for (uint8_t i = 0; axis_mask != 0; i++, axis_mask >>= 1) {
+          if (axis_mask & 1) {
+            Serial.printf(" %d:%d", i, joysticks[joystick_index].getAxis(i));
+          }
+        }
+      }
+      if (buttons != gamepad_buttons_prev) {
+
+        gamepad_buttons_prev = buttons;
+      }
+      Serial.println();
+      // joysticks[joystick_index].joystickDataClear();
+    }
+  }
+
+}
+#endif
+
 
 FLASHMEM void setup_midi_devices(void)
 {

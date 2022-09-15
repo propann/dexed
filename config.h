@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.4"
+#define VERSION "1.4.5"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -70,9 +70,11 @@
 #define MIDI_DEVICE_USB_HOST
 
 //*************************************************************************************************
-//* USB HOST KEYPAD/KEYBOARD SUPPORT
+//* USB HOST KEYPAD/KEYBOARD/GAMEPAD SUPPORT
 //*************************************************************************************************
+
 //#define USB_KEYPAD 1
+//#define USB_GAMEPAD 1
 
 //*************************************************************************************************
 //* AUDIO HARDWARE SETTINGS

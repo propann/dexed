@@ -59,6 +59,31 @@ extern braids_t     braids_osc;
 extern void braids_update_settings();
 #endif
 
+#ifdef USB_GAMEPAD
+extern uint8_t GAMEPAD_UP_0;
+extern uint8_t GAMEPAD_UP_1;
+extern uint8_t GAMEPAD_UP_BUTTONS;
+
+extern uint8_t GAMEPAD_DOWN_0;
+extern uint8_t GAMEPAD_DOWN_1;
+extern uint8_t GAMEPAD_DOWN_BUTTONS;
+
+extern uint8_t GAMEPAD_RIGHT_0;
+extern uint8_t GAMEPAD_RIGHT_1;
+extern uint8_t GAMEPAD_RIGHT_BUTTONS;
+
+extern uint8_t GAMEPAD_LEFT_0;
+extern uint8_t GAMEPAD_LEFT_1;
+extern uint8_t GAMEPAD_LEFT_BUTTONS;
+
+extern uint32_t GAMEPAD_SELECT;
+extern uint32_t GAMEPAD_START;
+extern uint32_t GAMEPAD_BUTTON_A;
+extern uint32_t GAMEPAD_BUTTON_B;
+
+extern uint8_t  gamepad_0_neutral;
+extern uint8_t  gamepad_1_neutral;
+#endif
 
 #ifdef USE_SEQUENCER
 #include "sequencer.h"
@@ -1528,7 +1553,23 @@ FLASHMEM bool load_sd_sys_json(void)
         configuration.sys.favorites = data_json["favorites"];
         configuration.sys.load_at_startup_performance = data_json["load_at_startup_performance"];
         configuration.sys.load_at_startup_page = data_json["load_at_startup_page"];
-
+#ifdef USB_GAMEPAD
+if (data_json["gp_a"] != data_json["gp_b"] )
+{
+        GAMEPAD_UP_0 = data_json["gp_up_0"];
+        GAMEPAD_UP_1 = data_json["gp_up_1"];
+        GAMEPAD_DOWN_0 = data_json["gp_down_0"];
+        GAMEPAD_DOWN_1 = data_json["gp_down_1"];
+        GAMEPAD_LEFT_0 = data_json["gp_left_0"];
+        GAMEPAD_LEFT_1 = data_json["gp_left_1"];
+        GAMEPAD_RIGHT_0 = data_json["gp_right_0"];
+        GAMEPAD_RIGHT_1 = data_json["gp_right_1"];
+        GAMEPAD_SELECT = data_json["gp_select"];
+        GAMEPAD_START = data_json["gp_start"];
+        GAMEPAD_BUTTON_A = data_json["gp_a"];
+        GAMEPAD_BUTTON_B = data_json["gp_b"];
+}
+#endif
         check_configuration_sys();
         set_sys_params();
 
@@ -1580,7 +1621,23 @@ FLASHMEM bool save_sd_sys_json(void)
       data_json["favorites"] = configuration.sys.favorites;
       data_json["load_at_startup_performance"] = configuration.sys.load_at_startup_performance;
       data_json["load_at_startup_page"] = configuration.sys.load_at_startup_page;
-
+#ifdef USB_GAMEPAD
+if (GAMEPAD_BUTTON_A != GAMEPAD_BUTTON_B )
+{
+      data_json["gp_up_0"] = GAMEPAD_UP_0;
+      data_json["gp_up_1"] = GAMEPAD_UP_1;
+      data_json["gp_down_0"] = GAMEPAD_DOWN_0;
+      data_json["gp_down_1"] = GAMEPAD_DOWN_1;
+      data_json["gp_left_0"] = GAMEPAD_LEFT_0;
+      data_json["gp_left_1"] = GAMEPAD_LEFT_1;
+      data_json["gp_right_0"] = GAMEPAD_RIGHT_0;
+      data_json["gp_right_1"] = GAMEPAD_RIGHT_1;
+      data_json["gp_select"] = GAMEPAD_SELECT;
+      data_json["gp_start"] = GAMEPAD_START;
+      data_json["gp_a"] = GAMEPAD_BUTTON_A;
+      data_json["gp_b"] = GAMEPAD_BUTTON_B;
+}
+#endif
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
