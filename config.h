@@ -945,15 +945,6 @@ typedef struct braids_s
 } braids_t;
 #endif
 
-#ifdef USE_BRAIDS
-//typedef struct braids_filter_state_s
-//{
-//  uint16_t filter_freq_last_displayed = 99;
-//  uint16_t filter_freq_current;
-//} braids_filter_state_t;
-//extern uint16_t braids_filter_state[NUM_BRAIDS];
-#endif
-
 typedef struct sys_s {
   uint8_t vol;
   uint8_t mono;
