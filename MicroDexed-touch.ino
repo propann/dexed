@@ -2260,7 +2260,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 
-                snprintf_P(temp_name, strlen(temp_name), PSTR("%s.wav"), drum_config[d].name);
+                sprintf(temp_name, "%s.wav", drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
