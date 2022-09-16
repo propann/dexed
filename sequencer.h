@@ -68,6 +68,7 @@ typedef struct multisample_zone_s {
 
 typedef struct sequencer_s {
   int gamepad_timer;
+  uint8_t gamepad_timer_speed;
   bool gamepad_jumped_back_from_pattern_editor_to_chain_editor;
   bool euclidean_state[16];
   uint8_t euclidean_offset=5;

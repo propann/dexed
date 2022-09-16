@@ -2402,6 +2402,41 @@ void toggle_sequencer_play_status()
   }
 }
 
+#ifdef USB_GAMEPAD
+boolean gp_right()
+{
+  if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1)
+    return true;
+  else
+    return false;
+}
+
+boolean gp_left()
+{
+
+  if (joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1)
+    return true;
+  else
+    return false;
+}
+
+boolean gp_up()
+{
+  if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1)
+    return true;
+  else
+    return false;
+}
+
+boolean gp_down()
+{
+  if (joysticks[0].getAxis(0) == GAMEPAD_DOWN_0 && joysticks[0].getAxis(1) == GAMEPAD_DOWN_1)
+    return true;
+  else
+    return false;
+}
+#endif
+
 /***********************************************************************
    MENU CONTROL
  ***********************************************************************/
@@ -2430,6 +2465,8 @@ void lcdml_menu_control(void)
     pinMode(PCM5102_MUTE_PIN, OUTPUT);
     digitalWrite(PCM5102_MUTE_PIN, HIGH); // ENABLE/UNMUTE DAC
 #endif
+
+
   }
 
   if (back_from_volume > BACK_FROM_VOLUME_MS && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
@@ -2465,7 +2502,7 @@ void lcdml_menu_control(void)
   }
 #endif
 
-#ifdef USB_GAMEPAD  // USB NES CONTROL TEST
+#ifdef USB_GAMEPAD // USB GAMEPAD CONTROL
 
   uint32_t buttons = joysticks[0].getButtons();
 
@@ -2490,7 +2527,7 @@ void lcdml_menu_control(void)
         display.print(F("MASTER VOLUME "));
         setCursor_textGrid_small(1, 19);
         display.setTextColor(GREEN, COLOR_BACKGROUND);
-        display.print(F("WILL ALSO STORE YOUR CURRENT GAMEPAD SETTINGS."));
+        display.print(F("WILL STORE YOUR CURRENT GAMEPAD SETTINGS."));
       }
       else
       {
@@ -2506,25 +2543,25 @@ void lcdml_menu_control(void)
       print_formatted_number(GAMEPAD_UP_0, 3);
       setCursor_textGrid_small(20, 6 );
       print_formatted_number(GAMEPAD_UP_1, 3);
-      
+
       if (temp_int == 1) display.setTextColor(RED, COLOR_BACKGROUND); else  if (temp_int > 1) display.setTextColor(GREEN, COLOR_BACKGROUND); else  display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_small(16, 7);
       print_formatted_number(GAMEPAD_DOWN_0, 3);
       setCursor_textGrid_small(20, 7);
       print_formatted_number(GAMEPAD_DOWN_1, 3);
-     
+
       if (temp_int == 2) display.setTextColor(RED, COLOR_BACKGROUND); else  if (temp_int > 2) display.setTextColor(GREEN, COLOR_BACKGROUND); else  display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_small(16, 8);
       print_formatted_number(GAMEPAD_LEFT_0, 3);
       setCursor_textGrid_small(20, 8);
       print_formatted_number(GAMEPAD_LEFT_1, 3);
-    
+
       if (temp_int == 3) display.setTextColor(RED, COLOR_BACKGROUND); else  if (temp_int > 3) display.setTextColor(GREEN, COLOR_BACKGROUND); else  display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_small(16, 9);
       print_formatted_number(GAMEPAD_RIGHT_0, 3);
       setCursor_textGrid_small(20, 9);
       print_formatted_number(GAMEPAD_RIGHT_1, 3);
-     
+
       if (temp_int == 4) display.setTextColor(RED, COLOR_BACKGROUND); else  if (temp_int > 4) display.setTextColor(GREEN, COLOR_BACKGROUND); else  display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_small(16, 11);
       print_formatted_number(GAMEPAD_BUTTON_A, 3);
@@ -2542,7 +2579,7 @@ void lcdml_menu_control(void)
         if (temp_int == 0)
         {
           GAMEPAD_UP_0 =  joysticks[0].getAxis(0);
-          GAMEPAD_UP_1 =  joysticks[0].getAxis(1); 
+          GAMEPAD_UP_1 =  joysticks[0].getAxis(1);
         }
         else if (temp_int == 1)
         {
@@ -2569,11 +2606,11 @@ void lcdml_menu_control(void)
         }
         else if (temp_int == 6)
         {
-          GAMEPAD_SELECT =   buttons;
+          GAMEPAD_SELECT = buttons;
         }
         else if (temp_int == 7)
         {
-          GAMEPAD_START =   buttons;
+          GAMEPAD_START = buttons;
         }
         temp_int++;
         seq.gamepad_timer = 0;
@@ -2582,7 +2619,7 @@ void lcdml_menu_control(void)
     }
     else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
     {
-      if ( seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT  && joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1 )
+      if ( seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT  && gp_right() )
       {
         seq.cycle_touch_element = 6; // goto chain edit
         seq.help_text_needs_refresh = true;
@@ -2594,7 +2631,7 @@ void lcdml_menu_control(void)
         print_song_mode_help();
         seq.gamepad_timer = 0;
       }
-      else if ( seq.cycle_touch_element == 6 &&  buttons == GAMEPAD_SELECT  && joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1 )
+      else if ( seq.cycle_touch_element == 6 &&  buttons == GAMEPAD_SELECT  && gp_left() )
       {
         seq.cycle_touch_element = 0; // goto pattern in song mode
         seq.help_text_needs_refresh = true;
@@ -2606,7 +2643,7 @@ void lcdml_menu_control(void)
         print_song_mode_help();
         seq.gamepad_timer = 0;
       }
-      else if ( seq.cycle_touch_element == 6  &&  buttons == GAMEPAD_SELECT  && joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1 )
+      else if ( seq.cycle_touch_element == 6  &&  buttons == GAMEPAD_SELECT  && gp_right() )
       { // go to pattern editor
         seq.gamepad_timer = 0;
         LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
@@ -2614,7 +2651,7 @@ void lcdml_menu_control(void)
     }
     else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
     {
-      if (  buttons == GAMEPAD_SELECT  && joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1 )
+      if (  buttons == GAMEPAD_SELECT  && gp_left() )
       { // go to pattern editor
         seq.cycle_touch_element = 6;
         seq.tracktype_or_instrument_assign = 0;
@@ -2624,70 +2661,107 @@ void lcdml_menu_control(void)
         LCDML.OTHER_jumpToFunc(UI_func_song);
       }
     }
-    else if ( LCDML.FUNC_getID() != 0 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad))
+    else if (  LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad))
     {
+      if (    LCDML.FUNC_getID() == 255   ) // main menu
+        seq.gamepad_timer_speed = 1;
 
-      if (seq.edit_state == false)
+      if (   LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ||  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) ||
+             LCDML.FUNC_getID() < 58  ||  (LCDML.FUNC_getID() > 57 && LCDML.FUNC_getID() < 89) )
       {
-        if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1 && buttons == gamepad_buttons_neutral)
+        if (seq.edit_state || generic_active_function != 0 ) // is in edit state
+        {
+          if (gp_up() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 254;
+          }
+          else if (gp_down() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 254;
+          }
+          if (gp_right() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 45;
+          }
+          else if (gp_left() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 45;
+          }
+        }
+        else  // not in edit state
+        {
+          if (gp_up() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 254;
+          }
+          else if (gp_down() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 254;
+          }
+          if (gp_right() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 45;
+          }
+          else if (gp_left() && buttons == gamepad_buttons_neutral)
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+            seq.gamepad_timer = 0;
+            seq.gamepad_timer_speed = 45;
+          }
+        }
+        if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) )// is in edit state
+          // is in edit state
+        { if (seq.edit_state)
+            seq.gamepad_timer_speed = 3;
+          else
+            seq.gamepad_timer_speed = 1;
+        }
+        else if ( LCDML.FUNC_getID() > 57 )
+          seq.gamepad_timer_speed = 1;
+      }
+      else
+      {
+        if (gp_up() && buttons == gamepad_buttons_neutral)
         {
           g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
           seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 1;
         }
-        else if (joysticks[0].getAxis(0) == GAMEPAD_DOWN_0 && joysticks[0].getAxis(1) == GAMEPAD_DOWN_1 && buttons ==gamepad_buttons_neutral)
+        else if (gp_down() && buttons == gamepad_buttons_neutral)
         {
           g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
           seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 1;
         }
-        if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1 && buttons == gamepad_buttons_neutral)
+
+        if (gp_right() && buttons == gamepad_buttons_neutral)
         {
           g_LCDML_CONTROL_Encoder_position[ENC_L] = -4;
           seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 1;
         }
-        else if (joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1 && buttons == gamepad_buttons_neutral)
+        else if (gp_left() && buttons == gamepad_buttons_neutral)
         {
           g_LCDML_CONTROL_Encoder_position[ENC_L] = 4;
           seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 1;
         }
       }
-      else
-      { // is in edit mode
-        if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1 && buttons == gamepad_buttons_neutral)
-        {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-        }
-        else if (joysticks[0].getAxis(0) == GAMEPAD_DOWN_0 && joysticks[0].getAxis(1) == GAMEPAD_DOWN_1 && buttons == gamepad_buttons_neutral)
-        {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-        }
-        if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1 && buttons == gamepad_buttons_neutral)
-        {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-        }
-        else if (joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1 && buttons == gamepad_buttons_neutral)
-        {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-        }
-      }
-
     }
-    //    else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
-    //    {
-    //      if (joysticks[0].getAxis(0) == GPAD_RIGHT_0 && joysticks[0].getAxis(1) == GPAD_RIGHT_1 && buttons == gamepad_buttons_neutral)
-    //      {
-    //        g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-    //        seq.gamepad_timer = 0;
-    //      }
-    //      else if (joysticks[0].getAxis(0) == GPAD_LEFT_0 && joysticks[0].getAxis(1) == GPAD_LEFT_1 && buttons == gamepad_buttons_neutral)
-    //      {
-    //        g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-    //        seq.gamepad_timer = 0;
-    //      }
-    //    }
   }
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad))
   {
@@ -2695,43 +2769,17 @@ void lcdml_menu_control(void)
       button[ENC_L] = 0;
     else if (buttons == GAMEPAD_BUTTON_A)
       button[ENC_R] = 0;
+    else if (buttons == GAMEPAD_START && seq.gamepad_timer>4000)
+    {
+       seq.gamepad_timer = 0;
+        seq.gamepad_timer_speed = 1;
+      if (!seq.running)
+        handleStart();
+      else
+        handleStop();
+    }
   }
-  //  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_song))
-  //  {
-  //    if (buttons == 1)
-  //      button[ENC_L] = 0;
-  //    else if (buttons == 2)
-  //      button[ENC_R] = 0;
-  //  }
-  //  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
-  //  {
-  //    if (buttons == 1)
-  //    {
-  //      // button[ENC_L] = 0;
-  //    }
-  //    else if (buttons == 2)
-  //    {
-  //      button[ENC_R] = 0;
-  //      encoderDir[ENC_R].ButtonShort(true);
-  //      seq.edit_state = true;
-  //
-  //      seq.help_text_needs_refresh = true;
-  //
-  //    }
-  //    else
-  //    {
-  //      ;
-  //
-  //    }
-  //
-  //  }
-  if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
-    seq.gamepad_timer = seq.gamepad_timer + 5;
-  else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad))
-    seq.gamepad_timer = seq.gamepad_timer + 2;
-  else
-    seq.gamepad_timer++;
-
+  seq.gamepad_timer = seq.gamepad_timer + seq.gamepad_timer_speed;
 #endif
 
   /************************************************************************************
@@ -3291,14 +3339,16 @@ FLASHMEM void colors_screen_update_text_preview()
 
 FLASHMEM void setModeColor(uint8_t selected_option)
 {
-  if (generic_temp_select_menu == selected_option)
+  if (generic_temp_select_menu == selected_option )
   {
-    display.setTextColor( RED, COLOR_BACKGROUND);
+    display.setTextColor(  COLOR_BACKGROUND, COLOR_SYSTEXT);
   } else
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  if (generic_temp_select_menu == selected_option && generic_active_function == 1)
+  if ( (generic_temp_select_menu == selected_option && generic_active_function == 1) || (generic_temp_select_menu == selected_option && seq.edit_state == 1))
   {
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    // display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    //   display.setTextColor( COLOR_BACKGROUND,RED);
+    display.setTextColor( COLOR_SYSTEXT, RED);
   }
 }
 
@@ -4480,9 +4530,9 @@ void getNoteName(char* noteName, uint8_t noteNumber)
   {
     noteNumber -= 21;
     if ( notes[noteNumber % 12][1] == '\0')
-      snprintf_P(noteName, strlen(noteName), PSTR("%1s-%1d"), notes[noteNumber % 12], oct_index / 12);
+      sprintf(noteName, "%1s-%1d", notes[noteNumber % 12], oct_index / 12);
     else
-      snprintf_P(noteName, strlen(noteName), PSTR("%2s%1d"), notes[noteNumber % 12], oct_index / 12);
+      sprintf(noteName, "%2s%1d", notes[noteNumber % 12], oct_index / 12);
   }
 }
 
@@ -5983,7 +6033,7 @@ void UI_func_drum_reverb_send(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("Drum Rev. Send"));
     setCursor_textGrid(2, 2);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+    sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     show(2, 5, 7, basename(drum_config[activesample].name));
   }
@@ -6035,10 +6085,10 @@ void UI_func_drum_reverb_send(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+      sprintf(displayname, "%02d", activesample);
       display.print(displayname);
       show(2, 5, 7, basename(drum_config[activesample].name));
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].reverb_send * 100) );
+      sprintf(displayname, "%03d", (int)(drum_config[activesample].reverb_send * 100) );
       setCursor_textGrid(13, 2);
       display.print(displayname);
     } else {
@@ -6050,7 +6100,7 @@ void UI_func_drum_reverb_send(uint8_t param)
       display.print("[");
       setCursor_textGrid(16, 2);
       display.print("]");
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
+      sprintf(displayname, "%03d", temp_int);
       setCursor_textGrid(13, 2);
       display.print(displayname);
       drum_config[activesample].reverb_send = mapfloat(temp_int, 0, 100, 0.0, 1.0);
@@ -6079,6 +6129,7 @@ FLASHMEM void UI_func_drum_midi_channel(uint8_t param)
       drum_midi_channel = constrain(drum_midi_channel - ENCODER[ENC_R].speed(), MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX);
 
     setCursor_textGrid(1, 2);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     if (drum_midi_channel == 0)
     {
       display.print(F("[OMNI]"));
@@ -6140,7 +6191,7 @@ FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("DrumSmp. Tune"));
     setCursor_textGrid(2, 2);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+    sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     show(2, 5, 8, basename(drum_config[activesample].name));
   }
@@ -6190,10 +6241,10 @@ FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+      sprintf(displayname, "%02d", activesample);
       display.print(displayname);
       show(2, 5, 8, basename(drum_config[activesample].name));
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].p_offset * 200) );
+      sprintf(displayname, "%03d", (int)(drum_config[activesample].p_offset * 200) );
       setCursor_textGrid(14, 2);
       display.print(displayname);
     } else {
@@ -6206,7 +6257,7 @@ FLASHMEM void UI_func_drum_tune_offset(uint8_t param)
       display.print("[");
       setCursor_textGrid(17, 2);
       display.print("]");
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
+      sprintf(displayname, "%03d", temp_int);
       setCursor_textGrid(14, 2);
       display.print(displayname);
       drum_config[activesample].p_offset = temp_float;
@@ -6230,7 +6281,7 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("DrumSmp. Pitch"));
     setCursor_textGrid(2, 2);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+    sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     show(2, 5, 8, basename(drum_config[activesample].name));
   }
@@ -6280,10 +6331,10 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+      sprintf(displayname, "%02d", activesample);
       display.print(displayname);
       show(2, 5, 8, basename(drum_config[activesample].name));
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].pitch * 200) );
+      sprintf(displayname, "%03d", (int)(drum_config[activesample].pitch * 200) );
       setCursor_textGrid(14, 2);
       display.print(displayname);
     } else {
@@ -6296,7 +6347,7 @@ FLASHMEM void UI_func_drum_pitch(uint8_t param)
       display.print("[");
       setCursor_textGrid(17, 2);
       display.print("]");
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
+      sprintf(displayname, "%03d", temp_int);
       setCursor_textGrid(14, 2);
       display.print(displayname);
       drum_config[activesample].pitch = temp_float;
@@ -6599,7 +6650,7 @@ void UI_func_custom_mappings(uint8_t param)
     display.print("]");
     setCursor_textGrid_small(3, 3);
 
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+    sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
     show_small_font(4 * CHAR_height_small - 2, 9 * CHAR_width_small, 13, basename(drum_config[activesample].name));
@@ -6672,7 +6723,7 @@ void UI_func_drum_volume(uint8_t param)
     display.print(F("DrumSmp. Volume"));
 
     setCursor_textGrid(2, 2);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+    sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     show(2, 4, 8, basename(drum_config[activesample].name));
 
@@ -6725,10 +6776,10 @@ void UI_func_drum_volume(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+      sprintf(displayname, "%02d", activesample);
       display.print(displayname);
       show(2, 5, 7, basename(drum_config[activesample].name));
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), (int)(drum_config[activesample].vol_max * 100) );
+      sprintf(displayname, "%03d", (int)(drum_config[activesample].vol_max * 100) );
       setCursor_textGrid(13, 2);
       display.print(displayname);
     } else {
@@ -6741,7 +6792,7 @@ void UI_func_drum_volume(uint8_t param)
       display.print("[");
       setCursor_textGrid(16, 2);
       display.print("]");
-      snprintf_P(displayname, strlen(displayname), PSTR("%03d"), temp_int);
+      sprintf(displayname, "%03d", temp_int);
       setCursor_textGrid(13, 2);
       display.print(displayname);
       drum_config[activesample].vol_max = temp_float;
@@ -6906,7 +6957,7 @@ void UI_func_seq_settings(uint8_t param)
     if (temp_int == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 6);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), seq.oct_shift);
+    sprintf(displayname, "%02d", seq.oct_shift);
     display.print(displayname);
     if (temp_int == 1)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -6915,12 +6966,12 @@ void UI_func_seq_settings(uint8_t param)
     if (temp_int == 2)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 8);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), seq.chord_key_ammount);
+    sprintf(displayname, "%02d", seq.chord_key_ammount);
     display.print(displayname);
     if (temp_int == 3)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 9);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), seq.arp_num_notes_max);
+    sprintf(displayname, "%02d", seq.arp_num_notes_max);
     display.print(displayname);
     if (temp_int == 4)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -6945,12 +6996,12 @@ void UI_func_seq_settings(uint8_t param)
     }
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(13, 19);
-    snprintf_P(displayname, strlen(displayname), PSTR("%03d"), seq.tempo_ms / 1000);
+    sprintf(displayname, "%03d", seq.tempo_ms / 1000);
     display.print(displayname);
     if (temp_int == 6)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT); else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(23, 19);
-    snprintf_P(displayname, strlen(displayname), PSTR("%03d"), seq.bpm);
+    sprintf(displayname, "%03d", seq.bpm);
     display.print(displayname);
     seq.tempo_ms = 60000000 / seq.bpm / 4;
 
@@ -6987,7 +7038,7 @@ void UI_func_drum_pan(uint8_t param)
     setCursor_textGrid(1, 1);
     display.print(F("DrmSmp. Panorama"));
     setCursor_textGrid(2, 2);
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+    sprintf(displayname, "%02d", activesample);
     display.print(displayname);
     show(2, 5, 6, basename(drum_config[activesample].name));
   }
@@ -7038,7 +7089,7 @@ void UI_func_drum_pan(uint8_t param)
       setCursor_textGrid(4, 2);
       display.print("]");
       setCursor_textGrid(2, 2);
-      snprintf_P(displayname, strlen(displayname), PSTR("%02d"), activesample);
+      sprintf(displayname, "%02d", activesample);
       display.print(displayname);
       show(2, 5, 6, basename(drum_config[activesample].name));
     } else {
@@ -7062,7 +7113,7 @@ void UI_func_drum_pan(uint8_t param)
     else {
       display.print("C");
     }
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), abs(temp_int));
+    sprintf(displayname, "%02d", abs(temp_int));
     setCursor_textGrid(14, 2);
     display.print( displayname);
   }
@@ -8129,7 +8180,7 @@ void UI_func_seq_vel_editor(uint8_t param)
           {
             display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
             display.print("V:");
-            snprintf_P(tmp, strlen(tmp), PSTR("%03d"), seq.vel[seq.active_pattern][seq.menu - 1]);
+            sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
             display.print(tmp);
             display.print(" ");
             display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
@@ -8185,7 +8236,7 @@ void UI_func_seq_vel_editor(uint8_t param)
             {
               setCursor_textGrid(0, 0);
               display.print(F("Vel:"));
-              snprintf_P(tmp, strlen(tmp), PSTR("%03d"), seq.vel[seq.active_pattern][seq.menu - 1]);
+              sprintf(tmp, "%03d", seq.vel[seq.active_pattern][seq.menu - 1]);
               setCursor_textGrid(4, 0);
               display.print(tmp);
               display.print(" ");
@@ -8800,7 +8851,7 @@ void seq_sub_pattern_transpose ()
     else {
       display.print(" ");
     }
-    snprintf_P(displayname, strlen(displayname), PSTR("%02d"), abs(temp_int));
+    sprintf(displayname, "%02d", abs(temp_int));
     display.print( displayname);
     display.print("]");
     for (uint8_t i = 0; i < 16; i++)
@@ -13995,7 +14046,7 @@ void print_flash_stats()
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("USED: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(sum_used));
+  sprintf(tmp, "%05d", int(sum_used));
   display.print(tmp);
   display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
   display.print(" KB");
@@ -14004,7 +14055,7 @@ void print_flash_stats()
   display.print("TOTAL: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
   chipsize = SerialFlash.capacity(buf);
-  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(chipsize / 1024));
+  sprintf(tmp, "%05d", int(chipsize / 1024));
   display.print(tmp);
 
   display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
@@ -14019,7 +14070,7 @@ void print_flash_stats()
   display.print("FREE: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(chipsize / 1024 - sum_used) );
+  sprintf(tmp, "%05d", int(chipsize / 1024 - sum_used) );
   display.print(tmp);
   display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
   display.print(" KB");
@@ -14035,13 +14086,13 @@ void print_flash_stats()
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("USED: ");
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(myfs.usedSize() / 1024));
+  sprintf(tmp, "%05d", int(myfs.usedSize() / 1024));
   display.print(tmp);
   display.print(" KB");
   display.setCursor (CHAR_width_small * 37 , 3 * CHAR_height_small   );
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("TOTAL: ");
-  snprintf_P(tmp, strlen(tmp), PSTR("%05d"), int(myfs.totalSize() / 1024));
+  sprintf(tmp, "%05d", int(myfs.totalSize() / 1024));
   display.print(tmp);
   display.print(" KB");
 }
@@ -16004,14 +16055,14 @@ void print_perfmod_lables()
   else
     display.setTextColor(GREY1, GREY2);
   display.setCursor( 5 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
-  snprintf_P(tmp, strlen(tmp), PSTR("%03d"), dexed_live_mod.attack_mod[selected_instance_id]);
+  sprintf(tmp, "%03d", dexed_live_mod.attack_mod[selected_instance_id]);
   display.print(tmp);
   if (dexed_live_mod.active_button == 2 || dexed_live_mod.active_button == 4)
     display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
   else
     display.setTextColor(GREY1, GREY2);
   display.setCursor( 14 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
-  snprintf_P(tmp, strlen(tmp), PSTR("%03d"), dexed_live_mod.release_mod[selected_instance_id]);
+  sprintf(tmp, "%03d", dexed_live_mod.release_mod[selected_instance_id]);
   display.print(tmp);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
@@ -16538,7 +16589,7 @@ void UI_func_voice_select(uint8_t param)
     }
     else if (generic_temp_select_menu != 0)
     {
-      display.fillRect(CHAR_width_small * 10 , 6, CHAR_width_small * 19, 7, COLOR_BACKGROUND);
+      display.fillRect(CHAR_width_small * 10 , 6, CHAR_width_small * 19, 8, COLOR_BACKGROUND);
       draw_favorite_icon(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
     }
 
@@ -16548,8 +16599,10 @@ void UI_func_voice_select(uint8_t param)
     print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
     setCursor_textGrid(1, 2);
     print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    //display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setModeColor(1);
     show(1, 5, 8, g_bank_name[selected_instance_id]);
+    setModeColor(2);
     show(2, 5, 10, g_voice_name[selected_instance_id]);
 
     if (generic_temp_select_menu == 1)
@@ -17225,7 +17278,7 @@ void UI_func_sysex_receive_bank(uint8_t param)
 #endif
             char tmp[FILENAME_LEN];
             strcpy(tmp, receive_bank_filename);
-            snprintf_P(receive_bank_filename, strlen(receive_bank_filename), PSTR("/%d/%s.syx"), bank_number, tmp);
+            sprintf(receive_bank_filename, "/%d/%s.syx", bank_number, tmp);
 #ifdef DEBUG
             Serial.print(F("Receiving into bank "));
             Serial.print(bank_number);
@@ -18325,28 +18378,33 @@ void display_int(int16_t var, uint8_t size, bool zeros, bool brackets, bool sign
 void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool zeros, bool brackets, bool sign)
 {
   char s[display_cols + 1];
+  char f[display_cols + 1];
 
   if (size_fraction > 0)
   {
     if (zeros == true && sign == true)
-      snprintf_P(s, strlen(s), PSTR("%+0*.*f"), size_number + size_fraction + 2, size_fraction, var);
+      sprintf(f, "%%+0%d.%df", size_number + size_fraction + 2, size_fraction);
     else if (zeros == true && sign == false)
-      snprintf_P(s, strlen(s), PSTR("%0*.*f"), size_number + size_fraction + 1, size_fraction, var);
+      sprintf(f, "%%+0%d.%df", size_number + size_fraction + 1, size_fraction);
     else if (zeros == false && sign == true)
-      snprintf_P(s, strlen(s), PSTR("%+*.*f"), size_number + size_fraction + 2, size_fraction, var);
+      sprintf(f, "%%+%d.%df", size_number + size_fraction + 2, size_fraction);
     else if (zeros == false && sign == false)
-      snprintf_P(s, strlen(s), PSTR("%*.*f"), size_number + size_fraction + 1, size_fraction, var);
+      sprintf(f, "%%%d.%df", size_number + size_fraction + 1, size_fraction);
+
+    sprintf(s, f, var);
   }
   else
   {
     if (zeros == true && sign == true)
-      snprintf_P(s, strlen(s), PSTR("%+0*d"), size_number + 1, var);
+      sprintf(f, "%%+0%dd", size_number + 1);
     else if (zeros == true && sign == false)
-      snprintf_P(s, strlen(s), PSTR("%0*d"), size_number, var);
+      sprintf(f, "%%%0dd", size_number);
     else if (zeros == false && sign == true)
-      snprintf_P(s, strlen(s), PSTR("%+*d"), size_number + 1, var);
+      sprintf(f, "%%+%dd", size_number + 1);
     else if (zeros == false && sign == false)
-      snprintf_P(s, strlen(s), PSTR("%*d"), size_number, var);
+      sprintf(f, "%%%dd", size_number);
+
+    sprintf(s, f, int(var));
   }
 
   if (brackets == true)
@@ -18354,9 +18412,8 @@ void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool z
     char tmp[display_cols + 1];
 
     strcpy(tmp, s);
-    snprintf_P(s, strlen(s), PSTR("[%s]"), tmp);
+    sprintf(s, "[%s]", tmp);
   }
-
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(s);
   display.setTextColor(COLOR_SYSTEXT);
@@ -18395,12 +18452,7 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
 
   // Value
   display.setCursor( CHAR_width * (display_cols - size - 3), CHAR_height * 2);
-  //display_float(value * factor, size_number, size_fraction, zeros, false, sign); // TBD
-  char s[display_cols + 1];
-  snprintf_P(s, strlen(s), PSTR("%+1.1f"), value * factor);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(s);
-  display.setTextColor(COLOR_SYSTEXT);
+  display_float(value * factor, size_number, size_fraction, zeros, false, sign); // TBD
 
   // Bar
   //if (vi == 0)
@@ -18448,12 +18500,7 @@ void display_meter_float(const char* title, float value, float factor, float off
 
   // Value
   display.setCursor( (display_cols - size - 3)*CHAR_width, CHAR_height * 2);
-  //display_float((value + offset) * factor, size_number, size_fraction, zeros, false, sign);
-  char s[display_cols + 1];
-  snprintf_P(s, strlen(s), PSTR("%+1.1f"), value * factor);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(s);
-  display.setTextColor(COLOR_SYSTEXT);
+  display_float((value + offset) * factor, size_number, size_fraction, zeros, false, sign);
 
   // Bar
 

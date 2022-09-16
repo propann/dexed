@@ -1354,12 +1354,13 @@ sd_card = check_sd_cards();
   }
 
   scope.clear();
-  
+
 #ifdef USB_GAMEPAD
   gamepad_buttons_neutral = joysticks[0].getButtons();
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
- 
+  seq.gamepad_timer_speed = 1;
+
 #endif
 
 }
@@ -1531,7 +1532,7 @@ void loop()
   else if ( LCDML.FUNC_getID() > _LCDML_DISP_cnt  || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)  )
   {
     handle_touchscreen_menu();
-    scope.draw_scope(225, 18, 92);
+    scope.draw_scope(230, 18, 87);
   }
 #ifdef USE_MULTIBAND
   else if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics) )

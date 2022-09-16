@@ -96,6 +96,8 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
 
 ## Installation/Compile Instructions
 
+* Use Arduino Version 1.8.19 with Teensyduino 1.56. Arduino IDE 2.0 is out recently but first tests indicated there a several issues that needs to be checked and fixed. Until then please use the suggested versions if you want to compile to the code for your own. If you have a default MD-T configuration, you can also upload MD-T as an .HEX (Binary File), without any compiling of your own. We will provide a version for PROGMEM and for FLASH. (meaning you have an external FLASH Chip attached).
+
 * Copy Libraries from /third-party to you Arduino / Teensy Library Directory (On Mac: usualy in your Home Directory/Documents/Arduino/libraries), if not already existing there.
 
 * Copy all Files/Directories from /addon/SD/ to the root of your SD Card (FAT32) and insert the card in SD Slot of the Teensy 4.1
