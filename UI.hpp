@@ -2365,9 +2365,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) //qix screensaver
 
 void setup_ui(void)
 {
-  SPI.begin();
-  display.begin();
-  touch.begin();
 #ifdef UI_REVERSE
   display.setRotation(1); // rotation 180°
   touch.setRotation(3); // rotation 180°
