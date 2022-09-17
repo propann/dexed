@@ -918,6 +918,11 @@ void setup()
   Serial.flush();
 #endif
 
+  // Init display
+  SPI.begin();
+  display.begin();
+  touch.begin();
+
   // Setup MIDI devices
   setup_midi_devices();
 

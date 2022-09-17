@@ -650,7 +650,6 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number)
 #ifdef DEBUG
         Serial.println("remove old drum mapping file");
 #endif
-        SD.begin();
         SD.remove(filename);
       }
       json = SD.open(filename, FILE_WRITE);
@@ -797,7 +796,6 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
 #ifdef DEBUG
         Serial.println("remove old drumsettings file");
 #endif
-        SD.begin();
         SD.remove(filename);
       }
       json = SD.open(filename, FILE_WRITE);
@@ -961,7 +959,6 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -1132,7 +1129,6 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -1309,7 +1305,6 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -1464,7 +1459,6 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -1608,7 +1602,6 @@ FLASHMEM bool save_sd_sys_json(void)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -1759,7 +1752,6 @@ FLASHMEM bool save_sd_braids_json(uint8_t number)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -1908,7 +1900,6 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number)
 #endif
 
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -2035,7 +2026,6 @@ FLASHMEM bool save_sd_chain_json(uint8_t number)
     int columns = sizeof(seq.chain[0]);
     int rows = total / columns;
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -2132,7 +2122,6 @@ FLASHMEM bool save_sd_transpose_json(uint8_t number)
     int columns = sizeof(seq.chain_transpose[0]);
     int rows = total / columns;
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -2234,7 +2223,6 @@ FLASHMEM bool save_sd_song_json(uint8_t number)
     int columns = sizeof(seq.song[0]);
     int rows = total / columns;
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -2282,7 +2270,6 @@ FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number)
     int columns = sizeof(seq.vel[0]);
     int rows = total / columns;
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -2336,7 +2323,6 @@ FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number)
     int columns = sizeof(seq.note_data[0]);
     int rows = total / columns;
     AudioNoInterrupts();
-    SD.begin();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json)
@@ -2513,7 +2499,6 @@ FLASHMEM bool check_performance_directory(uint8_t number)
     sprintf(dir, "/%s/%d", PERFORMANCE_CONFIG_PATH, number);
 
     AudioNoInterrupts();
-    SD.begin();
     if (!SD.exists(dir))
     {
 #ifdef DEBUG
@@ -3271,7 +3256,6 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
 #ifdef DEBUG
       Serial.println("remove old multisample file");
 #endif
-      SD.begin();
       SD.remove(filename);
     }
     json = SD.open(filename, FILE_WRITE);
@@ -3304,7 +3288,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
       serializeJsonPretty(data_json, Serial);
       Serial.println();
 #endif
-      serializeJson(data_json, json);
+      serializeJsonPretty(data_json, json);
       json.close();
       AudioInterrupts();
       return (true);
@@ -3337,18 +3321,18 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
     AudioNoInterrupts();
     if (SD.exists(filename))
     {
-      // ... and if: load
 #ifdef DEBUG
       Serial.print(F("Found msp presets data ["));
       Serial.print(filename);
       Serial.println(F("]... loading..."));
       Serial.println(F(" "));
 #endif
-      SD.begin();
+
       json = SD.open(filename);
       if (json)
       {
-        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+        // StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+        DynamicJsonDocument data_json(JSON_BUFFER_SIZE);
         deserializeJson(data_json, json);
         json.close();
         AudioInterrupts();
