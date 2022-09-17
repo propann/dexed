@@ -1036,7 +1036,7 @@ void OnHIDExtrasRelease(uint32_t top, uint16_t key)
 void OnRawPress(uint8_t keycode) {
 #ifdef KEYBOARD_INTERFACE
   if (keyboard_leds != keyboard_last_leds) {
-    //Serial.printf_p(PSTR("New LEDS: %x\n"), keyboard_leds);
+    //Serial.printf_P(PSTR("New LEDS: %x\n"), keyboard_leds);
     keyboard_last_leds = keyboard_leds;
     keyboard1.LEDS(keyboard_leds);
   }
@@ -1049,7 +1049,7 @@ void OnRawPress(uint8_t keycode) {
   } else {
     if (keyboard1.getModifiers() != keyboard_modifiers) {
 #ifdef SHOW_KEYBOARD_DATA
-      Serial.printf_p(PSTR("Mods mismatch: %x != %x\n"), keyboard_modifiers, keyboard1.getModifiers());
+      Serial.printf_P(PSTR("Mods mismatch: %x != %x\n"), keyboard_modifiers, keyboard1.getModifiers());
 #endif
       keyboard_modifiers = keyboard1.getModifiers();
       Keyboard.set_modifier(keyboard_modifiers);
@@ -1097,21 +1097,21 @@ void USB_GAMEPAD_stats()
     int ch = Serial.read(); // get the first char.
     while (Serial.read() != -1) ;
     if ((ch == 'b') || (ch == 'B')) {
-      Serial.println("Only notify on Basic Axis changes");
+      Serial.println(F("Only notify on Basic Axis changes"));
       for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
         joysticks[joystick_index].axisChangeNotifyMask(0x3ff);
     } else if ((ch == 'f') || (ch == 'F')) {
-      Serial.println("Only notify on Full Axis changes");
+      Serial.println(F("Only notify on Full Axis changes"));
       for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
         joysticks[joystick_index].axisChangeNotifyMask(joystick_full_notify_mask);
 
     } else {
       if (show_changed_only) {
         show_changed_only = false;
-        Serial.println("\n*** Show All fields mode ***");
+        Serial.println(F("\n*** Show All fields mode ***"));
       } else {
         show_changed_only = true;
-        Serial.println("\n*** Show only changed fields mode ***");
+        Serial.println(F("\n*** Show only changed fields mode ***"));
       }
     }
   }
@@ -1121,18 +1121,18 @@ void USB_GAMEPAD_stats()
       uint64_t axis_mask = joysticks[joystick_index].axisMask();
       uint64_t axis_changed_mask = joysticks[joystick_index].axisChangedMask();
       uint32_t buttons = joysticks[joystick_index].getButtons();
-      Serial.printf("Joystick(%d): buttons = %x", joystick_index, buttons);
+      Serial.printf_P(PSTR("Joystick(%d): buttons = %x"), joystick_index, buttons);
 
       if (show_changed_only) {
         for (uint8_t i = 0; axis_changed_mask != 0; i++, axis_changed_mask >>= 1) {
           if (axis_changed_mask & 1) {
-            Serial.printf(" %d:%d", i, joysticks[joystick_index].getAxis(i));
+            Serial.printf_P(PSTR(" %d:%d"), i, joysticks[joystick_index].getAxis(i));
           }
         }
       } else {
         for (uint8_t i = 0; axis_mask != 0; i++, axis_mask >>= 1) {
           if (axis_mask & 1) {
-            Serial.printf(" %d:%d", i, joysticks[joystick_index].getAxis(i));
+            Serial.printf_P(PSTR(" %d:%d"), i, joysticks[joystick_index].getAxis(i));
           }
         }
       }

@@ -210,7 +210,7 @@ class ILI9341_t3n : public Print {
     void setOrigin(int16_t x = 0, int16_t y = 0) {
       _originx = x;
       _originy = y;
-      // if (Serial) Serial.printf("Set Origin %d %d\n", x, y);
+      // if (Serial) Serial.printf_P(PSTR("Set Origin %d %d\n"), x, y);
       updateDisplayClip();
     }
     void getOrigin(int16_t *x, int16_t *y) {
@@ -227,7 +227,7 @@ class ILI9341_t3n : public Print {
       _clipy1 = y1;
       _clipx2 = x1 + w;
       _clipy2 = y1 + h;
-      // if (Serial) Serial.printf("Set clip Rect %d %d %d %d\n", x1, y1, w, h);
+      // if (Serial) Serial.printf_P(PSTR("Set clip Rect %d %d %d %d\n"), x1, y1, w, h);
       updateDisplayClip();
     }
     void setClipRect() {
@@ -235,7 +235,7 @@ class ILI9341_t3n : public Print {
       _clipy1 = 0;
       _clipx2 = _width;
       _clipy2 = _height;
-      // if (Serial) Serial.printf("clear clip Rect\n");
+      // if (Serial) Serial.printf_P(PSTR("clear clip Rect\n"));
       updateDisplayClip();
     }
 

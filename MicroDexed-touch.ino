@@ -2274,7 +2274,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 
-                sprintf(temp_name, "%s.wav", drum_config[d].name);
+                snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
 #endif
@@ -2917,9 +2917,9 @@ void handleSystemExclusive(byte * sysex, uint len)
       {
 #ifdef DEBUG
         Serial.println(F("SysEx Function parameter: "));
-        Serial.print("Parameter #");
+        Serial.print(F("Parameter #"));
         Serial.print(sysex[4], DEC);
-        Serial.print(" Value: ");
+        Serial.print(F(" Value: "));
         Serial.println(sysex[5], DEC);
 #endif
         switch (sysex[4])
@@ -4272,25 +4272,25 @@ FLASHMEM uint8_t check_sd_cards(void)
 #endif
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("SD1"));
+        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("SD1"));
 #ifdef DEBUG
         Serial.println(F("SD1"));
 #endif
         break;
       case SD_CARD_TYPE_SD2:
-        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("SD2"));
+        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("SD2"));
 #ifdef DEBUG
         Serial.println(F("SD2"));
 #endif
         break;
       case SD_CARD_TYPE_SDHC:
-        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("SD2"));
+        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("SD2"));
 #ifdef DEBUG
         Serial.println(F("SDHC"));
 #endif
         break;
       default:
-        snprintf_P(sd_string, strlen(sd_string), PSTR("%-5s"), F("UKNW"));
+        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("UKNW"));
 #ifdef DEBUG
         Serial.println(F("Unknown"));
 #endif
@@ -4321,7 +4321,7 @@ FLASHMEM uint8_t check_sd_cards(void)
     Serial.println(volumesize);
 #endif
 
-    snprintf_P(sd_string + 5, strlen(sd_string), PSTR("FAT %2d %02dGB"), volume.fatType(), int(volumesize));
+    snprintf_P(sd_string + 5, sizeof(sd_string), PSTR("FAT %2d %02dGB"), volume.fatType(), int(volumesize));
   }
 
 #ifdef DEBUG
@@ -4344,7 +4344,7 @@ FLASHMEM void check_and_create_directories(void)
     // create directories for banks
     for (i = 0; i < MAX_BANKS; i++)
     {
-      sprintf(tmp, "/%d", i);
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%d"), i);
       if (!SD.exists(tmp))
       {
 #ifdef DEBUG
@@ -4355,7 +4355,7 @@ FLASHMEM void check_and_create_directories(void)
       }
     }
 
-    sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
+    snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), PERFORMANCE_CONFIG_PATH);
     if (!SD.exists(tmp))
     {
 #ifdef DEBUG
@@ -4367,7 +4367,7 @@ FLASHMEM void check_and_create_directories(void)
 
     /*
       // create directories for configuration files
-      sprintf(tmp, "/%s", VOICE_CONFIG_PATH);
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), VOICE_CONFIG_PATH);
       if (!SD.exists(tmp))
       {
       #ifdef DEBUG
@@ -4376,7 +4376,7 @@ FLASHMEM void check_and_create_directories(void)
       #endif
       SD.mkdir(tmp);
       }
-      sprintf(tmp, "/%s", PERFORMANCE_CONFIG_PATH);
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), PERFORMANCE_CONFIG_PATH);
       if (!SD.exists(tmp))
       {
       #ifdef DEBUG
@@ -4385,7 +4385,7 @@ FLASHMEM void check_and_create_directories(void)
       #endif
       SD.mkdir(tmp);
       }
-      sprintf(tmp, "/%s", FX_CONFIG_PATH);
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), FX_CONFIG_PATH);
       if (!SD.exists(tmp))
       {
       #ifdef DEBUG
@@ -4394,7 +4394,7 @@ FLASHMEM void check_and_create_directories(void)
       #endif
       SD.mkdir(tmp);
       }
-      sprintf(tmp, "/%s", DRUM_CONFIG_PATH);
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), DRUM_CONFIG_PATH);
       if (!SD.exists(tmp))
       {
       #ifdef DEBUG
@@ -4403,7 +4403,7 @@ FLASHMEM void check_and_create_directories(void)
       #endif
       SD.mkdir(tmp);
       }
-      sprintf(tmp, "/%s", FAV_CONFIG_PATH);
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), FAV_CONFIG_PATH);
       if (!SD.exists(tmp))
       {
       #ifdef DEBUG
@@ -4588,7 +4588,7 @@ FLASHMEM void show_patch(uint8_t instance_id)
     Serial.println(F(" += == == = += == == = += == == = += == == = += == == = += == == = += == == = += == == = += == == == == == == == = += == == == == == == == = += == == == == == == == = +"));
     Serial.println(F(" |  R1  |  R2  |  R3  |  R4  |  L1  |  L2  |  L3  |  L4  | LEV_SCL_BRK_PT | SCL_LEFT_DEPTH | SCL_RGHT_DEPTH | "));
     Serial.println(F(" + ------ +------ +------ +------ +------ +------ +------ +------ +---------------- +---------------- +---------------- +"));
-    Serial.print(" | ");
+    Serial.print(F(" | "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R1));
     Serial.print(F("  | "));
     SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R2));
@@ -4682,8 +4682,8 @@ void SerialPrintFormatInt3(uint8_t num)
 {
   char buf[4];
   memset(buf, 0, 4);
-  //sprintf(buf, " % 3d", num);
-  snprintf_P(buf, strlen(buf), PSTR("%3d"), num);
+  //snprintf_P(buf, sizeof(buf), PSTR("%3d"), num);
+  snprintf_P(buf, sizeof(buf), PSTR("%3d"), num);
   Serial.print(buf);
 }
 
