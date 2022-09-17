@@ -175,7 +175,7 @@ FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed)
   for (p = memory_begin; p < memory_end; p++) {
     uint32_t actual = *p;
     if (actual != reg) return psram_fail_message(p, actual, reg);
-    //Serial.printf(" reg=%08X\n", reg);
+    //Serial.printf_P(PSTR(" reg=%08X\n"), reg);
     for (int i = 0; i < 3; i++) {
       if (reg & 1) {
         reg >>= 1;
