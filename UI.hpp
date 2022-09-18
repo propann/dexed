@@ -2179,6 +2179,26 @@ boolean gp_down() {
 }
 #endif
 
+void gamepad_speed_adjustments() {
+  // speed adjustments for various menus
+  if (LCDML.FUNC_getID() == 255)  //Main Menu
+    seq.gamepad_timer_speed = 1;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state)
+    seq.gamepad_timer_speed = 5;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false)
+    seq.gamepad_timer_speed = 2;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && seq.edit_state)
+    seq.gamepad_timer_speed = 3;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && seq.edit_state == false)
+    seq.gamepad_timer_speed = 1;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano))
+    seq.gamepad_timer_speed = 3;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
+    seq.gamepad_timer_speed = 2;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids))
+    seq.gamepad_timer_speed = 3;
+}
+
 /***********************************************************************
    MENU CONTROL
  ***********************************************************************/
@@ -2343,99 +2363,46 @@ void lcdml_menu_control(void) {
         temp_int++;
         seq.gamepad_timer = 0;
         //joysticks[0].joystickDataClear();
-      }
-    } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
-      if (seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
-        seq.cycle_touch_element = 6;  // goto chain edit
-        seq.help_text_needs_refresh = true;
-        //  seq.tracktype_or_instrument_assign = 0;
-        seq.edit_state = true;
-        print_chains_in_song_page();
-        print_patterns_in_song_page();
-        print_shortcut_navigator();
-        print_song_mode_help();
-        seq.gamepad_timer = 0;
-      } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) {
-        seq.cycle_touch_element = 0;  // goto pattern in song mode
-        seq.help_text_needs_refresh = true;
-        // seq.tracktype_or_instrument_assign = 0;
-        seq.edit_state = false;
-        print_chains_in_song_page();
-        print_patterns_in_song_page();
-        print_shortcut_navigator();
-        print_song_mode_help();
-        seq.gamepad_timer = 0;
-      } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
-        seq.gamepad_timer = 0;
-        LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-      }
-    } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
-      if (buttons == GAMEPAD_SELECT && gp_left()) {  // go to pattern editor
-        seq.cycle_touch_element = 6;
-        seq.tracktype_or_instrument_assign = 0;
-        seq.edit_state = true;
-        seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor = true;
-        seq.gamepad_timer = 0;
-        LCDML.OTHER_jumpToFunc(UI_func_song);
-      }
-    } else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
-      if (LCDML.FUNC_getID() == 255)  // main menu
-        seq.gamepad_timer_speed = 1;
-
-      // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on the edit state of the field, this needs special handling for gamepad usage
-
-      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) || LCDML.FUNC_getID() < 58 || (LCDML.FUNC_getID() > 57 && LCDML.FUNC_getID() < 61) || (LCDML.FUNC_getID() > 61 && LCDML.FUNC_getID() < 89)) {
-        if (seq.edit_state || generic_active_function != 0)  // is in edit state
-        {
-          if (gp_up() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 254;
-          } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 254;
-          }
-          if (gp_right() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 45;
-          } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 45;
-          }
-        } else  // not in edit state
-        {
-          if (gp_up() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 254;
-          } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 254;
-          }
-          if (gp_right() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 45;
-          } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-            seq.gamepad_timer = 0;
-            seq.gamepad_timer_speed = 45;
-          }
+      } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
+        if (seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
+          seq.cycle_touch_element = 6;  // goto chain edit
+          seq.help_text_needs_refresh = true;
+          //  seq.tracktype_or_instrument_assign = 0;
+          seq.edit_state = true;
+          print_chains_in_song_page();
+          print_patterns_in_song_page();
+          print_shortcut_navigator();
+          print_song_mode_help();
+          seq.gamepad_timer = 0;
+        } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) {
+          seq.cycle_touch_element = 0;  // goto pattern in song mode
+          seq.help_text_needs_refresh = true;
+          // seq.tracktype_or_instrument_assign = 0;
+          seq.edit_state = false;
+          print_chains_in_song_page();
+          print_patterns_in_song_page();
+          print_shortcut_navigator();
+          print_song_mode_help();
+          seq.gamepad_timer = 0;
+        } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
+          seq.gamepad_timer = 0;
+          LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
         }
-        if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))  // is in edit state
-        // is in edit state
-        {
-          if (seq.edit_state)
-            seq.gamepad_timer_speed = 3;
-          else
-            seq.gamepad_timer_speed = 1;
-        } else if (LCDML.FUNC_getID() > 57)
-          seq.gamepad_timer_speed = 1;
-      } else {
+      } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
+        if (buttons == GAMEPAD_SELECT && gp_left()) {  // go to pattern editor
+          seq.cycle_touch_element = 6;
+          seq.tracktype_or_instrument_assign = 0;
+          seq.edit_state = true;
+          seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor = true;
+          seq.gamepad_timer = 0;
+          LCDML.OTHER_jumpToFunc(UI_func_song);
+        }
+      }
+    }
+
+    if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+      // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on that and the edit state of the field, this needs special handling for gamepad usage
+      if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.edit_state == false && LCDML.FUNC_getID() != 255) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false && LCDML.FUNC_getID() != 255) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state == false && LCDML.FUNC_getID() != 255)) {
         if (gp_up() && buttons == gamepad_buttons_neutral) {
           g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
           seq.gamepad_timer = 0;
@@ -2445,7 +2412,6 @@ void lcdml_menu_control(void) {
           seq.gamepad_timer = 0;
           seq.gamepad_timer_speed = 1;
         }
-
         if (gp_right() && buttons == gamepad_buttons_neutral) {
           g_LCDML_CONTROL_Encoder_position[ENC_L] = -4;
           seq.gamepad_timer = 0;
@@ -2455,32 +2421,110 @@ void lcdml_menu_control(void) {
           seq.gamepad_timer = 0;
           seq.gamepad_timer_speed = 1;
         }
+      } else if (seq.edit_state || generic_active_function != 0)  // is in edit state
+      {
+        if (gp_up() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        }
+        if (gp_right() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        }
+      } else if (LCDML.FUNC_getID() == 255)  //  main menu
+      {
+        if (gp_up() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        }
+        if (gp_right() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        }
+      } else if (LCDML.FUNC_getID() != 255 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_epiano) && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_microsynth)
+                 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_braids)) // is not in edit state and not in main menu and not in a instrument page
+      {
+        if (gp_up() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        }
+        if (gp_right() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        }
+      } else {
+        if (gp_up() && buttons == gamepad_buttons_neutral) {
+
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 254;
+        }
+        if (gp_right() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
+          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          seq.gamepad_timer = 0;
+          seq.gamepad_timer_speed = 45;
+        }
+      }
+    }
+    // GAMEPAD BUTTON HANDLING
+
+    if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+      if (buttons == GAMEPAD_BUTTON_B)
+        button[ENC_L] = 0;
+      else if (buttons == GAMEPAD_BUTTON_A)
+        button[ENC_R] = 0;
+      else if (buttons == GAMEPAD_START && seq.gamepad_timer > 4000) {
+        seq.gamepad_timer = 0;
+        seq.gamepad_timer_speed = 1;
+        if (!seq.running)
+          handleStart();
+        else
+          handleStop();
       }
     }
   }
-  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
-    if (buttons == GAMEPAD_BUTTON_B)
-      button[ENC_L] = 0;
-    else if (buttons == GAMEPAD_BUTTON_A)
-      button[ENC_R] = 0;
-    else if (buttons == GAMEPAD_START && seq.gamepad_timer > 4000) {
-      seq.gamepad_timer = 0;
-      seq.gamepad_timer_speed = 1;
-      if (!seq.running)
-        handleStart();
-      else
-        handleStop();
-    }
-  }
-  // speed adjustments for various menus
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano))
-    seq.gamepad_timer_speed = 3;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-    seq.gamepad_timer_speed = 2;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids))
-    seq.gamepad_timer_speed = 3;
+  gamepad_speed_adjustments();
 
   seq.gamepad_timer = seq.gamepad_timer + seq.gamepad_timer_speed;
+
 #endif
 
   /************************************************************************************
@@ -2858,7 +2902,8 @@ void lcdml_menu_display(void) {
       // show(7, 1, 5, x_pos_menu_header);
 
       display.setTextSize(2);
-
+      seq.edit_state = false;
+      generic_active_function = 0;
       // loop to display lines
       do {
         // check if a menu element has a condition and if the condition be true
@@ -12591,28 +12636,26 @@ void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
   if ((seq.temp_select_menu == row + 1 && seq.selected_track == column && seq.edit_state == false) || (seq.temp_select_menu == row + 1 && column == 99 && seq.edit_state == false)) {
     temp_color = COLOR_BACKGROUND;
     temp_background = COLOR_SYSTEXT;
-  }
-  else if ((seq.temp_select_menu == row + 1 && seq.selected_track == column && seq.edit_state ) || (seq.temp_select_menu == row + 1 && column == 99 && seq.edit_state )) {
+  } else if ((seq.temp_select_menu == row + 1 && seq.selected_track == column && seq.edit_state) || (seq.temp_select_menu == row + 1 && column == 99 && seq.edit_state)) {
     temp_background = RED;
-      temp_color = COLOR_SYSTEXT;
-  } else 
-  {
+    temp_color = COLOR_SYSTEXT;
+  } else {
     temp_background = COLOR_BACKGROUND;
-    if (row == 0 )
+    if (row == 0)
       temp_color = COLOR_PITCHSMP;
-    else if (row == 1 )
+    else if (row == 1)
       temp_color = COLOR_INSTR;
-    else if (row == 2 )
+    else if (row == 2)
       temp_color = COLOR_CHORDS;
-    else if (row == 3 )
+    else if (row == 3)
       temp_color = COLOR_ARP;
-    else if (row == 4 )
+    else if (row == 4)
       temp_color = COLOR_DRUMS;
-    else if (row == 5 )
+    else if (row == 5)
       temp_color = GREEN;
-    else if (row == 6 )
+    else if (row == 6)
       temp_color = YELLOW;
-    else if (row == 7 )
+    else if (row == 7)
       temp_color = GREY1;
   }
   display.setTextColor(temp_color, temp_background);
