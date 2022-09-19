@@ -962,6 +962,12 @@ typedef struct configuration_s {
   fx_t fx;
 } config_t;
 
+typedef struct custom_midi_map_s {
+  uint8_t type;      // 0 = empty, 1 = Key/Pad, 2 = CC / Values, 3 = Button push on/off
+  uint8_t channel;   // Midi Channel
+  uint8_t in;        // Midi Input Key/Pad / Value
+  uint8_t out;       // Destination Key / Value
+} custom_midi_map_t;
 
 enum master_mixer_ports {
   MASTER_MIX_CH_DEXED2,
