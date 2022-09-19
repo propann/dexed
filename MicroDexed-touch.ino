@@ -149,6 +149,8 @@ AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
 AudioEffectFlange braids_flanger_r;
 AudioEffectFlange braids_flanger_l;
 AudioEffectStereoPanorama braids_stereo_panorama;
+AudioAnalyzePeak braids_peak_r;
+AudioAnalyzePeak braids_peak_l;
 uint8_t braids_slot;
 extern void update_braids_params(void);
 braids_t braids_osc;
@@ -507,6 +509,8 @@ AudioConnection patchCord[] = {
 #if defined(USE_EPIANO)
   { ep, 0, ep_stereo_panorama, 0 },
   { ep, 1, ep_stereo_panorama, 1 },
+   { ep_stereo_panorama,0, ep_peak_r, 0 },
+  { ep_stereo_panorama,1, ep_peak_l, 0 },
 #if defined(USE_FX)
   { ep_stereo_panorama, 0, ep_chorus_mixer_r, 0 },
   { ep_stereo_panorama, 1, ep_chorus_mixer_l, 0 },
@@ -524,10 +528,6 @@ AudioConnection patchCord[] = {
   { ep_chorus_mixer_l, 0, reverb_mixer_l, REVERB_MIX_CH_EPIANO },
   { ep_chorus_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_EPIANO },
   { ep_chorus_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_EPIANO },
-
-  { master_mixer_r, MASTER_MIX_CH_EPIANO, ep_peak_r, 0 },
-  { master_mixer_l, MASTER_MIX_CH_EPIANO, ep_peak_l, 0 },
-
 #else
   { ep_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_EPIANO },
   { ep_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_EPIANO },
@@ -615,7 +615,7 @@ AudioConnection patchCord[] = {
 //
 uint8_t nDynamic = 0;
 #if defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT && defined(USE_BRAIDS)
-AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 10];
+AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 12 ];  
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4];
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT == MOD_NO_FILTER_OUTPUT
@@ -704,13 +704,10 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
 
-    //dynamicConnections[nDynamic++] = new AudioConnection(braids_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_BRAIDS);
-    //dynamicConnections[nDynamic++] = new AudioConnection(braids_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_BRAIDS);
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,0 ,braids_peak_r, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,1, braids_peak_l, 0 };
   }
 
-  //#ifdef DEBUG
-  //  Serial.println(instance_id);
-  //#endif
 }
 #endif
 
@@ -794,10 +791,12 @@ uint8_t midi_voices[NUM_DEXED];
 elapsedMillis cpu_mem_millis;
 #endif
 uint32_t cpumax = 0;
-uint32_t peak_dexed = 0;
-float peak_dexed_value = 0.0;
-uint32_t peak_r = 0;
-uint32_t peak_l = 0;
+
+// uint32_t peak_dexed = 0;
+// float peak_dexed_value = 0.0;
+// uint32_t peak_r = 0;
+// uint32_t peak_l = 0;
+
 config_t configuration;
 const uint8_t cs_pins[] = { SDCARD_TEENSY_CS_PIN, SDCARD_AUDIO_CS_PIN };
 const uint8_t mosi_pins[] = { SDCARD_TEENSY_MOSI_PIN, SDCARD_AUDIO_MOSI_PIN };
@@ -1354,15 +1353,7 @@ void draw_volmeter(int x, int y, uint8_t arr, float value) {
   int height;
   //draw text
   display.setCursor(x, y + 4);
-  //if  (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
-  //  {
-  //    if (value == 0 || value > 0.16)
-  //    {
-  //      height = 0;
-  //      print_formatted_number( 0, 3 );
-  //    }
-  //  }
-  //  else
+
   height = mapfloat(value, 0.0, 1.0, 0, 99);
   print_formatted_number(height, 3);
 
@@ -1387,35 +1378,59 @@ void draw_volmeter(int x, int y, uint8_t arr, float value) {
 }
 
 FLASHMEM void clear_volmeter(int x, int y) {
-  // display.drawFastHLine ( x, y - height + z, 19, GREEN  );
   display.fillRect(x, y - 100, 19, 100, COLOR_BACKGROUND);
 }
 
 FLASHMEM void handle_touchscreen_mixer() {
   if (scope.scope_delay % 60 == 0) {
-#if NUM_DRUMS > 0
-    float dr, dl;
-    dr = drum_mixer_peak_l.read() / 6;
-    dl = drum_mixer_peak_r.read() / 6;
-#endif
+
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-    draw_volmeter(0, 170, 2, microdexed_peak_0.read());
-    draw_volmeter(CHAR_width_small * 4, 170, 3, microdexed_peak_1.read());
+    draw_volmeter(0, 170, 0, microdexed_peak_0.read());
+    draw_volmeter(CHAR_width_small * 4, 170, 1, microdexed_peak_1.read());
 #ifdef USE_MICROSYNTH
-    draw_volmeter(CHAR_width_small * 8, 170, 8, microsynth_peak_osc_0.read());
-    draw_volmeter(CHAR_width_small * 12, 170, 9, microsynth_peak_osc_1.read());
+    if (microsynth_peak_osc_0.available())
+      draw_volmeter(CHAR_width_small * 8, 170, 2, microsynth_peak_osc_0.read());
+    else
+      draw_volmeter(CHAR_width_small * 8, 170, 2, 0);
+    if (microsynth_peak_osc_1.available())
+      draw_volmeter(CHAR_width_small * 12, 170, 3, microsynth_peak_osc_1.read());
+    else
+      draw_volmeter(CHAR_width_small * 12, 170, 3, 0);
 #endif
 #if NUM_DRUMS > 0
-    draw_volmeter(CHAR_width_small * 16, 170, 4, dr);
-    draw_volmeter(CHAR_width_small * 20, 170, 5, dl);
+    if (drum_mixer_peak_l.available())
+      draw_volmeter(CHAR_width_small * 16, 170, 4, drum_mixer_peak_l.read());
+    else
+      draw_volmeter(CHAR_width_small * 16, 170, 4, 0);
+    if (drum_mixer_peak_r.available())
+      draw_volmeter(CHAR_width_small * 20, 170, 5, drum_mixer_peak_r.read());
+    else
+      draw_volmeter(CHAR_width_small * 20, 170, 5, 0);
 #endif
     draw_volmeter(CHAR_width_small * 27, 170, 6, reverb_return_peak_l.read());
     draw_volmeter(CHAR_width_small * 32, 170, 7, reverb_return_peak_r.read());
 
-    draw_volmeter(CHAR_width_small * 40, 170, 0, master_peak_l.read());
-    draw_volmeter(CHAR_width_small * 47, 170, 1, master_peak_r.read());
+    draw_volmeter(CHAR_width_small * 40, 170, 8, master_peak_l.read());
+    draw_volmeter(CHAR_width_small * 47, 170, 9, master_peak_r.read());
+
+    if (ep_peak_l.available())
+      draw_volmeter(CHAR_width_small * 16, 100, 10, ep_peak_l.read());
+    else
+      draw_volmeter(CHAR_width_small * 16, 100, 10, 0);
+    if (ep_peak_r.available())
+      draw_volmeter(CHAR_width_small * 20, 100, 11, ep_peak_r.read());
+    else
+      draw_volmeter(CHAR_width_small * 20, 100, 11, 0);
+    if (braids_peak_l.available())
+      draw_volmeter(CHAR_width_small * 27, 100, 12, braids_peak_l.read());
+    else
+      draw_volmeter(CHAR_width_small * 27, 100, 12, 0);
+    if (ep_peak_r.available())
+      draw_volmeter(CHAR_width_small * 32, 100, 13, braids_peak_r.read());
+    else
+      draw_volmeter(CHAR_width_small * 32, 100, 13, 0);
   }
 }
 
