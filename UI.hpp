@@ -12335,52 +12335,62 @@ void sd_printDirectory(File currentDirectory) {
 #ifdef COMPILE_FOR_FLASH
 void flash_printDirectory()  //SPI FLASH
 {
-  char tmp[6];
-  fm.flash_cap_rows = 9;
-  uint8_t f = 0;
-  char filename[26];
-  uint32_t filesize;
-  SerialFlash.opendir();
-  if (fm.flash_skip_files > 0) {
-    for (f = 0; f < fm.flash_skip_files; f++) {
-      if (SerialFlash.readdir(filename, sizeof(filename), filesize))
-        ;
-      else
-        break;
-    }
-  }
-  f = 0;
-  while (1) {
-    if (f > 9) {
-      fm.flash_cap_rows = f - 1;
-      break;
-    } else if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
-      if (f == fm.flash_selected_file && fm.active_window == 1)
-        display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-      else
-        display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-
-      show_smallfont_noGrid(f * 11 + 6 * 11, CHAR_width_small * 30, 15, filename);
-
-      display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-      display.setCursor(CHAR_width_small * 45, f * 11 + 6 * 11);
-
-      if (filesize / 1024 / 1024 > 0) {
-        snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(filesize / 1024 / 1024));
-        display.print(tmp);
-        display.print(" MB");
-      } else if (int(filesize / 1024) > 0) {
-        snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(filesize / 1024));
-        display.print(tmp);
-        display.print(" KB");
-      } else {
-        snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(filesize));
-        display.print(tmp);
-        display.print(" B ");
+  if (seq.running == false) {
+    char tmp[6];
+    fm.flash_cap_rows = 9;
+    uint8_t f = 0;
+    char filename[26];
+    uint32_t filesize;
+    SerialFlash.opendir();
+    if (fm.flash_skip_files > 0) {
+      for (f = 0; f < fm.flash_skip_files; f++) {
+        if (SerialFlash.readdir(filename, sizeof(filename), filesize))
+          ;
+        else
+          break;
       }
     }
+    f = 0;
+    while (1) {
+      if (f > 9) {
+        fm.flash_cap_rows = f - 1;
+        break;
+      } else if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
+        if (f == fm.flash_selected_file && fm.active_window == 1)
+          display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+        else
+          display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-    f++;
+        show_smallfont_noGrid(f * 11 + 6 * 11, CHAR_width_small * 30, 15, filename);
+
+        display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+        display.setCursor(CHAR_width_small * 45, f * 11 + 6 * 11);
+
+        if (filesize / 1024 / 1024 > 0) {
+          snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(filesize / 1024 / 1024));
+          display.print(tmp);
+          display.print(" MB");
+        } else if (int(filesize / 1024) > 0) {
+          snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(filesize / 1024));
+          display.print(tmp);
+          display.print(" KB");
+        } else {
+          snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(filesize));
+          display.print(tmp);
+          display.print(" B ");
+        }
+      }
+
+      f++;
+    }
+  } else {
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 31, 6 * 11);
+    display.print(F("NOT AVAILABLE"));
+    display.setCursor(CHAR_width_small * 31, 7 * 11);
+    display.print(F("WHILE SEQUENCER"));
+    display.setCursor(CHAR_width_small * 31, 8 * 11);
+    display.print(F("IS PLAYING FROM FLASH"));
   }
 }
 #endif
@@ -12490,57 +12500,59 @@ bool compareFiles(File& file, File& ffile) {
 
 #ifdef COMPILE_FOR_FLASH
 void print_flash_stats() {
-  char tmp[6];
-  fm.flash_sum_files = 0;
-  unsigned char buf[256];
-  unsigned long chipsize;
-  uint32_t sum_used = 0;
-  //uint16_t sum_files = 0;
-  SerialFlash.readID(buf);
-  SerialFlash.opendir();
-  while (1) {
-    char filename[25];
-    uint32_t filesize;
-    if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
-      sum_used = sum_used + filesize / 1024;
-      fm.flash_sum_files++;
-    } else {
-      break;  // no more files
+  if (seq.running == false) {
+    char tmp[6];
+    fm.flash_sum_files = 0;
+    unsigned char buf[256];
+    unsigned long chipsize;
+    uint32_t sum_used = 0;
+    //uint16_t sum_files = 0;
+    SerialFlash.readID(buf);
+    SerialFlash.opendir();
+    while (1) {
+      char filename[25];
+      uint32_t filesize;
+      if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
+        sum_used = sum_used + filesize / 1024;
+        fm.flash_sum_files++;
+      } else {
+        break;  // no more files
+      }
     }
+    display.setTextSize(1);
+    display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("USED: ");
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(sum_used));
+    display.print(tmp);
+    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+    display.print(" KB");
+    display.setCursor(CHAR_width_small * 37, 3 * CHAR_height_small);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("TOTAL: ");
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    chipsize = SerialFlash.capacity(buf);
+    snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(chipsize / 1024));
+    display.print(tmp);
+
+    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+    display.print(" KB");
+    display.setCursor(CHAR_width_small * 42, 1 * CHAR_height_small);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("FILES: ");
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    print_formatted_number(fm.flash_sum_files, 3);
+    display.setCursor(CHAR_width_small * 38, 5 * CHAR_height_small);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("FREE: ");
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+
+    snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(chipsize / 1024 - sum_used));
+    display.print(tmp);
+    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+    display.print(" KB");
   }
-  display.setTextSize(1);
-  display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("USED: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(sum_used));
-  display.print(tmp);
-  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-  display.print(" KB");
-  display.setCursor(CHAR_width_small * 37, 3 * CHAR_height_small);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("TOTAL: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  chipsize = SerialFlash.capacity(buf);
-  snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(chipsize / 1024));
-  display.print(tmp);
-
-  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-  display.print(" KB");
-  display.setCursor(CHAR_width_small * 42, 1 * CHAR_height_small);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("FILES: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  print_formatted_number(fm.flash_sum_files, 3);
-  display.setCursor(CHAR_width_small * 38, 5 * CHAR_height_small);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("FREE: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-
-  snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(chipsize / 1024 - sum_used));
-  display.print(tmp);
-  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-  display.print(" KB");
 }
 #endif
 
