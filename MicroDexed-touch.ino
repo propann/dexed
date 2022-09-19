@@ -1362,23 +1362,23 @@ void draw_volmeter(int x, int y, uint8_t arr, float value) {
     int z = 0;
     do {
       // display.drawFastHLine ( x, y - height + z, 19, GREEN  );
-      display.drawFastHLine(x, y - height + z, 19, ColorHSV((100 - height + z), 200, 200));
+      display.drawFastHLine(x, y - height + z, 17, ColorHSV((100 - height + z), 200, 200));
       z++;
     } while (z < height - ts.displayed_peak[arr]);
     ts.displayed_peak[arr] = height;
   } else {
     if (ts.displayed_peak[arr] > 1) {
-      display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 2, COLOR_BACKGROUND);
+      display.fillRect(x, y - (ts.displayed_peak[arr]), 17, 2, COLOR_BACKGROUND);
       ts.displayed_peak[arr] = ts.displayed_peak[arr] - 2;
     } else if (ts.displayed_peak[arr] > 0) {
-      display.fillRect(x, y - (ts.displayed_peak[arr]), 20, 1, COLOR_BACKGROUND);
+      display.fillRect(x, y - (ts.displayed_peak[arr]), 17, 1, COLOR_BACKGROUND);
       ts.displayed_peak[arr] = ts.displayed_peak[arr] - 1;
     }
   }
 }
 
 FLASHMEM void clear_volmeter(int x, int y) {
-  display.fillRect(x, y - 100, 19, 100, COLOR_BACKGROUND);
+  display.fillRect(x, y - 100, 17, 100, COLOR_BACKGROUND);
 }
 
 FLASHMEM void handle_touchscreen_mixer() {
@@ -1389,48 +1389,50 @@ FLASHMEM void handle_touchscreen_mixer() {
 
     draw_volmeter(0, 170, 0, microdexed_peak_0.read());
     draw_volmeter(CHAR_width_small * 4, 170, 1, microdexed_peak_1.read());
+
+    if (ep_peak_l.available())
+      draw_volmeter(CHAR_width_small * 8, 170, 10, ep_peak_l.read());
+    else
+      draw_volmeter(CHAR_width_small * 8, 170, 10, 0);
+    if (ep_peak_r.available())
+      draw_volmeter(CHAR_width_small * 12, 170, 11, ep_peak_r.read());
+    else
+      draw_volmeter(CHAR_width_small * 12, 170, 11, 0);
+
 #ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
-      draw_volmeter(CHAR_width_small * 8, 170, 2, microsynth_peak_osc_0.read());
+      draw_volmeter(CHAR_width_small * 16, 170, 2, microsynth_peak_osc_0.read());
     else
-      draw_volmeter(CHAR_width_small * 8, 170, 2, 0);
+      draw_volmeter(CHAR_width_small * 16, 170, 2, 0);
     if (microsynth_peak_osc_1.available())
-      draw_volmeter(CHAR_width_small * 12, 170, 3, microsynth_peak_osc_1.read());
+      draw_volmeter(CHAR_width_small * 20, 170, 3, microsynth_peak_osc_1.read());
     else
-      draw_volmeter(CHAR_width_small * 12, 170, 3, 0);
+      draw_volmeter(CHAR_width_small * 20, 170, 3, 0);
 #endif
 #if NUM_DRUMS > 0
     if (drum_mixer_peak_l.available())
-      draw_volmeter(CHAR_width_small * 16, 170, 4, drum_mixer_peak_l.read());
+      draw_volmeter(CHAR_width_small * 24, 170, 4, drum_mixer_peak_l.read());
     else
-      draw_volmeter(CHAR_width_small * 16, 170, 4, 0);
+      draw_volmeter(CHAR_width_small * 24, 170, 4, 0);
     if (drum_mixer_peak_r.available())
-      draw_volmeter(CHAR_width_small * 20, 170, 5, drum_mixer_peak_r.read());
+      draw_volmeter(CHAR_width_small * 28, 170, 5, drum_mixer_peak_r.read());
     else
-      draw_volmeter(CHAR_width_small * 20, 170, 5, 0);
+      draw_volmeter(CHAR_width_small * 28, 170, 5, 0);
 #endif
-    draw_volmeter(CHAR_width_small * 27, 170, 6, reverb_return_peak_l.read());
-    draw_volmeter(CHAR_width_small * 32, 170, 7, reverb_return_peak_r.read());
-
-    draw_volmeter(CHAR_width_small * 40, 170, 8, master_peak_l.read());
-    draw_volmeter(CHAR_width_small * 47, 170, 9, master_peak_r.read());
-
-    if (ep_peak_l.available())
-      draw_volmeter(CHAR_width_small * 16, 100, 10, ep_peak_l.read());
-    else
-      draw_volmeter(CHAR_width_small * 16, 100, 10, 0);
-    if (ep_peak_r.available())
-      draw_volmeter(CHAR_width_small * 20, 100, 11, ep_peak_r.read());
-    else
-      draw_volmeter(CHAR_width_small * 20, 100, 11, 0);
-    if (braids_peak_l.available())
-      draw_volmeter(CHAR_width_small * 27, 100, 12, braids_peak_l.read());
-    else
-      draw_volmeter(CHAR_width_small * 27, 100, 12, 0);
+    // if (braids_peak_l.available())
+    //   draw_volmeter(CHAR_width_small * 32, 170, 12, braids_peak_l.read());
+    // else
+    //   draw_volmeter(CHAR_width_small * 32, 170, 12, 0);
     if (braids_peak_r.available())
-      draw_volmeter(CHAR_width_small * 32, 100, 13, braids_peak_r.read());
+      draw_volmeter(CHAR_width_small * 32, 170, 13, braids_peak_r.read());
     else
-      draw_volmeter(CHAR_width_small * 32, 100, 13, 0);
+      draw_volmeter(CHAR_width_small * 32, 170, 13, 0);
+      
+    draw_volmeter(CHAR_width_small * 38, 170, 6, reverb_return_peak_l.read());
+    draw_volmeter(CHAR_width_small * 42, 170, 7, reverb_return_peak_r.read());
+
+    draw_volmeter(CHAR_width_small * 46, 170, 8, master_peak_l.read());
+    draw_volmeter(CHAR_width_small * 50, 170, 9, master_peak_r.read());
   }
 }
 
