@@ -29,24 +29,22 @@
 // Written by Holger Wirtz
 // 20211124 - inital version
 
-class AudioEffectStereoPanorama : public AudioStream
-{
-  public:
-    AudioEffectStereoPanorama(void):
-      AudioStream(2, inputQueueArray)
-    {
-      pan = 0.0;
-    }
+class AudioEffectStereoPanorama : public AudioStream {
+public:
+  AudioEffectStereoPanorama(void)
+    : AudioStream(2, inputQueueArray) {
+    pan = 0.0;
+  }
 
-    virtual void update(void);
-    virtual void panorama(float p);
+  virtual void update(void);
+  virtual void panorama(float p);
 
-  private:
-    audio_block_t *inputQueueArray[2];
-    audio_block_t *out[2];
-    float in_f[2][AUDIO_BLOCK_SAMPLES];
-    float out_f[2][AUDIO_BLOCK_SAMPLES];
-    float pan;
+private:
+  audio_block_t *inputQueueArray[2];
+  audio_block_t *out[2];
+  float in_f[2][AUDIO_BLOCK_SAMPLES];
+  float out_f[2][AUDIO_BLOCK_SAMPLES];
+  float pan;
 };
 
 #endif

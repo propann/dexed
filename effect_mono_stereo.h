@@ -31,24 +31,22 @@
 // Written by Holger Wirtz
 // 20191122 - inital version
 
-class AudioEffectMonoStereo : public AudioStream
-{
-  public:
-    AudioEffectMonoStereo(void):
-      AudioStream(1, inputQueueArray)
-    {
-      pan = 0.5;
-    }
+class AudioEffectMonoStereo : public AudioStream {
+public:
+  AudioEffectMonoStereo(void)
+    : AudioStream(1, inputQueueArray) {
+    pan = 0.5;
+  }
 
-    virtual void update(void);
-    virtual void panorama(float p);
+  virtual void update(void);
+  virtual void panorama(float p);
 
-  private:
-    audio_block_t *inputQueueArray[1];
-    audio_block_t *out[2];
-    float in_f[AUDIO_BLOCK_SAMPLES];
-    float pan;
-    const float _pseudo_log = 1048575 / (float)(1 << 20);
+private:
+  audio_block_t *inputQueueArray[1];
+  audio_block_t *out[2];
+  float in_f[AUDIO_BLOCK_SAMPLES];
+  float pan;
+  const float _pseudo_log = 1048575 / (float)(1 << 20);
 };
 
 #endif

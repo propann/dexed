@@ -34,54 +34,48 @@
 // 140219 - correct storage class (not static)
 // 190527 - added modulation input handling (Aug 2019 by Holger Wirtz)
 
-class AudioEffectModulatedDelay :
-  public AudioStream
-{
-  public:
-    AudioEffectModulatedDelay(void):
-      AudioStream(2, inputQueueArray)
-    { }
+class AudioEffectModulatedDelay : public AudioStream {
+public:
+  AudioEffectModulatedDelay(void)
+    : AudioStream(2, inputQueueArray) {}
 
-    boolean begin(short *delayline, uint16_t delay_length);
-    virtual void update(void);
-    virtual uint16_t get_delay_length(void);
-    virtual void set_bypass(bool b);
-    virtual bool get_bypass(void);
+  boolean begin(short *delayline, uint16_t delay_length);
+  virtual void update(void);
+  virtual uint16_t get_delay_length(void);
+  virtual void set_bypass(bool b);
+  virtual bool get_bypass(void);
 
-  private:
-    audio_block_t *inputQueueArray[2];
-    int16_t *_delayline;  // pointer for the circular buffer
-    uint16_t _cb_index;   // current write pointer of the circular buffer
-    uint16_t _delay_length; // calculated number of samples of the delay
-    int16_t cb_mod_index; // current read pointer with modulation for the circular buffer
-    uint16_t _delay_offset;
-    bool bypass;
+private:
+  audio_block_t *inputQueueArray[2];
+  int16_t *_delayline;     // pointer for the circular buffer
+  uint16_t _cb_index;      // current write pointer of the circular buffer
+  uint16_t _delay_length;  // calculated number of samples of the delay
+  int16_t cb_mod_index;    // current read pointer with modulation for the circular buffer
+  uint16_t _delay_offset;
+  bool bypass;
 };
 
-class AudioEffectModulatedDelayStereo :
-  public AudioStream
-{
-  public:
-    AudioEffectModulatedDelayStereo(void):
-      AudioStream(3, inputQueueArray)
-    { }
+class AudioEffectModulatedDelayStereo : public AudioStream {
+public:
+  AudioEffectModulatedDelayStereo(void)
+    : AudioStream(3, inputQueueArray) {}
 
-    boolean begin(short *delayline_l, short *delayline_r, uint16_t delay_length);
-    virtual void update(void);
-    virtual uint16_t get_delay_length(void);
-    virtual void set_stereo(bool s);
-    virtual bool get_stereo(void);
-    virtual void set_bypass(bool b);
-    virtual bool get_bypass(void);
+  boolean begin(short *delayline_l, short *delayline_r, uint16_t delay_length);
+  virtual void update(void);
+  virtual uint16_t get_delay_length(void);
+  virtual void set_stereo(bool s);
+  virtual bool get_stereo(void);
+  virtual void set_bypass(bool b);
+  virtual bool get_bypass(void);
 
-  private:
-    audio_block_t *inputQueueArray[3];
-    int16_t *_delayline[2];  // pointer for the circular buffer
-    uint16_t _cb_index[2];   // current write pointer of the circular buffer
-    uint16_t _delay_length; // calculated number of samples of the delay
-    int16_t cb_mod_index[2]; // current read pointer with modulation for the circular buffer
-    uint16_t _delay_offset;
-    bool stereo;
-    bool bypass;
+private:
+  audio_block_t *inputQueueArray[3];
+  int16_t *_delayline[2];   // pointer for the circular buffer
+  uint16_t _cb_index[2];    // current write pointer of the circular buffer
+  uint16_t _delay_length;   // calculated number of samples of the delay
+  int16_t cb_mod_index[2];  // current read pointer with modulation for the circular buffer
+  uint16_t _delay_offset;
+  bool stereo;
+  bool bypass;
 };
 #endif

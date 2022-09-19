@@ -28,49 +28,59 @@
 
 class TS_Point {
 public:
-	TS_Point(void) : x(0), y(0), z(0) {}
-	TS_Point(int16_t x, int16_t y, int16_t z) : x(x), y(y), z(z) {}
-	bool operator==(TS_Point p) { return ((p.x == x) && (p.y == y) && (p.z == z)); }
-	bool operator!=(TS_Point p) { return ((p.x != x) || (p.y != y) || (p.z != z)); }
-	int16_t x, y, z;
+  TS_Point(void)
+    : x(0), y(0), z(0) {}
+  TS_Point(int16_t x, int16_t y, int16_t z)
+    : x(x), y(y), z(z) {}
+  bool operator==(TS_Point p) {
+    return ((p.x == x) && (p.y == y) && (p.z == z));
+  }
+  bool operator!=(TS_Point p) {
+    return ((p.x != x) || (p.y != y) || (p.z != z));
+  }
+  int16_t x, y, z;
 };
 
 class XPT2046_Touchscreen {
 public:
-	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq=255)
-		: csPin(cspin), tirqPin(tirq) { }
-	bool begin(SPIClass &wspi = SPI1);
+  constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255)
+    : csPin(cspin), tirqPin(tirq) {}
+  bool begin(SPIClass &wspi = SPI1);
 
-	TS_Point getPoint();
-	bool tirqTouched();
-	bool touched();
-	void readData(uint16_t *x, uint16_t *y, uint8_t *z);
-	bool bufferEmpty();
-	uint8_t bufferSize() { return 1; }
-	void setRotation(uint8_t n) { rotation = n % 4; }
-// protected:
-	volatile bool isrWake=true;
+  TS_Point getPoint();
+  bool tirqTouched();
+  bool touched();
+  void readData(uint16_t *x, uint16_t *y, uint8_t *z);
+  bool bufferEmpty();
+  uint8_t bufferSize() {
+    return 1;
+  }
+  void setRotation(uint8_t n) {
+    rotation = n % 4;
+  }
+  // protected:
+  volatile bool isrWake = true;
 
 private:
-	void update();
-	uint8_t csPin, tirqPin, rotation=1;
-	int16_t xraw=0, yraw=0, zraw=0;
-	uint32_t msraw=0x80000000;
-	SPIClass *_pspi = nullptr;
+  void update();
+  uint8_t csPin, tirqPin, rotation = 1;
+  int16_t xraw = 0, yraw = 0, zraw = 0;
+  uint32_t msraw = 0x80000000;
+  SPIClass *_pspi = nullptr;
 #if defined(_FLEXIO_SPI_H_)
-	FlexIOSPI *_pflexspi = nullptr;
+  FlexIOSPI *_pflexspi = nullptr;
 #endif
 };
 
 #ifndef ISR_PREFIX
-  #if defined(ESP8266)
-    #define ISR_PREFIX ICACHE_RAM_ATTR
-  #elif defined(ESP32)
-    // TODO: should this also be ICACHE_RAM_ATTR ??
-    #define ISR_PREFIX IRAM_ATTR
-  #else
-    #define ISR_PREFIX
-  #endif
+#if defined(ESP8266)
+#define ISR_PREFIX ICACHE_RAM_ATTR
+#elif defined(ESP32)
+// TODO: should this also be ICACHE_RAM_ATTR ??
+#define ISR_PREFIX IRAM_ATTR
+#else
+#define ISR_PREFIX
+#endif
 #endif
 
 #endif

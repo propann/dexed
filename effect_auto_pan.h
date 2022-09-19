@@ -31,24 +31,22 @@
 // Written by Holger Wirtz
 // 20191205 - inital version
 
-class AudioEffectAutoPan : public AudioStream
-{
-  public:
-    AudioEffectAutoPan(void):
-      AudioStream(2, inputQueueArray)
-    {
-      ;
-    }
+class AudioEffectAutoPan : public AudioStream {
+public:
+  AudioEffectAutoPan(void)
+    : AudioStream(2, inputQueueArray) {
+    ;
+  }
 
-    virtual void update(void);
+  virtual void update(void);
 
-  private:
-    audio_block_t *inputQueueArray[2];
-    audio_block_t *out[2];
-    float in_f[AUDIO_BLOCK_SAMPLES];
-    float out_f[2][AUDIO_BLOCK_SAMPLES];
-    float pan_f[AUDIO_BLOCK_SAMPLES];
-    const float _pseudo_log = 1048575 / (float)(1 << 20);
+private:
+  audio_block_t *inputQueueArray[2];
+  audio_block_t *out[2];
+  float in_f[AUDIO_BLOCK_SAMPLES];
+  float out_f[2][AUDIO_BLOCK_SAMPLES];
+  float pan_f[AUDIO_BLOCK_SAMPLES];
+  const float _pseudo_log = 1048575 / (float)(1 << 20);
 };
 
 #endif

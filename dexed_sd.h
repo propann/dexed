@@ -31,7 +31,7 @@
 #define DEXED_SYSEX_H_INCLUDED
 
 extern uint8_t sd_card;
-extern AudioSynthDexed*     MicroDexed[NUM_DEXED];
+extern AudioSynthDexed* MicroDexed[NUM_DEXED];
 extern void show_patch(uint8_t instance_id);
 
 extern void send_sysex_voice(uint8_t midi_channel, uint8_t* data);
@@ -41,7 +41,7 @@ extern uint8_t voice;
 extern uint8_t ui_state;
 extern uint8_t ui_main_state;
 extern config_t configuration;
-extern uint32_t crc32(byte * calc_start, uint16_t calc_bytes);
+extern uint32_t crc32(byte* calc_start, uint16_t calc_bytes);
 extern void set_fx_params(void);
 extern void set_voiceconfig_params(uint8_t instance_id);
 extern void set_sys_params(void);

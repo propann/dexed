@@ -31,21 +31,19 @@
 // Written by Holger Wirtz
 // 20191023 - inital version
 
-class AudioEffectStereoMono : public AudioStream
-{
-  public:
-    AudioEffectStereoMono(void):
-      AudioStream(2, inputQueueArray)
-    {
-      _enabled = true;
-    }
+class AudioEffectStereoMono : public AudioStream {
+public:
+  AudioEffectStereoMono(void)
+    : AudioStream(2, inputQueueArray) {
+    _enabled = true;
+  }
 
-    virtual void update(void);
-    virtual void stereo(bool mode);
+  virtual void update(void);
+  virtual void stereo(bool mode);
 
-  private:
-    audio_block_t *inputQueueArray[2];
-    bool _enabled;
+private:
+  audio_block_t *inputQueueArray[2];
+  bool _enabled;
 };
 
 #endif

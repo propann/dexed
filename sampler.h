@@ -33,27 +33,37 @@
 #define _SAMPLER_H
 
 typedef struct sampler_config_s {
-  uint8_t sampler_class; // Type of sample
-  uint8_t midinote;   // Triggered by note
+  uint8_t sampler_class;  // Type of sample
+  uint8_t midinote;       // Triggered by note
   char name[SAMPLER_NAME_LEN];
   const unsigned int* sample_data;
-  char shortname[2];  // 1 char name for sequencer
-  float32_t pitch;    // play pitch
-  float32_t pan;      // panorama (-1.0 - +1.0)
-  float32_t vol_max;  // max. volume (0.0 - 1.0)
-  float32_t vol_min;  // min. volume (0.0 - 1.0, should be <= vol_max)
-  float32_t reverb_send; // how much signal to send to the reverb (0.0 - 1.0)
+  char shortname[2];      // 1 char name for sequencer
+  float32_t pitch;        // play pitch
+  float32_t pan;          // panorama (-1.0 - +1.0)
+  float32_t vol_max;      // max. volume (0.0 - 1.0)
+  float32_t vol_min;      // min. volume (0.0 - 1.0, should be <= vol_max)
+  float32_t reverb_send;  // how much signal to send to the reverb (0.0 - 1.0)
 } sampler_config_t;
 
-enum {SAMPLER_NONE, SAMPLER_BASS, SAMPLER_SNARE, SAMPLER_HIHAT, SAMPLER_HANDCLAP, SAMPLER_RIDE, SAMPLER_CHRASH, SAMPLER_LOWTOM, SAMPLER_MIDTOM, SAMPLER_HIGHTOM, SAMPLER_PERCUSSION, SAMPLER_MONOPHONE, SAMPLER_POLYPHONE};
+enum { SAMPLER_NONE,
+       SAMPLER_BASS,
+       SAMPLER_SNARE,
+       SAMPLER_HIHAT,
+       SAMPLER_HANDCLAP,
+       SAMPLER_RIDE,
+       SAMPLER_CHRASH,
+       SAMPLER_LOWTOM,
+       SAMPLER_MIDTOM,
+       SAMPLER_HIGHTOM,
+       SAMPLER_PERCUSSION,
+       SAMPLER_MONOPHONE,
+       SAMPLER_POLYPHONE };
 
 // DEFAULT MIDI CHANNEL FOR SAMPLER
 uint8_t sampler_midi_channel = 10;
 
-sampler_config_t sampler_config[NUM_SAMPLESET_CONFIG] =
-{
-  {
-    SAMPLER_BASS,
+sampler_config_t sampler_config[NUM_SAMPLESET_CONFIG] = {
+  { SAMPLER_BASS,
     MIDI_C3,
     "bd01",
     AudioSampleBd01,
@@ -62,11 +72,9 @@ sampler_config_t sampler_config[NUM_SAMPLESET_CONFIG] =
     0.0,
     0.8,
     0.0,
-    0.0
-  },
- 
-  {
-    SAMPLER_NONE,
+    0.0 },
+
+  { SAMPLER_NONE,
     0,
     "EMPTY",
     NULL,
@@ -75,8 +83,7 @@ sampler_config_t sampler_config[NUM_SAMPLESET_CONFIG] =
     0.0,
     0.0,
     0.0,
-    0.0
-  }
+    0.0 }
 };
 
 #endif
