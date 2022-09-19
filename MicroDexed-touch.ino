@@ -509,8 +509,8 @@ AudioConnection patchCord[] = {
 #if defined(USE_EPIANO)
   { ep, 0, ep_stereo_panorama, 0 },
   { ep, 1, ep_stereo_panorama, 1 },
-   { ep_stereo_panorama,0, ep_peak_r, 0 },
-  { ep_stereo_panorama,1, ep_peak_l, 0 },
+  { ep_stereo_panorama, 0, ep_peak_r, 0 },
+  { ep_stereo_panorama, 1, ep_peak_l, 0 },
 #if defined(USE_FX)
   { ep_stereo_panorama, 0, ep_chorus_mixer_r, 0 },
   { ep_stereo_panorama, 1, ep_chorus_mixer_l, 0 },
@@ -615,7 +615,7 @@ AudioConnection patchCord[] = {
 //
 uint8_t nDynamic = 0;
 #if defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT && defined(USE_BRAIDS)
-AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 12 ];  
+AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 12];
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4];
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT == MOD_NO_FILTER_OUTPUT
@@ -704,10 +704,9 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
 
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,0 ,braids_peak_r, 0 };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,1, braids_peak_l, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_r, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_l, 0 };
   }
-
 }
 #endif
 
@@ -1349,7 +1348,7 @@ void setup() {
 #endif
 }
 
-void draw_volmeter(int x, int y, uint8_t arr, float value) {
+FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value) {
   int height;
   //draw text
   display.setCursor(x, y + 4);
@@ -1427,7 +1426,7 @@ FLASHMEM void handle_touchscreen_mixer() {
       draw_volmeter(CHAR_width_small * 32, 170, 13, braids_peak_r.read());
     else
       draw_volmeter(CHAR_width_small * 32, 170, 13, 0);
-      
+
     draw_volmeter(CHAR_width_small * 38, 170, 6, reverb_return_peak_l.read());
     draw_volmeter(CHAR_width_small * 42, 170, 7, reverb_return_peak_r.read());
 

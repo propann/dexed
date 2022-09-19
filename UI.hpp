@@ -582,14 +582,14 @@ LCDMenuLib2 LCDML(LCDML_0, _LCDML_DISP_rows, _LCDML_DISP_cols, lcdml_menu_displa
 int favsearcher = 0;
 
 
-void print_empty_spaces(uint8_t spaces) {
+FLASHMEM void print_empty_spaces(uint8_t spaces) {
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   for (uint8_t x = 0; x < spaces; x++) {
     display.print(" ");
   }
 }
 
-void print_shortcut_navigator() {
+FLASHMEM void print_shortcut_navigator() {
   display.setTextSize(1);
   display.setCursor(CHAR_width_small * 30, 29 * (CHAR_height_small));
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element < 6)
@@ -629,7 +629,7 @@ void print_shortcut_navigator() {
   display.print("P");
 }
 
-void print_song_mode_help() {
+FLASHMEM void print_song_mode_help() {
   print_shortcut_navigator();
   if (seq.tracktype_or_instrument_assign == 6)  // is in tracktype select mode
   {
@@ -694,7 +694,7 @@ void print_song_mode_help() {
   seq.help_text_needs_refresh = false;
 }
 
-void sub_song_print_instruments(uint16_t front, uint16_t back) {
+FLASHMEM void sub_song_print_instruments(uint16_t front, uint16_t back) {
   for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++) {
     if (seq.tracktype_or_instrument_assign == 2 && seq.selected_track == x && seq.track_type[x] != 0)
       display.setTextColor(COLOR_SYSTEXT, MIDDLEGREEN);
@@ -877,7 +877,7 @@ void show_small_font(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, long num)
   show_small_font(pos_y, pos_x, field_size, itoa(num, _buf10, 10));
 }
 
-void drawHome(const uint8_t bitmap[]) {
+FLASHMEM void drawHome(const uint8_t bitmap[]) {
   byte w = 8;
   byte h = 8;
   byte x = CHAR_width + 1;
@@ -905,8 +905,8 @@ void drawHome(const uint8_t bitmap[]) {
   display.drawLine(CHAR_width - 1, 13, CHAR_width + 9, 13, MIDDLEGREEN);
 }
 
-void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
-                int16_t w, int16_t h, uint16_t color) {
+FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
+                         int16_t w, int16_t h, uint16_t color) {
 
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
@@ -923,9 +923,9 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
   }
 }
 
-void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
-                int16_t w, int16_t h, uint16_t color,
-                uint16_t bg) {
+FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
+                         int16_t w, int16_t h, uint16_t color,
+                         uint16_t bg) {
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
   for (int16_t j = 0; j < h; j++, y++) {
@@ -939,8 +939,8 @@ void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
   }
 }
 
-void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
-                int16_t h, uint16_t color) {
+FLASHMEM void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
+                         int16_t h, uint16_t color) {
 
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
@@ -957,8 +957,8 @@ void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
   }
 }
 
-void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
-                int16_t h, uint16_t color, uint16_t bg) {
+FLASHMEM void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
+                         int16_t h, uint16_t color, uint16_t bg) {
 
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
@@ -1222,7 +1222,7 @@ void border3_large_clear()  //lower left+right as one window
   display.fillRect(1, CHAR_height * 5, DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 5, COLOR_BACKGROUND);
 }
 
-const char* seq_find_shortname(uint8_t sstep) {
+FLASHMEM const char* seq_find_shortname(uint8_t sstep) {
   const char* shortname;
   bool found = false;
   if (seq.content_type[seq.active_pattern] == 0 && seq.vel[seq.active_pattern][sstep] < 210)  //is Drumtrack and not a pitched sample
@@ -1245,7 +1245,7 @@ const char* seq_find_shortname(uint8_t sstep) {
   return shortname;
 }
 
-void set_track_type_color(uint8_t track) {
+FLASHMEM void set_track_type_color(uint8_t track) {
   if (seq.track_type[track] == 0)  //Drums
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
   else if (seq.track_type[track] == 1)  //Inst
@@ -1256,7 +1256,7 @@ void set_track_type_color(uint8_t track) {
     display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
 }
 
-void sub_song_print_tracktypes() {
+FLASHMEM void sub_song_print_tracktypes() {
   for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++) {
     display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 4);
     if (seq.tracktype_or_instrument_assign == 0)
@@ -1281,7 +1281,7 @@ void sub_song_print_tracktypes() {
   }
 }
 
-void set_track_type_color_inverted(uint8_t track) {
+FLASHMEM void set_track_type_color_inverted(uint8_t track) {
   if (seq.track_type[track] == 0)  //Drums
     display.setTextColor(COLOR_BACKGROUND, COLOR_DRUMS);
   else if (seq.track_type[track] == 1)  //Inst
@@ -1292,7 +1292,7 @@ void set_track_type_color_inverted(uint8_t track) {
     display.setTextColor(COLOR_BACKGROUND, COLOR_ARP);
 }
 
-void print_patterns_in_song_page() {
+FLASHMEM void print_patterns_in_song_page() {
   if (seq.tracktype_or_instrument_assign > 0 && seq.tracktype_or_instrument_assign < 3)  //select track for instrument assignment
   {
     sub_song_print_instruments(DARKGREEN, COLOR_BACKGROUND);
@@ -1374,7 +1374,7 @@ void print_patterns_in_song_page() {
   }
 }
 
-void pattern_preview_in_song(uint8_t patternno) {
+FLASHMEM void pattern_preview_in_song(uint8_t patternno) {
   display.setTextSize(1);
   seq.active_pattern = patternno;
   display.setCursor(0, DISPLAY_HEIGHT - CHAR_height_small);
@@ -1407,11 +1407,7 @@ void pattern_preview_in_song(uint8_t patternno) {
   display.print("]");
 }
 
-
-
-
-
-void print_chains_in_song_page() {
+FLASHMEM void print_chains_in_song_page() {
   uint8_t endline = 99;
   display.setTextSize(1);
 
@@ -12258,7 +12254,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
 //  }
 //}
 
-void sd_printDirectory(File currentDirectory) {
+FLASHMEM void sd_printDirectory(File currentDirectory) {
   char tmp[6];
   currentDirectory.rewindDirectory();
   fm.sd_is_folder = false;
@@ -12333,7 +12329,7 @@ void sd_printDirectory(File currentDirectory) {
 }
 
 #ifdef COMPILE_FOR_FLASH
-void flash_printDirectory()  //SPI FLASH
+FLASHMEM void flash_printDirectory()  //SPI FLASH
 {
   if (seq.running == false) {
     char tmp[6];
@@ -12396,7 +12392,7 @@ void flash_printDirectory()  //SPI FLASH
 #endif
 
 #ifdef COMPILE_FOR_QSPI
-void flash_printDirectory(File flash_currentDirectory)  //QSPI
+FLASHMEM void flash_printDirectory(File flash_currentDirectory)  //QSPI
 {
   fm.flash_is_folder = false;
   fm.flash_cap_rows = 9;
@@ -12462,7 +12458,7 @@ void flash_printDirectory(File flash_currentDirectory)  //QSPI
 #endif
 
 #ifdef COMPILE_FOR_FLASH
-bool compareFiles(File& file, SerialFlashFile& ffile) {
+FLASHMEM bool compareFiles(File& file, SerialFlashFile& ffile) {
   file.seek(0);
   ffile.seek(0);
   unsigned long count = file.size();
@@ -12480,7 +12476,7 @@ bool compareFiles(File& file, SerialFlashFile& ffile) {
 #endif
 
 #ifdef COMPILE_FOR_QSPI
-bool compareFiles(File& file, File& ffile) {
+FLASHMEM bool compareFiles(File& file, File& ffile) {
 
   file.seek(0);
   ffile.seek(0);
@@ -12499,7 +12495,7 @@ bool compareFiles(File& file, File& ffile) {
 #endif
 
 #ifdef COMPILE_FOR_FLASH
-void print_flash_stats() {
+FLASHMEM void print_flash_stats() {
   if (seq.running == false) {
     char tmp[6];
     fm.flash_sum_files = 0;
@@ -12557,7 +12553,7 @@ void print_flash_stats() {
 #endif
 
 #ifdef COMPILE_FOR_QSPI
-void print_flash_stats() {
+FLASHMEM void print_flash_stats() {
   char tmp[6];
   display.setTextSize(1);
   display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
@@ -12576,7 +12572,7 @@ void print_flash_stats() {
 }
 #endif
 
-void print_sampler_keyboard(int x, int y) {
+FLASHMEM void print_sampler_keyboard(int x, int y) {
   uint8_t offset[5] = { 1, 2, 2, 4, 6 };  //+ is the offset to left
   int offcount = 0;
 
@@ -12595,7 +12591,7 @@ void print_sampler_keyboard(int x, int y) {
   }
 }
 
-void print_note_name_and_octave(uint8_t note) {
+FLASHMEM void print_note_name_and_octave(uint8_t note) {
   display.print(noteNames[note % 12][0]);
   if (noteNames[note % 12][1] != '\0') {
     display.print(noteNames[note % 12][1]);
@@ -12604,7 +12600,7 @@ void print_note_name_and_octave(uint8_t note) {
   display.print(" ");
 }
 
-uint8_t get_distance(uint8_t a, uint8_t b) {
+FLASHMEM uint8_t get_distance(uint8_t a, uint8_t b) {
   if (a == b)
     return 0;
   else if (a > b)
@@ -12612,7 +12608,7 @@ uint8_t get_distance(uint8_t a, uint8_t b) {
   else return b - a;
 }
 
-void calc_low_high(uint8_t preset) {
+FLASHMEM void calc_low_high(uint8_t preset) {
   uint8_t result = 200;
   uint8_t result_zone = 99;
 
@@ -12640,7 +12636,7 @@ void calc_low_high(uint8_t preset) {
   }
 }
 
-void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
+FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
   uint16_t temp_color = 0;
   uint16_t temp_background = 0;
 
@@ -12672,7 +12668,7 @@ void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
   display.setTextColor(temp_color, temp_background);
 }
 
-uint16_t get_multisample_zone_color(uint8_t row) {
+FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
   uint16_t temp_color = 0;
   if (seq.temp_select_menu == row + 1)
     temp_color = RED;
@@ -12696,7 +12692,7 @@ uint16_t get_multisample_zone_color(uint8_t row) {
   return temp_color;
 }
 
-void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
+FLASHMEM void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
   display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 3 * CHAR_width_small - 1, 7 - 2, COLOR_BACKGROUND);
 
   if (input_value == 20)
@@ -12711,7 +12707,7 @@ void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_
 }
 
 #if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
-void UI_func_MultiSamplePlay(uint8_t param) {
+FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     //test is this prevents crashing
@@ -12938,7 +12934,7 @@ void UI_func_MultiSamplePlay(uint8_t param) {
   }
 }
 #else
-void UI_func_MultiSamplePlay(uint8_t param) {
+FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     display.fillScreen(COLOR_BACKGROUND);
@@ -12967,7 +12963,7 @@ void UI_func_MultiSamplePlay(uint8_t param) {
 }
 #endif
 
-void sd_card_count_files_from_directory(File dir) {
+FLASHMEM void sd_card_count_files_from_directory(File dir) {
   fm.sd_sum_files = 0;
   dir.rewindDirectory();
   while (true) {
@@ -12986,7 +12982,7 @@ void sd_card_count_files_from_directory(File dir) {
 }
 
 #ifdef COMPILE_FOR_FLASH
-void UI_func_file_manager(uint8_t param) {
+FLASHMEM void UI_func_file_manager(uint8_t param) {
   uint32_t volumesize;
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -13352,7 +13348,7 @@ void UI_func_file_manager(uint8_t param) {
 
 
 #ifdef COMPILE_FOR_QSPI
-void UI_func_file_manager(uint8_t param) {
+FLASHMEM void UI_func_file_manager(uint8_t param) {
   uint32_t volumesize;
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -13720,7 +13716,7 @@ void UI_func_file_manager(uint8_t param) {
 #endif
 
 #if (defined COMPILE_FOR_PROGMEM) || (defined COMPILE_FOR_SDCARD)
-void UI_func_file_manager(uint8_t param) {
+FLASHMEM void UI_func_file_manager(uint8_t param) {
   uint32_t volumesize;
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
