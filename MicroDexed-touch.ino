@@ -1427,7 +1427,7 @@ FLASHMEM void handle_touchscreen_mixer() {
       draw_volmeter(CHAR_width_small * 27, 100, 12, braids_peak_l.read());
     else
       draw_volmeter(CHAR_width_small * 27, 100, 12, 0);
-    if (ep_peak_r.available())
+    if (braids_peak_r.available())
       draw_volmeter(CHAR_width_small * 32, 100, 13, braids_peak_r.read());
     else
       draw_volmeter(CHAR_width_small * 32, 100, 13, 0);
