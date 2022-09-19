@@ -80,10 +80,9 @@
   when computing db20() is accurate to 7.984884e-003 dB.
 ** ------------------------------------------------------------------- */
 
-float log2f_approx_coeff[4] = {1.23149591368684f, -4.11852516267426f, 6.02197014179219f, -3.13396450166353f};
+float log2f_approx_coeff[4] = { 1.23149591368684f, -4.11852516267426f, 6.02197014179219f, -3.13396450166353f };
 
-float log2f_approx(float X)
-{
+float log2f_approx(float X) {
   float *C = &log2f_approx_coeff[0];
   float Y;
   float F;
@@ -107,9 +106,16 @@ float log2f_approx(float X)
 // https://codingforspeed.com/using-faster-exponential-approximation/
 inline float expf_approx(float x) {
   x = 1.0f + x / 1024;
-  x *= x; x *= x; x *= x; x *= x;
-  x *= x; x *= x; x *= x; x *= x;
-  x *= x; x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
+  x *= x;
   return x;
 }
 
@@ -129,7 +135,7 @@ void AudioEffectDynamics::update(void) {
 
   if (!block) return;
 
-  if ( !compEnabled && !limiterEnabled) {
+  if (!compEnabled && !limiterEnabled) {
     //Transmit & release
     transmit(block);
     release(block);
@@ -159,7 +165,7 @@ void AudioEffectDynamics::update(void) {
 
     //Compressor
     if (compEnabled) {
-      float attdb = MAX_DB; //Below knee
+      float attdb = MAX_DB;  //Below knee
       if (inputdb >= aLowKnee) {
         if (inputdb <= aHighKnee) {
           //Knee transition
@@ -177,13 +183,12 @@ void AudioEffectDynamics::update(void) {
     //Brickwall Limiter
     if (limiterEnabled) {
       float outdb = inputdb + compdb + makeupdb;
-      if (outdb >= limitThreshold) limitdb = (aLimitAttack * limitdb) +
-                                               (aOneMinusLimitAttack * (limitThreshold - outdb));
+      if (outdb >= limitThreshold) limitdb = (aLimitAttack * limitdb) + (aOneMinusLimitAttack * (limitThreshold - outdb));
       else limitdb *= aLimitRelease;
     } else limitdb = MAX_DB;
 
     //Compute linear gain
-    float totalGain =  compdb + makeupdb + limitdb + phingain;
+    float totalGain = compdb + makeupdb + limitdb + phingain;
 
     float multiplier = dbToUnit(totalGain);
     int16_t result = sample * multiplier;

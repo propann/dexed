@@ -1,4 +1,3 @@
-
 #include "system_tests.h"
 #include "ILI9341_t3n.h"
 extern ILI9341_t3n display;
@@ -7,15 +6,13 @@ extern uint16_t COLOR_BACKGROUND;
 extern uint16_t COLOR_SYSTEXT;
 uint8_t psram_test_dline = 7;
 
-void fill_up_with_spaces_psram()
-{
+void fill_up_with_spaces_psram() {
   do {
     display.print(F(" "));
   } while (display.getCursorX() < 52 * CHAR_width_small);
 }
 
-FLASHMEM void psram_test()
-{
+FLASHMEM void psram_test() {
   char text1[40];
   psram_test_dline = 7;
   uint8_t size = external_psram_size;
@@ -25,7 +22,7 @@ FLASHMEM void psram_test()
   display.print(text1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (size == 0) return;
-  const float clocks[4] = {396.0f, 720.0f, 664.62f, 528.0f};
+  const float clocks[4] = { 396.0f, 720.0f, 664.62f, 528.0f };
   const float frequency = clocks[(CCM_CBCMR >> 8) & 3] / (float)(((CCM_CBCMR >> 29) & 7) + 1);
   snprintf_P(text1, strlen(text1), PSTR(" (%03d MHz)"), (int)frequency);
   display.print(text1);
@@ -106,12 +103,11 @@ FLASHMEM void psram_test()
   fill_up_with_spaces_psram();
   psram_memory_ok = true;
   psram_test_dline++;
-  display.fillRect(1, psram_test_dline * 10, DISPLAY_WIDTH - 1, (DISPLAY_HEIGHT - (psram_test_dline * 10) - CHAR_height_small), COLOR_BACKGROUND );
+  display.fillRect(1, psram_test_dline * 10, DISPLAY_WIDTH - 1, (DISPLAY_HEIGHT - (psram_test_dline * 10) - CHAR_height_small), COLOR_BACKGROUND);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-FLASHMEM bool psram_fail_message(volatile uint32_t *location, uint32_t actual, uint32_t expected)
-{
+FLASHMEM bool psram_fail_message(volatile uint32_t *location, uint32_t actual, uint32_t expected) {
   char text1[40];
   psram_test_dline++;
   setCursor_textGrid_small(2, psram_test_dline);
@@ -126,8 +122,7 @@ FLASHMEM bool psram_fail_message(volatile uint32_t *location, uint32_t actual, u
 }
 
 // fill the entire RAM with a fixed pattern, then check it
-FLASHMEM bool psram_check_fixed_pattern(uint32_t pattern)
-{
+FLASHMEM bool psram_check_fixed_pattern(uint32_t pattern) {
   char text1[40];
   setCursor_textGrid_small(2, psram_test_dline);
   volatile uint32_t *p;
@@ -149,8 +144,7 @@ FLASHMEM bool psram_check_fixed_pattern(uint32_t pattern)
 }
 
 // fill the entire RAM with a pseudo-random sequence, then check it
-FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed)
-{
+FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed) {
   char text1[40];
   setCursor_textGrid_small(2, psram_test_dline);
   volatile uint32_t *p;

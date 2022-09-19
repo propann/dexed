@@ -115,7 +115,7 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_PROGMEM   // enable this if you do not have a SPI FLASH chip
+#define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
 //#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 //#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
@@ -124,7 +124,7 @@
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
 //*************************************************************************************************
 // Number of Dexed instances
-#define NUM_DEXED 2 // 1 or 2 - nothing else!
+#define NUM_DEXED 2  // 1 or 2 - nothing else!
 
 // FX-CHAIN ENABLE/DISABLE
 #define USE_FX 1
@@ -175,11 +175,11 @@
 #define USE_MULTIBAND
 
 #define VIRT_KEYB_YPOS 166
- 
+
 // CHORUS parameters
-#define MOD_DELAY_SAMPLE_BUFFER int32_t(TIME_MS2SAMPLES(15.0)) // 15.0 ms delay buffer. 
-#define MOD_WAVEFORM WAVEFORM_TRIANGLE // WAVEFORM_SINE WAVEFORM_TRIANGLE WAVEFORM_SAWTOOTH WAVEFORM_SAWTOOTH_REVERSE
-#define MOD_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT // MOD_LINKWITZ_RILEY_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT MOD_NO_FILTER_OUTPUT
+#define MOD_DELAY_SAMPLE_BUFFER int32_t(TIME_MS2SAMPLES(15.0))  // 15.0 ms delay buffer.
+#define MOD_WAVEFORM WAVEFORM_TRIANGLE                          // WAVEFORM_SINE WAVEFORM_TRIANGLE WAVEFORM_SAWTOOTH WAVEFORM_SAWTOOTH_REVERSE
+#define MOD_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT         // MOD_LINKWITZ_RILEY_FILTER_OUTPUT MOD_BUTTERWORTH_FILTER_OUTPUT MOD_NO_FILTER_OUTPUT
 #define MOD_FILTER_CUTOFF_HZ 2000
 
 // SGTL5000
@@ -202,9 +202,9 @@
 
 #ifdef USE_FX
 #if defined(USE_EPIANO)
-#define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 + 14
+#define AUDIO_MEM SAMPLE_RATE* NUM_DEXED* DELAY_MAX_TIME / 128000 + 36 + 14
 #else
-#define AUDIO_MEM SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36
+#define AUDIO_MEM SAMPLE_RATE* NUM_DEXED* DELAY_MAX_TIME / 128000 + 36
 #endif
 #else
 #if defined(USE_EPIANO)
@@ -246,30 +246,30 @@
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
 
-#define RED     0xF000
-#define PINK    0xF81F
-#define YELLOW  0xFFEB
+#define RED 0xF000
+#define PINK 0xF81F
+#define YELLOW 0xFFEB
 
-#define GREEN        0x07E0
-#define MIDDLEGREEN  0x1500
-#define DARKGREEN    0x0AE0
+#define GREEN 0x07E0
+#define MIDDLEGREEN 0x1500
+#define DARKGREEN 0x0AE0
 
-#define GREY1   0xC638
-#define GREY2   0x52AA
-#define GREY3   0x2104
-#define GREY4   0x10A2
+#define GREY1 0xC638
+#define GREY2 0x52AA
+#define GREY3 0x2104
+#define GREY4 0x10A2
 #define DX_DARKCYAN 0x03EF
 
 // Display
 
-#define TFT_WIDTH  240
+#define TFT_WIDTH 240
 #define TFT_HEIGHT 320
 
-#define DISPLAY_WIDTH  320
+#define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
 
-#define display_cols  20
-#define display_rows  6
+#define display_cols 20
+#define display_rows 6
 #define CHAR_width 12
 #define CHAR_height 17
 #define CHAR_width_small 6
@@ -287,35 +287,35 @@
 //*************************************************************************************************
 
 // Teensy Audio Shield
-#define SDCARD_AUDIO_CS_PIN    10
-#define SDCARD_AUDIO_MOSI_PIN  7
-#define SDCARD_AUDIO_SCK_PIN   14
+#define SDCARD_AUDIO_CS_PIN 10
+#define SDCARD_AUDIO_MOSI_PIN 7
+#define SDCARD_AUDIO_SCK_PIN 14
 
-#define SDCARD_TEENSY_CS_PIN    BUILTIN_SDCARD
-#define SDCARD_TEENSY_MOSI_PIN  11
-#define SDCARD_TEENSY_SCK_PIN   13
+#define SDCARD_TEENSY_CS_PIN BUILTIN_SDCARD
+#define SDCARD_TEENSY_MOSI_PIN 11
+#define SDCARD_TEENSY_SCK_PIN 13
 
-const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Shield)
+const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio Shield)
 
 // Encoder with button
 //#define ENCODER_USE_INTERRUPTS
 #define NUM_ENCODER 2
 #ifdef UI_REVERSE
-#define ENC_L_PIN_B  29
-#define ENC_L_PIN_A  28
-#define BUT_L_PIN    25
+#define ENC_L_PIN_B 29
+#define ENC_L_PIN_A 28
+#define BUT_L_PIN 25
 
-#define ENC_R_PIN_B  31
-#define ENC_R_PIN_A  32
-#define BUT_R_PIN    30
+#define ENC_R_PIN_B 31
+#define ENC_R_PIN_A 32
+#define BUT_R_PIN 30
 #else
-#define ENC_L_PIN_A  32
-#define ENC_L_PIN_B  31
-#define BUT_L_PIN    30
+#define ENC_L_PIN_A 32
+#define ENC_L_PIN_B 31
+#define BUT_L_PIN 30
 
-#define ENC_R_PIN_A  28
-#define ENC_R_PIN_B  29
-#define BUT_R_PIN    25
+#define ENC_R_PIN_A 28
+#define ENC_R_PIN_B 29
+#define BUT_R_PIN 25
 #endif
 
 #define BUT_DEBOUNCE_MS 20
@@ -328,9 +328,9 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define EEPROM_START_ADDRESS 0xFF
 
 #define MAX_BANKS 100
-#define MAX_VOICES 32 // voices per bank
-#define BANK_NAME_LEN 11 // 10 (plus '\0')
-#define VOICE_NAME_LEN 12 // 11 (plus '\0')
+#define MAX_VOICES 32      // voices per bank
+#define BANK_NAME_LEN 11   // 10 (plus '\0')
+#define VOICE_NAME_LEN 12  // 11 (plus '\0')
 #define FILENAME_LEN BANK_NAME_LEN + VOICE_NAME_LEN
 #define CONFIG_FILENAME_LEN 50
 #define DRUM_NAME_LEN 21
@@ -364,7 +364,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 //*************************************************************************************************
 //* DO NO CHANGE ANYTHING BEYOND IF YOU DON'T KNOW WHAT YOU ARE DOING !!!
 //*************************************************************************************************
-#define MAX_DEXED 2 // No! - even don't think about increasing this number! IT _WILL_ PRODUCE MASSIVE PROBLEMS!
+#define MAX_DEXED 2  // No! - even don't think about increasing this number! IT _WILL_ PRODUCE MASSIVE PROBLEMS!
 #define CONTROL_RATE_MS 50
 #define MICROSYNTH_LFO_RATE_MS 20
 #define BRAIDS_LFO_RATE_MS 20
@@ -453,7 +453,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define CHORUS_LEVEL_DEFAULT 0
 
 #define DELAY_TIME_MIN 0
-#define DELAY_TIME_MAX DELAY_MAX_TIME/10
+#define DELAY_TIME_MAX DELAY_MAX_TIME / 10
 #define DELAY_TIME_DEFAULT 0
 
 #define DELAY_FEEDBACK_MIN 0
@@ -546,7 +546,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define MW_ASSIGN_MIN 0
 #define MW_ASSIGN_MAX 7
-#define MW_ASSIGN_DEFAULT 0 // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
+#define MW_ASSIGN_DEFAULT 0  // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
 
 #define MW_MODE_MIN 0
 #define MW_MODE_MAX MIDI_CONTROLLER_MODE_MAX
@@ -558,7 +558,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define FC_ASSIGN_MIN 0
 #define FC_ASSIGN_MAX 7
-#define FC_ASSIGN_DEFAULT 0 // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
+#define FC_ASSIGN_DEFAULT 0  // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
 
 #define FC_MODE_MIN 0
 #define FC_MODE_MAX MIDI_CONTROLLER_MODE_MAX
@@ -570,7 +570,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define BC_ASSIGN_MIN 0
 #define BC_ASSIGN_MAX 7
-#define BC_ASSIGN_DEFAULT 0 // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
+#define BC_ASSIGN_DEFAULT 0  // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
 
 #define BC_MODE_MIN 0
 #define BC_MODE_MAX MIDI_CONTROLLER_MODE_MAX
@@ -582,7 +582,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define AT_ASSIGN_MIN 0
 #define AT_ASSIGN_MAX 7
-#define AT_ASSIGN_DEFAULT 0 // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
+#define AT_ASSIGN_DEFAULT 0  // Bitmapped: 0: Pitch, 1: Amp, 2: Bias
 
 #define AT_MODE_MIN 0
 #define AT_MODE_MAX MIDI_CONTROLLER_MODE_MAX
@@ -594,7 +594,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define PORTAMENTO_MODE_MIN 0
 #define PORTAMENTO_MODE_MAX 1
-#define PORTAMENTO_MODE_DEFAULT 0 // 0: Retain, 1: Follow
+#define PORTAMENTO_MODE_DEFAULT 0  // 0: Retain, 1: Follow
 
 #define PORTAMENTO_GLISSANDO_MIN 0
 #define PORTAMENTO_GLISSANDO_MAX 1
@@ -762,7 +762,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #endif
 
 // Number of samples in each delay line
-#define BRAIDS_FLANGE_DELAY_LENGTH (6*AUDIO_BLOCK_SAMPLES)
+#define BRAIDS_FLANGE_DELAY_LENGTH (6 * AUDIO_BLOCK_SAMPLES)
 
 #define FAVORITES_NUM_MIN 0
 #define FAVORITES_NUM_MAX 100
@@ -872,8 +872,7 @@ typedef struct epiano_s {
 } epiano_t;
 
 #ifdef USE_MICROSYNTH
-typedef struct microsynth_s
-{
+typedef struct microsynth_s {
   int coarse;
   int detune;
   int lfo_intensity;
@@ -921,8 +920,7 @@ typedef struct microsynth_s
 #endif
 
 #ifdef USE_BRAIDS
-typedef struct braids_s
-{
+typedef struct braids_s {
   uint8_t sound_intensity;
   uint8_t algo;
   uint8_t color;
@@ -939,7 +937,7 @@ typedef struct braids_s
   uint16_t filter_speed;
   uint8_t rev_send;
   uint8_t flanger;
-    uint8_t flanger_spread;
+  uint8_t flanger_spread;
   uint8_t delay_send;
   uint8_t midi_channel;
   uint8_t pan;
@@ -986,8 +984,7 @@ enum reverb_mixer_ports {
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
-inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)
-{
+inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max) {
   return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 #endif

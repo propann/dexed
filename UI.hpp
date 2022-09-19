@@ -143,7 +143,6 @@ extern config_t configuration;
 extern void set_volume(uint8_t v, uint8_t m);
 extern bool load_sysex(uint8_t b, uint8_t v);
 extern void generate_version_string(char* buffer, uint8_t len);
-extern void _softRestart(void);
 extern float midi_volume_transform(uint8_t midi_amp);
 extern float volume_transform(float amp);
 extern uint8_t selected_instance_id;
@@ -2462,7 +2461,7 @@ void lcdml_menu_control(void) {
           seq.gamepad_timer_speed = 45;
         }
       } else if (LCDML.FUNC_getID() != 255 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_epiano) && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_microsynth)
-                 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_braids)) // is not in edit state and not in main menu and not in a instrument page
+                 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_braids))  // is not in edit state and not in main menu and not in a instrument page
       {
         if (gp_up() && buttons == gamepad_buttons_neutral) {
           g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;

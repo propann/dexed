@@ -31,23 +31,22 @@ extern Sd2Card card;
 
 extern char noteNames[12][3];
 
-static const float tune_frequencies2_PGM[128] =
-{
-  8.1758,    8.6620,    9.1770,    9.7227,    10.3009,    10.9134,    11.5623,    12.2499,
-  12.9783,   13.7500,   14.5676,   15.4339,   16.3516,    17.3239,    18.3540,    19.4454,
-  20.6017,   21.8268,   23.1247,   24.4997,   25.9565,    27.5000,    29.1352,    30.8677,
-  32.7032,   34.6478,   36.7081,   38.8909,   41.2034,    43.6535,    46.2493,    48.9994,
-  51.9131,   55.0000,   58.2705,   61.7354,   65.4064,    69.2957,    73.4162,    77.7817,
-  82.4069,   87.3071,   92.4986,   97.9989,   103.8262,   110.0000,   116.5409,   123.4708,
-  130.8128,  138.5913,  146.8324,  155.5635,  164.8138,   174.6141,   184.9972,   195.9977,
-  207.6523,  220.0000,  233.0819,  246.9417,  261.6256,   277.1826,   293.6648,   311.1270,
-  329.6276,  349.2282,  369.9944,  391.9954,  415.3047,   440.0000,   466.1638,   493.8833,
-  523.2511,  554.3653,  587.3295,  622.2540,  659.2551,   698.4565,   739.9888,   783.9909,
-  830.6094,  880.0000,  932.3275,  987.7666,  1046.5023,  1108.7305,  1174.6591,  1244.5079,
-  1318.5102, 1396.9129, 1479.9777, 1567.9817, 1661.2188,  1760.0000,  1864.6550,  1975.5332,
-  2093.0045, 2217.4610, 2349.3181, 2489.0159, 2637.0205,  2793.8259,  2959.9554,  3135.9635,
-  3322.4376, 3520.0000, 3729.3101, 3951.0664, 4186.0090,  4434.9221,  4698.6363,  4978.0317,
-  5274.0409, 5587.6517, 5919.9108, 6271.9270, 6644.8752,  7040.0000,  7458.6202,  7902.1328,
+static const float tune_frequencies2_PGM[128] = {
+  8.1758, 8.6620, 9.1770, 9.7227, 10.3009, 10.9134, 11.5623, 12.2499,
+  12.9783, 13.7500, 14.5676, 15.4339, 16.3516, 17.3239, 18.3540, 19.4454,
+  20.6017, 21.8268, 23.1247, 24.4997, 25.9565, 27.5000, 29.1352, 30.8677,
+  32.7032, 34.6478, 36.7081, 38.8909, 41.2034, 43.6535, 46.2493, 48.9994,
+  51.9131, 55.0000, 58.2705, 61.7354, 65.4064, 69.2957, 73.4162, 77.7817,
+  82.4069, 87.3071, 92.4986, 97.9989, 103.8262, 110.0000, 116.5409, 123.4708,
+  130.8128, 138.5913, 146.8324, 155.5635, 164.8138, 174.6141, 184.9972, 195.9977,
+  207.6523, 220.0000, 233.0819, 246.9417, 261.6256, 277.1826, 293.6648, 311.1270,
+  329.6276, 349.2282, 369.9944, 391.9954, 415.3047, 440.0000, 466.1638, 493.8833,
+  523.2511, 554.3653, 587.3295, 622.2540, 659.2551, 698.4565, 739.9888, 783.9909,
+  830.6094, 880.0000, 932.3275, 987.7666, 1046.5023, 1108.7305, 1174.6591, 1244.5079,
+  1318.5102, 1396.9129, 1479.9777, 1567.9817, 1661.2188, 1760.0000, 1864.6550, 1975.5332,
+  2093.0045, 2217.4610, 2349.3181, 2489.0159, 2637.0205, 2793.8259, 2959.9554, 3135.9635,
+  3322.4376, 3520.0000, 3729.3101, 3951.0664, 4186.0090, 4434.9221, 4698.6363, 4978.0317,
+  5274.0409, 5587.6517, 5919.9108, 6271.9270, 6644.8752, 7040.0000, 7458.6202, 7902.1328,
   8372.0181, 8869.8442, 9397.2726, 9956.0635, 10548.0818, 11175.3034, 11839.8215, 12543.8540
 };
 
@@ -57,12 +56,12 @@ typedef struct multisample_s {
 
 typedef struct multisample_zone_s {
   char name[MAX_FLASH_FILENAME_LEN];
-  uint8_t rootnote;   // sample root note
-  uint8_t low;        // lowest note in range
-  uint8_t high;       // highest note in range
-  uint8_t vol;        // volume
-  uint8_t pan;        // panorama
-  uint8_t rev;        // reverb send
+  uint8_t rootnote;  // sample root note
+  uint8_t low;       // lowest note in range
+  uint8_t high;      // highest note in range
+  uint8_t vol;       // volume
+  uint8_t pan;       // panorama
+  uint8_t rev;       // reverb send
 } multisample_zone_t;
 
 
@@ -71,21 +70,70 @@ typedef struct sequencer_s {
   uint8_t gamepad_timer_speed;
   bool gamepad_jumped_back_from_pattern_editor_to_chain_editor;
   bool euclidean_state[16];
-  uint8_t euclidean_offset=5;
+  uint8_t euclidean_offset = 5;
   bool euclidean_active;
   bool DAC_mute_state = false;
   bool play_mode;  // false = song, true = current pattern only
-  bool hunt_pattern=false;
+  bool hunt_pattern = false;
   uint8_t active_function = 99;
   uint16_t wave_spacing = 2;
-  uint8_t active_multisample;   // multisample currently selected in editor
-  uint8_t auto_advance_step = 0; //0 = single step, 1 = auto advance, 2 = auto advance and auto stop
+  uint8_t active_multisample;     // multisample currently selected in editor
+  uint8_t auto_advance_step = 0;  //0 = single step, 1 = auto advance, 2 = auto advance and auto stop
   bool step_recording = false;
   uint8_t current_track_type_of_active_pattern;
   bool track_mute[NUM_SEQ_TRACKS];
   uint8_t mute_mode = 0;
-  const uint8_t piano[12 * 4] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,  0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, };
-  const uint8_t piano2[13] = {1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
+  const uint8_t piano[12 * 4] = {
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+  };
+  const uint8_t piano2[13] = { 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
   int generic_ui_delay;
   bool midi_learn_active = false;
   bool help_text_needs_refresh = false;
@@ -94,13 +142,13 @@ typedef struct sequencer_s {
   uint8_t loop_start = 99;
   uint8_t loop_end = 99;
   uint8_t ticks;
-  uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
+  uint8_t cycle_touch_element = 0;  // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
   uint8_t scrollpos;
   int cursor_scroll;
   uint8_t selected_track;
   bool edit_state;
   float drums_volume;
-  uint8_t menu_status; // 0= normal jump
+  uint8_t menu_status;  // 0= normal jump
   // 1= jump from pattern edit to vel edit
   // 2= jump from vel edit to pattern edit
   // 3= ...
@@ -111,9 +159,9 @@ typedef struct sequencer_s {
   uint8_t menu;
   uint8_t sub_menu;
   uint8_t UI_last_seq_step;
-  uint8_t note_editor_view = 99; // 0 = list/tracker view, 1 = pianoroll
-  bool noteoffsent[NUM_SEQ_TRACKS] = {false, false, false, false, false, false, false, false};
-  uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
+  uint8_t note_editor_view = 99;  // 0 = list/tracker view, 1 = pianoroll
+  bool noteoffsent[NUM_SEQ_TRACKS] = { false, false, false, false, false, false, false, false };
+  uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 };  //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
   uint8_t step = 0;
   bool running = false;
   bool recording = false;
@@ -129,32 +177,32 @@ typedef struct sequencer_s {
   uint8_t chord_key_ammount = 4;
   uint8_t element_shift = 0;
   int oct_shift = 0;
-  uint8_t arp_style = 0; // up, down, up&down, random
+  uint8_t arp_style = 0;  // up, down, up&down, random
 
   const uint8_t arps[6][23] = {
-    { 0, 4, 7, 12, 16, 19, 24, 28, 31, 36, 40, 43, 48, 52, 55, 60, 64, 67, 72, 76, 79, 84, 0}, //major
-    { 0, 3, 7, 12, 15, 19, 24, 27, 31, 36, 39, 43, 48, 51, 55, 60, 63, 67, 72, 75, 79, 84, 0}, //minor
-    { 0, 4, 7, 10, 12, 16, 19, 22, 24, 28, 31, 34, 36, 40, 43, 46, 48, 52, 55, 58, 60, 64, 0}, //seventh
-    { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 0}, //augmented
-    { 0, 3, 6, 12, 15, 18, 24, 27, 30, 36, 39, 42, 48, 51, 54, 60, 63, 66, 72, 75, 78, 84, 0}, //dim
-    { 0, 4, 7, 11, 12, 16, 19, 23, 24, 28, 31, 35, 36, 40, 43, 47, 48, 52, 55, 59, 60, 64, 0}  //maj7
+    { 0, 4, 7, 12, 16, 19, 24, 28, 31, 36, 40, 43, 48, 52, 55, 60, 64, 67, 72, 76, 79, 84, 0 },  //major
+    { 0, 3, 7, 12, 15, 19, 24, 27, 31, 36, 39, 43, 48, 51, 55, 60, 63, 67, 72, 75, 79, 84, 0 },  //minor
+    { 0, 4, 7, 10, 12, 16, 19, 22, 24, 28, 31, 34, 36, 40, 43, 46, 48, 52, 55, 58, 60, 64, 0 },  //seventh
+    { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 0 },  //augmented
+    { 0, 3, 6, 12, 15, 18, 24, 27, 30, 36, 39, 42, 48, 51, 54, 60, 63, 66, 72, 75, 78, 84, 0 },  //dim
+    { 0, 4, 7, 11, 12, 16, 19, 23, 24, 28, 31, 35, 36, 40, 43, 47, 48, 52, 55, 59, 60, 64, 0 }   //maj7
   };
 
   const char chord_names[7][7] = {
-    {'M', 'a', 'j', 'o', 'r', ' ', ' '}, //major
-    {'M', 'i', 'n', 'o', 'r', ' ', ' '},
-    {'s', 'e', 'v', 'e', 'n', ' ', ' '},
-    {'a', 'u', 'g', ' ', ' ', ' ', ' '},
-    {'d', 'i', 'm', ' ', ' ', ' ', ' '},
-    {'M', 'a', 'j', '7', ' ', ' ', ' '},
-    {'N', 'o', 'C', 'h', 'o', 'r', 'd'}
+    { 'M', 'a', 'j', 'o', 'r', ' ', ' ' },  //major
+    { 'M', 'i', 'n', 'o', 'r', ' ', ' ' },
+    { 's', 'e', 'v', 'e', 'n', ' ', ' ' },
+    { 'a', 'u', 'g', ' ', ' ', ' ', ' ' },
+    { 'd', 'i', 'm', ' ', ' ', ' ', ' ' },
+    { 'M', 'a', 'j', '7', ' ', ' ', ' ' },
+    { 'N', 'o', 'C', 'h', 'o', 'r', 'd' }
   };
 
   const char arp_style_names[4][3] = {
-    { 'U', 'P', ' '},
-    {'D', 'W', 'N'},
-    {'U', '&', 'D'},
-    {'R', 'N', 'D'}
+    { 'U', 'P', ' ' },
+    { 'D', 'W', 'N' },
+    { 'U', '&', 'D' },
+    { 'R', 'N', 'D' }
   };
   int tempo_ms = 180000;
   int bpm = 102;
@@ -162,11 +210,11 @@ typedef struct sequencer_s {
   uint8_t temp_active_menu = 99;
 
   int8_t current_song_step = 0;
-  int8_t current_chain[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99, 99, 99 };
-  int8_t current_pattern[NUM_SEQ_TRACKS] =  { 99, 99, 99, 99, 99, 99, 99, 99 };
-  int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0, 0, 0, 0, 0, 0, 0, 0 };
+  int8_t current_chain[NUM_SEQ_TRACKS] = { 99, 99, 99, 99, 99, 99, 99, 99 };
+  int8_t current_pattern[NUM_SEQ_TRACKS] = { 99, 99, 99, 99, 99, 99, 99, 99 };
+  int8_t chain_counter[NUM_SEQ_TRACKS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-  uint8_t prev_note[NUM_SEQ_TRACKS]; // note_offs for every (instr.) track
+  uint8_t prev_note[NUM_SEQ_TRACKS];  // note_offs for every (instr.) track
   uint8_t prev_vel[NUM_SEQ_TRACKS];
   uint8_t arp_step;
   uint8_t arp_note;
@@ -181,33 +229,33 @@ typedef struct sequencer_s {
   uint8_t arp_num_notes_count = 0;
   float arp_volume_fade;
   float arp_volume_base = 50;
-  uint8_t data_buffer[16] = { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 };
+  uint8_t data_buffer[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
   uint8_t note_data[NUM_SEQ_PATTERN][16] = {
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 },
-    { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0 }
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
   };
 
   uint8_t vel[NUM_SEQ_PATTERN][16] = {
@@ -318,14 +366,14 @@ typedef struct sequencer_s {
     { 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99 }
   };
 
-  uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0 , 0, 0, 0, 0 , 0, 0, 0 , 0 , 0 , 0, 0, 0, 0, 0};
+  uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
 
-  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1 , 0, 0}; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
+  uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 };  // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
 
-uint8_t pat_chance[NUM_SEQ_PATTERN];
-uint8_t pat_vel_variation[NUM_SEQ_PATTERN];
-    
+  uint8_t pat_chance[NUM_SEQ_PATTERN];
+  uint8_t pat_vel_variation[NUM_SEQ_PATTERN];
+
 } sequencer_t;
 
 #endif

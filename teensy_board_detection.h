@@ -28,22 +28,22 @@
 
 
 // Teensy-4.x
-#if defined(__IMXRT1062__) || defined (ARDUINO_TEENSY40) || defined (ARDUINO_TEENSY41)
+#if defined(__IMXRT1062__) || defined(ARDUINO_TEENSY40) || defined(ARDUINO_TEENSY41)
 #define TEENSY4
-#if defined (ARDUINO_TEENSY40)
+#if defined(ARDUINO_TEENSY40)
 #define TEENSY4_0
-#elif defined (ARDUINO_TEENSY41)
+#elif defined(ARDUINO_TEENSY41)
 #define TEENSY4_1
 #endif
 #endif
 
 // Teensy-3.6
 #if defined(__MK66FX1M0__)
-#  define TEENSY3_6
+#define TEENSY3_6
 #endif
 
 // Teensy-3.5
-#if defined (__MK64FX512__)
+#if defined(__MK64FX512__)
 #define TEENSY3_5
 #endif
 

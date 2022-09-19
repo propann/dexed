@@ -29,13 +29,11 @@
 // Written by Holger Wirtz
 // 20191023 - inital version
 
-void AudioEffectStereoMono::stereo(bool mode)
-{
+void AudioEffectStereoMono::stereo(bool mode) {
   _enabled = mode;
 }
 
-void AudioEffectStereoMono::update(void)
-{
+void AudioEffectStereoMono::update(void) {
   audio_block_t *block[2];
 
   block[0] = receiveWritable(0);
@@ -46,15 +44,12 @@ void AudioEffectStereoMono::update(void)
   if (!block[1])
     return;
 
-  if (_enabled == false)
-  {
-    if (block[0] && block[1])
-    {
+  if (_enabled == false) {
+    if (block[0] && block[1]) {
 #ifdef USE_OLD_STEREO_TO_MONO
       int16_t *bp[2] = { block[0]->data, block[1]->data };
 
-      for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-      {
+      for (uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
         *bp[0] = (*bp[0] >> 1) + (*bp[1] >> 1);
         *bp[1] = *bp[0];
         bp[0]++;
@@ -72,14 +67,12 @@ void AudioEffectStereoMono::update(void)
     }
   }
 
-  if (block[0])
-  {
+  if (block[0]) {
     transmit(block[0], 0);
     release(block[0]);
   }
 
-  if (block[1])
-  {
+  if (block[1]) {
     transmit(block[1], 1);
     release(block[1]);
   }

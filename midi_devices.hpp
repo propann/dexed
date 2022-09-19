@@ -35,22 +35,22 @@ extern sequencer_t seq;
 
 #ifdef USB_GAMEPAD
 extern int temp_int;
-extern uint8_t GAMEPAD_UP_0 ;
+extern uint8_t GAMEPAD_UP_0;
 extern uint8_t GAMEPAD_UP_1;
 extern uint32_t GAMEPAD_UP_BUTTONS;
 extern uint8_t GAMEPAD_DOWN_0;
-extern uint8_t GAMEPAD_DOWN_1 ;
+extern uint8_t GAMEPAD_DOWN_1;
 extern uint32_t GAMEPAD_DOWN_BUTTONS;
-extern uint8_t GAMEPAD_RIGHT_0 ;
-extern uint8_t GAMEPAD_RIGHT_1 ;
+extern uint8_t GAMEPAD_RIGHT_0;
+extern uint8_t GAMEPAD_RIGHT_1;
 extern uint32_t GAMEPAD_RIGTH_BUTTONS;
-extern uint8_t GAMEPAD_LEFT_0 ;
-extern uint8_t GAMEPAD_LEFT_1 ;
+extern uint8_t GAMEPAD_LEFT_0;
+extern uint8_t GAMEPAD_LEFT_1;
 extern uint32_t GAMEPAD_LEFT_BUTTONS;
-extern uint32_t  GAMEPAD_SELECT ;
-extern uint32_t  GAMEPAD_START ;
-extern uint32_t  GAMEPAD_BUTTON_A ;
-extern uint32_t  GAMEPAD_BUTTON_B;
+extern uint32_t GAMEPAD_SELECT;
+extern uint32_t GAMEPAD_START;
+extern uint32_t GAMEPAD_BUTTON_A;
+extern uint32_t GAMEPAD_BUTTON_B;
 #endif
 
 /* #if defined(MIDI_DEVICE_USB)
@@ -61,9 +61,8 @@ extern uint32_t  GAMEPAD_BUTTON_B;
 #endif
 
 // override default sysex size settings
-struct MicroDexedSettings : public midi::DefaultSettings
-{
-  static const unsigned SysExMaxSize = 4104; // Accept SysEx messages up to 1024 bytes long.
+struct MicroDexedSettings : public midi::DefaultSettings {
+  static const unsigned SysExMaxSize = 4104;  // Accept SysEx messages up to 1024 bytes long.
 };
 
 #ifdef MIDI_DEVICE_DIN
@@ -90,18 +89,18 @@ USBHIDParser hid1(usb_host);
 JoystickController joysticks[COUNT_JOYSTICKS](usb_host);
 uint32_t gamepad_buttons_prev = 0;
 
-USBDriver *drivers[] = {&hub1, &joysticks[0], &joysticks[1], &joysticks[2], &joysticks[3], &hid1};
-#define CNT_DEVICES (sizeof(drivers)/sizeof(drivers[0]))
+USBDriver *drivers[] = { &hub1, &joysticks[0], &joysticks[1], &joysticks[2], &joysticks[3], &hid1 };
+#define CNT_DEVICES (sizeof(drivers) / sizeof(drivers[0]))
 
-bool driver_active[CNT_DEVICES] = {false, false, false, false};
+bool driver_active[CNT_DEVICES] = { false, false, false, false };
 
 // Lets also look at HID Input devices
-USBHIDInput *hiddrivers[] = {&joysticks[0], &joysticks[1], &joysticks[2], &joysticks[3]};
-#define CNT_HIDDEVICES (sizeof(hiddrivers)/sizeof(hiddrivers[0]))
-const char * hid_driver_names[CNT_DEVICES] = {"joystick[0H]", "joystick[1H]", "joystick[2H]", "joystick[3H]"};
-bool hid_driver_active[CNT_DEVICES] = {false};
+USBHIDInput *hiddrivers[] = { &joysticks[0], &joysticks[1], &joysticks[2], &joysticks[3] };
+#define CNT_HIDDEVICES (sizeof(hiddrivers) / sizeof(hiddrivers[0]))
+const char *hid_driver_names[CNT_DEVICES] = { "joystick[0H]", "joystick[1H]", "joystick[2H]", "joystick[3H]" };
+bool hid_driver_active[CNT_DEVICES] = { false };
 bool show_changed_only = true;
-uint64_t joystick_full_notify_mask = (uint64_t) - 1;
+uint64_t joystick_full_notify_mask = (uint64_t)-1;
 #endif
 
 /* #ifdef MIDI_DEVICE_USB
@@ -136,8 +135,7 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #define MIDI_BY_USB_HOST "MIDI_USB_HOST"
 #define MIDI_BY_USB "USB_MIDI"
 
-void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event)
-{
+void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event) {
   char text[10];
 
   switch (event) {
@@ -181,8 +179,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
 #endif
 
   // MIDI THRU
-  if (configuration.sys.soft_midi_thru == 1)
-  {
+  if (configuration.sys.soft_midi_thru == 1) {
 #ifdef MIDI_DEVICE_USB
     if (strcmp(MIDI_BY_USB, midi_device)) {
       switch (event) {
@@ -295,8 +292,7 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
 #endif
 
   // MIDI THRU
-  if (configuration.sys.soft_midi_thru == 1)
-  {
+  if (configuration.sys.soft_midi_thru == 1) {
 #ifdef MIDI_DEVICE_USB
     if (strcmp(MIDI_BY_USB, midi_device)) {
       usbMIDI.sendSysEx(len, data);
@@ -330,8 +326,7 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
 #endif
 }
 
-void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::MidiType event)
-{
+void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::MidiType event) {
   char text[10];
 
   switch (event) {
@@ -355,8 +350,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
 #endif
 
   // MIDI THRU
-  if (configuration.sys.soft_midi_thru == 1)
-  {
+  if (configuration.sys.soft_midi_thru == 1) {
 #ifdef MIDI_DEVICE_USB
     if (strcmp(MIDI_BY_USB, midi_device)) {
       switch (event) {
@@ -426,8 +420,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
 #endif
 }
 
-void handleRealtime_generic(const char *midi_device, midi::MidiType event)
-{
+void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
   char text[10];
 
   switch (event) {
@@ -463,8 +456,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event)
 #endif
 
   // MIDI THRU
-  if (configuration.sys.soft_midi_thru == 1)
-  {
+  if (configuration.sys.soft_midi_thru == 1) {
 #ifdef MIDI_DEVICE_USB
     if (strcmp(MIDI_BY_USB, midi_device)) {
       usbMIDI.sendRealTime(event);
@@ -556,43 +548,35 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event)
  *****************************************/
 #ifdef MIDI_DEVICE_DIN
 
-void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_DIN, midi::NoteOn);
 }
 
-void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_DIN, midi::NoteOff);
 }
 
-void handleControlChange_MIDI_DEVICE_DIN(byte inChannel, byte inData1, byte inData2)
-{
+void handleControlChange_MIDI_DEVICE_DIN(byte inChannel, byte inData1, byte inData2) {
   handle_generic(inChannel, inData1, inData2, MIDI_BY_DIN, midi::ControlChange);
 }
 
-void handleAfterTouch_MIDI_DEVICE_DIN(byte inChannel, byte inPressure)
-{
+void handleAfterTouch_MIDI_DEVICE_DIN(byte inChannel, byte inPressure) {
   handle_generic(inChannel, inPressure, '\0', MIDI_BY_DIN, midi::AfterTouchChannel);
 }
 
-void handlePitchBend_MIDI_DEVICE_DIN(byte inChannel, int inPitch)
-{
+void handlePitchBend_MIDI_DEVICE_DIN(byte inChannel, int inPitch) {
   handle_generic(inChannel, inPitch, '\0', MIDI_BY_DIN, midi::PitchBend);
 }
 
-void handleProgramChange_MIDI_DEVICE_DIN(byte inChannel, byte inProgram)
-{
+void handleProgramChange_MIDI_DEVICE_DIN(byte inChannel, byte inProgram) {
   handle_generic(inChannel, inProgram, '\0', MIDI_BY_DIN, midi::ProgramChange);
 }
 
-void handleAfterTouchPoly_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleAfterTouchPoly_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_DIN, midi::AfterTouchPoly);
 }
 
-void handleSystemExclusive_MIDI_DEVICE_DIN(byte * data, uint len)
-{
+void handleSystemExclusive_MIDI_DEVICE_DIN(byte *data, uint len) {
   handleSystemExclusive_generic(data, len, MIDI_BY_DIN);
 }
 
@@ -622,48 +606,39 @@ void handleSystemExclusive_MIDI_DEVICE_DIN(byte * data, uint len)
   #endif
   } */
 
-void handleTimeCodeQuarterFrame_MIDI_DEVICE_DIN(byte data)
-{
+void handleTimeCodeQuarterFrame_MIDI_DEVICE_DIN(byte data) {
   handleSystemCommon_generic(data, MIDI_BY_DIN, midi::TimeCodeQuarterFrame);
 }
 
-void handleSongSelect_MIDI_DEVICE_DIN(byte inSong)
-{
+void handleSongSelect_MIDI_DEVICE_DIN(byte inSong) {
   handleSystemCommon_generic(inSong, MIDI_BY_DIN, midi::SongSelect);
 }
 
-void handleTuneRequest_MIDI_DEVICE_DIN(void)
-{
+void handleTuneRequest_MIDI_DEVICE_DIN(void) {
   handleSystemCommon_generic('\0', MIDI_BY_DIN, midi::TuneRequest);
 }
 
-void handleClock_MIDI_DEVICE_DIN(void)
-{
+void handleClock_MIDI_DEVICE_DIN(void) {
   handleRealtime_generic(MIDI_BY_DIN, midi::Clock);
 }
 
-void handleStart_MIDI_DEVICE_DIN(void)
-{
+void handleStart_MIDI_DEVICE_DIN(void) {
   handleRealtime_generic(MIDI_BY_DIN, midi::Start);
 }
 
-void handleContinue_MIDI_DEVICE_DIN(void)
-{
+void handleContinue_MIDI_DEVICE_DIN(void) {
   handleRealtime_generic(MIDI_BY_DIN, midi::Continue);
 }
 
-void handleStop_MIDI_DEVICE_DIN(void)
-{
+void handleStop_MIDI_DEVICE_DIN(void) {
   handleRealtime_generic(MIDI_BY_DIN, midi::Stop);
 }
 
-void handleActiveSensing_MIDI_DEVICE_DIN(void)
-{
+void handleActiveSensing_MIDI_DEVICE_DIN(void) {
   handleRealtime_generic(MIDI_BY_DIN, midi::ActiveSensing);
 }
 
-void handleSystemReset_MIDI_DEVICE_DIN(void)
-{
+void handleSystemReset_MIDI_DEVICE_DIN(void) {
   handleRealtime_generic(MIDI_BY_DIN, midi::SystemReset);
 }
 
@@ -671,49 +646,41 @@ void handleSystemReset_MIDI_DEVICE_DIN(void)
   {
   handleRealTimeSystem_generic(MIDI_DIN);
   } */
-#endif // MIDI_DEVICE_DIN
+#endif  // MIDI_DEVICE_DIN
 
 /*****************************************
    MIDI_DEVICE_USB_HOST
  *****************************************/
 #ifdef MIDI_DEVICE_USB_HOST
-void handleNoteOn_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleNoteOn_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB_HOST, midi::NoteOn);
 }
 
-void handleNoteOff_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleNoteOff_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB_HOST, midi::NoteOff);
 }
 
-void handleControlChange_MIDI_DEVICE_USB_HOST(byte inChannel, byte inData1, byte inData2)
-{
+void handleControlChange_MIDI_DEVICE_USB_HOST(byte inChannel, byte inData1, byte inData2) {
   handle_generic(inChannel, inData1, inData2, MIDI_BY_USB_HOST, midi::ControlChange);
 }
 
-void handleAfterTouch_MIDI_DEVICE_USB_HOST(byte inChannel, byte inPressure)
-{
+void handleAfterTouch_MIDI_DEVICE_USB_HOST(byte inChannel, byte inPressure) {
   handle_generic(inChannel, inPressure, '\0', MIDI_BY_USB_HOST, midi::AfterTouchChannel);
 }
 
-void handlePitchBend_MIDI_DEVICE_USB_HOST(byte inChannel, int inPitch)
-{
+void handlePitchBend_MIDI_DEVICE_USB_HOST(byte inChannel, int inPitch) {
   handle_generic(inChannel, inPitch, '\0', MIDI_BY_USB_HOST, midi::PitchBend);
 }
 
-void handleProgramChange_MIDI_DEVICE_USB_HOST(byte inChannel, byte inPitch)
-{
+void handleProgramChange_MIDI_DEVICE_USB_HOST(byte inChannel, byte inPitch) {
   handle_generic(inChannel, inPitch, '\0', MIDI_BY_USB_HOST, midi::ProgramChange);
 }
 
-void handleAfterTouchPoly_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleAfterTouchPoly_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB_HOST, midi::AfterTouchPoly);
 }
 
-void handleSystemExclusive_MIDI_DEVICE_USB_HOST(byte * data, uint len)
-{
+void handleSystemExclusive_MIDI_DEVICE_USB_HOST(byte *data, uint len) {
   handleSystemExclusive_generic(data, len, MIDI_BY_USB_HOST);
 }
 
@@ -743,48 +710,39 @@ void handleSystemExclusive_MIDI_DEVICE_USB_HOST(byte * data, uint len)
   #endif
   } */
 
-void handleTimeCodeQuarterFrame_MIDI_DEVICE_USB_HOST(midi::DataByte data)
-{
+void handleTimeCodeQuarterFrame_MIDI_DEVICE_USB_HOST(midi::DataByte data) {
   handleSystemCommon_generic(data, MIDI_BY_USB_HOST, midi::TimeCodeQuarterFrame);
 }
 
-void handleSongSelect_MIDI_DEVICE_USB_HOST(byte inSong)
-{
+void handleSongSelect_MIDI_DEVICE_USB_HOST(byte inSong) {
   handleSystemCommon_generic(inSong, MIDI_BY_USB_HOST, midi::SongSelect);
 }
 
-void handleTuneRequest_MIDI_DEVICE_USB_HOST(void)
-{
+void handleTuneRequest_MIDI_DEVICE_USB_HOST(void) {
   handleSystemCommon_generic('\0', MIDI_BY_USB_HOST, midi::TuneRequest);
 }
 
-void handleClock_MIDI_DEVICE_USB_HOST(void)
-{
+void handleClock_MIDI_DEVICE_USB_HOST(void) {
   handleRealtime_generic(MIDI_BY_USB_HOST, midi::Clock);
 }
 
-void handleStart_MIDI_DEVICE_USB_HOST(void)
-{
+void handleStart_MIDI_DEVICE_USB_HOST(void) {
   handleRealtime_generic(MIDI_BY_USB_HOST, midi::Start);
 }
 
-void handleContinue_MIDI_DEVICE_USB_HOST(void)
-{
+void handleContinue_MIDI_DEVICE_USB_HOST(void) {
   handleRealtime_generic(MIDI_BY_USB_HOST, midi::Continue);
 }
 
-void handleStop_MIDI_DEVICE_USB_HOST(void)
-{
+void handleStop_MIDI_DEVICE_USB_HOST(void) {
   handleRealtime_generic(MIDI_BY_USB_HOST, midi::Stop);
 }
 
-void handleActiveSensing_MIDI_DEVICE_USB_HOST(void)
-{
+void handleActiveSensing_MIDI_DEVICE_USB_HOST(void) {
   handleRealtime_generic(MIDI_BY_USB_HOST, midi::ActiveSensing);
 }
 
-void handleSystemReset_MIDI_DEVICE_USB_HOST(void)
-{
+void handleSystemReset_MIDI_DEVICE_USB_HOST(void) {
   handleRealtime_generic(MIDI_BY_USB_HOST, midi::SystemReset);
 }
 
@@ -792,49 +750,41 @@ void handleSystemReset_MIDI_DEVICE_USB_HOST(void)
   {
   handleRealTimeSystem_generic(inRealTime, MIDI_USB_HOST);
   } */
-#endif // MIDI_DEVICE_USB_HOST
+#endif  // MIDI_DEVICE_USB_HOST
 
 /*****************************************
    MIDI_DEVICE_USB
  *****************************************/
 #ifdef MIDI_DEVICE_USB
-void handleNoteOn_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleNoteOn_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB, midi::NoteOn);
 }
 
-void handleNoteOff_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleNoteOff_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB, midi::NoteOff);
 }
 
-void handleControlChange_MIDI_DEVICE_USB(byte inChannel, byte inData1, byte inData2)
-{
+void handleControlChange_MIDI_DEVICE_USB(byte inChannel, byte inData1, byte inData2) {
   handle_generic(inChannel, inData1, inData2, MIDI_BY_USB, midi::ControlChange);
 }
 
-void handleAfterTouch_MIDI_DEVICE_USB(byte inChannel, byte inPressure)
-{
+void handleAfterTouch_MIDI_DEVICE_USB(byte inChannel, byte inPressure) {
   handle_generic(inChannel, inPressure, '\0', MIDI_BY_USB, midi::AfterTouchChannel);
 }
 
-void handlePitchBend_MIDI_DEVICE_USB(byte inChannel, int inPitch)
-{
+void handlePitchBend_MIDI_DEVICE_USB(byte inChannel, int inPitch) {
   handle_generic(inChannel, inPitch, '\0', MIDI_BY_USB, midi::PitchBend);
 }
 
-void handleProgramChange_MIDI_DEVICE_USB(byte inChannel, byte inProgram)
-{
+void handleProgramChange_MIDI_DEVICE_USB(byte inChannel, byte inProgram) {
   handle_generic(inChannel, inProgram, '\0', MIDI_BY_USB, midi::ProgramChange);
 }
 
-void handleAfterTouchPoly_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byte inVelocity)
-{
+void handleAfterTouchPoly_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byte inVelocity) {
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB, midi::AfterTouchPoly);
 }
 
-void handleSystemExclusive_MIDI_DEVICE_USB(byte * data, uint len)
-{
+void handleSystemExclusive_MIDI_DEVICE_USB(byte *data, uint len) {
   handleSystemExclusive_generic(data, len, MIDI_BY_USB);
 }
 
@@ -864,48 +814,39 @@ void handleSystemExclusive_MIDI_DEVICE_USB(byte * data, uint len)
   #endif
   } */
 
-void handleTimeCodeQuarterFrame_MIDI_DEVICE_USB(midi::DataByte data)
-{
+void handleTimeCodeQuarterFrame_MIDI_DEVICE_USB(midi::DataByte data) {
   handleSystemCommon_generic(data, MIDI_BY_USB, midi::TimeCodeQuarterFrame);
 }
 
-void handleSongSelect_MIDI_DEVICE_USB(byte inSong)
-{
+void handleSongSelect_MIDI_DEVICE_USB(byte inSong) {
   handleSystemCommon_generic(inSong, MIDI_BY_USB, midi::SongSelect);
 }
 
-void handleTuneRequest_MIDI_DEVICE_USB(void)
-{
+void handleTuneRequest_MIDI_DEVICE_USB(void) {
   handleSystemCommon_generic('\0', MIDI_BY_USB, midi::TuneRequest);
 }
 
-void handleClock_MIDI_DEVICE_USB(void)
-{
+void handleClock_MIDI_DEVICE_USB(void) {
   handleRealtime_generic(MIDI_BY_USB, midi::Clock);
 }
 
-void handleStart_MIDI_DEVICE_USB(void)
-{
+void handleStart_MIDI_DEVICE_USB(void) {
   handleRealtime_generic(MIDI_BY_USB, midi::Start);
 }
 
-void handleContinue_MIDI_DEVICE_USB(void)
-{
+void handleContinue_MIDI_DEVICE_USB(void) {
   handleRealtime_generic(MIDI_BY_USB, midi::Continue);
 }
 
-void handleStop_MIDI_DEVICE_USB(void)
-{
+void handleStop_MIDI_DEVICE_USB(void) {
   handleRealtime_generic(MIDI_BY_USB, midi::Stop);
 }
 
-void handleActiveSensing_MIDI_DEVICE_USB(void)
-{
+void handleActiveSensing_MIDI_DEVICE_USB(void) {
   handleRealtime_generic(MIDI_BY_USB, midi::ActiveSensing);
 }
 
-void handleSystemReset_MIDI_DEVICE_USB(void)
-{
+void handleSystemReset_MIDI_DEVICE_USB(void) {
   handleRealtime_generic(MIDI_BY_USB, midi::SystemReset);
 }
 
@@ -913,10 +854,9 @@ void handleSystemReset_MIDI_DEVICE_USB(void)
   {
   handleRealTimeSystem_generic(inRealTime, USB_MIDI);
   } */
-#endif // MIDI_DEVICE_USB
+#endif  // MIDI_DEVICE_USB
 
-FLASHMEM void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value)
-{
+FLASHMEM void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value) {
 #ifdef DEBUG
   Serial.print(F("[MD] SendControlChange CH:"));
   Serial.print(channel, DEC);
@@ -955,8 +895,7 @@ FLASHMEM void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value)
 #ifdef USB_KEYPAD
 uint8_t USB_KEY = 0;
 
-void OnPress(int key)
-{
+void OnPress(int key) {
   USB_KEY = key;
 
   //  switch (key) {
@@ -1018,8 +957,7 @@ void OnPress(int key)
 //#endif
 //}
 
-void OnHIDExtrasRelease(uint32_t top, uint16_t key)
-{
+void OnHIDExtrasRelease(uint32_t top, uint16_t key) {
 #ifdef KEYBOARD_INTERFACE
   if (top == 0xc0000) {
     Keyboard.release(0XE400 | key);
@@ -1090,12 +1028,12 @@ void OnRawRelease(uint8_t keycode) {
 #endif
 
 #ifdef USB_GAMEPAD
-void USB_GAMEPAD_stats()
-{
+void USB_GAMEPAD_stats() {
   if (Serial.available()) {
 
-    int ch = Serial.read(); // get the first char.
-    while (Serial.read() != -1) ;
+    int ch = Serial.read();  // get the first char.
+    while (Serial.read() != -1)
+      ;
     if ((ch == 'b') || (ch == 'B')) {
       Serial.println(F("Only notify on Basic Axis changes"));
       for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
@@ -1144,13 +1082,11 @@ void USB_GAMEPAD_stats()
       // joysticks[joystick_index].joystickDataClear();
     }
   }
-
 }
 #endif
 
 
-FLASHMEM void setup_midi_devices(void)
-{
+FLASHMEM void setup_midi_devices(void) {
 #ifdef MIDI_DEVICE_DIN
   // Start serial MIDI
   midi_serial.begin(DEFAULT_MIDI_CHANNEL);
@@ -1242,8 +1178,7 @@ FLASHMEM void setup_midi_devices(void)
 #endif
 }
 
-FLASHMEM void check_midi_devices(void)
-{
+FLASHMEM void check_midi_devices(void) {
 #ifdef MIDI_DEVICE_DIN
   midi_serial.read();
 #endif
@@ -1256,82 +1191,75 @@ FLASHMEM void check_midi_devices(void)
 #endif
 }
 
-FLASHMEM void send_sysex_voice(uint8_t midi_channel, uint8_t* data)
-{
+FLASHMEM void send_sysex_voice(uint8_t midi_channel, uint8_t *data) {
   uint8_t checksum = 0;
   uint8_t vd[161];
 
   // Send SYSEX data also via MIDI
   //vd[0] = 0xF0; // SysEx start
-  vd[0] = 0x43; // ID=Yamaha
-  vd[1] = midi_channel; // Sub-status and MIDI channel
-  vd[2] = 0x00; // Format number (0=1 voice)
-  vd[3] = 0x01; // Byte count MSB
-  vd[4] = 0x1B; // Byte count LSB
-  for (uint8_t n = 0; n < 155; n++)
-  {
+  vd[0] = 0x43;          // ID=Yamaha
+  vd[1] = midi_channel;  // Sub-status and MIDI channel
+  vd[2] = 0x00;          // Format number (0=1 voice)
+  vd[3] = 0x01;          // Byte count MSB
+  vd[4] = 0x1B;          // Byte count LSB
+  for (uint8_t n = 0; n < 155; n++) {
     checksum -= data[n];
     vd[5 + n] = data[n];
   }
-  vd[160] = checksum & 0x7f; // Checksum
+  vd[160] = checksum & 0x7f;  // Checksum
   //vd[162] = 0xF7; // SysEx end
 
 #ifdef MIDI_DEVICE_DIN
-  midi_serial.sendSysEx(161, vd); // Send to DIN MIDI
+  midi_serial.sendSysEx(161, vd);  // Send to DIN MIDI
 #endif
 #ifdef MIDI_DEVICE_USB
-  usbMIDI.sendSysEx(161, vd); // Send to USB MIDI
+  usbMIDI.sendSysEx(161, vd);  // Send to USB MIDI
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
-  midi_usb.sendSysEx(161, vd); // Send to USB-HOST MIDI
+  midi_usb.sendSysEx(161, vd);  // Send to USB-HOST MIDI
 #endif
 }
 
-FLASHMEM void send_sysex_bank(uint8_t midi_channel, uint8_t* bank_data)
-{
+FLASHMEM void send_sysex_bank(uint8_t midi_channel, uint8_t *bank_data) {
 #ifdef MIDI_DEVICE_DIN
-  midi_serial.sendSysEx(4104, bank_data); // Send to DIN MIDI
+  midi_serial.sendSysEx(4104, bank_data);  // Send to DIN MIDI
 #endif
 #ifdef MIDI_DEVICE_USB
   // Sysex bank dump is splitted due to Windows USB driver limitations
-  usbMIDI.sendSysEx(2048, bank_data, true); // Send to USB MIDI
+  usbMIDI.sendSysEx(2048, bank_data, true);  // Send to USB MIDI
   delay(50);
   usbMIDI.sendSysEx(2048, bank_data + 2048, true);
   delay(50);
   usbMIDI.sendSysEx(8, bank_data + 4096, true);
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
-  midi_usb.sendSysEx(4104, bank_data); // Send to USB-HOST MIDI
+  midi_usb.sendSysEx(4104, bank_data);  // Send to USB-HOST MIDI
 #endif
 }
 
-FLASHMEM void send_sysex_param(uint8_t midi_channel, uint8_t var, uint8_t val, uint8_t param_group)
-{
+FLASHMEM void send_sysex_param(uint8_t midi_channel, uint8_t var, uint8_t val, uint8_t param_group) {
   uint8_t s[5];
 
-  s[0] = 0x43; // ID=Yamaha
-  s[1] = midi_channel; // Sub-status and MIDI channel
-  s[2] = (param_group & 5) << 2; // Format number (0=1 voice)
-  if (param_group == 0)
-  {
+  s[0] = 0x43;                    // ID=Yamaha
+  s[1] = midi_channel;            // Sub-status and MIDI channel
+  s[2] = (param_group & 5) << 2;  // Format number (0=1 voice)
+  if (param_group == 0) {
     s[2] |= 1;
     s[3] = var & 0x7f;
-  }
-  else
-  {
+  } else {
     s[3] = var & 0x7f;
   }
   s[4] = val & 0x7f;
 
 #ifdef MIDI_DEVICE_DIN
-  midi_serial.sendSysEx(5, s); // Send to DIN MIDI
+  midi_serial.sendSysEx(5, s);  // Send to DIN MIDI
 #endif
 #ifdef MIDI_DEVICE_USB
-  usbMIDI.sendSysEx(5, s); // Send to USB MIDI
+  usbMIDI.sendSysEx(5, s);  // Send to USB MIDI
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
-  midi_usb.sendSysEx(5, s); // Send to USB-HOST MIDI
+  midi_usb.sendSysEx(5, s);  // Send to USB-HOST MIDI
 #endif
 }
 
-#endif // MIDI_DEVICES_H
+#endif  // MIDI_DEVICES_H

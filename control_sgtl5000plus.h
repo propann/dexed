@@ -57,28 +57,27 @@
 #define EQ_CENTER_FRQ_6 18000.0
 #define EQ_BW_6 2
 
-class AudioControlSGTL5000Plus : public AudioControlSGTL5000
-{
-  public:
-    AudioControlSGTL5000Plus(uint8_t n = 7) {
-      _enabled = false;
-      num_bands = constrain(n, 1, 7);
-    };
-    void setEQType(uint8_t band, uint8_t ft);
-    void setEQFc(uint8_t band, float frq);
-    void setEQQ(uint8_t band, float q);
-    void setEQBandwidth(uint8_t band, float bw);
-    void setEQGain(uint8_t band, float gain);
-    void commitFilter(uint8_t band);
-    void show_params(uint8_t band);
-    void init_parametric_eq(uint8_t n = 7);
+class AudioControlSGTL5000Plus : public AudioControlSGTL5000 {
+public:
+  AudioControlSGTL5000Plus(uint8_t n = 7) {
+    _enabled = false;
+    num_bands = constrain(n, 1, 7);
+  };
+  void setEQType(uint8_t band, uint8_t ft);
+  void setEQFc(uint8_t band, float frq);
+  void setEQQ(uint8_t band, float q);
+  void setEQBandwidth(uint8_t band, float bw);
+  void setEQGain(uint8_t band, float gain);
+  void commitFilter(uint8_t band);
+  void show_params(uint8_t band);
+  void init_parametric_eq(uint8_t n = 7);
 
-  private:
-    bool _enabled;
-    uint8_t num_bands;
-    uint8_t* filter_type;
-    float* Fc;
-    float* Q;
-    float* peakGainDB;
+private:
+  bool _enabled;
+  uint8_t num_bands;
+  uint8_t* filter_type;
+  float* Fc;
+  float* Q;
+  float* peakGainDB;
 };
 #endif

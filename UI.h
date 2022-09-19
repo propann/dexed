@@ -97,8 +97,8 @@ LCDML_add(63, LCDML_0_6, 1, "Drums Main Vol", UI_func_drums_main_volume);
 LCDML_add(64, LCDML_0_6, 2, "Drum Volumes", UI_func_drum_volume);
 LCDML_add(65, LCDML_0_6, 3, "Drum Pan", UI_func_drum_pan);
 LCDML_add(66, LCDML_0_6, 4, "Drum Rev.Send", UI_func_drum_reverb_send);
-LCDML_add(67, LCDML_0_6, 5, "Drum Pitch",  UI_func_drum_pitch);
-LCDML_add(68, LCDML_0_6, 6, "Drum Tune",  UI_func_drum_tune_offset);
+LCDML_add(67, LCDML_0_6, 5, "Drum Pitch", UI_func_drum_pitch);
+LCDML_add(68, LCDML_0_6, 6, "Drum Tune", UI_func_drum_tune_offset);
 LCDML_add(69, LCDML_0_6, 7, "MIDI Channel", UI_func_drum_midi_channel);
 LCDML_add(70, LCDML_0_6, 8, "Smart Filter", UI_func_smart_filter);
 LCDML_add(71, LCDML_0, 7, "Master Effects", NULL);
@@ -164,6 +164,6 @@ LCDML_add(126, LCDML_0_15, 11, "TEST Audio Mute", UI_func_test_mute);
 LCDML_add(127, LCDML_0_15, 12, "TEST PSRAM", UI_func_test_psram);
 LCDML_add(128, LCDML_0, 16, "Info", UI_func_information);
 LCDML_addAdvanced(129, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced (130 , LCDML_0   , 18  , COND_hide,  "Screensaver"   , mFunc_screensaver,   0, _LCDML_TYPE_default);
+LCDML_addAdvanced(130, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
 #define _LCDML_DISP_cnt 130
 #endif

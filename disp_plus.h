@@ -29,63 +29,59 @@
 
 #include "config.h"
 
-#define STRING_BUFFER_SIZE display_cols+1
+#define STRING_BUFFER_SIZE display_cols + 1
 
-template <class T>
-class Disp_Plus : public T
-{
-  public:
+template<class T>
+class Disp_Plus : public T {
+public:
 
-    using T::T;
+  using T::T;
 
-    void show(uint8_t y, uint8_t x, uint8_t fs, const char *str)
+  void show(uint8_t y, uint8_t x, uint8_t fs, const char *str) {
+    _show(y, x, fs, str, false, false);
+  }
+
+  void show(uint8_t y, uint8_t x, uint8_t fs, long num) {
+    char _buf10[STRING_BUFFER_SIZE];
+
+    _show(y, x, fs, itoa(num, _buf10, 10), true, true);
+  }
+
+private:
+  void _show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str, bool justify_right, bool fill_zero) {
     {
-      _show(y, x, fs, str, false, false);
-    }
+      char tmp[STRING_BUFFER_SIZE];
+      char *s = tmp;
+      uint8_t l = strlen(str);
 
-    void show(uint8_t y, uint8_t x, uint8_t fs, long num)
-    {
-      char _buf10[STRING_BUFFER_SIZE];
+      memset(tmp, 0, sizeof(tmp));
+      if (fill_zero == true)
+        memset(tmp, '0', field_size);
+      else
+        memset(tmp, 0x20, field_size);  // blank
 
-      _show(y, x, fs, itoa(num, _buf10, 10), true, true);
-    }
+      if (l > field_size)
+        l = field_size;
 
-  private:
-    void _show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str, bool justify_right, bool fill_zero)
-    {
-      {
-        char tmp[STRING_BUFFER_SIZE];
-        char *s = tmp;
-        uint8_t l = strlen(str);
+      if (justify_right == true)
+        s += field_size - l;
 
-        memset(tmp, 0, sizeof(tmp));
-        if (fill_zero == true)
-          memset(tmp, '0', field_size);
-        else
-          memset(tmp, 0x20, field_size); // blank
+      strncpy(s, str, l);
 
-        if (l > field_size)
-          l = field_size;
-
-        if (justify_right == true)
-          s += field_size - l;
-
-        strncpy(s, str, l);
-
-        //setCursor(pos_x * getMaxCharWidth(), pos_y * getMaxCharHeight());
-        this->setCursor(pos_x, pos_y );
-        this->print(tmp);
+      //setCursor(pos_x * getMaxCharWidth(), pos_y * getMaxCharHeight());
+      this->setCursor(pos_x, pos_y);
+      this->print(tmp);
 
 #ifdef DEBUG
-        Serial.print(pos_y, DEC);
-        Serial.print(F("/"));
-        Serial.print(pos_x, DEC);
-        Serial.print(F(": ["));
-        Serial.print(tmp);
-        Serial.println(F("]"));
+      Serial.print(pos_y, DEC);
+      Serial.print(F("/"));
+      Serial.print(pos_x, DEC);
+      Serial.print(F(": ["));
+      Serial.print(tmp);
+      Serial.println(F("]"));
 #endif
-      }
     }
+  }
 };
 
 #endif

@@ -29,8 +29,7 @@
 #include <Audio.h>
 #include "control_sgtl5000plus.h"
 
-FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
-{
+FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n) {
   num_bands = constrain(n, 1, 7);
 
   eqSelect(PARAMETRIC_EQUALIZER);
@@ -49,8 +48,7 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
   setEQGain(1, 0.0);
   commitFilter(1);
 
-  if (num_bands > 1)
-  {
+  if (num_bands > 1) {
     setEQType(2, EQ_TYPE_1);
     setEQFc(2, EQ_CENTER_FRQ_1);
     setEQBandwidth(2, EQ_BW_1);
@@ -58,8 +56,7 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
     commitFilter(2);
   }
 
-  if (num_bands > 2)
-  {
+  if (num_bands > 2) {
     setEQType(3, EQ_TYPE_2);
     setEQFc(3, EQ_CENTER_FRQ_2);
     setEQBandwidth(3, EQ_BW_2);
@@ -67,8 +64,7 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
     commitFilter(3);
   }
 
-  if (num_bands > 3)
-  {
+  if (num_bands > 3) {
     setEQType(4, EQ_TYPE_3);
     setEQFc(4, EQ_CENTER_FRQ_3);
     setEQBandwidth(4, EQ_BW_3);
@@ -76,8 +72,7 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
     commitFilter(4);
   }
 
-  if (num_bands > 4)
-  {
+  if (num_bands > 4) {
     setEQType(5, EQ_TYPE_4);
     setEQFc(5, EQ_CENTER_FRQ_4);
     setEQBandwidth(5, EQ_BW_4);
@@ -85,8 +80,7 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
     commitFilter(5);
   }
 
-  if (num_bands > 5)
-  {
+  if (num_bands > 5) {
     setEQType(6, EQ_TYPE_5);
     setEQFc(6, EQ_CENTER_FRQ_5);
     setEQBandwidth(6, EQ_BW_5);
@@ -94,8 +88,7 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
     commitFilter(6);
   }
 
-  if (num_bands > 6)
-  {
+  if (num_bands > 6) {
     setEQType(7, EQ_TYPE_6);
     setEQFc(7, EQ_CENTER_FRQ_6);
     setEQBandwidth(7, EQ_BW_6);
@@ -104,28 +97,22 @@ FLASHMEM void AudioControlSGTL5000Plus::init_parametric_eq(uint8_t n)
   }
 }
 
-FLASHMEM void AudioControlSGTL5000Plus::setEQType(uint8_t band, uint8_t ft)
-{
-  if (filter_type && _enabled != false)
-  {
+FLASHMEM void AudioControlSGTL5000Plus::setEQType(uint8_t band, uint8_t ft) {
+  if (filter_type && _enabled != false) {
     band = constrain(band, 1, num_bands);
     filter_type[band - 1] = ft;
   }
 }
 
-FLASHMEM void AudioControlSGTL5000Plus::setEQFc(uint8_t band, float frq)
-{
-  if (Fc && _enabled != false)
-  {
+FLASHMEM void AudioControlSGTL5000Plus::setEQFc(uint8_t band, float frq) {
+  if (Fc && _enabled != false) {
     band = constrain(band, 1, num_bands);
     Fc[band - 1] = frq;
   }
 }
 
-FLASHMEM void AudioControlSGTL5000Plus::setEQQ(uint8_t band, float q)
-{
-  if (Q && _enabled != false)
-  {
+FLASHMEM void AudioControlSGTL5000Plus::setEQQ(uint8_t band, float q) {
+  if (Q && _enabled != false) {
     band = constrain(band, 1, num_bands);
     Q[band - 1] = q;
   }
@@ -133,58 +120,49 @@ FLASHMEM void AudioControlSGTL5000Plus::setEQQ(uint8_t band, float q)
 
 // Calculate Q: http://www.sengpielaudio.com/calculator-bandwidth.htm
 //              http://jdm12.ch/Audio/EQ_BPF-Q-bandwidth.asp
-FLASHMEM void AudioControlSGTL5000Plus::setEQBandwidth(uint8_t band, float bw)
-{
-  if (Q && Fc && _enabled != false)
-  {
+FLASHMEM void AudioControlSGTL5000Plus::setEQBandwidth(uint8_t band, float bw) {
+  if (Q && Fc && _enabled != false) {
     band = constrain(band, 1, num_bands);
     Q[band - 1] = sqrt(pow(2, bw)) / (pow(2, bw) - 1);
   }
 }
 
-FLASHMEM void AudioControlSGTL5000Plus::setEQGain(uint8_t band, float gain)
-{
-  if (peakGainDB && _enabled != false)
-  {
+FLASHMEM void AudioControlSGTL5000Plus::setEQGain(uint8_t band, float gain) {
+  if (peakGainDB && _enabled != false) {
     band = constrain(band, 1, num_bands);
     peakGainDB[band - 1] = gain;
   }
 }
 
-FLASHMEM void AudioControlSGTL5000Plus::commitFilter(uint8_t band)
-{
-  int filter[5] = {0, 0, 0, 0, 0};
+FLASHMEM void AudioControlSGTL5000Plus::commitFilter(uint8_t band) {
+  int filter[5] = { 0, 0, 0, 0, 0 };
 
   if (_enabled == false)
     return;
 
   band = constrain(band, 1, num_bands);
 
-  calcBiquad(filter_type[band - 1], Fc[band - 1], peakGainDB[band - 1],  Q[band - 1],  0x80000,  AUDIO_SAMPLE_RATE, filter);
+  calcBiquad(filter_type[band - 1], Fc[band - 1], peakGainDB[band - 1], Q[band - 1], 0x80000, AUDIO_SAMPLE_RATE, filter);
   eqFilter(band, filter);
 }
 
-FLASHMEM void AudioControlSGTL5000Plus::show_params(uint8_t band)
-{
-  if (_enabled == false)
-  {
+FLASHMEM void AudioControlSGTL5000Plus::show_params(uint8_t band) {
+  if (_enabled == false) {
     Serial.print(F("Parametric-EQ not initialized!"));
-  }
-  else
-  {
+  } else {
     band = constrain(band, 1, num_bands);
 
-//    Serial.print(F("[SGTL5000 EQ] Band: "));
-//    Serial.print(band, DEC);
-//    Serial.print(F(" Type:"));
-//    Serial.print(filter_type[band - 1], DEC);
-//    Serial.print(F(" Fc:"));
-//    Serial.print(Fc[band - 1], 1);
-//    Serial.print(F(" Q:"));
-//    Serial.print(Q[band - 1], 1);
-//    Serial.print(F(" peakGainDB:"));
-//    Serial.print(peakGainDB[band - 1], 1);
-//    Serial.println();
+    //    Serial.print(F("[SGTL5000 EQ] Band: "));
+    //    Serial.print(band, DEC);
+    //    Serial.print(F(" Type:"));
+    //    Serial.print(filter_type[band - 1], DEC);
+    //    Serial.print(F(" Fc:"));
+    //    Serial.print(Fc[band - 1], 1);
+    //    Serial.print(F(" Q:"));
+    //    Serial.print(Q[band - 1], 1);
+    //    Serial.print(F(" peakGainDB:"));
+    //    Serial.print(peakGainDB[band - 1], 1);
+    //    Serial.println();
   }
 }
 #endif

@@ -1,4 +1,3 @@
-
 #include "scope.h"
 #include "ILI9341_t3n.h"
 #include "sequencer.h"
@@ -18,21 +17,18 @@ FLASHMEM void Realtime_Scope::FillArray() {
     int8_t y = map(wave_data, 32767, -32768, 32, -32) + 33;
     scopebuffer[i] = y;
     i = i + 1;
-  } while (i < (AUDIO_BLOCK_SAMPLES) );
+  } while (i < (AUDIO_BLOCK_SAMPLES));
   __enable_irq();
 }
 
-FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio)
-{
+FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio) {
   const int16_t *end = audio + AUDIO_BLOCK_SAMPLES;
   __disable_irq();
-  do
-  {
+  do {
     buffer[count++] = *audio;
     audio++;
   } while (audio < end);
-  if (count > (AUDIO_BLOCK_SAMPLES) - 1)
-  {
+  if (count > (AUDIO_BLOCK_SAMPLES)-1) {
     count = 0;
   }
   __enable_irq();
@@ -40,36 +36,30 @@ FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio)
     FillArray();
 }
 
-FLASHMEM void Realtime_Scope::update(void)
-{
+FLASHMEM void Realtime_Scope::update(void) {
   //if (msecs < 6000) return;
   audio_block_t *block;
   block = receiveReadOnly(0);
-  if (block)
-  {
+  if (block) {
     AddtoBuffer(block->data);
     release(block);
   }
 }
 
-FLASHMEM void Realtime_Scope::clear(void)
-{
-   for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
-    {
-      scopebuffer_old[i] = 40;
-    }
+FLASHMEM void Realtime_Scope::clear(void) {
+  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+    scopebuffer_old[i] = 40;
+  }
 }
 
 FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
-  if (scope_delay > 252)
-  {
+  if (scope_delay > 252) {
     uint16_t i = 0;
     scope_is_drawing = true;
     do {
-      if (scopebuffer_old[i] != scopebuffer[i])
-      {
-        display.drawPixel( x + i , scopebuffer_old[i] + y, COLOR_BACKGROUND);
-        display.drawPixel( x + i , scopebuffer[i] + y, COLOR_SYSTEXT);
+      if (scopebuffer_old[i] != scopebuffer[i]) {
+        display.drawPixel(x + i, scopebuffer_old[i] + y, COLOR_BACKGROUND);
+        display.drawPixel(x + i, scopebuffer[i] + y, COLOR_SYSTEXT);
       }
       scopebuffer_old[i] = scopebuffer[i];
       i = i + 1;
