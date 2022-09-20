@@ -705,7 +705,7 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
 
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_r, 0 };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_l, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_l, 1 };
   }
 }
 #endif
@@ -1923,7 +1923,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
-  if ((device == 4 && inNumber < 119) || (device == 0 && inChannel == braids_osc.midi_channel && inNumber < 119)) {
+  if (device == 4 && inNumber < 119) {
     braids_slot++;
     if (braids_slot > NUM_BRAIDS - 1)
       braids_slot = 0;

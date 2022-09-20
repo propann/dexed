@@ -511,6 +511,7 @@ void UI_func_load_performance(uint8_t param);
 void UI_func_save_performance(uint8_t param);
 void UI_func_save_voice(uint8_t param);
 void UI_func_midi_soft_thru(uint8_t param);
+void UI_func_midi_channels();
 void UI_func_velocity_level(uint8_t param);
 void UI_func_voice_select(uint8_t param);
 void UI_func_sysex_send_voice(uint8_t param);
@@ -13917,6 +13918,134 @@ FLASHMEM void UI_func_midi_soft_thru(uint8_t param) {
       save_sys_flag = true;
       save_sys = 0;
     }
+  }
+}
+
+FLASHMEM void _print_midi_channel(uint8_t midi_channel) {
+  if (midi_channel == 0) {
+    display.print(F("OMNI"));
+  } else {
+    print_formatted_number(midi_channel, 2);
+    display.print(F("  "));
+  }
+}
+FLASHMEM void _show_midi_channel(char* text, uint8_t line, uint8_t midi_channel) {
+  setCursor_textGrid(1, line);
+  display.setTextColor(GREY2);
+  display.print(text);
+  display.setTextColor(COLOR_SYSTEXT);
+  setCursor_textGrid(17, line);
+  _print_midi_channel(midi_channel);
+}
+
+FLASHMEM void UI_func_midi_channels() {
+  if (LCDML.FUNC_setup()) {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    generic_active_function = 0;
+    generic_temp_select_menu = 0;
+    setCursor_textGrid(1, 1);
+    display.print(F("MIDI channels"));
+    helptext_l("BACK");
+    display.setTextSize(2);
+
+    char buf[14];
+    for (uint8_t i = 0; i < 2; i++) {
+      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("DEXED #"), i);
+      _show_midi_channel(buf, 3 + i, configuration.dexed[i].midi_channel);
+    }
+
+    snprintf_P(buf, sizeof(buf), PSTR("%s"), F("E-PIANO"));
+    _show_midi_channel(buf, 5, configuration.epiano.midi_channel);
+
+    for (uint8_t i = 0; i < 2; i++) {
+      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MICROSYNTH #"), i);
+      _show_midi_channel(buf, 6 + i, microsynth[i].midi_channel);
+    }
+
+    snprintf_P(buf, sizeof(buf), PSTR("%s"), F("DRUMS"));
+    _show_midi_channel(buf, 8, drum_midi_channel);
+    snprintf_P(buf, sizeof(buf), PSTR("%s"), F("BRAIDS"));
+    _show_midi_channel(buf, 9, braids_osc.midi_channel);
+  }
+  if (LCDML.FUNC_loop()) {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      if (LCDML.BT_checkDown()) {
+        if (generic_active_function == 0)
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 6);
+        else if (generic_temp_select_menu == 0)
+          configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel + 1, 0, 16);
+        else if (generic_temp_select_menu == 1)
+          configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel + 1, 0, 160);
+        else if (generic_temp_select_menu == 2)
+          configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
+        else if (generic_temp_select_menu == 3)
+          microsynth[0].midi_channel = constrain(microsynth[0].midi_channel + 1, 0, 16);
+        else if (generic_temp_select_menu == 4)
+          microsynth[1].midi_channel = constrain(microsynth[1].midi_channel + 1, 0, 16);
+        else if (generic_temp_select_menu == 5)
+          drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
+        else if (generic_temp_select_menu == 6)
+          braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 0, 16);
+
+      } else if (LCDML.BT_checkUp()) {
+        if (generic_active_function == 0)
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 6);
+        else if (generic_temp_select_menu == 0)
+          configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel - 1, 0, 16);
+        else if (generic_temp_select_menu == 1)
+          configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel - 1, 0, 160);
+        else if (generic_temp_select_menu == 2)
+          configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel - 1, 0, 16);
+        else if (generic_temp_select_menu == 3)
+          microsynth[0].midi_channel = constrain(microsynth[0].midi_channel - 1, 0, 16);
+        else if (generic_temp_select_menu == 4)
+          microsynth[1].midi_channel = constrain(microsynth[1].midi_channel - 1, 0, 16);
+        else if (generic_temp_select_menu == 5)
+          drum_midi_channel = constrain(drum_midi_channel - 1, 0, 16);
+        else if (generic_temp_select_menu == 6)
+          braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 0, 16);
+      }
+    }
+
+    //handle button presses during menu
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
+      if (generic_active_function == 0)
+        generic_active_function = 1;
+      else
+        generic_active_function = 0;
+    } else if (LCDML.BT_checkEnter()) {
+      ;
+    }
+
+    //button check end
+    setModeColor(0);
+    setCursor_textGrid(17, 3);
+    _print_midi_channel(configuration.dexed[0].midi_channel);
+    setModeColor(1);
+    setCursor_textGrid(17, 4);
+    _print_midi_channel(configuration.dexed[1].midi_channel);
+    setModeColor(2);
+    setCursor_textGrid(17, 5);
+    _print_midi_channel(configuration.epiano.midi_channel);
+    setModeColor(3);
+    setCursor_textGrid(17, 6);
+    _print_midi_channel(microsynth[0].midi_channel);
+    setModeColor(4);
+    setCursor_textGrid(17, 7);
+    _print_midi_channel(microsynth[1].midi_channel);
+    setModeColor(5);
+    setCursor_textGrid(17, 8);
+    _print_midi_channel(drum_midi_channel);
+    setModeColor(6);
+    setCursor_textGrid(17, 9);
+    _print_midi_channel(braids_osc.midi_channel);
+  }
+  // ****** STABLE END *********
+  if (LCDML.FUNC_close()) {
+    generic_active_function = 99;
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
   }
 }
 
