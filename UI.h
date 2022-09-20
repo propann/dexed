@@ -147,23 +147,24 @@ LCDML_add(113, LCDML_0_13_5, 3, "MIDI Snd Voice", UI_func_sysex_send_voice);
 LCDML_add(114, LCDML_0, 14, "File Manager", UI_func_file_manager);
 LCDML_add(115, LCDML_0, 15, "System", NULL);
 LCDML_add(116, LCDML_0_15, 1, "Stereo/Mono", UI_func_stereo_mono);
-LCDML_add(117, LCDML_0_15, 2, "MIDI Soft THRU", UI_func_midi_soft_thru);
-LCDML_add(118, LCDML_0_15, 3, "Cust.DrumMap", UI_func_custom_mappings);
-LCDML_add(119, LCDML_0_15, 4, "Cust. cc Map", UI_func_cc_mappings);
-LCDML_add(120, LCDML_0_15, 5, "Favorites", UI_func_favorites);
-LCDML_add(121, LCDML_0_15, 6, "Startup Perform.", UI_func_startup_performance);
-LCDML_add(122, LCDML_0_15, 7, "Startup Page", UI_func_startup_page);
-LCDML_add(123, LCDML_0_15, 8, "Screen Colors", UI_func_colors);
+LCDML_add(117, LCDML_0_15, 2, "MIDI channels", UI_func_midi_channels);
+LCDML_add(118, LCDML_0_15, 3, "MIDI Soft THRU", UI_func_midi_soft_thru);
+LCDML_add(119, LCDML_0_15, 4, "Cust.DrumMap", UI_func_custom_mappings);
+LCDML_add(120, LCDML_0_15, 5, "Cust. cc Map", UI_func_cc_mappings);
+LCDML_add(121, LCDML_0_15, 6, "Favorites", UI_func_favorites);
+LCDML_add(122, LCDML_0_15, 7, "Startup Perform.", UI_func_startup_performance);
+LCDML_add(123, LCDML_0_15, 8, "Startup Page", UI_func_startup_page);
+LCDML_add(124, LCDML_0_15, 9, "Screen Colors", UI_func_colors);
 #ifdef USB_GAMEPAD
-LCDML_add(124, LCDML_0_15, 9, "Automap Gamepad", UI_func_automap_gamepad);
+LCDML_add(125, LCDML_0_15, 10, "Automap Gamepad", UI_func_automap_gamepad);
 #else
-LCDML_add(124, LCDML_0_15, 9, "Gamepad[disabled]", NULL);
+LCDML_add(125, LCDML_0_15, 10, "Gamepad[disabled]", NULL);
 #endif
-LCDML_add(125, LCDML_0_15, 10, "FORMAT FLASH", UI_func_format_flash);
-LCDML_add(126, LCDML_0_15, 11, "TEST Audio Mute", UI_func_test_mute);
-LCDML_add(127, LCDML_0_15, 12, "TEST PSRAM", UI_func_test_psram);
-LCDML_add(128, LCDML_0, 16, "Info", UI_func_information);
-LCDML_addAdvanced(129, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced(130, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 130
+LCDML_add(126, LCDML_0_15, 11, "FORMAT FLASH", UI_func_format_flash);
+LCDML_add(127, LCDML_0_15, 12, "TEST Audio Mute", UI_func_test_mute);
+LCDML_add(128, LCDML_0_15, 13, "TEST PSRAM", UI_func_test_psram);
+LCDML_add(129, LCDML_0, 16, "Info", UI_func_information);
+LCDML_addAdvanced(130, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced(131, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 131
 #endif

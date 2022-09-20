@@ -705,7 +705,7 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
 
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_r, 0 };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_l, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_l, 1 };
   }
 }
 #endif
