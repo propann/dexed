@@ -13951,7 +13951,7 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
 
     char buf[14];
     for (uint8_t i = 0; i < 2; i++) {
-      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("DEXED #"), i+1);
+      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("DEXED #"), i + 1);
       _show_midi_channel(buf, 3 + i, configuration.dexed[i].midi_channel);
     }
 
@@ -13959,7 +13959,7 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
     _show_midi_channel(buf, 5, configuration.epiano.midi_channel);
 
     for (uint8_t i = 0; i < 2; i++) {
-      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MICROSYNTH #"), i+1);
+      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MICROSYNTH #"), i + 1);
       _show_midi_channel(buf, 6 + i, microsynth[i].midi_channel);
     }
 
@@ -14287,7 +14287,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
 #endif
       setCursor_textGrid(1, 1);
       display.print("MICROSYNTH #");
-      display.print(seq.temp_active_menu - 2 + 1);
+      display.print(seq.temp_active_menu - 2);
     } else if (seq.temp_active_menu == 5 && seq.edit_state)  // drums
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);

@@ -1923,7 +1923,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
-  if (device == 4 && inNumber < 119) {
+  if (inNumber < 119 && (inChannel == braids_osc.midi_channel || braids_osc.midi_channel == MIDI_CHANNEL_OMNI)) {
     braids_slot++;
     if (braids_slot > NUM_BRAIDS - 1)
       braids_slot = 0;
@@ -2035,7 +2035,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #ifdef USE_MICROSYNTH
       // Check for MicroSynth
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
-        if (inChannel == microsynth[instance_id].midi_channel) {
+        if (microsynth[instance_id].midi_channel == MIDI_CHANNEL_OMNI || microsynth[instance_id].midi_channel == inChannel) {
           if (inNumber == MIDI_C8)  // is noise only, mute osc
           {
             microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
@@ -2288,7 +2288,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
 
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
-  if (inChannel == braids_osc.midi_channel || device == 4) {
+  if (device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) {
     for (uint8_t i = 0; i < NUM_BRAIDS; i++) {
       if (inNumber == braids_osc.note_buffer[i])
         braids_envelope[i]->noteOff();
