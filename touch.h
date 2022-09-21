@@ -26,6 +26,7 @@ typedef struct ts_s {
   uint8_t virtual_keyboard_octave = 3;
   uint8_t virtual_keyboard_instrument = 1;  // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums 7=braids, 8- pitched samples
   uint8_t virtual_keyboard_midi_channel = 1;
+  uint8_t multisample_peak;
 
   TS_Point p;
   uint8_t virtual_keyboard_state_white[11];

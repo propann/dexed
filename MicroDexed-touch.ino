@@ -864,6 +864,7 @@ PeriodicTimer sequencer_timer;
 #ifdef USE_MULTISAMPLES
 extern multisample_t ms[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
+extern uint8_t msp_global_sound_intensity;
 #endif
 
 extern LCDMenuLib2 LCDML;
@@ -1390,42 +1391,46 @@ FLASHMEM void handle_touchscreen_mixer() {
     draw_volmeter(CHAR_width_small * 4, 170, 1, microdexed_peak_1.read());
 
     if (ep_peak_l.available() && ep_peak_r.available())
-      draw_volmeter(CHAR_width_small * 8, 170, 10, (ep_peak_l.read()+ep_peak_r.read())/2);
+      draw_volmeter(CHAR_width_small * 8, 170, 10, (ep_peak_l.read() + ep_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 8, 170, 10, 0);
-    // if (ep_peak_r.available())
-    //   draw_volmeter(CHAR_width_small * 12, 170, 11, ep_peak_r.read());
-    // else
-    //   draw_volmeter(CHAR_width_small * 12, 170, 11, 0);
+      // if (ep_peak_r.available())
+      //   draw_volmeter(CHAR_width_small * 12, 170, 11, ep_peak_r.read());
+      // else
+      //   draw_volmeter(CHAR_width_small * 12, 170, 11, 0);
 
 #ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
-      draw_volmeter(CHAR_width_small * 16, 170, 2, microsynth_peak_osc_0.read());
+      draw_volmeter(CHAR_width_small * 12, 170, 2, microsynth_peak_osc_0.read());
     else
-      draw_volmeter(CHAR_width_small * 16, 170, 2, 0);
+      draw_volmeter(CHAR_width_small * 12, 170, 2, 0);
     if (microsynth_peak_osc_1.available())
-      draw_volmeter(CHAR_width_small * 20, 170, 3, microsynth_peak_osc_1.read());
+      draw_volmeter(CHAR_width_small * 16, 170, 3, microsynth_peak_osc_1.read());
     else
-      draw_volmeter(CHAR_width_small * 20, 170, 3, 0);
+      draw_volmeter(CHAR_width_small * 16, 170, 3, 0);
 #endif
 #if NUM_DRUMS > 0
     if (drum_mixer_peak_l.available())
-      draw_volmeter(CHAR_width_small * 24, 170, 4, drum_mixer_peak_l.read());
+      draw_volmeter(CHAR_width_small * 20, 170, 4, drum_mixer_peak_l.read());
     else
-      draw_volmeter(CHAR_width_small * 24, 170, 4, 0);
+      draw_volmeter(CHAR_width_small * 20, 170, 4, 0);
     if (drum_mixer_peak_r.available())
-      draw_volmeter(CHAR_width_small * 28, 170, 5, drum_mixer_peak_r.read());
+      draw_volmeter(CHAR_width_small * 24, 170, 5, drum_mixer_peak_r.read());
     else
-      draw_volmeter(CHAR_width_small * 28, 170, 5, 0);
+      draw_volmeter(CHAR_width_small * 24, 170, 5, 0);
 #endif
     // if (braids_peak_l.available())
     //   draw_volmeter(CHAR_width_small * 32, 170, 12, braids_peak_l.read());
     // else
     //   draw_volmeter(CHAR_width_small * 32, 170, 12, 0);
-    if (braids_peak_r.available())
-      draw_volmeter(CHAR_width_small * 32, 170, 13, braids_peak_r.read());
+    if (braids_peak_l.available() && braids_peak_r.available())
+      draw_volmeter(CHAR_width_small * 28, 170, 12, braids_peak_l.read()+braids_peak_r.read()/2);
     else
-      draw_volmeter(CHAR_width_small * 32, 170, 13, 0);
+      draw_volmeter(CHAR_width_small * 28, 170, 12, 0);
+
+//msp
+ draw_volmeter(CHAR_width_small * 32, 170, 13, ts.multisample_peak);
+ts.multisample_peak=ts.multisample_peak/1.05;
 
     draw_volmeter(CHAR_width_small * 38, 170, 6, reverb_return_peak_l.read());
     draw_volmeter(CHAR_width_small * 42, 170, 7, reverb_return_peak_r.read());
@@ -1779,8 +1784,9 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot) {
       if (inNumber >= msz[presetslot][y].low && inNumber <= msz[presetslot][y].high) {
 
         float pan = mapfloat(msz[presetslot][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol, 0, 127 * 100, 0.0, 0.7)));
-        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol, 0, 127 * 100, 0.0, 0.7)));
+        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol, 0, 127 * msp_global_sound_intensity, 0.0, 0.7)));
+        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol, 0, 127 * msp_global_sound_intensity, 0.0, 0.7)));
+        ts.multisample_peak = (inVelocity * msz[presetslot][y].vol * msp_global_sound_intensity) / 900000;
 #ifdef USE_FX
         drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
@@ -2189,7 +2195,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #if defined(USE_EPIANO)
       if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel) {
         if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note) {
-          ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);  
+          ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
           //#ifdef DEBUG
           //              char note_name[4];
           //              getNoteName(note_name, inNumber);
