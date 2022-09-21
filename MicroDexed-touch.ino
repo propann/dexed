@@ -1923,7 +1923,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
-  if (inNumber < 119 && (inChannel == braids_osc.midi_channel || braids_osc.midi_channel == MIDI_CHANNEL_OMNI)) {
+  if ((device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) && inNumber < 119) {
     braids_slot++;
     if (braids_slot > NUM_BRAIDS - 1)
       braids_slot = 0;
