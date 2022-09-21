@@ -13951,7 +13951,7 @@ FLASHMEM void UI_func_midi_channels() {
 
     char buf[14];
     for (uint8_t i = 0; i < 2; i++) {
-      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("DEXED #"), i);
+      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("DEXED #"), i+1);
       _show_midi_channel(buf, 3 + i, configuration.dexed[i].midi_channel);
     }
 
@@ -13959,7 +13959,7 @@ FLASHMEM void UI_func_midi_channels() {
     _show_midi_channel(buf, 5, configuration.epiano.midi_channel);
 
     for (uint8_t i = 0; i < 2; i++) {
-      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MICROSYNTH #"), i);
+      snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MICROSYNTH #"), i+1);
       _show_midi_channel(buf, 6 + i, microsynth[i].midi_channel);
     }
 
