@@ -269,7 +269,7 @@ void sequencer_part1(void) {
               //Braids Instrument
               if (seq.instrument[d] == 5) {
                 if (check_probability(seq.current_pattern[d]))
-                  handleNoteOn(seq.instrument[d], seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 4);
+                  handleNoteOn(braids_osc.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 4);
               }
 
               //Multisampler Instrument
@@ -338,7 +338,7 @@ void sequencer_part1(void) {
                 else if (seq.instrument[d] == 5)  //Chords: Braids
                 {
                   if (check_probability(seq.current_pattern[d]))
-                    handleNoteOn(seq.instrument[d], seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
+                    handleNoteOn(braids_osc.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
@@ -419,7 +419,7 @@ void sequencer_part1(void) {
               else if (seq.instrument[d] == 5)  //Arp up: Braids
               {
                 if (check_probability(seq.current_pattern[d]))
-                  handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
+                  handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
@@ -463,7 +463,7 @@ void sequencer_part1(void) {
               else if (seq.instrument[d] == 5)  //Arp down : Braids
               {
                 if (check_probability(seq.current_pattern[d]))
-                  handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
+                  handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
 #endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift];
@@ -509,7 +509,7 @@ void sequencer_part1(void) {
                 else if (seq.instrument[d] == 5)  //Arp up-down: Braids
                 {
                   if (check_probability(seq.current_pattern[d]))
-                    handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
+                    handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
 #endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step];
@@ -571,7 +571,7 @@ void sequencer_part1(void) {
               else if (seq.instrument[d] == 5)  //Arp random: Braids
               {
                 if (check_probability(seq.current_pattern[d]))
-                  handleNoteOn(seq.instrument[d], seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
+                  handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
 #endif
               else if (seq.instrument[d] < 2)  // track is assigned to dexed
@@ -716,7 +716,7 @@ void sequencer_part2(void) {
 #endif
 #ifdef USE_BRAIDS
           else if (seq.instrument[d] == 5 && seq.ticks == 7)
-            handleNoteOff(seq.instrument[d], seq.prev_note[d], 0, 4);
+            handleNoteOff(braids_osc.midi_channel, seq.prev_note[d], 0, 4);
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 15 && seq.instrument[d] < 32 && seq.ticks == 7)  // track is for external USB MIDI
@@ -757,7 +757,7 @@ void sequencer_part2(void) {
 
 #ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5 && seq.ticks == 7)
-                handleNoteOff(seq.instrument[d], seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 4);
+                handleNoteOff(braids_osc.midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 4);
 #endif
               seq.noteoffsent[d] = true;
             }
@@ -771,7 +771,6 @@ void sequencer_part2(void) {
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 15 && seq.instrument[d] < 32)  // track is for external USB MIDI
           {
-
             handleNoteOff(seq.instrument[d] - 15, seq.arp_note_prev, 0, 1);
           }
 #endif
@@ -787,7 +786,7 @@ void sequencer_part2(void) {
 #endif
 #ifdef USE_BRAIDS
           else if (seq.instrument[d] == 5 && seq.ticks == 7)
-            handleNoteOff(seq.instrument[d], seq.arp_note_prev, 0, 4);
+            handleNoteOff(braids_osc.midi_channel, seq.arp_note_prev, 0, 4);
 #endif
           seq.noteoffsent[d] = true;
         }
