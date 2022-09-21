@@ -9154,7 +9154,6 @@ void UI_func_epiano(uint8_t param) {
             MD_sendControlChange(configuration.epiano.midi_channel, 10, map(configuration.epiano.pan, PANORAMA_MIN, PANORAMA_MAX, 0, 127));
           } else if (generic_temp_select_menu == 2)
             configuration.epiano.transpose = constrain(configuration.epiano.transpose + ENCODER[ENC_R].speed(), EP_TRANSPOSE_MIN, EP_TRANSPOSE_MAX);
-
           else if (generic_temp_select_menu == 3)
             configuration.epiano.decay = constrain(configuration.epiano.decay + ENCODER[ENC_R].speed(), EP_DECAY_MIN, EP_DECAY_MAX);
           else if (generic_temp_select_menu == 4)
@@ -14072,12 +14071,12 @@ FLASHMEM void print_mixer_text() {
   if (seq.temp_active_menu == 2)
     display.setTextColor(RED, COLOR_BACKGROUND);
   else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  setCursor_textGrid_small(8, 20);
-  display.print(F("L"));
-  setCursor_textGrid_small(12, 20);
-  display.print(F("R"));
+  // setCursor_textGrid_small(8, 20);
+  // display.print(F("L"));
+  // setCursor_textGrid_small(12, 20);
+  // display.print(F("R"));
   setCursor_textGrid_small(8, 21);
-  display.print(F("EPIANO"));
+  display.print(F("EP"));
 
   // MicroSynth
   if (seq.temp_active_menu == 3 || seq.temp_active_menu == 4)
@@ -14147,8 +14146,8 @@ FLASHMEM void print_mixer_text() {
 
   setCursor_textGrid_small(8, 19);
   print_formatted_number(configuration.epiano.sound_intensity, 3);
-  setCursor_textGrid_small(12, 19);
-  print_formatted_number(configuration.epiano.sound_intensity, 3);
+  //setCursor_textGrid_small(12, 19);
+  //print_formatted_number(configuration.epiano.sound_intensity, 3);
 
 #ifdef USE_MICROSYNTH
   setCursor_textGrid_small(16, 19);
@@ -14208,10 +14207,14 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             configuration.dexed[seq.temp_active_menu].sound_intensity = constrain(configuration.dexed[seq.temp_active_menu].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
         } else if (seq.temp_active_menu == 2)  //epiano
         {
-          if (LCDML.BT_checkDown())
+          if (LCDML.BT_checkDown()) {
             configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-          else if (LCDML.BT_checkUp())
+            ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
+          } else if (LCDML.BT_checkUp()) {
             configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
+          }
+
         } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5)  //microsynth
         {
 #ifdef USE_MICROSYNTH
@@ -14278,7 +14281,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_bar_int("", configuration.epiano.sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
-      display.print("EPIANO");
+      display.print("EP");
     } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5 && seq.edit_state)  //microsynth
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);

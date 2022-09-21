@@ -1389,14 +1389,14 @@ FLASHMEM void handle_touchscreen_mixer() {
     draw_volmeter(0, 170, 0, microdexed_peak_0.read());
     draw_volmeter(CHAR_width_small * 4, 170, 1, microdexed_peak_1.read());
 
-    if (ep_peak_l.available())
-      draw_volmeter(CHAR_width_small * 8, 170, 10, ep_peak_l.read());
+    if (ep_peak_l.available() && ep_peak_r.available())
+      draw_volmeter(CHAR_width_small * 8, 170, 10, (ep_peak_l.read()+ep_peak_r.read())/2);
     else
       draw_volmeter(CHAR_width_small * 8, 170, 10, 0);
-    if (ep_peak_r.available())
-      draw_volmeter(CHAR_width_small * 12, 170, 11, ep_peak_r.read());
-    else
-      draw_volmeter(CHAR_width_small * 12, 170, 11, 0);
+    // if (ep_peak_r.available())
+    //   draw_volmeter(CHAR_width_small * 12, 170, 11, ep_peak_r.read());
+    // else
+    //   draw_volmeter(CHAR_width_small * 12, 170, 11, 0);
 
 #ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
@@ -2189,7 +2189,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #if defined(USE_EPIANO)
       if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel) {
         if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note) {
-          ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
+          ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);  
           //#ifdef DEBUG
           //              char note_name[4];
           //              getNoteName(note_name, inNumber);
