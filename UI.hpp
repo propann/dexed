@@ -14209,31 +14209,31 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
         } else if (seq.temp_active_menu == 2)  //epiano
         {
           if (LCDML.BT_checkDown())
-            configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity + 1, 0, 100);
+            configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity - 1, 0, 100);
+            configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
         } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5)  //microsynth
         {
 #ifdef USE_MICROSYNTH
           if (LCDML.BT_checkDown())
-            microsynth[seq.temp_active_menu - 2].sound_intensity = constrain(microsynth[seq.temp_active_menu - 2].sound_intensity + 1, 0, 100);
+            microsynth[seq.temp_active_menu - 3].sound_intensity = constrain(microsynth[seq.temp_active_menu - 3].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            microsynth[seq.temp_active_menu - 2].sound_intensity = constrain(microsynth[seq.temp_active_menu - 2].sound_intensity - 1, 0, 100);
+            microsynth[seq.temp_active_menu - 3].sound_intensity = constrain(microsynth[seq.temp_active_menu - 3].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
 #endif
         } else if (seq.temp_active_menu == 5)  //drums
         {
           if (LCDML.BT_checkDown())
-            temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 100);
+            temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 100);
-          seq.drums_volume = mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT);
+            temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+          seq.drums_volume = mapfloat(temp_int, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0.0, VOL_MAX_FLOAT);
         } else if (seq.temp_active_menu == 6)  // braids
         {
 #ifdef USE_BRAIDS
           if (LCDML.BT_checkDown())
-            braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + 1, 0, 100);
+            braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - 1, 0, 100);
+            braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
 #endif
         } else if (seq.temp_active_menu == 7)  //reverb level
         {
@@ -14283,7 +14283,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 #ifdef USE_MICROSYNTH
-      display_bar_int("", microsynth[seq.temp_active_menu - 2].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      display_bar_int("", microsynth[seq.temp_active_menu - 3].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
 #endif
       setCursor_textGrid(1, 1);
       display.print("MICROSYNTH #");
