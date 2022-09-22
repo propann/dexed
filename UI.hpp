@@ -14193,8 +14193,8 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
     encoderDir[ENC_R].reset();
     seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
-    // for (uint8_t j = 0; j < uint8_t(sizeof(ts.displayed_peak)); j++)
-    //   ts.displayed_peak[j] = 0;
+     for (uint8_t j = 0; j < uint8_t(sizeof(ts.displayed_peak)); j++)
+       ts.displayed_peak[j] = 0;
     setCursor_textGrid(1, 1);
     display.print(F("MIXER"));
     helptext_l("BACK");
