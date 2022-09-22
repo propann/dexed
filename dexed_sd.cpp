@@ -160,7 +160,7 @@ const char* sError = "*ERROR*";
 
 FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR"load voice, bank [%d] - voice [%d]\n"), b, v + 1);
+  Serial.printf_P(PSTR("load voice, bank [%d] - voice [%d]\n"), b, v + 1);
 #endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
@@ -270,7 +270,7 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 
 FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR"save_sd_voice, b:%d - d:%d\n"), b, v);
+  Serial.printf_P(PSTR("save_sd_voice, b:%d - d:%d\n"), b, v);
 #endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
@@ -2792,7 +2792,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
 
 FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR"get bank name for bank [%d]\n"), b);
+  Serial.printf_P(PSTR("get bank name for bank [%d]\n"), b);
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -2847,7 +2847,7 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
 
 FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR"get voice name for voice [%d]\n"), v + 1);
+  Serial.printf_P(PSTR("get voice name for voice [%d]\n"), v + 1);
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -2890,7 +2890,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     char bank_name[BANK_NAME_LEN];
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    Serial.printf_P(PSTR"Get voice name from [/%d/%s.syx]\n"), b, bank_name);
+    Serial.printf_P(PSTR("Get voice name from [/%d/%s.syx]\n"), b, bank_name);
 #endif
     memset(voice_name, 0, VOICE_NAME_LEN);
     entry.seek(124 + (v * 128));
@@ -2898,7 +2898,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     string_toupper(voice_name);
 
 #ifdef DEBUG
-    Serial.printf_P(PSTR"Found voice-name [%s] for bank [%d] and voice [%d]\n"), voice_name, b, v + 1);
+    Serial.printf_P(PSTR("Found voice-name [%s] for bank [%d] and voice [%d]\n"), voice_name, b, v + 1);
 #endif
 
     AudioNoInterrupts();
