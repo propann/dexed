@@ -14267,9 +14267,9 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
         } else if (seq.temp_active_menu == 9)  //master level
         {
           if (LCDML.BT_checkDown()) {
-            configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
+            configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_R].speed(), VOLUME_MIN, VOLUME_MAX);
           } else if (LCDML.BT_checkUp()) {
-            configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_L].speed(), VOLUME_MIN, VOLUME_MAX);
+            configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_R].speed(), VOLUME_MIN, VOLUME_MAX);
           }
         }
       }
