@@ -1409,28 +1409,31 @@ FLASHMEM void handle_touchscreen_mixer() {
     else
       draw_volmeter(CHAR_width_small * 16, 170, 3, 0);
 #endif
-#if NUM_DRUMS > 0
-    if (drum_mixer_peak_l.available())
-      draw_volmeter(CHAR_width_small * 20, 170, 4, drum_mixer_peak_l.read());
-    else
-      draw_volmeter(CHAR_width_small * 20, 170, 4, 0);
-    if (drum_mixer_peak_r.available())
-      draw_volmeter(CHAR_width_small * 24, 170, 5, drum_mixer_peak_r.read());
-    else
-      draw_volmeter(CHAR_width_small * 24, 170, 5, 0);
-#endif
+#ifdef USE_BRAIDS
     // if (braids_peak_l.available())
     //   draw_volmeter(CHAR_width_small * 32, 170, 12, braids_peak_l.read());
     // else
     //   draw_volmeter(CHAR_width_small * 32, 170, 12, 0);
     if (braids_peak_l.available() && braids_peak_r.available())
-      draw_volmeter(CHAR_width_small * 28, 170, 12, braids_peak_l.read()+braids_peak_r.read()/2);
+      draw_volmeter(CHAR_width_small * 20, 170, 12, braids_peak_l.read() + braids_peak_r.read() / 2);
     else
-      draw_volmeter(CHAR_width_small * 28, 170, 12, 0);
+      draw_volmeter(CHAR_width_small * 20, 170, 12, 0);
+#endif
 
-//msp
- draw_volmeter(CHAR_width_small * 32, 170, 13, ts.multisample_peak);
-ts.multisample_peak=ts.multisample_peak/1.05;
+    //msp
+    draw_volmeter(CHAR_width_small * 24, 170, 13, ts.multisample_peak);
+    ts.multisample_peak = ts.multisample_peak / 1.05;
+
+#if NUM_DRUMS > 0
+    if (drum_mixer_peak_l.available())
+      draw_volmeter(CHAR_width_small * 28, 170, 4, drum_mixer_peak_l.read());
+    else
+      draw_volmeter(CHAR_width_small * 28, 170, 4, 0);
+    if (drum_mixer_peak_r.available())
+      draw_volmeter(CHAR_width_small * 32, 170, 5, drum_mixer_peak_r.read());
+    else
+      draw_volmeter(CHAR_width_small * 32, 170, 5, 0);
+#endif
 
     draw_volmeter(CHAR_width_small * 38, 170, 6, reverb_return_peak_l.read());
     draw_volmeter(CHAR_width_small * 42, 170, 7, reverb_return_peak_r.read());
