@@ -14098,32 +14098,32 @@ FLASHMEM void print_mixer_text() {
   setCursor_textGrid_small(16, 20);
   display.print(F("#2"));
 
-  // Drums
+  // Braids
   if (seq.temp_active_menu == 5)
     display.setTextColor(RED, COLOR_BACKGROUND);
   else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  setCursor_textGrid_small(20, 20);
-  display.print(F("L"));
-  setCursor_textGrid_small(24, 20);
-  display.print(F("R"));
+  // setCursor_textGrid_small(28, 20);
+  // display.print(F("BRA"));
   setCursor_textGrid_small(20, 21);
-  display.print(F("DRUMS"));
+  display.print(F("BRD"));
 
-  // Braids
+  // MSP
   if (seq.temp_active_menu == 6)
     display.setTextColor(RED, COLOR_BACKGROUND);
   else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  setCursor_textGrid_small(28, 20);
-  display.print(F("BRA"));
-  setCursor_textGrid_small(28, 21);
-  display.print(F("IDS"));
+  setCursor_textGrid_small(24, 21);
+  display.print(F("MSP"));
 
-  // MSP
+  // Drums
   if (seq.temp_active_menu == 7)
     display.setTextColor(RED, COLOR_BACKGROUND);
   else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  setCursor_textGrid_small(32, 21);
-  display.print(F("MSP"));
+  setCursor_textGrid_small(28, 20);
+  display.print(F("L"));
+  setCursor_textGrid_small(32, 20);
+  display.print(F("R"));
+  setCursor_textGrid_small(28, 21);
+  display.print(F("DRUMS"));
 
   // Reverb
   if (seq.temp_active_menu == 8)
@@ -14165,17 +14165,18 @@ FLASHMEM void print_mixer_text() {
   print_formatted_number(microsynth[1].sound_intensity, 3);
 #endif
 #ifdef USE_BRAIDS
-  setCursor_textGrid_small(28, 19);
+  setCursor_textGrid_small(20, 19);
   print_formatted_number(braids_osc.sound_intensity, 3);
 #endif
-  temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
-  setCursor_textGrid_small(20, 19);
-  print_formatted_number(temp_int, 3);
-  setCursor_textGrid_small(24, 19);
-  print_formatted_number(temp_int, 3);
   //msp
-  setCursor_textGrid_small(32, 19);
+  setCursor_textGrid_small(24, 19);
   print_formatted_number(msp_global_sound_intensity, 3);
+
+  temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
+  setCursor_textGrid_small(28, 19);
+  print_formatted_number(temp_int, 3);
+  setCursor_textGrid_small(32, 19);
+  print_formatted_number(temp_int, 3);
   setCursor_textGrid_small(38, 19);
   print_formatted_number(configuration.fx.reverb_level, 3);
   setCursor_textGrid_small(42, 19);
@@ -14235,14 +14236,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
           else if (LCDML.BT_checkUp())
             microsynth[seq.temp_active_menu - 3].sound_intensity = constrain(microsynth[seq.temp_active_menu - 3].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
 #endif
-        } else if (seq.temp_active_menu == 5)  //drums
-        {
-          if (LCDML.BT_checkDown())
-            temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-          else if (LCDML.BT_checkUp())
-            temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-          seq.drums_volume = mapfloat(temp_int, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0.0, VOL_MAX_FLOAT);
-        } else if (seq.temp_active_menu == 6)  // braids
+        } else if (seq.temp_active_menu == 5)  // braids
         {
 #ifdef USE_BRAIDS
           if (LCDML.BT_checkDown())
@@ -14250,13 +14244,20 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
           else if (LCDML.BT_checkUp())
             braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
 #endif
-        } else if (seq.temp_active_menu == 7)  // msp
+        } else if (seq.temp_active_menu == 6)  // msp
         {
           if (LCDML.BT_checkDown())
             msp_global_sound_intensity = constrain(msp_global_sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
             msp_global_sound_intensity = constrain(msp_global_sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
 
+        } else if (seq.temp_active_menu == 7)  //drums/samples
+        {
+          if (LCDML.BT_checkDown())
+            temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+          else if (LCDML.BT_checkUp())
+            temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+          seq.drums_volume = mapfloat(temp_int, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0.0, VOL_MAX_FLOAT);
         } else if (seq.temp_active_menu == 8)  //reverb level
         {
           if (LCDML.BT_checkDown())
@@ -14310,14 +14311,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       setCursor_textGrid(1, 1);
       display.print("MICROSYNTH #");
       display.print(seq.temp_active_menu - 2);
-    } else if (seq.temp_active_menu == 5 && seq.edit_state)  // drums
-    {
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
-      display_bar_int("DRUMS VOLUME", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, true);
-      master_mixer_r.gain(3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
-      master_mixer_l.gain(3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
-    } else if (seq.temp_active_menu == 6 && seq.edit_state)  // braids
+    } else if (seq.temp_active_menu == 5 && seq.edit_state)  // braids
     {
 #ifdef USE_BRAIDS
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -14325,12 +14319,19 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       setCursor_textGrid(1, 1);
       display.print("BRAIDS");
 #endif
-    } else if (seq.temp_active_menu == 7 && seq.edit_state)  // braids
+    } else if (seq.temp_active_menu == 6 && seq.edit_state)  // braids
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_bar_int("", msp_global_sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("MSP");
+    } else if (seq.temp_active_menu == 7 && seq.edit_state)  // drums
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
+      display_bar_int("DRUMS VOLUME", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, true);
+      master_mixer_r.gain(3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
+      master_mixer_l.gain(3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
     } else if (seq.temp_active_menu == 8 && seq.edit_state)  // reverb level
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
