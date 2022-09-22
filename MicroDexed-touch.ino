@@ -1382,7 +1382,7 @@ FLASHMEM void clear_volmeter(int x, int y) {
 }
 
 FLASHMEM void handle_touchscreen_mixer() {
-  if (scope.scope_delay % 60 == 0) {
+  if (scope.scope_delay % 50 == 0) {
 
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);

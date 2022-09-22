@@ -14208,9 +14208,9 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       if (!seq.edit_state)  //select channel
       {
         if (LCDML.BT_checkDown())
-          seq.temp_active_menu = constrain(seq.temp_active_menu + ENCODER[ENC_R].speed(), 0, 9);
+          seq.temp_active_menu = constrain(seq.temp_active_menu + 1, 0, 9);
         else if (LCDML.BT_checkUp())
-          seq.temp_active_menu = constrain(seq.temp_active_menu - ENCODER[ENC_R].speed(), 0, 9);
+          seq.temp_active_menu = constrain(seq.temp_active_menu - 1, 0, 9);
       } else {
         if (seq.temp_active_menu < 2)  //dexed instance #0 or #1
         {
@@ -14348,7 +14348,6 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       display_bar_int("", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
       set_volume(configuration.sys.vol, configuration.sys.mono);
     }
-
     display.setTextSize(1);
     print_mixer_text();
   }
