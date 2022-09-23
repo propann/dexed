@@ -1437,20 +1437,22 @@ FLASHMEM void handle_touchscreen_mixer() {
 }
 
 void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol) {
-  float minval = 0.08;
+
+  uint8_t display_val = 0;
+  if (audio_vol * 1024 > 253)
+    display_val = 254;
+  else
+    display_val = uint8_t(audio_vol * 1024);
+
   setCursor_textGrid(x, y);
-  if (audio_vol > minval) {
-    display.print(">");
-  } else
-    display.print(" ");
+  display.setTextColor(ColorHSV(100, 250, display_val));
+  display.print(">");
 }
 
 FLASHMEM void handle_touchscreen_midi_channel_page() {
 
-  if (scope.scope_delay % 90 == 0) {
+  if (scope.scope_delay % 70 == 0) {
     display.setTextSize(2);
-    display.setTextColor(GREEN, COLOR_BACKGROUND);
-
     print_midi_channel_activity(16, 3, microdexed_peak_0.read());
     print_midi_channel_activity(16, 4, microdexed_peak_1.read());
     print_midi_channel_activity(16, 5, (ep_peak_l.read() + ep_peak_r.read()) / 2);
@@ -1588,7 +1590,7 @@ void loop() {
     scope.draw_scope(225, 0, 80);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_channels)) {
     handle_touchscreen_midi_channel_page();
-    scope.draw_scope(225, 0, 80);
+    scope.draw_scope(205, -8, 108);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
