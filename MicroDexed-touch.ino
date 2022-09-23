@@ -704,8 +704,8 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
 
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,0, braids_peak_r, 0 };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,1, braids_peak_l, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 0, braids_peak_r, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 1, braids_peak_l, 0 };
   }
 }
 #endif
@@ -1394,7 +1394,7 @@ FLASHMEM void handle_touchscreen_mixer() {
       draw_volmeter(CHAR_width_small * 8, 170, 2, (ep_peak_l.read() + ep_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 8, 170, 2, 0);
-     
+
 #ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
       draw_volmeter(CHAR_width_small * 12, 170, 3, microsynth_peak_osc_0.read());
@@ -1433,6 +1433,50 @@ FLASHMEM void handle_touchscreen_mixer() {
 
     draw_volmeter(CHAR_width_small * 46, 170, 11, master_peak_l.read());
     draw_volmeter(CHAR_width_small * 50, 170, 12, master_peak_r.read());
+  }
+}
+
+void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol) {
+  float minval = 0.08;
+  setCursor_textGrid(x, y);
+  if (audio_vol > minval) {
+    display.print(">");
+  } else
+    display.print(" ");
+}
+
+FLASHMEM void handle_touchscreen_midi_channel_page() {
+
+  if (scope.scope_delay % 90 == 0) {
+    display.setTextSize(2);
+    display.setTextColor(GREEN, COLOR_BACKGROUND);
+
+    print_midi_channel_activity(16, 3, microdexed_peak_0.read());
+    print_midi_channel_activity(16, 4, microdexed_peak_1.read());
+    print_midi_channel_activity(16, 5, (ep_peak_l.read() + ep_peak_r.read()) / 2);
+    if (microsynth_peak_osc_0.available())
+      print_midi_channel_activity(16, 6, microsynth_peak_osc_0.read());
+    else
+      print_midi_channel_activity(16, 6, 0);
+    if (microsynth_peak_osc_1.available())
+      print_midi_channel_activity(16, 7, microsynth_peak_osc_1.read());
+    else
+      print_midi_channel_activity(16, 7, 0);
+
+    if (drum_mixer_peak_r.available() && drum_mixer_peak_l.available())
+      print_midi_channel_activity(16, 8, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
+    else
+      print_midi_channel_activity(16, 8, 0);
+
+    if (braids_peak_l.available() && braids_peak_r.available())
+      print_midi_channel_activity(16, 9, (braids_peak_l.read() + braids_peak_r.read()) / 2);
+    else
+      print_midi_channel_activity(16, 9, 0);
+
+    print_midi_channel_activity(16, 10, ts.multisample_peak);
+    ts.multisample_peak = ts.multisample_peak / 1.05;
+
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
 }
 
@@ -1541,6 +1585,9 @@ void loop() {
     handle_touchscreen_cc_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer)) {
     handle_touchscreen_mixer();
+    scope.draw_scope(225, 0, 80);
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_channels)) {
+    handle_touchscreen_midi_channel_page();
     scope.draw_scope(225, 0, 80);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
     scope.draw_scope(232, -2, 64);
