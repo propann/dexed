@@ -117,7 +117,7 @@ FLASHMEM void braids_update_settings() {
   braids_stereo_panorama.panorama(mapfloat(braids_osc.pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 
   for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++) {
-    braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+    braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 0.7)));
     synthBraids[instance_id]->set_braids_shape(braids_osc.algo);
     synthBraids[instance_id]->set_braids_color(braids_osc.color << 6);
     synthBraids[instance_id]->set_braids_timbre((braids_osc.timbre * 2) << 6);

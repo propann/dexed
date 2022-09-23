@@ -14187,14 +14187,19 @@ FLASHMEM void print_mixer_text() {
   print_formatted_number(configuration.sys.vol, 3);
 }
 
+FLASHMEM void update_braids_volume() {
+  for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
+    braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 0.7)));
+}
+
 FLASHMEM void UI_func_mixer(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
     seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
-     for (uint8_t j = 0; j < uint8_t(sizeof(ts.displayed_peak)); j++)
-       ts.displayed_peak[j] = 0;
+    for (uint8_t j = 0; j < uint8_t(sizeof(ts.displayed_peak)); j++)
+      ts.displayed_peak[j] = 0;
     setCursor_textGrid(1, 1);
     display.print(F("MIXER"));
     helptext_l("BACK");
@@ -14239,10 +14244,13 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
         } else if (seq.temp_active_menu == 5)  // braids
         {
 #ifdef USE_BRAIDS
-          if (LCDML.BT_checkDown())
+          if (LCDML.BT_checkDown()) {
             braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-          else if (LCDML.BT_checkUp())
+            update_braids_volume();
+          } else if (LCDML.BT_checkUp()) {
             braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            update_braids_volume();
+          }
 #endif
         } else if (seq.temp_active_menu == 6)  // msp
         {

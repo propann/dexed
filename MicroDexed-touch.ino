@@ -704,8 +704,8 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
 
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_r, 0 };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_peak_l, 1 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,0, braids_peak_r, 0 };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama,1, braids_peak_l, 0 };
   }
 }
 #endif
@@ -1391,55 +1391,48 @@ FLASHMEM void handle_touchscreen_mixer() {
     draw_volmeter(CHAR_width_small * 4, 170, 1, microdexed_peak_1.read());
 
     if (ep_peak_l.available() && ep_peak_r.available())
-      draw_volmeter(CHAR_width_small * 8, 170, 10, (ep_peak_l.read() + ep_peak_r.read()) / 2);
+      draw_volmeter(CHAR_width_small * 8, 170, 2, (ep_peak_l.read() + ep_peak_r.read()) / 2);
     else
-      draw_volmeter(CHAR_width_small * 8, 170, 10, 0);
-      // if (ep_peak_r.available())
-      //   draw_volmeter(CHAR_width_small * 12, 170, 11, ep_peak_r.read());
-      // else
-      //   draw_volmeter(CHAR_width_small * 12, 170, 11, 0);
-
+      draw_volmeter(CHAR_width_small * 8, 170, 2, 0);
+     
 #ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
-      draw_volmeter(CHAR_width_small * 12, 170, 2, microsynth_peak_osc_0.read());
+      draw_volmeter(CHAR_width_small * 12, 170, 3, microsynth_peak_osc_0.read());
     else
-      draw_volmeter(CHAR_width_small * 12, 170, 2, 0);
+      draw_volmeter(CHAR_width_small * 12, 170, 3, 0);
     if (microsynth_peak_osc_1.available())
-      draw_volmeter(CHAR_width_small * 16, 170, 3, microsynth_peak_osc_1.read());
+      draw_volmeter(CHAR_width_small * 16, 170, 4, microsynth_peak_osc_1.read());
     else
-      draw_volmeter(CHAR_width_small * 16, 170, 3, 0);
+      draw_volmeter(CHAR_width_small * 16, 170, 4, 0);
 #endif
+
 #ifdef USE_BRAIDS
-    // if (braids_peak_l.available())
-    //   draw_volmeter(CHAR_width_small * 32, 170, 12, braids_peak_l.read());
-    // else
-    //   draw_volmeter(CHAR_width_small * 32, 170, 12, 0);
     if (braids_peak_l.available() && braids_peak_r.available())
-      draw_volmeter(CHAR_width_small * 20, 170, 12, braids_peak_l.read() + braids_peak_r.read() / 2);
+      draw_volmeter(CHAR_width_small * 20, 170, 15, (braids_peak_l.read() + braids_peak_r.read()) / 2);
     else
-      draw_volmeter(CHAR_width_small * 20, 170, 12, 0);
+      draw_volmeter(CHAR_width_small * 20, 170, 5, 0);
 #endif
 
     //msp
-    draw_volmeter(CHAR_width_small * 24, 170, 13, ts.multisample_peak);
+    draw_volmeter(CHAR_width_small * 24, 170, 6, ts.multisample_peak);
     ts.multisample_peak = ts.multisample_peak / 1.05;
 
 #if NUM_DRUMS > 0
     if (drum_mixer_peak_l.available())
-      draw_volmeter(CHAR_width_small * 28, 170, 4, drum_mixer_peak_l.read());
+      draw_volmeter(CHAR_width_small * 28, 170, 7, drum_mixer_peak_l.read());
     else
-      draw_volmeter(CHAR_width_small * 28, 170, 4, 0);
+      draw_volmeter(CHAR_width_small * 28, 170, 7, 0);
     if (drum_mixer_peak_r.available())
-      draw_volmeter(CHAR_width_small * 32, 170, 5, drum_mixer_peak_r.read());
+      draw_volmeter(CHAR_width_small * 32, 170, 8, drum_mixer_peak_r.read());
     else
-      draw_volmeter(CHAR_width_small * 32, 170, 5, 0);
+      draw_volmeter(CHAR_width_small * 32, 170, 8, 0);
 #endif
 
-    draw_volmeter(CHAR_width_small * 38, 170, 6, reverb_return_peak_l.read());
-    draw_volmeter(CHAR_width_small * 42, 170, 7, reverb_return_peak_r.read());
+    draw_volmeter(CHAR_width_small * 38, 170, 9, reverb_return_peak_l.read());
+    draw_volmeter(CHAR_width_small * 42, 170, 10, reverb_return_peak_r.read());
 
-    draw_volmeter(CHAR_width_small * 46, 170, 8, master_peak_l.read());
-    draw_volmeter(CHAR_width_small * 50, 170, 9, master_peak_r.read());
+    draw_volmeter(CHAR_width_small * 46, 170, 11, master_peak_l.read());
+    draw_volmeter(CHAR_width_small * 50, 170, 12, master_peak_r.read());
   }
 }
 
