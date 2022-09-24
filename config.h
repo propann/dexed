@@ -149,7 +149,7 @@
 
 // SAMPLER
 #define USE_MULTISAMPLES
-#define NUM_MULTISAMPLES 10
+#define NUM_MULTISAMPLES 2
 #define NUM_MULTISAMPLE_ZONES 8
 
 // EPIANO
@@ -944,6 +944,22 @@ typedef struct braids_s {
   uint8_t note_buffer[NUM_BRAIDS];
 } braids_t;
 #endif
+
+typedef struct multisample_s {
+  char name[MAX_FLASH_FILENAME_LEN];
+  uint8_t sound_intensity;
+  uint8_t midi_channel;
+} multisample_t;
+
+typedef struct multisample_zone_s {
+  char name[MAX_FLASH_FILENAME_LEN];
+  uint8_t rootnote;  // sample root note
+  uint8_t low;       // lowest note in range
+  uint8_t high;      // highest note in range
+  uint8_t vol;       // volume
+  uint8_t pan;       // panorama
+  uint8_t rev;       // reverb send
+} multisample_zone_t;
 
 typedef struct sys_s {
   uint8_t vol;
