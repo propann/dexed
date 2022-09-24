@@ -51,21 +51,6 @@ static const float tune_frequencies2_PGM[128] = {
   8372.0181, 8869.8442, 9397.2726, 9956.0635, 10548.0818, 11175.3034, 11839.8215, 12543.8540
 };
 
-typedef struct multisample_s {
-  char name[MAX_FLASH_FILENAME_LEN];
-} multisample_t;
-
-typedef struct multisample_zone_s {
-  char name[MAX_FLASH_FILENAME_LEN];
-  uint8_t rootnote;  // sample root note
-  uint8_t low;       // lowest note in range
-  uint8_t high;      // highest note in range
-  uint8_t vol;       // volume
-  uint8_t pan;       // panorama
-  uint8_t rev;       // reverb send
-} multisample_zone_t;
-
-
 typedef struct sequencer_s {
   int gamepad_timer;
   uint8_t gamepad_timer_speed;

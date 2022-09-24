@@ -2970,6 +2970,8 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
 
       for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
         data_json[i]["name"] = ms[i].name;
+        data_json[i]["sound_intensity"] = ms[i].sound_intensity;
+        data_json[i]["midi_channel"] = ms[i].midi_channel;
 
         for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
           strcpy(zone_filename, msz[i][j].name);
@@ -3041,6 +3043,9 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
 #endif
         for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
           strcpy(ms[i].name, data_json[i]["name"]);
+          ms[i].sound_intensity = data_json[i]["sound_intensity"];
+          ms[i].midi_channel = data_json[i]["midi_channel"];
+
           for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
             strcpy(msz[i][j].name, data_json[i]["zones"]["filename"][j]);
             if (strlen(msz[i][j].name) > 0) strcat(msz[i][j].name, ".wav");

@@ -1408,7 +1408,7 @@ FLASHMEM void handle_touchscreen_mixer() {
 
 #ifdef USE_BRAIDS
     if (braids_peak_l.available() && braids_peak_r.available())
-      draw_volmeter(CHAR_width_small * 20, 170, 15, (braids_peak_l.read() + braids_peak_r.read()) / 2);
+      draw_volmeter(CHAR_width_small * 20, 170, 5, (braids_peak_l.read() + braids_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 20, 170, 5, 0);
 #endif
@@ -1453,29 +1453,30 @@ FLASHMEM void handle_touchscreen_midi_channel_page() {
 
   if (scope.scope_delay % 70 == 0) {
     display.setTextSize(2);
-    print_midi_channel_activity(16, 3, microdexed_peak_0.read());
-    print_midi_channel_activity(16, 4, microdexed_peak_1.read());
-    print_midi_channel_activity(16, 5, (ep_peak_l.read() + ep_peak_r.read()) / 2);
+    print_midi_channel_activity(19, 3, microdexed_peak_0.read());
+    print_midi_channel_activity(19, 4, microdexed_peak_1.read());
+    print_midi_channel_activity(19, 5, (ep_peak_l.read() + ep_peak_r.read()) / 2);
     if (microsynth_peak_osc_0.available())
-      print_midi_channel_activity(16, 6, microsynth_peak_osc_0.read());
+      print_midi_channel_activity(19, 6, microsynth_peak_osc_0.read());
     else
-      print_midi_channel_activity(16, 6, 0);
+      print_midi_channel_activity(19, 6, 0);
     if (microsynth_peak_osc_1.available())
-      print_midi_channel_activity(16, 7, microsynth_peak_osc_1.read());
+      print_midi_channel_activity(19, 7, microsynth_peak_osc_1.read());
     else
-      print_midi_channel_activity(16, 7, 0);
-
-    if (drum_mixer_peak_r.available() && drum_mixer_peak_l.available())
-      print_midi_channel_activity(16, 8, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
-    else
-      print_midi_channel_activity(16, 8, 0);
+      print_midi_channel_activity(19, 7, 0);
 
     if (braids_peak_l.available() && braids_peak_r.available())
-      print_midi_channel_activity(16, 9, (braids_peak_l.read() + braids_peak_r.read()) / 2);
+      print_midi_channel_activity(19, 8, (braids_peak_l.read() + braids_peak_r.read()) / 2);
     else
-      print_midi_channel_activity(16, 9, 0);
+      print_midi_channel_activity(19, 8, 0);
 
-    print_midi_channel_activity(16, 10, ts.multisample_peak);
+    if (drum_mixer_peak_r.available() && drum_mixer_peak_l.available())
+      print_midi_channel_activity(19, 9, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
+    else
+      print_midi_channel_activity(19, 9, 0);
+
+    print_midi_channel_activity(19, 10, ts.multisample_peak);
+    print_midi_channel_activity(19, 11, ts.multisample_peak);
     ts.multisample_peak = ts.multisample_peak / 1.05;
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -1815,7 +1816,24 @@ void playWAVFile(const char* filename) {
 
 //#ifdef COMPILE_FOR_FLASH
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-void Multi_Sample_Player(byte inNumber, byte inVelocity, byte presetslot) {
+void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
+
+  // find the MSP preset slot for this midi channel
+  byte presetslot = -1;
+  for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
+    if (ms[i].midi_channel == inChannel) {
+      presetslot++;
+      break;
+    } else {
+      presetslot++;
+    }
+  }
+
+  if (presetslot == -1) {
+    Serial.printf("no MSP found with MIDI channel %d\n", inChannel);
+    return;
+  }
+
 #if NUM_DRUMS > 0
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
@@ -1969,6 +1987,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       else if (trk == 5)
         inChannel = braids_osc.midi_channel;
 #endif
+      else if (trk == 6)
+        inChannel = ms[0].midi_channel;
+      else if (trk == 7)
+        inChannel = ms[1].midi_channel;
     }
   }
 
@@ -2015,19 +2037,23 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
   }
 #endif
 
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-  if (device == 3)  //playing Multisample by Sequencer
-  {
-    Multi_Sample_Player(inNumber, inVelocity, inChannel);
-  }
-#endif
-
   if (device == 0) {
+
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+    // Multisamples
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
-      Multi_Sample_Player(inNumber, inVelocity, seq.active_multisample);  //play multisample live with manual preset selection
+      //play multisample live on MSP page with manual preset selection
+      Multi_Sample_Player(inNumber, inVelocity, ms[seq.active_multisample].midi_channel);
+    } else {
+      // MSP play, live or by sequencer
+      for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
+        if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI || ms[instance_id].midi_channel == inChannel) {
+          Multi_Sample_Player(inNumber, inVelocity, inChannel);
+        }
+      }
     }
 #endif
+
     if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
       learn_key(inChannel, inNumber);
 
@@ -2334,6 +2360,10 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
       else if (trk == 4)
         inChannel = microsynth[1].midi_channel;
 #endif
+      else if (trk == 5)
+        inChannel = ms[0].midi_channel;
+      else if (trk == 6)
+        inChannel = ms[1].midi_channel;
     }
   }
 
