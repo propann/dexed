@@ -2195,7 +2195,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
           if (inNumber == drum_config[d].midinote) {
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-            char temp_name[16];
+            char temp_name[26];
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -2226,7 +2226,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #endif
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-
                 snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
