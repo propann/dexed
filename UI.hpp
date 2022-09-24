@@ -2674,7 +2674,7 @@ void lcdml_menu_control(void) {
         {
 
           if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false) {
-            if (seq.selected_track == 6)
+            if (seq.selected_track == 7)
               seq.selected_track = 0;
             else
               seq.selected_track++;
@@ -2739,7 +2739,7 @@ void lcdml_menu_control(void) {
 
           if (seq.selected_track == 0) {
             if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false)
-              seq.selected_track = 6;
+              seq.selected_track = 7;
             else
               seq.selected_track = NUM_SEQ_TRACKS - 1;
           } else
@@ -12642,10 +12642,10 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
   uint16_t temp_color = 0;
   uint16_t temp_background = 0;
 
-  if ((seq.temp_select_menu == row + 1 && seq.selected_track == column && seq.edit_state == false) || (seq.temp_select_menu == row + 1 && column == 99 && seq.edit_state == false)) {
+  if ((generic_temp_select_menu == row + 3 && seq.selected_track == column && seq.edit_state == false) || (generic_temp_select_menu == row + 3 && column == 99 && seq.edit_state == false)) {
     temp_color = COLOR_BACKGROUND;
     temp_background = COLOR_SYSTEXT;
-  } else if ((seq.temp_select_menu == row + 1 && seq.selected_track == column && seq.edit_state) || (seq.temp_select_menu == row + 1 && column == 99 && seq.edit_state)) {
+  } else if ((generic_temp_select_menu == row + 3 && seq.selected_track == column && seq.edit_state) || (generic_temp_select_menu == row + 3 && column == 99 && seq.edit_state)) {
     temp_background = RED;
     temp_color = COLOR_SYSTEXT;
   } else {
@@ -12672,7 +12672,7 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
 
 FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
   uint16_t temp_color = 0;
-  if (seq.temp_select_menu == row + 1)
+  if (generic_temp_select_menu == row + 3)
     temp_color = RED;
   else if (row == 0)
     temp_color = COLOR_PITCHSMP;
@@ -12702,7 +12702,7 @@ FLASHMEM void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_valu
   else
     display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
 
-  if (selected_option == seq.temp_select_menu - 1 && seq.selected_track == 4)
+  if (selected_option == generic_temp_select_menu - 3 && seq.selected_track == 5)
     display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 3 * CHAR_width_small + 1, 7, COLOR_SYSTEXT);
   else
     display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 3 * CHAR_width_small + 1, 7, GREY2);
@@ -12718,25 +12718,26 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
 
     seq.active_multisample = 0;
     seq.edit_state = false;
-    seq.temp_select_menu = 0;
+    generic_temp_select_menu = 0;
     seq.scrollpos = 0;
     calc_low_high(seq.active_multisample);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     display.setTextSize(1);
     border0();
-    helptext_l("MOVE X");
-    helptext_r("MOVE Y");
+
+    //helptext_r("MOVE Y");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     for (uint8_t oct = 0; oct < 8; oct++) {
       print_sampler_keyboard(oct * 7 + 2, 135);
       display.setCursor(CHAR_width_small * 2 + oct * 42, 175);
       display.print(oct + 1);
     }
-    display.setTextSize(2);
-    setCursor_textGrid(1, 1);
-    display.print(F("SAMPLER"));
     display.setTextSize(1);
+    setCursor_textGrid_small(2, 4);
+    display.print(F("Volume:"));
+    setCursor_textGrid_small(18, 4);
+    display.print(F("MIDI Channel:"));
 #if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
     if (seq.running == false)
       print_flash_stats();
@@ -12749,29 +12750,53 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     display.print(F("ROOT"));
     display.setCursor(9 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
     display.print(F("LOW"));
-    display.setCursor(14 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
+    display.setCursor(13 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
     display.print(F("HIGH"));
-    display.setCursor(19 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
+    display.setCursor(18 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
+    display.print(F("PM"));
+    display.setCursor(21 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
     display.print(F("VOL"));
-    display.setCursor(23 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
+    display.setCursor(25 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
     display.print(F("PAN"));
-    display.setCursor(28 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
-    display.print(F("REV."));
-    display.setCursor(33 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
+    display.setCursor(29 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
+    display.print(F("REV"));
+    display.setCursor(33 * CHAR_width_small + 2, (6) * (CHAR_height_small + 2) - 2);
     display.print(F("FILENAME"));
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (seq.edit_state && seq.temp_select_menu == 0) {
+      if (seq.edit_state && generic_temp_select_menu == 0) {
         if (LCDML.BT_checkDown()) {
-          seq.active_multisample = constrain(seq.active_multisample + 1, 0, NUM_MULTISAMPLES - 1);
+          seq.active_multisample = constrain(seq.active_multisample + 1, 0, NUM_MULTISAMPLES);
         } else if (LCDML.BT_checkUp()) {
-          seq.active_multisample = constrain(seq.active_multisample - 1, 0, NUM_MULTISAMPLES - 1);
+          seq.active_multisample = constrain(seq.active_multisample - 1, 0, NUM_MULTISAMPLES);
         }
-        calc_low_high(seq.active_multisample);
+        if (seq.active_multisample < NUM_MULTISAMPLES)
+          calc_low_high(seq.active_multisample);
+        else {
+          if (seq.active_multisample == NUM_MULTISAMPLES) {
+            helptext_r("PUSH JUMPS TO RENAME MENU");
+            display.setTextSize(2);
+            show(1, 1, 15, "JUMP TO RENAME?");
+          }
+        }
       }
-      if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 6)  //file name selection
+      if (seq.edit_state && generic_temp_select_menu == 1) {
+        if (LCDML.BT_checkDown()) {
+          ms[seq.active_multisample].sound_intensity = constrain(ms[seq.active_multisample].sound_intensity + ENCODER[ENC_R].speed(), 0, 100);
+        } else if (LCDML.BT_checkUp()) {
+          ms[seq.active_multisample].sound_intensity = constrain(ms[seq.active_multisample].sound_intensity - ENCODER[ENC_R].speed(), 0, 100);
+        }
+      }
+      if (seq.edit_state && generic_temp_select_menu == 2) {
+        if (LCDML.BT_checkDown()) {
+          ms[seq.active_multisample].midi_channel = constrain(ms[seq.active_multisample].midi_channel + 1, 0, 16);
+        } else if (LCDML.BT_checkUp()) {
+          ms[seq.active_multisample].midi_channel = constrain(ms[seq.active_multisample].midi_channel - 1, 0, 16);
+        }
+      }
+      if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 7)  //file name selection
       {
         if (LCDML.BT_checkDown()) {
           seq.scrollpos = constrain(seq.scrollpos + 1, 0, fm.flash_sum_files - 1);
@@ -12779,151 +12804,184 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
           seq.scrollpos = constrain(seq.scrollpos - 1, 0, fm.flash_sum_files - 1);
         }
         stop_all_drum_slots();
-        fill_msz_from_flash_filename(seq.scrollpos, seq.active_multisample, seq.temp_select_menu - 1);
+        fill_msz_from_flash_filename(seq.scrollpos, seq.active_multisample, generic_temp_select_menu - 3);
       }
-      if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 5)  //reverb send selection
+      if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 6)  //reverb send selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].rev = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].rev + 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rev = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rev + 1, 0, 100);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].rev = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].rev - 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rev = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rev - 1, 0, 100);
         }
-      } else if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 4)  //pan selection
+      } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 5)  //pan selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].pan = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].pan = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].pan = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].pan - 1, PANORAMA_MIN, PANORAMA_MAX);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].pan = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].pan - 1, PANORAMA_MIN, PANORAMA_MAX);
         }
-      } else if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 3)  //volume selection
+      } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 4)  //volume selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].vol = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].vol + 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].vol = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].vol + 1, 0, 100);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].vol = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].vol - 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].vol = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].vol - 1, 0, 100);
         }
-      } else if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 2)  //high selection
+      } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 3)  //playmode selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].high = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].high + 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].playmode = !msz[seq.active_multisample][generic_temp_select_menu - 3].playmode;
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].high = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].high - 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].playmode = !msz[seq.active_multisample][generic_temp_select_menu - 3].playmode;
         }
-      } else if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 1)  //low selection
+      } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 2)  //high selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].low = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].low + 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].high = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].high + 1, 12, 127);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].low = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].low - 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].high = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].high - 1, 12, 127);
         }
-      } else if (seq.edit_state && seq.temp_select_menu > 0 && seq.selected_track == 0)  //root note selection
+      } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 1)  //low selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].rootnote = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].rootnote + 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].low = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].low + 1, 12, 127);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][seq.temp_select_menu - 1].rootnote = constrain(msz[seq.active_multisample][seq.temp_select_menu - 1].rootnote - 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].low = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].low - 1, 12, 127);
+        }
+      } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 0)  //root note selection
+      {
+        if (LCDML.BT_checkDown()) {
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote + 1, 12, 127);
+        } else if (LCDML.BT_checkUp()) {
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote - 1, 12, 127);
         }
       } else if (seq.edit_state == false)  // no option is selected, scroll parameter rows
       {
         if (LCDML.BT_checkDown()) {
-          //          if (seq.edit_state)
-          //          {
-          //            display.setTextSize(2);
-          //            setCursor_textGrid(1, 1);
-          //            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          //            display.print(F("SAMPLER"));
-          //            seq.edit_state = false;
-          //          }
-          seq.temp_select_menu = constrain(seq.temp_select_menu + 1, 0, 8);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 10);
         } else if (LCDML.BT_checkUp()) {
-          //          if (seq.temp_select_menu == 0 && seq.edit_state == false)
-          //          {
-          //            display.setTextSize(2);
-          //            setCursor_textGrid(1, 1);
-          //            display.setTextColor(RED, COLOR_BACKGROUND);
-          //            display.print(F("RENAME?"));
-          //            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          //            seq.edit_state = true;
-          //          }
-          //          else
-          seq.temp_select_menu = constrain(seq.temp_select_menu - 1, 0, 8);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 10);
         }
       }
     }
     if (LCDML.BT_checkEnter()) {
-      //if (seq.temp_select_menu == 0 && generic_active_function == 99 && seq.edit_state)
-      //LCDML.OTHER_jumpToFunc(UI_func_set_multisample_name);
-      if (seq.edit_state == false)
+
+      if (seq.edit_state && generic_temp_select_menu == 0 && seq.active_multisample == NUM_MULTISAMPLES) {
+        seq.active_multisample = 0;
+        LCDML.OTHER_jumpToFunc(UI_func_set_multisample_name);
+      } else
+
+        if (seq.edit_state == false)
         seq.edit_state = true;
       else
         seq.edit_state = false;
     }
-    display.setTextSize(2);
-    //if (seq.temp_select_menu == 0 && seq.edit_state == false )
-    if (seq.temp_select_menu == 0)
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    if (generic_temp_select_menu > 2)
+      helptext_l("MOVE X");
     else
+      helptext_l("BACK");
+
+    if (generic_temp_select_menu > 2)
+      helptext_r("MOVE Y");
+    else if (generic_temp_select_menu == 0 && seq.active_multisample != NUM_MULTISAMPLES)
+      helptext_r("SEL. MULTISAMPLE");
+    else if (generic_temp_select_menu == 1)
+      helptext_r("CHANGE VOLUME");
+    else if (generic_temp_select_menu == 2)
+      helptext_r("SEL. MIDI CHANNEL");
+    display.setTextSize(2);
+
+    if (seq.active_multisample < NUM_MULTISAMPLES) {
       display.setTextColor(GREY2, COLOR_BACKGROUND);
-    setCursor_textGrid(1, 2);
-    print_formatted_number(seq.active_multisample, 2);
-    setCursor_textGrid(3, 2);
-    display.print(F("["));
-    setCursor_textGrid(15, 2);
-    display.print(F("]"));
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    show(2, 4, 11, ms[seq.active_multisample].name);
+      setCursor_textGrid(1, 1);
+      if (generic_temp_select_menu == 0)
+        setModeColor(0);
+      print_formatted_number(seq.active_multisample, 2);
+      setCursor_textGrid(3, 1);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.print(F("["));
+      setCursor_textGrid(15, 1);
+      display.print(F("]"));
+      display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-    uint8_t yoffset = 7;
-    display.setTextSize(1);
-    for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++) {
-      sub_MultiSample_setColor(y, 99);
-      setCursor_textGrid_small(2, y + yoffset);
-      display.print(y + 1);
-      sub_MultiSample_setColor(y, 0);
-      setCursor_textGrid_small(4, y + yoffset);
-      print_note_name_and_octave(msz[seq.active_multisample][y].rootnote);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.print(" ");
-      setCursor_textGrid_small(9, y + yoffset);
-      sub_MultiSample_setColor(y, 1);
-      print_note_name_and_octave(msz[seq.active_multisample][y].low);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.print(" ");
-      setCursor_textGrid_small(14, y + yoffset);
-      sub_MultiSample_setColor(y, 2);
-      print_note_name_and_octave(msz[seq.active_multisample][y].high);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.print(" ");
-      char tmp[4];
+      show(1, 4, 11, ms[seq.active_multisample].name);
 
-      sub_MultiSample_setColor(y, 3);
-      show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 19 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].vol, tmp, 10));
+      setModeColor(1);
+      display.setTextSize(1);
+      setCursor_textGrid_small(10, 4);
+      print_formatted_number(ms[seq.active_multisample].sound_intensity, 3);
+      setModeColor(2);
+      setCursor_textGrid_small(32, 4);
+      if (ms[seq.active_multisample].midi_channel != 0) {
+        print_formatted_number(ms[seq.active_multisample].midi_channel, 2);
+        display.print(F("  "));
+      } else
+        display.print(F("OMNI"));
 
-      print_multisampler_panbar(19, yoffset + y, msz[seq.active_multisample][y].pan, y);
+      uint8_t yoffset = 7;
+      display.setTextSize(1);
+      for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++) {
+        sub_MultiSample_setColor(y, 99);
+        setCursor_textGrid_small(2, y + yoffset);
+        display.print(y + 1);
+        sub_MultiSample_setColor(y, 0);
+        setCursor_textGrid_small(4, y + yoffset);
+        print_note_name_and_octave(msz[seq.active_multisample][y].rootnote);
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        display.print(" ");
+        setCursor_textGrid_small(9, y + yoffset);
+        sub_MultiSample_setColor(y, 1);
+        print_note_name_and_octave(msz[seq.active_multisample][y].low);
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        display.print(" ");
+        setCursor_textGrid_small(13, y + yoffset);
+        sub_MultiSample_setColor(y, 2);
+        print_note_name_and_octave(msz[seq.active_multisample][y].high);
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        display.print(" ");
+        char tmp[4];
+        sub_MultiSample_setColor(y, 3);
+        setCursor_textGrid_small(18, y + yoffset);
 
-      sub_MultiSample_setColor(y, 5);
-      show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 28 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].rev, tmp, 10));
-      setCursor_textGrid_small(33, y + yoffset);
-      sub_MultiSample_setColor(y, 6);
-      display.print("[");
-      show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 17, msz[seq.active_multisample][y].name);
-      setCursor_textGrid_small(51, y + yoffset);
-      display.print("]");
-      if (msz[seq.active_multisample][y].low == 0 && msz[seq.active_multisample][y].high == 0)
-        display.fillRect(0,
-                         185 + y * 5,
-                         DISPLAY_WIDTH - 1, 5, COLOR_BACKGROUND);
-      else {
-        display.fillRect(0, 185 + y * 5, 2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
+        if (msz[seq.active_multisample][y].playmode) {
+          display.write(144);
+          display.setCursor(display.getCursorX() - 1, display.getCursorY());
+          display.write(145);
+        } else {
+          display.write(146);
+          display.setCursor(display.getCursorX() - 1, display.getCursorY());
+          display.write(147);
+        }
 
-        display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                         (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5, 5, get_multisample_zone_color(y));
+        sub_MultiSample_setColor(y, 4);
+        show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 21 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].vol, tmp, 10));
+        sub_MultiSample_setColor(y, 5);
+        print_multisampler_panbar(21, yoffset + y, msz[seq.active_multisample][y].pan, y);
 
-        display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].high * 3.5 - (24 * 3.5) + 3.5 - 1, 185 + y * 5,
-                         DISPLAY_WIDTH - (msz[seq.active_multisample][y].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
+        sub_MultiSample_setColor(y, 6);
+        show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 29 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].rev, tmp, 10));
+        setCursor_textGrid_small(33, y + yoffset);
+        sub_MultiSample_setColor(y, 7);
+        display.print("[");
+        show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 18, msz[seq.active_multisample][y].name);
+        setCursor_textGrid_small(51, y + yoffset);
+        display.print("]");
+        if (msz[seq.active_multisample][y].low == 0 && msz[seq.active_multisample][y].high == 0)
+          display.fillRect(0,
+                           185 + y * 5,
+                           DISPLAY_WIDTH - 1, 5, COLOR_BACKGROUND);
+        else {
+          display.fillRect(0, 185 + y * 5, 2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
 
-        display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
-                         3.5 + 1, 5 - 2, COLOR_SYSTEXT);
+          display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+                           (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5, 5, get_multisample_zone_color(y));
+
+          display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].high * 3.5 - (24 * 3.5) + 3.5 - 1, 185 + y * 5,
+                           DISPLAY_WIDTH - (msz[seq.active_multisample][y].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
+
+          display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
+                           3.5 + 1, 5 - 2, COLOR_SYSTEXT);
+        }
       }
     }
   }
@@ -12940,7 +12998,6 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     display.fillScreen(COLOR_BACKGROUND);
-
     encoderDir[ENC_R].reset();
     helptext_l("BACK");
     setCursor_textGrid(1, 1);

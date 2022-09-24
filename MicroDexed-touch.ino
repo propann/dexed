@@ -1759,9 +1759,11 @@ void loop() {
       save_sd_sys_json();
       save_sys = 0;
       save_sys_flag = false;
+      if (LCDML.FUNC_getID() == 255) {
+        draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
+      }
 #ifdef DEBUG
       Serial.println(F("Saved."));
-      //Serial.print(save_sys_flag);
 #endif
     } else {
 #ifdef DEBUG
@@ -1816,6 +1818,8 @@ void playWAVFile(const char* filename) {
 
 //#ifdef COMPILE_FOR_FLASH
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+bool msp_playmode_sampleslot[NUM_DRUMS];
+
 void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
 
   // find the MSP preset slot for this midi channel
@@ -1841,6 +1845,7 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
 
   if (slot != 99) {
 
+
     drum_type[slot] = DRUM_POLY;
     Drum[slot]->enableInterpolation(true);
     for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++) {
@@ -1855,6 +1860,7 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
 #endif
 
+msp_playmode_sampleslot[slot]=msz[presetslot][y].playmode;
         Drum[slot]->setPlaybackRate(powf(2.0, (inNumber - msz[presetslot][y].rootnote) / 12.0));
         Drum[slot]->playWav(msz[presetslot][y].name);
 
@@ -2041,11 +2047,18 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     // Multisamples
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
+    //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
+    if (seq.running == false) {
       //play multisample live on MSP page with manual preset selection
-      Multi_Sample_Player(inNumber, inVelocity, ms[seq.active_multisample].midi_channel);
+      for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
+        if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI || ms[instance_id].midi_channel == inChannel) {
+          if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI)
+            inChannel = ms[0].midi_channel;  // hack - what to do if imput channel is not omni but MSP is omni?
+          Multi_Sample_Player(inNumber, inVelocity, inChannel);
+        }
+      }
     } else {
-      // MSP play, live or by sequencer
+      // MSP played by sequencer
       for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
         if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI || ms[instance_id].midi_channel == inChannel) {
           Multi_Sample_Player(inNumber, inVelocity, inChannel);
@@ -2339,7 +2352,9 @@ uint8_t drum_get_slot(uint8_t dt) {
 }
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) {
-  if ((seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) || (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
+  if ((seq.running == false && 
+  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) 
+  || (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
     //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
 
@@ -3431,7 +3446,7 @@ FLASHMEM void initial_values(bool init) {
 
     check_configuration();
   }
-  configuration.sys.vol = EEPROM[EEPROM_START_ADDRESS + 2];
+  //configuration.sys.vol = EEPROM[EEPROM_START_ADDRESS + 2];
   set_volume(configuration.sys.vol, configuration.sys.mono);
 
 #ifdef DEBUG
@@ -3651,7 +3666,7 @@ FLASHMEM void init_configuration(void) {
   configuration.epiano.midi_channel = EP_MIDI_CHANNEL_DEFAULT;
 #endif
 
-  //set_volume(configuration.sys.vol, configuration.sys.mono);
+  set_volume(configuration.sys.vol, configuration.sys.mono);
 
   eeprom_update();
 }
@@ -3659,7 +3674,7 @@ FLASHMEM void init_configuration(void) {
 FLASHMEM void eeprom_update(void) {
   EEPROM.update(EEPROM_START_ADDRESS, (EEPROM_MARKER & 0xff00) >> 8);
   EEPROM.update(EEPROM_START_ADDRESS + 1, EEPROM_MARKER & 0xff);
-  EEPROM.update(EEPROM_START_ADDRESS + 2, configuration.sys.vol);
+  //EEPROM.update(EEPROM_START_ADDRESS + 2, configuration.sys.vol);
 }
 
 /******************************************************************************

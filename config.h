@@ -97,6 +97,7 @@
 //*************************************************************************************************
 //* MIDI SOFTWARE SETTINGS
 //*************************************************************************************************
+
 #define DEFAULT_MIDI_CHANNEL MIDI_CHANNEL_OMNI
 #define SYSEXBANK_DEFAULT 0
 #define SYSEXSOUND_DEFAULT 0
@@ -956,6 +957,7 @@ typedef struct multisample_zone_s {
   uint8_t rootnote;  // sample root note
   uint8_t low;       // lowest note in range
   uint8_t high;      // highest note in range
+  bool playmode;     // Trigger/Hold Mode
   uint8_t vol;       // volume
   uint8_t pan;       // panorama
   uint8_t rev;       // reverb send
