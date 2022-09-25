@@ -12778,7 +12778,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     seq.edit_state = false;
     generic_temp_select_menu = 0;
     seq.scrollpos = 0;
-    calc_low_high(seq.active_multisample);
+    //calc_low_high(seq.active_multisample);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     display.setTextSize(1);
@@ -13061,7 +13061,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.print(F("ONLY WORKING WITH SERIAL FLASH CHIP"));
     setCursor_textGrid(1, 2);
-    display.print(F("QSPI CHIP IS CURRENTLY IN TESTING"));
+    display.print(F("AND COMPILED FOR FLASH CONFIG"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
 

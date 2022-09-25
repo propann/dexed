@@ -1855,9 +1855,9 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
       if (inNumber >= msz[presetslot][y].low && inNumber <= msz[presetslot][y].high) {
 
         float pan = mapfloat(msz[presetslot][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[0].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
-        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[0].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
-        ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * ms[0].sound_intensity) / 900000;
+        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
+        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
+        ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * ms[presetslot].sound_intensity) / 900000;
 #ifdef USE_FX
         drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
