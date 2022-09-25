@@ -1416,14 +1416,16 @@ FLASHMEM void handle_touchscreen_mixer() {
     //msp
     draw_volmeter(CHAR_width_small * 24, 170, 6, ts.multisample_peak);
     ts.multisample_peak = ts.multisample_peak / 1.05;
+    draw_volmeter(CHAR_width_small * 28, 170, 7, ts.multisample_peak);
+    ts.multisample_peak = ts.multisample_peak / 1.05;
 
 #if NUM_DRUMS > 0
-    if (drum_mixer_peak_l.available())
-      draw_volmeter(CHAR_width_small * 28, 170, 7, drum_mixer_peak_l.read());
-    else
-      draw_volmeter(CHAR_width_small * 28, 170, 7, 0);
-    if (drum_mixer_peak_r.available())
-      draw_volmeter(CHAR_width_small * 32, 170, 8, drum_mixer_peak_r.read());
+    // if (drum_mixer_peak_l.available())
+    //   draw_volmeter(CHAR_width_small * 28, 170, 7, drum_mixer_peak_l.read());
+    // else
+    //   draw_volmeter(CHAR_width_small * 28, 170, 7, 0);
+    if (drum_mixer_peak_l.available() && drum_mixer_peak_r.available())
+      draw_volmeter(CHAR_width_small * 32, 170, 8, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 32, 170, 8, 0);
 #endif
