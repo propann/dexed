@@ -2296,6 +2296,11 @@ void lcdml_menu_control(void) {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   buttons = 0;
+
+  if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B) )
+buttons=gamepad_buttons_neutral;
+else
+{
   if (digitalRead(BI_SELECT) == false)
 buttons=buttons+GAMEPAD_SELECT;
  if (digitalRead(BI_START) == false)
@@ -2304,6 +2309,8 @@ buttons=buttons+GAMEPAD_START;
 buttons=buttons+GAMEPAD_BUTTON_A;
  if (digitalRead(BI_BUTTON_B) == false)
 buttons=buttons+GAMEPAD_BUTTON_B;
+}
+
 #endif
 
   if (seq.gamepad_timer > 1000) {

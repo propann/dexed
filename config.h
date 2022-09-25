@@ -73,6 +73,10 @@
 //* USB HOST KEYPAD/KEYBOARD/GAMEPAD SUPPORT
 //*************************************************************************************************
 
+// USB_KEYBOARD is for a PC-Numeric Keypad, connected via USB
+// USB_GAMEPAD is for a classic 8bit/16bit style of USB Gamepad. ONBOARD_BUTTON_Interface must be DISABLED for it to work.
+// ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy. USB_GAMEPAD must be also be enabled for it to work.
+
 //#define USB_KEYPAD 1
 //#define USB_GAMEPAD 1
 //#define ONBOARD_BUTTON_INTERFACE 1
