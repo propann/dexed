@@ -2247,8 +2247,8 @@ void lcdml_menu_control(void) {
     pinMode(BI_RIGHT, INPUT_PULLUP);
     pinMode(BI_SELECT, INPUT_PULLUP);
     pinMode(BI_START, INPUT_PULLUP);
-    pinMode(BI_BUTTON_1, INPUT_PULLUP);
-    pinMode(BI_BUTTON_2, INPUT_PULLUP);
+    pinMode(BI_BUTTON_A, INPUT_PULLUP);
+    pinMode(BI_BUTTON_B, INPUT_PULLUP);
 #endif
 
     ENCODER[ENC_R].begin();
@@ -2296,8 +2296,14 @@ void lcdml_menu_control(void) {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   buttons = 0;
-
-
+  if (digitalRead(BI_SELECT) == false)
+buttons=buttons+GAMEPAD_SELECT;
+ if (digitalRead(BI_START) == false)
+buttons=buttons+GAMEPAD_START;
+ if (digitalRead(BI_BUTTON_A) == false)
+buttons=buttons+GAMEPAD_BUTTON_A;
+ if (digitalRead(BI_BUTTON_B) == false)
+buttons=buttons+GAMEPAD_BUTTON_B;
 #endif
 
   if (seq.gamepad_timer > 1000) {

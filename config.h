@@ -74,8 +74,8 @@
 //*************************************************************************************************
 
 //#define USB_KEYPAD 1
-#define USB_GAMEPAD 1
-#define ONBOARD_BUTTON_INTERFACE 1
+//#define USB_GAMEPAD 1
+//#define ONBOARD_BUTTON_INTERFACE 1
 
 #ifdef ONBOARD_BUTTON_INTERFACE
 #define BI_UP 2
@@ -84,8 +84,8 @@
 #define BI_RIGHT 5
 #define BI_SELECT 9
 #define BI_START 10
-#define BI_BUTTON_1 16
-#define BI_BUTTON_2 17
+#define BI_BUTTON_A 16
+#define BI_BUTTON_B 17
 #endif
 
 //*************************************************************************************************
