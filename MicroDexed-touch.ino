@@ -864,7 +864,7 @@ PeriodicTimer sequencer_timer;
 #ifdef USE_MULTISAMPLES
 extern multisample_t ms[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-extern uint8_t msp_global_sound_intensity;
+uint8_t note_buffer_msp[NUM_DRUMS];
 #endif
 
 extern LCDMenuLib2 LCDML;
@@ -1414,10 +1414,10 @@ FLASHMEM void handle_touchscreen_mixer() {
 #endif
 
     //msp
-    draw_volmeter(CHAR_width_small * 24, 170, 6, ts.multisample_peak);
-    ts.multisample_peak = ts.multisample_peak / 1.05;
-    draw_volmeter(CHAR_width_small * 28, 170, 7, ts.multisample_peak);
-    ts.multisample_peak = ts.multisample_peak / 1.05;
+    draw_volmeter(CHAR_width_small * 24, 170, 6, ts.msp_peak[0]);
+    ts.msp_peak[0] = ts.msp_peak[0] / 1.05;
+    draw_volmeter(CHAR_width_small * 28, 170, 7, ts.msp_peak[1]);
+    ts.msp_peak[1] = ts.msp_peak[1] / 1.05;
 
 #if NUM_DRUMS > 0
     // if (drum_mixer_peak_l.available())
@@ -1477,9 +1477,10 @@ FLASHMEM void handle_touchscreen_midi_channel_page() {
     else
       print_midi_channel_activity(19, 9, 0);
 
-    print_midi_channel_activity(19, 10, ts.multisample_peak);
-    print_midi_channel_activity(19, 11, ts.multisample_peak);
-    ts.multisample_peak = ts.multisample_peak / 1.05;
+    print_midi_channel_activity(19, 10, ts.msp_peak[0]);
+    print_midi_channel_activity(19, 11, ts.msp_peak[1]);
+    ts.msp_peak[0] = ts.msp_peak[0] / 1.05;
+    ts.msp_peak[1] = ts.msp_peak[1] / 1.05;
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
@@ -1818,9 +1819,10 @@ void playWAVFile(const char* filename) {
 #endif
 }
 
+bool msp_playmode_sample_slot[NUM_DRUMS];  // needs to be moved in COMPILE_FOR_FLASH
 //#ifdef COMPILE_FOR_FLASH
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
-bool msp_playmode_sampleslot[NUM_DRUMS];
+
 
 void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
 
@@ -1847,22 +1849,22 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
 
   if (slot != 99) {
 
-
     drum_type[slot] = DRUM_POLY;
     Drum[slot]->enableInterpolation(true);
     for (uint8_t y = 0; y < NUM_MULTISAMPLE_ZONES; y++) {
       if (inNumber >= msz[presetslot][y].low && inNumber <= msz[presetslot][y].high) {
 
         float pan = mapfloat(msz[presetslot][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp_global_sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
-        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp_global_sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
-        ts.multisample_peak = (inVelocity * msz[presetslot][y].vol * msp_global_sound_intensity) / 900000;
+        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[0].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
+        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[0].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
+        ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * ms[0].sound_intensity) / 900000;
 #ifdef USE_FX
         drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
 #endif
 
-msp_playmode_sampleslot[slot]=msz[presetslot][y].playmode;
+        msp_playmode_sample_slot[slot] = msz[presetslot][y].playmode;
+        note_buffer_msp[slot] = inNumber;
         Drum[slot]->setPlaybackRate(powf(2.0, (inNumber - msz[presetslot][y].rootnote) / 12.0));
         Drum[slot]->playWav(msz[presetslot][y].name);
 
@@ -2353,9 +2355,8 @@ uint8_t drum_get_slot(uint8_t dt) {
 }
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) {
-  if ((seq.running == false && 
-  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) 
-  || (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
+  if ((seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+      || (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
     //dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
 
@@ -2391,6 +2392,24 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
         braids_envelope[i]->noteOff();
     }
   }
+#endif
+
+#ifdef USE_MULTISAMPLES
+
+for (uint8_t j = 0; j < NUM_MULTISAMPLES; j++) {
+  if (device == 5 || ms[j].midi_channel == MIDI_CHANNEL_OMNI || ms[j].midi_channel == inChannel) {
+  //if (device == 5 || ms[j].midi_channel == inChannel) {
+    for (uint8_t i = 0; i < 8; i++) {
+      if (inNumber == note_buffer_msp[i] && note_buffer_msp[i] > 1 && msp_playmode_sample_slot[i]) {
+        note_buffer_msp[i] = 0;
+        Drum[i]->stop();
+        // Drum[i]->enableInterpolation(false);
+        // Drum[i]->setPlaybackRate(1.0);
+        break;
+      }
+    }
+  }
+}
 #endif
 
 

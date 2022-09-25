@@ -219,8 +219,6 @@ uint8_t generic_active_function = 99;
 uint8_t generic_temp_select_menu;
 uint8_t generic_menu;
 
-uint8_t msp_global_sound_intensity = SOUND_INTENSITY_MAX;
-
 #ifdef SGTL5000_AUDIO_ENHANCE
 #include "control_sgtl5000plus.h"
 extern AudioControlSGTL5000Plus sgtl5000;
@@ -2148,32 +2146,59 @@ void toggle_sequencer_play_status() {
 
 #ifdef USB_GAMEPAD
 boolean gp_right() {
+#ifdef ONBOARD_BUTTON_INTERFACE
+  if (digitalRead(BI_RIGHT) == false)
+    return true;
+  else
+    return false;
+#else
   if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1)
     return true;
   else
     return false;
+#endif
 }
 
 boolean gp_left() {
-
+#ifdef ONBOARD_BUTTON_INTERFACE
+  if (digitalRead(BI_LEFT) == false)
+    return true;
+  else
+    return false;
+#else
   if (joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1)
     return true;
   else
     return false;
+#endif
 }
 
 boolean gp_up() {
+#ifdef ONBOARD_BUTTON_INTERFACE
+  if (digitalRead(BI_UP) == false)
+    return true;
+  else
+    return false;
+#else
   if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1)
     return true;
   else
     return false;
+#endif
 }
 
 boolean gp_down() {
+#ifdef ONBOARD_BUTTON_INTERFACE
+  if (digitalRead(BI_DOWN) == false)
+    return true;
+  else
+    return false;
+#else
   if (joysticks[0].getAxis(0) == GAMEPAD_DOWN_0 && joysticks[0].getAxis(1) == GAMEPAD_DOWN_1)
     return true;
   else
     return false;
+#endif
 }
 #endif
 
@@ -2214,6 +2239,17 @@ void lcdml_menu_control(void) {
   if (LCDML.BT_setup()) {
     pinMode(BUT_R_PIN, INPUT_PULLUP);
     pinMode(BUT_L_PIN, INPUT_PULLUP);
+
+#ifdef ONBOARD_BUTTON_INTERFACE
+    pinMode(BI_UP, INPUT_PULLUP);
+    pinMode(BI_DOWN, INPUT_PULLUP);
+    pinMode(BI_LEFT, INPUT_PULLUP);
+    pinMode(BI_RIGHT, INPUT_PULLUP);
+    pinMode(BI_SELECT, INPUT_PULLUP);
+    pinMode(BI_START, INPUT_PULLUP);
+    pinMode(BI_BUTTON_1, INPUT_PULLUP);
+    pinMode(BI_BUTTON_2, INPUT_PULLUP);
+#endif
 
     ENCODER[ENC_R].begin();
     ENCODER[ENC_L].begin();
@@ -2257,6 +2293,12 @@ void lcdml_menu_control(void) {
 #ifdef USB_GAMEPAD  // USB GAMEPAD CONTROL
 
   uint32_t buttons = joysticks[0].getButtons();
+
+#ifdef ONBOARD_BUTTON_INTERFACE
+  buttons = 0;
+
+
+#endif
 
   if (seq.gamepad_timer > 1000) {
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad) && temp_int < 9) {
@@ -12719,9 +12761,12 @@ FLASHMEM void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_valu
 FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
-    //test is this prevents crashing
-    //handleStop();
-    //stop_all_drum_slots();
+    //test if this prevents crashing
+    // display.setTextSize(2);
+    // setCursor_textGrid_small(2,2);
+    // display.print(F("PLEASE WAIT 5 SEC."));
+    // handleStop();
+    // delay(5000);
 
     seq.active_multisample = 0;
     seq.edit_state = false;
@@ -12733,7 +12778,6 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     display.setTextSize(1);
     border0();
 
-    //helptext_r("MOVE Y");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     for (uint8_t oct = 0; oct < 8; oct++) {
       print_sampler_keyboard(oct * 7 + 2, 135);
@@ -12810,7 +12854,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
         } else if (LCDML.BT_checkUp()) {
           seq.scrollpos = constrain(seq.scrollpos - 1, 0, fm.flash_sum_files - 1);
         }
-        stop_all_drum_slots();
+        //stop_all_drum_slots();
         fill_msz_from_flash_filename(seq.scrollpos, seq.active_multisample, generic_temp_select_menu - 3);
       }
       if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 6)  //reverb send selection
@@ -12949,17 +12993,16 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
         char tmp[4];
         sub_MultiSample_setColor(y, 3);
         setCursor_textGrid_small(18, y + yoffset);
-
         if (msz[seq.active_multisample][y].playmode) {
-          display.write(144);
-          display.setCursor(display.getCursorX() - 1, display.getCursorY());
-          display.write(145);
-        } else {
           display.write(146);
           display.setCursor(display.getCursorX() - 1, display.getCursorY());
           display.write(147);
-        }
 
+        } else {
+          display.write(144);
+          display.setCursor(display.getCursorX() - 1, display.getCursorY());
+          display.write(145);
+        }
         sub_MultiSample_setColor(y, 4);
         show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 21 * CHAR_width_small, 3, itoa(msz[seq.active_multisample][y].vol, tmp, 10));
         sub_MultiSample_setColor(y, 5);
@@ -14271,10 +14314,10 @@ FLASHMEM void print_mixer_text() {
   // msp
 //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #1 zone played
   setCursor_textGrid_small(24, 19);
-  print_formatted_number(msp_global_sound_intensity, 3);
+  print_formatted_number(ms[0].sound_intensity, 3);
 //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #2 zone played
   setCursor_textGrid_small(28, 19);
-  print_formatted_number(msp_global_sound_intensity, 3);
+  print_formatted_number(ms[0].sound_intensity, 3);
 
   // drums
   temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
@@ -14361,13 +14404,19 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             update_braids_volume();
           }
 #endif
-        } else if (seq.temp_active_menu == 6 || seq.temp_active_menu == 7)  // msp
+        } else if (seq.temp_active_menu == 6 )  // msp1
         {
           if (LCDML.BT_checkDown())
-            msp_global_sound_intensity = constrain(msp_global_sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            ms[0].sound_intensity = constrain(ms[0].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            msp_global_sound_intensity = constrain(msp_global_sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-        } else if (seq.temp_active_menu == 8)  //drums/samples
+            ms[0].sound_intensity = constrain(ms[0].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+        } else if (seq.temp_active_menu == 7)  // msp2
+        {
+          if (LCDML.BT_checkDown())
+            ms[1].sound_intensity = constrain(ms[1].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+          else if (LCDML.BT_checkUp())
+            ms[1].sound_intensity = constrain(ms[1].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+        }else if (seq.temp_active_menu == 8)  //drums/samples
         {
           if (LCDML.BT_checkDown())
             temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
@@ -14435,10 +14484,17 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       setCursor_textGrid(1, 1);
       display.print("BRAIDS");
 #endif
-    } else if (seq.temp_active_menu > 5 && seq.temp_active_menu < 8 && seq.edit_state)  // msp
+    } else if (seq.temp_active_menu == 6  && seq.edit_state)  // msp0
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display_bar_int("", msp_global_sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      display_bar_int("", ms[0].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      setCursor_textGrid(1, 1);
+      display.print("MULTISAMPLE #");
+      display.print(seq.temp_active_menu - 5);
+    } else if (seq.temp_active_menu == 7 && seq.edit_state)  // msp1
+    {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display_bar_int("", ms[1].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("MULTISAMPLE #");
       display.print(seq.temp_active_menu - 5);

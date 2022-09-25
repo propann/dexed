@@ -2982,6 +2982,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
           data_json[i]["zones"]["root"][j] = msz[i][j].rootnote;
           data_json[i]["zones"]["low"][j] = msz[i][j].low;
           data_json[i]["zones"]["high"][j] = msz[i][j].high;
+          data_json[i]["zones"]["playmode"][j] = msz[i][j].playmode;
           data_json[i]["zones"]["vol"][j] = msz[i][j].vol;
           data_json[i]["zones"]["pan"][j] = msz[i][j].pan;
           data_json[i]["zones"]["rev"][j] = msz[i][j].rev;
@@ -3052,6 +3053,7 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
             msz[i][j].rootnote = data_json[i]["zones"]["root"][j];
             msz[i][j].low = data_json[i]["zones"]["low"][j];
             msz[i][j].high = data_json[i]["zones"]["high"][j];
+            msz[i][j].playmode = data_json[i]["zones"]["playmode"][j];
             msz[i][j].vol = data_json[i]["zones"]["vol"][j];
             msz[i][j].pan = data_json[i]["zones"]["pan"][j];
             msz[i][j].rev = data_json[i]["zones"]["rev"][j];
