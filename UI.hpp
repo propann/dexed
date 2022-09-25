@@ -66,8 +66,8 @@ uint8_t GAMEPAD_RIGHT_1 = 127;
 uint8_t GAMEPAD_LEFT_0 = 0;
 uint8_t GAMEPAD_LEFT_1 = 127;
 
-uint32_t GAMEPAD_SELECT = 100;
-uint32_t GAMEPAD_START = 200;
+uint32_t GAMEPAD_SELECT = 256;
+uint32_t GAMEPAD_START = 512;
 uint32_t GAMEPAD_BUTTON_A = 2;
 uint32_t GAMEPAD_BUTTON_B = 1;
 
@@ -2220,6 +2220,14 @@ void gamepad_speed_adjustments() {
     seq.gamepad_timer_speed = 2;
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids))
     seq.gamepad_timer_speed = 3;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+    seq.gamepad_timer_speed = 2;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+    seq.gamepad_timer_speed = 2;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
+    seq.gamepad_timer_speed = 7;
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker))
+    seq.gamepad_timer_speed = 7;
 }
 
 /***********************************************************************
@@ -2296,24 +2304,22 @@ void lcdml_menu_control(void) {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   buttons = 0;
-
-  if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B) )
-buttons=gamepad_buttons_neutral;
-else
-{
-  if (digitalRead(BI_SELECT) == false)
-buttons=buttons+GAMEPAD_SELECT;
- if (digitalRead(BI_START) == false)
-buttons=buttons+GAMEPAD_START;
- if (digitalRead(BI_BUTTON_A) == false)
-buttons=buttons+GAMEPAD_BUTTON_A;
- if (digitalRead(BI_BUTTON_B) == false)
-buttons=buttons+GAMEPAD_BUTTON_B;
-}
-
+  if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B))
+    buttons = gamepad_buttons_neutral;
+  else {
+    if (digitalRead(BI_SELECT) == false)
+      buttons = GAMEPAD_SELECT;
+    if (digitalRead(BI_START) == false)
+      buttons = buttons + GAMEPAD_START;
+    if (digitalRead(BI_BUTTON_A) == false)
+      buttons = buttons + GAMEPAD_BUTTON_A;
+    if (digitalRead(BI_BUTTON_B) == false)
+      buttons = buttons + GAMEPAD_BUTTON_B;
+  }
 #endif
 
-  if (seq.gamepad_timer > 1000) {
+  if (seq.gamepad_timer > 2700) {
+
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad) && temp_int < 9) {
       if (temp_int > 7) {
         setCursor_textGrid_small(35, 3);
@@ -2416,44 +2422,47 @@ buttons=buttons+GAMEPAD_BUTTON_B;
         temp_int++;
         seq.gamepad_timer = 0;
         //joysticks[0].joystickDataClear();
-      } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
-        if (seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
-          seq.cycle_touch_element = 6;  // goto chain edit
-          seq.help_text_needs_refresh = true;
-          //  seq.tracktype_or_instrument_assign = 0;
-          seq.edit_state = true;
-          print_chains_in_song_page();
-          print_patterns_in_song_page();
-          print_shortcut_navigator();
-          print_song_mode_help();
-          seq.gamepad_timer = 0;
-        } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) {
-          seq.cycle_touch_element = 0;  // goto pattern in song mode
-          seq.help_text_needs_refresh = true;
-          // seq.tracktype_or_instrument_assign = 0;
-          seq.edit_state = false;
-          print_chains_in_song_page();
-          print_patterns_in_song_page();
-          print_shortcut_navigator();
-          print_song_mode_help();
-          seq.gamepad_timer = 0;
-        } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
-          seq.gamepad_timer = 0;
-          LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-        }
-      } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
-        if (buttons == GAMEPAD_SELECT && gp_left()) {  // go to pattern editor
-          seq.cycle_touch_element = 6;
-          seq.tracktype_or_instrument_assign = 0;
-          seq.edit_state = true;
-          seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor = true;
-          seq.gamepad_timer = 0;
-          LCDML.OTHER_jumpToFunc(UI_func_song);
-        }
+      }
+    }
+    // LSDJ Style Navigation:
+
+    else if (buttons == GAMEPAD_SELECT && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
+      if (seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
+        seq.cycle_touch_element = 6;  // goto chain edit
+        seq.help_text_needs_refresh = true;
+        //  seq.tracktype_or_instrument_assign = 0;
+        seq.edit_state = true;
+        print_chains_in_song_page();
+        print_patterns_in_song_page();
+        print_shortcut_navigator();
+        print_song_mode_help();
+        seq.gamepad_timer = 0;
+      } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) {
+        seq.cycle_touch_element = 0;  // goto pattern in song mode
+        seq.help_text_needs_refresh = true;
+        // seq.tracktype_or_instrument_assign = 0;
+        seq.edit_state = false;
+        print_chains_in_song_page();
+        print_patterns_in_song_page();
+        print_shortcut_navigator();
+        print_song_mode_help();
+        seq.gamepad_timer = 0;
+      } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
+        seq.gamepad_timer = 0;
+        LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+      }
+    } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
+      if (buttons == GAMEPAD_SELECT && gp_left()) {  // go to pattern editor
+        seq.cycle_touch_element = 6;
+        seq.tracktype_or_instrument_assign = 0;
+        seq.edit_state = true;
+        seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor = true;
+        seq.gamepad_timer = 0;
+        LCDML.OTHER_jumpToFunc(UI_func_song);
       }
     }
 
-    if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+    else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
       // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on that and the edit state of the field, this needs special handling for gamepad usage
       if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.edit_state == false && LCDML.FUNC_getID() != 255) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false && LCDML.FUNC_getID() != 255) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state == false && LCDML.FUNC_getID() != 255)) {
         if (gp_up() && buttons == gamepad_buttons_neutral) {
@@ -14325,10 +14334,10 @@ FLASHMEM void print_mixer_text() {
   print_formatted_number(braids_osc.sound_intensity, 3);
 #endif
   // msp
-//  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #1 zone played
+  //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #1 zone played
   setCursor_textGrid_small(24, 19);
   print_formatted_number(ms[0].sound_intensity, 3);
-//  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #2 zone played
+  //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #2 zone played
   setCursor_textGrid_small(28, 19);
   print_formatted_number(ms[0].sound_intensity, 3);
 
@@ -14417,7 +14426,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             update_braids_volume();
           }
 #endif
-        } else if (seq.temp_active_menu == 6 )  // msp1
+        } else if (seq.temp_active_menu == 6)  // msp1
         {
           if (LCDML.BT_checkDown())
             ms[0].sound_intensity = constrain(ms[0].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
@@ -14429,7 +14438,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             ms[1].sound_intensity = constrain(ms[1].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
             ms[1].sound_intensity = constrain(ms[1].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-        }else if (seq.temp_active_menu == 8)  //drums/samples
+        } else if (seq.temp_active_menu == 8)  //drums/samples
         {
           if (LCDML.BT_checkDown())
             temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
@@ -14497,7 +14506,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       setCursor_textGrid(1, 1);
       display.print("BRAIDS");
 #endif
-    } else if (seq.temp_active_menu == 6  && seq.edit_state)  // msp0
+    } else if (seq.temp_active_menu == 6 && seq.edit_state)  // msp0
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_bar_int("", ms[0].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);

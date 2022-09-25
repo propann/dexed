@@ -901,6 +901,8 @@ void setup() {
   Serial.println(F("MicroDexed based on https://github.com/asb2m10/dexed"));
   Serial.println(F("(c)2018-2022 H. Wirtz <wirtz@parasitstudio.de>"));
   Serial.println(F("https://codeberg.org/dcoredump/MicroDexed"));
+  Serial.println(F("MicroDexed touch based on https://codeberg.org/dcoredump/MicroDexed"));
+  Serial.println(F("https://codeberg.org/positionhigh/MicroDexed-touch"));
   Serial.print(F("Version: "));
   Serial.println(version_string);
   Serial.print(F("CPU-Speed: "));
@@ -1345,6 +1347,12 @@ void setup() {
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
   seq.gamepad_timer_speed = 1;
+
+// #ifdef ONBOARD_BUTTON_INTERFACE
+//   gamepad_buttons_neutral = 0;
+//   gamepad_0_neutral = 0;
+//   gamepad_1_neutral = 0;
+// #endif
 
 #endif
 }
@@ -2396,20 +2404,20 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
 
 #ifdef USE_MULTISAMPLES
 
-for (uint8_t j = 0; j < NUM_MULTISAMPLES; j++) {
-  if (device == 5 || ms[j].midi_channel == MIDI_CHANNEL_OMNI || ms[j].midi_channel == inChannel) {
-  //if (device == 5 || ms[j].midi_channel == inChannel) {
-    for (uint8_t i = 0; i < 8; i++) {
-      if (inNumber == note_buffer_msp[i] && note_buffer_msp[i] > 1 && msp_playmode_sample_slot[i]) {
-        note_buffer_msp[i] = 0;
-        Drum[i]->stop();
-        // Drum[i]->enableInterpolation(false);
-        // Drum[i]->setPlaybackRate(1.0);
-        break;
+  for (uint8_t j = 0; j < NUM_MULTISAMPLES; j++) {
+    if (device == 5 || ms[j].midi_channel == MIDI_CHANNEL_OMNI || ms[j].midi_channel == inChannel) {
+      //if (device == 5 || ms[j].midi_channel == inChannel) {
+      for (uint8_t i = 0; i < 8; i++) {
+        if (inNumber == note_buffer_msp[i] && note_buffer_msp[i] > 1 && msp_playmode_sample_slot[i]) {
+          note_buffer_msp[i] = 0;
+          Drum[i]->stop();
+          // Drum[i]->enableInterpolation(false);
+          // Drum[i]->setPlaybackRate(1.0);
+          break;
+        }
       }
     }
   }
-}
 #endif
 
 
