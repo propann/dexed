@@ -89,12 +89,9 @@ void Settings::Init() {
   }
   settings_within_range = settings_within_range && data_.magic_byte == 'M';
   // for (int i = 0; i < 2; ++i) {
-  //   settings_within_range = settings_within_range && \
-  //       data_.parameter_cv_scale[i] > 16384;
-  //   settings_within_range = settings_within_range && \
-  //       data_.parameter_cv_offset[i] < 8000;
-  //   settings_within_range = settings_within_range && \
-  //       data_.parameter_cv_offset[i] > -8000;
+  //   settings_within_range = settings_within_range && data_.parameter_cv_scale[i] > 16384;
+  //   settings_within_range = settings_within_range && data_.parameter_cv_offset[i] < 8000;
+  //   settings_within_range = settings_within_range && data_.parameter_cv_offset[i] > -8000;
   // }
   if (!settings_within_range) {
     Reset();
