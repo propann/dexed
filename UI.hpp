@@ -54,6 +54,11 @@ extern void braids_update_settings();
 #endif
 
 #ifdef USB_GAMEPAD
+elapsedMillis gamepad_millis;
+uint gamepad_speed = 180;
+int gamepad_accelerate;
+uint8_t gamepad_last_dir;
+
 uint8_t GAMEPAD_UP_0 = 127;
 uint8_t GAMEPAD_UP_1 = 0;
 
@@ -330,6 +335,8 @@ extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
 
+
+
 void sd_card_count_files_from_directory(File dir);
 void print_voice_select_default_help();
 
@@ -599,35 +606,31 @@ FLASHMEM void print_shortcut_navigator() {
     display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("S");
   display.setCursor(CHAR_width_small * 31, 29 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 5)
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 7)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("C");
   display.setCursor(CHAR_width_small * 32, 29 * (CHAR_height_small));
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 7)
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  else
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print("T");
+
+
+  display.setCursor(CHAR_width_small * 33, 29 * (CHAR_height_small));
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("P");
-  display.setCursor(CHAR_width_small * 33, 29 * (CHAR_height_small));
+  display.setCursor(CHAR_width_small * 34, 29 * (CHAR_height_small));
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay))
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("I");
-  display.setCursor(CHAR_width_small * 32, 28 * (CHAR_height_small));
-  //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_) )
-  //    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //  else
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("O");
-  display.setCursor(CHAR_width_small * 30, 28 * (CHAR_height_small));
-  //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_) )
-  //    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //  else
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("P");
 }
 
 FLASHMEM void print_song_mode_help() {
@@ -2202,32 +2205,152 @@ boolean gp_down() {
 }
 #endif
 
-void gamepad_speed_adjustments() {
-  // speed adjustments for various menus
-  if (LCDML.FUNC_getID() == 255)  //Main Menu
-    seq.gamepad_timer_speed = 1;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state)
-    seq.gamepad_timer_speed = 5;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false)
-    seq.gamepad_timer_speed = 2;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && seq.edit_state)
-    seq.gamepad_timer_speed = 3;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && seq.edit_state == false)
-    seq.gamepad_timer_speed = 1;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano))
-    seq.gamepad_timer_speed = 3;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-    seq.gamepad_timer_speed = 2;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids))
-    seq.gamepad_timer_speed = 3;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
-    seq.gamepad_timer_speed = 2;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
-    seq.gamepad_timer_speed = 2;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
-    seq.gamepad_timer_speed = 7;
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker))
-    seq.gamepad_timer_speed = 7;
+
+void gamepad_seq_navigation_func(uint32_t buttons) {
+  if (gamepad_millis > gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
+    seq.cycle_touch_element = 6;  // goto chain edit
+    seq.help_text_needs_refresh = true;
+    seq.edit_state = true;
+    print_chains_in_song_page();
+    print_patterns_in_song_page();
+    print_shortcut_navigator();
+    print_song_mode_help();
+    gamepad_millis = 0;
+  } else if ((seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) || (seq.cycle_touch_element == 7 && buttons == GAMEPAD_SELECT && gp_left())) {
+    seq.cycle_touch_element = 0;  // goto main song mode
+    seq.help_text_needs_refresh = true;
+    seq.edit_state = false;
+    print_chains_in_song_page();
+    print_patterns_in_song_page();
+    print_shortcut_navigator();
+    print_song_mode_help();
+    gamepad_millis = 0;
+  } else if ((seq.cycle_touch_element == 8 && buttons == GAMEPAD_SELECT && gp_left()) || (seq.cycle_touch_element == 9 && buttons == GAMEPAD_SELECT && gp_left())) {
+    seq.cycle_touch_element = 6;  // go back from transpose to chain
+    seq.help_text_needs_refresh = true;
+    seq.edit_state = true;
+    print_chains_in_song_page();
+    print_patterns_in_song_page();
+    print_shortcut_navigator();
+    print_song_mode_help();
+    gamepad_millis = 0;
+  } else if ((seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) || (seq.cycle_touch_element == 7 && buttons == GAMEPAD_SELECT && gp_right())) {
+    seq.cycle_touch_element = 8;  // goto transpose from chain
+    seq.help_text_needs_refresh = true;
+    seq.edit_state = true;
+    print_chains_in_song_page();
+    print_patterns_in_song_page();
+    print_shortcut_navigator();
+    print_song_mode_help();
+    gamepad_millis = 0;
+  } else if (seq.cycle_touch_element > 7 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
+    gamepad_millis = 0;
+    LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+  }
+}
+
+void gamepad_learn_func(uint32_t buttons) {
+  if (temp_int > 7) {
+    setCursor_textGrid_small(35, 3);
+    display.setTextColor(GREEN, COLOR_BACKGROUND);
+    display.print(F("READY ! "));
+    setCursor_textGrid_small(1, 17);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("GO BACK WITH ENC[L]"));
+    setCursor_textGrid_small(21, 17);
+    display.setTextColor(GREEN, COLOR_BACKGROUND);
+    display.print(F("AND TEST OUT YOUR GAMEPAD."));
+    setCursor_textGrid_small(1, 18);
+    display.print(F("ANY CHANGE TO GLOBALS, LIKE "));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(F("MASTER VOLUME "));
+    setCursor_textGrid_small(1, 19);
+    display.setTextColor(GREEN, COLOR_BACKGROUND);
+    display.print(F("WILL STORE YOUR CURRENT GAMEPAD SETTINGS."));
+  } else {
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(35, 3);
+    display.print(F("STEP "));
+    display.print(temp_int + 1);
+    display.print(F("/8  "));
+  }
+  if (temp_int == 0) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 0) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 6);
+  print_formatted_number(GAMEPAD_UP_0, 3);
+  setCursor_textGrid_small(20, 6);
+  print_formatted_number(GAMEPAD_UP_1, 3);
+
+  if (temp_int == 1) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 1) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 7);
+  print_formatted_number(GAMEPAD_DOWN_0, 3);
+  setCursor_textGrid_small(20, 7);
+  print_formatted_number(GAMEPAD_DOWN_1, 3);
+
+  if (temp_int == 2) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 2) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 8);
+  print_formatted_number(GAMEPAD_LEFT_0, 3);
+  setCursor_textGrid_small(20, 8);
+  print_formatted_number(GAMEPAD_LEFT_1, 3);
+
+  if (temp_int == 3) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 3) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 9);
+  print_formatted_number(GAMEPAD_RIGHT_0, 3);
+  setCursor_textGrid_small(20, 9);
+  print_formatted_number(GAMEPAD_RIGHT_1, 3);
+
+  if (temp_int == 4) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 4) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 11);
+  print_formatted_number(GAMEPAD_BUTTON_A, 3);
+  if (temp_int == 5) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 5) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 12);
+  print_formatted_number(GAMEPAD_BUTTON_B, 3);
+  if (temp_int == 6) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 6) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 14);
+  print_formatted_number(GAMEPAD_SELECT, 3);
+  if (temp_int == 7) display.setTextColor(RED, COLOR_BACKGROUND);
+  else if (temp_int > 7) display.setTextColor(GREEN, COLOR_BACKGROUND);
+  else display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(16, 15);
+  print_formatted_number(GAMEPAD_START, 3);
+  if (buttons != gamepad_buttons_neutral || joysticks[0].getAxis(0) != gamepad_0_neutral || joysticks[0].getAxis(1) != gamepad_1_neutral) {
+    if (temp_int == 0) {
+      GAMEPAD_UP_0 = joysticks[0].getAxis(0);
+      GAMEPAD_UP_1 = joysticks[0].getAxis(1);
+    } else if (temp_int == 1) {
+      GAMEPAD_DOWN_0 = joysticks[0].getAxis(0);
+      GAMEPAD_DOWN_1 = joysticks[0].getAxis(1);
+    } else if (temp_int == 2) {
+      GAMEPAD_LEFT_0 = joysticks[0].getAxis(0);
+      GAMEPAD_LEFT_1 = joysticks[0].getAxis(1);
+    } else if (temp_int == 3) {
+      GAMEPAD_RIGHT_0 = joysticks[0].getAxis(0);
+      GAMEPAD_RIGHT_1 = joysticks[0].getAxis(1);
+    } else if (temp_int == 4) {
+      GAMEPAD_BUTTON_A = buttons;
+    } else if (temp_int == 5) {
+      GAMEPAD_BUTTON_B = buttons;
+    } else if (temp_int == 6) {
+      GAMEPAD_SELECT = buttons;
+    } else if (temp_int == 7) {
+      GAMEPAD_START = buttons;
+    }
+    temp_int++;
+    gamepad_millis = 0;
+  }
 }
 
 /***********************************************************************
@@ -2318,264 +2441,151 @@ void lcdml_menu_control(void) {
   }
 #endif
 
-  if (seq.gamepad_timer > 2700) {
+  if (gamepad_millis + (gamepad_accelerate) >= gamepad_speed) {
 
+    //key-learn function
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad) && temp_int < 9) {
-      if (temp_int > 7) {
-        setCursor_textGrid_small(35, 3);
-        display.setTextColor(GREEN, COLOR_BACKGROUND);
-        display.print(F("READY ! "));
-        setCursor_textGrid_small(1, 17);
-        display.setTextColor(RED, COLOR_BACKGROUND);
-        display.print(F("GO BACK WITH ENC[L]"));
-        setCursor_textGrid_small(21, 17);
-        display.setTextColor(GREEN, COLOR_BACKGROUND);
-        display.print(F("AND TEST OUT YOUR GAMEPAD."));
-        setCursor_textGrid_small(1, 18);
-        display.print(F("ANY CHANGE TO GLOBALS, LIKE "));
-        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        display.print(F("MASTER VOLUME "));
-        setCursor_textGrid_small(1, 19);
-        display.setTextColor(GREEN, COLOR_BACKGROUND);
-        display.print(F("WILL STORE YOUR CURRENT GAMEPAD SETTINGS."));
-      } else {
-        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        setCursor_textGrid_small(35, 3);
-        display.print(F("STEP "));
-        display.print(temp_int + 1);
-        display.print(F("/8  "));
-      }
-      if (temp_int == 0) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 0) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 6);
-      print_formatted_number(GAMEPAD_UP_0, 3);
-      setCursor_textGrid_small(20, 6);
-      print_formatted_number(GAMEPAD_UP_1, 3);
-
-      if (temp_int == 1) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 1) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 7);
-      print_formatted_number(GAMEPAD_DOWN_0, 3);
-      setCursor_textGrid_small(20, 7);
-      print_formatted_number(GAMEPAD_DOWN_1, 3);
-
-      if (temp_int == 2) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 2) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 8);
-      print_formatted_number(GAMEPAD_LEFT_0, 3);
-      setCursor_textGrid_small(20, 8);
-      print_formatted_number(GAMEPAD_LEFT_1, 3);
-
-      if (temp_int == 3) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 3) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 9);
-      print_formatted_number(GAMEPAD_RIGHT_0, 3);
-      setCursor_textGrid_small(20, 9);
-      print_formatted_number(GAMEPAD_RIGHT_1, 3);
-
-      if (temp_int == 4) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 4) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 11);
-      print_formatted_number(GAMEPAD_BUTTON_A, 3);
-      if (temp_int == 5) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 5) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 12);
-      print_formatted_number(GAMEPAD_BUTTON_B, 3);
-      if (temp_int == 6) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 6) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 14);
-      print_formatted_number(GAMEPAD_SELECT, 3);
-      if (temp_int == 7) display.setTextColor(RED, COLOR_BACKGROUND);
-      else if (temp_int > 7) display.setTextColor(GREEN, COLOR_BACKGROUND);
-      else display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(16, 15);
-      print_formatted_number(GAMEPAD_START, 3);
-      if (buttons != gamepad_buttons_neutral || joysticks[0].getAxis(0) != gamepad_0_neutral || joysticks[0].getAxis(1) != gamepad_1_neutral) {
-        if (temp_int == 0) {
-          GAMEPAD_UP_0 = joysticks[0].getAxis(0);
-          GAMEPAD_UP_1 = joysticks[0].getAxis(1);
-        } else if (temp_int == 1) {
-          GAMEPAD_DOWN_0 = joysticks[0].getAxis(0);
-          GAMEPAD_DOWN_1 = joysticks[0].getAxis(1);
-        } else if (temp_int == 2) {
-          GAMEPAD_LEFT_0 = joysticks[0].getAxis(0);
-          GAMEPAD_LEFT_1 = joysticks[0].getAxis(1);
-        } else if (temp_int == 3) {
-          GAMEPAD_RIGHT_0 = joysticks[0].getAxis(0);
-          GAMEPAD_RIGHT_1 = joysticks[0].getAxis(1);
-        } else if (temp_int == 4) {
-          GAMEPAD_BUTTON_A = buttons;
-        } else if (temp_int == 5) {
-          GAMEPAD_BUTTON_B = buttons;
-        } else if (temp_int == 6) {
-          GAMEPAD_SELECT = buttons;
-        } else if (temp_int == 7) {
-          GAMEPAD_START = buttons;
-        }
-        temp_int++;
-        seq.gamepad_timer = 0;
-        //joysticks[0].joystickDataClear();
-      }
+      gamepad_learn_func(buttons);
     }
     // LSDJ Style Navigation:
-
     else if (buttons == GAMEPAD_SELECT && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
-      if (seq.gamepad_timer > 8000 && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
-        seq.cycle_touch_element = 6;  // goto chain edit
-        seq.help_text_needs_refresh = true;
-        //  seq.tracktype_or_instrument_assign = 0;
-        seq.edit_state = true;
-        print_chains_in_song_page();
-        print_patterns_in_song_page();
-        print_shortcut_navigator();
-        print_song_mode_help();
-        seq.gamepad_timer = 0;
-      } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) {
-        seq.cycle_touch_element = 0;  // goto pattern in song mode
-        seq.help_text_needs_refresh = true;
-        // seq.tracktype_or_instrument_assign = 0;
-        seq.edit_state = false;
-        print_chains_in_song_page();
-        print_patterns_in_song_page();
-        print_shortcut_navigator();
-        print_song_mode_help();
-        seq.gamepad_timer = 0;
-      } else if (seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
-        seq.gamepad_timer = 0;
-        LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-      }
+      gamepad_seq_navigation_func(buttons);
     } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
-      if (buttons == GAMEPAD_SELECT && gp_left()) {  // go to pattern editor
-        seq.cycle_touch_element = 6;
-        seq.tracktype_or_instrument_assign = 0;
+      if (buttons == GAMEPAD_SELECT && gp_left()) {  // go back to song-transpose
+        seq.help_text_needs_refresh = true;
         seq.edit_state = true;
-        seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor = true;
-        seq.gamepad_timer = 0;
+        seq.gamepad_jumped_back_from_pattern_editor = true;
+        gamepad_millis = 0;
         LCDML.OTHER_jumpToFunc(UI_func_song);
       }
     }
 
     else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
-      // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on that and the edit state of the field, this needs special handling for gamepad usage
-      if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.edit_state == false && LCDML.FUNC_getID() != 255) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.edit_state == false && LCDML.FUNC_getID() != 255) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) && seq.edit_state == false && LCDML.FUNC_getID() != 255)) {
-        if (gp_up() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 1;
-        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 1;
-        }
-        if (gp_right() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_L] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 1;
-        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_L] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 1;
-        }
-      } else if (seq.edit_state || generic_active_function != 0)  // is in edit state
-      {
-        if (gp_up() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        }
-        if (gp_right() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        }
-      } else if (LCDML.FUNC_getID() == 255)  //  main menu
-      {
-        if (gp_up() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        }
-        if (gp_right() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        }
-      } else if (LCDML.FUNC_getID() != 255 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_voice_select) && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_epiano) && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_microsynth)
-                 && LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_braids))  // is not in edit state and not in main menu and not in a instrument page
-      {
-        if (gp_up() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        }
-        if (gp_right() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        }
-      } else {
-        if (gp_up() && buttons == gamepad_buttons_neutral) {
+      bool reverse_y = false;
+      bool xy_navigation = false;
 
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        } else if (gp_down() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 254;
-        }
-        if (gp_right() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
-        } else if (gp_left() && buttons == gamepad_buttons_neutral) {
-          g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
-          seq.gamepad_timer = 0;
-          seq.gamepad_timer_speed = 45;
+      if (seq.edit_state || generic_active_function != 0)  // is in edit state
+        if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_song))
+          reverse_y = true;
+
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
+        if (seq.active_function != 99)
+          reverse_y = true;
+      }
+
+      if ((LCDML.FUNC_getID() > 1 && LCDML.FUNC_getID() < 58) || (LCDML.FUNC_getID() > 61 && LCDML.FUNC_getID() < 88))  //"1-line menus", reverse y
+      {
+        reverse_y = true;
+      }
+
+
+      // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on that and the edit state of the field, this needs special handling for gamepad usage
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker)) {
+
+        if (seq.edit_state) {
+          ;
+        } else {
+          xy_navigation = true;
         }
       }
+
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
+        if (seq.edit_state == false && seq.cycle_touch_element == 0) {
+          reverse_y = false;
+        } else if (seq.edit_state && seq.cycle_touch_element == 5) {
+          reverse_y = true;
+        } else if (seq.edit_state && seq.cycle_touch_element == 6) {
+          reverse_y = false;
+        } else if (seq.edit_state && seq.cycle_touch_element == 7) {
+          reverse_y = true;
+        } else if (seq.edit_state && seq.cycle_touch_element == 8) {
+          reverse_y = false;
+        } else if (seq.edit_state && seq.cycle_touch_element == 9) {
+          reverse_y = true;
+        }
+      }
+
+      // display.setCursor(1, 1 * 10);
+      // display.print(seq.edit_state);
+
+      // display.setCursor(1, 2 * 10);
+      // display.print(seq.active_function);
+      // display.setCursor(1, 3 * 10);
+      // display.print(seq.cycle_touch_element);
+
+      // display.setCursor(1, 4 * 10);
+      // display.print(reverse_y);
+
+      //if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.edit_state == false && seq.cycle_touch_element !=6) {
+
+
+      //   if ( (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element >5 )
+      //   ||    (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element <6 ))
+      //    {
+      //   reverse_y = false;
+      // }
+
+      // start gamepad cases
+
+      if (buttons == gamepad_buttons_neutral) {
+        if (gp_up()) {
+          if (reverse_y)
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          else
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          if (gamepad_last_dir == 1)
+            gamepad_accelerate = 1 + gamepad_accelerate * 1.4;
+          else
+            gamepad_accelerate = 0;
+          gamepad_millis = 0;
+          gamepad_last_dir = 1;
+        } else if (gp_down()) {
+          if (reverse_y)
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          else
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          if (gamepad_last_dir == 2)
+            gamepad_accelerate = 1 + gamepad_accelerate * 1.4;
+          else
+            gamepad_accelerate = 0;
+          gamepad_millis = 0;
+          gamepad_last_dir = 2;
+        } else if (gp_right()) {
+          if (xy_navigation)
+            g_LCDML_CONTROL_Encoder_position[ENC_L] = -4;
+          else
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = -4;
+          gamepad_accelerate = 0;
+          gamepad_millis = 0;
+        } else if (gp_left()) {
+          if (xy_navigation)
+            g_LCDML_CONTROL_Encoder_position[ENC_L] = 4;
+          else
+            g_LCDML_CONTROL_Encoder_position[ENC_R] = 4;
+          gamepad_millis = 0;
+          gamepad_accelerate = 0;
+        } else
+          gamepad_accelerate = 0;
+      }
+
+      //end gamepad cases
     }
+    if (gamepad_accelerate > gamepad_speed / 1.1)
+      gamepad_accelerate = gamepad_speed / 1.1;
+
     // GAMEPAD BUTTON HANDLING
 
     if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
-      if (buttons == GAMEPAD_BUTTON_B)
+      if (buttons == GAMEPAD_BUTTON_B) {
         button[ENC_L] = 0;
-      else if (buttons == GAMEPAD_BUTTON_A)
+        gamepad_accelerate = 0;
+      } else if (buttons == GAMEPAD_BUTTON_A) {
         button[ENC_R] = 0;
-      else if (buttons == GAMEPAD_START && seq.gamepad_timer > 4000) {
-        seq.gamepad_timer = 0;
-        seq.gamepad_timer_speed = 1;
+        gamepad_accelerate = 0;
+      } else if (buttons == GAMEPAD_START && gamepad_millis > 2999) {
+        gamepad_millis = 0;
+        gamepad_accelerate = 0;
+
         if (!seq.running)
           handleStart();
         else
@@ -2583,9 +2593,6 @@ void lcdml_menu_control(void) {
       }
     }
   }
-  gamepad_speed_adjustments();
-
-  seq.gamepad_timer = seq.gamepad_timer + seq.gamepad_timer_speed;
 
 #endif
 
@@ -10076,20 +10083,18 @@ void UI_func_song(uint8_t param) {
     seq.help_text_needs_refresh = true;
     seq.loop_edit_step = 0;
     temp_int = 0;
-
-    if (seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor == false) {
-      seq.cycle_touch_element = 0;
-      seq.edit_state = false;
-
-    } else
-      seq.gamepad_jumped_back_from_pattern_editor_to_chain_editor = false;
-
-    seq.menu = 0;
+    seq.cycle_touch_element = 0;
     display.fillScreen(COLOR_BACKGROUND);
-
     display.setTextSize(1);
+    if (seq.gamepad_jumped_back_from_pattern_editor == false) {
+      seq.edit_state = false;
+    } else {
+      seq.gamepad_jumped_back_from_pattern_editor = false;
+      print_patterns_in_song_page();
+      seq.cycle_touch_element = 8;
+    }
+    seq.menu = 0;
     UI_toplineInfoText(2);
-
     display.setCursor(1, 1);
     display.setTextColor(COLOR_SYSTEXT);
     display.print(F("SONG"));
@@ -10715,7 +10720,7 @@ void UI_func_arpeggio(uint8_t param) {
     seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextSize(1);
-    seq.active_function = 0;
+    seq.edit_state = false;
     setCursor_textGrid_large(1, 1);
     display.setTextColor(RED);
     display.print(F("ARPEGGIO SETTINGS"));
@@ -10748,7 +10753,7 @@ void UI_func_arpeggio(uint8_t param) {
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (LCDML.BT_checkDown()) {
-        if (seq.active_function == 0)
+        if (seq.edit_state == false)
           seq.temp_select_menu = constrain(seq.temp_select_menu + 1, 0, 4);
         else if (seq.temp_select_menu == 0)
           seq.arp_length = constrain(seq.arp_length + ENCODER[ENC_R].speed(), 0, 16);
@@ -10762,7 +10767,7 @@ void UI_func_arpeggio(uint8_t param) {
           seq.euclidean_active = !seq.euclidean_active;
 
       } else if (LCDML.BT_checkUp()) {
-        if (seq.active_function == 0)
+        if (seq.edit_state == false)
           seq.temp_select_menu = constrain(seq.temp_select_menu - 1, 0, 4);
         else if (seq.temp_select_menu == 0)
           seq.arp_length = constrain(seq.arp_length - ENCODER[ENC_R].speed(), 0, 16);
@@ -10778,14 +10783,14 @@ void UI_func_arpeggio(uint8_t param) {
     }
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
-      if (seq.active_function == 0)
-        seq.active_function = 1;
+      if (seq.edit_state == 0)
+        seq.edit_state = 1;
       else
-        seq.active_function = 0;
+        seq.edit_state = 0;
     }
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     show_euclidean();
-    if (seq.active_function == 0)
+    if (seq.edit_state == false)
       helptext_r("< > SELECT OPTION TO EDIT");
     else
       helptext_r("< > EDIT VALUE");
@@ -10855,7 +10860,7 @@ void UI_func_arpeggio(uint8_t param) {
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
     seq.menu = 0;
-    seq.active_function = 99;
+    seq.edit_state = false;
     encoderDir[ENC_R].reset();
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -14112,7 +14117,7 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
         else if (generic_temp_select_menu == 0)
           configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 1)
-          configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel + 1, 0, 160);
+          configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 2)
           configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 3)

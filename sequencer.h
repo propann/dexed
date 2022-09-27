@@ -52,9 +52,8 @@ static const float tune_frequencies2_PGM[128] = {
 };
 
 typedef struct sequencer_s {
-  int gamepad_timer;
-  uint8_t gamepad_timer_speed;
-  bool gamepad_jumped_back_from_pattern_editor_to_chain_editor;
+
+  bool gamepad_jumped_back_from_pattern_editor=false;
   bool euclidean_state[16];
   uint8_t euclidean_offset = 5;
   bool euclidean_active;

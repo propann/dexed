@@ -1346,14 +1346,6 @@ void setup() {
   gamepad_buttons_neutral = joysticks[0].getButtons();
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
-  seq.gamepad_timer_speed = 1;
-
-// #ifdef ONBOARD_BUTTON_INTERFACE
-//   gamepad_buttons_neutral = 0;
-//   gamepad_0_neutral = 0;
-//   gamepad_1_neutral = 0;
-// #endif
-
 #endif
 }
 
