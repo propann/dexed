@@ -2205,7 +2205,7 @@ boolean gp_down() {
 }
 #endif
 
-
+#ifdef USB_GAMEPAD
 void gamepad_seq_navigation_func(uint32_t buttons) {
   if (gamepad_millis > gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
     seq.cycle_touch_element = 6;  // goto chain edit
@@ -2352,6 +2352,7 @@ void gamepad_learn_func(uint32_t buttons) {
     gamepad_millis = 0;
   }
 }
+#endif
 
 /***********************************************************************
    MENU CONTROL
