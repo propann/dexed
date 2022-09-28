@@ -199,7 +199,6 @@ extern AudioRecordQueue record_queue_r;
 extern char filename[CONFIG_FILENAME_LEN];
 extern void psram_test();
 void draw_euclidean_circle();
-extern void draw_menu_ui_icons();
 #ifdef USB_GAMEPAD
 extern JoystickController joysticks[];
 extern void USB_GAMEPAD_stats();
@@ -520,6 +519,7 @@ void UI_func_save_performance(uint8_t param);
 void UI_func_save_voice(uint8_t param);
 void UI_func_midi_soft_thru(uint8_t param);
 void UI_func_midi_channels(uint8_t param);
+void UI_func_misc_settings(uint8_t param);
 void UI_func_velocity_level(uint8_t param);
 void UI_func_voice_select(uint8_t param);
 void UI_func_sysex_send_voice(uint8_t param);
@@ -14197,6 +14197,172 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
     setModeColor(8);
     setCursor_textGrid(20, 11);
     _print_midi_channel(drum_midi_channel);
+  }
+  // ****** STABLE END *********
+  if (LCDML.FUNC_close()) {
+    generic_active_function = 99;
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+FLASHMEM void UI_func_misc_settings(uint8_t param) {
+  if (LCDML.FUNC_setup()) {
+    // char buf[16];
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    generic_active_function = 0;
+    generic_temp_select_menu = 0;
+    display.setTextSize(2);
+    setCursor_textGrid(1, 1);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("MISC. SETTINGS"));
+    helptext_l("BACK");
+    helptext_r("SELECT PARAMETER");
+    display.setTextSize(1);
+
+    draw_button_on_grid(42, 1, "TOUCH", "TEST", 0);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(2, 7);
+    display.print(F("GAMEPAD/NATIVE KEY SPEED"));
+    setCursor_textGrid_small(2, 8);
+    display.print(F("GAMEPAD/NATIVE KEY ACCELERATION"));
+    setCursor_textGrid_small(2, 9);
+    display.print(F("DISPLAY ROTATION"));
+    setCursor_textGrid_small(2, 10);
+    display.print(F("TOUCH SCREEN ROTATION"));
+    setCursor_textGrid_small(2, 11);
+    display.print(F("REVERSE UI (ENCODERS ON TOP)"));
+    setCursor_textGrid_small(2, 12);
+
+    setCursor_textGrid_small(42, 7);
+    display.print(F("200ms"));
+    setCursor_textGrid_small(42, 8);
+    display.print(F("x 1.5"));
+    setCursor_textGrid_small(42, 9);
+    display.print(F("0"));
+    setCursor_textGrid_small(42, 10);
+    display.print(F("0"));
+    setCursor_textGrid_small(42, 11);
+    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    display.print(F("OFF"));
+    setCursor_textGrid_small(42, 12);
+
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    setCursor_textGrid_small(2, 20);
+    display.print(F("TEMPLATE MENU - NOT IMPLEMENTED, YET"));
+    setCursor_textGrid_small(2, 21);
+    display.print(F("WRITE YOU CHRISTMAS WISH(ES) ON DISCORD"));
+    // for (uint8_t i = 0; i < 2; i++) {
+    //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("Dexed #"), i + 1);
+    //   _show_midi_channel(buf, 3 + i, configuration.dexed[i].midi_channel);
+    // }
+
+    // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("E-Piano"));
+    // _show_midi_channel(buf, 5, configuration.epiano.midi_channel);
+
+    // for (uint8_t i = 0; i < 2; i++) {
+    //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MicroSynth #"), i + 1);
+    //   _show_midi_channel(buf, 6 + i, microsynth[i].midi_channel);
+    // }
+
+    // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Braids"));
+    // _show_midi_channel(buf, 8, braids_osc.midi_channel);
+
+    // for (uint8_t i = 0; i < 2; i++) {
+    //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MultiSample #"), i + 1);
+    //   _show_midi_channel(buf, 9 + i, ms[i].midi_channel);
+    // }
+
+    // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Drums"));
+    // _show_midi_channel(buf, 11, drum_midi_channel);
+  }
+  if (LCDML.FUNC_loop()) {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      if (LCDML.BT_checkDown()) {
+        // if (generic_active_function == 0)
+        //   generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 8);
+        // else if (generic_temp_select_menu == 0)
+        //   configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 1)
+        //   configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 2)
+        //   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 3)
+        //   microsynth[0].midi_channel = constrain(microsynth[0].midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 4)
+        //   microsynth[1].midi_channel = constrain(microsynth[1].midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 5)
+        //   braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 6)
+        //   ms[0].midi_channel = constrain(ms[0].midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 7)
+        //   ms[1].midi_channel = constrain(ms[1].midi_channel + 1, 0, 16);
+        // else if (generic_temp_select_menu == 8)
+        //   drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
+
+      } else if (LCDML.BT_checkUp()) {
+        // if (generic_active_function == 0)
+        //   generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 8);
+        // else if (generic_temp_select_menu == 0)
+        //   configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 1)
+        //   configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel - 1, 0, 160);
+        // else if (generic_temp_select_menu == 2)
+        //   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 3)
+        //   microsynth[0].midi_channel = constrain(microsynth[0].midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 4)
+        //   microsynth[1].midi_channel = constrain(microsynth[1].midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 5)
+        //   braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 6)
+        //   ms[0].midi_channel = constrain(ms[0].midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 7)
+        //   ms[1].midi_channel = constrain(ms[1].midi_channel - 1, 0, 16);
+        // else if (generic_temp_select_menu == 8)
+        //   drum_midi_channel = constrain(drum_midi_channel - 1, 0, 16);
+      }
+    }
+
+    //handle button presses during menu
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
+      if (generic_active_function == 0)
+        generic_active_function = 1;
+      else
+        generic_active_function = 0;
+    } else if (LCDML.BT_checkEnter()) {
+      ;
+    }
+
+    //button check end
+    // setModeColor(0);
+    // setCursor_textGrid(20, 3);
+    // _print_midi_channel(configuration.dexed[0].midi_channel);
+    // setModeColor(1);
+    // setCursor_textGrid(20, 4);
+    // _print_midi_channel(configuration.dexed[1].midi_channel);
+    // setModeColor(2);
+    // setCursor_textGrid(20, 5);
+    // _print_midi_channel(configuration.epiano.midi_channel);
+    // setModeColor(3);
+    // setCursor_textGrid(20, 6);
+    // _print_midi_channel(microsynth[0].midi_channel);
+    // setModeColor(4);
+    // setCursor_textGrid(20, 7);
+    // _print_midi_channel(microsynth[1].midi_channel);
+    // setModeColor(5);
+    // setCursor_textGrid(20, 8);
+    // _print_midi_channel(braids_osc.midi_channel);
+    // setModeColor(6);
+    // setCursor_textGrid(20, 9);
+    // _print_midi_channel(ms[0].midi_channel);
+    // setModeColor(7);
+    // setCursor_textGrid(20, 10);
+    // _print_midi_channel(ms[1].midi_channel);
+    // setModeColor(8);
+    // setCursor_textGrid(20, 11);
+    // _print_midi_channel(drum_midi_channel);
   }
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
