@@ -199,6 +199,7 @@ extern AudioRecordQueue record_queue_r;
 extern char filename[CONFIG_FILENAME_LEN];
 extern void psram_test();
 void draw_euclidean_circle();
+extern void draw_menu_ui_icons();
 #ifdef USB_GAMEPAD
 extern JoystickController joysticks[];
 extern void USB_GAMEPAD_stats();
@@ -2583,7 +2584,7 @@ void lcdml_menu_control(void) {
       } else if (buttons == GAMEPAD_BUTTON_A) {
         button[ENC_R] = 0;
         gamepad_accelerate = 0;
-      } else if (buttons == GAMEPAD_START && gamepad_millis > 2999) {
+      } else if (buttons == GAMEPAD_START && gamepad_millis >= gamepad_speed * 3) {
         gamepad_millis = 0;
         gamepad_accelerate = 0;
 
@@ -12888,9 +12889,9 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 6)  //reverb send selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].rev = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rev + 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rev = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rev + ENCODER[ENC_R].speed(), 0, 100);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].rev = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rev - 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rev = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rev - ENCODER[ENC_R].speed(), 0, 100);
         }
       } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 5)  //pan selection
       {
@@ -12902,9 +12903,9 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 4)  //volume selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].vol = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].vol + 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].vol = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].vol + ENCODER[ENC_R].speed(), 0, 100);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].vol = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].vol - 1, 0, 100);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].vol = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].vol - ENCODER[ENC_R].speed(), 0, 100);
         }
       } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 3)  //playmode selection
       {
@@ -14393,9 +14394,9 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
       if (!seq.edit_state)  //select channel
       {
         if (LCDML.BT_checkDown())
-          seq.temp_active_menu = constrain(seq.temp_active_menu + 1, 0, 9);
+          seq.temp_active_menu = constrain(seq.temp_active_menu + 1, 0, 10);
         else if (LCDML.BT_checkUp())
-          seq.temp_active_menu = constrain(seq.temp_active_menu - 1, 0, 9);
+          seq.temp_active_menu = constrain(seq.temp_active_menu - 1, 0, 10);
       } else {
         if (seq.temp_active_menu < 2)  //dexed instance #0 or #1
         {

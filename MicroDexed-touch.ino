@@ -3239,6 +3239,9 @@ void handleStart(void) {
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
     print_arp_start_stop_button();
   }
+ else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)  // when in main menu
+  draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
+
 }
 
 void handleContinue(void) {
@@ -3309,6 +3312,8 @@ void handleStop(void) {
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
     print_arp_start_stop_button();
   }
+  else  if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)  // when in main menu
+            draw_button_on_grid(45, 18, "SEQ.", "START", 1);
 }
 
 void handleActiveSensing(void) {
