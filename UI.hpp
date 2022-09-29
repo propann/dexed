@@ -9090,8 +9090,8 @@ void microsynth_refresh_lower_screen_dynamic_text() {
   print_small_intbar(5, 15, microsynth[microsynth_selected_instance].filter_osc_resonance, 11, 0, 1);
   print_small_intbar(15, 15, microsynth[microsynth_selected_instance].filter_osc_speed / 10, 12, 0, 1);
 
-  print_small_intbar(9, 17, microsynth[microsynth_selected_instance].pwm_from, 13, 0, 1);
-  print_small_intbar(15, 17, microsynth[microsynth_selected_instance].pwm_to, 14, 0, 1);
+  print_small_intbar(9, 17, microsynth[microsynth_selected_instance].pwm_from / 10, 13, 0, 1);
+  print_small_intbar(15, 17, microsynth[microsynth_selected_instance].pwm_to / 10, 14, 0, 1);
 
   setCursor_textGrid_small(10, 18);
   setModeColor(15);
@@ -9562,142 +9562,142 @@ void UI_func_microsynth(uint8_t param) {
         if (generic_active_function == 0)
           generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 32);
         else if (generic_temp_select_menu == 0)
-          microsynth[microsynth_selected_instance].sound_intensity = constrain(microsynth[microsynth_selected_instance].sound_intensity + 1, 0, 100);
+          microsynth[microsynth_selected_instance].sound_intensity = constrain(microsynth[microsynth_selected_instance].sound_intensity + ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 1) {
           microsynth[microsynth_selected_instance].wave = constrain(microsynth[microsynth_selected_instance].wave + 1, 0, 8);
           update_pwm_text();
         } else if (generic_temp_select_menu == 2)
           microsynth[microsynth_selected_instance].coarse = constrain(microsynth[microsynth_selected_instance].coarse + 1, -36, 36);
         else if (generic_temp_select_menu == 3)
-          microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune + 1, -99, 99);
+          microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune + ENCODER[ENC_R].speed(), -99, 99);
         else if (generic_temp_select_menu == 4)
-          microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack + 1, 0, 254);
+          microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack + ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 5)
-          microsynth[microsynth_selected_instance].env_decay = constrain(microsynth[microsynth_selected_instance].env_decay + 1, 0, 254);
+          microsynth[microsynth_selected_instance].env_decay = constrain(microsynth[microsynth_selected_instance].env_decay + ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 6)
-          microsynth[microsynth_selected_instance].env_sustain = constrain(microsynth[microsynth_selected_instance].env_sustain + 1, 0, 50);
+          microsynth[microsynth_selected_instance].env_sustain = constrain(microsynth[microsynth_selected_instance].env_sustain + ENCODER[ENC_R].speed(), 0, 50);
         else if (generic_temp_select_menu == 7)
-          microsynth[microsynth_selected_instance].env_release = constrain(microsynth[microsynth_selected_instance].env_release + 1, 0, 99);
+          microsynth[microsynth_selected_instance].env_release = constrain(microsynth[microsynth_selected_instance].env_release + ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 8)
           microsynth[microsynth_selected_instance].filter_osc_mode = constrain(microsynth[microsynth_selected_instance].filter_osc_mode + 1, 0, 3);
         else if (generic_temp_select_menu == 9)
-          microsynth[microsynth_selected_instance].filter_osc_freq_from = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_from + 80, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_osc_freq_from = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_from + ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 10)
-          microsynth[microsynth_selected_instance].filter_osc_freq_to = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_to + 80, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_osc_freq_to = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_to + ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 11)
-          microsynth[microsynth_selected_instance].filter_osc_resonance = constrain(microsynth[microsynth_selected_instance].filter_osc_resonance + 1, 0, 99);
+          microsynth[microsynth_selected_instance].filter_osc_resonance = constrain(microsynth[microsynth_selected_instance].filter_osc_resonance + ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 12)
-          microsynth[microsynth_selected_instance].filter_osc_speed = constrain(microsynth[microsynth_selected_instance].filter_osc_speed + 5, 0, 999);
+          microsynth[microsynth_selected_instance].filter_osc_speed = constrain(microsynth[microsynth_selected_instance].filter_osc_speed + 5 + ENCODER[ENC_R].speed(), 0, 999);
         else if (generic_temp_select_menu == 13)
-          microsynth[microsynth_selected_instance].pwm_from = constrain(microsynth[microsynth_selected_instance].pwm_from + 5, 0, 999);
+          microsynth[microsynth_selected_instance].pwm_from = constrain(microsynth[microsynth_selected_instance].pwm_from + ENCODER[ENC_R].speed() * 4, 0, 999);
         else if (generic_temp_select_menu == 14)
-          microsynth[microsynth_selected_instance].pwm_to = constrain(microsynth[microsynth_selected_instance].pwm_to + 5, 0, 999);
+          microsynth[microsynth_selected_instance].pwm_to = constrain(microsynth[microsynth_selected_instance].pwm_to + ENCODER[ENC_R].speed() * 4, 0, 999);
         else if (generic_temp_select_menu == 15)
-          microsynth[microsynth_selected_instance].pwm_speed = constrain(microsynth[microsynth_selected_instance].pwm_speed + 1, 0, 99);
+          microsynth[microsynth_selected_instance].pwm_speed = constrain(microsynth[microsynth_selected_instance].pwm_speed + ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 16)
-          microsynth[microsynth_selected_instance].noise_vol = constrain(microsynth[microsynth_selected_instance].noise_vol + 1, 0, 100);
+          microsynth[microsynth_selected_instance].noise_vol = constrain(microsynth[microsynth_selected_instance].noise_vol + ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 17)
-          microsynth[microsynth_selected_instance].noise_decay = constrain(microsynth[microsynth_selected_instance].noise_decay + 1, 0, 100);
+          microsynth[microsynth_selected_instance].noise_decay = constrain(microsynth[microsynth_selected_instance].noise_decay + ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 18)
           microsynth[microsynth_selected_instance].trigger_noise_with_osc = !microsynth[microsynth_selected_instance].trigger_noise_with_osc;
         else if (generic_temp_select_menu == 19)
           microsynth[microsynth_selected_instance].filter_noise_mode = constrain(microsynth[microsynth_selected_instance].filter_noise_mode + 1, 0, 3);
         else if (generic_temp_select_menu == 20)
-          microsynth[microsynth_selected_instance].filter_noise_freq_from = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_from + 100, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_noise_freq_from = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_from + ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 21)
-          microsynth[microsynth_selected_instance].filter_noise_freq_to = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_to + 100, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_noise_freq_to = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_to + ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 22)
-          microsynth[microsynth_selected_instance].filter_noise_resonance = constrain(microsynth[microsynth_selected_instance].filter_noise_resonance + 1, 0, 99);
+          microsynth[microsynth_selected_instance].filter_noise_resonance = constrain(microsynth[microsynth_selected_instance].filter_noise_resonance + ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 23)
-          microsynth[microsynth_selected_instance].filter_noise_speed = constrain(microsynth[microsynth_selected_instance].filter_noise_speed + 6, 0, 999);
+          microsynth[microsynth_selected_instance].filter_noise_speed = constrain(microsynth[microsynth_selected_instance].filter_noise_speed + ENCODER[ENC_R].speed() * 2, 0, 999);
         else if (generic_temp_select_menu == 24)
-          microsynth[microsynth_selected_instance].lfo_intensity = constrain(microsynth[microsynth_selected_instance].lfo_intensity + 1, 0, 254);
+          microsynth[microsynth_selected_instance].lfo_intensity = constrain(microsynth[microsynth_selected_instance].lfo_intensity + ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 25)
           microsynth[microsynth_selected_instance].lfo_mode = constrain(microsynth[microsynth_selected_instance].lfo_mode + 1, 0, 2);
         else if (generic_temp_select_menu == 26)
-          microsynth[microsynth_selected_instance].lfo_delay = constrain(microsynth[microsynth_selected_instance].lfo_delay + 1, 0, 254);
+          microsynth[microsynth_selected_instance].lfo_delay = constrain(microsynth[microsynth_selected_instance].lfo_delay + ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 27)
-          microsynth[microsynth_selected_instance].lfo_speed = constrain(microsynth[microsynth_selected_instance].lfo_speed + 1, 0, 254);
+          microsynth[microsynth_selected_instance].lfo_speed = constrain(microsynth[microsynth_selected_instance].lfo_speed + ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 28)
-          microsynth[microsynth_selected_instance].rev_send = constrain(microsynth[microsynth_selected_instance].rev_send + 1, 0, 127);
+          microsynth[microsynth_selected_instance].rev_send = constrain(microsynth[microsynth_selected_instance].rev_send + ENCODER[ENC_R].speed(), ENCODER[ENC_R].speed(), 127);
         else if (generic_temp_select_menu == 29)
-          microsynth[microsynth_selected_instance].chorus_send = constrain(microsynth[microsynth_selected_instance].chorus_send + 1, 0, 127);
+          microsynth[microsynth_selected_instance].chorus_send = constrain(microsynth[microsynth_selected_instance].chorus_send + ENCODER[ENC_R].speed(), 0, 127);
         else if (generic_temp_select_menu == 30)
-          microsynth[microsynth_selected_instance].delay_send = constrain(microsynth[microsynth_selected_instance].delay_send + 1, 0, 127);
+          microsynth[microsynth_selected_instance].delay_send = constrain(microsynth[microsynth_selected_instance].delay_send + ENCODER[ENC_R].speed(), 0, 127);
         else if (generic_temp_select_menu == 31)
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         else if (generic_temp_select_menu == 32)
-          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel + 1, 1, 15);
+          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel + 1, 0, 16);
       } else if (LCDML.BT_checkUp()) {
         if (generic_active_function == 0)
           generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 32);
         else if (generic_temp_select_menu == 0)
-          microsynth[microsynth_selected_instance].sound_intensity = constrain(microsynth[microsynth_selected_instance].sound_intensity - 1, 0, 100);
+          microsynth[microsynth_selected_instance].sound_intensity = constrain(microsynth[microsynth_selected_instance].sound_intensity - ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 1) {
           microsynth[microsynth_selected_instance].wave = constrain(microsynth[microsynth_selected_instance].wave - 1, 0, 8);
           update_pwm_text();
         } else if (generic_temp_select_menu == 2)
           microsynth[microsynth_selected_instance].coarse = constrain(microsynth[microsynth_selected_instance].coarse - 1, -36, 36);
         else if (generic_temp_select_menu == 3)
-          microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune - 1, -99, 99);
+          microsynth[microsynth_selected_instance].detune = constrain(microsynth[microsynth_selected_instance].detune - ENCODER[ENC_R].speed(), -99, 99);
         else if (generic_temp_select_menu == 4)
-          microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack - 1, 0, 254);
+          microsynth[microsynth_selected_instance].env_attack = constrain(microsynth[microsynth_selected_instance].env_attack - ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 5)
-          microsynth[microsynth_selected_instance].env_decay = constrain(microsynth[microsynth_selected_instance].env_decay - 1, 0, 254);
+          microsynth[microsynth_selected_instance].env_decay = constrain(microsynth[microsynth_selected_instance].env_decay - ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 6)
           microsynth[microsynth_selected_instance].env_sustain = constrain(microsynth[microsynth_selected_instance].env_sustain - 1, 0, 50);
         else if (generic_temp_select_menu == 7)
-          microsynth[microsynth_selected_instance].env_release = constrain(microsynth[microsynth_selected_instance].env_release - 1, 0, 99);
+          microsynth[microsynth_selected_instance].env_release = constrain(microsynth[microsynth_selected_instance].env_release - ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 8)
           microsynth[microsynth_selected_instance].filter_osc_mode = constrain(microsynth[microsynth_selected_instance].filter_osc_mode - 1, 0, 3);
         else if (generic_temp_select_menu == 9)
-          microsynth[microsynth_selected_instance].filter_osc_freq_from = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_from - 80, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_osc_freq_from = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_from - ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 10)
-          microsynth[microsynth_selected_instance].filter_osc_freq_to = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_to - 80, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_osc_freq_to = constrain(microsynth[microsynth_selected_instance].filter_osc_freq_to - ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 11)
-          microsynth[microsynth_selected_instance].filter_osc_resonance = constrain(microsynth[microsynth_selected_instance].filter_osc_resonance - 1, 0, 99);
+          microsynth[microsynth_selected_instance].filter_osc_resonance = constrain(microsynth[microsynth_selected_instance].filter_osc_resonance - ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 12)
-          microsynth[microsynth_selected_instance].filter_osc_speed = constrain(microsynth[microsynth_selected_instance].filter_osc_speed - 6, 0, 999);
+          microsynth[microsynth_selected_instance].filter_osc_speed = constrain(microsynth[microsynth_selected_instance].filter_osc_speed - ENCODER[ENC_R].speed(), 0, 999);
         else if (generic_temp_select_menu == 13)
-          microsynth[microsynth_selected_instance].pwm_from = constrain(microsynth[microsynth_selected_instance].pwm_from - 5, 0, 999);
+          microsynth[microsynth_selected_instance].pwm_from = constrain(microsynth[microsynth_selected_instance].pwm_from - ENCODER[ENC_R].speed() * 4, 0, 999);
         else if (generic_temp_select_menu == 14)
-          microsynth[microsynth_selected_instance].pwm_to = constrain(microsynth[microsynth_selected_instance].pwm_to - 5, 0, 999);
+          microsynth[microsynth_selected_instance].pwm_to = constrain(microsynth[microsynth_selected_instance].pwm_to - ENCODER[ENC_R].speed() * 4, 0, 999);
         else if (generic_temp_select_menu == 15)
-          microsynth[microsynth_selected_instance].pwm_speed = constrain(microsynth[microsynth_selected_instance].pwm_speed - 1, 0, 99);
+          microsynth[microsynth_selected_instance].pwm_speed = constrain(microsynth[microsynth_selected_instance].pwm_speed - ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 16)
-          microsynth[microsynth_selected_instance].noise_vol = constrain(microsynth[microsynth_selected_instance].noise_vol - 1, 0, 100);
+          microsynth[microsynth_selected_instance].noise_vol = constrain(microsynth[microsynth_selected_instance].noise_vol - ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 17)
-          microsynth[microsynth_selected_instance].noise_decay = constrain(microsynth[microsynth_selected_instance].noise_decay - 1, 0, 100);
+          microsynth[microsynth_selected_instance].noise_decay = constrain(microsynth[microsynth_selected_instance].noise_decay - ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 18)
           microsynth[microsynth_selected_instance].trigger_noise_with_osc = !microsynth[microsynth_selected_instance].trigger_noise_with_osc;
         else if (generic_temp_select_menu == 19)
           microsynth[microsynth_selected_instance].filter_noise_mode = constrain(microsynth[microsynth_selected_instance].filter_noise_mode - 1, 0, 3);
         else if (generic_temp_select_menu == 20)
-          microsynth[microsynth_selected_instance].filter_noise_freq_from = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_from - 100, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_noise_freq_from = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_from - ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 21)
-          microsynth[microsynth_selected_instance].filter_noise_freq_to = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_to - 100, 0, 15000);
+          microsynth[microsynth_selected_instance].filter_noise_freq_to = constrain(microsynth[microsynth_selected_instance].filter_noise_freq_to - ENCODER[ENC_R].speed() * 40, 0, 15000);
         else if (generic_temp_select_menu == 22)
-          microsynth[microsynth_selected_instance].filter_noise_resonance = constrain(microsynth[microsynth_selected_instance].filter_noise_resonance - 1, 0, 99);
+          microsynth[microsynth_selected_instance].filter_noise_resonance = constrain(microsynth[microsynth_selected_instance].filter_noise_resonance - ENCODER[ENC_R].speed(), 0, 99);
         else if (generic_temp_select_menu == 23)
-          microsynth[microsynth_selected_instance].filter_noise_speed = constrain(microsynth[microsynth_selected_instance].filter_noise_speed - 6, 0, 999);
+          microsynth[microsynth_selected_instance].filter_noise_speed = constrain(microsynth[microsynth_selected_instance].filter_noise_speed - ENCODER[ENC_R].speed() * 2, 0, 999);
         else if (generic_temp_select_menu == 24)
-          microsynth[microsynth_selected_instance].lfo_intensity = constrain(microsynth[microsynth_selected_instance].lfo_intensity - 1, 0, 254);
+          microsynth[microsynth_selected_instance].lfo_intensity = constrain(microsynth[microsynth_selected_instance].lfo_intensity - ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 25)
           microsynth[microsynth_selected_instance].lfo_mode = constrain(microsynth[microsynth_selected_instance].lfo_mode - 1, 0, 2);
         else if (generic_temp_select_menu == 26)
-          microsynth[microsynth_selected_instance].lfo_delay = constrain(microsynth[microsynth_selected_instance].lfo_delay - 1, 0, 254);
+          microsynth[microsynth_selected_instance].lfo_delay = constrain(microsynth[microsynth_selected_instance].lfo_delay - ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 27)
-          microsynth[microsynth_selected_instance].lfo_speed = constrain(microsynth[microsynth_selected_instance].lfo_speed - 1, 0, 254);
+          microsynth[microsynth_selected_instance].lfo_speed = constrain(microsynth[microsynth_selected_instance].lfo_speed - ENCODER[ENC_R].speed(), 0, 254);
         else if (generic_temp_select_menu == 28)
-          microsynth[microsynth_selected_instance].rev_send = constrain(microsynth[microsynth_selected_instance].rev_send - 1, 0, 127);
+          microsynth[microsynth_selected_instance].rev_send = constrain(microsynth[microsynth_selected_instance].rev_send - ENCODER[ENC_R].speed(), 0, 127);
         else if (generic_temp_select_menu == 29)
-          microsynth[microsynth_selected_instance].chorus_send = constrain(microsynth[microsynth_selected_instance].chorus_send - 1, 0, 127);
+          microsynth[microsynth_selected_instance].chorus_send = constrain(microsynth[microsynth_selected_instance].chorus_send - ENCODER[ENC_R].speed(), 0, 127);
         else if (generic_temp_select_menu == 30)
-          microsynth[microsynth_selected_instance].delay_send = constrain(microsynth[microsynth_selected_instance].delay_send - 1, 0, 127);
+          microsynth[microsynth_selected_instance].delay_send = constrain(microsynth[microsynth_selected_instance].delay_send - ENCODER[ENC_R].speed(), 0, 127);
         else if (generic_temp_select_menu == 31)
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan - 1, PANORAMA_MIN, PANORAMA_MAX);
         else if (generic_temp_select_menu == 32)
-          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel - 1, 1, 15);
+          microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel - 1, 0, 16);
       }
     }
 
