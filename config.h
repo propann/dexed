@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.5"
+#define VERSION "1.4.6.6"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -133,7 +133,7 @@
 //*************************************************************************************************
 
 #define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
-//#define COMPILE_FOR_FLASH   // this is the intended configuration, with SPI FLASH chip
+//#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 //#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
 
@@ -933,6 +933,8 @@ typedef struct microsynth_s {
   uint8_t rev_send;
   uint8_t chorus_send;
   uint8_t delay_send;
+  uint8_t vel_mod_filter_osc = 0;
+  uint8_t vel_mod_filter_noise = 0;
 } microsynth_t;
 #endif
 

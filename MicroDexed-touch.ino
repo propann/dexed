@@ -2132,12 +2132,12 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
         if (microsynth[instance_id].midi_channel == MIDI_CHANNEL_OMNI || microsynth[instance_id].midi_channel == inChannel) {
           if (inNumber == MIDI_C8)  // is noise only, mute osc
           {
-            microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
+            microsynth_noise[instance_id].amplitude((microsynth[instance_id].noise_vol / 127.0) * inVelocity / 127);
             microsynth_envelope_noise[instance_id].noteOn();
             microsynth_waveform[instance_id].amplitude(0);
           } else {
             if (microsynth[instance_id].trigger_noise_with_osc) {
-              microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
+              microsynth_noise[instance_id].amplitude((microsynth[instance_id].noise_vol / 127) * inVelocity);
               microsynth_envelope_noise[instance_id].noteOn();
               microsynth_waveform[instance_id].amplitude(mapfloat(
                 ((microsynth[instance_id].sound_intensity / 127.0) * inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
@@ -2151,10 +2151,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
             microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
             microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
           }
-          microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
-          microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from;
-          microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
-          microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from;
+          microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_osc / 4.1)));
+          microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_osc / 4.1));
+          microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_noise / 4.1)));
+          microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_noise / 4.1));
 
           float noteFreq = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse];
           float tunedFreq = 0;
@@ -3238,10 +3238,8 @@ void handleStart(void) {
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
     print_arp_start_stop_button();
-  }
- else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)  // when in main menu
-  draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
-
+  } else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)  // when in main menu
+    draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
 }
 
 void handleContinue(void) {
@@ -3311,9 +3309,8 @@ void handleStop(void) {
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
     print_arp_start_stop_button();
-  }
-  else  if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)  // when in main menu
-            draw_button_on_grid(45, 18, "SEQ.", "START", 1);
+  } else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)  // when in main menu
+    draw_button_on_grid(45, 18, "SEQ.", "START", 1);
 }
 
 void handleActiveSensing(void) {

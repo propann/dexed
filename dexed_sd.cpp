@@ -997,6 +997,7 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
         microsynth[instance_id].filter_noise_freq_from = data_json["filter_noise_freq_from"];
         microsynth[instance_id].filter_noise_freq_to = data_json["filter_noise_freq_to"];
         microsynth[instance_id].filter_noise_speed = data_json["filter_noise_speed"];
+        microsynth[instance_id].filter_noise_mode = data_json["filter_noise_mode"];
         microsynth[instance_id].pwm_from = data_json["pwm_from"];
         microsynth[instance_id].pwm_to = data_json["pwm_to"];
         microsynth[instance_id].pwm_speed = data_json["pwm_speed"];
@@ -1005,6 +1006,8 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
         microsynth[instance_id].delay_send = data_json["delay_send"];
         microsynth[instance_id].midi_channel = data_json["midi_channel"];
         microsynth[instance_id].pan = data_json["pan"];
+        microsynth[instance_id].vel_mod_filter_osc = data_json["vel_mod_filter_osc"];
+        microsynth[instance_id].vel_mod_filter_noise = data_json["vel_mod_filter_noise"];
 
         microsynth_update_settings(instance_id);
 
@@ -1066,6 +1069,7 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
       data_json["noise_decay"] = microsynth[instance_id].noise_decay;
       data_json["filter_noise_freq_from"] = microsynth[instance_id].filter_noise_freq_from;
       data_json["filter_noise_freq_to"] = microsynth[instance_id].filter_noise_freq_to;
+      data_json["filter_noise_mode"] = microsynth[instance_id].filter_noise_mode;
       data_json["filter_noise_speed"] = microsynth[instance_id].filter_noise_speed;
       data_json["pwm_from"] = microsynth[instance_id].pwm_from;
       data_json["pwm_to"] = microsynth[instance_id].pwm_to;
@@ -1075,6 +1079,8 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
       data_json["delay_send"] = microsynth[instance_id].delay_send;
       data_json["midi_channel"] = microsynth[instance_id].midi_channel;
       data_json["pan"] = microsynth[instance_id].pan;
+      data_json["vel_mod_filter_osc"] = microsynth[instance_id].vel_mod_filter_osc;
+      data_json["vel_mod_filter_noise"] = microsynth[instance_id].vel_mod_filter_noise;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));

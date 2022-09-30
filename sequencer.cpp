@@ -304,11 +304,11 @@ void sequencer_part1(void) {
                 if (seq.note_data[seq.current_pattern[d]][seq.step] == MIDI_C8)  // is noise only, do not transpose note
                 {
                   if (check_probability(seq.current_pattern[d]))
-                    handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step], check_vel_variation(seq.current_pattern[d], microsynth[seq.instrument[d] - 3].sound_intensity), 0);
+                    handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
                 } else  //allow transpose
                 {
                   if (check_probability(seq.current_pattern[d]))
-                    handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], microsynth[seq.instrument[d] - 3].sound_intensity), 0);
+                    handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
                 }
               }
 #endif
