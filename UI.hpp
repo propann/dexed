@@ -728,18 +728,18 @@ FLASHMEM void sub_song_print_instruments(uint16_t front, uint16_t back) {
         display.print(F("#"));
         print_formatted_number(seq.instrument[x] - 6, 2);
       } else if (seq.instrument[x] > 15 && seq.instrument[x] < 32) {
-        if (seq.tracktype_or_instrument_assign == 2) {
-          display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 5);
-          display.print(F("USB"));
-        }
+        //if (seq.tracktype_or_instrument_assign == 2) {
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 5);
+        display.print(F("USB"));
+        // }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 6);
         display.print(F("#"));
         print_formatted_number(seq.instrument[x] - 15, 2);
       } else if (seq.instrument[x] > 31 && seq.instrument[x] < 48) {
-        if (seq.tracktype_or_instrument_assign == 2) {
-          display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 5);
-          display.print(F("DIN"));
-        }
+        //if (seq.tracktype_or_instrument_assign == 2) {
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 5);
+        display.print(F("DIN"));
+        // }
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 6);
         display.print(F("#"));
         print_formatted_number(seq.instrument[x] - 31, 2);
@@ -1279,6 +1279,11 @@ FLASHMEM void sub_song_print_tracktypes() {
     else if (seq.track_type[x] == 1) display.print(F("INS"));
     else if (seq.track_type[x] == 2) display.print(F("CHD"));
     else if (seq.track_type[x] == 3) display.print(F("ARP"));
+    // else if (seq.track_type[x] == 1 && seq.instrument[seq.selected_track] < 16) display.print(F("INS"));
+    // else if (seq.track_type[x] == 2 && seq.instrument[seq.selected_track] < 16) display.print(F("CHD"));
+    // else if (seq.track_type[x] == 3 && seq.instrument[seq.selected_track] < 16) display.print(F("ARP"));
+    // else if (seq.instrument[x] > 15 && seq.instrument[x] < 32) display.print("USB");
+    // else if (seq.instrument[x] > 31 && seq.instrument[x] < 48) display.print("DIN");
     else {
       display.setTextColor(RED, COLOR_BACKGROUND);
       display.print("???");
@@ -1415,24 +1420,21 @@ FLASHMEM void pattern_preview_in_song(uint8_t patternno) {
 FLASHMEM void print_chains_in_song_page() {
   uint8_t endline = 99;
   display.setTextSize(1);
-
   if (seq.edit_state && seq.cycle_touch_element == 9) {
     seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][seq.menu] = seq.sub_menu;
   }
-
   if (seq.cycle_touch_element < 10) {
     for (uint8_t y = 0; y < 16; y++)  // chain
     {
       if (seq.cycle_touch_element != 7) {
         display.setCursor(CHAR_width_small * 44, CHAR_height_small * 8 + y * 10);
-
         if (endline == 99 && seq.chain[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] == 99) {
           display.setTextColor(RED, COLOR_BACKGROUND);
           display.print(F("END"));
           display.setTextColor(GREY1, COLOR_BACKGROUND);
           endline = y;
         }
-        if (seq.edit_state && seq.cycle_touch_element == 6)
+        if (seq.edit_state && seq.cycle_touch_element == 6 && seq.menu == y)
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         else
           display.setTextColor(GREY1, COLOR_BACKGROUND);
@@ -1441,14 +1443,19 @@ FLASHMEM void print_chains_in_song_page() {
         if (seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] < 99 && seq.chain[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] < 99) {
           print_formatted_number(seq.chain[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y], 2);
           display.print(F(" "));
-        } else if (endline != y)
+        } else if (endline != y) {
+          display.setTextColor(GREY1, COLOR_BACKGROUND);
           display.print(F("-- "));
+        }
       }
       display.setCursor(CHAR_width_small * 50, CHAR_height_small * 8 + y * 10);  // chain transpose
       if (seq.edit_state && seq.cycle_touch_element == 9 && seq.menu == y)
         display.setTextColor(COLOR_SYSTEXT, RED);
       else if (seq.edit_state && seq.cycle_touch_element == 8 && seq.menu == y)
         display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+
+      else if (seq.cycle_touch_element == 8 && seq.edit_state == false)
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       else
         display.setTextColor(GREY1, COLOR_BACKGROUND);
       if (seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] != 99 && seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] < 99) {
@@ -1456,10 +1463,8 @@ FLASHMEM void print_chains_in_song_page() {
           print_formatted_number(seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y], 2);
         else
           print_formatted_number((seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y]) - NUM_CHAINS, 2);
-
         display.setCursor(CHAR_width_small * 49, CHAR_height_small * 8 + y * 10);
-        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
+        // display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         if (seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] > NUM_CHAINS && seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] < NUM_CHAINS * 2)
           display.print(F("-"));
         else if (seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] != 0 && seq.chain_transpose[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][y] != 99)
@@ -1469,7 +1474,7 @@ FLASHMEM void print_chains_in_song_page() {
       } else {
         display.print(F("--"));
         display.setCursor(CHAR_width_small * 49, CHAR_height_small * 8 + y * 10);
-        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        display.setTextColor(GREY1, COLOR_BACKGROUND);
         display.print(F(" "));
       }
     }
@@ -1505,7 +1510,7 @@ FLASHMEM void print_chains_in_song_page() {
   //print current CHAIN Number
   display.setTextSize(1);
   display.setCursor(47 * CHAR_width_small, CHAR_height_small * 4);
-  if (seq.edit_state && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 9)
+  if (seq.edit_state && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 10)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY1, COLOR_BACKGROUND);
@@ -1513,7 +1518,7 @@ FLASHMEM void print_chains_in_song_page() {
   if (seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] < 99)
     print_formatted_number(seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos], 2);
   else
-    display.print("--");
+    display.print(F("--"));
   display.setCursor(51 * CHAR_width_small, CHAR_height_small * 4);  //print chain length of current track step
   print_formatted_number(get_chain_length_from_current_track(seq.selected_track), 2);
 }
@@ -10099,7 +10104,7 @@ void print_song_length() {
 
 void print_chain_header() {
   if (seq.cycle_touch_element < 6) {
-    display.setTextColor(GREY3, COLOR_BACKGROUND);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
   } else {
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
@@ -10107,14 +10112,19 @@ void print_chain_header() {
   display.print(F("CHAIN:"));
   display.setCursor(50 * CHAR_width_small, CHAR_height_small * 4);
   display.print(F("L"));
-
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.setCursor(40 * CHAR_width_small, CHAR_height_small * 6);
   display.print(F("ST"));
   display.setCursor(43 * CHAR_width_small, CHAR_height_small * 6);
+  if (seq.cycle_touch_element == 6 || seq.cycle_touch_element == 7)
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(F("PAT"));
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  if (seq.cycle_touch_element == 8 || seq.cycle_touch_element == 9)
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(48 * CHAR_width_small, CHAR_height_small * 6);
   display.print(F("TRANS"));
-
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
   for (uint8_t y = 0; y < 16; y++)  // chain
   {
     display.setCursor(CHAR_width_small * 40, CHAR_height_small * 8 + y * 10);
@@ -10169,10 +10179,7 @@ void UI_func_song(uint8_t param) {
     display.print(F("SLEN"));
     display.setCursor(CHAR_width_small * 26, 1);
     display.print(F("LC"));
-
-
     print_chain_header();
-
     display.setTextSize(1);
     if (CHAR_height_small * 8 + 10 * (seq.current_song_step - seq.scrollpos + 1) > CHAR_height_small * 8) {
       display.setCursor(CHAR_width_small * 4, CHAR_height_small * 8 + 10 * (seq.current_song_step - seq.scrollpos));
@@ -10200,6 +10207,12 @@ void UI_func_song(uint8_t param) {
           {
             if (seq.instrument[seq.selected_track] < 47)
               seq.instrument[seq.selected_track]++;
+
+            if (seq.instrument[seq.selected_track] > 5 && seq.instrument[seq.selected_track] < 16)  //skip currently unused msp slots
+            {
+              if (seq.instrument[seq.selected_track] > 5 + NUM_MULTISAMPLES)
+                seq.instrument[seq.selected_track] = 16;
+            }
           } else if (seq.tracktype_or_instrument_assign == 6)  // tracktype change
           {
             if (seq.track_type[seq.selected_track] < 3)
@@ -10257,6 +10270,12 @@ void UI_func_song(uint8_t param) {
           {
             if (seq.instrument[seq.selected_track] > 0)
               seq.instrument[seq.selected_track]--;
+
+            if (seq.instrument[seq.selected_track] > 5 && seq.instrument[seq.selected_track] < 16)  //skip currently unused msp slots
+            {
+              if (seq.instrument[seq.selected_track] > 5 + NUM_MULTISAMPLES)
+                seq.instrument[seq.selected_track] = 5 + NUM_MULTISAMPLES;
+            }
           } else if (seq.tracktype_or_instrument_assign == 1)  //goto for tracktype change
           {
             seq.tracktype_or_instrument_assign = 5;
@@ -10395,9 +10414,10 @@ void UI_func_song(uint8_t param) {
       }  // Button END
     }
 
-    print_chain_header();
+
 
     if (seq.help_text_needs_refresh) {
+      print_chain_header();
       print_song_mode_help();
     }
 
