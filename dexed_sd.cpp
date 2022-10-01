@@ -147,7 +147,7 @@ extern uint16_t COLOR_CHORDS;
 extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
-extern multisample_t ms[NUM_MULTISAMPLES];
+extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
 File json;
@@ -2975,9 +2975,9 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
 
       for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
-        data_json[i]["name"] = ms[i].name;
-        data_json[i]["sound_intensity"] = ms[i].sound_intensity;
-        data_json[i]["midi_channel"] = ms[i].midi_channel;
+        data_json[i]["name"] = msp[i].name;
+        data_json[i]["sound_intensity"] = msp[i].sound_intensity;
+        data_json[i]["midi_channel"] = msp[i].midi_channel;
 
         for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
           strcpy(zone_filename, msz[i][j].name);
@@ -3049,9 +3049,9 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
         Serial.println();
 #endif
         for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
-          strcpy(ms[i].name, data_json[i]["name"]);
-          ms[i].sound_intensity = data_json[i]["sound_intensity"];
-          ms[i].midi_channel = data_json[i]["midi_channel"];
+          strcpy(msp[i].name, data_json[i]["name"]);
+          msp[i].sound_intensity = data_json[i]["sound_intensity"];
+          msp[i].midi_channel = data_json[i]["midi_channel"];
 
           for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
             strcpy(msz[i][j].name, data_json[i]["zones"]["filename"][j]);
