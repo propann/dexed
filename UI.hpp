@@ -216,7 +216,7 @@ extern sequencer_t seq;
 #endif
 
 #ifdef USE_MULTISAMPLES
-extern multisample_t ms[NUM_MULTISAMPLES];
+extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 #endif
 
@@ -12864,16 +12864,16 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       }
       if (seq.edit_state && generic_temp_select_menu == 1) {
         if (LCDML.BT_checkDown()) {
-          ms[seq.active_multisample].sound_intensity = constrain(ms[seq.active_multisample].sound_intensity + ENCODER[ENC_R].speed(), 0, 100);
+          msp[seq.active_multisample].sound_intensity = constrain(msp[seq.active_multisample].sound_intensity + ENCODER[ENC_R].speed(), 0, 100);
         } else if (LCDML.BT_checkUp()) {
-          ms[seq.active_multisample].sound_intensity = constrain(ms[seq.active_multisample].sound_intensity - ENCODER[ENC_R].speed(), 0, 100);
+          msp[seq.active_multisample].sound_intensity = constrain(msp[seq.active_multisample].sound_intensity - ENCODER[ENC_R].speed(), 0, 100);
         }
       }
       if (seq.edit_state && generic_temp_select_menu == 2) {
         if (LCDML.BT_checkDown()) {
-          ms[seq.active_multisample].midi_channel = constrain(ms[seq.active_multisample].midi_channel + 1, 0, 16);
+          msp[seq.active_multisample].midi_channel = constrain(msp[seq.active_multisample].midi_channel + 1, 0, 16);
         } else if (LCDML.BT_checkUp()) {
-          ms[seq.active_multisample].midi_channel = constrain(ms[seq.active_multisample].midi_channel - 1, 0, 16);
+          msp[seq.active_multisample].midi_channel = constrain(msp[seq.active_multisample].midi_channel - 1, 0, 16);
         }
       }
       if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 7)  //file name selection
@@ -12984,16 +12984,16 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       display.print(F("]"));
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-      show(1, 4, 11, ms[seq.active_multisample].name);
+      show(1, 4, 11, msp[seq.active_multisample].name);
 
       setModeColor(1);
       display.setTextSize(1);
       setCursor_textGrid_small(10, 4);
-      print_formatted_number(ms[seq.active_multisample].sound_intensity, 3);
+      print_formatted_number(msp[seq.active_multisample].sound_intensity, 3);
       setModeColor(2);
       setCursor_textGrid_small(32, 4);
-      if (ms[seq.active_multisample].midi_channel != 0) {
-        print_formatted_number(ms[seq.active_multisample].midi_channel, 2);
+      if (msp[seq.active_multisample].midi_channel != 0) {
+        print_formatted_number(msp[seq.active_multisample].midi_channel, 2);
         display.print(F("  "));
       } else
         display.print(F("OMNI"));
@@ -14105,7 +14105,7 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
 
     for (uint8_t i = 0; i < 2; i++) {
       snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MultiSample #"), i + 1);
-      _show_midi_channel(buf, 9 + i, ms[i].midi_channel);
+      _show_midi_channel(buf, 9 + i, msp[i].midi_channel);
     }
 
     snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Drums"));
@@ -14129,9 +14129,9 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
         else if (generic_temp_select_menu == 5)
           braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 6)
-          ms[0].midi_channel = constrain(ms[0].midi_channel + 1, 0, 16);
+          msp[0].midi_channel = constrain(msp[0].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 7)
-          ms[1].midi_channel = constrain(ms[1].midi_channel + 1, 0, 16);
+          msp[1].midi_channel = constrain(msp[1].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 8)
           drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
 
@@ -14151,9 +14151,9 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
         else if (generic_temp_select_menu == 5)
           braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 0, 16);
         else if (generic_temp_select_menu == 6)
-          ms[0].midi_channel = constrain(ms[0].midi_channel - 1, 0, 16);
+          msp[0].midi_channel = constrain(msp[0].midi_channel - 1, 0, 16);
         else if (generic_temp_select_menu == 7)
-          ms[1].midi_channel = constrain(ms[1].midi_channel - 1, 0, 16);
+          msp[1].midi_channel = constrain(msp[1].midi_channel - 1, 0, 16);
         else if (generic_temp_select_menu == 8)
           drum_midi_channel = constrain(drum_midi_channel - 1, 0, 16);
       }
@@ -14190,10 +14190,10 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
     _print_midi_channel(braids_osc.midi_channel);
     setModeColor(6);
     setCursor_textGrid(20, 9);
-    _print_midi_channel(ms[0].midi_channel);
+    _print_midi_channel(msp[0].midi_channel);
     setModeColor(7);
     setCursor_textGrid(20, 10);
-    _print_midi_channel(ms[1].midi_channel);
+    _print_midi_channel(msp[1].midi_channel);
     setModeColor(8);
     setCursor_textGrid(20, 11);
     _print_midi_channel(drum_midi_channel);
@@ -14271,7 +14271,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
 
     // for (uint8_t i = 0; i < 2; i++) {
     //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MultiSample #"), i + 1);
-    //   _show_midi_channel(buf, 9 + i, ms[i].midi_channel);
+    //   _show_midi_channel(buf, 9 + i, msp[i].midi_channel);
     // }
 
     // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Drums"));
@@ -14295,9 +14295,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         // else if (generic_temp_select_menu == 5)
         //   braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 0, 16);
         // else if (generic_temp_select_menu == 6)
-        //   ms[0].midi_channel = constrain(ms[0].midi_channel + 1, 0, 16);
+        //   msp[0].midi_channel = constrain(msp[0].midi_channel + 1, 0, 16);
         // else if (generic_temp_select_menu == 7)
-        //   ms[1].midi_channel = constrain(ms[1].midi_channel + 1, 0, 16);
+        //   msp[1].midi_channel = constrain(msp[1].midi_channel + 1, 0, 16);
         // else if (generic_temp_select_menu == 8)
         //   drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
 
@@ -14317,9 +14317,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         // else if (generic_temp_select_menu == 5)
         //   braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 0, 16);
         // else if (generic_temp_select_menu == 6)
-        //   ms[0].midi_channel = constrain(ms[0].midi_channel - 1, 0, 16);
+        //   msp[0].midi_channel = constrain(msp[0].midi_channel - 1, 0, 16);
         // else if (generic_temp_select_menu == 7)
-        //   ms[1].midi_channel = constrain(ms[1].midi_channel - 1, 0, 16);
+        //   msp[1].midi_channel = constrain(msp[1].midi_channel - 1, 0, 16);
         // else if (generic_temp_select_menu == 8)
         //   drum_midi_channel = constrain(drum_midi_channel - 1, 0, 16);
       }
@@ -14356,10 +14356,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     // _print_midi_channel(braids_osc.midi_channel);
     // setModeColor(6);
     // setCursor_textGrid(20, 9);
-    // _print_midi_channel(ms[0].midi_channel);
+    // _print_midi_channel(msp[0].midi_channel);
     // setModeColor(7);
     // setCursor_textGrid(20, 10);
-    // _print_midi_channel(ms[1].midi_channel);
+    // _print_midi_channel(msp[1].midi_channel);
     // setModeColor(8);
     // setCursor_textGrid(20, 11);
     // _print_midi_channel(drum_midi_channel);
@@ -14509,10 +14509,10 @@ FLASHMEM void print_mixer_text() {
   // msp
   //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #1 zone played
   setCursor_textGrid_small(24, 19);
-  print_formatted_number(ms[0].sound_intensity, 3);
+  print_formatted_number(msp[0].sound_intensity, 3);
   //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #2 zone played
   setCursor_textGrid_small(28, 19);
-  print_formatted_number(ms[0].sound_intensity, 3);
+  print_formatted_number(msp[0].sound_intensity, 3);
 
   // drums
   temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
@@ -14602,15 +14602,15 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
         } else if (seq.temp_active_menu == 6)  // msp1
         {
           if (LCDML.BT_checkDown())
-            ms[0].sound_intensity = constrain(ms[0].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            msp[0].sound_intensity = constrain(msp[0].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            ms[0].sound_intensity = constrain(ms[0].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            msp[0].sound_intensity = constrain(msp[0].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
         } else if (seq.temp_active_menu == 7)  // msp2
         {
           if (LCDML.BT_checkDown())
-            ms[1].sound_intensity = constrain(ms[1].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            msp[1].sound_intensity = constrain(msp[1].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
-            ms[1].sound_intensity = constrain(ms[1].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
+            msp[1].sound_intensity = constrain(msp[1].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
         } else if (seq.temp_active_menu == 8)  //drums/samples
         {
           if (LCDML.BT_checkDown())
@@ -14682,14 +14682,14 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
     } else if (seq.temp_active_menu == 6 && seq.edit_state)  // msp0
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display_bar_int("", ms[0].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      display_bar_int("", msp[0].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("MULTISAMPLE #");
       display.print(seq.temp_active_menu - 5);
     } else if (seq.temp_active_menu == 7 && seq.edit_state)  // msp1
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display_bar_int("", ms[1].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
+      display_bar_int("", msp[1].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("MULTISAMPLE #");
       display.print(seq.temp_active_menu - 5);
@@ -16110,7 +16110,7 @@ FLASHMEM void UI_func_set_multisample_name(uint8_t param) {
       if (mode == 2) {
         ui_select_name_state = UI_select_name(2, 4, seq.name_temp, BANK_NAME_LEN - 1, false);
         if (ui_select_name_state == true) {
-          strcpy(ms[seq.active_multisample].name, seq.name_temp);
+          strcpy(msp[seq.active_multisample].name, seq.name_temp);
           mode = 0xff;
           setCursor_textGrid(1, 2);
           display.print(F("OK.                 "));
@@ -16133,11 +16133,11 @@ FLASHMEM void UI_func_set_multisample_name(uint8_t param) {
       setCursor_textGrid(15, 2);
       display.print(F("]"));
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      show(2, 4, 11, ms[seq.active_multisample].name);
+      show(2, 4, 11, msp[seq.active_multisample].name);
     }
     if (mode == 1) {
       mode = 2;
-      strcpy(seq.name_temp, ms[seq.active_multisample].name);
+      strcpy(seq.name_temp, msp[seq.active_multisample].name);
       setCursor_textGrid(3, 2);
       display.print(F("[          ]      "));
       ui_select_name_state = UI_select_name(2, 4, seq.name_temp, BANK_NAME_LEN - 1, true);

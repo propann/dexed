@@ -862,8 +862,8 @@ PeriodicTimer sequencer_timer;
 #endif
 
 #ifdef USE_MULTISAMPLES
-extern multisample_t ms[NUM_MULTISAMPLES];
-extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
+multisample_s msp[NUM_MULTISAMPLES];
+multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 uint8_t note_buffer_msp[NUM_DRUMS];
 #endif
 
@@ -1824,23 +1824,10 @@ bool msp_playmode_sample_slot[NUM_DRUMS];  // needs to be moved in COMPILE_FOR_F
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
 
 
-void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
+void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
 
   // find the MSP preset slot for this midi channel
-  byte presetslot = -1;
-  for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
-    if (ms[i].midi_channel == inChannel) {
-      presetslot++;
-      break;
-    } else {
-      presetslot++;
-    }
-  }
-
-  if (presetslot == -1) {
-    Serial.printf("no MSP found with MIDI channel %d\n", inChannel);
-    return;
-  }
+  byte presetslot = instance_id;
 
 #if NUM_DRUMS > 0
   if (drum_counter >= NUM_DRUMS)
@@ -1855,9 +1842,9 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte inChannel) {
       if (inNumber >= msz[presetslot][y].low && inNumber <= msz[presetslot][y].high) {
 
         float pan = mapfloat(msz[presetslot][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
-        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * ms[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
-        ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * ms[presetslot].sound_intensity) / 900000;
+        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
+        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
+        ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity) / 900000;
 #ifdef USE_FX
         drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
@@ -1998,9 +1985,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
         inChannel = braids_osc.midi_channel;
 #endif
       else if (trk == 6)
-        inChannel = ms[0].midi_channel;
+        inChannel = msp[0].midi_channel;
       else if (trk == 7)
-        inChannel = ms[1].midi_channel;
+        inChannel = msp[1].midi_channel;
     }
   }
 
@@ -2052,22 +2039,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     // Multisamples
     //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
-    if (seq.running == false) {
-      //play multisample live on MSP page with manual preset selection
       for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
-        if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI || ms[instance_id].midi_channel == inChannel) {
-          if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI)
-            inChannel = ms[0].midi_channel;  // hack - what to do if imput channel is not omni but MSP is omni?
-          Multi_Sample_Player(inNumber, inVelocity, inChannel);
+        if (msp[instance_id].midi_channel == MIDI_CHANNEL_OMNI || msp[instance_id].midi_channel == inChannel) {
+          Multi_Sample_Player(inNumber, inVelocity, instance_id);
         }
-      }
-    } else {
-      // MSP played by sequencer
-      for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
-        if (ms[instance_id].midi_channel == MIDI_CHANNEL_OMNI || ms[instance_id].midi_channel == inChannel) {
-          Multi_Sample_Player(inNumber, inVelocity, inChannel);
-        }
-      }
     }
 #endif
 
@@ -2122,7 +2097,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
             //                Serial.print(inChannel, DEC);
             //                Serial.println();
             //#endif
-            return;
+            // return;
           }
         }
       }
@@ -2378,9 +2353,9 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
         inChannel = microsynth[1].midi_channel;
 #endif
       else if (trk == 5)
-        inChannel = ms[0].midi_channel;
+        inChannel = msp[0].midi_channel;
       else if (trk == 6)
-        inChannel = ms[1].midi_channel;
+        inChannel = msp[1].midi_channel;
     }
   }
 
@@ -2397,8 +2372,8 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
 #ifdef USE_MULTISAMPLES
 
   for (uint8_t j = 0; j < NUM_MULTISAMPLES; j++) {
-    if (device == 5 || ms[j].midi_channel == MIDI_CHANNEL_OMNI || ms[j].midi_channel == inChannel) {
-      //if (device == 5 || ms[j].midi_channel == inChannel) {
+    if (device == 5 || msp[j].midi_channel == MIDI_CHANNEL_OMNI || msp[j].midi_channel == inChannel) {
+      //if (device == 5 || msp[j].midi_channel == inChannel) {
       for (uint8_t i = 0; i < 8; i++) {
         if (inNumber == note_buffer_msp[i] && note_buffer_msp[i] > 1 && msp_playmode_sample_slot[i]) {
           note_buffer_msp[i] = 0;

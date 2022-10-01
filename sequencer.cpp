@@ -99,8 +99,8 @@ extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
-multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-multisample_s ms[NUM_MULTISAMPLES];
+extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
+extern multisample_s msp[NUM_MULTISAMPLES];
 
 void seq_live_recording(void) {
   //record to sequencer if sequencer menu is active and recording is active
@@ -276,7 +276,7 @@ void sequencer_part1(void) {
               if (seq.instrument[d] > 5 && seq.instrument[d] < 16)  // track is for internal MultiSampler
               {
                 if (check_probability(seq.current_pattern[d]))
-                  handleNoteOn(ms[seq.instrument[d] - 6].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
+                  handleNoteOn(msp[seq.instrument[d] - 6].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
               } else if (seq.instrument[d] > 15 && seq.instrument[d] < 32)  // track is for external USB MIDI
               {
 #ifdef MIDI_DEVICE_USB_HOST
@@ -719,7 +719,7 @@ void sequencer_part2(void) {
             handleNoteOff(braids_osc.midi_channel, seq.prev_note[d], 0, 4);
 #endif
           else if (seq.instrument[d] > 5 && seq.instrument[d] < 16)  // MultiSampler
-            handleNoteOff(ms[seq.instrument[d] - 6].midi_channel, seq.prev_note[d], 0, 0);
+            handleNoteOff(msp[seq.instrument[d] - 6].midi_channel, seq.prev_note[d], 0, 0);
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 15 && seq.instrument[d] < 32 && seq.ticks == 7)  // track is for external USB MIDI
           {
