@@ -6957,8 +6957,9 @@ void UI_func_sample_editor(uint8_t param) {
       display.print("EXT.FLASH");
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_PROGMEM)
     UI_draw_waveform_large();
+#endif
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
@@ -9066,6 +9067,12 @@ void microsynth_refresh_lower_screen_static_text() {
   display.print(F("PANORAMA"));
   setCursor_textGrid_small(22, 17);
   display.print(F("MIDI CHN."));
+  setCursor_textGrid_small(22, 19);
+  display.print(F("MAP VELOCITY TO FILTER FREQ"));
+  setCursor_textGrid_small(22, 20);
+  display.print(F("OSC"));
+  setCursor_textGrid_small(22, 21);
+  display.print(F("NOISE"));
   setCursor_textGrid_small(13, 17);
   display.print(F(">"));
   setCursor_textGrid_small(13, 14);
@@ -9111,8 +9118,16 @@ void microsynth_refresh_lower_screen_dynamic_text() {
     print_small_panbar(33, 16, microsynth[microsynth_selected_instance].pan, 31);
 
   setModeColor(32);
-  setCursor_textGrid_small(34, 17);
-  print_formatted_number(microsynth[microsynth_selected_instance].midi_channel, 2);
+  setCursor_textGrid_small(33, 17);
+  print_formatted_number(microsynth[microsynth_selected_instance].midi_channel, 3);
+
+  setModeColor(33);
+  setCursor_textGrid_small(33, 20);
+
+  print_formatted_number(microsynth[microsynth_selected_instance].vel_mod_filter_osc, 3);
+  setModeColor(34);
+  setCursor_textGrid_small(33, 21);
+  print_formatted_number(microsynth[microsynth_selected_instance].vel_mod_filter_noise, 3);
 
   update_pwm_text();
 #endif
@@ -9560,7 +9575,7 @@ void UI_func_microsynth(uint8_t param) {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (LCDML.BT_checkDown()) {
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 32);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 34);
         else if (generic_temp_select_menu == 0)
           microsynth[microsynth_selected_instance].sound_intensity = constrain(microsynth[microsynth_selected_instance].sound_intensity + ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 1) {
@@ -9628,9 +9643,13 @@ void UI_func_microsynth(uint8_t param) {
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan + 1, PANORAMA_MIN, PANORAMA_MAX);
         else if (generic_temp_select_menu == 32)
           microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel + 1, 0, 16);
+        else if (generic_temp_select_menu == 33)
+          microsynth[microsynth_selected_instance].vel_mod_filter_osc = constrain(microsynth[microsynth_selected_instance].vel_mod_filter_osc + ENCODER[ENC_R].speed(), 0, 254);
+        else if (generic_temp_select_menu == 34)
+          microsynth[microsynth_selected_instance].vel_mod_filter_noise = constrain(microsynth[microsynth_selected_instance].vel_mod_filter_noise + ENCODER[ENC_R].speed(), 0, 254);
       } else if (LCDML.BT_checkUp()) {
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 32);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 34);
         else if (generic_temp_select_menu == 0)
           microsynth[microsynth_selected_instance].sound_intensity = constrain(microsynth[microsynth_selected_instance].sound_intensity - ENCODER[ENC_R].speed(), 0, 100);
         else if (generic_temp_select_menu == 1) {
@@ -9698,6 +9717,10 @@ void UI_func_microsynth(uint8_t param) {
           microsynth[microsynth_selected_instance].pan = constrain(microsynth[microsynth_selected_instance].pan - 1, PANORAMA_MIN, PANORAMA_MAX);
         else if (generic_temp_select_menu == 32)
           microsynth[microsynth_selected_instance].midi_channel = constrain(microsynth[microsynth_selected_instance].midi_channel - 1, 0, 16);
+        else if (generic_temp_select_menu == 33)
+          microsynth[microsynth_selected_instance].vel_mod_filter_osc = constrain(microsynth[microsynth_selected_instance].vel_mod_filter_osc - ENCODER[ENC_R].speed(), 0, 254);
+        else if (generic_temp_select_menu == 34)
+          microsynth[microsynth_selected_instance].vel_mod_filter_noise = constrain(microsynth[microsynth_selected_instance].vel_mod_filter_noise - ENCODER[ENC_R].speed(), 0, 254);
       }
     }
 
@@ -10047,9 +10070,6 @@ void sub_song_print_tracknumbers() {
   }
 }
 
-
-
-
 void print_song_loop() {
   //print loop
   display.setCursor(CHAR_width_small * 11, 10);
@@ -10074,6 +10094,36 @@ void print_song_length() {
   display.setCursor(CHAR_width_small * 21, 10);
   display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
   print_formatted_number(get_song_length(), 2);
+}
+
+
+void print_chain_header() {
+  if (seq.cycle_touch_element < 6) {
+    display.setTextColor(GREY3, COLOR_BACKGROUND);
+  } else {
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  }
+  display.setCursor(40 * CHAR_width_small, CHAR_height_small * 4);
+  display.print(F("CHAIN:"));
+  display.setCursor(50 * CHAR_width_small, CHAR_height_small * 4);
+  display.print(F("L"));
+
+  display.setCursor(40 * CHAR_width_small, CHAR_height_small * 6);
+  display.print(F("ST"));
+  display.setCursor(43 * CHAR_width_small, CHAR_height_small * 6);
+  display.print(F("PAT"));
+  display.setCursor(48 * CHAR_width_small, CHAR_height_small * 6);
+  display.print(F("TRANS"));
+
+  for (uint8_t y = 0; y < 16; y++)  // chain
+  {
+    display.setCursor(CHAR_width_small * 40, CHAR_height_small * 8 + y * 10);
+    print_formatted_number(y + 1, 2);
+    display.setCursor(CHAR_width_small * 43, CHAR_height_small * 8 + y * 10);
+    display.print("P");
+    display.setCursor(CHAR_width_small * 48, CHAR_height_small * 8 + y * 10);
+    display.print("T");
+  }
 }
 
 void UI_func_song(uint8_t param) {
@@ -10112,12 +10162,6 @@ void UI_func_song(uint8_t param) {
     sub_song_print_tracktypes();
     sub_song_print_instruments(GREY2, COLOR_BACKGROUND);
 
-    display.setCursor(40 * CHAR_width_small, CHAR_height_small * 4);
-    display.setTextColor(GREY1, COLOR_BACKGROUND);
-    display.print(F("CHAIN:"));
-    display.setCursor(50 * CHAR_width_small, CHAR_height_small * 4);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print(F("L"));
     display.setTextColor(COLOR_SYSTEXT);
     display.setCursor(CHAR_width_small * 11, 1);
     display.print(F("LOOP"));
@@ -10126,25 +10170,9 @@ void UI_func_song(uint8_t param) {
     display.setCursor(CHAR_width_small * 26, 1);
     display.print(F("LC"));
 
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(40 * CHAR_width_small, CHAR_height_small * 6);
-    display.print(F("ST"));
-    display.setCursor(43 * CHAR_width_small, CHAR_height_small * 6);
-    display.print(F("PAT"));
-    display.setCursor(48 * CHAR_width_small, CHAR_height_small * 6);
-    display.print(F("TRANS"));
-    display.setTextColor(COLOR_SYSTEXT);
 
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    for (uint8_t y = 0; y < 16; y++)  // chain
-    {
-      display.setCursor(CHAR_width_small * 40, CHAR_height_small * 8 + y * 10);
-      print_formatted_number(y + 1, 2);
-      display.setCursor(CHAR_width_small * 43, CHAR_height_small * 8 + y * 10);
-      display.print("P");
-      display.setCursor(CHAR_width_small * 48, CHAR_height_small * 8 + y * 10);
-      display.print("T");
-    }
+    print_chain_header();
+
     display.setTextSize(1);
     if (CHAR_height_small * 8 + 10 * (seq.current_song_step - seq.scrollpos + 1) > CHAR_height_small * 8) {
       display.setCursor(CHAR_width_small * 4, CHAR_height_small * 8 + 10 * (seq.current_song_step - seq.scrollpos));
@@ -10366,6 +10394,8 @@ void UI_func_song(uint8_t param) {
         }
       }  // Button END
     }
+
+    print_chain_header();
 
     if (seq.help_text_needs_refresh) {
       print_song_mode_help();

@@ -88,9 +88,9 @@ FLASHMEM void microsynth_update_settings(uint8_t instance_id) {
   microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
   microsynth_filter_noise[instance_id].resonance(microsynth[instance_id].filter_noise_resonance / 20);
   microsynth_filter_osc[instance_id].resonance(microsynth[instance_id].filter_osc_resonance / 20);
-  microsynth_envelope_noise[instance_id].decay(microsynth[instance_id].noise_decay);
+  microsynth_envelope_noise[instance_id].decay(microsynth[instance_id].noise_decay+20);
   microsynth_envelope_noise[instance_id].sustain(0);
-  //microsynth_envelope_noise[instance_id].release(microsynth[instance_id].noise_decay);
+  microsynth_envelope_noise[instance_id].release(microsynth[instance_id].noise_decay*8+20);
   microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
   microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
   microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);

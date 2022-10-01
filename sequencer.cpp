@@ -799,7 +799,7 @@ void sequencer_part2(void) {
 
 void update_microsynth_params() {
 #ifdef USE_MICROSYNTH
-  for (uint8_t d = 0; d < 2; d++) {
+  for (uint8_t d = 0; d < NUM_MICROSYNTH; d++) {
     if (microsynth_envelope_osc[d].isActive())  //pwm down
     {
       if (microsynth[d].pwm_from > microsynth[d].pwm_to) {
@@ -820,82 +820,82 @@ void update_microsynth_params() {
           microsynth_waveform[d].pulseWidth(microsynth[d].pwm_current / 2000.1);
         }
       }
-      if (microsynth[d].filter_osc_freq_from > microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0) {
-        if (microsynth[d].filter_osc_freq_current > microsynth[d].filter_osc_freq_to)  //osc filter down
-        {
-          if (int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001)))) >= 0)
-            microsynth[d].filter_osc_freq_current = int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001))));
-          else
-            microsynth[d].filter_osc_freq_current = 0;
+    }
+    if (microsynth[d].filter_osc_freq_from > microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0) {
+      if (microsynth[d].filter_osc_freq_current > microsynth[d].filter_osc_freq_to)  //osc filter down
+      {
+        if (int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001)))) >= 0)
+          microsynth[d].filter_osc_freq_current = int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001))));
+        else
+          microsynth[d].filter_osc_freq_current = 0;
 
-          microsynth_filter_osc[d].frequency(microsynth[d].filter_osc_freq_current);
-        }
-      } else {
-        if (microsynth[d].filter_osc_freq_current < microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0) {  //osc filter up
-          if (microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed <= 15000)
-            microsynth[d].filter_osc_freq_current = microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed;
-          else
-            microsynth[d].filter_osc_freq_current = 15000;
-          microsynth_filter_osc[d].frequency(microsynth[d].filter_osc_freq_current);
-        }
+        microsynth_filter_osc[d].frequency(microsynth[d].filter_osc_freq_current);
       }
-
-      if (microsynth[d].filter_noise_freq_from > microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0) {
-        if (microsynth[d].filter_noise_freq_current > microsynth[d].filter_noise_freq_to) {
-          if (int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001)))) >= 0)
-            microsynth[d].filter_noise_freq_current = int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001))));
-          else
-            microsynth[d].filter_noise_freq_current = 0;
-          microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
-        }
-      } else {
-        if (microsynth[d].filter_noise_freq_current < microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0) {
-          if (microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed <= 15000)
-            microsynth[d].filter_noise_freq_current = microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed;
-          else
-            microsynth[d].filter_noise_freq_current = 15000;
-          microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
-        }
-      }  //  --------------------------------------------------------- OSC LFO ----------------------------------------------------------------------
-
-      if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 0)  // LFO U&D
-      {
-        if (microsynth[d].lfo_direction == false && microsynth[d].lfo_value > microsynth[d].lfo_intensity * -1)
-          microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
-
-        else if (microsynth[d].lfo_direction == true && microsynth[d].lfo_value < microsynth[d].lfo_intensity)
-          microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
-
-        if (microsynth[d].lfo_value <= microsynth[d].lfo_intensity * -1)  //switch mode 0 LFO direction
-          microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
-        else if (microsynth[d].lfo_mode == 0 && microsynth[d].lfo_value >= microsynth[d].lfo_intensity)
-          microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
-      } else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 1)  // LFO Up
-      {
-        if (microsynth[d].lfo_value < microsynth[d].lfo_intensity * 10)
-          microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
-      } else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 2)  // LFO Down
-      {
-        if (microsynth[d].lfo_value > microsynth[d].lfo_intensity * -10)
-          microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+    } else {
+      if (microsynth[d].filter_osc_freq_current < microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0) {  //osc filter up
+        if (microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed <= 15000)
+          microsynth[d].filter_osc_freq_current = microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed;
+        else
+          microsynth[d].filter_osc_freq_current = 15000;
+        microsynth_filter_osc[d].frequency(microsynth[d].filter_osc_freq_current);
       }
+    }
 
-      //--------------------------------------------------------------------------- LFO FADE/DELAY ---------------------------------------------------------
+    if (microsynth[d].filter_noise_freq_from > microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0) {
+      if (microsynth[d].filter_noise_freq_current > microsynth[d].filter_noise_freq_to) {
+        if (int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001)))) >= 0)
+          microsynth[d].filter_noise_freq_current = int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001))));
+        else
+          microsynth[d].filter_noise_freq_current = 0;
+        microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
+      }
+    } else {
+      if (microsynth[d].filter_noise_freq_current < microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0) {
+        if (microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed <= 15000)
+          microsynth[d].filter_noise_freq_current = microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed;
+        else
+          microsynth[d].filter_noise_freq_current = 15000;
+        microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
+      }
+    }  //  --------------------------------------------------------- OSC LFO ----------------------------------------------------------------------
 
-      if (microsynth[d].lfo_delay == 0)  // no delay, instant lfo mod
-      {
-        microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + microsynth[d].lfo_value / 10);
-      } else if ((int)microsynth_lfo_delay_timer[d] / 10 > microsynth[d].lfo_delay && microsynth[d].lfo_fade == 0)  //init lfo fade in
-      {
-        microsynth[d].lfo_fade = microsynth[d].lfo_delay;
-      }
-      if (microsynth[d].lfo_fade > 0)  //fade in to max lfo intensity
-      {
-        if (microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))) > 20 && microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))) < 10000)
-          microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))));
-        if (microsynth[d].lfo_fade > 1)  //only count down to multiplier of 1, not 0
-          microsynth[d].lfo_fade = microsynth[d].lfo_fade - 1;
-      }
+    if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 0)  // LFO U&D
+    {
+      if (microsynth[d].lfo_direction == false && microsynth[d].lfo_value > microsynth[d].lfo_intensity * -1)
+        microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+
+      else if (microsynth[d].lfo_direction == true && microsynth[d].lfo_value < microsynth[d].lfo_intensity)
+        microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
+
+      if (microsynth[d].lfo_value <= microsynth[d].lfo_intensity * -1)  //switch mode 0 LFO direction
+        microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
+      else if (microsynth[d].lfo_mode == 0 && microsynth[d].lfo_value >= microsynth[d].lfo_intensity)
+        microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
+    } else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 1)  // LFO Up
+    {
+      if (microsynth[d].lfo_value < microsynth[d].lfo_intensity * 10)
+        microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
+    } else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 2)  // LFO Down
+    {
+      if (microsynth[d].lfo_value > microsynth[d].lfo_intensity * -10)
+        microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+    }
+
+    //--------------------------------------------------------------------------- LFO FADE/DELAY ---------------------------------------------------------
+
+    if (microsynth[d].lfo_delay == 0)  // no delay, instant lfo mod
+    {
+      microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + microsynth[d].lfo_value / 10);
+    } else if ((int)microsynth_lfo_delay_timer[d] / 10 > microsynth[d].lfo_delay && microsynth[d].lfo_fade == 0)  //init lfo fade in
+    {
+      microsynth[d].lfo_fade = microsynth[d].lfo_delay;
+    }
+    if (microsynth[d].lfo_fade > 0)  //fade in to max lfo intensity
+    {
+      if (microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))) > 20 && microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))) < 10000)
+        microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))));
+      if (microsynth[d].lfo_fade > 1)  //only count down to multiplier of 1, not 0
+        microsynth[d].lfo_fade = microsynth[d].lfo_fade - 1;
     }
   }
 #endif

@@ -1801,17 +1801,17 @@ void loop() {
 ******************************************************************************/
 
 void playWAVFile(const char* filename) {
-#ifdef COMPILE_FOR_SDCARD
-  //sd_WAV_preview[fm.sd_preview_slot]->play(filename);
-  sd_WAV_preview.play(filename);
-  //sd_WAV.stop();
-  sd_WAV.play(filename);
-  // A brief delay for the library to read WAV info
-  //delay(25);
-  // Simply wait for the file to finish playing.
-  while (sd_WAV.isPlaying()) {
-  }
-#endif
+// #ifdef COMPILE_FOR_SDCARD
+//   //sd_WAV_preview[fm.sd_preview_slot]->play(filename);
+//   sd_WAV_preview.play(filename);
+//   //sd_WAV.stop();
+//   sd_WAV.play(filename);
+//   // A brief delay for the library to read WAV info
+//   //delay(25);
+//   // Simply wait for the file to finish playing.
+//   while (sd_WAV.isPlaying()) {
+//   }
+// #endif
 
 #ifdef COMPILE_FOR_FLASH
   //flash_WAV_preview.stop();
@@ -2112,7 +2112,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
             microsynth_waveform[instance_id].amplitude(0);
           } else {
             if (microsynth[instance_id].trigger_noise_with_osc) {
-              microsynth_noise[instance_id].amplitude((microsynth[instance_id].noise_vol / 127) * inVelocity);
+              microsynth_noise[instance_id].amplitude((microsynth[instance_id].noise_vol / 127.0) * inVelocity/ 127);
               microsynth_envelope_noise[instance_id].noteOn();
               microsynth_waveform[instance_id].amplitude(mapfloat(
                 ((microsynth[instance_id].sound_intensity / 127.0) * inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
@@ -2126,10 +2126,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
             microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
             microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
           }
-          microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_osc / 4.1)));
-          microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_osc / 4.1));
-          microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_noise / 4.1)));
-          microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_noise / 4.1));
+          microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_osc / 20.1)));
+          microsynth[instance_id].filter_osc_freq_current = microsynth[instance_id].filter_osc_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_osc / 20.1));
+          microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_noise / 20.1)));
+          microsynth[instance_id].filter_noise_freq_current = microsynth[instance_id].filter_noise_freq_from + (inVelocity * (microsynth[instance_id].vel_mod_filter_noise / 20.1));
 
           float noteFreq = tune_frequencies2_PGM[inNumber + microsynth[instance_id].coarse];
           float tunedFreq = 0;
