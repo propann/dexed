@@ -12686,33 +12686,33 @@ FLASHMEM void print_flash_stats() {
   display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("USED: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.sum_used));
   display.print(tmp);
-  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   display.print(" KB");
   display.setCursor(CHAR_width_small * 37, 3 * CHAR_height_small);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("TOTAL: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.chipsize / 1024));
   display.print(tmp);
 
-  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   display.print(" KB");
   display.setCursor(CHAR_width_small * 42, 1 * CHAR_height_small);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("FILES: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   print_formatted_number(fm.flash_sum_files, 3);
   display.setCursor(CHAR_width_small * 38, 5 * CHAR_height_small);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("FREE: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
 
   snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.chipsize / 1024 - flash_infos.sum_used));
   display.print(tmp);
-  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   display.print(" KB");
 }
 #endif
@@ -12724,7 +12724,7 @@ FLASHMEM void print_flash_stats() {
   display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("USED: ");
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
   snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(myfs.usedSize() / 1024));
   display.print(tmp);
   display.print(" KB");
@@ -13132,7 +13132,7 @@ print_msp_all_zones();
       display.print(F("["));
       setCursor_textGrid(15, 1);
       display.print(F("]"));
-      display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
       show(1, 4, 11, msp[seq.active_multisample].name);
 
