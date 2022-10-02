@@ -12915,7 +12915,10 @@ FLASHMEM void print_msp_zone(uint8_t zone) {
   setCursor_textGrid_small(33, zone + yoffset);
   sub_MultiSample_setColor(zone, 7);
   display.print("[");
-  show_smallfont_noGrid((zone + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 18, msz[seq.active_multisample][zone].filename);
+  if (msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number == 0 && seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 7)
+    show_smallfont_noGrid((zone + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 18, "CLEAR THIS ZONE ?");
+  else
+    show_smallfont_noGrid((zone + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 18, msz[seq.active_multisample][zone].filename);
   setCursor_textGrid_small(51, zone + yoffset);
   display.print("]");
 
@@ -13098,9 +13101,15 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       if (seq.edit_state && generic_temp_select_menu == 0 && seq.active_multisample == NUM_MULTISAMPLES) {
         seq.active_multisample = 0;
         LCDML.OTHER_jumpToFunc(UI_func_set_multisample_name);
-      } else
-
-        if (seq.edit_state == false)
+      } else if (msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number == 0 && seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 7) {
+        //clear zone
+        msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = 0;
+        msz[seq.active_multisample][generic_temp_select_menu - 3].rev = 0;
+        msz[seq.active_multisample][generic_temp_select_menu - 3].high = 0;
+        msz[seq.active_multisample][generic_temp_select_menu - 3].low = 0;
+        msz[seq.active_multisample][generic_temp_select_menu - 3].vol = 100;
+      }
+      if (seq.edit_state == false)
         seq.edit_state = true;
       else
         seq.edit_state = false;
