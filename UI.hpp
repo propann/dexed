@@ -12814,9 +12814,9 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
   } else {
     temp_background = COLOR_BACKGROUND;
    if (generic_temp_select_menu == row + 3)
-    temp_color = ColorHSV(row*34, 254, 254);
+    temp_color = ColorHSV(row*28+15, 254, 254);
   else 
-    temp_color = ColorHSV(row*34, 234, 130);
+    temp_color = ColorHSV(row*28+15, 214, 220);
   }
   display.setTextColor(temp_color, temp_background);
 }
@@ -12824,9 +12824,9 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
 FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
   uint16_t temp_color = 0;
   if (generic_temp_select_menu == row + 3)
-    temp_color = ColorHSV(row*34, 254, 254);
+    temp_color = ColorHSV(row*28+15, 254, 254);
   else 
-    temp_color = ColorHSV(row*34, 234, 130);
+    temp_color = ColorHSV(row*28+15, 214, 130);
   return temp_color;
 }
 
