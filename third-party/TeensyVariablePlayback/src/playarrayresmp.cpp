@@ -39,6 +39,11 @@ void AudioPlayArrayResmp::stop()
     arrayReader.stop();
 }
 
+void AudioPlayArrayResmp::close()
+{
+    arrayReader.close();
+}
+
 void AudioPlayArrayResmp::update()
 {
     int _numChannels = arrayReader.getNumChannels();

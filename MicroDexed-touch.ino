@@ -791,6 +791,10 @@ elapsedMillis cpu_mem_millis;
 #endif
 uint32_t cpumax = 0;
 
+#ifdef COMPILE_FOR_FLASH
+flash_t flash_infos;
+#endif
+
 // uint32_t peak_dexed = 0;
 // float peak_dexed_value = 0.0;
 // uint32_t peak_r = 0;
@@ -886,6 +890,7 @@ extern void handle_touchscreen_arpeggio(void);
 extern void handle_touchscreen_braids(void);
 extern void handle_touchscreen_sample_editor(void);
 extern void sequencer_part2(void);
+extern void flash_loadDirectory(void);
 
 /***********************************************************************
    SETUP
@@ -1346,6 +1351,10 @@ void setup() {
   gamepad_buttons_neutral = joysticks[0].getButtons();
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
+#endif
+
+#ifdef COMPILE_FOR_FLASH
+  flash_loadDirectory();
 #endif
 }
 
@@ -1853,28 +1862,28 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
         msp_playmode_sample_slot[slot] = msz[presetslot][y].playmode;
         note_buffer_msp[slot] = inNumber;
         Drum[slot]->setPlaybackRate(powf(2.0, (inNumber - msz[presetslot][y].rootnote) / 12.0));
-        Drum[slot]->playWav(msz[presetslot][y].name);
+        Drum[slot]->playWav(msz[presetslot][y].filename);
 
-        if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay)) {
+        // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay)) {
 
-          display.fillRect(0, 185 + y * 5, 2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
+        //   display.fillRect(0, 185 + y * 5, 2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
 
-          display.fillRect(2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                           (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5, 5, RED);
+        //   display.fillRect(2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+        //                    (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5, 5, RED);
 
-          display.fillRect(2 * CHAR_width_small + msz[presetslot][y].high * 3.5 - (24 * 3.5) + 3.5, 185 + y * 5,
-                           DISPLAY_WIDTH - (msz[presetslot][y].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
+        //   display.fillRect(2 * CHAR_width_small + msz[presetslot][y].high * 3.5 - (24 * 3.5) + 3.5, 185 + y * 5,
+        //                    DISPLAY_WIDTH - (msz[presetslot][y].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
 
-          display.fillRect(2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
-                           3.5 + 1, 5 - 2, COLOR_SYSTEXT);
-        }
+        //   display.fillRect(2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
+        //                    3.5 + 1, 5 - 2, COLOR_SYSTEXT);
+        // }
       } else {
-        if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay)) {
-          display.fillRect(2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                           (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5, 5, get_multisample_zone_color(y));
-          display.fillRect(2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
-                           3.5 + 1, 5 - 2, COLOR_SYSTEXT);
-        }
+        // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay)) {
+        //   display.fillRect(2 * CHAR_width_small + msz[presetslot][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+        //                    (msz[presetslot][y].high - msz[presetslot][y].low) * 3.5 + 2.5, 5, get_multisample_zone_color(y));
+        //   display.fillRect(2 * CHAR_width_small + msz[presetslot][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
+        //                    3.5 + 1, 5 - 2, COLOR_SYSTEXT);
+        // }
       }
     }
   }
@@ -2039,10 +2048,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     // Multisamples
     //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
-      for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
-        if (msp[instance_id].midi_channel == MIDI_CHANNEL_OMNI || msp[instance_id].midi_channel == inChannel) {
-          Multi_Sample_Player(inNumber, inVelocity, instance_id);
-        }
+    for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
+      if (msp[instance_id].midi_channel == MIDI_CHANNEL_OMNI || msp[instance_id].midi_channel == inChannel) {
+        Multi_Sample_Player(inNumber, inVelocity, instance_id);
+      }
     }
 #endif
 
@@ -2279,7 +2288,7 @@ void stop_all_drum_slots() {
 #if NUM_DRUMS > 0
   for (uint8_t i = 0; i < NUM_DRUMS; i++) {
     if (Drum[i]->isPlaying()) {
-      Drum[i]->stop();
+      Drum[i]->close();
       drum_type[i] = DRUM_NONE;
       Drum[i]->enableInterpolation(false);
       Drum[i]->setPlaybackRate(1.0);

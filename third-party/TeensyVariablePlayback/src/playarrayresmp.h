@@ -29,6 +29,7 @@ public:
     bool playWav(const unsigned int *data, uint32_t fileSize);
 
     void stop(void);
+    void close(void);
     bool isPlaying(void) { return arrayReader.isPlaying(); }
     uint32_t positionMillis(void);
     uint32_t lengthMillis(void);
