@@ -19,6 +19,7 @@ class AudioPlayResmp : public AudioStream
         virtual void enableInterpolation(bool enable) = 0;
         virtual bool isPlaying(void) = 0;
         virtual void stop() = 0;
+        virtual void close() = 0;
 };
 
 #endif // TEENSY_RESAMPLING_FLASHREADER_PLAYRESMP_H

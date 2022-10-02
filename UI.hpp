@@ -180,7 +180,6 @@ extern void virtual_keyboard_print_current_instrument();
 extern uint8_t find_longest_chain();
 extern bool get_bank_name(uint8_t b, char* bank_name);
 extern bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
-extern void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
 extern void stop_all_drum_slots();
 extern char noteNames[12][3];
 extern void dac_mute(void);
@@ -335,7 +334,9 @@ extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
 
-
+#ifdef COMPILE_FOR_FLASH
+extern flash_t flash_infos;
+#endif
 
 void sd_card_count_files_from_directory(File dir);
 void print_voice_select_default_help();
@@ -576,6 +577,7 @@ void splash_screen1();
 void splash_screen2();
 void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y);
 void displayOp(char id, int x, int y, char link, char fb);
+void fill_msz_from_flash_entry(const uint8_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
 
 char* basename(const char* filename);
 uint8_t x_pos_menu_header_layer[8];
@@ -12519,6 +12521,58 @@ FLASHMEM void flash_printDirectory()  //SPI FLASH
     display.print(F("IS PLAYING FROM FLASH"));
   }
 }
+
+FLASHMEM void flash_loadDirectory()  //SPI FLASH
+{
+  uint32_t filesize;
+  uint8_t filepos = 1;
+  unsigned char buf[256];
+
+  strcpy(flash_infos.filenames[0], "");  // for empty MSP zone
+
+  SerialFlash.readID(buf);
+  flash_infos.chipsize = SerialFlash.capacity(buf);
+
+  SerialFlash.opendir();
+  while (1) {
+    if (SerialFlash.readdir(flash_infos.filenames[filepos], MAX_FLASH_FILENAME_LEN, filesize)) {
+      flash_infos.sum_used = flash_infos.sum_used + filesize / 1024;
+
+#ifdef DEBUG
+      Serial.print(filepos);
+      Serial.print(F("  "));
+      Serial.print(flash_infos.filenames[filepos]);
+      Serial.print(F("  "));
+      Serial.print(filesize);
+      Serial.print(F(" bytes"));
+      Serial.println();
+#endif
+      filepos++;
+    } else {
+      break;  // no more files
+    }
+  }
+
+  // Update MSP zones entry number from filename
+  for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
+    for (uint8_t j = 0; j < NUM_MULTISAMPLE_ZONES; j++) {
+      bool found = false;
+      msz[i][j].entry_number = 0;
+      for (uint8_t k = 0; k < filepos && !found; k++) {
+        if (strcmp(flash_infos.filenames[k], msz[i][j].filename) == 0) {
+          msz[i][j].entry_number = k;
+          found = true;
+        }
+      }
+    }
+  }
+
+  fm.flash_sum_files = filepos;
+#ifdef DEBUG
+  Serial.print(F("Total flash files: "));
+  Serial.println(filepos);
+#endif
+}
 #endif
 
 #ifdef COMPILE_FOR_QSPI
@@ -12626,59 +12680,40 @@ FLASHMEM bool compareFiles(File& file, File& ffile) {
 
 #ifdef COMPILE_FOR_FLASH
 FLASHMEM void print_flash_stats() {
-  if (seq.running == false) {
-    char tmp[6];
-    fm.flash_sum_files = 0;
-    unsigned char buf[256];
-    unsigned long chipsize;
-    uint32_t sum_used = 0;
-    //uint16_t sum_files = 0;
-    SerialFlash.readID(buf);
-    SerialFlash.opendir();
-    while (1) {
-      char filename[25];
-      uint32_t filesize;
-      if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
-        sum_used = sum_used + filesize / 1024;
-        fm.flash_sum_files++;
-      } else {
-        break;  // no more files
-      }
-    }
-    display.setTextSize(1);
-    display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print("USED: ");
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(sum_used));
-    display.print(tmp);
-    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-    display.print(" KB");
-    display.setCursor(CHAR_width_small * 37, 3 * CHAR_height_small);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print("TOTAL: ");
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    chipsize = SerialFlash.capacity(buf);
-    snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(chipsize / 1024));
-    display.print(tmp);
+  char tmp[6];
 
-    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-    display.print(" KB");
-    display.setCursor(CHAR_width_small * 42, 1 * CHAR_height_small);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print("FILES: ");
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    print_formatted_number(fm.flash_sum_files, 3);
-    display.setCursor(CHAR_width_small * 38, 5 * CHAR_height_small);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print("FREE: ");
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  display.setTextSize(1);
+  display.setCursor(CHAR_width_small * 38, 4 * CHAR_height_small);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print("USED: ");
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.sum_used));
+  display.print(tmp);
+  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.print(" KB");
+  display.setCursor(CHAR_width_small * 37, 3 * CHAR_height_small);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print("TOTAL: ");
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.chipsize / 1024));
+  display.print(tmp);
 
-    snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(chipsize / 1024 - sum_used));
-    display.print(tmp);
-    display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-    display.print(" KB");
-  }
+  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.print(" KB");
+  display.setCursor(CHAR_width_small * 42, 1 * CHAR_height_small);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print("FILES: ");
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  print_formatted_number(fm.flash_sum_files, 3);
+  display.setCursor(CHAR_width_small * 38, 5 * CHAR_height_small);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print("FREE: ");
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+
+  snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.chipsize / 1024 - flash_infos.sum_used));
+  display.print(tmp);
+  display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
+  display.print(" KB");
 }
 #endif
 
@@ -12850,7 +12885,6 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     seq.active_multisample = 0;
     seq.edit_state = false;
     generic_temp_select_menu = 0;
-    seq.scrollpos = 0;
     //calc_low_high(seq.active_multisample);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
@@ -12868,10 +12902,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     display.print(F("Volume:"));
     setCursor_textGrid_small(18, 4);
     display.print(F("MIDI Channel:"));
-#if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
-    if (seq.running == false)
-      print_flash_stats();
-#endif
+    print_flash_stats();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     display.setCursor(2 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
@@ -12929,12 +12960,14 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 7)  //file name selection
       {
         if (LCDML.BT_checkDown()) {
-          seq.scrollpos = constrain(seq.scrollpos + 1, 0, fm.flash_sum_files - 1);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number + 1, 0, fm.flash_sum_files - 1);
         } else if (LCDML.BT_checkUp()) {
-          seq.scrollpos = constrain(seq.scrollpos - 1, 0, fm.flash_sum_files - 1);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number - 1, 0, fm.flash_sum_files - 1);
         }
-        //stop_all_drum_slots();
-        fill_msz_from_flash_filename(seq.scrollpos, seq.active_multisample, generic_temp_select_menu - 3);
+
+        if (seq.running == true)
+          stop_all_drum_slots();
+        fill_msz_from_flash_entry(msz[seq.active_multisample][generic_temp_select_menu - 3].entry_number, seq.active_multisample, generic_temp_select_menu - 3);
       }
       if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 6)  //reverb send selection
       {
@@ -13092,32 +13125,31 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
         setCursor_textGrid_small(33, y + yoffset);
         sub_MultiSample_setColor(y, 7);
         display.print("[");
-        show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 18, msz[seq.active_multisample][y].name);
+        show_smallfont_noGrid((y + yoffset) * (CHAR_height_small + 2), 34 * CHAR_width_small, 18, msz[seq.active_multisample][y].filename);
         setCursor_textGrid_small(51, y + yoffset);
         display.print("]");
-        if (msz[seq.active_multisample][y].low == 0 && msz[seq.active_multisample][y].high == 0)
-          display.fillRect(0,
-                           185 + y * 5,
-                           DISPLAY_WIDTH - 1, 5, COLOR_BACKGROUND);
-        else {
-          display.fillRect(0, 185 + y * 5, 2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
+        // if (msz[seq.active_multisample][y].low == 0 && msz[seq.active_multisample][y].high == 0)
+        //   display.fillRect(0,
+        //                    185 + y * 5,
+        //                    DISPLAY_WIDTH - 1, 5, COLOR_BACKGROUND);
+        // else {
+        //   display.fillRect(0, 185 + y * 5, 2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
 
-          display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
-                           (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5, 5, get_multisample_zone_color(y));
+        //   display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].low * 3.5 - (24 * 3.5), 185 + y * 5,
+        //                    (msz[seq.active_multisample][y].high - msz[seq.active_multisample][y].low) * 3.5 + 2.5, 5, get_multisample_zone_color(y));
 
-          display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].high * 3.5 - (24 * 3.5) + 3.5 - 1, 185 + y * 5,
-                           DISPLAY_WIDTH - (msz[seq.active_multisample][y].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
+        //   display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].high * 3.5 - (24 * 3.5) + 3.5 - 1, 185 + y * 5,
+        //                    DISPLAY_WIDTH - (msz[seq.active_multisample][y].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
 
-          display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
-                           3.5 + 1, 5 - 2, COLOR_SYSTEXT);
-        }
+        //   display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][y].rootnote * 3.5 - (24 * 3.5) - 1, 185 + y * 5 + 1,
+        //                    3.5 + 1, 5 - 2, COLOR_SYSTEXT);
+        // }
       }
     }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
-    seq.scrollpos = 0;
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
@@ -13367,6 +13399,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         }
         rootdir.close();
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+        flash_loadDirectory();
         print_flash_stats();
         flash_printDirectory();
 #ifdef DEBUG
@@ -13737,6 +13770,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         }
         rootdir.close();
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+        flash_loadDirectory();
         print_flash_stats();
         flash_printDirectory(fm.flash_currentDirectory);
 
@@ -17904,115 +17938,89 @@ char* basename(const char* filename) {
   return p ? p + 1 : (char*)filename;
 }
 
-FLASHMEM void fill_msz_from_flash_filename(const uint16_t entry_number, const uint8_t preset_number, const uint8_t zone_number) {
+#ifdef COMPILE_FOR_FLASH
+FLASHMEM void fill_msz_from_flash_entry(const uint8_t entry_number, const uint8_t preset_number, const uint8_t zone_number) {
   char filename[MAX_FLASH_FILENAME_LEN];
-  uint32_t filesize;
-  uint16_t f;
-  SerialFlash.opendir();
+  strcpy(filename, flash_infos.filenames[entry_number]);
 
-  // search for the right file from its entry_number in the directory
-  for (f = 0; f <= entry_number; f++) {
-    if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
+  // Search root note from filename
+  char root_note[4];
+  memset(root_note, 0, sizeof(root_note));
+
+  MatchState ms;
+  ms.Target(filename);
+
+  char result = ms.Match("[-_ ][A-G]#?[0-9]");
+  if (result > 0) {
+    memcpy(root_note, filename + ms.MatchStart + 1, ms.MatchLength - 1);
 #ifdef DEBUG
-      Serial.print(F("entry #"));
-      Serial.print(f);
-      Serial.print(F(": "));
-      Serial.println(filename);
-#endif
-    } else
-      break;
-  }
-  if (f == entry_number + 1) {
-#ifdef DEBUG
-    Serial.print(F("Flash file found for entry #"));
-    Serial.print(entry_number);
-    Serial.print(F(": "));
-    Serial.println(filename);
+    Serial.print(F("Found match at: "));
+    Serial.println(ms.MatchStart + 1);
+    Serial.print(F("Match length: "));
+    Serial.println(ms.MatchLength - 1);
+    Serial.print(F("Match root note: "));
+    Serial.println(root_note);
 #endif
 
-    // Search root note from filename
-    char root_note[4];
-    memset(root_note, 0, sizeof(root_note));
-
-    MatchState ms;
-    ms.Target(filename);
-
-    char result = ms.Match("[-_ ][A-G]#?[0-9]");
-    if (result > 0) {
-      memcpy(root_note, filename + ms.MatchStart + 1, ms.MatchLength - 1);
-#ifdef DEBUG
-      Serial.print(F("Found match at: "));
-      Serial.println(ms.MatchStart + 1);
-      Serial.print(F("Match length: "));
-      Serial.println(ms.MatchLength - 1);
-      Serial.print(F("Match root note: "));
-      Serial.println(root_note);
-#endif
-
-      // get midi note from the root note string
-      uint8_t offset = 0;
-      switch (root_note[0]) {
-        case 'A':
-          offset = 9;
-          break;
-        case 'B':
-          offset = 11;
-          break;
-        case 'C':
-          offset = 0;
-          break;
-        case 'D':
-          offset = 2;
-          break;
-        case 'E':
-          offset = 4;
-          break;
-        case 'F':
-          offset = 5;
-          break;
-        case 'G':
-          offset = 7;
-          break;
-      }
-
-      if (root_note[ms.MatchLength - 2 - 1] == '#') {
-        offset++;
-      }
-      uint8_t midi_root = (root_note[ms.MatchLength - 1 - 1] - '0' + 1) * 12 + offset;
-#ifdef DEBUG
-      Serial.printf_P(PSTR("root note found: %s\n"), root_note);
-      Serial.printf_P(PSTR("midi root note found: %d\n"), midi_root);
-#endif
-      msz[preset_number][zone_number].rootnote = midi_root;
-
-      // recalculate low and high notes for all zones
-      calc_low_high(preset_number);
-    } else {
-#ifdef DEBUG
-      Serial.println("No match.");
-#endif
+    // get midi note from the root note string
+    uint8_t offset = 0;
+    switch (root_note[0]) {
+      case 'A':
+        offset = 9;
+        break;
+      case 'B':
+        offset = 11;
+        break;
+      case 'C':
+        offset = 0;
+        break;
+      case 'D':
+        offset = 2;
+        break;
+      case 'E':
+        offset = 4;
+        break;
+      case 'F':
+        offset = 5;
+        break;
+      case 'G':
+        offset = 7;
+        break;
     }
+
+    if (root_note[ms.MatchLength - 2 - 1] == '#') {
+      offset++;
+    }
+    uint8_t midi_root = (root_note[ms.MatchLength - 1 - 1] - '0' + 1) * 12 + offset;
+#ifdef DEBUG
+    Serial.printf_P(PSTR("root note found: %s\n"), root_note);
+    Serial.printf_P(PSTR("midi root note found: %d\n"), midi_root);
+#endif
+    msz[preset_number][zone_number].rootnote = midi_root;
+
+    // recalculate low and high notes for all zones
+    calc_low_high(preset_number);
   } else {
 #ifdef DEBUG
-    Serial.print(F("Flash file not found for entry #"));
-    Serial.println(entry_number);
+    Serial.println("No match.");
 #endif
-    strcpy(filename, "*ERROR*");
   }
 
   // fill the multisample zone informations
-  strcpy(msz[preset_number][zone_number].name, filename);
+  strcpy(msz[preset_number][zone_number].filename, filename);
+
 #ifdef DEBUG
   Serial.print(F("MSZ preset #"));
   Serial.print(preset_number);
   Serial.print(F(" - zone #"));
   Serial.print(zone_number);
   Serial.print(F(": "));
-  Serial.print(msz[preset_number][zone_number].name);
+  Serial.print(msz[preset_number][zone_number].filename);
   Serial.print(F(" root: "));
   Serial.println(msz[preset_number][zone_number].rootnote);
 #endif
 }
+#endif
 
 static const uint8_t splash_image[3033] = {
   20,

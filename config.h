@@ -147,8 +147,7 @@
 #define USE_FX 1
 
 // NUMBER OF PARALLEL SAMPLEDRUMS
-#define NUM_DRUMS 8
-//#define NUM_DRUMS 0  //Disable Drums
+#define NUM_DRUMS 8 // set 0 to disable Drums
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
@@ -376,7 +375,8 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define MAX_PERF_MOD 30
 
 // SerialFlash
-#define MAX_FLASH_FILENAME_LEN 18
+#define MAX_FLASH_FILES 255
+#define MAX_FLASH_FILENAME_LEN 64
 
 //*************************************************************************************************
 //* DO NO CHANGE ANYTHING BEYOND IF YOU DON'T KNOW WHAT YOU ARE DOING !!!
@@ -965,13 +965,14 @@ typedef struct braids_s {
 #endif
 
 typedef struct multisample_s {
-  char name[MAX_FLASH_FILENAME_LEN];
+  char name[18];
   uint8_t sound_intensity;
   uint8_t midi_channel;
 } multisample_t;
 
 typedef struct multisample_zone_s {
-  char name[MAX_FLASH_FILENAME_LEN];
+  char filename[MAX_FLASH_FILENAME_LEN];
+  uint8_t entry_number;
   uint8_t rootnote;  // sample root note
   uint8_t low;       // lowest note in range
   uint8_t high;      // highest note in range
@@ -990,6 +991,14 @@ typedef struct sys_s {
   uint8_t load_at_startup_performance;
   uint8_t load_at_startup_page;
 } sys_t;
+
+#ifdef COMPILE_FOR_FLASH
+typedef struct flash_s {
+  char filenames[MAX_FLASH_FILES][MAX_FLASH_FILENAME_LEN];
+  uint32_t sum_used;
+  unsigned long chipsize;
+} flash_t;
+#endif
 
 typedef struct configuration_s {
   sys_t sys;

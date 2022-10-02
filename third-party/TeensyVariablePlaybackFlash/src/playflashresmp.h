@@ -26,6 +26,7 @@ public:
     bool playRaw(const char *filename, uint16_t numChannels);
     bool playWav(const char *filename);
     void stop(void);
+    void close(void);
     bool isPlaying(void) { return FlashReader.isPlaying(); }
     uint32_t positionMillis(void);
     uint32_t lengthMillis(void);

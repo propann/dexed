@@ -22,6 +22,11 @@ void AudioPlayFlashResmp::stop()
        FlashReader.stop();
 }
 
+void AudioPlayFlashResmp::close()
+{
+       FlashReader.close();
+}
+
 void AudioPlayFlashResmp::update()
 {
     int _numChannels = FlashReader.getNumChannels();
