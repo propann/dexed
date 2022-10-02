@@ -12813,10 +12813,10 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
     temp_color = COLOR_SYSTEXT;
   } else {
     temp_background = COLOR_BACKGROUND;
-   if (generic_temp_select_menu == row + 3)
-    temp_color = ColorHSV(row*28+15, 254, 254);
-  else 
-    temp_color = ColorHSV(row*28+15, 214, 220);
+    if (generic_temp_select_menu == row + 3)
+      temp_color = ColorHSV(row * 28 + 15, 254, 254);
+    else
+      temp_color = ColorHSV(row * 28 + 15, 214, 220);
   }
   display.setTextColor(temp_color, temp_background);
 }
@@ -12824,9 +12824,9 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
 FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
   uint16_t temp_color = 0;
   if (generic_temp_select_menu == row + 3)
-    temp_color = ColorHSV(row*28+15, 254, 254);
-  else 
-    temp_color = ColorHSV(row*28+15, 214, 130);
+    temp_color = ColorHSV(row * 28 + 15, 254, 254);
+  else
+    temp_color = ColorHSV(row * 28 + 15, 214, 130);
   return temp_color;
 }
 
@@ -12936,11 +12936,11 @@ FLASHMEM void print_msp_zone(uint8_t zone) {
                      3.5 + 1, 5 - 2, COLOR_SYSTEXT);
   }
 }
-FLASHMEM void print_msp_all_zones(){
-for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++) {
-      print_msp_zone(zone);
-    }
- }
+FLASHMEM void print_msp_all_zones() {
+  for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++) {
+    print_msp_zone(zone);
+  }
+}
 
 FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -12987,9 +12987,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
     display.setCursor(33 * CHAR_width_small + 2, (6) * (CHAR_height_small + 2) - 2);
     display.print(F("FILENAME"));
 
-print_msp_all_zones();
-
-    
+    print_msp_all_zones();
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -13000,9 +12998,10 @@ print_msp_all_zones();
         } else if (LCDML.BT_checkUp()) {
           seq.active_multisample = constrain(seq.active_multisample - 1, 0, NUM_MULTISAMPLES);
         }
-        if (seq.active_multisample < NUM_MULTISAMPLES)
+        if (seq.active_multisample < NUM_MULTISAMPLES) {
           calc_low_high(seq.active_multisample);
-        else {
+          print_msp_all_zones();
+        } else {
           if (seq.active_multisample == NUM_MULTISAMPLES) {
             helptext_r("PUSH JUMPS TO RENAME MENU");
             display.setTextSize(2);
@@ -13162,12 +13161,10 @@ print_msp_all_zones();
           print_msp_zone(generic_temp_select_menu - 4);
           print_msp_zone(generic_temp_select_menu - 3);
         }
-      }else
-      {
+      } else {
         if (generic_temp_select_menu > 2)
-       print_msp_zone(generic_temp_select_menu - 3);
+          print_msp_zone(generic_temp_select_menu - 3);
       }
-
     }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
