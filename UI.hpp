@@ -333,6 +333,7 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
+extern int incomingSerialByte;
 
 #ifdef COMPILE_FOR_FLASH
 extern flash_t flash_infos;
@@ -2124,7 +2125,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param)  //qix screensaver
   }
 }
 
-void setup_ui(void) {
+FLASHMEM void setup_ui(void) {
 #ifdef UI_REVERSE
   display.setRotation(1);  // rotation 180°
   touch.setRotation(3);    // rotation 180°
@@ -2156,9 +2157,9 @@ void toggle_sequencer_play_status() {
 }
 
 #ifdef USB_GAMEPAD
-boolean gp_right() {
+FLASHMEM boolean gp_right() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_RIGHT) == false)
+  if (digitalRead(BI_RIGHT) == false || incomingSerialByte == 114) // 'r'
     return true;
   else
     return false;
@@ -2170,9 +2171,9 @@ boolean gp_right() {
 #endif
 }
 
-boolean gp_left() {
+FLASHMEM boolean gp_left() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_LEFT) == false)
+  if (digitalRead(BI_LEFT) == false || incomingSerialByte == 108) // 'l'
     return true;
   else
     return false;
@@ -2184,9 +2185,9 @@ boolean gp_left() {
 #endif
 }
 
-boolean gp_up() {
+FLASHMEM boolean gp_up() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_UP) == false)
+  if (digitalRead(BI_UP) == false || incomingSerialByte == 117 || incomingSerialByte == 38) // 'u'
     return true;
   else
     return false;
@@ -2198,9 +2199,9 @@ boolean gp_up() {
 #endif
 }
 
-boolean gp_down() {
+FLASHMEM boolean gp_down() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_DOWN) == false)
+  if (digitalRead(BI_DOWN) == false || incomingSerialByte == 100 || incomingSerialByte == 40) // 'd'
     return true;
   else
     return false;
@@ -2214,7 +2215,7 @@ boolean gp_down() {
 #endif
 
 #ifdef USB_GAMEPAD
-void gamepad_seq_navigation_func(uint32_t buttons) {
+FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
   if (gamepad_millis > gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
     seq.cycle_touch_element = 6;  // goto chain edit
     seq.help_text_needs_refresh = true;
@@ -2257,7 +2258,7 @@ void gamepad_seq_navigation_func(uint32_t buttons) {
   }
 }
 
-void gamepad_learn_func(uint32_t buttons) {
+FLASHMEM void gamepad_learn_func(uint32_t buttons) {
   if (temp_int > 7) {
     setCursor_textGrid_small(35, 3);
     display.setTextColor(GREEN, COLOR_BACKGROUND);
@@ -2436,9 +2437,9 @@ void lcdml_menu_control(void) {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   buttons = 0;
-  if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B))
+  if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B)) {
     buttons = gamepad_buttons_neutral;
-  else {
+  } else {
     if (digitalRead(BI_SELECT) == false)
       buttons = GAMEPAD_SELECT;
     if (digitalRead(BI_START) == false)
@@ -2448,6 +2449,20 @@ void lcdml_menu_control(void) {
     if (digitalRead(BI_BUTTON_B) == false)
       buttons = buttons + GAMEPAD_BUTTON_B;
   }
+
+  if (incomingSerialByte == 48) {  // '0'
+    buttons = GAMEPAD_SELECT;
+  }
+  if (incomingSerialByte == 49) {  // '1'
+    buttons = buttons + GAMEPAD_START;
+  }
+  if (incomingSerialByte == 97) {  // 'a'
+    buttons = buttons + GAMEPAD_BUTTON_A;
+  }
+  if (incomingSerialByte == 98) {  // 'b'
+    buttons = buttons + GAMEPAD_BUTTON_B;
+  }
+
 #endif
 
   if (gamepad_millis + (gamepad_accelerate) >= gamepad_speed) {
