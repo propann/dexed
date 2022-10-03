@@ -259,6 +259,9 @@
 //* UI
 //*************************************************************************************************
 
+#define CLASSIC_UI
+//#define MODERN_UI
+
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
 

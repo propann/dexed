@@ -30,6 +30,7 @@ boolean COND_hide()  // hide a menu element
   return false;
 }
 
+#ifdef CLASSIC_UI
 LCDML_add(0, LCDML_0, 1, "Dexed", NULL);
 LCDML_add(1, LCDML_0_1, 1, "Select Voice", UI_func_voice_select);
 LCDML_add(2, LCDML_0_1, 2, "Audio", NULL);
@@ -168,4 +169,19 @@ LCDML_add(130, LCDML_0, 16, "Info", UI_func_information);
 LCDML_addAdvanced(131, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
 LCDML_addAdvanced(132, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
 #define _LCDML_DISP_cnt 132
+#endif
+
+#ifdef MODERN_UI
+LCDML_add(0, LCDML_0, 1, "INSTRUMENTS", NULL);
+LCDML_add(1, LCDML_0_1, 1, "E-Piano", UI_func_epiano);
+LCDML_add(2, LCDML_0_1, 2, "MicroSynth", UI_func_microsynth);
+LCDML_add(3, LCDML_0, 2, "SEQUENCER", NULL);
+LCDML_add(4, LCDML_0, 3, "MIXING", NULL);
+LCDML_add(5, LCDML_0, 4, "SYSTEM", NULL);
+LCDML_add(6, LCDML_0, 5, "INFO", UI_func_information);
+LCDML_addAdvanced(7, LCDML_0, 6, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced(8, LCDML_0, 7, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 8
+#endif
+
 #endif
