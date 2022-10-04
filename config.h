@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.7"
+#define VERSION "1.4.6.9"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -77,20 +77,12 @@
 // USB_GAMEPAD is for a classic 8bit/16bit style of USB Gamepad. ONBOARD_BUTTON_Interface must be DISABLED for it to work.
 // ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy. USB_GAMEPAD must be also be enabled for it to work.
 
+// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION, 
+// JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
+
 //#define USB_KEYPAD 1
 //#define USB_GAMEPAD 1
 //#define ONBOARD_BUTTON_INTERFACE 1
-
-#ifdef ONBOARD_BUTTON_INTERFACE
-#define BI_UP 2
-#define BI_DOWN 3
-#define BI_LEFT 4
-#define BI_RIGHT 5
-#define BI_SELECT 9
-#define BI_START 10
-#define BI_BUTTON_A 16
-#define BI_BUTTON_B 17
-#endif
 
 //*************************************************************************************************
 //* AUDIO HARDWARE SETTINGS
@@ -99,13 +91,9 @@
 // Left and right channel audio signal is presented on pins A21 and A22.
 
 //#define AUDIO_DEVICE_USB
-//#define TEENSY_AUDIO_BOARD
+//#define TEENSY_AUDIO_BOARD // for legacy reasons, only
 
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
-
-#ifdef I2S_AUDIO_ONLY
-#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function
-#endif
 
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -147,7 +135,7 @@
 #define USE_FX 1
 
 // NUMBER OF PARALLEL SAMPLEDRUMS
-#define NUM_DRUMS 8 // set 0 to disable Drums
+#define NUM_DRUMS 8  // set 0 to disable Drums
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
@@ -384,6 +372,30 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 //*************************************************************************************************
 //* DO NO CHANGE ANYTHING BEYOND IF YOU DON'T KNOW WHAT YOU ARE DOING !!!
 //*************************************************************************************************
+
+//do not touch beyond here:
+
+#ifdef I2S_AUDIO_ONLY
+#define PCM5102_MUTE_PIN 34  // hardware pin for PCM5102 XSMT soft mute function
+#endif
+
+#ifdef REMOTE_CONSOLE
+#define USB_GAMEPAD 1
+#define ONBOARD_BUTTON_INTERFACE 1
+#define AUDIO_DEVICE_USB
+#endif
+
+#ifdef ONBOARD_BUTTON_INTERFACE
+#define BI_UP 2
+#define BI_DOWN 3
+#define BI_LEFT 4
+#define BI_RIGHT 5
+#define BI_SELECT 9
+#define BI_START 10
+#define BI_BUTTON_A 16
+#define BI_BUTTON_B 17
+#endif
+
 #define MAX_DEXED 2  // No! - even don't think about increasing this number! IT _WILL_ PRODUCE MASSIVE PROBLEMS!
 #define CONTROL_RATE_MS 50
 #define MICROSYNTH_LFO_RATE_MS 20

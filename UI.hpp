@@ -333,7 +333,12 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
-extern int incomingSerialByte;
+#ifdef REMOTE_CONSOLE
+extern uint8_t incomingSerialByte;
+bool remote_console_keystate_select;
+bool remote_console_keystate_a;
+bool remote_console_keystate_b;
+#endif
 
 #ifdef COMPILE_FOR_FLASH
 extern flash_t flash_infos;
@@ -2159,7 +2164,7 @@ void toggle_sequencer_play_status() {
 #ifdef USB_GAMEPAD
 FLASHMEM boolean gp_right() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_RIGHT) == false || incomingSerialByte == 114) // 'r'
+  if (digitalRead(BI_RIGHT) == false || incomingSerialByte == 'r')
     return true;
   else
     return false;
@@ -2173,7 +2178,7 @@ FLASHMEM boolean gp_right() {
 
 FLASHMEM boolean gp_left() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_LEFT) == false || incomingSerialByte == 108) // 'l'
+  if (digitalRead(BI_LEFT) == false || incomingSerialByte == 'l')
     return true;
   else
     return false;
@@ -2187,7 +2192,7 @@ FLASHMEM boolean gp_left() {
 
 FLASHMEM boolean gp_up() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_UP) == false || incomingSerialByte == 117 || incomingSerialByte == 38) // 'u'
+  if (digitalRead(BI_UP) == false || incomingSerialByte == 117 || incomingSerialByte == 'u')
     return true;
   else
     return false;
@@ -2201,7 +2206,7 @@ FLASHMEM boolean gp_up() {
 
 FLASHMEM boolean gp_down() {
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (digitalRead(BI_DOWN) == false || incomingSerialByte == 100 || incomingSerialByte == 40) // 'd'
+  if (digitalRead(BI_DOWN) == false || incomingSerialByte == 100 || incomingSerialByte == 'd')
     return true;
   else
     return false;
@@ -2450,18 +2455,36 @@ void lcdml_menu_control(void) {
       buttons = buttons + GAMEPAD_BUTTON_B;
   }
 
-  if (incomingSerialByte == 48) {  // '0'
+#ifdef REMOTE_CONSOLE
+  if (incomingSerialByte == '0' || remote_console_keystate_select) {
     buttons = GAMEPAD_SELECT;
+    remote_console_keystate_select = true;
   }
-  if (incomingSerialByte == 49) {  // '1'
+
+  if (incomingSerialByte == '1') {
     buttons = buttons + GAMEPAD_START;
   }
-  if (incomingSerialByte == 97) {  // 'a'
+  if (incomingSerialByte == 'a' || remote_console_keystate_a) {
     buttons = buttons + GAMEPAD_BUTTON_A;
+    remote_console_keystate_a = true;
   }
-  if (incomingSerialByte == 98) {  // 'b'
+  if (incomingSerialByte == 'b' || remote_console_keystate_b) {
     buttons = buttons + GAMEPAD_BUTTON_B;
+    remote_console_keystate_b = true;
   }
+  if (incomingSerialByte == '!') {
+    remote_console_keystate_select = false;
+    buttons = 0;
+  }
+  if (incomingSerialByte == '$') {
+    remote_console_keystate_a = false;
+    buttons = 0;
+  }
+  if (incomingSerialByte == '#') {
+    remote_console_keystate_b = false;
+    buttons = 0;
+  }
+#endif
 
 #endif
 

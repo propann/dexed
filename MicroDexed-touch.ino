@@ -1553,14 +1553,19 @@ FLASHMEM void sub_step_recording() {
   }
 }
 
-int incomingSerialByte;
+#ifdef REMOTE_CONSOLE
+uint8_t incomingSerialByte;
+#endif
 
 void loop() {
+
+#ifdef REMOTE_CONSOLE
   // Serial read (commands from web remote)
-  incomingSerialByte = -1;
+  incomingSerialByte = 0;
   if (Serial.available() > 0) {
     incomingSerialByte = Serial.read();
   }
+#endif
 
   // MIDI input handling
   check_midi_devices();
