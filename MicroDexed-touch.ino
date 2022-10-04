@@ -2296,7 +2296,7 @@ void stop_all_drum_slots() {
 #if NUM_DRUMS > 0
   for (uint8_t i = 0; i < NUM_DRUMS; i++) {
     if (Drum[i]->isPlaying()) {
-      Drum[i]->close();
+      Drum[i]->stop();
       drum_type[i] = DRUM_NONE;
       Drum[i]->enableInterpolation(false);
       Drum[i]->setPlaybackRate(1.0);
