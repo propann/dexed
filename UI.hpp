@@ -2154,8 +2154,8 @@ FLASHMEM void setup_ui(void) {
   //LCDML.MENU_enRollover();
 
   //Enable Screensaver (screensaver menu function, time to activate in ms)
-  //LCDML.SCREEN_enable(mFunc_screensaver, 200000);
-  LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
+  LCDML.SCREEN_enable(mFunc_screensaver, 200000);
+  //LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
 }
 
 void toggle_sequencer_play_status() {
