@@ -2071,7 +2071,12 @@ FLASHMEM void mFunc_screensaver(uint8_t param)  //qix screensaver
     display.fillScreen(0);
     qix.counthue = random(358);
     // setup function
-    LCDML.FUNC_setLoopInterval(18);  // starts a trigger event for the loop function every 20 milliseconds
+#ifdef REMOTE_CONSOLE
+    LCDML.FUNC_setLoopInterval(200);  // starts a trigger event for the loop function every 200 milliseconds
+#else
+ LCDML.FUNC_setLoopInterval(40);  // starts a trigger event for the loop function every 40 milliseconds
+#endif
+
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -2149,8 +2154,8 @@ FLASHMEM void setup_ui(void) {
   //LCDML.MENU_enRollover();
 
   //Enable Screensaver (screensaver menu function, time to activate in ms)
-  LCDML.SCREEN_enable(mFunc_screensaver, 200000);
-  //LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
+  //LCDML.SCREEN_enable(mFunc_screensaver, 200000);
+  LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
 }
 
 void toggle_sequencer_play_status() {
@@ -2506,6 +2511,10 @@ void lcdml_menu_control(void) {
   if (incomingSerialByte == '#') {
     remote_console_keystate_b = false;
     buttons = 0;
+  }
+   if (incomingSerialByte == 127) { // jump to current menu, when remote console start, currently hardwired to voice select
+     buttons = 0;
+  LCDML.OTHER_jumpToFunc( UI_func_voice_select );
   }
 #endif
 
