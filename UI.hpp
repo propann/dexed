@@ -2220,8 +2220,20 @@ FLASHMEM boolean gp_down() {
 #endif
 
 #ifdef USB_GAMEPAD
+
+#ifdef REMOTE_CONSOLE
+FLASHMEM void clear_remote_console_button_states() {
+  remote_console_keystate_select = false;
+  remote_console_keystate_a = false;
+  remote_console_keystate_b = false;
+}
+#endif
+
 FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
   if (gamepad_millis > gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && gp_right()) {
+#ifdef REMOTE_CONSOLE
+    clear_remote_console_button_states();
+#endif
     seq.cycle_touch_element = 6;  // goto chain edit
     seq.help_text_needs_refresh = true;
     seq.edit_state = true;
@@ -2231,6 +2243,9 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
     print_song_mode_help();
     gamepad_millis = 0;
   } else if ((seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_left()) || (seq.cycle_touch_element == 7 && buttons == GAMEPAD_SELECT && gp_left())) {
+#ifdef REMOTE_CONSOLE
+    clear_remote_console_button_states();
+#endif
     seq.cycle_touch_element = 0;  // goto main song mode
     seq.help_text_needs_refresh = true;
     seq.edit_state = false;
@@ -2240,6 +2255,9 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
     print_song_mode_help();
     gamepad_millis = 0;
   } else if ((seq.cycle_touch_element == 8 && buttons == GAMEPAD_SELECT && gp_left()) || (seq.cycle_touch_element == 9 && buttons == GAMEPAD_SELECT && gp_left())) {
+#ifdef REMOTE_CONSOLE
+    clear_remote_console_button_states();
+#endif
     seq.cycle_touch_element = 6;  // go back from transpose to chain
     seq.help_text_needs_refresh = true;
     seq.edit_state = true;
@@ -2249,6 +2267,9 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
     print_song_mode_help();
     gamepad_millis = 0;
   } else if ((seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && gp_right()) || (seq.cycle_touch_element == 7 && buttons == GAMEPAD_SELECT && gp_right())) {
+#ifdef REMOTE_CONSOLE
+    clear_remote_console_button_states();
+#endif
     seq.cycle_touch_element = 8;  // goto transpose from chain
     seq.help_text_needs_refresh = true;
     seq.edit_state = true;
@@ -2259,6 +2280,10 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
     gamepad_millis = 0;
   } else if (seq.cycle_touch_element > 7 && buttons == GAMEPAD_SELECT && gp_right()) {  // go to pattern editor
     gamepad_millis = 0;
+    seq.quicknav_song_to_pattern_jump = true;
+#ifdef REMOTE_CONSOLE
+    clear_remote_console_button_states();
+#endif
     LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
   }
 }
@@ -2423,7 +2448,6 @@ void lcdml_menu_control(void) {
 
 #ifdef USB_KEYPAD  // USB KEYPAD CONTROL TEST
   if (USB_KEY != 0) {
-    delay(30);  /// Workaround, otherwise USB keypad input is ridiculous fast and unusable
     switch (USB_KEY) {
       case 211: g_LCDML_CONTROL_Encoder_position[ENC_L] = -4; break;
       case 218: g_LCDML_CONTROL_Encoder_position[ENC_L] = 4; break;
@@ -2460,7 +2484,6 @@ void lcdml_menu_control(void) {
     buttons = GAMEPAD_SELECT;
     remote_console_keystate_select = true;
   }
-
   if (incomingSerialByte == '1') {
     buttons = buttons + GAMEPAD_START;
   }
@@ -2497,11 +2520,13 @@ void lcdml_menu_control(void) {
     // LSDJ Style Navigation:
     else if (buttons == GAMEPAD_SELECT && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
       gamepad_seq_navigation_func(buttons);
-    } else if (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
+    } else if ((buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+               || (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))) {
       if (buttons == GAMEPAD_SELECT && gp_left()) {  // go back to song-transpose
         seq.help_text_needs_refresh = true;
         seq.edit_state = true;
-        seq.gamepad_jumped_back_from_pattern_editor = true;
+        seq.quicknav_pattern_to_song_jump = true;
+        seq.quicknav_song_to_pattern_jump = false;
         gamepad_millis = 0;
         LCDML.OTHER_jumpToFunc(UI_func_song);
       }
@@ -2516,7 +2541,7 @@ void lcdml_menu_control(void) {
           reverse_y = true;
 
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
-        if (seq.active_function != 99)
+        if (seq.active_function != 99 || seq.quicknav_song_to_pattern_jump)
           reverse_y = true;
       }
 
@@ -10188,17 +10213,17 @@ void UI_func_song(uint8_t param) {
     seq.cycle_touch_element = 0;
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextSize(1);
-    if (seq.gamepad_jumped_back_from_pattern_editor == false) {
+    if (seq.quicknav_pattern_to_song_jump == false) {
       seq.edit_state = false;
     } else {
-      seq.gamepad_jumped_back_from_pattern_editor = false;
+      seq.quicknav_pattern_to_song_jump = false;
       print_patterns_in_song_page();
       seq.cycle_touch_element = 8;
     }
     seq.menu = 0;
     UI_toplineInfoText(2);
     display.setCursor(1, 1);
-    display.setTextColor(COLOR_SYSTEXT);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
     display.print(F("SONG"));
 
     show_small_font(10, 1, 10, seq.name);
