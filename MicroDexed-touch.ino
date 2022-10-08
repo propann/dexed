@@ -1598,25 +1598,30 @@ void loop() {
       continueRecording();
   } else if (LCDML.FUNC_getID() > _LCDML_DISP_cnt || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)) {
     handle_touchscreen_menu();
+    display.console=false;
     scope.draw_scope(230, 18, 87);
   }
 #ifdef USE_MULTIBAND
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics)) {
+    display.console=true;
     scope.draw_scope(188, -5, 128);
     handle_touchscreen_multiband();
   }
 #endif
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select)) {
     handle_touchscreen_voice_select();
+    display.console=true;
     scope.draw_scope(217, 30, 102);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
     handle_touchscreen_pattern_editor();
+    display.console=true;
     if (seq.running)
       scope.draw_scope(216, -9, button_size_x * CHAR_width_small);
     else
       sub_step_recording();
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) {
     handle_touchscreen_microsynth();
+    display.console=true;
     scope.draw_scope(253, 34, 58);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
     handle_touchscreen_file_manager();
@@ -1629,17 +1634,22 @@ void loop() {
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
     handle_touchscreen_cc_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer)) {
+    display.console=true;
     handle_touchscreen_mixer();
     scope.draw_scope(225, 0, 80);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_channels)) {
     handle_touchscreen_midi_channel_page();
     scope.draw_scope(205, -8, 108);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
+    display.console=true;
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information)) {
     if (seq.running)
+    {
+      display.console=true;
       scope.draw_scope(203, 138, 108);
+    }
   }
 
 #ifdef COMPILE_FOR_FLASH
@@ -1696,6 +1706,7 @@ void loop() {
 
 #ifdef USE_BRAIDS
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids)) {
+    display.console=true;
     handle_touchscreen_braids();
     scope.draw_scope(250, -14, 60);
   }
@@ -1737,7 +1748,6 @@ void loop() {
 
 #ifdef COMPILE_FOR_FLASH
     if (flash_WAV_preview.isPlaying()) {
-      display.console=true;
       fm.sample_screen_position_x = fm.sample_screen_position_x + seq.wave_spacing / 10;
       if (fm.sample_screen_position_x < DISPLAY_WIDTH)
         display.fillRect(fm.sample_screen_position_x, 180, 1, 2, RED);
@@ -1746,27 +1756,30 @@ void loop() {
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))  // draw MIDI in activity bars
     {
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
+         display.console = true;
         if (midi_decay_timer_dexed > MIDI_DECAY_TIMER && midi_decay_dexed[instance_id] > 0) {
           midi_decay_dexed[instance_id]--;
-          display.console=true;
+         
           drawBitmap(177 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay_dexed[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         } else if (midi_voices[instance_id] == 0 && midi_decay_dexed[instance_id] == 0 && !MicroDexed[instance_id]->getSustain()) {
           midi_decay_dexed[instance_id]--;
           display.fillRect(180 + (instance_id * 12), 23, 5, 1, COLOR_BACKGROUND);  // blank
         }
+        
       }
       if (midi_decay_timer_dexed > MIDI_DECAY_LEVEL_TIME) {
         midi_decay_timer_dexed = 0;
       }
+      display.console = false;
     }
 #ifdef USE_MICROSYNTH
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  // draw MIDI in activity bars on microsynth page
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
-
+        display.console = true;
         if (midi_decay_timer_microsynth > MIDI_DECAY_TIMER && midi_decay_microsynth[instance_id] > 0) {
           midi_decay_microsynth[instance_id]--;
-          display.console=true;
+
           drawBitmap(13 * 6 - 3 + (instance_id * 12), 18, special_chars[15 - (7 - midi_decay_microsynth[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         } else if (midi_decay_microsynth[instance_id] == 0)
           display.fillRect(13 * 6 + (instance_id * 12), 25, 5, 1, COLOR_BACKGROUND);  // blank
@@ -1774,7 +1787,9 @@ void loop() {
         if (midi_decay_timer_microsynth > MIDI_DECAY_LEVEL_TIME) {
           midi_decay_timer_microsynth = 0;
         }
+       
       }
+       display.console = false;
     }
 #endif
   } else

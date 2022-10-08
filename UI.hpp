@@ -818,6 +818,9 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, u
     display.setTextSize(1);
     // display.setTextColor(COLOR_SYSTEXT,COLOR_BACKGROUND);
   }
+  #ifdef REMOTE_CONSOLE
+  display.console = false;
+#endif
 }
 
 void show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char* str) {
@@ -2171,7 +2174,7 @@ FLASHMEM void setup_ui(void) {
   //LCDML.MENU_enRollover();
 
   //Enable Screensaver (screensaver menu function, time to activate in ms)
-  LCDML.SCREEN_enable(mFunc_screensaver, 200000);
+  LCDML.SCREEN_enable(mFunc_screensaver, 180000);
   //LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
 }
 
