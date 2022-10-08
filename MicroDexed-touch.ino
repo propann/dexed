@@ -1364,13 +1364,30 @@ FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value) {
   display.setCursor(x, y + 4);
 
   height = mapfloat(value, 0.0, 1.0, 0, 99);
-  print_formatted_number(height, 3);
+  if (ts.displayed_peak[arr] != height) {
+    print_formatted_number(height, 3);
+  }
+
+#ifdef REMOTE_CONSOLE
+  if (ts.displayed_peak[arr] != height) {
+    Serial.write(99);
+    Serial.write(70);
+    Serial.write(highByte(x));
+    Serial.write(lowByte(x));
+    Serial.write(highByte(y));
+    Serial.write(lowByte(y));
+    Serial.write(highByte(height));
+    Serial.write(lowByte(height));
+    Serial.write(arr);
+    Serial.write(88);
+    // delayMicroseconds(50);  //necessary to avoid random pixels in remote console
+  }
+#endif
 
   //draw bar
   if (height > ts.displayed_peak[arr]) {
     int z = 0;
     do {
-      // display.drawFastHLine ( x, y - height + z, 19, GREEN  );
       display.drawFastHLine(x, y - height + z, 17, ColorHSV((100 - height + z), 200, 200));
       z++;
     } while (z < height - ts.displayed_peak[arr]);
@@ -1391,7 +1408,7 @@ FLASHMEM void clear_volmeter(int x, int y) {
 }
 
 FLASHMEM void handle_touchscreen_mixer() {
-  if (scope.scope_delay % 50 == 0) {
+  if (scope.scope_delay % 30 == 0) {
 
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -1720,6 +1737,7 @@ void loop() {
 
 #ifdef COMPILE_FOR_FLASH
     if (flash_WAV_preview.isPlaying()) {
+      display.console=true;
       fm.sample_screen_position_x = fm.sample_screen_position_x + seq.wave_spacing / 10;
       if (fm.sample_screen_position_x < DISPLAY_WIDTH)
         display.fillRect(fm.sample_screen_position_x, 180, 1, 2, RED);
@@ -1730,6 +1748,7 @@ void loop() {
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
         if (midi_decay_timer_dexed > MIDI_DECAY_TIMER && midi_decay_dexed[instance_id] > 0) {
           midi_decay_dexed[instance_id]--;
+          display.console=true;
           drawBitmap(177 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay_dexed[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         } else if (midi_voices[instance_id] == 0 && midi_decay_dexed[instance_id] == 0 && !MicroDexed[instance_id]->getSustain()) {
           midi_decay_dexed[instance_id]--;
@@ -1747,6 +1766,7 @@ void loop() {
 
         if (midi_decay_timer_microsynth > MIDI_DECAY_TIMER && midi_decay_microsynth[instance_id] > 0) {
           midi_decay_microsynth[instance_id]--;
+          display.console=true;
           drawBitmap(13 * 6 - 3 + (instance_id * 12), 18, special_chars[15 - (7 - midi_decay_microsynth[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
         } else if (midi_decay_microsynth[instance_id] == 0)
           display.fillRect(13 * 6 + (instance_id * 12), 25, 5, 1, COLOR_BACKGROUND);  // blank
