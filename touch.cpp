@@ -358,6 +358,7 @@ FLASHMEM void virtual_keyboard() {
 
   //draw white keys
   for (uint8_t x = 0; x < 10; x++) {
+    display.console=true;
     display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS, 29.33, 73.5, COLOR_SYSTEXT);  // white key
     if (x == 0 || x == 7 || x == 14) {
       display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);

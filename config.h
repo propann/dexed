@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.10"
+#define VERSION "1.4.6.11"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -90,6 +90,9 @@
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
 
+// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION, 
+// JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
+
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
 
 //#define AUDIO_DEVICE_USB
@@ -111,7 +114,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-//#define REMOTE_CONSOLE  //enable USB Display Mirroring - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
+//#define REMOTE_CONSOLE  //enable USB Display + Audio Mirroring - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
