@@ -344,7 +344,7 @@ if (console)
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
-  delayMicroseconds(60);  //necessary to avoid random pixels in remote console
+  //delayMicroseconds(60);  //necessary to avoid random pixels in remote console
 }
 #endif
 
@@ -492,7 +492,7 @@ if (console)
       Serial.write(highByte(color));
       Serial.write(lowByte(color));
       Serial.write(88);
-      delayMicroseconds(50);  //necessary to avoid random pixels in remote console
+      //delayMicroseconds(50);  //necessary to avoid random pixels in remote console
     } else                    //is fillscreen
     {
       Serial.write(99);
@@ -1042,7 +1042,6 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
                            uint16_t color) {
 
 #ifdef REMOTE_CONSOLE
-  //remote console
   Serial.write(99);
   Serial.write(96);
   Serial.write(highByte(x0));
@@ -1056,7 +1055,7 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
-  delayMicroseconds(50);  //necessary to avoid random pixels in remote
+  //delayMicroseconds(50);  //necessary to avoid random pixels in remote
   console = false;
 #endif
 
@@ -1069,9 +1068,7 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       drawPixel(x0, y0, color);
     }
     return;
-#ifdef REMOTE_CONSOLE
-    console = true;
-#endif
+
   } else if (x0 == x1) {
     if (y1 > y0) {
       drawFastVLine(x0, y0, y1 - y0 + 1, color);
@@ -1080,7 +1077,7 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
     }
     return;
 #ifdef REMOTE_CONSOLE
-    console = true;
+    console = true;  //maybe a good idea to remove this line
 #endif
   }
 

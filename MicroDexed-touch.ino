@@ -1598,30 +1598,30 @@ void loop() {
       continueRecording();
   } else if (LCDML.FUNC_getID() > _LCDML_DISP_cnt || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)) {
     handle_touchscreen_menu();
-    display.console=false;
+    display.console = false;
     scope.draw_scope(230, 18, 87);
   }
 #ifdef USE_MULTIBAND
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics)) {
-    display.console=true;
+    display.console = true;
     scope.draw_scope(188, -5, 128);
     handle_touchscreen_multiband();
   }
 #endif
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select)) {
     handle_touchscreen_voice_select();
-    display.console=true;
+    display.console = true;
     scope.draw_scope(217, 30, 102);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
     handle_touchscreen_pattern_editor();
-    display.console=true;
+    display.console = true;
     if (seq.running)
       scope.draw_scope(216, -9, button_size_x * CHAR_width_small);
     else
       sub_step_recording();
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) {
     handle_touchscreen_microsynth();
-    display.console=true;
+    display.console = true;
     scope.draw_scope(253, 34, 58);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
     handle_touchscreen_file_manager();
@@ -1634,20 +1634,19 @@ void loop() {
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
     handle_touchscreen_cc_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer)) {
-    display.console=true;
+    display.console = true;
     handle_touchscreen_mixer();
     scope.draw_scope(225, 0, 80);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_channels)) {
     handle_touchscreen_midi_channel_page();
     scope.draw_scope(205, -8, 108);
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) {
-    display.console=true;
+    display.console = true;
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information)) {
-    if (seq.running)
-    {
-      display.console=true;
+    if (seq.running) {
+      display.console = true;
       scope.draw_scope(203, 138, 108);
     }
   }
@@ -1677,14 +1676,15 @@ void loop() {
     microsynth_lfo_control_rate = 0;
     update_microsynth_params();
     //Microsynth Realtime Screen Updates
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1) {
+    if (scope.scope_delay % 11 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1) {
       display.setTextSize(1);
       setCursor_textGrid_small(15, 18);  //phtodo
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       print_formatted_number(microsynth[microsynth_selected_instance].pwm_current, 3);
       microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
     }
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && seq.cycle_touch_element != 1 && microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current) {
+
+    if (scope.scope_delay % 12 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && seq.cycle_touch_element != 1 && microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current) {
       display.setTextSize(1);
       setCursor_textGrid_small(15, 16);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -1692,7 +1692,7 @@ void loop() {
       microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;
     }
 
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  //debug
+    if (scope.scope_delay % 13 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  //debug
     {
       display.setTextSize(1);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -1706,7 +1706,7 @@ void loop() {
 
 #ifdef USE_BRAIDS
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids)) {
-    display.console=true;
+    display.console = true;
     handle_touchscreen_braids();
     scope.draw_scope(250, -14, 60);
   }
@@ -1756,16 +1756,15 @@ void loop() {
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))  // draw MIDI in activity bars
     {
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
-         display.console = true;
+        display.console = true;
         if (midi_decay_timer_dexed > MIDI_DECAY_TIMER && midi_decay_dexed[instance_id] > 0) {
           midi_decay_dexed[instance_id]--;
-         
-          drawBitmap(177 + (instance_id * 12), 16, special_chars[15 - (7 - midi_decay_dexed[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
+          display.fillRect(181 + (instance_id * 12), 19, 5, 8 - midi_decay_dexed[instance_id], COLOR_BACKGROUND);  //region above bar
+          display.fillRect(181 + (instance_id * 12), 27 - midi_decay_dexed[instance_id], 5, midi_decay_dexed[instance_id], COLOR_PITCHSMP); //bar
         } else if (midi_voices[instance_id] == 0 && midi_decay_dexed[instance_id] == 0 && !MicroDexed[instance_id]->getSustain()) {
           midi_decay_dexed[instance_id]--;
-          display.fillRect(180 + (instance_id * 12), 23, 5, 1, COLOR_BACKGROUND);  // blank
+          display.fillRect(181 + (instance_id * 12), 19 + 7, 5, 1, COLOR_BACKGROUND);
         }
-        
       }
       if (midi_decay_timer_dexed > MIDI_DECAY_LEVEL_TIME) {
         midi_decay_timer_dexed = 0;
@@ -1777,19 +1776,21 @@ void loop() {
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
         display.console = true;
-        if (midi_decay_timer_microsynth > MIDI_DECAY_TIMER && midi_decay_microsynth[instance_id] > 0) {
+        if (midi_decay_timer_microsynth > MIDI_DECAY_TIMER && midi_decay_microsynth[instance_id] > 1) {
           midi_decay_microsynth[instance_id]--;
-
-          drawBitmap(13 * 6 - 3 + (instance_id * 12), 18, special_chars[15 - (7 - midi_decay_microsynth[instance_id])], 8, 8, COLOR_PITCHSMP, COLOR_BACKGROUND);
-        } else if (midi_decay_microsynth[instance_id] == 0)
-          display.fillRect(13 * 6 + (instance_id * 12), 25, 5, 1, COLOR_BACKGROUND);  // blank
-
+          display.fillRect(13 * 6 + (instance_id * 12), 19, 5, 8 - midi_decay_microsynth[instance_id], COLOR_BACKGROUND);  //region above bar
+          display.fillRect(13 * 6 + (instance_id * 12), 27 - midi_decay_microsynth[instance_id], 5, midi_decay_microsynth[instance_id], COLOR_PITCHSMP); //bar
+        }
+        // if value is 0 then no drawing should happen - so stop at 1
+        if (midi_decay_microsynth[instance_id] == 1) {
+          display.fillRect(13 * 6 + (instance_id * 12), 19 + 7, 5, 1, COLOR_BACKGROUND);
+          midi_decay_microsynth[instance_id] = 0;
+        }
         if (midi_decay_timer_microsynth > MIDI_DECAY_LEVEL_TIME) {
           midi_decay_timer_microsynth = 0;
         }
-       
       }
-       display.console = false;
+      display.console = false;
     }
 #endif
   } else
@@ -2140,7 +2141,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 
             if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select)) {
               midi_decay_timer_dexed = 0;
-              midi_decay_dexed[instance_id] = min(inVelocity / 5, 7);
+              midi_decay_dexed[instance_id] = min(inVelocity / 5, 8);
             }
 
             //#ifdef DEBUG
@@ -2207,7 +2208,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
             microsynth[instance_id].lfo_value = 0;
           if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) {
             midi_decay_timer_microsynth = 0;
-            midi_decay_microsynth[instance_id] = min(inVelocity / 5, 7);
+            //midi_decay_microsynth[instance_id] = min(inVelocity / 5, 7);
+            midi_decay_microsynth[instance_id] = min(inVelocity / 5, 8);
           }
         }
       }

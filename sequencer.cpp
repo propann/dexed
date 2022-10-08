@@ -48,12 +48,6 @@ boolean interrupt_swapper = false;
 extern void helptext_l(const char* str);
 extern void helptext_r(const char* str);
 extern AudioSynthDexed* MicroDexed[NUM_DEXED];
-extern elapsedMillis midi_decay_timer_dexed;
-extern elapsedMillis midi_decay_timer_microsynth;
-extern int8_t midi_decay_dexed[NUM_DEXED];
-#ifdef USE_MICROSYNTH
-extern int8_t midi_decay_microsynth[NUM_MICROSYNTH];
-#endif
 extern void UI_func_microsynth(uint8_t param);
 
 #ifdef USE_MICROSYNTH
