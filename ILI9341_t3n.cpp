@@ -169,11 +169,11 @@ PROGMEM const unsigned char font[] = {
   0xF0, 0x28, 0x25, 0x28, 0xF0,
   0x3e, 0x08, 0x00, 0x08, 0x00,  // Sample Play Mode : Trigger Mode. part1 //144
   0x08, 0x00, 0x3E, 0x1C, 0x08,  // Sample Play Mode : Trigger Mode. part2 //145
-  0x3e, 0x08, 0x08, 0x08, 0x08,// Sample Play Mode : Hold Mode part1
-  0x08, 0x08, 0x08, 0x08, 0x3e,// Sample Play Mode : Hold Mode part2
+  0x3e, 0x08, 0x08, 0x08, 0x08,  // Sample Play Mode : Hold Mode part1
+  0x08, 0x08, 0x08, 0x08, 0x3e,  // Sample Play Mode : Hold Mode part2
   0x3A, 0x44, 0x44, 0x44, 0x3A,  // o-umlaut
   0x32, 0x4A, 0x48, 0x48, 0x30,
-  0x3A, 0x41, 0x41, 0x21, 0x7A,//150
+  0x3A, 0x41, 0x41, 0x21, 0x7A,  //150
   0x3A, 0x42, 0x40, 0x20, 0x78,
   0x00, 0x9D, 0xA0, 0xA0, 0x7D,
   0x3D, 0x42, 0x42, 0x42, 0x3D,  // O-umlaut
@@ -183,7 +183,7 @@ PROGMEM const unsigned char font[] = {
   0x2B, 0x2F, 0xFC, 0x2F, 0x2B,
   0xFF, 0x09, 0x29, 0xF6, 0x20,
   0xC0, 0x88, 0x7E, 0x09, 0x03,
-  0x20, 0x54, 0x54, 0x79, 0x41,//160
+  0x20, 0x54, 0x54, 0x79, 0x41,  //160
   0x00, 0x00, 0x44, 0x7D, 0x41,
   0x30, 0x48, 0x48, 0x4A, 0x32,
   0x38, 0x40, 0x40, 0x22, 0x7A,
@@ -192,8 +192,8 @@ PROGMEM const unsigned char font[] = {
   0x26, 0x29, 0x29, 0x2F, 0x28,
   0x26, 0x29, 0x29, 0x29, 0x26,
   0x30, 0x48, 0x4D, 0x40, 0x20,
-  0x38, 0x08, 0x08, 0x08, 0x08, 
-  0x08, 0x08, 0x08, 0x08, 0x38,//170
+  0x38, 0x08, 0x08, 0x08, 0x08,
+  0x08, 0x08, 0x08, 0x08, 0x38,  //170
   0x2F, 0x10, 0xC8, 0xAC, 0xBA,
   0x2F, 0x10, 0x28, 0x34, 0xFA,
   0x00, 0x00, 0x7B, 0x00, 0x00,
@@ -333,7 +333,8 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color) {
     return;
 
 #ifdef REMOTE_CONSOLE
-  //remote console
+if (console)
+{
   Serial.write(99);
   Serial.write(90);
   Serial.write(highByte(x));
@@ -344,6 +345,7 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color) {
   Serial.write(lowByte(color));
   Serial.write(88);
   delayMicroseconds(60);  //necessary to avoid random pixels in remote console
+}
 #endif
 
   beginSPITransaction(_SPI_CLOCK);
@@ -351,6 +353,7 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color) {
   writecommand_cont(ILI9341_RAMWR);
   writedata16_last(color);
   endSPITransaction();
+
 }
 
 void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
@@ -370,7 +373,8 @@ void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
     return;
 
 #ifdef REMOTE_CONSOLE
-  //remote console
+if (console)
+{
   Serial.write(99);
   Serial.write(91);
   Serial.write(highByte(x));
@@ -382,6 +386,8 @@ void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
+
+}
 #endif
 
   beginSPITransaction(_SPI_CLOCK);
@@ -411,8 +417,9 @@ void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
   if (w < 1)
     return;
 
+if (console)
+{
 #ifdef REMOTE_CONSOLE
-  //remote console
   Serial.write(99);
   Serial.write(92);
   Serial.write(highByte(x));
@@ -425,6 +432,7 @@ void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
   Serial.write(lowByte(color));
   Serial.write(88);
 #endif
+}
 
   beginSPITransaction(_SPI_CLOCK);
   setAddr(x, y, x + w - 1, y);
@@ -437,6 +445,9 @@ void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
 }
 
 void ILI9341_t3n::fillScreen(uint16_t color) {
+  #ifdef REMOTE_CONSOLE
+ console=true;
+#endif
   fillRect(0, 0, _width, _height, color);
 }
 
@@ -463,32 +474,35 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   if ((y + h - 1) >= _displayclipy2)
     h = _displayclipy2 - y;
 
+if (console)
+{
 #ifdef REMOTE_CONSOLE
-  //remote console
-  if (w != DISPLAY_WIDTH && h != DISPLAY_HEIGHT) {
-    Serial.write(99);
-    Serial.write(94);
-    Serial.write(highByte(x));
-    Serial.write(lowByte(x));
-    Serial.write(highByte(y));
-    Serial.write(lowByte(y));
-    Serial.write(highByte(w));
-    Serial.write(lowByte(w));
-    Serial.write(highByte(h));
-    Serial.write(lowByte(h));
-    Serial.write(highByte(color));
-    Serial.write(lowByte(color));
-    Serial.write(88);
-    delayMicroseconds(50);  //necessary to avoid random pixels in remote console
-  } else                    //is fillscreen
-  {
-    Serial.write(99);
-    Serial.write(93);
-    Serial.write(highByte(color));
-    Serial.write(lowByte(color));
-    Serial.write(88);
-  }
+    //remote console
+    if (w != DISPLAY_WIDTH && h != DISPLAY_HEIGHT) {
+      Serial.write(99);
+      Serial.write(94);
+      Serial.write(highByte(x));
+      Serial.write(lowByte(x));
+      Serial.write(highByte(y));
+      Serial.write(lowByte(y));
+      Serial.write(highByte(w));
+      Serial.write(lowByte(w));
+      Serial.write(highByte(h));
+      Serial.write(lowByte(h));
+      Serial.write(highByte(color));
+      Serial.write(lowByte(color));
+      Serial.write(88);
+      delayMicroseconds(50);  //necessary to avoid random pixels in remote console
+    } else                    //is fillscreen
+    {
+      Serial.write(99);
+      Serial.write(93);
+      Serial.write(highByte(color));
+      Serial.write(lowByte(color));
+      Serial.write(88);
+    }
 #endif
+}
 
   // TODO: this can result in a very long transaction time
   // should break this into multiple transactions, even though
@@ -946,8 +960,28 @@ void ILI9341_t3n::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
 /**************************************************************************/
 void ILI9341_t3n::fillCircle(int16_t x0, int16_t y0, int16_t r,
                              uint16_t color) {
-  drawFastVLine(x0, y0 - r, 2 * r + 1, color);
+  
+#ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(97);
+  Serial.write(highByte(x0));
+  Serial.write(lowByte(x0));
+  Serial.write(highByte(y0));
+  Serial.write(lowByte(y0));
+  Serial.write(highByte(r));
+  Serial.write(lowByte(r));
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+  console=false;
+#endif
+
+drawFastVLine(x0, y0 - r, 2 * r + 1, color);
   fillCircleHelper(x0, y0, r, 3, 0, color);
+#ifdef REMOTE_CONSOLE
+console=true;
+#endif
 }
 
 /**************************************************************************/
@@ -1006,6 +1040,26 @@ void ILI9341_t3n::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 // Bresenham's algorithm - thx wikpedia
 void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
                            uint16_t color) {
+
+#ifdef REMOTE_CONSOLE
+  //remote console
+  Serial.write(99);
+  Serial.write(96);
+  Serial.write(highByte(x0));
+  Serial.write(lowByte(x0));
+  Serial.write(highByte(y0));
+  Serial.write(lowByte(y0));
+  Serial.write(highByte(x1));
+  Serial.write(lowByte(x1));
+  Serial.write(highByte(y1));
+  Serial.write(lowByte(y1));
+  Serial.write(highByte(color));
+  Serial.write(lowByte(color));
+  Serial.write(88);
+  delayMicroseconds(50);  //necessary to avoid random pixels in remote
+  console = false;
+#endif
+
   if (y0 == y1) {
     if (x1 > x0) {
       drawFastHLine(x0, y0, x1 - x0 + 1, color);
@@ -1015,6 +1069,9 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       drawPixel(x0, y0, color);
     }
     return;
+#ifdef REMOTE_CONSOLE
+    console = true;
+#endif
   } else if (x0 == x1) {
     if (y1 > y0) {
       drawFastVLine(x0, y0, y1 - y0 + 1, color);
@@ -1022,6 +1079,9 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       drawFastVLine(x0, y1, y0 - y1 + 1, color);
     }
     return;
+#ifdef REMOTE_CONSOLE
+    console = true;
+#endif
   }
 
   bool steep = abs(y1 - y0) > abs(x1 - x0);
@@ -1090,6 +1150,27 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 
 // Draw a rectangle
 void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+  
+  if (console)
+{
+#ifdef REMOTE_CONSOLE
+      Serial.write(99);
+      Serial.write(98);
+      Serial.write(highByte(x));
+      Serial.write(lowByte(x));
+      Serial.write(highByte(y));
+      Serial.write(lowByte(y));
+      Serial.write(highByte(w));
+      Serial.write(lowByte(w));
+      Serial.write(highByte(h));
+      Serial.write(lowByte(h));
+      Serial.write(highByte(color));
+      Serial.write(lowByte(color));
+      Serial.write(88);
+      //delayMicroseconds(50);  //necessary to avoid random pixels in remote console
+   console=false;
+#endif
+}
   drawFastHLine(x, y, w, color);
   drawFastHLine(x, y + h - 1, w, color);
   drawFastVLine(x, y, h, color);
@@ -1151,7 +1232,9 @@ void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
   Serial.write(size_x);
   Serial.write(88);
   // delayMicroseconds(60); //necessary to avoid random pixels in remote console
+  console = false;
 #endif
+
   if (c == 32) {
     if (fgcolor == bgcolor) {
       if (size_x == 2)

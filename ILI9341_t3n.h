@@ -203,6 +203,8 @@ public:
   uint8_t getTextSizeY();
   uint8_t getTextSize();
 
+  bool console;
+
   // setOrigin sets an offset in display pixels where drawing to (0,0) will
   // appear
   // for example: setOrigin(10,10); drawPixel(5,5); will cause a pixel to be
