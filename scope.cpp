@@ -56,6 +56,7 @@ FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
   if (scope_delay > 252) {
     uint16_t i = 0;
     scope_is_drawing = true;
+    display.console=false; // just for testing stability
     do {
       if (scopebuffer_old[i] != scopebuffer[i]) {
         display.drawPixel(x + i, scopebuffer_old[i] + y, COLOR_BACKGROUND);
