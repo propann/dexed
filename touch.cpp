@@ -595,7 +595,7 @@ FLASHMEM void handle_touchscreen_pattern_editor() {
         virtual_keyboard_print_current_instrument();
       }
       seq.generic_ui_delay = 0;
-    } else if (check_button_on_grid(36, 20) && seq.generic_ui_delay > 12000)  // toggle seq. playmode song/pattern only
+    } else if (check_button_on_grid(36, 16) && seq.generic_ui_delay > 12000)  // toggle seq. playmode song/pattern only
     {
       if (seq.play_mode)
         seq.play_mode = false;
@@ -604,13 +604,13 @@ FLASHMEM void handle_touchscreen_pattern_editor() {
 
       if (seq.play_mode == false)  // is in full song more
       {
-        draw_button_on_grid(36, 20, "PLAYNG", "SONG", 0);
+        draw_button_on_grid(36, 16, "PLAYNG", "SONG", 0);
         seq.hunt_pattern = false;
-        draw_button_on_grid(45, 26, "HUNT", "PATT", 0);
+        draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
       } else  // play only current pattern
-        draw_button_on_grid(36, 20, "LOOP", "PATT", 2);
+        draw_button_on_grid(36, 16, "LOOP", "PATT", 2);
       seq.generic_ui_delay = 0;
-    } else if (check_button_on_grid(45, 26) && seq.generic_ui_delay > 12000)  // hunt pattern
+    } else if (check_button_on_grid(45, 22) && seq.generic_ui_delay > 12000)  // hunt pattern
     {
       if (seq.hunt_pattern)
         seq.hunt_pattern = false;
@@ -618,26 +618,26 @@ FLASHMEM void handle_touchscreen_pattern_editor() {
         seq.hunt_pattern = true;
 
       if (seq.hunt_pattern == false)
-        draw_button_on_grid(45, 26, "HUNT", "PATT", 0);
+        draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
       else  // play only current pattern
-        draw_button_on_grid(45, 26, "HUNT", "PATT", 2);
+        draw_button_on_grid(45, 22, "HUNT", "PATT", 2);
       seq.generic_ui_delay = 0;
-    } else if (check_button_on_grid(36, 26) && seq.generic_ui_delay > 12000)  // jump song editor
+    } else if (check_button_on_grid(36, 22) && seq.generic_ui_delay > 12000)  // jump song editor
     {
       LCDML.OTHER_jumpToFunc(UI_func_song);
       seq.generic_ui_delay = 0;
     } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
-      if (check_button_on_grid(45, 20) && seq.generic_ui_delay > 12000)  // jump pattern editor functions
+      if (check_button_on_grid(45, 16) && seq.generic_ui_delay > 12000)  // jump pattern editor functions
       {
 
         if (seq.content_type[seq.active_pattern] == 0) {
-          draw_button_on_grid(45, 20, "JUMP", "TOOLS", 2);
+          draw_button_on_grid(45, 16, "JUMP", "TOOLS", 2);
           activesample = NUM_DRUMSET_CONFIG;
           seq.menu = 0;
           seq.active_function = 0;
           pattern_editor_menu_0();
         } else {
-          draw_button_on_grid(45, 20, "JUMP", "TOOLS", 2);
+          draw_button_on_grid(45, 16, "JUMP", "TOOLS", 2);
           temp_int = 111;
           seq.menu = 0;
           seq.active_function = 0;
