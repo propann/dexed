@@ -33,7 +33,7 @@ typedef struct ts_s {
   uint8_t virtual_keyboard_state_black[17];
   bool update_virtual_keyboard_octave;
   bool block_screen_update;
-  uint8_t displayed_peak[20];
+  uint8_t displayed_peak[20];  //volmeter peak levels, currently displayed level
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu = false;
   bool keyb_in_menu_activated = false;

@@ -358,7 +358,7 @@ FLASHMEM void virtual_keyboard() {
 
   //draw white keys
   for (uint8_t x = 0; x < 10; x++) {
-    display.console=true;
+    display.console = true;
     display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS, 29.33, 73.5, COLOR_SYSTEXT);  // white key
     if (x == 0 || x == 7 || x == 14) {
       display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
@@ -1130,18 +1130,19 @@ FLASHMEM void handle_touchscreen_multiband() {
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (scope.scope_delay % 60 == 0) {
+   
     float l, r;
     l = mb_before_l.read();
     r = mb_before_r.read();
-    draw_volmeter(CHAR_width_small * 1, 228, 10, l);
-    draw_volmeter(CHAR_width_small * 5, 228, 11, r);
+    draw_volmeter(CHAR_width_small * 1, 228, 0, l);
+    draw_volmeter(CHAR_width_small * 5, 228, 1, r);
 
     if (multiband_active) {
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 16, mb_after_l.read());
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 17, mb_after_r.read());
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 2, mb_after_l.read());
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 3, mb_after_r.read());
     } else {
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 14, l);
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 15, r);
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 2, l);
+      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 3, r);
     }
   }
   display.setTextSize(2);

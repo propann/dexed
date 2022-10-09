@@ -11697,6 +11697,12 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param) {
     draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 0);
 
     print_mb_params();
+#ifdef REMOTE_CONSOLE
+    Serial.write(99);
+    Serial.write(71);  // command
+    Serial.write(4);   // 4 meter channels
+    Serial.write(88);
+#endif
 
     for (int y = 0; y < 4; y++) {
 
@@ -14659,6 +14665,13 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
     helptext_r("< > SELECT CH");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     print_mixer_text();
+
+#ifdef REMOTE_CONSOLE
+    Serial.write(99);
+    Serial.write(71);  // command
+    Serial.write(13);  // 13 meter channels
+    Serial.write(88);
+#endif
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
