@@ -23,6 +23,7 @@ int []levelmeter_y= new int[20];
 int []levelmeter_h= new int[20];
 boolean show_levelmeters;
 int timer = millis();
+int num_meters;
 
 // 5x7 font
 int[] font = {
@@ -284,6 +285,15 @@ int[] font = {
   0x00, 0x00, 0x00, 0x00, 0x00 // #255 NBSP
 };
 
+void initMeters() {
+  for (int i=0; i<20; i++) {
+    peak[i] = 0;
+    levelmeter_x[i] = 0;
+    levelmeter_y[i] = 0;
+    levelmeter_h[i] = 0;
+  }
+}
+
 int bitRead(int b, int bitPos)
 {
   int x = b & (1 << bitPos);
@@ -312,9 +322,8 @@ void update_volmeter(int x, int y, int h, int meter) {
 
 void draw_volmeters() {
 
-  for (int j = 0; j < 13; j++)
+  for (int j = 0; j < num_meters; j++)
   {
-
     if (  levelmeter_h[j] > peak[j]) {
       int z = 0;
       do {
@@ -575,50 +584,62 @@ void draw()
         levelmeter = myPort.read();
         check= myPort.read();
         if (check==88)
-
+        {
           update_volmeter((xh*256+xl)*2, (yh*256+yl)*2, (hh*256+hl) *2, levelmeter);
-        show_levelmeters=true;
+          show_levelmeters=true;
+          draw_volmeters();
+        }
+      } else if (val2==71)  // update number of volume meters
+      {
+        debug_command=12;
+        hh=myPort.read();
+        if (check==88)
+          initMeters();
+        num_meters=hh;
+      }
+
+      //if (debug_command !=0) {
+      //  print (" ");
+      //  if (debug_command == 1)
+      //    print ("Ch");
+      //  if (debug_command == 2)
+      //    print ("px");
+      //  if (debug_command == 3)
+      //    print ("vl");
+      //  if (debug_command == 4)
+      //    print ("hl");
+      //  if (debug_command == 5)
+      //    print ("fs");
+      //  if (debug_command == 6)
+      //    print ("fr");
+      //  if (debug_command == 7)
+      //    print ("chr");
+      //  if (debug_command == 8)
+      //    print ("l");
+      //  if (debug_command == 9)
+      //    print ("c");
+      //  if (debug_command == 10)
+      //    print ("dr");
+      //  if (debug_command == 11)
+      //    print ("vm");
+      //  if (debug_command == 12)
+      //  { 
+      //    print ("meterchange=");
+      //    print (num_meters);
+      //  }
+      //  debug_command =0;
+      //}
+      
+      // if (debug_command !=11)
+      //  show_levelmeters=false;
+
+      if (show_levelmeters == true && timer >1110)
+      {
         draw_volmeters();
+        timer=0;
       }
     }
-
-    //if (debug_command !=0) {
-    //  print (" ");
-    //  if (debug_command == 1)
-    //    print ("Ch");
-    //  if (debug_command == 2)
-    //    print ("px");
-    //  if (debug_command == 3)
-    //    print ("vl");
-    //  if (debug_command == 4)
-    //    print ("hl");
-    //  if (debug_command == 5)
-    //    print ("fs");
-    //  if (debug_command == 6)
-    //    print ("fr");
-    //  if (debug_command == 7)
-    //    print ("chr");
-    //  if (debug_command == 8)
-    //    print ("l");
-    //  if (debug_command == 9)
-    //    print ("c");
-    //  if (debug_command == 10)
-    //    print ("dr");
-    //  if (debug_command == 11)
-    //    print ("vm");
-    //  debug_command =0;
-    //}
-
-    if (debug_command !=11)
-      show_levelmeters=false;
-
-    if (show_levelmeters == true && timer >1110)
-    {
-      draw_volmeters();
-      timer=0;
-    }
+    //if (keyPressed)
+    // saveFrame("microdexed-######.png");
   }
-
-  if (keyPressed)
-    saveFrame("microdexed-######.png");
 }
