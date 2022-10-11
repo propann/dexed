@@ -1570,13 +1570,13 @@ FLASHMEM void sub_step_recording() {
   }
 }
 
-#ifdef REMOTE_CONSOLE
+#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
 uint8_t incomingSerialByte;
 #endif
 
 void loop() {
 
-#ifdef REMOTE_CONSOLE
+#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
   // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0) {

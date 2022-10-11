@@ -21,6 +21,10 @@ extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
 extern void pattern_editor_menu_0();
 
+#ifdef REMOTE_CONSOLE
+extern bool remote_touched;
+#endif
+
 #ifdef USE_SEQUENCER
 extern sequencer_t seq;
 #endif
@@ -460,17 +464,22 @@ FLASHMEM void virtual_keyboard_update_all_key_states() {
 
 void get_scaled_touch_point() {
   LCDML.SCREEN_resetTimer();
-  ts.p = touch.getPoint();
-  // Scale from ~0->4000 to tft
-  ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-  ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
+#ifdef REMOTE_CONSOLE
+  if (remote_touched == false) {
+#endif
+    ts.p = touch.getPoint();
+    // Scale from ~0->4000 to tft
+    ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+    ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
+#ifdef REMOTE_CONSOLE
+  }
+#endif
 }
 
 void handle_touchscreen_voice_select() {
   if (touch.touched()) {
     get_scaled_touch_point();
-
-    if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 31000) {
+    if (seq.cycle_touch_element != 1 && seq.generic_ui_delay > 2000) {
       if (check_button_on_grid(37, 1)) {
         save_favorite(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
       } else
@@ -519,7 +528,7 @@ void handle_touchscreen_voice_select() {
       print_perfmod_lables();
       seq.generic_ui_delay = 0;
     }
-    if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 12000) {
+    if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 1000) {
       border3_large_clear();
       if (seq.cycle_touch_element == 1) {
         seq.cycle_touch_element = 0;
@@ -1130,7 +1139,7 @@ FLASHMEM void handle_touchscreen_multiband() {
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (scope.scope_delay % 60 == 0) {
-   
+
     float l, r;
     l = mb_before_l.read();
     r = mb_before_r.read();

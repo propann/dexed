@@ -388,6 +388,9 @@ void setup()
   myPort = new Serial(this, portName);
   myPort.buffer(116);
   noSmooth();
+  fill(0, 0, 0);
+  rect(0, 0, 640, 480);
+  myPort.write(127);
 }
 
 void readxy()
@@ -629,7 +632,7 @@ void draw()
       //  }
       //  debug_command =0;
       //}
-      
+
       // if (debug_command !=11)
       //  show_levelmeters=false;
 
@@ -639,7 +642,32 @@ void draw()
         timer=0;
       }
     }
-    //if (keyPressed)
-    // saveFrame("microdexed-######.png");
   }
+
+
+  //if (keyPressed)
+  //  saveFrame("microdexed-######.png");
 }
+
+void mousePressed() {
+
+  myPort.write(1);
+  myPort.write(mouseX/4);
+  myPort.write(mouseY/2);
+  myPort.write(88);
+}
+
+void mouseReleased() {
+  myPort.write(2);
+  myPort.write(88);
+}
+
+//void mouseClicked() {
+//  //if (mousePressed) {
+//   // myPort.write(90);
+//    myPort.write(1);
+//    myPort.write(mouseX/4);
+//    myPort.write(mouseY/2);
+//    myPort.write(88);
+// // }
+//}

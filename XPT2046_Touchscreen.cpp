@@ -49,6 +49,10 @@ void isrPin(void) {
   o->isrWake = true;
 }
 
+#ifdef REMOTE_CONSOLE
+extern bool remote_touched;
+#endif
+
 TS_Point XPT2046_Touchscreen::getPoint() {
   update();
   return TS_Point(xraw, yraw, zraw);
@@ -59,8 +63,15 @@ bool XPT2046_Touchscreen::tirqTouched() {
 }
 
 bool XPT2046_Touchscreen::touched() {
-  update();
-  return (zraw >= Z_THRESHOLD);
+#ifdef REMOTE_CONSOLE
+  if (remote_touched == false) {
+#endif
+    update();
+    return (zraw >= Z_THRESHOLD);
+#ifdef REMOTE_CONSOLE
+  }
+#endif
+  return true;
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
