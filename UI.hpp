@@ -81,10 +81,8 @@ int gamepad_0_neutral;
 int gamepad_1_neutral;
 #endif
 
-#ifdef REMOTE_CONSOLE
 bool remote_touched;
 extern void draw_menu_ui_icons();
-#endif
 
 #ifdef USE_MULTIBAND
 uint16_t mb_cross_freq_low = 140;
@@ -2484,7 +2482,7 @@ void lcdml_menu_control(void) {
   }
 #endif
 
-#ifdef USB_GAMEPAD  // USB GAMEPAD CONTROL
+#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 
   uint32_t buttons = joysticks[0].getButtons();
 
