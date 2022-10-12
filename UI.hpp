@@ -764,7 +764,7 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, u
   if (color == 99)  //special case, draw virtual keyboard button (icon)
   {
     display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y / 2 - 2, GREY2);
-
+    display.fillRect(x * CHAR_width_small, y * CHAR_height_small + CHAR_height_small * button_size_y / 2, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y / 2 - 2, COLOR_BACKGROUND);
     uint8_t offset[5] = { 1, 2, 2, 4, 6 };  //+ is the offset to left
     int offcount = 0;
     display.setTextSize(1);
@@ -813,9 +813,9 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, u
     display.setTextSize(1);
     // display.setTextColor(COLOR_SYSTEXT,COLOR_BACKGROUND);
   }
-#ifdef REMOTE_CONSOLE
-  display.console = false;
-#endif
+  // #ifdef REMOTE_CONSOLE
+  //   display.console = false;
+  // #endif
 }
 
 void show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char* str) {
@@ -2151,6 +2151,31 @@ FLASHMEM void mFunc_screensaver(uint8_t param)  //qix screensaver
 }
 
 FLASHMEM void setup_ui(void) {
+
+   if (LCDML.BT_setup()) {
+    pinMode(BUT_R_PIN, INPUT_PULLUP);
+    pinMode(BUT_L_PIN, INPUT_PULLUP);
+
+#ifdef ONBOARD_BUTTON_INTERFACE
+    pinMode(BI_UP, INPUT_PULLUP);
+    pinMode(BI_DOWN, INPUT_PULLUP);
+    pinMode(BI_LEFT, INPUT_PULLUP);
+    pinMode(BI_RIGHT, INPUT_PULLUP);
+    pinMode(BI_SELECT, INPUT_PULLUP);
+    pinMode(BI_START, INPUT_PULLUP);
+    pinMode(BI_BUTTON_A, INPUT_PULLUP);
+    pinMode(BI_BUTTON_B, INPUT_PULLUP);
+#endif
+
+    ENCODER[ENC_R].begin();
+    ENCODER[ENC_L].begin();
+
+#ifdef PCM5102_MUTE_PIN
+    pinMode(PCM5102_MUTE_PIN, OUTPUT);
+    digitalWrite(PCM5102_MUTE_PIN, HIGH);  // ENABLE/UNMUTE DAC
+#endif
+  }
+  
 #ifdef UI_REVERSE
   display.setRotation(1);  // rotation 180°
   touch.setRotation(3);    // rotation 180°
@@ -2430,29 +2455,7 @@ uint8_t get_current_cursor_id(void) {
 
 void lcdml_menu_control(void) {
   // If something must init, put in in the setup condition
-  if (LCDML.BT_setup()) {
-    pinMode(BUT_R_PIN, INPUT_PULLUP);
-    pinMode(BUT_L_PIN, INPUT_PULLUP);
-
-#ifdef ONBOARD_BUTTON_INTERFACE
-    pinMode(BI_UP, INPUT_PULLUP);
-    pinMode(BI_DOWN, INPUT_PULLUP);
-    pinMode(BI_LEFT, INPUT_PULLUP);
-    pinMode(BI_RIGHT, INPUT_PULLUP);
-    pinMode(BI_SELECT, INPUT_PULLUP);
-    pinMode(BI_START, INPUT_PULLUP);
-    pinMode(BI_BUTTON_A, INPUT_PULLUP);
-    pinMode(BI_BUTTON_B, INPUT_PULLUP);
-#endif
-
-    ENCODER[ENC_R].begin();
-    ENCODER[ENC_L].begin();
-
-#ifdef PCM5102_MUTE_PIN
-    pinMode(PCM5102_MUTE_PIN, OUTPUT);
-    digitalWrite(PCM5102_MUTE_PIN, HIGH);  // ENABLE/UNMUTE DAC
-#endif
-  }
+ 
   if (back_from_volume > BACK_FROM_VOLUME_MS && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)) {
     encoderDir[ENC_L].reset();
     encoderDir[ENC_R].reset();
@@ -2533,6 +2536,7 @@ void lcdml_menu_control(void) {
   if (incomingSerialByte == 127) {  // jump to current menu, when remote console start, currently hardwired to voice select
     buttons = 0;
     ts.touch_ui_drawn_in_menu = false;
+    ts.keyb_in_menu_activated = false;
     draw_menu_ui_icons();
     LCDML.MENU_goRoot();
   }
@@ -3041,9 +3045,11 @@ void lcdml_menu_display(void) {
         x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1] = CHAR_width + 12;
         last_menu_depth = LCDML.MENU_getLayer();
         fill_up_with_spaces_menu_header(x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1]);
-        display.setCursor(0, DISPLAY_HEIGHT - CHAR_height_small);
-        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        display.print("    ");
+        if (ts.keyb_in_menu_activated == false) {
+          display.setCursor(0, DISPLAY_HEIGHT - CHAR_height_small);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          display.print("    ");
+        }
       } else if (LCDML.MENU_getLayer() > last_menu_depth) {
         display.setCursor(x_pos_menu_header_layer[LCDML.MENU_getLayer()], 7);
         display.setTextColor(RED, COLOR_BACKGROUND);
@@ -3054,10 +3060,11 @@ void lcdml_menu_display(void) {
 
         x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1] = display.getCursorX();
         fill_up_with_spaces_menu_header(x_pos_menu_header_layer[LCDML.MENU_getLayer() + 1]);
-        display.setCursor(0, DISPLAY_HEIGHT - CHAR_height_small);
-        display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-        display.print("BACK");
-
+        if (ts.keyb_in_menu_activated == false) {
+          display.setCursor(0, DISPLAY_HEIGHT - CHAR_height_small);
+          display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+          display.print("BACK");
+        }
       }
 
       else if (LCDML.MENU_getLayer() < last_menu_depth) {
@@ -15297,6 +15304,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param) {
     generic_temp_select_menu = 2;
 
     if (seq.cycle_touch_element != 1) {
+
       draw_button_on_grid(45, 1, "", "", 99);  //print keyboard icon
       draw_button_on_grid(37, 1, "SET", "FAV.", 0);
       print_voice_settings(true);
