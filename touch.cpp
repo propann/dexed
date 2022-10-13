@@ -265,11 +265,11 @@ FLASHMEM void virtual_keyboard_key_on() {
   uint8_t halftones = 0;
   display.setTextColor(COLOR_SYSTEXT);
   display.setTextSize(1);
-  
+
   //draw white keys
   if (ts.p.y > VIRT_KEYB_YPOS + 36) {
     for (uint8_t x = 0; x < 10; x++) {
-      if (ts.p.x > x * 32.22 && ts.p.x < x * 32.22 + 32 ) {
+      if (ts.p.x > x * 32.22 && ts.p.x < x * 32.22 + 32) {
         if (ts.virtual_keyboard_state_white[x] == 0) {
           ts.virtual_keyboard_state_white[x] = 254;
           for (uint8_t z = 0; z < x; z++) {
@@ -293,7 +293,7 @@ FLASHMEM void virtual_keyboard_key_on() {
   } else if (ts.p.y > VIRT_KEYB_YPOS && ts.p.y < VIRT_KEYB_YPOS + 34) {
     for (uint8_t x = 0; x < 16; x++) {
       if (seq.piano[x] == 1) {
-        if (ts.p.x > x * 18.46  && ts.p.x < x * 18.46 + 24 )
+        if (ts.p.x > x * 18.46 && ts.p.x < x * 18.46 + 24)
 
           if (ts.virtual_keyboard_state_black[x] == 0) {
             ts.virtual_keyboard_state_black[x] = 254;
@@ -331,7 +331,7 @@ FLASHMEM void virtual_keyboard_key_off_white(uint8_t note) {
       handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
       display.console = true;
       display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, COLOR_SYSTEXT);  // white key
-display.console = false;
+      display.console = false;
 
       if (x == 0 || x == 7) {
         display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
@@ -370,12 +370,15 @@ FLASHMEM void virtual_keyboard() {
   uint8_t oct_count = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
+  display.console = true;
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
+    display.fillRect(0, DISPLAY_HEIGHT - 18, 1, 18, GREY3);  //clear 1 column of pixels from previous displayed help text
 
   //draw white keys
   for (uint8_t x = 0; x < 10; x++) {
     display.console = true;
-    display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS, 29.33, 73.5, COLOR_SYSTEXT);  // white key
-     display.console = false;
+    display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS, 29.33, 73.5, COLOR_SYSTEXT);  // WHITE key
+    display.console = false;
     if (x == 0 || x == 7 || x == 14) {
       display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
       display.print("C");
@@ -385,7 +388,7 @@ FLASHMEM void virtual_keyboard() {
   }
   for (uint8_t x = 0; x < 16; x++) {
     if (seq.piano[x] == 1) {
-       display.console = true;
+      display.console = true;
       display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, COLOR_BACKGROUND);  // BLACK key
       display.console = false;
       offcount++;

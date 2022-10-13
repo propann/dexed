@@ -1200,7 +1200,7 @@ void smart_filter(uint8_t dir) {
 void border0()  //main Border  default Colors = GREY2/4
 {
   display.console = true;
-  display.drawRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, GREY4);  //Main Border
+  display.drawRect(0, 0, DISPLAY_WIDTH-1, DISPLAY_HEIGHT-1, GREY4);  //Main Border
 }
 
 void border1()  //upper left
