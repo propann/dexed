@@ -575,8 +575,8 @@ void draw()
         check= myPort.read();
         if (check==88)
         {
-          rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2-1  );
-          //rect((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2-2, (hh*256+hl) *2 -2 );
+          rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2+1, (hh*256+hl) *2 +1 );
+          rect((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2-1, (hh*256+hl) *2 -1 );
         }
       } else if (val2==70)  //volume meter
       {
@@ -645,8 +645,8 @@ void draw()
   }
 
 
-  //if (keyPressed)
-  //  saveFrame("microdexed-######.png");
+ // if (keyPressed)
+ //  saveFrame("microdexed-######.png");
 }
 
 void mousePressed() {
