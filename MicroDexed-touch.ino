@@ -3465,7 +3465,7 @@ FLASHMEM void set_volume(uint8_t v, uint8_t m) {
 ******************************************************************************/
 
 FLASHMEM void initial_values(bool init) {
-  uint16_t _m_;
+  // uint16_t _m_;
   init_configuration();
 
 //   if (init == true) {
@@ -3505,7 +3505,7 @@ FLASHMEM void initial_values(bool init) {
 #endif
 
     check_configuration();
-  }
+  // }
   //configuration.sys.vol = EEPROM[EEPROM_START_ADDRESS + 2];
   set_volume(configuration.sys.vol, configuration.sys.mono);
 
