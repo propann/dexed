@@ -664,11 +664,11 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define TOUCH_ROTATION_INVERTED 3
 
 #define SCREEN_SAVER_START_MIN 1
-#define SCREEN_SAVER_START_MAX 9
-#define SCREEN_SAVER_START_DEFAULT 3
+#define SCREEN_SAVER_START_MAX 59
+#define SCREEN_SAVER_START_DEFAULT 4
 
-#define GAMEPAD_SPEED_MIN 0
-#define GAMEPAD_SPEED_MAX 500
+#define GAMEPAD_SPEED_MIN 60
+#define GAMEPAD_SPEED_MAX 300
 #define GAMEPAD_SPEED_DEFAULT 180
 
 #define EQ_1_MIN 15

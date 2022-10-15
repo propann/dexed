@@ -14385,10 +14385,12 @@ FLASHMEM void _render_misc_settings() {
 
   setCursor_textGrid_small(42, 7);
 #ifdef USB_GAMEPAD
-  display.print(configuration.sys.gamepad_speed);
+ print_formatted_number(configuration.sys.gamepad_speed, 3);
+ setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
 #endif
 #ifndef USB_GAMEPAD
+setCursor_textGrid_small(42, 7);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print(F("N/A"));
 #endif
@@ -14396,7 +14398,7 @@ FLASHMEM void _render_misc_settings() {
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(42, 8);
   display.print(configuration.sys.screen_saver_start);
-  display.print(configuration.sys.screen_saver_start > 1 ? F("mins") : F("min "));
+   
   setCursor_textGrid_small(42, 9);
   display.print(configuration.sys.display_rotation);
   setCursor_textGrid_small(42, 10);
@@ -14487,7 +14489,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     setModeColor(0);
     setCursor_textGrid_small(42, 7);
 #ifdef USB_GAMEPAD
-    display.print(configuration.sys.gamepad_speed);
+   
+     print_formatted_number(configuration.sys.gamepad_speed, 3);
+    setCursor_textGrid_small(46, 7);
     display.print(F("ms"));
 #endif
 #ifndef USB_GAMEPAD
@@ -14499,7 +14503,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     // Screen saver starts after xx seconds
     setModeColor(1);
     setCursor_textGrid_small(42, 8);
-    display.print(configuration.sys.screen_saver_start);
+     print_formatted_number(configuration.sys.screen_saver_start, 2);
+      setCursor_textGrid_small(45, 8);
+  display.print(configuration.sys.screen_saver_start > 1 ? F("MINS") : F("MIN "));
     if (settings_modified == 2) {
       LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000);  // parameter in minutes => ms
     }

@@ -3534,9 +3534,9 @@ FLASHMEM void check_configuration_sys(void) {
   configuration.sys.display_rotation = constrain(configuration.sys.display_rotation, 0, 3);
   configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
   configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
-  configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 9);
+  configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
 #ifdef USB_GAMEPAD
-  configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 0, 500);
+  configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 60, 500);
 #endif
 }
 
