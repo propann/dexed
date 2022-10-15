@@ -55,8 +55,8 @@ extern void braids_update_settings();
 
 #ifdef USB_GAMEPAD
 elapsedMillis gamepad_millis;
-uint gamepad_speed = 180;
 int gamepad_accelerate;
+
 uint8_t gamepad_last_dir;
 
 uint8_t GAMEPAD_UP_0 = 127;
@@ -199,6 +199,8 @@ extern AudioRecordQueue record_queue_l;
 extern AudioRecordQueue record_queue_r;
 extern char filename[CONFIG_FILENAME_LEN];
 extern void psram_test();
+extern void handle_touchscreen_settings_button_test();
+
 void draw_euclidean_circle();
 #ifdef USB_GAMEPAD
 extern JoystickController joysticks[];
@@ -586,6 +588,7 @@ void splash_screen2();
 void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y);
 void displayOp(char id, int x, int y, char link, char fb);
 void fill_msz_from_flash_entry(const uint8_t entry_number, const uint8_t preset_number, const uint8_t zone_number);
+void _setup_rotation_and_encoders(bool init);
 
 char* basename(const char* filename);
 uint8_t x_pos_menu_header_layer[8];
@@ -755,7 +758,7 @@ FLASHMEM void sub_song_print_instruments(uint16_t front, uint16_t back) {
     }
   }
 }
-void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, uint8_t color) {
+FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, uint8_t color) {
 
 #ifdef REMOTE_CONSOLE
   display.console = true;
@@ -818,7 +821,7 @@ void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, u
   // #endif
 }
 
-void show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char* str) {
+FLASHMEM void show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char* str) {
   display.setTextSize(1);
   char tmp[STRING_BUFFER_SIZE];
   char* s = tmp;
@@ -832,19 +835,19 @@ void show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char*
   display.print(tmp);
 }
 
-void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y) {
+FLASHMEM void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y) {
   display.setCursor(pos_x * CHAR_width, pos_y * CHAR_height);
 }
 
-void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y) {
+FLASHMEM void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y) {
   display.setCursor(pos_x * 6, pos_y * 10);
 }
 
-void setCursor_textGrid_large(uint8_t pos_x, uint8_t pos_y) {
+FLASHMEM void setCursor_textGrid_large(uint8_t pos_x, uint8_t pos_y) {
   display.setCursor(pos_x * CHAR_width, pos_y * (CHAR_height + 1));
 }
 
-void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char* str) {
+FLASHMEM void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char* str) {
   char tmp[STRING_BUFFER_SIZE];
   char* s = tmp;
   uint8_t l = strlen(str);
@@ -857,7 +860,7 @@ void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char* str) {
   display.print(tmp);
 }
 
-void show_uppercase_no_grid(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char* str) {
+FLASHMEM void show_uppercase_no_grid(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char* str) {
   char tmp[STRING_BUFFER_SIZE];
   char* s = tmp;
   uint8_t l = strlen(str);
@@ -872,7 +875,7 @@ void show_uppercase_no_grid(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, co
   display.print(tmp);
 }
 
-void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char* str) {
+FLASHMEM void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char* str) {
   char tmp[STRING_BUFFER_SIZE];
   char* s = tmp;
   uint8_t l = strlen(str);
@@ -885,11 +888,11 @@ void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char* str) 
   display.print(tmp);
 }
 
-void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, long num) {
+FLASHMEM void show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, long num) {
   char _buf10[STRING_BUFFER_SIZE];
   show(pos_y, pos_x, field_size, itoa(num, _buf10, 10));
 }
-void show_small_font(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, long num) {
+FLASHMEM void show_small_font(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, long num) {
   char _buf10[STRING_BUFFER_SIZE];
   show_small_font(pos_y, pos_x, field_size, itoa(num, _buf10, 10));
 }
@@ -1127,32 +1130,33 @@ private:
 
 MD_REncoder ENCODER[NUM_ENCODER] = { MD_REncoder(ENC_R_PIN_B, ENC_R_PIN_A), MD_REncoder(ENC_L_PIN_B, ENC_L_PIN_A) };
 EncoderDirection encoderDir[NUM_ENCODER];
+bool button[NUM_ENCODER];
 
 long g_LCDML_CONTROL_button_press_time[NUM_ENCODER] = { 0, 0 };
 bool g_LCDML_CONTROL_button_prev[NUM_ENCODER] = { HIGH, HIGH };
 uint8_t g_LCDML_CONTROL_prev[NUM_ENCODER] = { 0, 0 };
 bool menu_init = true;
 
-void fill_up_with_spaces_menu_header(int xpos) {
+FLASHMEM void fill_up_with_spaces_menu_header(int xpos) {
   display.setCursor(xpos, 7);
   do {
     display.print(" ");
   } while (display.getCursorX() < 35 * CHAR_width_small);
 }
 
-void fill_up_with_spaces_right_window() {
+FLASHMEM void fill_up_with_spaces_right_window() {
   do {
     display.print(" ");
   } while (display.getCursorX() < DISPLAY_WIDTH - 8);
 }
 
-void fill_up_with_spaces_left_window() {
+FLASHMEM void fill_up_with_spaces_left_window() {
   do {
     display.print(" ");
   } while (display.getCursorX() < 36 * CHAR_width_small);
 }
 
-void smart_filter(uint8_t dir) {
+FLASHMEM void smart_filter(uint8_t dir) {
 #if NUM_DRUMS > 0
   bool found = false;
 
@@ -1197,55 +1201,55 @@ void smart_filter(uint8_t dir) {
 #endif
 }
 
-void border0()  //main Border  default Colors = GREY2/4
+FLASHMEM void border0()  //main Border  default Colors = GREY2/4
 {
   display.console = true;
-  display.drawRect(0, 0, DISPLAY_WIDTH-1, DISPLAY_HEIGHT-1, GREY4);  //Main Border
+  display.drawRect(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1, GREY4);  //Main Border
 }
 
-void border1()  //upper left
+FLASHMEM void border1()  //upper left
 {
   display.console = true;
   display.drawRect(0, 0, CHAR_width * 18, CHAR_height * display_rows - 3, GREY4);
 }
-void border2()  //upper right
+FLASHMEM void border2()  //upper right
 {
   display.console = true;
   display.drawRect(CHAR_width * 18 - 1, 0, DISPLAY_WIDTH - CHAR_width * 18 + 1, CHAR_height * 6 - 3, GREY4);
 }
 
-void border1_clear()  //upper left
+FLASHMEM void border1_clear()  //upper left
 {
   display.console = true;
   display.fillRect(1, CHAR_height, CHAR_width * 19 - 1, CHAR_height * display_rows, COLOR_BACKGROUND);
 }
-void border2_clear()  //upper right
+FLASHMEM void border2_clear()  //upper right
 {
   display.console = true;
   display.fillRect(CHAR_width * 18 - 1 + 1, 0 + 1, DISPLAY_WIDTH - CHAR_width * 18 - 1, CHAR_height * 6 - 5, COLOR_BACKGROUND);
 }
-void border2_half_clear()  //upper right
+FLASHMEM void border2_half_clear()  //upper right
 {
   display.console = true;
   display.fillRect(CHAR_width * 18 - 1 + 1, 0 + 1, 171, CHAR_height * 6 - 5, COLOR_BACKGROUND);
 }
-void border3_clear()  //lower left
+FLASHMEM void border3_clear()  //lower left
 {
   display.console = true;
   display.fillRect(0, CHAR_height * 5 - 4, CHAR_width * 17, DISPLAY_HEIGHT - CHAR_height * 5 + 3, COLOR_BACKGROUND);
 }
-void border4_clear()  //lower right
+FLASHMEM void border4_clear()  //lower right
 {
   display.console = true;
   display.fillRect(CHAR_width * 18, CHAR_height * 6 - 3, DISPLAY_WIDTH - CHAR_width * 18 - 1, 321 - CHAR_height * 6 - 5, COLOR_BACKGROUND);
 }
-void border3_large()  //lower left+right as one window
+FLASHMEM void border3_large()  //lower left+right as one window
 {
   display.console = true;
   display.drawRect(0, CHAR_height * 6 - 4, DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 6 + 4, GREY4);
 }
 
-void border3_large_clear()  //lower left+right as one window
+FLASHMEM void border3_large_clear()  //lower left+right as one window
 {
   display.console = true;
   display.fillRect(1, CHAR_height * 5, DISPLAY_WIDTH, DISPLAY_HEIGHT - CHAR_height * 5, COLOR_BACKGROUND);
@@ -1547,7 +1551,7 @@ FLASHMEM void print_chains_in_song_page() {
   print_formatted_number(get_chain_length_from_current_track(seq.selected_track), 2);
 }
 
-uint8_t seq_find_drum_data_from_note(uint8_t note) {
+FLASHMEM uint8_t seq_find_drum_data_from_note(uint8_t note) {
   bool found = false;
   uint8_t samplenumber;
   for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++) {
@@ -1562,7 +1566,7 @@ uint8_t seq_find_drum_data_from_note(uint8_t note) {
   return samplenumber;
 }
 
-const char* seq_find_drum_name_from_note(uint8_t note) {
+FLASHMEM const char* seq_find_drum_name_from_note(uint8_t note) {
   bool found = false;
   const char* shortname;
   for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++) {
@@ -1577,7 +1581,7 @@ const char* seq_find_drum_name_from_note(uint8_t note) {
   return shortname;
 }
 
-const char* find_long_drum_name_from_note(uint8_t note) {
+FLASHMEM const char* find_long_drum_name_from_note(uint8_t note) {
   bool found = false;
   const char* name;
   for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++) {
@@ -1592,7 +1596,7 @@ const char* find_long_drum_name_from_note(uint8_t note) {
   return name;
 }
 
-const char* tracker_find_shortname_from_pattern_step(uint8_t track, uint8_t pattern, uint8_t sstep) {
+FLASHMEM const char* tracker_find_shortname_from_pattern_step(uint8_t track, uint8_t pattern, uint8_t sstep) {
   const char* shortname;
   bool found = false;
   if (seq.content_type[seq.current_pattern[track]] == 0 && seq.vel[seq.current_pattern[track]][sstep] < 210)  //is Drumtrack and not a pitched sample
@@ -1618,7 +1622,7 @@ const char* tracker_find_shortname_from_pattern_step(uint8_t track, uint8_t patt
   return shortname;
 }
 
-const char* seq_find_shortname_in_track(uint8_t sstep, uint8_t track) {
+FLASHMEM const char* seq_find_shortname_in_track(uint8_t sstep, uint8_t track) {
   const char* shortname;
   bool found = false;
   if (seq.content_type[track] == 0 && seq.vel[track][sstep] < 210)  //is Drumtrack and not a pitched sample
@@ -1643,8 +1647,6 @@ const char* seq_find_shortname_in_track(uint8_t sstep, uint8_t track) {
   }
   return shortname;
 }
-
-
 
 FLASHMEM void print_voice_settings_in_pattern_editor(int x, int y) {
   display.setTextSize(1);
@@ -1679,7 +1681,7 @@ FLASHMEM void update_pattern_number_in_tracker(uint8_t tracknumber) {
   }
 }
 
-void print_live_probability_pattern_info() {
+FLASHMEM void print_live_probability_pattern_info() {
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)  // print track numbers, patterns and currently playing notes/chords/drums
   {
     display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -1722,7 +1724,7 @@ void print_live_probability_pattern_info() {
     }
   }
 }
-void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, uint8_t currentstep) {
+FLASHMEM void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, uint8_t currentstep) {
   if (seq.cycle_touch_element == 0)  // touch keyboard is off
   {
     uint8_t i = 0;
@@ -1834,7 +1836,7 @@ void print_track_steps_detailed_only_current_playing_note(int xpos, int ypos, ui
   }
 }
 
-void print_playing_chains() {
+FLASHMEM void print_playing_chains() {
 
   for (uint8_t x = 0; x < NUM_SEQ_TRACKS; x++) {
     display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
@@ -1864,7 +1866,7 @@ void print_playing_chains() {
   print_formatted_number(find_longest_chain(), 2);
 }
 
-void update_display_functions_while_seq_running() {
+FLASHMEM void update_display_functions_while_seq_running() {
   seq.UI_last_seq_step = seq.step;
   //is in UI_func_seq_pattern_editor or is in UI_func_seq_vel_editor
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
@@ -2151,8 +2153,9 @@ FLASHMEM void mFunc_screensaver(uint8_t param)  //qix screensaver
 }
 
 FLASHMEM void setup_ui(void) {
+  _setup_rotation_and_encoders(true);
 
-   if (LCDML.BT_setup()) {
+  if (LCDML.BT_setup()) {
     pinMode(BUT_R_PIN, INPUT_PULLUP);
     pinMode(BUT_L_PIN, INPUT_PULLUP);
 
@@ -2175,13 +2178,6 @@ FLASHMEM void setup_ui(void) {
     digitalWrite(PCM5102_MUTE_PIN, HIGH);  // ENABLE/UNMUTE DAC
 #endif
   }
-  
-#ifdef UI_REVERSE
-  display.setRotation(1);  // rotation 180°
-  touch.setRotation(3);    // rotation 180°
-#else
-  display.setRotation(3);
-#endif
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(2);
@@ -2194,11 +2190,11 @@ FLASHMEM void setup_ui(void) {
   //LCDML.MENU_enRollover();
 
   //Enable Screensaver (screensaver menu function, time to activate in ms)
-  LCDML.SCREEN_enable(mFunc_screensaver, 180000);
+  LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000);  // from parameter in minutes
   //LCDML.SCREEN_enable(mFunc_screensaver, 2000); //quick test time
 }
 
-void toggle_sequencer_play_status() {
+FLASHMEM void toggle_sequencer_play_status() {
   if (seq.running == false && seq.recording == false) {
     handleStart();
   } else if (seq.running == true && seq.recording == false) {
@@ -2293,7 +2289,7 @@ FLASHMEM boolean key_down() {
 
 #if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
-  if (gamepad_millis > gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && key_right()) {
+  if (gamepad_millis > configuration.sys.gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && key_right()) {
     seq.cycle_touch_element = 6;  // goto chain edit
     seq.help_text_needs_refresh = true;
     seq.edit_state = true;
@@ -2444,7 +2440,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons) {
 /***********************************************************************
    MENU CONTROL
  ***********************************************************************/
-uint8_t get_current_cursor_id(void) {
+FLASHMEM uint8_t get_current_cursor_id(void) {
   LCDMenuLib2_menu* tmp;
 
   if ((tmp = LCDML.MENU_getCurrentObj()) != NULL)
@@ -2453,9 +2449,9 @@ uint8_t get_current_cursor_id(void) {
     return (0);
 }
 
-void lcdml_menu_control(void) {
+FLASHMEM void lcdml_menu_control(void) {
   // If something must init, put in in the setup condition
- 
+
   if (back_from_volume > BACK_FROM_VOLUME_MS && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume)) {
     encoderDir[ENC_L].reset();
     encoderDir[ENC_R].reset();
@@ -2469,7 +2465,13 @@ void lcdml_menu_control(void) {
 
   // Volatile Variables
   long g_LCDML_CONTROL_Encoder_position[NUM_ENCODER] = { ENCODER[ENC_R].read(), ENCODER[ENC_L].read() };
-  bool button[NUM_ENCODER] = { digitalRead(BUT_R_PIN), digitalRead(BUT_L_PIN) };
+  if (configuration.sys.ui_reverse) {
+    button[0] = digitalRead(BUT_L_PIN);
+    button[1] = digitalRead(BUT_R_PIN);
+  } else {
+    button[0] = digitalRead(BUT_R_PIN);
+    button[1] = digitalRead(BUT_L_PIN);
+  }
 
 #ifdef USB_KEYPAD  // USB KEYPAD CONTROL TEST
   if (USB_KEY != 0) {
@@ -2568,7 +2570,7 @@ void lcdml_menu_control(void) {
   }
 #endif
 
-  if (gamepad_millis + (gamepad_accelerate) >= gamepad_speed) {
+  if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed) {
 
     //key-learn function
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad) && temp_int < 9) {
@@ -2679,8 +2681,8 @@ void lcdml_menu_control(void) {
 
       //end gamepad cases
     }
-    if (gamepad_accelerate > gamepad_speed / 1.1)
-      gamepad_accelerate = gamepad_speed / 1.1;
+    if (gamepad_accelerate > configuration.sys.gamepad_speed / 1.1)
+      gamepad_accelerate = configuration.sys.gamepad_speed / 1.1;
 
     // GAMEPAD BUTTON HANDLING
 
@@ -2691,7 +2693,7 @@ void lcdml_menu_control(void) {
       } else if (buttons == GAMEPAD_BUTTON_A) {
         button[ENC_R] = 0;
         gamepad_accelerate = 0;
-      } else if (buttons == GAMEPAD_START && gamepad_millis >= gamepad_speed * 3) {
+      } else if (buttons == GAMEPAD_START && gamepad_millis >= configuration.sys.gamepad_speed * 3) {
         gamepad_millis = 0;
         gamepad_accelerate = 0;
 
@@ -3007,13 +3009,13 @@ void lcdml_menu_control(void) {
 /***********************************************************************
    MENU DISPLAY
  ***********************************************************************/
-void lcdml_menu_clear(void) {
+FLASHMEM void lcdml_menu_clear(void) {
   if (seq.menu_status == 0)
     border1_clear();
   ts.touch_ui_drawn_in_menu = false;
 }
 
-void lcdml_menu_display(void) {
+FLASHMEM void lcdml_menu_display(void) {
   // update content
   // ***************
   if (LCDML.DISP_checkMenuUpdate()) {
@@ -3129,7 +3131,6 @@ void lcdml_menu_display(void) {
 /***********************************************************************
    MENU
  ***********************************************************************/
-
 
 FLASHMEM void colors_screen_update_text_preview() {
   display.setTextSize(1);
@@ -4227,7 +4228,7 @@ FLASHMEM void UI_func_midi_channel(uint8_t param) {
   }
 }
 
-void getNoteName(char* noteName, uint8_t noteNumber) {
+FLASHMEM void getNoteName(char* noteName, uint8_t noteNumber) {
   char notes[12][3] = { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
   uint8_t oct_index = noteNumber - 12;
   if (noteNumber == 130)  //it is a latched note
@@ -4670,7 +4671,7 @@ FLASHMEM void UI_func_mono_poly(uint8_t param) {
   }
 }
 
-void UI_func_note_refresh(uint8_t param) {
+FLASHMEM void UI_func_note_refresh(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -5556,7 +5557,7 @@ FLASHMEM void UI_func_portamento_time(uint8_t param) {
   }
 }
 
-void UI_handle_OP(uint8_t param) {
+FLASHMEM void UI_handle_OP(uint8_t param) {
   static uint8_t op_selected;
 
   display_OP_active_instance_number(selected_instance_id, configuration.dexed[selected_instance_id].op_enabled);
@@ -5617,7 +5618,7 @@ void UI_handle_OP(uint8_t param) {
   }
 }
 
-void UI_func_drum_reverb_send(uint8_t param) {
+FLASHMEM void UI_func_drum_reverb_send(uint8_t param) {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -14358,122 +14359,115 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
   }
 }
 
+FLASHMEM void _render_misc_settings() {
+  display.fillScreen(COLOR_BACKGROUND);
+  display.setTextSize(2);
+  setCursor_textGrid(1, 1);
+  display.setTextColor(RED, COLOR_BACKGROUND);
+  display.print(F("MISC. SETTINGS"));
+  helptext_l("BACK");
+  helptext_r("SELECT PARAMETER");
+  display.setTextSize(1);
+
+  draw_button_on_grid(42, 1, "TOUCH", "TEST", 0);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+  setCursor_textGrid_small(2, 7);
+  display.print(F("GAMEPAD/NATIVE KEY SPEED"));
+  setCursor_textGrid_small(2, 8);
+  display.print(F("SCREENSAVER START"));
+  setCursor_textGrid_small(2, 9);
+  display.print(F("DISPLAY ROTATION"));
+  setCursor_textGrid_small(2, 10);
+  display.print(F("TOUCH SCREEN ROTATION"));
+  setCursor_textGrid_small(2, 11);
+  display.print(F("REVERSE UI (ENCODERS ON TOP)"));
+
+  setCursor_textGrid_small(42, 7);
+#ifdef USB_GAMEPAD
+  display.print(configuration.sys.gamepad_speed);
+  display.print(F("ms"));
+#endif
+#ifndef USB_GAMEPAD
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print(F("N/A"));
+#endif
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(42, 8);
+  display.print(configuration.sys.screen_saver_start);
+  display.print(configuration.sys.screen_saver_start > 1 ? F("mins") : F("min "));
+  setCursor_textGrid_small(42, 9);
+  display.print(configuration.sys.display_rotation);
+  setCursor_textGrid_small(42, 10);
+  display.print(configuration.sys.touch_rotation);
+  setCursor_textGrid_small(42, 11);
+  display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
+
+  setCursor_textGrid_small(42, 12);
+  display.setTextColor(RED, COLOR_BACKGROUND);
+  setCursor_textGrid_small(2, 21);
+  display.print(F("WRITE YOUR CHRISTMAS WISH(ES) ON DISCORD"));
+}
+
 FLASHMEM void UI_func_misc_settings(uint8_t param) {
+  uint8_t settings_modified = 0;
+
   if (LCDML.FUNC_setup()) {
-    // char buf[16];
-    display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     generic_active_function = 0;
     generic_temp_select_menu = 0;
-    display.setTextSize(2);
-    setCursor_textGrid(1, 1);
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("MISC. SETTINGS"));
-    helptext_l("BACK");
-    helptext_r("SELECT PARAMETER");
-    display.setTextSize(1);
-
-    draw_button_on_grid(42, 1, "TOUCH", "TEST", 0);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(2, 7);
-    display.print(F("GAMEPAD/NATIVE KEY SPEED"));
-    setCursor_textGrid_small(2, 8);
-    display.print(F("GAMEPAD/NATIVE KEY ACCELERATION"));
-    setCursor_textGrid_small(2, 9);
-    display.print(F("DISPLAY ROTATION"));
-    setCursor_textGrid_small(2, 10);
-    display.print(F("TOUCH SCREEN ROTATION"));
-    setCursor_textGrid_small(2, 11);
-    display.print(F("REVERSE UI (ENCODERS ON TOP)"));
-    setCursor_textGrid_small(2, 12);
-
-    setCursor_textGrid_small(42, 7);
-    display.print(F("200ms"));
-    setCursor_textGrid_small(42, 8);
-    display.print(F("x 1.5"));
-    setCursor_textGrid_small(42, 9);
-    display.print(F("0"));
-    setCursor_textGrid_small(42, 10);
-    display.print(F("0"));
-    setCursor_textGrid_small(42, 11);
-    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    display.print(F("OFF"));
-    setCursor_textGrid_small(42, 12);
-
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    setCursor_textGrid_small(2, 20);
-    display.print(F("TEMPLATE MENU - NOT IMPLEMENTED, YET"));
-    setCursor_textGrid_small(2, 21);
-    display.print(F("WRITE YOU CHRISTMAS WISH(ES) ON DISCORD"));
-    // for (uint8_t i = 0; i < 2; i++) {
-    //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("Dexed #"), i + 1);
-    //   _show_midi_channel(buf, 3 + i, configuration.dexed[i].midi_channel);
-    // }
-
-    // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("E-Piano"));
-    // _show_midi_channel(buf, 5, configuration.epiano.midi_channel);
-
-    // for (uint8_t i = 0; i < 2; i++) {
-    //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MicroSynth #"), i + 1);
-    //   _show_midi_channel(buf, 6 + i, microsynth[i].midi_channel);
-    // }
-
-    // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Braids"));
-    // _show_midi_channel(buf, 8, braids_osc.midi_channel);
-
-    // for (uint8_t i = 0; i < 2; i++) {
-    //   snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MultiSample #"), i + 1);
-    //   _show_midi_channel(buf, 9 + i, msp[i].midi_channel);
-    // }
-
-    // snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Drums"));
-    // _show_midi_channel(buf, 11, drum_midi_channel);
+    _render_misc_settings();
   }
   if (LCDML.FUNC_loop()) {
+
+    // handle encoders
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (LCDML.BT_checkDown()) {
-        // if (generic_active_function == 0)
-        //   generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 8);
-        // else if (generic_temp_select_menu == 0)
-        //   configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 1)
-        //   configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 2)
-        //   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 3)
-        //   microsynth[0].midi_channel = constrain(microsynth[0].midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 4)
-        //   microsynth[1].midi_channel = constrain(microsynth[1].midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 5)
-        //   braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 6)
-        //   msp[0].midi_channel = constrain(msp[0].midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 7)
-        //   msp[1].midi_channel = constrain(msp[1].midi_channel + 1, 0, 16);
-        // else if (generic_temp_select_menu == 8)
-        //   drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
+        uint8_t menu = 0;
+        if (generic_active_function == 0)
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 4);
+        else if (generic_temp_select_menu == menu++) {
+#ifdef USB_GAMEPAD
+          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
+          settings_modified = 1;
+#endif
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
+          settings_modified = 2;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation + 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
+          settings_modified = 3;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + 1, TOUCH_ROTATION_MAX, TOUCH_ROTATION_MAX);
+          settings_modified = 4;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
+          settings_modified = 5;
+        }
 
       } else if (LCDML.BT_checkUp()) {
-        // if (generic_active_function == 0)
-        //   generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 8);
-        // else if (generic_temp_select_menu == 0)
-        //   configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 1)
-        //   configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel - 1, 0, 160);
-        // else if (generic_temp_select_menu == 2)
-        //   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 3)
-        //   microsynth[0].midi_channel = constrain(microsynth[0].midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 4)
-        //   microsynth[1].midi_channel = constrain(microsynth[1].midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 5)
-        //   braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 6)
-        //   msp[0].midi_channel = constrain(msp[0].midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 7)
-        //   msp[1].midi_channel = constrain(msp[1].midi_channel - 1, 0, 16);
-        // else if (generic_temp_select_menu == 8)
-        //   drum_midi_channel = constrain(drum_midi_channel - 1, 0, 16);
+        uint8_t menu = 0;
+        if (generic_active_function == 0)
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 4);
+        else if (generic_temp_select_menu == menu++) {
+#ifdef USB_GAMEPAD
+          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
+          settings_modified = 1;
+#endif
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start - 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
+          settings_modified = 2;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation - 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
+          settings_modified = 3;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation - 1, TOUCH_ROTATION_MAX, TOUCH_ROTATION_MAX);
+          settings_modified = 4;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
+          settings_modified = 5;
+        }
       }
     }
 
@@ -14488,39 +14482,94 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     }
 
     //button check end
-    // setModeColor(0);
-    // setCursor_textGrid(20, 3);
-    // _print_midi_channel(configuration.dexed[0].midi_channel);
-    // setModeColor(1);
-    // setCursor_textGrid(20, 4);
-    // _print_midi_channel(configuration.dexed[1].midi_channel);
-    // setModeColor(2);
-    // setCursor_textGrid(20, 5);
-    // _print_midi_channel(configuration.epiano.midi_channel);
-    // setModeColor(3);
-    // setCursor_textGrid(20, 6);
-    // _print_midi_channel(microsynth[0].midi_channel);
-    // setModeColor(4);
-    // setCursor_textGrid(20, 7);
-    // _print_midi_channel(microsynth[1].midi_channel);
-    // setModeColor(5);
-    // setCursor_textGrid(20, 8);
-    // _print_midi_channel(braids_osc.midi_channel);
-    // setModeColor(6);
-    // setCursor_textGrid(20, 9);
-    // _print_midi_channel(msp[0].midi_channel);
-    // setModeColor(7);
-    // setCursor_textGrid(20, 10);
-    // _print_midi_channel(msp[1].midi_channel);
-    // setModeColor(8);
-    // setCursor_textGrid(20, 11);
-    // _print_midi_channel(drum_midi_channel);
+
+    // Gamepad settings
+    setModeColor(0);
+    setCursor_textGrid_small(42, 7);
+#ifdef USB_GAMEPAD
+    display.print(configuration.sys.gamepad_speed);
+    display.print(F("ms"));
+#endif
+#ifndef USB_GAMEPAD
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(F("N/A"));
+#endif
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+    // Screen saver starts after xx seconds
+    setModeColor(1);
+    setCursor_textGrid_small(42, 8);
+    display.print(configuration.sys.screen_saver_start);
+    if (settings_modified == 2) {
+      LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000);  // parameter in minutes => ms
+    }
+
+    // Display rotation
+    setModeColor(2);
+    setCursor_textGrid_small(42, 9);
+    display.print(configuration.sys.display_rotation);
+    if (settings_modified == 3) {
+      display.setRotation(configuration.sys.display_rotation);  // rotation 180°
+      _render_misc_settings();
+    }
+
+    // Touch rotation
+    setModeColor(3);
+    setCursor_textGrid_small(42, 10);
+    display.print(configuration.sys.touch_rotation);
+    if (settings_modified == 4) {
+      touch.setRotation(configuration.sys.touch_rotation);  // rotation 180°
+    }
+
+    // UI reverse
+    setModeColor(4);
+    setCursor_textGrid_small(42, 11);
+    display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
+    if (settings_modified == 5) {
+      if (configuration.sys.display_rotation == DISPLAY_ROTATION_DEFAULT) {
+        configuration.sys.display_rotation = DISPLAY_ROTATION_INVERTED;
+        configuration.sys.touch_rotation = TOUCH_ROTATION_INVERTED;
+      } else {
+        configuration.sys.display_rotation = DISPLAY_ROTATION_DEFAULT;
+        configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
+      }
+
+      // set hardware rotations for display/touch and pins for encoders
+      _setup_rotation_and_encoders(false);
+
+      // Re render the page
+      generic_active_function = 0;
+      generic_temp_select_menu = 0;
+      _render_misc_settings();
+    }
+
+    if (settings_modified > 0) {
+      save_sd_sys_json();
+      settings_modified = 0;
+    }
   }
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
     generic_active_function = 99;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+FLASHMEM void _setup_rotation_and_encoders(bool init) {
+  display.setRotation(configuration.sys.display_rotation);
+  touch.setRotation(configuration.sys.touch_rotation);
+
+  if (configuration.sys.ui_reverse == true) {
+    MD_REncoder encoder_tmp = ENCODER[ENC_L];
+    ENCODER[ENC_L] = ENCODER[ENC_R];
+    ENCODER[ENC_R] = encoder_tmp;
+  } else {
+    if (!init) {
+      MD_REncoder encoder_tmp = ENCODER[ENC_R];
+      ENCODER[ENC_R] = ENCODER[ENC_L];
+      ENCODER[ENC_L] = encoder_tmp;
+    }
   }
 }
 
@@ -16246,7 +16295,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param) {
   }
 }
 
-void UI_func_eq_1(uint8_t param) {
+FLASHMEM void UI_func_eq_1(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16285,7 +16334,7 @@ void UI_func_eq_1(uint8_t param) {
 #endif
 }
 
-void UI_func_eq_2(uint8_t param) {
+FLASHMEM void UI_func_eq_2(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16324,7 +16373,7 @@ void UI_func_eq_2(uint8_t param) {
 #endif
 }
 
-void UI_func_eq_3(uint8_t param) {
+FLASHMEM void UI_func_eq_3(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16362,7 +16411,7 @@ void UI_func_eq_3(uint8_t param) {
 #endif
 }
 
-void UI_func_eq_4(uint8_t param) {
+FLASHMEM void UI_func_eq_4(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16400,7 +16449,7 @@ void UI_func_eq_4(uint8_t param) {
 #endif
 }
 
-void UI_func_eq_5(uint8_t param) {
+FLASHMEM void UI_func_eq_5(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16440,7 +16489,7 @@ void UI_func_eq_5(uint8_t param) {
 #endif
 }
 
-void UI_func_eq_6(uint8_t param) {
+FLASHMEM void UI_func_eq_6(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16480,7 +16529,7 @@ void UI_func_eq_6(uint8_t param) {
 #endif
 }
 
-void UI_func_eq_7(uint8_t param) {
+FLASHMEM void UI_func_eq_7(uint8_t param) {
 #ifndef SGTL5000_AUDIO_ENHANCE
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -16521,7 +16570,7 @@ void UI_func_eq_7(uint8_t param) {
 #endif
 }
 
-void UI_func_startup_performance(uint8_t param) {
+FLASHMEM void UI_func_startup_performance(uint8_t param) {
   bool stored = false;
   static uint8_t old_load_at_startup_performance;
 
@@ -16603,7 +16652,7 @@ void UI_func_startup_performance(uint8_t param) {
   }
 }
 
-void UI_func_startup_page(uint8_t param) {
+FLASHMEM void UI_func_startup_page(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -16810,7 +16859,7 @@ FLASHMEM bool UI_select_name(uint8_t y, uint8_t x, char* edit_string, uint8_t le
   return (false);
 }
 
-uint8_t search_accepted_char(uint8_t c) {
+FLASHMEM uint8_t search_accepted_char(uint8_t c) {
   // if (c == 0)
   //   c = 32;
 
@@ -16828,11 +16877,11 @@ uint8_t search_accepted_char(uint8_t c) {
   return (0);
 }
 
-void display_int(int16_t var, uint8_t size, bool zeros, bool brackets, bool sign) {
+FLASHMEM void display_int(int16_t var, uint8_t size, bool zeros, bool brackets, bool sign) {
   display_float(float(var), size, 0, zeros, brackets, sign);
 }
 
-void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool zeros, bool brackets, bool sign) {
+FLASHMEM void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool zeros, bool brackets, bool sign) {
   char s[display_cols + 1];
 
   if (size_fraction > 0) {
@@ -16867,11 +16916,11 @@ void display_float(float var, uint8_t size_number, uint8_t size_fraction, bool z
   display.setTextColor(COLOR_SYSTEXT);
 }
 
-inline void display_bar_int(const char* title, uint32_t value, float factor, int32_t min_value, int32_t max_value, uint8_t size, bool zeros, bool sign, bool init) {
+FLASHMEM void display_bar_int(const char* title, uint32_t value, float factor, int32_t min_value, int32_t max_value, uint8_t size, bool zeros, bool sign, bool init) {
   display_bar_float(title, float(value), factor, min_value, max_value, size, 0, zeros, sign, init);
 }
 
-void display_bar_float(const char* title, float value, float factor, int32_t min_value, int32_t max_value, uint8_t size_number, uint8_t size_fraction, bool zeros, bool sign, bool init) {
+FLASHMEM void display_bar_float(const char* title, float value, float factor, int32_t min_value, int32_t max_value, uint8_t size_number, uint8_t size_fraction, bool zeros, bool sign, bool init) {
   uint8_t size;
   //float v;
   //float _vi = 0.0;
@@ -16911,11 +16960,11 @@ void display_bar_float(const char* title, float value, float factor, int32_t min
   }
 }
 
-inline void display_meter_int(const char* title, uint32_t value, float factor, float offset, int32_t min_value, int32_t max_value, uint8_t size, bool zeros, bool sign, bool init) {
+FLASHMEM inline void display_meter_int(const char* title, uint32_t value, float factor, float offset, int32_t min_value, int32_t max_value, uint8_t size, bool zeros, bool sign, bool init) {
   display_meter_float(title, float(value), factor, offset, min_value, max_value, size, 0, zeros, sign, init);
 }
 
-void display_meter_float(const char* title, float value, float factor, float offset, int32_t min_value, int32_t max_value, uint8_t size_number, uint8_t size_fraction, bool zeros, bool sign, bool init) {
+FLASHMEM void display_meter_float(const char* title, float value, float factor, float offset, int32_t min_value, int32_t max_value, uint8_t size_number, uint8_t size_fraction, bool zeros, bool sign, bool init) {
   uint8_t size = 0;
   float v;
   //float _vi = 0.0;
@@ -16974,14 +17023,14 @@ void display_meter_float(const char* title, float value, float factor, float off
   display.fillRect(CHAR_width + v + 1, 2 * CHAR_height + 4, 4, 8, COLOR_SYSTEXT);
 }
 
-uint8_t bit_reverse8(uint8_t v) {
+FLASHMEM uint8_t bit_reverse8(uint8_t v) {
   uint8_t result = 0;
   for (; v > 0; v >>= 1)
     (result <<= 1) |= (v & 1);
   return (result);
 }
 
-void display_OP_active_instance_number(uint8_t instance_id, uint8_t op) {
+FLASHMEM void display_OP_active_instance_number(uint8_t instance_id, uint8_t op) {
   uint8_t i, n;
 
   for (n = 2; n < 8; n++) {
@@ -17022,7 +17071,7 @@ void display_OP_active_instance_number(uint8_t instance_id, uint8_t op) {
 }
 
 #ifdef USE_FX
-void display_delay_sync(uint8_t sync) {
+FLASHMEM void display_delay_sync(uint8_t sync) {
   show(1, 1, display_cols - 2, "Delay Sync");
   if (seq.running == false) show(2, 1, 10, "MIDI Sync   ");
   else show(2, 0, 10, "Seq. Sync   ");
@@ -17076,7 +17125,7 @@ void display_delay_sync(uint8_t sync) {
 }
 #endif
 
-void string_trim(char* s) {
+FLASHMEM void string_trim(char* s) {
   int i;
 
   while (isspace(*s)) s++;  // skip left side white spaces
@@ -17085,7 +17134,7 @@ void string_trim(char* s) {
   s[i + 1] = '\0';
 }
 
-void locate_previous_non_favorite() {
+FLASHMEM void locate_previous_non_favorite() {
   //find prev. non fav in current bank
   display.setTextSize(2);
   setCursor_textGrid(4, 1);
@@ -17316,7 +17365,7 @@ FLASHMEM bool check_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
     return false;
 }
 
-float eraseBytesPerSecond(const unsigned char* id) {
+FLASHMEM float eraseBytesPerSecond(const unsigned char* id) {
   if (id[0] == 0x20) return 152000.0;  // Micron
   if (id[0] == 0x01) return 500000.0;  // Spansion
   if (id[0] == 0xEF) return 419430.0;  // Winbond
@@ -17747,7 +17796,7 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
   }
 }
 
-char* basename(const char* filename) {
+FLASHMEM char* basename(const char* filename) {
   char* p = strrchr(filename, '/');
   return p ? p + 1 : (char*)filename;
 }
@@ -17836,7 +17885,7 @@ FLASHMEM void fill_msz_from_flash_entry(const uint8_t entry_number, const uint8_
 }
 #endif
 
-static const uint8_t splash_image[3033] = {
+PROGMEM static const uint8_t splash_image[3033] = {
   20,
   20,
   38,
@@ -20880,8 +20929,8 @@ static const uint8_t splash_image[3033] = {
    insize  - Number of input bytes.
 *************************************************************************/
 
-void RLE_Uncompress(const unsigned char* in, unsigned char* out,
-                    unsigned int insize) {
+FLASHMEM void RLE_Uncompress(const unsigned char* in, unsigned char* out,
+                             unsigned int insize) {
   unsigned char marker, symbol;
   unsigned int i, inpos, outpos, count;
 

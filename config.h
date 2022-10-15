@@ -307,18 +307,9 @@
 
 const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio Shield)
 
-// Encoder with button
+// Encoders with push button
 //#define ENCODER_USE_INTERRUPTS
 #define NUM_ENCODER 2
-#ifdef UI_REVERSE
-#define ENC_L_PIN_B 29
-#define ENC_L_PIN_A 28
-#define BUT_L_PIN 25
-
-#define ENC_R_PIN_B 31
-#define ENC_R_PIN_A 32
-#define BUT_R_PIN 30
-#else
 #define ENC_L_PIN_A 32
 #define ENC_L_PIN_B 31
 #define BUT_L_PIN 30
@@ -326,7 +317,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define ENC_R_PIN_A 28
 #define ENC_R_PIN_B 29
 #define BUT_R_PIN 25
-#endif
 
 #define BUT_DEBOUNCE_MS 20
 #define LONG_BUTTON_PRESS 500
@@ -384,6 +374,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 
 #ifdef REMOTE_CONSOLE
 #define USB_GAMEPAD 1
+#define ONBOARD_BUTTON_INTERFACE 1
 #define AUDIO_DEVICE_USB
 #endif
 
@@ -661,6 +652,24 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define PERFORMANCE_NUM_MIN 0
 #define PERFORMANCE_NUM_MAX 99
 #define PERFORMANCE_NUM_DEFAULT 0
+
+#define DISPLAY_ROTATION_MIN 0
+#define DISPLAY_ROTATION_MAX 3
+#define DISPLAY_ROTATION_DEFAULT 3
+#define DISPLAY_ROTATION_INVERTED 1
+
+#define TOUCH_ROTATION_MIN 0
+#define TOUCH_ROTATION_MAX 3
+#define TOUCH_ROTATION_DEFAULT 1
+#define TOUCH_ROTATION_INVERTED 3
+
+#define SCREEN_SAVER_START_MIN 1
+#define SCREEN_SAVER_START_MAX 9
+#define SCREEN_SAVER_START_DEFAULT 3
+
+#define GAMEPAD_SPEED_MIN 0
+#define GAMEPAD_SPEED_MAX 500
+#define GAMEPAD_SPEED_DEFAULT 180
 
 #define EQ_1_MIN 15
 #define EQ_1_MAX 250
@@ -1007,6 +1016,13 @@ typedef struct sys_s {
   uint8_t favorites;
   uint8_t load_at_startup_performance;
   uint8_t load_at_startup_page;
+  uint8_t display_rotation;
+  uint8_t touch_rotation;
+  uint8_t screen_saver_start; // minutes
+#ifdef USB_GAMEPAD
+  uint16_t gamepad_speed; // milliseconds
+#endif
+  bool ui_reverse;
 } sys_t;
 
 #ifdef COMPILE_FOR_FLASH
