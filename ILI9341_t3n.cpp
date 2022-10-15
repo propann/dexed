@@ -1162,9 +1162,9 @@ void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t 
 #endif
   }
   drawFastHLine(x, y, w, color);
-  drawFastHLine(x, y + h, w, color);
+  drawFastHLine(x, y + h - 1, w, color);
   drawFastVLine(x, y, h, color);
-  drawFastVLine(x + w, y, h, color);
+  drawFastVLine(x + w - 1, y, h, color);
 }
 
 // overwrite functions from class Print:

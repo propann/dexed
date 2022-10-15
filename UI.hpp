@@ -1204,7 +1204,7 @@ FLASHMEM void smart_filter(uint8_t dir) {
 FLASHMEM void border0()  //main Border  default Colors = GREY2/4
 {
   display.console = true;
-  display.drawRect(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1, GREY4);  //Main Border
+  display.drawRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, GREY4);  //Main Border
 }
 
 FLASHMEM void border1()  //upper left
@@ -14439,7 +14439,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
           configuration.sys.display_rotation = constrain(configuration.sys.display_rotation + 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
           settings_modified = 3;
         } else if (generic_temp_select_menu == menu++) {
-          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + 1, TOUCH_ROTATION_MAX, TOUCH_ROTATION_MAX);
+          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + 1, TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
           settings_modified = 4;
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
@@ -14462,7 +14462,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
           configuration.sys.display_rotation = constrain(configuration.sys.display_rotation - 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
           settings_modified = 3;
         } else if (generic_temp_select_menu == menu++) {
-          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation - 1, TOUCH_ROTATION_MAX, TOUCH_ROTATION_MAX);
+          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation - 1, TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
           settings_modified = 4;
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
