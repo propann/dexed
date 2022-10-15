@@ -1825,6 +1825,8 @@ void loop() {
       save_sys_flag = false;
       if (LCDML.FUNC_getID() == 255) {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
+      } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
+        draw_button_on_grid(2, 23, "CONFIG", "SAVED", 1);
       }
 #ifdef DEBUG
       Serial.println(F("Saved."));
@@ -3468,43 +3470,43 @@ FLASHMEM void initial_values(bool init) {
   // uint16_t _m_;
   init_configuration();
 
-//   if (init == true) {
-//     init_configuration();
-//   } else {
-//     _m_ = (EEPROM[EEPROM_START_ADDRESS] << 8) | EEPROM[EEPROM_START_ADDRESS + 1];
-//     if (_m_ != EEPROM_MARKER) {
-// #ifdef DEBUG
-//       Serial.println(F("Found wrong EEPROM marker, initializing EEPROM..."));
-// #endif
-//       init_configuration();
-//       //load_sd_performance_json(PERFORMANCE_NUM_MIN);
-//     } else {
-      load_sd_sys_json();
-      if (configuration.sys.load_at_startup_performance == 255) {
+  //   if (init == true) {
+  //     init_configuration();
+  //   } else {
+  //     _m_ = (EEPROM[EEPROM_START_ADDRESS] << 8) | EEPROM[EEPROM_START_ADDRESS + 1];
+  //     if (_m_ != EEPROM_MARKER) {
+  // #ifdef DEBUG
+  //       Serial.println(F("Found wrong EEPROM marker, initializing EEPROM..."));
+  // #endif
+  //       init_configuration();
+  //       //load_sd_performance_json(PERFORMANCE_NUM_MIN);
+  //     } else {
+  load_sd_sys_json();
+  if (configuration.sys.load_at_startup_performance == 255) {
 #ifdef DEBUG
-        Serial.print(F("Loading initial system data from performance "));
-        Serial.println(configuration.sys.performance_number, DEC);
+    Serial.print(F("Loading initial system data from performance "));
+    Serial.println(configuration.sys.performance_number, DEC);
 #endif
-        load_sd_performance_json(configuration.sys.performance_number);
-      } else if (configuration.sys.load_at_startup_performance < 100) {
+    load_sd_performance_json(configuration.sys.performance_number);
+  } else if (configuration.sys.load_at_startup_performance < 100) {
 #ifdef DEBUG
-        Serial.print(F("Loading initial system data from performance "));
-        Serial.println(configuration.sys.load_at_startup_performance, DEC);
+    Serial.print(F("Loading initial system data from performance "));
+    Serial.println(configuration.sys.load_at_startup_performance, DEC);
 #endif
-        load_sd_performance_json(configuration.sys.load_at_startup_performance);
-      } else {
+    load_sd_performance_json(configuration.sys.load_at_startup_performance);
+  } else {
 #ifdef DEBUG
-        Serial.print(F("Loading initial system data from default performance "));
-        Serial.println(STARTUP_NUM_DEFAULT, DEC);
+    Serial.print(F("Loading initial system data from default performance "));
+    Serial.println(STARTUP_NUM_DEFAULT, DEC);
 #endif
-        load_sd_performance_json(STARTUP_NUM_DEFAULT);
-      }
-    // }
+    load_sd_performance_json(STARTUP_NUM_DEFAULT);
+  }
+  // }
 #ifdef DEBUG
-    Serial.println(F("OK, loaded!"));
+  Serial.println(F("OK, loaded!"));
 #endif
 
-    check_configuration();
+  check_configuration();
   // }
   //configuration.sys.vol = EEPROM[EEPROM_START_ADDRESS + 2];
   set_volume(configuration.sys.vol, configuration.sys.mono);

@@ -14406,7 +14406,7 @@ FLASHMEM void _render_misc_settings() {
 
   setCursor_textGrid_small(42, 12);
   display.setTextColor(RED, COLOR_BACKGROUND);
-  setCursor_textGrid_small(2, 21);
+  setCursor_textGrid_small(12, 21);
   display.print(F("WRITE YOUR CHRISTMAS WISH(ES) ON DISCORD"));
 }
 
@@ -14544,7 +14544,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     }
 
     if (settings_modified > 0) {
-      save_sd_sys_json();
+      //save_sd_sys_json();
+      save_sys_flag = true;
+      save_sys = 0;
       settings_modified = 0;
     }
   }
