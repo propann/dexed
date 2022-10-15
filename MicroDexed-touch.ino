@@ -1649,6 +1649,9 @@ void loop() {
       display.console = true;
       scope.draw_scope(203, 138, 108);
     }
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
+    // handle touch button test
+    handle_touchscreen_settings_button_test();
   }
 
 #ifdef COMPILE_FOR_FLASH
@@ -1759,8 +1762,8 @@ void loop() {
         display.console = true;
         if (midi_decay_timer_dexed > MIDI_DECAY_TIMER && midi_decay_dexed[instance_id] > 0) {
           midi_decay_dexed[instance_id]--;
-          display.fillRect(181 + (instance_id * 12), 19, 5, 8 - midi_decay_dexed[instance_id], COLOR_BACKGROUND);  //region above bar
-          display.fillRect(181 + (instance_id * 12), 27 - midi_decay_dexed[instance_id], 5, midi_decay_dexed[instance_id], COLOR_PITCHSMP); //bar
+          display.fillRect(181 + (instance_id * 12), 19, 5, 8 - midi_decay_dexed[instance_id], COLOR_BACKGROUND);                            //region above bar
+          display.fillRect(181 + (instance_id * 12), 27 - midi_decay_dexed[instance_id], 5, midi_decay_dexed[instance_id], COLOR_PITCHSMP);  //bar
         } else if (midi_voices[instance_id] == 0 && midi_decay_dexed[instance_id] == 0 && !MicroDexed[instance_id]->getSustain()) {
           midi_decay_dexed[instance_id]--;
           display.fillRect(181 + (instance_id * 12), 19 + 7, 5, 1, COLOR_BACKGROUND);
@@ -1778,8 +1781,8 @@ void loop() {
         display.console = true;
         if (midi_decay_timer_microsynth > MIDI_DECAY_TIMER && midi_decay_microsynth[instance_id] > 1) {
           midi_decay_microsynth[instance_id]--;
-          display.fillRect(13 * 6 + (instance_id * 12), 19, 5, 8 - midi_decay_microsynth[instance_id], COLOR_BACKGROUND);  //region above bar
-          display.fillRect(13 * 6 + (instance_id * 12), 27 - midi_decay_microsynth[instance_id], 5, midi_decay_microsynth[instance_id], COLOR_PITCHSMP); //bar
+          display.fillRect(13 * 6 + (instance_id * 12), 19, 5, 8 - midi_decay_microsynth[instance_id], COLOR_BACKGROUND);                                 //region above bar
+          display.fillRect(13 * 6 + (instance_id * 12), 27 - midi_decay_microsynth[instance_id], 5, midi_decay_microsynth[instance_id], COLOR_PITCHSMP);  //bar
         }
         // if value is 0 then no drawing should happen - so stop at 1
         if (midi_decay_microsynth[instance_id] == 1) {
@@ -3409,7 +3412,8 @@ FLASHMEM void set_drums_volume(float vol) {
   master_mixer_r.gain(MASTER_MIX_CH_DRUMS, vol);
   master_mixer_l.gain(MASTER_MIX_CH_DRUMS, vol);
 }
-void set_volume(uint8_t v, uint8_t m) {
+
+FLASHMEM void set_volume(uint8_t v, uint8_t m) {
   float tmp_v;
 
   configuration.sys.vol = v;
@@ -3462,18 +3466,19 @@ void set_volume(uint8_t v, uint8_t m) {
 
 FLASHMEM void initial_values(bool init) {
   uint16_t _m_;
+  init_configuration();
 
-  if (init == true)
-    init_configuration();
-  else {
-    _m_ = (EEPROM[EEPROM_START_ADDRESS] << 8) | EEPROM[EEPROM_START_ADDRESS + 1];
-    if (_m_ != EEPROM_MARKER) {
-#ifdef DEBUG
-      Serial.println(F("Found wrong EEPROM marker, initializing EEPROM..."));
-#endif
-      init_configuration();
-      //load_sd_performance_json(PERFORMANCE_NUM_MIN);
-    } else {
+//   if (init == true) {
+//     init_configuration();
+//   } else {
+//     _m_ = (EEPROM[EEPROM_START_ADDRESS] << 8) | EEPROM[EEPROM_START_ADDRESS + 1];
+//     if (_m_ != EEPROM_MARKER) {
+// #ifdef DEBUG
+//       Serial.println(F("Found wrong EEPROM marker, initializing EEPROM..."));
+// #endif
+//       init_configuration();
+//       //load_sd_performance_json(PERFORMANCE_NUM_MIN);
+//     } else {
       load_sd_sys_json();
       if (configuration.sys.load_at_startup_performance == 255) {
 #ifdef DEBUG
@@ -3494,11 +3499,10 @@ FLASHMEM void initial_values(bool init) {
 #endif
         load_sd_performance_json(STARTUP_NUM_DEFAULT);
       }
-    }
+    // }
 #ifdef DEBUG
     Serial.println(F("OK, loaded!"));
 #endif
-
 
     check_configuration();
   }
@@ -3525,6 +3529,13 @@ FLASHMEM void check_configuration_sys(void) {
   configuration.sys.favorites = constrain(configuration.sys.favorites, FAVORITES_NUM_MIN, FAVORITES_NUM_MAX);
   configuration.sys.performance_number = constrain(configuration.sys.performance_number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   configuration.sys.load_at_startup_performance = constrain(configuration.sys.load_at_startup_performance, STARTUP_NUM_MIN, STARTUP_NUM_MAX);
+  configuration.sys.display_rotation = constrain(configuration.sys.display_rotation, 0, 3);
+  configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
+  configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
+  configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 9);
+#ifdef USB_GAMEPAD
+  configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 0, 500);
+#endif
 }
 
 FLASHMEM void check_configuration_fx(void) {
@@ -3635,7 +3646,13 @@ FLASHMEM void init_configuration(void) {
   configuration.sys.soft_midi_thru = SOFT_MIDI_THRU_DEFAULT;
   configuration.sys.performance_number = PERFORMANCE_NUM_DEFAULT;
   configuration.sys.load_at_startup_performance = STARTUP_NUM_DEFAULT;
-
+  configuration.sys.display_rotation = DISPLAY_ROTATION_DEFAULT;
+  configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
+  configuration.sys.ui_reverse = false;
+  configuration.sys.screen_saver_start = SCREEN_SAVER_START_DEFAULT;
+#ifdef USB_GAMEPAD
+  configuration.sys.gamepad_speed = GAMEPAD_SPEED_DEFAULT;
+#endif
 
   configuration.fx.reverb_lowpass = REVERB_LOWPASS_DEFAULT;
   configuration.fx.reverb_lodamp = REVERB_LODAMP_DEFAULT;
@@ -4321,6 +4338,14 @@ FLASHMEM void show_configuration(void) {
   Serial.println(configuration.sys.performance_number, DEC);
   Serial.print(F("  Load at startup     "));
   Serial.println(configuration.sys.load_at_startup_performance, DEC);
+  Serial.print(F("  Display rotation    "));
+  Serial.println(configuration.sys.display_rotation, DEC);
+  Serial.print(F("  Touch rotation      "));
+  Serial.println(configuration.sys.touch_rotation, DEC);
+  Serial.print(F("  UI reverse          "));
+  Serial.println(configuration.sys.ui_reverse);
+  Serial.print(F("  Screen saver start  "));
+  Serial.println(configuration.sys.screen_saver_start, DEC);
   Serial.println(F("FX"));
   Serial.print(F("  Reverb Roomsize     "));
   Serial.println(configuration.fx.reverb_roomsize, DEC);

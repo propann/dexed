@@ -1219,3 +1219,19 @@ FLASHMEM void handle_touchscreen_sample_editor() {
   }
   seq.generic_ui_delay++;
 }
+
+FLASHMEM void handle_touchscreen_settings_button_test() {
+  static bool button_state = false;
+
+  if (touch.touched()) {
+    get_scaled_touch_point();
+    if (seq.generic_ui_delay > 50) {
+      if (check_button_on_grid(42, 1)) {
+        draw_button_on_grid(42, 1, "TOUCH", button_state ? "OK" : "TEST", button_state ? 2 : 0);
+        button_state = !button_state;
+      }
+      seq.generic_ui_delay = 0;
+    }
+  }
+  seq.generic_ui_delay++;
+}
