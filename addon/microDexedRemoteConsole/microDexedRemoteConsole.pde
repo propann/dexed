@@ -388,6 +388,8 @@ void setup()
   myPort = new Serial(this, portName);
   myPort.buffer(116);
   noSmooth();
+  strokeWeight(2);
+  strokeCap(PROJECT);
   fill(0, 0, 0);
   rect(0, 0, 640, 480);
   myPort.write(127);
@@ -417,7 +419,6 @@ void readcolor()
   g = (((col) & 0x07E0) >>> 3) & 0xFF;
   r = (((col) & 0xF800) >>> 8) & 0xFF;
   c = color(r, g, b);
-
   fill(c);
   noStroke();
 }
@@ -540,7 +541,10 @@ void draw()
         readsize();
         check= myPort.read();
         if (check==88)
+        {
+
           drawChar((xh*256+xl), (yh*256+yl), ch, c, bgcolor, size);
+        }
       } else if (val2==96)  //draw line
       {
         debug_command=8;
@@ -552,7 +556,12 @@ void draw()
         read_and_set_line_color();
         check= myPort.read();
         if (check==88)
-          line((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2 );
+        {
+          if (yh*256+yl==hh*256+hl)
+            line((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2+2, (hh*256+hl) *2 );
+          else
+            line((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2 );
+        }
       } else if (val2==97)  //draw filled circle
       {
         debug_command=9;
@@ -575,8 +584,8 @@ void draw()
         check= myPort.read();
         if (check==88)
         {
-          rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2+1, (hh*256+hl) *2 +1 );
-          rect((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2-1, (hh*256+hl) *2 -1 );
+
+          rect((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2-2, (hh*256+hl) *2 -2);
         }
       } else if (val2==70)  //volume meter
       {
@@ -645,8 +654,8 @@ void draw()
   }
 
 
- // if (keyPressed)
- //  saveFrame("microdexed-######.png");
+  // if (keyPressed)
+  //  saveFrame("microdexed-######.png");
 }
 
 void mousePressed() {

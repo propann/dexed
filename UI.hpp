@@ -1207,42 +1207,18 @@ FLASHMEM void border0()  //main Border  default Colors = GREY2/4
   display.drawRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, GREY4);  //Main Border
 }
 
-FLASHMEM void border1()  //upper left
-{
-  display.console = true;
-  display.drawRect(0, 0, CHAR_width * 18, CHAR_height * display_rows - 3, GREY4);
-}
-FLASHMEM void border2()  //upper right
-{
-  display.console = true;
-  display.drawRect(CHAR_width * 18 - 1, 0, DISPLAY_WIDTH - CHAR_width * 18 + 1, CHAR_height * 6 - 3, GREY4);
-}
-
 FLASHMEM void border1_clear()  //upper left
 {
   display.console = true;
   display.fillRect(1, CHAR_height, CHAR_width * 19 - 1, CHAR_height * display_rows, COLOR_BACKGROUND);
 }
-FLASHMEM void border2_clear()  //upper right
-{
-  display.console = true;
-  display.fillRect(CHAR_width * 18 - 1 + 1, 0 + 1, DISPLAY_WIDTH - CHAR_width * 18 - 1, CHAR_height * 6 - 5, COLOR_BACKGROUND);
-}
-FLASHMEM void border2_half_clear()  //upper right
-{
-  display.console = true;
-  display.fillRect(CHAR_width * 18 - 1 + 1, 0 + 1, 171, CHAR_height * 6 - 5, COLOR_BACKGROUND);
-}
+
 FLASHMEM void border3_clear()  //lower left
 {
   display.console = true;
   display.fillRect(0, CHAR_height * 5 - 4, CHAR_width * 17, DISPLAY_HEIGHT - CHAR_height * 5 + 3, COLOR_BACKGROUND);
 }
-FLASHMEM void border4_clear()  //lower right
-{
-  display.console = true;
-  display.fillRect(CHAR_width * 18, CHAR_height * 6 - 3, DISPLAY_WIDTH - CHAR_width * 18 - 1, 321 - CHAR_height * 6 - 5, COLOR_BACKGROUND);
-}
+
 FLASHMEM void border3_large()  //lower left+right as one window
 {
   display.console = true;
@@ -12781,9 +12757,9 @@ FLASHMEM void print_sampler_keyboard(int x, int y) {
     if (x * CHAR_width_small + 6 * i < DISPLAY_WIDTH - 8)
       display.fillRect(x * CHAR_width_small + 6 * i, y + 23, 5, 15, COLOR_SYSTEXT);  // pianoroll white key
   }
-  for (uint8_t i = 0; i < 11; i++) {
+  for (uint8_t i = 0; i < 12; i++) {
     if (seq.piano[i] == 1) {
-      if (x * CHAR_width_small + 4 * i - offset[offcount] < DISPLAY_WIDTH - 12)
+      if (x * CHAR_width_small + 4 * i - offset[offcount] < DISPLAY_WIDTH - 10)
         display.fillRect(x * CHAR_width_small + 4 * i - offset[offcount], y + 23, 4, 8, COLOR_BACKGROUND);  // BLACK key
       offcount++;
       if (offcount == 5) offcount = 0;
@@ -12816,7 +12792,7 @@ FLASHMEM void calc_low_high(uint8_t preset) {
     msz[preset][zone].low = 0;
     msz[preset][zone].high = 0;
   }
-  for (uint8_t key = 12; key < 109; key++) {
+  for (uint8_t key = 24; key < 110; key++) {
     for (uint8_t zone = 0; zone < NUM_MULTISAMPLE_ZONES; zone++) {
       if (get_distance(msz[preset][zone].rootnote, key) < result) {
         result = get_distance(msz[preset][zone].rootnote, key);
@@ -12848,10 +12824,22 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
     temp_color = COLOR_SYSTEXT;
   } else {
     temp_background = COLOR_BACKGROUND;
-    if (generic_temp_select_menu == row + 3)
-      temp_color = ColorHSV(row * 28 + 15, 254, 254);
-    else
-      temp_color = ColorHSV(row * 28 + 15, 214, 220);
+    if (row == 0)
+      temp_color = COLOR_PITCHSMP;
+    else if (row == 1)
+      temp_color = DX_DARKCYAN;
+    else if (row == 2)
+      temp_color = COLOR_CHORDS;
+    else if (row == 3)
+      temp_color = COLOR_ARP;
+    else if (row == 4)
+      temp_color = COLOR_DRUMS;
+    else if (row == 5)
+      temp_color = GREEN;
+    else if (row == 6)
+      temp_color = MIDDLEGREEN;
+    else if (row == 7)
+      temp_color = YELLOW;
   }
   display.setTextColor(temp_color, temp_background);
 }
@@ -12859,35 +12847,25 @@ FLASHMEM void sub_MultiSample_setColor(uint8_t row, uint8_t column) {
 FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
   uint16_t temp_color = 0;
   if (generic_temp_select_menu == row + 3)
-    temp_color = ColorHSV(row * 28 + 15, 254, 254);
-  else
-    temp_color = ColorHSV(row * 28 + 15, 214, 130);
+    temp_color = RED;
+  else if (row == 0)
+    temp_color = COLOR_PITCHSMP;
+  else if (row == 1)
+    temp_color = DX_DARKCYAN;
+  else if (row == 2)
+    temp_color = COLOR_CHORDS;
+  else if (row == 3)
+    temp_color = COLOR_ARP;
+  else if (row == 4)
+    temp_color = COLOR_DRUMS;
+  else if (row == 5)
+    temp_color = GREEN;
+  else if (row == 6)
+    temp_color = MIDDLEGREEN;
+  else if (row == 7)
+    temp_color = YELLOW;
   return temp_color;
 }
-
-// FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
-//   uint16_t temp_color = 0;
-//   if (generic_temp_select_menu == row + 3)
-//     temp_color = RED;
-//   else if (row == 0)
-//     temp_color = COLOR_PITCHSMP;
-//   else if (row == 1)
-//     temp_color = COLOR_INSTR;
-//   else if (row == 2)
-//     temp_color = COLOR_CHORDS;
-//   else if (row == 3)
-//     temp_color = COLOR_ARP;
-//   else if (row == 4)
-//     temp_color = COLOR_DRUMS;
-//   else if (row == 5)
-//     temp_color = GREEN;
-//   else if (row == 6)
-//     temp_color = YELLOW;
-//   else if (row == 7)
-//     temp_color = GREY1;
-
-//   return temp_color;
-// }
 
 FLASHMEM void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
   display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 3 * CHAR_width_small - 1, 7 - 2, COLOR_BACKGROUND);
@@ -12958,11 +12936,16 @@ FLASHMEM void print_msp_zone(uint8_t zone) {
   display.print("]");
   display.console = true;
   if (msz[seq.active_multisample][zone].low == 0 && msz[seq.active_multisample][zone].high == 0)
-    display.fillRect(0,
+    display.fillRect(1,
                      185 + zone * 5,
-                     DISPLAY_WIDTH - 1, 5, COLOR_BACKGROUND);
+                     DISPLAY_WIDTH - 2, 5, COLOR_BACKGROUND);
   else {
-    display.fillRect(0, 185 + zone * 5, 2 * CHAR_width_small + msz[seq.active_multisample][zone].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
+    if (msz[seq.active_multisample][zone].low < 25)
+      msz[seq.active_multisample][zone].low = 24;
+    if (msz[seq.active_multisample][zone].high > 109)
+      msz[seq.active_multisample][zone].high = 109;
+
+    display.fillRect(1, 185 + zone * 5, 2 * CHAR_width_small + msz[seq.active_multisample][zone].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
 
     display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][zone].low * 3.5 - (24 * 3.5), 185 + zone * 5,
                      (msz[seq.active_multisample][zone].high - msz[seq.active_multisample][zone].low) * 3.5 + 2.5, 5, get_multisample_zone_color(zone));
@@ -13104,23 +13087,23 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
       } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 2)  //high selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].high = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].high + 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].high = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].high + 1, 24, 109);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].high = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].high - 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].high = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].high - 1, 24, 109);
         }
       } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 1)  //low selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].low = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].low + 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].low = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].low + 1, 24, 109);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].low = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].low - 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].low = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].low - 1, 24, 109);
         }
       } else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 0)  //root note selection
       {
         if (LCDML.BT_checkDown()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote + 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote + 1, 24, 109);
         } else if (LCDML.BT_checkUp()) {
-          msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote - 1, 12, 127);
+          msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote = constrain(msz[seq.active_multisample][generic_temp_select_menu - 3].rootnote - 1, 24, 109);
         }
       } else if (seq.edit_state == false)  // no option is selected, scroll parameter rows
       {
@@ -15070,7 +15053,7 @@ FLASHMEM void print_voice_settings(bool fullrefresh) {
       setCursor_textGrid_small(2, 16);
       display.print(F("REVERB"));
       display.console = true;
-      display.drawLine(1, CHAR_height * 5 - 2, DISPLAY_WIDTH, CHAR_height * 5 - 2, GREY4);
+      display.drawLine(1, CHAR_height * 5 - 2, DISPLAY_WIDTH - 2, CHAR_height * 5 - 2, GREY4);
       display.drawLine(CHAR_width * 18, 1, CHAR_width * 18, CHAR_height * 5 - 2, GREY4);
     }
     setCursor_textGrid_small(29, 9);
