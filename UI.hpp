@@ -15418,9 +15418,9 @@ FLASHMEM void UI_func_voice_select(uint8_t param) {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (seq.edit_state == 0) {
         if (LCDML.BT_checkDown()) {
-          generic_temp_select_menu = constrain(generic_temp_select_menu + ENCODER[ENC_R].speed(), 0, 11);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 11);
         } else if (LCDML.BT_checkUp()) {
-          generic_temp_select_menu = constrain(generic_temp_select_menu - ENCODER[ENC_R].speed(), 0, 11);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 11);
         }
       } else if (seq.edit_state == 1) {
         if (generic_temp_select_menu == 0) {
