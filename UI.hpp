@@ -14385,12 +14385,12 @@ FLASHMEM void _render_misc_settings() {
 
   setCursor_textGrid_small(42, 7);
 #ifdef USB_GAMEPAD
- print_formatted_number(configuration.sys.gamepad_speed, 3);
- setCursor_textGrid_small(46, 7);
+  print_formatted_number(configuration.sys.gamepad_speed, 3);
+  setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
 #endif
 #ifndef USB_GAMEPAD
-setCursor_textGrid_small(42, 7);
+  setCursor_textGrid_small(42, 7);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print(F("N/A"));
 #endif
@@ -14398,7 +14398,7 @@ setCursor_textGrid_small(42, 7);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(42, 8);
   display.print(configuration.sys.screen_saver_start);
-   
+
   setCursor_textGrid_small(42, 9);
   display.print(configuration.sys.display_rotation);
   setCursor_textGrid_small(42, 10);
@@ -14489,8 +14489,8 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     setModeColor(0);
     setCursor_textGrid_small(42, 7);
 #ifdef USB_GAMEPAD
-   
-     print_formatted_number(configuration.sys.gamepad_speed, 3);
+
+    print_formatted_number(configuration.sys.gamepad_speed, 3);
     setCursor_textGrid_small(46, 7);
     display.print(F("ms"));
 #endif
@@ -14503,9 +14503,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     // Screen saver starts after xx seconds
     setModeColor(1);
     setCursor_textGrid_small(42, 8);
-     print_formatted_number(configuration.sys.screen_saver_start, 2);
-      setCursor_textGrid_small(45, 8);
-  display.print(configuration.sys.screen_saver_start > 1 ? F("MINS") : F("MIN "));
+    print_formatted_number(configuration.sys.screen_saver_start, 2);
+    setCursor_textGrid_small(45, 8);
+    display.print(configuration.sys.screen_saver_start > 1 ? F("MINS") : F("MIN "));
     if (settings_modified == 2) {
       LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000);  // parameter in minutes => ms
     }
@@ -14552,7 +14552,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     if (settings_modified > 0) {
       //save_sd_sys_json();
       save_sys_flag = true;
-      save_sys = 0;
+      save_sys = SAVE_SYS_MS / 2;
       settings_modified = 0;
     }
   }
@@ -15674,7 +15674,7 @@ FLASHMEM void UI_func_volume(uint8_t param) {
     if (old_volume != configuration.sys.vol) {
       // eeprom_update();
       save_sys_flag = true;
-      save_sys = 0;
+      save_sys = SAVE_SYS_MS / 2;
     }
   }
 }

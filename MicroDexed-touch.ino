@@ -813,7 +813,7 @@ char tmp_voice_name[VOICE_NAME_LEN];
 char receive_bank_filename[FILENAME_LEN];
 uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
-
+bool ui_save_notification_icon;
 char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
 #if NUM_DEXED > 1
@@ -1825,8 +1825,10 @@ void loop() {
       save_sys_flag = false;
       if (LCDML.FUNC_getID() == 255) {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
+        ui_save_notification_icon = true;
       } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
         draw_button_on_grid(2, 23, "CONFIG", "SAVED", 1);
+        ui_save_notification_icon = true;
       }
 #ifdef DEBUG
       Serial.println(F("Saved."));
@@ -1836,6 +1838,20 @@ void loop() {
       Serial.println(F("System is playing, next try..."));
 #endif
       save_sys = 0;
+    }
+  }
+
+  if (save_sys > SAVE_SYS_MS && ui_save_notification_icon) {
+    if (LCDML.FUNC_getID() == 255) {
+      display.console = true;
+      display.fillRect(2 * CHAR_width_small, 25 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
+      ui_save_notification_icon = false;
+      display.console = false;
+    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
+      display.console = true;
+      display.fillRect(2 * CHAR_width_small, 23 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
+      ui_save_notification_icon = false;
+      display.console = false;
     }
   }
 
