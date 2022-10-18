@@ -20,7 +20,8 @@ extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
 extern void pattern_editor_menu_0();
-
+extern void UI_func_test_touchscreen(uint8_t param);
+extern void sub_touchscreen_test_page_init();
 extern bool remote_touched;
 
 #ifdef USE_SEQUENCER
@@ -1232,6 +1233,22 @@ FLASHMEM void handle_touchscreen_settings_button_test() {
       }
       seq.generic_ui_delay = 0;
     }
+  }
+  seq.generic_ui_delay++;
+}
+
+FLASHMEM void handle_touchscreen_test_touchscreen() {
+  if (touch.touched()) {
+    get_scaled_touch_point();
+    if (seq.generic_ui_delay > 900) {
+      if (check_button_on_grid(42, 1))
+        sub_touchscreen_test_page_init();
+      seq.generic_ui_delay = 0;
+    }
+display.console=true;
+    display.fillRect(ts.p.x, ts.p.y,2,2, COLOR_SYSTEXT);
+    display.console=false;
+
   }
   seq.generic_ui_delay++;
 }

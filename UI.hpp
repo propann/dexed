@@ -581,6 +581,7 @@ void UI_func_drum_tune_offset(uint8_t param);
 void UI_func_format_flash(uint8_t param);
 void UI_func_test_mute(uint8_t param);
 void UI_func_test_psram(uint8_t param);
+void UI_func_test_touchscreen(uint8_t param);
 void UI_func_MultiSamplePlay(uint8_t param);
 void UI_func_sample_editor(uint8_t param);
 void splash_screen1();
@@ -17547,6 +17548,46 @@ FLASHMEM void UI_func_test_psram(uint8_t param) {
       psram_test();
     }
     //setCursor_textGrid(1, 2);
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+void sub_touchscreen_test_page_init(){
+ display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    helptext_r("CLEAR");
+    helptext_l("BACK");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(2);
+    setCursor_textGrid(1, 1);
+    display.print(F("TEST TOUCHSCREEN"));
+    setCursor_textGrid_small(2, 4);
+    display.setTextSize(1);
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F("TEST TOUCH INPUT ON THE SCREEN"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(2, 5);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("PUSH ENC_R TO CLEAR SCREEN"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+     draw_button_on_grid(42, 1,  "CLEAR", "SCRN", 0);
+};
+
+FLASHMEM void UI_func_test_touchscreen(uint8_t param) {
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+   sub_touchscreen_test_page_init();
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    if (LCDML.BT_checkEnter()) {
+      sub_touchscreen_test_page_init();
+    }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {

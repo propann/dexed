@@ -889,6 +889,7 @@ extern void handle_touchscreen_color_edit(void);
 extern void handle_touchscreen_arpeggio(void);
 extern void handle_touchscreen_braids(void);
 extern void handle_touchscreen_sample_editor(void);
+extern void handle_touchscreen_test_touchscreen(void);
 extern void sequencer_part2(void);
 extern void flash_loadDirectory(void);
 
@@ -1652,6 +1653,9 @@ void loop() {
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
     // handle touch button test
     handle_touchscreen_settings_button_test();
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen)) {
+   handle_touchscreen_test_touchscreen();
   }
 
 #ifdef COMPILE_FOR_FLASH
