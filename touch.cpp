@@ -888,7 +888,7 @@ FLASHMEM void handle_touchscreen_mute_matrix() {
     for (uint8_t y = 0; y < 3; y++) {
       for (uint8_t x = 0; x < 4; x++) {
         if (y < 2) {
-          if (check_button_on_grid(2 + x * 14, 12 + y * 8) && seq.generic_ui_delay > 3000) {
+          if (check_button_on_grid(2 + x * 14, 12 + y * 8) && seq.generic_ui_delay > 200) {
             seq.track_mute[button_count] = !seq.track_mute[button_count];
             if (!seq.track_mute[button_count])
               draw_button_on_grid(2 + x * 14, 12 + y * 8, "TRACK:", itoa(button_count + 1, buf, 10), 1);
@@ -898,7 +898,7 @@ FLASHMEM void handle_touchscreen_mute_matrix() {
           }
           button_count++;
         } else {
-          if (check_button_on_grid(2 + x * 14, 4) && seq.generic_ui_delay > 3000) {
+          if (check_button_on_grid(2 + x * 14, 4) && seq.generic_ui_delay > 200) {
             if (x == 1)
               seq.mute_mode = 0;
             else if (x == 2)
