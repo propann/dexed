@@ -373,13 +373,15 @@ void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
 #ifdef REMOTE_CONSOLE
   if (console) {
     Serial.write(99);
-    Serial.write(91);
+    Serial.write(96);
     Serial.write(highByte(x));
     Serial.write(lowByte(x));
     Serial.write(highByte(y));
     Serial.write(lowByte(y));
-    Serial.write(highByte(h));
-    Serial.write(lowByte(h));
+    Serial.write(highByte(x));
+    Serial.write(lowByte(x));
+    Serial.write(highByte(y+h-1));
+    Serial.write(lowByte(y+h-1));
     Serial.write(highByte(color));
     Serial.write(lowByte(color));
     Serial.write(88);
@@ -416,13 +418,15 @@ void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
   if (console) {
 #ifdef REMOTE_CONSOLE
     Serial.write(99);
-    Serial.write(92);
+    Serial.write(96);
     Serial.write(highByte(x));
     Serial.write(lowByte(x));
     Serial.write(highByte(y));
     Serial.write(lowByte(y));
-    Serial.write(highByte(w));
-    Serial.write(lowByte(w));
+    Serial.write(highByte(x+w-1));
+    Serial.write(lowByte(x+w-1));
+    Serial.write(highByte(y));
+    Serial.write(lowByte(y));
     Serial.write(highByte(color));
     Serial.write(lowByte(color));
     Serial.write(88);
