@@ -923,8 +923,8 @@ FLASHMEM void drawHome(const uint8_t bitmap[]) {
   }
   //display.console = true;
   display.drawPixel(CHAR_width + 4, 4, 0xFBA0);  //roof top
-  display.drawFastVLine(CHAR_width, 8, 5, COLOR_SYSTEXT);
-  display.drawFastHLine(CHAR_width - 1, 13, CHAR_width - 1, MIDDLEGREEN);
+  // display.drawFastVLine(CHAR_width, 8, 5, COLOR_SYSTEXT);
+  // display.drawFastHLine(CHAR_width - 1, 13, CHAR_width - 1, MIDDLEGREEN);
 }
 
 FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
@@ -12870,16 +12870,18 @@ FLASHMEM uint16_t get_multisample_zone_color(uint8_t row) {
 
 FLASHMEM void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
   display.console = true;
-  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 3 * CHAR_width_small - 1, 7 - 2, COLOR_BACKGROUND);
-  if (input_value == 20)
-    display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83, 10 * y + 1, 3, 5, COLOR_SYSTEXT);
-  else
-    display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
 
   if (selected_option == generic_temp_select_menu - 3 && seq.selected_track == 5)
     display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 3 * CHAR_width_small + 1, 7, COLOR_SYSTEXT);
   else
     display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 3 * CHAR_width_small + 1, 7, GREY2);
+
+  display.console = true;
+  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 3 * CHAR_width_small - 1, 7 - 2, COLOR_BACKGROUND);
+  if (input_value == 20)
+    display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83, 10 * y + 1, 3, 5, COLOR_SYSTEXT);
+  else
+    display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
   display.console = false;
 }
 
@@ -12950,12 +12952,12 @@ FLASHMEM void print_msp_zone(uint8_t zone) {
     display.fillRect(1, 185 + zone * 5, 2 * CHAR_width_small + msz[seq.active_multisample][zone].low * 3.5 - (24 * 3.5) - 1, 5, COLOR_BACKGROUND);
 
     display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][zone].low * 3.5 - (24 * 3.5), 185 + zone * 5,
-                     (msz[seq.active_multisample][zone].high - msz[seq.active_multisample][zone].low) * 3.5 + 2.5, 5, get_multisample_zone_color(zone));
+                     (msz[seq.active_multisample][zone].high - msz[seq.active_multisample][zone].low) * 3.5 + 2.5 + 1, 5, get_multisample_zone_color(zone));
 
-    display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][zone].high * 3.5 - (24 * 3.5) + 3.5 - 1, 185 + zone * 5,
+    display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][zone].high * 3.5 - (24 * 3.5) + 3.5 + 1, 185 + zone * 5,
                      DISPLAY_WIDTH - (msz[seq.active_multisample][zone].high * 3.5) + (18 * 3.5), 5, COLOR_BACKGROUND);
 
-    display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][zone].rootnote * 3.5 - (24 * 3.5) - 1, 185 + zone * 5 + 1,
+    display.fillRect(2 * CHAR_width_small + msz[seq.active_multisample][zone].rootnote * 3.5 - (24 * 3.5) + 1, 185 + zone * 5 + 1,
                      3.5 + 1, 5 - 2, COLOR_SYSTEXT);
   }
 }
