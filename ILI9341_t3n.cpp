@@ -380,8 +380,8 @@ void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
     Serial.write(lowByte(y));
     Serial.write(highByte(x));
     Serial.write(lowByte(x));
-    Serial.write(highByte(y+h-1));
-    Serial.write(lowByte(y+h-1));
+    Serial.write(highByte(y + h - 1));
+    Serial.write(lowByte(y + h - 1));
     Serial.write(highByte(color));
     Serial.write(lowByte(color));
     Serial.write(88);
@@ -423,8 +423,8 @@ void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
     Serial.write(lowByte(x));
     Serial.write(highByte(y));
     Serial.write(lowByte(y));
-    Serial.write(highByte(x+w-1));
-    Serial.write(lowByte(x+w-1));
+    Serial.write(highByte(x + w - 1));
+    Serial.write(lowByte(x + w - 1));
     Serial.write(highByte(y));
     Serial.write(lowByte(y));
     Serial.write(highByte(color));
@@ -1053,7 +1053,6 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
   Serial.write(highByte(color));
   Serial.write(lowByte(color));
   Serial.write(88);
-  //delayMicroseconds(50);  //necessary to avoid random pixels in remote
   console = false;
 #endif
 

@@ -921,10 +921,9 @@ FLASHMEM void drawHome(const uint8_t bitmap[]) {
         display.drawPixel(x + i, y, color);
     }
   }
-  //display.console = true;
   display.drawPixel(CHAR_width + 4, 4, 0xFBA0);  //roof top
-  // display.drawFastVLine(CHAR_width, 8, 5, COLOR_SYSTEXT);
-  // display.drawFastHLine(CHAR_width - 1, 13, CHAR_width - 1, MIDDLEGREEN);
+  display.drawLine(CHAR_width, 8, CHAR_width, 13, COLOR_SYSTEXT);
+  display.drawLine(CHAR_width - 1, 13, 2*CHAR_width -3, 13, MIDDLEGREEN);
 }
 
 FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
@@ -17559,31 +17558,31 @@ FLASHMEM void UI_func_test_psram(uint8_t param) {
   }
 }
 
-void sub_touchscreen_test_page_init(){
- display.fillScreen(COLOR_BACKGROUND);
-    encoderDir[ENC_R].reset();
-    helptext_r("CLEAR");
-    helptext_l("BACK");
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setTextSize(2);
-    setCursor_textGrid(1, 1);
-    display.print(F("TEST TOUCHSCREEN"));
-    setCursor_textGrid_small(2, 4);
-    display.setTextSize(1);
-    display.setTextColor(GREY1, COLOR_BACKGROUND);
-    display.print(F("TEST TOUCH INPUT ON THE SCREEN"));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(2, 5);
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("PUSH ENC_R TO CLEAR SCREEN"));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-     draw_button_on_grid(42, 1,  "CLEAR", "SCRN", 0);
+void sub_touchscreen_test_page_init() {
+  display.fillScreen(COLOR_BACKGROUND);
+  encoderDir[ENC_R].reset();
+  helptext_r("CLEAR");
+  helptext_l("BACK");
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextSize(2);
+  setCursor_textGrid(1, 1);
+  display.print(F("TEST TOUCHSCREEN"));
+  setCursor_textGrid_small(2, 4);
+  display.setTextSize(1);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.print(F("TEST TOUCH INPUT ON THE SCREEN"));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(2, 5);
+  display.setTextColor(RED, COLOR_BACKGROUND);
+  display.print(F("PUSH ENC_R TO CLEAR SCREEN"));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  draw_button_on_grid(42, 1, "CLEAR", "SCRN", 0);
 };
 
 FLASHMEM void UI_func_test_touchscreen(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
-   sub_touchscreen_test_page_init();
+    sub_touchscreen_test_page_init();
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
