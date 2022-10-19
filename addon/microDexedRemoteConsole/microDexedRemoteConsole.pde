@@ -492,26 +492,6 @@ void draw()
         if (check==88)
           rect((xh*256+xl)*2, (yh*256+yl)*2, 2, 2  );
         ;
-      } else if (val2 == 91)  //draw vline
-      {
-        debug_command=3;
-        readxy();
-        hh = myPort.read();
-        hl = myPort.read();
-        readcolor();
-        check= myPort.read();
-        if (check==88)
-          rect((xh*256+xl)*2, (yh*256+yl)*2, 2, (hh*256+hl) *2 );
-      } else if (val2==92) // draw hline
-      {
-        debug_command=4;
-        readxy();
-        wh = myPort.read();
-        wl = myPort.read();
-        readcolor();
-        check= myPort.read();
-        if (check==88)
-          rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, 2  );
       } else if (val2==93)  // fill screen
       {
         debug_command=5;
@@ -542,7 +522,6 @@ void draw()
         check= myPort.read();
         if (check==88)
         {
-
           drawChar((xh*256+xl), (yh*256+yl), ch, c, bgcolor, size);
         }
       } else if (val2==96)  //draw line
@@ -557,10 +536,7 @@ void draw()
         check= myPort.read();
         if (check==88)
         {
-          if (yh*256+yl==hh*256+hl)
-            line((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2+2, (hh*256+hl) *2 );
-          else
-            line((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2 );
+          line((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2+1, (hh*256+hl) *2+1 );
         }
       } else if (val2==97)  //draw filled circle
       {
@@ -654,7 +630,7 @@ void draw()
   }
 
 
-  // if (keyPressed)
+  //if (keyPressed)
   //  saveFrame("microdexed-######.png");
 }
 
