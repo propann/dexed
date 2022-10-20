@@ -1925,6 +1925,10 @@ FLASHMEM void update_display_functions_while_seq_running() {
     }
 
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song)) {
+
+    if (seq.running)
+      LCDML.SCREEN_resetTimer();
+
     display.setTextColor(GREEN, COLOR_BACKGROUND);  //play indicator song view
 
     if (CHAR_height_small * 8 + 10 * (seq.current_song_step - 1 - seq.scrollpos) > CHAR_height_small * 6) {
@@ -2578,7 +2582,10 @@ FLASHMEM void lcdml_menu_control(void) {
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
         if (seq.active_function != 99 || seq.quicknav_song_to_pattern_jump)
           reverse_y = true;
+        if (seq.active_function == 99)
+          reverse_y = false;
       }
+
 
       if ((LCDML.FUNC_getID() > 1 && LCDML.FUNC_getID() < 58) || (LCDML.FUNC_getID() > 61 && LCDML.FUNC_getID() < 88))  //"1-line menus", reverse y
       {
