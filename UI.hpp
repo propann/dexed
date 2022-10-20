@@ -923,7 +923,7 @@ FLASHMEM void drawHome(const uint8_t bitmap[]) {
   }
   display.drawPixel(CHAR_width + 4, 4, 0xFBA0);  //roof top
   display.drawLine(CHAR_width, 8, CHAR_width, 13, COLOR_SYSTEXT);
-  display.drawLine(CHAR_width - 1, 13, 2*CHAR_width -3, 13, MIDDLEGREEN);
+  display.drawLine(CHAR_width - 1, 13, 2 * CHAR_width - 3, 13, MIDDLEGREEN);
 }
 
 FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
@@ -7248,7 +7248,6 @@ void UI_func_seq_vel_editor(uint8_t param) {
     encoderDir[ENC_R].reset();
     print_edit_mode();
     seq.menu = 1;
-    //clear "Insert xyz ?"  message
     print_shortcut_navigator();
     display.setTextSize(2);
     display.fillRect(0, 3 * CHAR_height + 17, 212, 8, COLOR_BACKGROUND);
@@ -7278,12 +7277,10 @@ void UI_func_seq_vel_editor(uint8_t param) {
         if (LCDML.BT_checkDown()) {
           seq.menu = constrain(seq.menu + 1, 0, 17);
         } else if (LCDML.BT_checkUp()) {
+
           if (seq.menu == 0) {
+
             seq.menu_status = 2;
-            display.setCursor(0, 0);
-            display.setTextSize(2);
-            display.setTextColor(GREY1, COLOR_BACKGROUND);
-            print_empty_spaces(12);
             LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
           } else {
             seq.menu_status = 0;
@@ -7291,23 +7288,23 @@ void UI_func_seq_vel_editor(uint8_t param) {
           }
         }
       }
-    } else if (seq.active_function == 0 && seq.menu < 17) {
+    } else if (seq.active_function == 0 && seq.menu == 0) {
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
         if (LCDML.BT_checkDown())
           seq.active_pattern = constrain(seq.active_pattern + 1, 0, NUM_SEQ_PATTERN - 1);
         else if (LCDML.BT_checkUp())
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
       }
-    } else if (seq.active_function == 0 && seq.menu < 17) {
+    } else if (seq.active_function == 0 && seq.menu > 0 && seq.menu < 17) {
       if (seq.note_data[seq.active_pattern][seq.menu - 1] > 0) {
         if (seq.vel[seq.active_pattern][seq.menu - 1] < 210)  //it is a normal sample
         {
           if (seq.active_function == 0 && seq.content_type[seq.active_pattern] < 2) {  //if is Drum or normal Instrument Track
             if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
               if (LCDML.BT_checkDown())
-                seq.vel[seq.active_pattern][seq.menu - 1] = constrain(seq.vel[seq.active_pattern][seq.menu - 1] + 1, 0, 127);
+                seq.vel[seq.active_pattern][seq.menu - 1] = constrain(seq.vel[seq.active_pattern][seq.menu - 1] + ENCODER[ENC_R].speed(), 0, 127);
               else if (LCDML.BT_checkUp())
-                seq.vel[seq.active_pattern][seq.menu - 1] = constrain(seq.vel[seq.active_pattern][seq.menu - 1] - 1, 0, 127);
+                seq.vel[seq.active_pattern][seq.menu - 1] = constrain(seq.vel[seq.active_pattern][seq.menu - 1] - ENCODER[ENC_R].speed(), 0, 127);
             }
           } else if (seq.active_function == 0 && seq.content_type[seq.active_pattern] > 1) {  //is in Chord or Arp Mode
             if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
@@ -7349,29 +7346,6 @@ void UI_func_seq_vel_editor(uint8_t param) {
       } else if (seq.active_function == 0) {
         seq.active_function = 99;
       }
-      //  else if (seq.menu > 0 && seq.menu < 17 && seq.active_function == 99) {
-      //   seq.active_function = 1;
-      //   //clear "Insert xyz ?"  message
-      //   //  display.fillRect(1 * CHAR_width, 4 * CHAR_height + 17, 222, 8, COLOR_BACKGROUND);
-      //   display.setCursor(0, 3 * CHAR_height + 17);
-      //   display.setTextSize(1);
-      //   display.setTextColor(GREEN, COLOR_BACKGROUND);
-      //   display.print(F("EDIT "));
-      //   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      //   display.print(F("VALUE"));
-      //   display.setTextColor(GREEN, COLOR_BACKGROUND);
-      //   display.print(F(" WITH "));
-      //   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      //   display.write(0x1B);
-      //   display.setTextColor(GREEN, COLOR_BACKGROUND);
-      //   display.print(" ");
-      //   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      //   display.write(0x1A);
-      //   display.setTextColor(GREEN, COLOR_BACKGROUND);
-      //   display.print(F(" ENCODER_R "));
-      //   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      //   display.setTextSize(2);
-      // }
     }
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -7384,9 +7358,23 @@ void UI_func_seq_vel_editor(uint8_t param) {
       print_content_type();
       display.setTextSize(2);
     }
+    if (seq.menu == 0 && seq.active_function == 99) {
+      display.setTextSize(1);
+      display.setCursor(0, 3 * CHAR_height + 17);
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
+      display.print(F("SELECT PATTERN TO EDIT"));
+      print_empty_spaces(8);
+      display.setTextSize(2);
+      display.setCursor(0, 0);
+      display.setTextColor(GREY1, COLOR_BACKGROUND);
+      print_empty_spaces(14);
+    }
     if (seq.menu == 0) {
       display.setTextSize(2);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      if (seq.active_function != 99)
+        display.setTextColor(RED, COLOR_BACKGROUND);
+      else
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(14, 0);
       display.print("[");
       print_formatted_number(seq.active_pattern, 2);
@@ -7407,7 +7395,7 @@ void UI_func_seq_vel_editor(uint8_t param) {
           seq.note_editor_view = 1;
           border3_clear();
           print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
-        } else
+        } else if (seq.active_function == 99)
           print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
       }
     } else if (seq.menu == 1) {
@@ -7430,12 +7418,6 @@ void UI_func_seq_vel_editor(uint8_t param) {
       display.print(seq_find_shortname(1)[0]);
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-      //      if (seq.vel[seq.active_pattern][seq.menu - 1] < 210 && seq.content_type[seq.active_pattern] < 2) //it is a normal sample
-      //      {
-      //        snprintf_P(tmp, sizeof(tmp), PSTR("%03d"), seq.vel[seq.active_pattern][seq.menu - 1]);
-      //        setCursor_textGrid(4, 0);
-      //        display.print(tmp);                     //phtodo
-      //      }
     } else if (seq.menu > 1 && seq.menu < 17) {
       display.setTextSize(2);
       set_pattern_content_type_color(seq.active_pattern);
@@ -7471,7 +7453,7 @@ void UI_func_seq_vel_editor(uint8_t param) {
           print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 1, false, true);
         else
           print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 1, false, false);
-      } else
+      } else if (seq.active_function == 99)
         print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, false);
       setCursor_textGrid(3, 0);
       if (seq.note_data[seq.active_pattern][seq.menu - 1] > 0) {
@@ -7486,7 +7468,7 @@ void UI_func_seq_vel_editor(uint8_t param) {
             display.print(tmp);
             display.print(" ");
             display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-            show(0, 6, 7, seq_find_drum_name_from_note(seq.note_data[seq.active_pattern][seq.menu - 1]));
+            show(0, 6, 8, seq_find_drum_name_from_note(seq.note_data[seq.active_pattern][seq.menu - 1]));
             if (seq.active_function == 99) {
               display.setCursor(0, 3 * CHAR_height + 17);
               display.setTextSize(1);
@@ -7580,23 +7562,20 @@ void UI_func_seq_vel_editor(uint8_t param) {
 
     if (seq.menu == 17)  //edit content type of pattern
     {
-      // if (seq.active_function != 1) {
-      //   //fix last step of sequence when switching to sub menus functions
-      //   //print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 1, false, true);
-      //   seq_printVelGraphBar_single_step(15, GREY1);
-      //   set_pattern_content_type_color(seq.active_pattern);
-      //   display.setTextSize(2);
-      //   setCursor_textGrid(15, 1);
-      //   display.print(seq_find_shortname(15)[0]);
-      //   display.setTextSize(1);
-      //   display.setCursor(0, 3 * CHAR_height + 17);
-      //   display.setTextColor(GREEN, COLOR_BACKGROUND);
-      //   display.print(F("EDIT CONTENT TYPE OF PAT. "));
-      //   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      //   display.print(seq.active_pattern);
-      //   display.setTextColor(GREEN, COLOR_BACKGROUND);
-      //   display.print(" ? ");
-      // }
+      if (seq.active_function != 1) {
+        display.setCursor(0, 0);
+        display.setTextSize(2);
+        display.setTextColor(GREY1, COLOR_BACKGROUND);
+        print_empty_spaces(15);
+        display.setTextSize(1);
+        display.setCursor(0, 3 * CHAR_height + 17);
+        display.setTextColor(GREEN, COLOR_BACKGROUND);
+        display.print(F("EDIT CONTENT TYPE OF PAT. "));
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        display.print(seq.active_pattern);
+        display.setTextColor(GREEN, COLOR_BACKGROUND);
+        display.print(" ? ");
+      }
       print_edit_mode();
       display.setTextSize(1);
       if (seq.active_function == 99)
@@ -7618,20 +7597,6 @@ void UI_func_seq_vel_editor(uint8_t param) {
       } else
         print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
     }
-
-    // else if (seq.menu > 19 && seq.menu < 21)  // sub menus functions
-    // {
-    //   //disable menu 19
-    //   display.setCursor(0, CHAR_height * 3 + 3);
-    //   display.setTextSize(1);
-    //   display.setTextColor(GREY1, COLOR_BACKGROUND);
-    //   display.print("CONT.TYPE:");
-    //   display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
-
-    //   print_content_type();
-    //   display.setTextSize(2);
-    //   // disable menu 19 end
-    // }
 
     else if (seq.menu == 16) {
       display.setTextSize(1);
@@ -8352,7 +8317,7 @@ void pattern_editor_menu_0() {
         else
           display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-        show(0, 1, 9, basename(drum_config[activesample].name));
+        show(0, 1, 11, basename(drum_config[activesample].name));
         if (seq.active_function != 99)
           display.setTextColor(RED, COLOR_BACKGROUND);
         else
@@ -8530,23 +8495,7 @@ void UI_func_seq_pattern_editor(uint8_t param) {
           seq.active_pattern = constrain(seq.active_pattern + 1, 0, NUM_SEQ_PATTERN - 1);
         else if (LCDML.BT_checkUp())
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
-        //        display.setTextSize(1);
-        //        display.setTextColor(GREY2, COLOR_BACKGROUND);
-        //        display.setCursor(48 * CHAR_width_small,  9 * (CHAR_height_small + 2) + 10  );
-        //        if (find_track_in_song_where_pattern_is_used(seq.active_pattern) == 99)
-        //          display.print( "NONE" );
-        //        else
-        //        {
-        //          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-        //          display.print(" ");
-        //          display.print( find_track_in_song_where_pattern_is_used(seq.active_pattern) + 1 );
-        //          display.print("  ");
-        //        }
-        //        if (seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)] < 40)
-        //        {
-        //          display.setCursor(49 * CHAR_width_small,  10 * (CHAR_height_small + 2) + 10  );
-        //          print_formatted_number(seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)], 2);
-        //        }
+
         display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
         print_content_type();
       }
@@ -8897,7 +8846,7 @@ void UI_func_seq_pattern_editor(uint8_t param) {
           setCursor_textGrid(0, 0);
           display.print(" ");
           display.setTextColor(GREY2, COLOR_BACKGROUND);
-          show(0, 1, 9, "--EMPTY--");
+          show(0, 1, 11, "--EMPTY--");
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
           display.setCursor(0, 3 * CHAR_height + 17);
           display.setTextSize(1);
