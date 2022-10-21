@@ -2313,106 +2313,108 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
 }
 
 FLASHMEM void gamepad_learn_func(uint32_t buttons) {
-  if (temp_int > 7) {
-    setCursor_textGrid_small(35, 3);
-    display.setTextColor(GREEN, COLOR_BACKGROUND);
-    display.print(F("READY ! "));
-    setCursor_textGrid_small(1, 17);
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("GO BACK WITH ENC[L]"));
-    setCursor_textGrid_small(21, 17);
-    display.setTextColor(GREEN, COLOR_BACKGROUND);
-    display.print(F("AND TEST OUT YOUR GAMEPAD."));
-    setCursor_textGrid_small(1, 18);
-    display.print(F("ANY CHANGE TO GLOBALS, LIKE "));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(F("MASTER VOLUME "));
-    setCursor_textGrid_small(1, 19);
-    display.setTextColor(GREEN, COLOR_BACKGROUND);
-    display.print(F("WILL STORE YOUR CURRENT GAMEPAD SETTINGS."));
-  } else {
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(35, 3);
-    display.print(F("STEP "));
-    display.print(temp_int + 1);
-    display.print(F("/8  "));
-  }
-  if (temp_int == 0) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 0) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 6);
-  print_formatted_number(GAMEPAD_UP_0, 3);
-  setCursor_textGrid_small(20, 6);
-  print_formatted_number(GAMEPAD_UP_1, 3);
-
-  if (temp_int == 1) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 1) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 7);
-  print_formatted_number(GAMEPAD_DOWN_0, 3);
-  setCursor_textGrid_small(20, 7);
-  print_formatted_number(GAMEPAD_DOWN_1, 3);
-
-  if (temp_int == 2) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 2) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 8);
-  print_formatted_number(GAMEPAD_LEFT_0, 3);
-  setCursor_textGrid_small(20, 8);
-  print_formatted_number(GAMEPAD_LEFT_1, 3);
-
-  if (temp_int == 3) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 3) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 9);
-  print_formatted_number(GAMEPAD_RIGHT_0, 3);
-  setCursor_textGrid_small(20, 9);
-  print_formatted_number(GAMEPAD_RIGHT_1, 3);
-
-  if (temp_int == 4) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 4) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 11);
-  print_formatted_number(GAMEPAD_BUTTON_A, 3);
-  if (temp_int == 5) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 5) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 12);
-  print_formatted_number(GAMEPAD_BUTTON_B, 3);
-  if (temp_int == 6) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 6) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 14);
-  print_formatted_number(GAMEPAD_SELECT, 3);
-  if (temp_int == 7) display.setTextColor(RED, COLOR_BACKGROUND);
-  else if (temp_int > 7) display.setTextColor(GREEN, COLOR_BACKGROUND);
-  else display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(16, 15);
-  print_formatted_number(GAMEPAD_START, 3);
-  if (buttons != gamepad_buttons_neutral || joysticks[0].getAxis(0) != gamepad_0_neutral || joysticks[0].getAxis(1) != gamepad_1_neutral) {
-    if (temp_int == 0) {
-      GAMEPAD_UP_0 = joysticks[0].getAxis(0);
-      GAMEPAD_UP_1 = joysticks[0].getAxis(1);
-    } else if (temp_int == 1) {
-      GAMEPAD_DOWN_0 = joysticks[0].getAxis(0);
-      GAMEPAD_DOWN_1 = joysticks[0].getAxis(1);
-    } else if (temp_int == 2) {
-      GAMEPAD_LEFT_0 = joysticks[0].getAxis(0);
-      GAMEPAD_LEFT_1 = joysticks[0].getAxis(1);
-    } else if (temp_int == 3) {
-      GAMEPAD_RIGHT_0 = joysticks[0].getAxis(0);
-      GAMEPAD_RIGHT_1 = joysticks[0].getAxis(1);
-    } else if (temp_int == 4) {
-      GAMEPAD_BUTTON_A = buttons;
-    } else if (temp_int == 5) {
-      GAMEPAD_BUTTON_B = buttons;
-    } else if (temp_int == 6) {
-      GAMEPAD_SELECT = buttons;
-    } else if (temp_int == 7) {
-      GAMEPAD_START = buttons;
+  if (gamepad_millis > 300) {
+    if (temp_int > 7) {
+      setCursor_textGrid_small(35, 3);
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
+      display.print(F("READY ! "));
+      setCursor_textGrid_small(1, 17);
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("GO BACK WITH ENC[L]"));
+      setCursor_textGrid_small(21, 17);
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
+      display.print(F("AND TEST OUT YOUR GAMEPAD."));
+      setCursor_textGrid_small(1, 18);
+      display.print(F("ANY CHANGE TO GLOBALS, LIKE "));
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.print(F("MASTER VOLUME "));
+      setCursor_textGrid_small(1, 19);
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
+      display.print(F("WILL STORE YOUR CURRENT GAMEPAD SETTINGS."));
+    } else {
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      setCursor_textGrid_small(35, 3);
+      display.print(F("STEP "));
+      display.print(temp_int + 1);
+      display.print(F("/8  "));
     }
-    temp_int++;
-    gamepad_millis = 0;
+    if (temp_int == 0) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 0) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 6);
+    print_formatted_number(GAMEPAD_UP_0, 3);
+    setCursor_textGrid_small(20, 6);
+    print_formatted_number(GAMEPAD_UP_1, 3);
+
+    if (temp_int == 1) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 1) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 7);
+    print_formatted_number(GAMEPAD_DOWN_0, 3);
+    setCursor_textGrid_small(20, 7);
+    print_formatted_number(GAMEPAD_DOWN_1, 3);
+
+    if (temp_int == 2) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 2) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 8);
+    print_formatted_number(GAMEPAD_LEFT_0, 3);
+    setCursor_textGrid_small(20, 8);
+    print_formatted_number(GAMEPAD_LEFT_1, 3);
+
+    if (temp_int == 3) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 3) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 9);
+    print_formatted_number(GAMEPAD_RIGHT_0, 3);
+    setCursor_textGrid_small(20, 9);
+    print_formatted_number(GAMEPAD_RIGHT_1, 3);
+
+    if (temp_int == 4) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 4) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 11);
+    print_formatted_number(GAMEPAD_BUTTON_A, 3);
+    if (temp_int == 5) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 5) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 12);
+    print_formatted_number(GAMEPAD_BUTTON_B, 3);
+    if (temp_int == 6) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 6) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 14);
+    print_formatted_number(GAMEPAD_SELECT, 3);
+    if (temp_int == 7) display.setTextColor(RED, COLOR_BACKGROUND);
+    else if (temp_int > 7) display.setTextColor(GREEN, COLOR_BACKGROUND);
+    else display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(16, 15);
+    print_formatted_number(GAMEPAD_START, 3);
+    if (buttons != gamepad_buttons_neutral || joysticks[0].getAxis(0) != gamepad_0_neutral || joysticks[0].getAxis(1) != gamepad_1_neutral) {
+      if (temp_int == 0) {
+        GAMEPAD_UP_0 = joysticks[0].getAxis(0);
+        GAMEPAD_UP_1 = joysticks[0].getAxis(1);
+      } else if (temp_int == 1) {
+        GAMEPAD_DOWN_0 = joysticks[0].getAxis(0);
+        GAMEPAD_DOWN_1 = joysticks[0].getAxis(1);
+      } else if (temp_int == 2) {
+        GAMEPAD_LEFT_0 = joysticks[0].getAxis(0);
+        GAMEPAD_LEFT_1 = joysticks[0].getAxis(1);
+      } else if (temp_int == 3) {
+        GAMEPAD_RIGHT_0 = joysticks[0].getAxis(0);
+        GAMEPAD_RIGHT_1 = joysticks[0].getAxis(1);
+      } else if (temp_int == 4) {
+        GAMEPAD_BUTTON_A = buttons;
+      } else if (temp_int == 5) {
+        GAMEPAD_BUTTON_B = buttons;
+      } else if (temp_int == 6) {
+        GAMEPAD_SELECT = buttons;
+      } else if (temp_int == 7) {
+        GAMEPAD_START = buttons;
+      }
+      temp_int++;
+      gamepad_millis = 0;
+    }
   }
 }
 #endif
@@ -2472,18 +2474,29 @@ FLASHMEM void lcdml_menu_control(void) {
   uint32_t buttons = joysticks[0].getButtons();
 
 #ifdef ONBOARD_BUTTON_INTERFACE
-  buttons = 0;
-  if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B)) {
-    buttons = gamepad_buttons_neutral;
-  } else {
+  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+
+    // buttons = 0;
+    // if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B)) {
+    //   buttons = gamepad_buttons_neutral;
+    // } else
+    // {
+
     if (digitalRead(BI_SELECT) == false)
       buttons = GAMEPAD_SELECT;
-    if (digitalRead(BI_START) == false)
-      buttons = buttons + GAMEPAD_START;
+    if (digitalRead(BI_START) == false) {
+      if (buttons == GAMEPAD_SELECT)
+        buttons = buttons + GAMEPAD_START;
+      else
+        buttons = GAMEPAD_START;
+    }
     if (digitalRead(BI_BUTTON_A) == false)
-      buttons = buttons + GAMEPAD_BUTTON_A;
+      // buttons = buttons + GAMEPAD_BUTTON_A;
+      buttons = GAMEPAD_BUTTON_A;
     if (digitalRead(BI_BUTTON_B) == false)
-      buttons = buttons + GAMEPAD_BUTTON_B;
+      // buttons = buttons + GAMEPAD_BUTTON_B;
+      buttons = GAMEPAD_BUTTON_B;
+    //}
   }
 #endif
 
