@@ -2656,6 +2656,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
           // case 25: // START navigation
           case 26: // BUTTON B navigation
           case 27: // BUTTON A navigation
+          case 28: // init display at remote connection
             remote_MIDI_CC = inCtrl;
             remote_MIDI_CC_value = inValue;
             break;
