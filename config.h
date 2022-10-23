@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.16"
+#define VERSION "1.4.6.17"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -133,6 +133,8 @@
 //*************************************************************************************************
 // Number of Dexed instances
 #define NUM_DEXED 2  // 1 or 2 - nothing else!
+#define DEFAULT_DEXED_MIDI_CHANNEL_INST0 1
+#define DEFAULT_DEXED_MIDI_CHANNEL_INST1 2
 
 // FX-CHAIN ENABLE/DISABLE
 #define USE_FX 1
@@ -158,6 +160,8 @@
 #define USE_MULTISAMPLES
 #define NUM_MULTISAMPLES 2
 #define NUM_MULTISAMPLE_ZONES 8
+#define DEFAULT_MSP_MIDI_CHANNEL_INST0 7
+#define DEFAULT_MSP_MIDI_CHANNEL_INST1 8
 
 // EPIANO
 #define USE_EPIANO
@@ -170,12 +174,15 @@
 #define USE_MICROSYNTH
 #ifdef USE_MICROSYNTH
 #define NUM_MICROSYNTH 2
+#define DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST0 4
+#define DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST1 5
 #endif
 
 // BRAIDS
 #define USE_BRAIDS  //very early state. not ready for usage
 #ifdef USE_BRAIDS
 #define NUM_BRAIDS 8
+#define DEFAULT_BRAIDS_MIDI_CHANNEL 6
 #endif
 
 // MULTIBAND COMPRESSOR

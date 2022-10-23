@@ -2135,20 +2135,20 @@ FLASHMEM void mFunc_screensaver(uint8_t param)  //qix screensaver
 FLASHMEM void setup_ui(void) {
   _setup_rotation_and_encoders(true);
 
-  if (LCDML.BT_setup()) {
-    pinMode(BUT_R_PIN, INPUT_PULLUP);
-    pinMode(BUT_L_PIN, INPUT_PULLUP);
+   if (LCDML.BT_setup()) {
+   //  pinMode(BUT_R_PIN, INPUT_PULLUP);
+   //  pinMode(BUT_L_PIN, INPUT_PULLUP);
 
-#ifdef ONBOARD_BUTTON_INTERFACE
-    pinMode(BI_UP, INPUT_PULLUP);
-    pinMode(BI_DOWN, INPUT_PULLUP);
-    pinMode(BI_LEFT, INPUT_PULLUP);
-    pinMode(BI_RIGHT, INPUT_PULLUP);
-    pinMode(BI_SELECT, INPUT_PULLUP);
-    pinMode(BI_START, INPUT_PULLUP);
-    pinMode(BI_BUTTON_A, INPUT_PULLUP);
-    pinMode(BI_BUTTON_B, INPUT_PULLUP);
-#endif
+// #ifdef ONBOARD_BUTTON_INTERFACE
+//     pinMode(BI_UP, INPUT_PULLUP);
+//     pinMode(BI_DOWN, INPUT_PULLUP);
+//     pinMode(BI_LEFT, INPUT_PULLUP);
+//     pinMode(BI_RIGHT, INPUT_PULLUP);
+//     pinMode(BI_SELECT, INPUT_PULLUP);
+//     pinMode(BI_START, INPUT_PULLUP);
+//     pinMode(BI_BUTTON_A, INPUT_PULLUP);
+//     pinMode(BI_BUTTON_B, INPUT_PULLUP);
+// #endif
 
     ENCODER[ENC_R].begin();
     ENCODER[ENC_L].begin();

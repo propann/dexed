@@ -103,6 +103,7 @@ void check_and_create_directories(void);
 void show_cpu_and_mem_usage(void);
 void initial_values(bool init);
 bool checkMidiChannel(byte inChannel, uint8_t instance_id);
+bool bootup_performance_loading = true;
 
 #define TFT_DC 37
 #define TFT_CS 41
@@ -918,6 +919,20 @@ void setup() {
   Serial.flush();
 #endif
 
+  pinMode(BUT_R_PIN, INPUT_PULLUP);
+  pinMode(BUT_L_PIN, INPUT_PULLUP);
+
+#ifdef ONBOARD_BUTTON_INTERFACE
+  pinMode(BI_UP, INPUT_PULLUP);
+  pinMode(BI_DOWN, INPUT_PULLUP);
+  pinMode(BI_LEFT, INPUT_PULLUP);
+  pinMode(BI_RIGHT, INPUT_PULLUP);
+  pinMode(BI_SELECT, INPUT_PULLUP);
+  pinMode(BI_START, INPUT_PULLUP);
+  pinMode(BI_BUTTON_A, INPUT_PULLUP);
+  pinMode(BI_BUTTON_B, INPUT_PULLUP);
+#endif
+
   // Init display
   SPI.begin();
   display.begin();
@@ -1183,7 +1198,6 @@ void setup() {
 #endif
 
   // Start SD card
-
   sd_card = check_sd_cards();
 
   if (sd_card < 1) {
@@ -1216,6 +1230,12 @@ void setup() {
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 #endif
 
+  if (digitalRead(BUT_R_PIN) == false || digitalRead(BUT_L_PIN) == false)  //is pushed
+    bootup_performance_loading = false;
+#ifdef ONBOARD_BUTTON_INTERFACE
+  if (digitalRead(BI_BUTTON_A) == false || digitalRead(BI_BUTTON_B) == false)  //is pushed
+    bootup_performance_loading = false;
+#endif
   // Load initial Performance or the last used one
   initial_values(false);
 
@@ -1653,9 +1673,8 @@ void loop() {
   } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
     // handle touch button test
     handle_touchscreen_settings_button_test();
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen)) {
-   handle_touchscreen_test_touchscreen();
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen)) {
+    handle_touchscreen_test_touchscreen();
   }
 
 #ifdef COMPILE_FOR_FLASH
@@ -3502,30 +3521,41 @@ FLASHMEM void initial_values(bool init) {
   //       //load_sd_performance_json(PERFORMANCE_NUM_MIN);
   //     } else {
   load_sd_sys_json();
-  if (configuration.sys.load_at_startup_performance == 255) {
+  if (bootup_performance_loading) {
+    if (configuration.sys.load_at_startup_performance == 255) {
 #ifdef DEBUG
-    Serial.print(F("Loading initial system data from performance "));
-    Serial.println(configuration.sys.performance_number, DEC);
+      Serial.print(F("Loading initial system data from performance "));
+      Serial.println(configuration.sys.performance_number, DEC);
 #endif
-    load_sd_performance_json(configuration.sys.performance_number);
-  } else if (configuration.sys.load_at_startup_performance < 100) {
+      load_sd_performance_json(configuration.sys.performance_number);
+    } else if (configuration.sys.load_at_startup_performance < 100) {
 #ifdef DEBUG
-    Serial.print(F("Loading initial system data from performance "));
-    Serial.println(configuration.sys.load_at_startup_performance, DEC);
+      Serial.print(F("Loading initial system data from performance "));
+      Serial.println(configuration.sys.load_at_startup_performance, DEC);
 #endif
-    load_sd_performance_json(configuration.sys.load_at_startup_performance);
-  } else {
+      load_sd_performance_json(configuration.sys.load_at_startup_performance);
+    } else {
 #ifdef DEBUG
-    Serial.print(F("Loading initial system data from default performance "));
-    Serial.println(STARTUP_NUM_DEFAULT, DEC);
+      Serial.print(F("Loading initial system data from default performance "));
+      Serial.println(STARTUP_NUM_DEFAULT, DEC);
 #endif
-    load_sd_performance_json(STARTUP_NUM_DEFAULT);
+      load_sd_performance_json(STARTUP_NUM_DEFAULT);
+    }
+    // }
+#ifdef DEBUG
+    Serial.println(F("OK, loaded!"));
+#endif
+  } else {  //boot without performance - set some defaults
+    configuration.dexed[0].midi_channel = DEFAULT_DEXED_MIDI_CHANNEL_INST0;
+    configuration.dexed[1].midi_channel = DEFAULT_DEXED_MIDI_CHANNEL_INST1;
+    // configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
+    microsynth[0].midi_channel = DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST0;
+    microsynth[1].midi_channel = DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST1;
+    braids_osc.midi_channel = DEFAULT_BRAIDS_MIDI_CHANNEL;
+    msp[0].midi_channel = DEFAULT_MSP_MIDI_CHANNEL_INST0;
+    msp[1].midi_channel = DEFAULT_MSP_MIDI_CHANNEL_INST1;
+    // drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
   }
-  // }
-#ifdef DEBUG
-  Serial.println(F("OK, loaded!"));
-#endif
-
   check_configuration();
   // }
   //configuration.sys.vol = EEPROM[EEPROM_START_ADDRESS + 2];
