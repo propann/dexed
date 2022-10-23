@@ -2552,9 +2552,14 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
   }
 }
 
+uint8_t remote_MIDI_CC = 0;
+uint8_t remote_MIDI_CC_value;
+
 void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
   inCtrl = constrain(inCtrl, 0, 127);
   inValue = constrain(inValue, 0, 127);
+  
+  remote_MIDI_CC = 0;
 
   if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
     learn_cc(inChannel, inCtrl);
@@ -2642,6 +2647,19 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
               LCDML.loop_menu();
             }
             break;
+
+          case 20: // RIGHT navigation
+          case 21: // LEFT navigation
+          case 22: // UP navigation
+          case 23: // DOWN navigation
+          case 24: // SELECT navigation
+          // case 25: // START navigation
+          case 26: // BUTTON B navigation
+          case 27: // BUTTON A navigation
+            remote_MIDI_CC = inCtrl;
+            remote_MIDI_CC_value = inValue;
+            break;
+
           case 32:  // BankSelect LSB
 #ifdef DEBUG
             Serial.println(F("BANK - SELECT LSB CC"));
@@ -2654,6 +2672,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
               LCDML.loop_menu();
               }*/
             break;
+
           case 64:
             MicroDexed[instance_id]->setSustain(inValue > 63);
             if (!MicroDexed[instance_id]->getSustain()) {

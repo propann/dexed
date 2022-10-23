@@ -200,6 +200,8 @@ extern AudioRecordQueue record_queue_r;
 extern char filename[CONFIG_FILENAME_LEN];
 extern void psram_test();
 extern void handle_touchscreen_settings_button_test();
+extern uint8_t remote_MIDI_CC;
+extern uint8_t remote_MIDI_CC_value;
 
 void draw_euclidean_circle();
 #ifdef USB_GAMEPAD
@@ -372,16 +374,30 @@ int temp_int;
 bool menu_select_toggle;
 float temp_float;
 
-PROGMEM const char cc_names[8][12] = { "Volume     ",
-                                       "Panorama   ",
-                                       "Bank Select",
-                                       "Reverb Send",
-                                       "Seq. Start ",
-                                       "Seq. Stop  ",
-                                       "Seq. RECORD",
-                                       "Panic Dexed" };
+#define MAX_CC_DEST 15
 
-PROGMEM const uint8_t cc_dest_values[8] = { 7, 10, 32, 91, 200, 201, 202, 203 };
+PROGMEM const char cc_names[MAX_CC_DEST][13] = {
+  "Volume      ",
+  "Panorama    ",
+  "Cursor RIGHT",
+  "Cursor LEFT ",
+  "Cursor UP   ",
+  "Cursor DOWN ",
+  "SELECT      ",
+  //  "START",
+  "BUTTON B    ",
+  "BUTTON A    ",
+  "Bank Select ",
+  "Reverb Send ",
+  "Seq. Start  ",
+  "Seq. Stop   ",
+  "Seq. RECORD ",
+  "Panic Dexed ",
+};
+
+PROGMEM const uint8_t cc_dest_values[MAX_CC_DEST] = { 7, 10, 20, 21, 22, 23, 24,
+// 25,
+26, 27, 32, 91, 200, 201, 202, 203 };
 
 // PROGMEM const uint8_t meter_bar[8][8] = {
 //   { B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000 },
@@ -2185,6 +2201,11 @@ FLASHMEM void toggle_sequencer_play_status() {
 #if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_right() {
 
+  if (remote_MIDI_CC == 20) {
+    remote_MIDI_CC = 0;
+    return true;
+  }
+
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_RIGHT) == false)
     return true;
@@ -2206,6 +2227,12 @@ FLASHMEM boolean key_right() {
 
 #if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_left() {
+
+  if (remote_MIDI_CC == 21) {
+    remote_MIDI_CC = 0;
+    return true;
+  }
+
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_LEFT) == false)
     return true;
@@ -2227,13 +2254,19 @@ FLASHMEM boolean key_left() {
 
 #if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_up() {
+
+  if (remote_MIDI_CC == 22) {
+    remote_MIDI_CC = 0;
+    return true;
+  }
+
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_UP) == false)
     return true;
 #endif
 
 #ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 117 || incomingSerialByte == 'u')
+  if (incomingSerialByte == 'u')
     return true;
 #endif
 
@@ -2248,13 +2281,19 @@ FLASHMEM boolean key_up() {
 
 #if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_down() {
+
+  if (remote_MIDI_CC == 23) {
+    remote_MIDI_CC = 0;
+    return true;
+  }
+
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_DOWN) == false)
     return true;
 #endif
 
 #ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 100 || incomingSerialByte == 'd')
+  if (incomingSerialByte == 'd')
     return true;
 #endif
 
@@ -2473,6 +2512,31 @@ FLASHMEM void lcdml_menu_control(void) {
 
   uint32_t buttons = joysticks[0].getButtons();
 
+  // MIDI remote
+  switch(remote_MIDI_CC) {
+    case 24: // SELECT
+      buttons = GAMEPAD_SELECT;
+      remote_MIDI_CC = 0;
+      remote_console_keystate_select = (remote_MIDI_CC_value == 127 ? true : false);
+      break;
+    // case 25: // START
+      // buttons = buttons + GAMEPAD_START;
+      // remote_MIDI_CC = 0;
+    //   break;
+    case 26: // BUTTON B
+      buttons = buttons + GAMEPAD_BUTTON_B;
+      remote_MIDI_CC = 0;
+      remote_console_keystate_b = (remote_MIDI_CC_value == 127 ? true : false);
+      break;
+    case 27: // BUTTON A
+      buttons = buttons + GAMEPAD_BUTTON_A;
+      remote_MIDI_CC = 0;
+      remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
+      break;
+    default:
+      break;
+  }
+
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
 
@@ -2530,6 +2594,9 @@ FLASHMEM void lcdml_menu_control(void) {
   }
   if (incomingSerialByte == 127) {  // jump to current menu, when remote console start, currently hardwired to voice select
     buttons = 0;
+    remote_console_keystate_select = false;
+    remote_console_keystate_a = false;
+    remote_console_keystate_b = false;
     ts.touch_ui_drawn_in_menu = false;
     ts.keyb_in_menu_activated = false;
     draw_menu_ui_icons();
@@ -6102,7 +6169,7 @@ void print_custom_mappings() {
       display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
       for (uint8_t i = 0; i < sizeof(cc_dest_values); i++) {
         if (custom_midi_map[y].out == cc_dest_values[i])
-          show_small_font((y + 6) * 12, 29 * CHAR_width_small, 13, cc_names[i]);
+          show_small_font((y + 6) * 13, 29 * CHAR_width_small, 14, cc_names[i]);
       }
     }
   }
@@ -6198,9 +6265,9 @@ void UI_func_cc_mappings(uint8_t param) {
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
       if (LCDML.BT_checkDown()) {
-        generic_temp_select_menu = constrain(generic_temp_select_menu + ENCODER[ENC_R].speed(), 0, 7);
+        generic_temp_select_menu = constrain(generic_temp_select_menu + ENCODER[ENC_R].speed(), 0, MAX_CC_DEST-1);
       } else if (LCDML.BT_checkUp()) {
-        generic_temp_select_menu = constrain(generic_temp_select_menu - ENCODER[ENC_R].speed(), 0, 7);
+        generic_temp_select_menu = constrain(generic_temp_select_menu - ENCODER[ENC_R].speed(), 0, MAX_CC_DEST-1);
       }
     }
     if (LCDML.BT_checkEnter()) {
@@ -6209,7 +6276,7 @@ void UI_func_cc_mappings(uint8_t param) {
     }
     display.setTextSize(2);
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    show(2, 1, 13, cc_names[generic_temp_select_menu]);
+    show(2, 1, 14, cc_names[generic_temp_select_menu]);
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
