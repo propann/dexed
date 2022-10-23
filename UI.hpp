@@ -2533,6 +2533,16 @@ FLASHMEM void lcdml_menu_control(void) {
       remote_MIDI_CC = 0;
       remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
       break;
+    case 28: // init display at remote connection
+      buttons = 0;
+      remote_console_keystate_select = false;
+      remote_console_keystate_a = false;
+      remote_console_keystate_b = false;
+      ts.touch_ui_drawn_in_menu = false;
+      ts.keyb_in_menu_activated = false;
+      draw_menu_ui_icons();
+      LCDML.MENU_goRoot();
+      break;
     default:
       break;
   }
