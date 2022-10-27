@@ -2177,7 +2177,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
         if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3) {
           remote_MIDI_CC = custom_midi_map[c].out;
-          //remote_MIDI_CC_value = 127;
+          remote_MIDI_CC_value = 127;
           break;
         }
       }
@@ -2507,6 +2507,17 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
     }
   }
 
+  //check custom midi UI KEY mapping
+  if (seq.midi_learn_active == false) {
+    for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
+      if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3) {
+        if (custom_midi_map[c].out == 24 || custom_midi_map[c].out == 26 || custom_midi_map[c].out == 27)
+          remote_MIDI_CC_value = 0;
+        break;
+      }
+    }
+  }
+
 #ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
   if (device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) {
@@ -2693,15 +2704,15 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             }
             break;
 
-          case 20: // RIGHT navigation
-          case 21: // LEFT navigation
-          case 22: // UP navigation
-          case 23: // DOWN navigation
-          case 24: // SELECT navigation
+          case 20:  // RIGHT navigation
+          case 21:  // LEFT navigation
+          case 22:  // UP navigation
+          case 23:  // DOWN navigation
+          case 24:  // SELECT navigation
           // case 25: // START navigation
-          case 26: // BUTTON B navigation
-          case 27: // BUTTON A navigation
-          case 28: // init display at remote connection
+          case 26:  // BUTTON B navigation
+          case 27:  // BUTTON A navigation
+          case 28:  // init display at remote connection
             remote_MIDI_CC = inCtrl;
             remote_MIDI_CC_value = inValue;
             break;

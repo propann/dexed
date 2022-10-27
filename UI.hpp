@@ -2514,6 +2514,12 @@ FLASHMEM void lcdml_menu_control(void) {
 
   uint32_t buttons = joysticks[0].getButtons();
 
+  if (remote_MIDI_CC_value == 0) {
+    remote_console_keystate_a = 0;
+    remote_console_keystate_b = 0;
+    remote_console_keystate_select = 0;
+  }
+  
   // MIDI remote
   switch (remote_MIDI_CC) {
     case 24:  // SELECT
@@ -2535,7 +2541,7 @@ FLASHMEM void lcdml_menu_control(void) {
       remote_MIDI_CC = 0;
       remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
       break;
-    case 28: // init display at remote connection
+    case 28:  // init display at remote connection
       buttons = 0;
       remote_console_keystate_select = false;
       remote_console_keystate_a = false;
@@ -6183,8 +6189,7 @@ void print_custom_mappings() {
     } else if (custom_midi_map[y].type == 2) {
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
       show_small_font(line * 12, 5 * CHAR_width_small, 7, "MIDI CC");
-    }
-     else if (custom_midi_map[y].type == 3) {
+    } else if (custom_midi_map[y].type == 3) {
       display.setTextColor(PINK, COLOR_BACKGROUND);
       show_small_font(line * 12, 5 * CHAR_width_small, 7, "UI KEY ");
     }
@@ -6206,7 +6211,7 @@ void print_custom_mappings() {
       display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
     else if (custom_midi_map[y].type == 2)
       display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-       else if (custom_midi_map[y].type == 3)
+    else if (custom_midi_map[y].type == 3)
       display.setTextColor(PINK, COLOR_BACKGROUND);
 
     if (custom_midi_map[y].in == 0)
@@ -6221,8 +6226,7 @@ void print_custom_mappings() {
           show_small_font(line * 12, 34 * CHAR_width_small, 14, cc_names[i]);
         }
       }
-    }
-     else if (custom_midi_map[y].type == 3) {
+    } else if (custom_midi_map[y].type == 3) {
       for (uint8_t i = 0; i < sizeof(cc_dest_values_UI_mapping); i++) {
         if (custom_midi_map[y].out == cc_dest_values_UI_mapping[i]) {
           show_small_font(line * 12, 34 * CHAR_width_small, 14, cc_names_UI_mapping[i]);
