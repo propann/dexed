@@ -1652,8 +1652,6 @@ void loop() {
     handle_touchscreen_color_edit();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
     handle_touchscreen_custom_mappings();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
-    handle_touchscreen_cc_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer)) {
     display.console = true;
     handle_touchscreen_mixer();
@@ -1987,9 +1985,43 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
 FLASHMEM void learn_key(byte inChannel, byte inNumber) {
   uint8_t found = 199;
 
-  if (inChannel == DRUM_MIDI_CHANNEL) {
+  if (generic_temp_select_menu == 0) {  // learn drum mapping
+    if (inChannel == DRUM_MIDI_CHANNEL) {
+      for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
+        if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1) {
+          found = c;
+          break;
+        }
+      }
+      if (found != 199)  //remap to new destination if it was already mapped before
+      {
+        custom_midi_map[found].in = inNumber;
+        custom_midi_map[found].out = drum_config[activesample].midinote;
+        custom_midi_map[found].type = 1;
+        custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
+      } else {
+        found = 199;
+        for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
+          if (custom_midi_map[c].in == 0) {
+            found = c;
+            break;
+          }
+        }
+        if (found != 199)  // else map to next empty slot if it was not mapped before
+        {
+          custom_midi_map[found].in = inNumber;
+          custom_midi_map[found].out = drum_config[activesample].midinote;
+          custom_midi_map[found].type = 1;
+          custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
+        } else
+          ;  // can not be mapped, no empty slot left
+      }
+    }
+  } else  // UI MIDI KEY MAP
+  {
+    // if (inChannel != DRUM_MIDI_CHANNEL) {
     for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
-      if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 1) {
+      if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3) {
         found = c;
         break;
       }
@@ -1997,9 +2029,10 @@ FLASHMEM void learn_key(byte inChannel, byte inNumber) {
     if (found != 199)  //remap to new destination if it was already mapped before
     {
       custom_midi_map[found].in = inNumber;
-      custom_midi_map[found].out = drum_config[activesample].midinote;
-      custom_midi_map[found].type = 1;
-      custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
+      custom_midi_map[found].out = cc_dest_values_UI_mapping[generic_menu];
+      custom_midi_map[found].type = 3;
+      custom_midi_map[found].channel = 0;
+
     } else {
       found = 199;
       for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
@@ -2011,12 +2044,13 @@ FLASHMEM void learn_key(byte inChannel, byte inNumber) {
       if (found != 199)  // else map to next empty slot if it was not mapped before
       {
         custom_midi_map[found].in = inNumber;
-        custom_midi_map[found].out = drum_config[activesample].midinote;
-        custom_midi_map[found].type = 1;
-        custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
+        custom_midi_map[found].out = cc_dest_values_UI_mapping[generic_menu];
+        custom_midi_map[found].type = 3;
+        custom_midi_map[found].channel = 0;
       } else
         ;  // can not be mapped, no empty slot left
     }
+    // }
   }
   seq.midi_learn_active = false;
   update_midi_learn_button();
@@ -2034,7 +2068,7 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber) {
   if (found != 199)  //remap to new destination if it was already mapped before
   {
     custom_midi_map[found].in = inNumber;
-    custom_midi_map[found].out = cc_dest_values[seq.temp_select_menu];
+    custom_midi_map[found].out = cc_dest_values[generic_menu];
     custom_midi_map[found].type = 2;
     custom_midi_map[found].channel = configuration.dexed[selected_instance_id].midi_channel;
   } else {
@@ -2048,7 +2082,7 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber) {
     if (found != 199)  // else map to next empty slot if it was not mapped before
     {
       custom_midi_map[found].in = inNumber;
-      custom_midi_map[found].out = cc_dest_values[seq.temp_select_menu];
+      custom_midi_map[found].out = cc_dest_values[generic_menu];
       custom_midi_map[found].type = 2;
       custom_midi_map[found].channel = configuration.dexed[selected_instance_id].midi_channel;
     } else
@@ -2137,6 +2171,17 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #endif
 
   if (device == 0) {
+
+    //check custom midi UI KEY mapping
+    if (seq.midi_learn_active == false) {
+      for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
+        if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3) {
+          remote_MIDI_CC = custom_midi_map[c].out;
+          //remote_MIDI_CC_value = 127;
+          break;
+        }
+      }
+    }
 
 #if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
     // Multisamples
@@ -2558,12 +2603,12 @@ uint8_t remote_MIDI_CC_value;
 void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
   inCtrl = constrain(inCtrl, 0, 127);
   inValue = constrain(inValue, 0, 127);
-  
+
   remote_MIDI_CC = 0;
 
-  if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_cc_mappings))
+  if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings)) {
     learn_cc(inChannel, inCtrl);
-  else {
+  } else {
 
     //check custom midi mapping
     for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {

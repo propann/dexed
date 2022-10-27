@@ -144,7 +144,7 @@
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
 #define DRUM_MIDI_CHANNEL 10
-#define NUM_CUSTOM_MIDI_MAPPINGS 10  //Number of Custom Key, CC and Button Mappings
+#define NUM_CUSTOM_MIDI_MAPPINGS 18  //Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
 #define NUM_DRUMSET_CONFIG 71

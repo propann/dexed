@@ -396,19 +396,22 @@ PROGMEM const char cc_names[MAX_CC_DEST][13] = {
 };
 
 PROGMEM const uint8_t cc_dest_values[MAX_CC_DEST] = { 7, 10, 20, 21, 22, 23, 24,
-// 25,
-26, 27, 32, 91, 200, 201, 202, 203 };
+                                                      // 25,
+                                                      26, 27, 32, 91, 200, 201, 202, 203 };
 
-// PROGMEM const uint8_t meter_bar[8][8] = {
-//   { B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000, B10000000 },
-//   { B01000000, B01000000, B01000000, B01000000, B01000000, B01000000, B01000000, B01000000 },
-//   { B00100000, B00100000, B00100000, B00100000, B00100000, B00100000, B00100000, B00100000 },
-//   { B00010000, B00010000, B00010000, B00010000, B00010000, B00010000, B00010000, B00010000 },
-//   { B00001000, B00001000, B00001000, B00001000, B00001000, B00001000, B00001000, B00001000 },
-//   { B00000100, B00000100, B00000100, B00000100, B00000100, B00000100, B00000100, B00000100 },
-//   { B00000010, B00000010, B00000010, B00000010, B00000010, B00000010, B00000010, B00000010 },
-//   { B00000001, B00000001, B00000001, B00000001, B00000001, B00000001, B00000001, B00000001 }
-// };
+PROGMEM const char cc_names_UI_mapping[8][13] = {
+
+  "Cursor RIGHT",
+  "Cursor LEFT ",
+  "Cursor UP   ",
+  "Cursor DOWN ",
+  "SELECT      ",
+  "START",
+  "BUTTON B    ",
+  "BUTTON A    ",
+};
+
+PROGMEM const uint8_t cc_dest_values_UI_mapping[8] = { 20, 21, 22, 23, 24, 25, 26, 27 };
 
 PROGMEM const uint8_t special_chars[25][8] = {
   { B11111111, B11110111, B11100111, B11110111, B11110111, B11110111, B11110111, B11111111 },  //  [0] 1 small invers
@@ -520,7 +523,6 @@ void UI_func_multiband_dynamics(uint8_t param);
 void UI_func_recorder(uint8_t param);
 void UI_func_file_manager(uint8_t param);
 void UI_func_custom_mappings(uint8_t param);
-void UI_func_cc_mappings(uint8_t param);
 void UI_func_microsynth(uint8_t param);
 void UI_func_seq_pattern_editor(uint8_t param);
 void UI_func_seq_vel_editor(uint8_t param);
@@ -2151,20 +2153,20 @@ FLASHMEM void mFunc_screensaver(uint8_t param)  //qix screensaver
 FLASHMEM void setup_ui(void) {
   _setup_rotation_and_encoders(true);
 
-   if (LCDML.BT_setup()) {
-   //  pinMode(BUT_R_PIN, INPUT_PULLUP);
-   //  pinMode(BUT_L_PIN, INPUT_PULLUP);
+  if (LCDML.BT_setup()) {
+    //  pinMode(BUT_R_PIN, INPUT_PULLUP);
+    //  pinMode(BUT_L_PIN, INPUT_PULLUP);
 
-// #ifdef ONBOARD_BUTTON_INTERFACE
-//     pinMode(BI_UP, INPUT_PULLUP);
-//     pinMode(BI_DOWN, INPUT_PULLUP);
-//     pinMode(BI_LEFT, INPUT_PULLUP);
-//     pinMode(BI_RIGHT, INPUT_PULLUP);
-//     pinMode(BI_SELECT, INPUT_PULLUP);
-//     pinMode(BI_START, INPUT_PULLUP);
-//     pinMode(BI_BUTTON_A, INPUT_PULLUP);
-//     pinMode(BI_BUTTON_B, INPUT_PULLUP);
-// #endif
+    // #ifdef ONBOARD_BUTTON_INTERFACE
+    //     pinMode(BI_UP, INPUT_PULLUP);
+    //     pinMode(BI_DOWN, INPUT_PULLUP);
+    //     pinMode(BI_LEFT, INPUT_PULLUP);
+    //     pinMode(BI_RIGHT, INPUT_PULLUP);
+    //     pinMode(BI_SELECT, INPUT_PULLUP);
+    //     pinMode(BI_START, INPUT_PULLUP);
+    //     pinMode(BI_BUTTON_A, INPUT_PULLUP);
+    //     pinMode(BI_BUTTON_B, INPUT_PULLUP);
+    // #endif
 
     ENCODER[ENC_R].begin();
     ENCODER[ENC_L].begin();
@@ -2513,22 +2515,22 @@ FLASHMEM void lcdml_menu_control(void) {
   uint32_t buttons = joysticks[0].getButtons();
 
   // MIDI remote
-  switch(remote_MIDI_CC) {
-    case 24: // SELECT
+  switch (remote_MIDI_CC) {
+    case 24:  // SELECT
       buttons = GAMEPAD_SELECT;
       remote_MIDI_CC = 0;
       remote_console_keystate_select = (remote_MIDI_CC_value == 127 ? true : false);
       break;
     // case 25: // START
-      // buttons = buttons + GAMEPAD_START;
-      // remote_MIDI_CC = 0;
+    // buttons = buttons + GAMEPAD_START;
+    // remote_MIDI_CC = 0;
     //   break;
-    case 26: // BUTTON B
+    case 26:  // BUTTON B
       buttons = buttons + GAMEPAD_BUTTON_B;
       remote_MIDI_CC = 0;
       remote_console_keystate_b = (remote_MIDI_CC_value == 127 ? true : false);
       break;
-    case 27: // BUTTON A
+    case 27:  // BUTTON A
       buttons = buttons + GAMEPAD_BUTTON_A;
       remote_MIDI_CC = 0;
       remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
@@ -2862,6 +2864,13 @@ FLASHMEM void lcdml_menu_control(void) {
       encoderDir[ENC_R].ButtonPressed(false);
       encoderDir[ENC_R].ButtonLong(false);
     } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  //long press microsynth button R
+    {
+      LCDML.BT_enter();
+      LCDML.OTHER_updateFunc();
+      LCDML.loop_menu();
+      encoderDir[ENC_R].ButtonPressed(false);
+      encoderDir[ENC_R].ButtonLong(false);
+    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)  //long press midi mapping button R
     {
       LCDML.BT_enter();
       LCDML.OTHER_updateFunc();
@@ -6148,145 +6157,314 @@ FLASHMEM void UI_func_seq_probabilities(uint8_t param) {
 
 void print_custom_mappings() {
   display.setTextSize(1);
+  uint8_t line = 9;
+  int offset = generic_temp_select_menu - 3;
+  if (offset < 10 || offset >= 99)
+    offset = 0;
+  if (offset > 9)
+    offset = generic_temp_select_menu - 3 - 9;
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  for (uint8_t y = 0; y < NUM_CUSTOM_MIDI_MAPPINGS; y++) {
-    display.setCursor(1 * CHAR_width_small, (y + 6) * 12);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  for (uint8_t y = 0 + offset; y < 10 + offset; y++) {
+    display.setCursor(1 * CHAR_width_small, line * 12);
+
+    if (generic_temp_select_menu - 3 == y)
+      display.setTextColor(COLOR_SYSTEXT, RED);
+    else
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+
     print_formatted_number((y + 1), 2);  //entry no.
     if (custom_midi_map[y].type == 0) {
       display.setTextColor(GREY2, COLOR_BACKGROUND);
-      show_small_font((y + 6) * 12, 5 * CHAR_width_small, 5, "NONE");
+      show_small_font(line * 12, 5 * CHAR_width_small, 7, "NONE");
     } else if (custom_midi_map[y].type == 1) {
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-      show_small_font((y + 6) * 12, 5 * CHAR_width_small, 7, "KEY/PAD");
+      show_small_font(line * 12, 5 * CHAR_width_small, 7, "KEY/PAD");
     } else if (custom_midi_map[y].type == 2) {
       display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-      show_small_font((y + 6) * 12, 5 * CHAR_width_small, 7, "MIDI CC");
+      show_small_font(line * 12, 5 * CHAR_width_small, 7, "MIDI CC");
+    }
+     else if (custom_midi_map[y].type == 3) {
+      display.setTextColor(PINK, COLOR_BACKGROUND);
+      show_small_font(line * 12, 5 * CHAR_width_small, 7, "UI KEY ");
     }
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
-    show_small_font((y + 6) * 12, 14 * CHAR_width_small, 3, custom_midi_map[y].in);
+    show_small_font(line * 12, 14 * CHAR_width_small, 3, custom_midi_map[y].in);
     display.setTextColor(COLOR_CHORDS, COLOR_BACKGROUND);
-    show_small_font((y + 6) * 12, 19 * CHAR_width_small, 3, custom_midi_map[y].out);
+    show_small_font(line * 12, 19 * CHAR_width_small, 3, custom_midi_map[y].out);
     display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-    show_small_font((y + 6) * 12, 24 * CHAR_width_small, 3, custom_midi_map[y].channel);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    if (custom_midi_map[y].in == 0)
-      show_small_font((y + 6) * 12, 29 * CHAR_width_small, 12, "EMPTY SLOT");
-    else if (custom_midi_map[y].type == 1) {
-      display.setTextColor(PINK, COLOR_BACKGROUND);
-      show_small_font((y + 6) * 12, 29 * CHAR_width_small, 13, find_long_drum_name_from_note(custom_midi_map[y].out));
-    } else if (custom_midi_map[y].type == 2) {
+    show_small_font(line * 12, 24 * CHAR_width_small, 3, custom_midi_map[y].channel);
+
+
+    if (generic_temp_select_menu - 3 == y)
+      display.setTextColor(COLOR_SYSTEXT, RED);
+    // else
+    //   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else if (custom_midi_map[y].in == 0)
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    else if (custom_midi_map[y].type == 1)
+      display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+    else if (custom_midi_map[y].type == 2)
       display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
+       else if (custom_midi_map[y].type == 3)
+      display.setTextColor(PINK, COLOR_BACKGROUND);
+
+    if (custom_midi_map[y].in == 0)
+      show_small_font(line * 12, 34 * CHAR_width_small, 14, "EMPTY SLOT");
+    else if (custom_midi_map[y].type == 1) {
+
+      show_small_font(line * 12, 34 * CHAR_width_small, 14, find_long_drum_name_from_note(custom_midi_map[y].out));
+    } else if (custom_midi_map[y].type == 2) {
+
       for (uint8_t i = 0; i < sizeof(cc_dest_values); i++) {
-        if (custom_midi_map[y].out == cc_dest_values[i])
-          show_small_font((y + 6) * 13, 29 * CHAR_width_small, 14, cc_names[i]);
+        if (custom_midi_map[y].out == cc_dest_values[i]) {
+          show_small_font(line * 12, 34 * CHAR_width_small, 14, cc_names[i]);
+        }
       }
     }
+     else if (custom_midi_map[y].type == 3) {
+      for (uint8_t i = 0; i < sizeof(cc_dest_values_UI_mapping); i++) {
+        if (custom_midi_map[y].out == cc_dest_values_UI_mapping[i]) {
+          show_small_font(line * 12, 34 * CHAR_width_small, 14, cc_names_UI_mapping[i]);
+        }
+      }
+    }
+    line++;
   }
-
-  //scrollbar
-  drawScrollbar(DISPLAY_WIDTH - 6 - CHAR_width_small, 7 * (CHAR_height_small + 2), 10, NUM_CUSTOM_MIDI_MAPPINGS, 0, CHAR_height_small + 4);
 }
 
+void print_custom_mapping_drums() {
+  display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND);
+  display.setTextSize(1);
+  setCursor_textGrid_small(1, 6);
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("SET YOUR MIDI DEVICE TO DRUM CH. "));
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+  display.print(F("["));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(DRUM_MIDI_CHANNEL);
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+  display.print(F("]        "));
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 7);
+  display.print(F("TOUCH "));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(F("LEARN "));
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("TO REMAP YOUR FAVORITE DRUMS "));
+}
+
+void print_custom_mapping_cc() {
+  UI_update_instance_icons();
+  display.setTextSize(1);
+  setCursor_textGrid_small(1, 6);
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("MAP MIDI CC TO DEXED PARAMETERS, INSTANCE "));
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+  display.print(F("["));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(selected_instance_id + 1);
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+  display.print(F("] "));
+  setCursor_textGrid_small(1, 7);
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("SWITCH INSTANCES WITH "));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(F("LONG PUSH "));
+  display.setTextColor(RED, COLOR_BACKGROUND);
+  display.print(F("ENCODER_R   "));
+}
+void print_custom_mapping_ui() {
+  display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND);
+  display.setTextSize(1);
+  setCursor_textGrid_small(1, 6);
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("MAP/ADD CUSTOM MIDI KEYS FOR MIDI UI CONTROL "));
+  setCursor_textGrid_small(1, 7);
+  display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+  display.print(F("USEFUL WHEN YOU CAN'T SEND DEFAULT CC VALUES"));
+}
+
+void print_mapping_help_text() {
+  if (seq.edit_state == false && generic_temp_select_menu == 0)
+    print_custom_mapping_drums();
+  else if (seq.edit_state == false && generic_temp_select_menu == 1)
+    print_custom_mapping_cc();
+  else if (seq.edit_state == false && generic_temp_select_menu == 2)
+    print_custom_mapping_ui();
+}
+
+void draw_scrollbar_custom_mappings() {
+  if (generic_temp_select_menu > 2)
+    drawScrollbar(DISPLAY_WIDTH - CHAR_width_small * 2, 9 * 12, 10, NUM_CUSTOM_MIDI_MAPPINGS, generic_temp_select_menu - 3, 12);
+  else
+    drawScrollbar(DISPLAY_WIDTH - CHAR_width_small * 2, 9 * 12, 10, NUM_CUSTOM_MIDI_MAPPINGS, 0, 12);
+  print_custom_mappings();
+}
 void UI_func_custom_mappings(uint8_t param) {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
-  display.setTextSize(2);
+
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+    generic_menu = 0;
+    generic_temp_select_menu = 0;
+    generic_active_function = 0;
+
+    seq.edit_state = false;
+    helptext_l("BACK");
+    helptext_r("SELECT MAPPING TYPE");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(1, 1);
-    display.print(F("CUSTOM MAPPINGS"));
     display.setTextSize(1);
     draw_button_on_grid(36, 1, "PREV.", "", 0);
     drawBitmap(CHAR_width_small * 38 + 4, CHAR_height * 1 + 8, special_chars[19], 8, 8, GREEN);
     draw_button_on_grid(45, 1, "MIDI", "LEARN", 0);
-    setCursor_textGrid_small(1, 5);
-    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
-    display.print(F("SET YOUR MIDI DEVICE TO DRUM CH. "));
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print(F("["));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(DRUM_MIDI_CHANNEL);
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print(F("]"));
-    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
-    display.print(F(" TO LEARN "));
-
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(1, 6);
+    setCursor_textGrid_small(1, 9);
     display.print(F("NO  TYPE     IN   OUT  CH.  NAME"));
+    print_custom_mapping_drums();
     print_custom_mappings();
+    draw_scrollbar_custom_mappings();
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
       if (LCDML.BT_checkDown()) {
-        smart_filter(1);
+        if (seq.edit_state == false) {
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 2 + NUM_CUSTOM_MIDI_MAPPINGS);
+          print_mapping_help_text();
+          draw_scrollbar_custom_mappings();
+        } else if (seq.edit_state && generic_temp_select_menu == 0) {
+          smart_filter(1);
+        } else if (seq.edit_state && generic_temp_select_menu == 1) {
+          generic_menu = constrain(generic_menu + 1, 0, MAX_CC_DEST - 1);
+        } else if (seq.edit_state && generic_temp_select_menu == 2) {
+          generic_menu = constrain(generic_menu + 1, 0, 7);
+        }
       } else if (LCDML.BT_checkUp()) {
-        smart_filter(0);
+        if (seq.edit_state == false) {
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 2 + NUM_CUSTOM_MIDI_MAPPINGS);
+          print_mapping_help_text();
+          draw_scrollbar_custom_mappings();
+        } else if (seq.edit_state && generic_temp_select_menu == 0) {
+          smart_filter(0);
+        } else if (seq.edit_state && generic_temp_select_menu == 1) {
+          generic_menu = constrain(generic_menu - 1, 0, MAX_CC_DEST - 1);
+        } else if (seq.edit_state && generic_temp_select_menu == 2) {
+          generic_menu = constrain(generic_menu - 1, 0, 7);
+        }
       }
     }
-    if (LCDML.BT_checkEnter()) {
-      ;
-    }
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setTextSize(2);
-    setCursor_textGrid_small(1, 3);
-    display.print("[");
-    setCursor_textGrid_small(7, 3);
-    display.print("]");
-    setCursor_textGrid_small(3, 3);
-
-    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-    display.print(displayname);
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    show_small_font(4 * CHAR_height_small - 2, 9 * CHAR_width_small, 13, basename(drum_config[activesample].name));
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    seq.midi_learn_active = false;
-    display.fillScreen(COLOR_BACKGROUND);
-    encoderDir[ENC_R].reset();
-  }
-}
-
-void UI_func_cc_mappings(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    display.fillScreen(COLOR_BACKGROUND);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setTextSize(1);
-    UI_update_instance_icons();
-    setCursor_textGrid(1, 1);
-    display.print("CUSTOM DEXED CC");
-    display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-    draw_button_on_grid(45, 1, "MIDI", "LEARN", 0);
-    display.setTextSize(1);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    setCursor_textGrid_small(1, 6);
-    display.print(F("NO  TYPE     IN   OUT  CH.  NAME"));
-    print_custom_mappings();
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        generic_temp_select_menu = constrain(generic_temp_select_menu + ENCODER[ENC_R].speed(), 0, MAX_CC_DEST-1);
-      } else if (LCDML.BT_checkUp()) {
-        generic_temp_select_menu = constrain(generic_temp_select_menu - ENCODER[ENC_R].speed(), 0, MAX_CC_DEST-1);
-      }
-    }
-    if (LCDML.BT_checkEnter()) {
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed() && generic_temp_select_menu == 1) {
       selected_instance_id = !selected_instance_id;
-      UI_update_instance_icons();
+      print_custom_mapping_cc();
+    } else if (LCDML.BT_checkEnter()) {
+
+
+      if (generic_temp_select_menu < 3) {
+        if (seq.edit_state == false)
+          seq.edit_state = true;
+        else
+          seq.edit_state = false;
+
+        if (seq.edit_state == false)
+          helptext_r("SELECT MAPPING TYPE");
+        else {
+          generic_menu = 0;
+          helptext_r("SELECT DESTINATION");
+        }
+        display.setTextSize(2);
+      }
+      if (generic_temp_select_menu > 2) {  // is in data line
+
+        custom_midi_map[generic_temp_select_menu - 3].type = 0;
+        custom_midi_map[generic_temp_select_menu - 3].in = 0;
+        custom_midi_map[generic_temp_select_menu - 3].out = 0;
+        custom_midi_map[generic_temp_select_menu - 3].channel = 0;
+        print_custom_mappings();
+      }
+    }
+
+    display.setTextSize(2);
+
+    setCursor_textGrid_small(3, 1);
+    if (generic_temp_select_menu == 0) {
+      setModeColor(0);
+      display.print(F("NOTES/DRUMS"));
+    } else if (generic_temp_select_menu == 1) {
+      setModeColor(1);
+      display.print(F("MIDI CC    "));
+    } else if (generic_temp_select_menu == 2) {
+      setModeColor(2);
+      display.print(F("NOTES TO UI"));
+      if (seq.edit_state == false)
+        helptext_r("SELECT MAPPING TYPE");
+      else
+        helptext_r("SELECT DESTINATION");
     }
     display.setTextSize(2);
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    show(2, 1, 14, cc_names[generic_temp_select_menu]);
+    if (generic_temp_select_menu < 3) {
+      if (seq.edit_state) {
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+        setCursor_textGrid_small(1, 1);
+        display.print(" ");
+        setCursor_textGrid_small(25, 1);
+        display.print(" ");
+
+        display.setTextColor(COLOR_SYSTEXT, RED);
+        setCursor_textGrid_small(1, 3);
+        display.print("[");
+        setCursor_textGrid_small(9, 3);
+        display.print("]");
+      } else {
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+        setCursor_textGrid_small(1, 1);
+        display.print("[");
+        setCursor_textGrid_small(25, 1);
+        display.print("]");
+
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+        setCursor_textGrid_small(1, 3);
+        display.print(" ");
+        setCursor_textGrid_small(9, 3);
+        display.print(" ");
+      }
+    }
+    if (generic_temp_select_menu == 3) {  // gone from menu to data lines
+
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      setCursor_textGrid_small(1, 1);
+      display.print(" ");
+      setCursor_textGrid_small(25, 1);
+      display.print(" ");
+      helptext_r("DELETE MAPPING");
+    }
+
+    display.setTextSize(2);
+    if (generic_temp_select_menu == 0) {
+      setCursor_textGrid_small(3, 3);
+      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), activesample);
+      display.print(displayname);
+
+      // display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      show_small_font(4 * CHAR_height_small - 2, 11 * CHAR_width_small, 12, basename(drum_config[activesample].name));
+
+    } else if (generic_temp_select_menu == 1) {
+
+      setCursor_textGrid_small(3, 3);
+      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), cc_dest_values[generic_menu]);
+      display.print(displayname);
+      show_small_font(4 * CHAR_height_small - 2, 11 * CHAR_width_small, 12, cc_names[generic_menu]);
+
+    } else if (generic_temp_select_menu == 2) {
+
+      setCursor_textGrid_small(3, 3);
+      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), cc_dest_values_UI_mapping[generic_menu]);
+      display.print(displayname);
+      show_small_font(4 * CHAR_height_small - 2, 11 * CHAR_width_small, 12, cc_names_UI_mapping[generic_menu]);
+    }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
