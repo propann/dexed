@@ -2514,11 +2514,11 @@ FLASHMEM void lcdml_menu_control(void) {
 
   uint32_t buttons = joysticks[0].getButtons();
 
-  if (remote_MIDI_CC_value == 0) {
-    remote_console_keystate_a = 0;
-    remote_console_keystate_b = 0;
-    remote_console_keystate_select = 0;
-  }
+  // if (remote_MIDI_CC_value == 0) {
+  //   remote_console_keystate_a = 0;
+  //   remote_console_keystate_b = 0;
+  //   remote_console_keystate_select = 0;
+  // }
   
   // MIDI remote
   switch (remote_MIDI_CC) {
