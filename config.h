@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.17"
+#define VERSION "1.4.6.18"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -74,14 +74,13 @@
 //*************************************************************************************************
 
 // USB_KEYBOARD is for a PC-Numeric Keypad, connected via USB
-// USB_GAMEPAD is for a classic 8bit/16bit style of USB Gamepad.
+// USB_GAMEPAD is for a classic 8bit/16bit style of USB Gamepad (now tested to be in default code, no need to add it here)
 // ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy. USB_GAMEPAD must be also be enabled for it to work.
 
 // IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION, 
 // JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
 
 //#define USB_KEYPAD 1
-//#define USB_GAMEPAD 1
 //#define ONBOARD_BUTTON_INTERFACE 1
 
 //*************************************************************************************************
@@ -96,7 +95,6 @@
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
 
 //#define AUDIO_DEVICE_USB
-
 //#define TEENSY_AUDIO_BOARD // for legacy reasons, only
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
@@ -114,7 +112,7 @@
 //*************************************************************************************************
 //#define DEBUG 1
 //#define DEBUG_SHOW_JSON 1
-//#define REMOTE_CONSOLE  //enable USB Display + USB AUDIO + GAMEPAD/Key Input - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
+//#define REMOTE_CONSOLE  //enable USB Display + USB AUDIO - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
 #define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
@@ -381,8 +379,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #endif
 
 #ifdef REMOTE_CONSOLE
-#define USB_GAMEPAD 1
-#define ONBOARD_BUTTON_INTERFACE 1
 #define AUDIO_DEVICE_USB
 #endif
 
@@ -1027,9 +1023,7 @@ typedef struct sys_s {
   uint8_t display_rotation;
   uint8_t touch_rotation;
   uint8_t screen_saver_start; // minutes
-#ifdef USB_GAMEPAD
   uint16_t gamepad_speed; // milliseconds
-#endif
   bool ui_reverse;
 } sys_t;
 

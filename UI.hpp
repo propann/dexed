@@ -53,7 +53,6 @@ extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 extern void braids_update_settings();
 #endif
 
-#ifdef USB_GAMEPAD
 elapsedMillis gamepad_millis;
 int gamepad_accelerate;
 
@@ -79,7 +78,6 @@ uint32_t GAMEPAD_BUTTON_B = 1;
 uint32_t gamepad_buttons_neutral;
 int gamepad_0_neutral;
 int gamepad_1_neutral;
-#endif
 
 bool remote_touched;
 extern void draw_menu_ui_icons();
@@ -202,12 +200,8 @@ extern void psram_test();
 extern void handle_touchscreen_settings_button_test();
 extern uint8_t remote_MIDI_CC;
 extern uint8_t remote_MIDI_CC_value;
-
 void draw_euclidean_circle();
-#ifdef USB_GAMEPAD
 extern JoystickController joysticks[];
-extern void USB_GAMEPAD_stats();
-#endif
 
 
 #if NUM_DRUMS > 0
@@ -339,12 +333,12 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 extern uint8_t incomingSerialByte;
 bool remote_console_keystate_select;
 bool remote_console_keystate_a;
 bool remote_console_keystate_b;
-#endif
+//#endif
 
 #ifdef COMPILE_FOR_FLASH
 extern flash_t flash_infos;
@@ -564,9 +558,7 @@ void UI_func_eq_7(uint8_t param);
 void UI_func_startup_performance(uint8_t param);
 void UI_func_startup_page(uint8_t param);
 void UI_func_colors(uint8_t param);
-#ifdef USB_GAMEPAD
-void UI_func_automap_gamepad(uint8_t param);
-#endif
+void UI_func_map_gamepad(uint8_t param);
 void UI_func_favorites(uint8_t param);
 void UI_func_epiano(uint8_t param);
 void UI_update_instance_icons();
@@ -2200,7 +2192,7 @@ FLASHMEM void toggle_sequencer_play_status() {
   }
 }
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_right() {
 
   if (remote_MIDI_CC == 20) {
@@ -2218,16 +2210,14 @@ FLASHMEM boolean key_right() {
     return true;
 #endif
 
-#ifdef USB_GAMEPAD
   if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1)
     return true;
-#endif
 
   return false;
 }
-#endif
+//#endif
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_left() {
 
   if (remote_MIDI_CC == 21) {
@@ -2245,16 +2235,14 @@ FLASHMEM boolean key_left() {
     return true;
 #endif
 
-#ifdef USB_GAMEPAD
   if (joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1)
     return true;
-#endif
 
   return false;
 }
-#endif
+//#endif
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_up() {
 
   if (remote_MIDI_CC == 22) {
@@ -2272,16 +2260,14 @@ FLASHMEM boolean key_up() {
     return true;
 #endif
 
-#ifdef USB_GAMEPAD
   if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1)
     return true;
-#endif
 
   return false;
 }
-#endif
+//#endif
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_down() {
 
   if (remote_MIDI_CC == 23) {
@@ -2299,16 +2285,14 @@ FLASHMEM boolean key_down() {
     return true;
 #endif
 
-#ifdef USB_GAMEPAD
   if (joysticks[0].getAxis(0) == GAMEPAD_DOWN_0 && joysticks[0].getAxis(1) == GAMEPAD_DOWN_1)
     return true;
-#endif
 
   return false;
 }
-#endif
+//#endif
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
   if (gamepad_millis > configuration.sys.gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && key_right()) {
     seq.cycle_touch_element = 6;  // goto chain edit
@@ -2458,7 +2442,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons) {
     }
   }
 }
-#endif
+//#endif
 
 /***********************************************************************
    MENU CONTROL
@@ -2510,16 +2494,10 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 
   uint32_t buttons = joysticks[0].getButtons();
 
-  // if (remote_MIDI_CC_value == 0) {
-  //   remote_console_keystate_a = 0;
-  //   remote_console_keystate_b = 0;
-  //   remote_console_keystate_select = 0;
-  // }
-  
   // MIDI remote
   switch (remote_MIDI_CC) {
     case 24:  // SELECT
@@ -2556,7 +2534,7 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 
 #ifdef ONBOARD_BUTTON_INTERFACE
-  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
 
     // buttons = 0;
     // if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B)) {
@@ -2582,7 +2560,7 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
   if (incomingSerialByte == '0' || remote_console_keystate_select) {
     buttons = GAMEPAD_SELECT;
     remote_console_keystate_select = true;
@@ -2620,7 +2598,7 @@ FLASHMEM void lcdml_menu_control(void) {
     draw_menu_ui_icons();
     LCDML.MENU_goRoot();
   }
-#endif
+//#endif
 
 #ifdef REMOTE_CONSOLE
   if (incomingSerialByte == 1) {  // touch input from remote console
@@ -2651,7 +2629,7 @@ FLASHMEM void lcdml_menu_control(void) {
   if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed) {
 
     //key-learn function
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad) && temp_int < 9) {
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad) && temp_int < 9) {
       gamepad_learn_func(buttons);
     }
     // LSDJ Style Navigation:
@@ -2669,7 +2647,7 @@ FLASHMEM void lcdml_menu_control(void) {
       }
     }
 
-    else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+    else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
       bool reverse_y = false;
       bool xy_navigation = false;
 
@@ -2767,7 +2745,7 @@ FLASHMEM void lcdml_menu_control(void) {
 
     // GAMEPAD BUTTON HANDLING
 
-    if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_automap_gamepad)) {
+    if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
       if (buttons == GAMEPAD_BUTTON_B) {
         button[ENC_L] = 0;
         gamepad_accelerate = 0;
@@ -2786,7 +2764,7 @@ FLASHMEM void lcdml_menu_control(void) {
     }
   }
 
-#endif
+
 
   /************************************************************************************
     Basic encoder handling (from LCDMenuLib2)
@@ -3396,8 +3374,7 @@ FLASHMEM void colors_screen_update() {
   }
 }
 
-#ifdef USB_GAMEPAD
-FLASHMEM void UI_func_automap_gamepad(uint8_t param) {
+FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -3473,7 +3450,6 @@ FLASHMEM void UI_func_automap_gamepad(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
-#endif
 
 FLASHMEM void UI_func_colors(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -14598,16 +14574,16 @@ FLASHMEM void _render_misc_settings() {
   display.print(F("REVERSE UI (ENCODERS ON TOP)"));
 
   setCursor_textGrid_small(42, 7);
-#ifdef USB_GAMEPAD
+//#ifdef USB_GAMEPAD
   print_formatted_number(configuration.sys.gamepad_speed, 3);
   setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
-#endif
-#ifndef USB_GAMEPAD
-  setCursor_textGrid_small(42, 7);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print(F("N/A"));
-#endif
+//#endif
+// #ifndef USB_GAMEPAD
+//   setCursor_textGrid_small(42, 7);
+//   display.setTextColor(GREY2, COLOR_BACKGROUND);
+//   display.print(F("N/A"));
+// #endif
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(42, 8);
@@ -14644,10 +14620,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         if (generic_active_function == 0)
           generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 4);
         else if (generic_temp_select_menu == menu++) {
-#ifdef USB_GAMEPAD
+//#ifdef USB_GAMEPAD
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
           settings_modified = 1;
-#endif
+//#endif
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
           settings_modified = 2;
@@ -14667,10 +14643,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         if (generic_active_function == 0)
           generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 4);
         else if (generic_temp_select_menu == menu++) {
-#ifdef USB_GAMEPAD
+//#ifdef USB_GAMEPAD
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
           settings_modified = 1;
-#endif
+//#endif
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start - 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
           settings_modified = 2;
@@ -14702,16 +14678,16 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     // Gamepad settings
     setModeColor(0);
     setCursor_textGrid_small(42, 7);
-#ifdef USB_GAMEPAD
+//#ifdef USB_GAMEPAD
 
     print_formatted_number(configuration.sys.gamepad_speed, 3);
     setCursor_textGrid_small(46, 7);
     display.print(F("ms"));
-#endif
-#ifndef USB_GAMEPAD
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.print(F("N/A"));
-#endif
+//#endif
+//#ifndef USB_GAMEPAD
+//    display.setTextColor(GREY2, COLOR_BACKGROUND);
+//    display.print(F("N/A"));
+//#endif
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     // Screen saver starts after xx seconds

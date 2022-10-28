@@ -156,11 +156,7 @@ LCDML_add(121, LCDML_0_15, 6, "Startup Perform.", UI_func_startup_performance);
 LCDML_add(122, LCDML_0_15, 7, "Startup Page", UI_func_startup_page);
 LCDML_add(123, LCDML_0_15, 8, "Screen Colors", UI_func_colors);
 LCDML_add(124, LCDML_0_15, 9, "Misc. Settings", UI_func_misc_settings);
-#ifdef USB_GAMEPAD
-LCDML_add(125, LCDML_0_15, 10, "Automap Gamepad", UI_func_automap_gamepad);
-#else
-LCDML_add(125, LCDML_0_15, 10, "Gamepad[disabled]", NULL);
-#endif
+LCDML_add(125, LCDML_0_15, 10, "Map Gamepad", UI_func_map_gamepad);
 LCDML_add(126, LCDML_0_15, 11, "FORMAT FLASH", UI_func_format_flash);
 LCDML_add(127, LCDML_0_15, 12, "TEST Audio Mute", UI_func_test_mute);
 LCDML_add(128, LCDML_0_15, 13, "TEST PSRAM", UI_func_test_psram);

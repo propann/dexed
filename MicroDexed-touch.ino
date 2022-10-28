@@ -1368,11 +1368,9 @@ void setup() {
 
   scope.clear();
 
-#ifdef USB_GAMEPAD
   gamepad_buttons_neutral = joysticks[0].getButtons();
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
-#endif
 
 #ifdef COMPILE_FOR_FLASH
   flash_loadDirectory();
@@ -1591,19 +1589,19 @@ FLASHMEM void sub_step_recording() {
   }
 }
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
 uint8_t incomingSerialByte;
-#endif
+//#endif
 
 void loop() {
 
-#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
   // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0) {
     incomingSerialByte = Serial.read();
   }
-#endif
+//#endif
 
   // MIDI input handling
   check_midi_devices();
@@ -2478,6 +2476,28 @@ uint8_t drum_get_slot(uint8_t dt) {
 }
 
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) {
+
+  //check custom midi UI KEY mapping
+  if (seq.midi_learn_active == false) {
+    for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
+      if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3) {
+        if (custom_midi_map[c].out == 24) {
+          remote_MIDI_CC_value = 0;
+          remote_console_keystate_select = 0;
+          break;
+        } else if (custom_midi_map[c].out == 26) {
+          remote_MIDI_CC_value = 0;
+          remote_console_keystate_b = 0;
+          break;
+        } else if (custom_midi_map[c].out == 27) {
+          remote_MIDI_CC_value = 0;
+          remote_console_keystate_a = 0;
+          break;
+        }
+      }
+    }
+  }
+
   if ((seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
       || (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
@@ -2504,17 +2524,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
         inChannel = msp[0].midi_channel;
       else if (trk == 6)
         inChannel = msp[1].midi_channel;
-    }
-  }
-
-  //check custom midi UI KEY mapping
-  if (seq.midi_learn_active == false) {
-    for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++) {
-      if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3) {
-        if (custom_midi_map[c].out == 24 || custom_midi_map[c].out == 26 || custom_midi_map[c].out == 27)
-          remote_MIDI_CC_value = 0;
-        break;
-      }
     }
   }
 
@@ -3661,9 +3670,7 @@ FLASHMEM void check_configuration_sys(void) {
   configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
   configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
   configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
-#ifdef USB_GAMEPAD
   configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 60, 500);
-#endif
 }
 
 FLASHMEM void check_configuration_fx(void) {
@@ -3778,10 +3785,7 @@ FLASHMEM void init_configuration(void) {
   configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
   configuration.sys.ui_reverse = false;
   configuration.sys.screen_saver_start = SCREEN_SAVER_START_DEFAULT;
-#ifdef USB_GAMEPAD
   configuration.sys.gamepad_speed = GAMEPAD_SPEED_DEFAULT;
-#endif
-
   configuration.fx.reverb_lowpass = REVERB_LOWPASS_DEFAULT;
   configuration.fx.reverb_lodamp = REVERB_LODAMP_DEFAULT;
   configuration.fx.reverb_hidamp = REVERB_HIDAMP_DEFAULT;

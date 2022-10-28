@@ -59,7 +59,6 @@ extern braids_t braids_osc;
 extern void braids_update_settings();
 #endif
 
-#ifdef USB_GAMEPAD
 extern uint8_t GAMEPAD_UP_0;
 extern uint8_t GAMEPAD_UP_1;
 extern uint8_t GAMEPAD_UP_BUTTONS;
@@ -83,7 +82,6 @@ extern uint32_t GAMEPAD_BUTTON_B;
 
 extern uint8_t gamepad_0_neutral;
 extern uint8_t gamepad_1_neutral;
-#endif
 
 #ifdef USE_SEQUENCER
 #include "sequencer.h"
@@ -1439,7 +1437,6 @@ FLASHMEM bool load_sd_sys_json(void) {
           configuration.sys.ui_reverse = data_json["ui_reverse"];
           configuration.sys.screen_saver_start = data_json["screen_saver_start"];
         }
-#ifdef USB_GAMEPAD
         if (data_json.containsKey("gp_speed"))
           configuration.sys.gamepad_speed = data_json["gp_speed"];
         if (data_json["gp_a"] != data_json["gp_b"]) {
@@ -1456,7 +1453,6 @@ FLASHMEM bool load_sd_sys_json(void) {
           GAMEPAD_BUTTON_A = data_json["gp_a"];
           GAMEPAD_BUTTON_B = data_json["gp_b"];
         }
-#endif
         check_configuration_sys();
         set_sys_params();
 
@@ -1504,7 +1500,6 @@ FLASHMEM bool save_sd_sys_json(void) {
       data_json["touch_rotation"] = configuration.sys.touch_rotation;
       data_json["ui_reverse"] = configuration.sys.ui_reverse;
       data_json["screen_saver_start"] = configuration.sys.screen_saver_start;
-#ifdef USB_GAMEPAD
       data_json["gp_speed"] = configuration.sys.gamepad_speed;
       if (GAMEPAD_BUTTON_A != GAMEPAD_BUTTON_B) {
         data_json["gp_up_0"] = GAMEPAD_UP_0;
@@ -1520,7 +1515,6 @@ FLASHMEM bool save_sd_sys_json(void) {
         data_json["gp_a"] = GAMEPAD_BUTTON_A;
         data_json["gp_b"] = GAMEPAD_BUTTON_B;
       }
-#endif
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       Serial.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);

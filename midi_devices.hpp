@@ -33,7 +33,6 @@ extern config_t configuration;
 extern sequencer_t seq;
 #endif
 
-#ifdef USB_GAMEPAD
 extern int temp_int;
 extern uint8_t GAMEPAD_UP_0;
 extern uint8_t GAMEPAD_UP_1;
@@ -51,7 +50,6 @@ extern uint32_t GAMEPAD_SELECT;
 extern uint32_t GAMEPAD_START;
 extern uint32_t GAMEPAD_BUTTON_A;
 extern uint32_t GAMEPAD_BUTTON_B;
-#endif
 
 /* #if defined(MIDI_DEVICE_USB)
   #include <midi_UsbTransport.h>
@@ -81,7 +79,6 @@ KeyboardController keyboard1(usb_host);
 //USBHIDParser hid2(usb_host);
 #endif
 
-#ifdef USB_GAMEPAD
 USBHub hub1(usb_host);
 USBHIDParser hid1(usb_host);
 
@@ -101,7 +98,6 @@ const char *hid_driver_names[CNT_DEVICES] = { "joystick[0H]", "joystick[1H]", "j
 bool hid_driver_active[CNT_DEVICES] = { false };
 bool show_changed_only = true;
 uint64_t joystick_full_notify_mask = (uint64_t)-1;
-#endif
 
 /* #ifdef MIDI_DEVICE_USB
   static const unsigned sUsbTransportBufferSize = 16;
@@ -897,65 +893,7 @@ uint8_t USB_KEY = 0;
 
 void OnPress(int key) {
   USB_KEY = key;
-
-  //  switch (key) {
-  //    case KEYD_UP       : Serial.print(F("UP")); break;
-  //    case KEYD_DOWN    : Serial.print(F("DN")); break;
-  //    case KEYD_LEFT     : Serial.print(F("LEFT")); break;
-  //    case KEYD_RIGHT   : Serial.print(F("RIGHT")); break;
-  //
-  //    default: Serial.print((char)key); break;
-  //  }
-  //  Serial.print(F("'  "));
-  //  Serial.print(key);
-  //  Serial.print(F(" MOD: "));
-  //  Serial.print(keyboard1.getModifiers(), HEX);
-  //  Serial.print(F(" OEM: "));
-  //  Serial.print(keyboard1.getOemKey(), HEX);
-  //  Serial.print(F(" LEDS: "));
-  //Serial.print((char)keyboard1.getKey());
-  //Serial.print(F("  "));
-  //Serial.print((char)keyboard2.getKey());
-  //Serial.println();
 }
-
-//void ShowHIDExtrasPress(uint32_t top, uint16_t key)
-//{
-//  Serial.print(F("HID ("));
-//  Serial.print(top, HEX);
-//  Serial.print(F(") key press:"));
-//  Serial.print(key, HEX);
-//  if (top == 0xc0000) {
-//    switch (key) {
-//      case  0x20 : Serial.print(F(" - +10")); break;
-//      case  0x21 : Serial.print(F(" - +100")); break;
-//      case  0x36 : Serial.print(F(" - Function Buttons")); break;
-//      case  0x40 : Serial.print(F(" - Menu")); break;
-//      case  0x41 : Serial.print(F(" - Menu  Pick")); break;
-//      case  0x42 : Serial.print(F(" - Menu Up")); break;
-//      case  0x43 : Serial.print(F(" - Menu Down")); break;
-//      case  0x44 : Serial.print(F(" - Menu Left")); break;
-//      case  0x45 : Serial.print(F(" - Menu Right")); break;
-//      case  0x46 : Serial.print(F(" - Menu Escape")); break;
-//    }
-//  }
-//  Serial.println();
-//}
-
-//void OnHIDExtrasPress(uint32_t top, uint16_t key)
-//{
-//#ifdef KEYBOARD_INTERFACE
-//  if (top == 0xc0000) {
-//    Keyboard.press(0XE400 | key);
-//#ifndef KEYMEDIA_INTERFACE
-//#error "KEYMEDIA_INTERFACE is Not defined"
-//#endif
-//  }
-//#endif
-//#ifdef SHOW_KEYBOARD_DATA
-//  ShowHIDExtrasPress(top, key);
-//#endif
-//}
 
 void OnHIDExtrasRelease(uint32_t top, uint16_t key) {
 #ifdef KEYBOARD_INTERFACE
@@ -1026,65 +964,6 @@ void OnRawRelease(uint8_t keycode) {
   //#endif
 }
 #endif
-
-#ifdef USB_GAMEPAD
-void USB_GAMEPAD_stats() {
-  if (Serial.available()) {
-
-    int ch = Serial.read();  // get the first char.
-    while (Serial.read() != -1)
-      ;
-    if ((ch == 'b') || (ch == 'B')) {
-      Serial.println(F("Only notify on Basic Axis changes"));
-      for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
-        joysticks[joystick_index].axisChangeNotifyMask(0x3ff);
-    } else if ((ch == 'f') || (ch == 'F')) {
-      Serial.println(F("Only notify on Full Axis changes"));
-      for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++)
-        joysticks[joystick_index].axisChangeNotifyMask(joystick_full_notify_mask);
-
-    } else {
-      if (show_changed_only) {
-        show_changed_only = false;
-        Serial.println(F("\n*** Show All fields mode ***"));
-      } else {
-        show_changed_only = true;
-        Serial.println(F("\n*** Show only changed fields mode ***"));
-      }
-    }
-  }
-
-  for (int joystick_index = 0; joystick_index < COUNT_JOYSTICKS; joystick_index++) {
-    if (joysticks[joystick_index].available()) {
-      uint64_t axis_mask = joysticks[joystick_index].axisMask();
-      uint64_t axis_changed_mask = joysticks[joystick_index].axisChangedMask();
-      uint32_t buttons = joysticks[joystick_index].getButtons();
-      Serial.printf_P(PSTR("Joystick(%d): buttons = %x"), joystick_index, buttons);
-
-      if (show_changed_only) {
-        for (uint8_t i = 0; axis_changed_mask != 0; i++, axis_changed_mask >>= 1) {
-          if (axis_changed_mask & 1) {
-            Serial.printf_P(PSTR(" %d:%d"), i, joysticks[joystick_index].getAxis(i));
-          }
-        }
-      } else {
-        for (uint8_t i = 0; axis_mask != 0; i++, axis_mask >>= 1) {
-          if (axis_mask & 1) {
-            Serial.printf_P(PSTR(" %d:%d"), i, joysticks[joystick_index].getAxis(i));
-          }
-        }
-      }
-      if (buttons != gamepad_buttons_prev) {
-
-        gamepad_buttons_prev = buttons;
-      }
-      Serial.println();
-      // joysticks[joystick_index].joystickDataClear();
-    }
-  }
-}
-#endif
-
 
 FLASHMEM void setup_midi_devices(void) {
 #ifdef MIDI_DEVICE_DIN
