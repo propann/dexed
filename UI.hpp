@@ -2494,7 +2494,7 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+  //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 
   uint32_t buttons = joysticks[0].getButtons();
 
@@ -2560,7 +2560,7 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+  //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
   if (incomingSerialByte == '0' || remote_console_keystate_select) {
     buttons = GAMEPAD_SELECT;
     remote_console_keystate_select = true;
@@ -2598,7 +2598,7 @@ FLASHMEM void lcdml_menu_control(void) {
     draw_menu_ui_icons();
     LCDML.MENU_goRoot();
   }
-//#endif
+  //#endif
 
 #ifdef REMOTE_CONSOLE
   if (incomingSerialByte == 1) {  // touch input from remote console
@@ -12632,7 +12632,9 @@ FLASHMEM void sd_printDirectory(File currentDirectory) {
     fm.sd_entry = currentDirectory.openNextFile();
     if (!fm.sd_entry) {
       fm.sd_cap_rows = f - 1;
+      display.console = true;
       display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27, (10 - f) * 11, COLOR_BACKGROUND);
+      display.console = false;
       break;
     }
     if (fm.sd_entry.isDirectory()) {
@@ -12912,7 +12914,6 @@ FLASHMEM void print_flash_stats() {
   display.setTextColor(GREY1, COLOR_BACKGROUND);
   snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.chipsize / 1024));
   display.print(tmp);
-
   display.setTextColor(GREY1, COLOR_BACKGROUND);
   display.print(" KB");
   display.setCursor(CHAR_width_small * 42, 1 * CHAR_height_small);
@@ -12924,7 +12925,6 @@ FLASHMEM void print_flash_stats() {
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("FREE: ");
   display.setTextColor(GREY1, COLOR_BACKGROUND);
-
   snprintf_P(tmp, sizeof(tmp), PSTR("%05d"), int(flash_infos.chipsize / 1024 - flash_infos.sum_used));
   display.print(tmp);
   display.setTextColor(GREY1, COLOR_BACKGROUND);
@@ -13551,10 +13551,11 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     }
     if (LCDML.BT_checkEnter() && fm.active_window == 0)  // left window, SDCARD
     {
-      if (fm.sd_mode == 4)  //copy presets dir from SD to flash
+      if (fm.sd_mode == 2)  //copy presets dir from SD to flash
       {
         display.console = true;
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+        display.console = false;
         encoderDir[ENC_R].reset();
         uint8_t screenline = 0;
 
@@ -13697,13 +13698,8 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
           SD.remove(fm.sd_full_name);
-        } else if (fm.sd_mode == 2)  //preview
-        {
-          strcpy(fm.sd_full_name, fm.sd_new_name);
-          strcat(fm.sd_full_name, "/");
-          strcat(fm.sd_full_name, fm.sd_temp_name);
-          playWAVFile(fm.sd_full_name);
-        } else if (fm.sd_mode == 3)  //copy to flash
+        }
+        else if (fm.sd_mode == 3)  //copy to flash
         {
           strcpy(fm.sd_full_name, fm.sd_new_name);
           strcat(fm.sd_full_name, "/");
@@ -13776,6 +13772,66 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
               flash_printDirectory();
             }
         }
+         else if (fm.sd_mode == 4)  // copy to pc
+        {
+          display.console = false;
+          strcpy(fm.sd_full_name, fm.sd_new_name);
+          strcat(fm.sd_full_name, "/");
+          strcat(fm.sd_full_name, fm.sd_temp_name);
+          File f = SD.open(fm.sd_full_name);
+          //const char* filename = f.name();
+          unsigned long length = f.size();
+
+          // copy data loop
+          unsigned long count = 0;
+          uint8_t num_chars = 0;
+          for (uint8_t i = 0; i < sizeof(fm.sd_temp_name); i++) {
+            if (fm.sd_temp_name[i] != '\0')
+              num_chars++;
+            else
+              break;
+          }
+          // write start byte to usb port
+          Serial.write(4);  //start send filename
+          //write filename
+          for (uint8_t i = 0; i < num_chars; i++) {
+            Serial.write(fm.sd_temp_name[i]);
+          }
+
+          Serial.write(5);  //write filename end
+
+          Serial.write(length);
+          Serial.write(length >> 8);
+          Serial.write(length >> 16);
+          Serial.write(length >> 24);
+
+          Serial.write(6);  //write file start
+
+          while (count < length) {
+            char buf[256];
+            unsigned int n;
+            n = f.read(buf, 256);
+            Serial.write(buf, n);  // write complete buffer to port
+            count = count + n;
+            if (count % 128 == 0)
+              display.console = false;
+            display.fillRect(181, 52, count / (f.size() / 132), 8, RED);
+          }
+
+          f.close();
+
+          display.console = false;
+          display.fillRect(180, 52, 134, 8, COLOR_BACKGROUND);
+
+          //display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);
+
+          // display.console = true;
+
+          // strcpy(fm.sd_full_name, fm.sd_new_name);
+          // strcat(fm.sd_full_name, "/");
+          // strcat(fm.sd_full_name, fm.sd_temp_name);
+          // playWAVFile(fm.sd_full_name);
+        } 
       }
     }
     if (fm.active_window == 0) {
@@ -13926,9 +13982,11 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     }
     if (LCDML.BT_checkEnter() && fm.active_window == 0)  // left window, SDCARD
     {
-      if (fm.sd_mode == 4)  //copy presets dir from SD to flash
+      if (fm.sd_mode == 2)  //copy presets dir from SD to flash
       {
+        display.console = true;
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+        display.console = false;
         encoderDir[ENC_R].reset();
         uint8_t screenline = 0;
 
@@ -14028,7 +14086,9 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           f.close();
         }
         rootdir.close();
+        display.console = true;
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+        display.console = false;
         flash_loadDirectory();
         print_flash_stats();
         flash_printDirectory(fm.flash_currentDirectory);
@@ -14070,13 +14130,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
           SD.remove(fm.sd_full_name);
-        } else if (fm.sd_mode == 2)  //preview
-        {
-          strcpy(fm.sd_full_name, fm.sd_new_name);
-          strcat(fm.sd_full_name, "/");
-          strcat(fm.sd_full_name, fm.sd_temp_name);
-          playWAVFile(fm.sd_full_name);
-        } else if (fm.sd_mode == 3)  //copy to flash
+        }  else if (fm.sd_mode == 3)  //copy to flash
         {
           strcpy(fm.sd_full_name, fm.sd_new_name);
           strcat(fm.sd_full_name, "/");
@@ -14310,7 +14364,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
           SD.remove(fm.sd_full_name);
-        } else if (fm.sd_mode == 2)  //preview
+        } else if (fm.sd_mode == 5)  //preview
         {
           strcpy(fm.sd_full_name, fm.sd_new_name);
           strcat(fm.sd_full_name, "/");
@@ -14574,16 +14628,16 @@ FLASHMEM void _render_misc_settings() {
   display.print(F("REVERSE UI (ENCODERS ON TOP)"));
 
   setCursor_textGrid_small(42, 7);
-//#ifdef USB_GAMEPAD
+  //#ifdef USB_GAMEPAD
   print_formatted_number(configuration.sys.gamepad_speed, 3);
   setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
-//#endif
-// #ifndef USB_GAMEPAD
-//   setCursor_textGrid_small(42, 7);
-//   display.setTextColor(GREY2, COLOR_BACKGROUND);
-//   display.print(F("N/A"));
-// #endif
+  //#endif
+  // #ifndef USB_GAMEPAD
+  //   setCursor_textGrid_small(42, 7);
+  //   display.setTextColor(GREY2, COLOR_BACKGROUND);
+  //   display.print(F("N/A"));
+  // #endif
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(42, 8);
@@ -14620,10 +14674,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         if (generic_active_function == 0)
           generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 4);
         else if (generic_temp_select_menu == menu++) {
-//#ifdef USB_GAMEPAD
+          //#ifdef USB_GAMEPAD
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
           settings_modified = 1;
-//#endif
+          //#endif
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
           settings_modified = 2;
@@ -14643,10 +14697,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         if (generic_active_function == 0)
           generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 4);
         else if (generic_temp_select_menu == menu++) {
-//#ifdef USB_GAMEPAD
+          //#ifdef USB_GAMEPAD
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
           settings_modified = 1;
-//#endif
+          //#endif
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start - 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
           settings_modified = 2;
@@ -14678,16 +14732,16 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     // Gamepad settings
     setModeColor(0);
     setCursor_textGrid_small(42, 7);
-//#ifdef USB_GAMEPAD
+    //#ifdef USB_GAMEPAD
 
     print_formatted_number(configuration.sys.gamepad_speed, 3);
     setCursor_textGrid_small(46, 7);
     display.print(F("ms"));
-//#endif
-//#ifndef USB_GAMEPAD
-//    display.setTextColor(GREY2, COLOR_BACKGROUND);
-//    display.print(F("N/A"));
-//#endif
+    //#endif
+    //#ifndef USB_GAMEPAD
+    //    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    //    display.print(F("N/A"));
+    //#endif
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     // Screen saver starts after xx seconds

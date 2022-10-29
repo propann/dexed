@@ -733,21 +733,25 @@ FLASHMEM void print_file_manager_buttons() {
   else
     draw_button_on_grid(1, 25, "BROWSE", "FILES", 0);
   if (fm.sd_mode == 1)
-    draw_button_on_grid(11, 25, "DELETE", "FILE", 1);
+    draw_button_on_grid(10, 25, "DELETE", "FILE", 1);
   else
-    draw_button_on_grid(11, 25, "DELETE", "FILE", 0);
+    draw_button_on_grid(10, 25, "DELETE", "FILE", 0);
   if (fm.sd_mode == 2)
-    draw_button_on_grid(41, 25, "PLAY", "SAMPLE", 1);
+    draw_button_on_grid(19, 25, "COPY", "PRESET", 1);
   else
-    draw_button_on_grid(41, 25, "PLAY", "SAMPLE", 0);
-  if (fm.sd_mode == 3)
-    draw_button_on_grid(31, 25, "COPY >", "FLASH", 1);
+    draw_button_on_grid(19, 25, "COPY", "PRESET", 0);
+if (fm.sd_mode == 3)
+    draw_button_on_grid(28, 25, "COPY >", "FLASH", 1);
   else
-    draw_button_on_grid(31, 25, "COPY >", "FLASH", 0);
+    draw_button_on_grid(28, 25, "COPY >", "FLASH", 0);
   if (fm.sd_mode == 4)
-    draw_button_on_grid(21, 25, "COPY", "PRESET", 1);
+    draw_button_on_grid(37, 25, "COPY >", "TO PC", 1);
   else
-    draw_button_on_grid(21, 25, "COPY", "PRESET", 0);
+    draw_button_on_grid(37, 25, "COPY >", "TO PC", 0);
+if (fm.sd_mode == 5)
+    draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 1);
+  else
+    draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 0);
 
   // active_window   0 = left window (SDCARD) , 1 = FLASH
 
@@ -769,29 +773,33 @@ FLASHMEM void handle_touchscreen_file_manager() {
       if (check_button_on_grid(1, 25)) {
         fm.sd_mode = 0;  // browse files/directories
       }
-      if (check_button_on_grid(11, 25)) {
+    else  if (check_button_on_grid(10, 25)) {
         fm.sd_mode = 1;  // delete
       }
-      if (check_button_on_grid(41, 25)) {
-        fm.sd_mode = 2;  //play
+else if (check_button_on_grid(19, 25)) {
+        fm.sd_mode = 2;  //copy preset samples to flash
+      }
 
-        if (fm.sd_mode == 2) {
-          if (fm.sd_is_folder == false) {
-            if (fm.sd_mode == 2 && ts.block_screen_update == false)  //preview
-            {
-              strcpy(fm.sd_full_name, fm.sd_new_name);
-              strcat(fm.sd_full_name, "/");
-              strcat(fm.sd_full_name, fm.sd_temp_name);
-              playWAVFile(fm.sd_full_name);
-              ts.slowdown_UI_input = 0;
-              ts.block_screen_update = true;
-            }
-          }
-        }
-      } else if (check_button_on_grid(31, 25)) {
+else if (check_button_on_grid(28, 25)) {
         fm.sd_mode = 3;  //copy to flash
-      } else if (check_button_on_grid(21, 25)) {
-        fm.sd_mode = 4;  //copy preset samples to flash
+      } 
+
+  else  if (check_button_on_grid(37, 25)) {
+        fm.sd_mode = 4;  //copy to pc
+      } 
+      else if (check_button_on_grid(46, 25)) {
+        fm.sd_mode = 5;  //play/preview sample 
+
+         //if (fm.sd_is_folder == false) {
+         // if (fm.sd_mode == 5 && ts.block_screen_update == false)  //preview
+            // {
+            //   strcpy(fm.sd_full_name, fm.sd_new_name);
+            //   strcat(fm.sd_full_name, "/");
+            //   strcat(fm.sd_full_name, fm.sd_temp_name);
+            //   playWAVFile(fm.sd_full_name);
+            //   ts.slowdown_UI_input = 0;
+            //   ts.block_screen_update = true;
+            // }
       }
     }
     // active_window   0 = left window (SDCARD) , 1 = FLASH
