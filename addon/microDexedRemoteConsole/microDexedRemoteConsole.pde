@@ -702,8 +702,8 @@ void draw()
       }
     }
   }
-  if (keyPressed)
-    saveFrame("microdexed-######.png");
+ // if (keyPressed)
+ //   saveFrame("microdexed-######.png");
 }
 
 void mousePressed() {
