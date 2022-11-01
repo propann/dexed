@@ -1517,15 +1517,15 @@ FLASHMEM void handle_touchscreen_midi_channel_page() {
     else
       print_midi_channel_activity(19, 8, 0);
 
-    if (drum_mixer_peak_r.available() && drum_mixer_peak_l.available())
-      print_midi_channel_activity(19, 9, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
-    else
-      print_midi_channel_activity(19, 9, 0);
-
-    print_midi_channel_activity(19, 10, ts.msp_peak[0]);
-    print_midi_channel_activity(19, 11, ts.msp_peak[1]);
+    print_midi_channel_activity(19, 9, ts.msp_peak[0]);
+    print_midi_channel_activity(19, 10, ts.msp_peak[1]);
     ts.msp_peak[0] = ts.msp_peak[0] / 1.05;
     ts.msp_peak[1] = ts.msp_peak[1] / 1.05;
+
+    if (drum_mixer_peak_r.available() && drum_mixer_peak_l.available())
+      print_midi_channel_activity(19, 11, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
+    else
+      print_midi_channel_activity(19, 11, 0);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
