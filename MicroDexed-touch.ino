@@ -156,10 +156,10 @@ AudioAnalyzePeak braids_peak_l;
 uint8_t braids_slot;
 extern void update_braids_params(void);
 braids_t braids_osc;
-int braids_filter_lfo_value[NUM_BRAIDS];
 boolean braids_lfo_direction[NUM_BRAIDS];
 uint16_t braids_filter_state[NUM_BRAIDS];
 uint16_t braids_filter_state_last_displayed[NUM_BRAIDS];
+extern uint16_t braids_filter_lfo_count[NUM_BRAIDS];
 
 #endif
 
@@ -2144,7 +2144,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
     braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
 
     braids_lfo_direction[braids_slot] = false;
-    braids_filter_lfo_value[braids_slot] = 0;
+braids_filter_lfo_count[braids_slot]=0;
 
     braids_filter[braids_slot]->setLowpass(0, braids_osc.filter_freq_from, braids_osc.filter_resonance / 10);
 

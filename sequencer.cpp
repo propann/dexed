@@ -75,11 +75,11 @@ microsynth_t microsynth[2];
 extern braids_t braids_osc;
 extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern boolean braids_lfo_direction[NUM_BRAIDS];
-extern int braids_filter_lfo_count[NUM_BRAIDS];
-extern int braids_filter_lfo_value[NUM_BRAIDS];
+uint16_t braids_filter_lfo_count[NUM_BRAIDS];
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
 //extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
 extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
+
 #endif
 
 extern uint16_t COLOR_SYSTEXT;
@@ -911,53 +911,41 @@ void update_braids_params() {
   for (uint8_t d = 0; d < NUM_BRAIDS; d++) {
 
     if (braids_envelope[d]->isActive()) {
-      // if (braids_osc.filter_lfo_speed > 0)  // LFO
-      // {
-      //   //       if (braids_lfo_direction[d] == true)
-      //   //        { braids_filter_lfo_value[d] = braids_filter_lfo_value[d] - braids_osc.filter_lfo_speed;
-      //   // braids_filter_lfo_count[d]++;
-      //   //        }
 
-      //   //       else if (braids_lfo_direction[d] == false  )
-      //   //        { braids_filter_lfo_value[d] = braids_filter_lfo_value[d] + braids_osc.filter_lfo_speed;
-      //   // braids_filter_lfo_count[d]++;
-      //   //        }
-
-      //   if (braids_lfo_direction[d] == true)
-      //     braids_filter_state[d] = braids_filter_state[d] - braids_osc.filter_lfo_speed;
-      //   if (braids_lfo_direction[d] == false)
-      //     braids_filter_state[d] = braids_filter_state[d] + braids_osc.filter_lfo_speed;
-
-      //   braids_filter_lfo_count[d]++;
-
-      //   if (braids_filter_lfo_count[d] > braids_osc.filter_lfo_intensity) {
-      //     braids_filter_lfo_count[d] = 0;
-      //     braids_lfo_direction[d] = !braids_lfo_direction[d];
-      //   }
-      // }
-      // else {
-      //   braids_filter_lfo_value[d] = 0;
-      // }
 
       if (braids_osc.filter_freq_from > braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {
         if (braids_filter_state[d] > braids_osc.filter_freq_to)  //osc filter down
         {
-          if (int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0)
+          if (int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0) {          
             braids_filter_state[d] = int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001))));
-          else
+          } else
             braids_filter_state[d] = 0;
-          update_braids_filter(d);
         }
+
       } else {
         if (braids_filter_state[d] < braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {  //osc filter up
           if (braids_filter_state[d] + braids_osc.filter_speed <= 15000)
             braids_filter_state[d] = braids_filter_state[d] + braids_osc.filter_speed;
           else
             braids_filter_state[d] = 15000;
-          update_braids_filter(d);
+        }
+      }
+
+      if (braids_osc.filter_lfo_speed > 0 && braids_osc.filter_lfo_intensity > 0)  // LFO
+      {
+        if (braids_lfo_direction[d] == true && braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100)  > 0)
+          braids_filter_state[d] = braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100) ;
+        if (braids_lfo_direction[d] == false && braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100)  < 15000)
+          braids_filter_state[d] = braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100) ;
+
+        braids_filter_lfo_count[d]++;
+        if (braids_filter_lfo_count[d] > 512 / braids_osc.filter_lfo_speed) {
+          braids_filter_lfo_count[d] = 0;
+          braids_lfo_direction[d] = !braids_lfo_direction[d];
         }
       }
     }
+    update_braids_filter(d);
   }
 #endif
 }

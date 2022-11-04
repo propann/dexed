@@ -12413,7 +12413,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
         else if (generic_temp_select_menu == 13)
           braids_osc.filter_speed = constrain(braids_osc.filter_speed + 5, 0, 999);
         else if (generic_temp_select_menu == 14)
-          braids_osc.filter_lfo_intensity = constrain(braids_osc.filter_lfo_intensity + 2, 0, 254);
+          braids_osc.filter_lfo_intensity = constrain(braids_osc.filter_lfo_intensity + 80, 0, 15000);
         else if (generic_temp_select_menu == 15)
           braids_osc.filter_lfo_speed = constrain(braids_osc.filter_lfo_speed + 1, 0, 254);
         else if (generic_temp_select_menu == 16)
@@ -12461,7 +12461,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
         else if (generic_temp_select_menu == 13)
           braids_osc.filter_speed = constrain(braids_osc.filter_speed - 5, 0, 999);
         else if (generic_temp_select_menu == 14)
-          braids_osc.filter_lfo_intensity = constrain(braids_osc.filter_lfo_intensity - 2, 0, 254);
+          braids_osc.filter_lfo_intensity = constrain(braids_osc.filter_lfo_intensity - 80, 0, 15000);
         else if (generic_temp_select_menu == 15)
           braids_osc.filter_lfo_speed = constrain(braids_osc.filter_lfo_speed - 1, 0, 254);
         else if (generic_temp_select_menu == 16)
@@ -12538,7 +12538,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     print_small_intbar(38, 4, braids_osc.filter_freq_to / 100, 11, 0, 1);
     print_small_intbar(27, 5, braids_osc.filter_resonance, 12, 0, 1);
     print_small_intbar(38, 5, braids_osc.filter_speed / 10, 13, 0, 1);
-    print_small_intbar(27, 6, braids_osc.filter_lfo_intensity, 14, 0, 1);
+    print_small_intbar(27, 6, braids_osc.filter_lfo_intensity/100, 14, 0, 1);
     print_small_intbar(38, 6, braids_osc.filter_lfo_speed, 15, 0, 1);
 
     setCursor_textGrid_small(33, 7);
@@ -12554,7 +12554,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     setModeColor(19);
     print_formatted_number(braids_osc.delay_send, 3);
     setModeColor(20);
-    print_small_panbar(33, 10, braids_osc.pan, 18);
+    print_small_panbar(33, 10, braids_osc.pan, 20);
     setModeColor(21);
     setCursor_textGrid_small(34, 11);
     print_formatted_number(braids_osc.midi_channel, 2);

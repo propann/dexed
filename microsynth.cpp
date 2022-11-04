@@ -32,7 +32,6 @@ extern short wave_type[9];
 extern uint8_t generic_active_function;
 extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 extern braids_t braids_osc;
-extern int braids_filter_lfo_value[NUM_BRAIDS];
 extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern AudioMixer<NUM_BRAIDS> braids_mixer;
 extern AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
