@@ -146,7 +146,8 @@ AudioMixer<NUM_BRAIDS> braids_mixer;
 AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
 AudioMixer<2> braids_mixer_reverb;
 AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
-AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
+//AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
+AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 AudioEffectFlange braids_flanger_r;
 AudioEffectFlange braids_flanger_l;
 AudioEffectStereoPanorama braids_stereo_panorama;
@@ -155,6 +156,8 @@ AudioAnalyzePeak braids_peak_l;
 uint8_t braids_slot;
 extern void update_braids_params(void);
 braids_t braids_osc;
+int braids_filter_lfo_value[NUM_BRAIDS];
+boolean braids_lfo_direction[NUM_BRAIDS];
 uint16_t braids_filter_state[NUM_BRAIDS];
 uint16_t braids_filter_state_last_displayed[NUM_BRAIDS];
 
@@ -680,13 +683,14 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
 FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
   synthBraids[instance_id] = new AudioSynthBraids();
   braids_envelope[instance_id] = new AudioEffectEnvelope();
-  braids_filter[instance_id] = new AudioFilterStateVariable();
+  //braids_filter[instance_id] = new AudioFilterStateVariable();
+  braids_filter[instance_id] = new AudioFilterBiquad();
   braids_mixer_filter[instance_id] = new AudioMixer<4>;
   dynamicConnections[nDynamic++] = new AudioConnection(*synthBraids[instance_id], 0, *braids_envelope[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_envelope[instance_id], 0, *braids_filter[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 0, *braids_mixer_filter[instance_id], 0);
-  dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 1, *braids_mixer_filter[instance_id], 1);
-  dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 2, *braids_mixer_filter[instance_id], 2);
+  //dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 1, *braids_mixer_filter[instance_id], 1);
+  //dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 2, *braids_mixer_filter[instance_id], 2);
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_envelope[instance_id], 0, *braids_mixer_filter[instance_id], 3);  // filter is off
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_mixer_filter[instance_id], 0, braids_mixer, instance_id);
 
@@ -826,13 +830,13 @@ int8_t midi_decay_dexed[NUM_DEXED] = { -1 };
 int8_t midi_decay_microsynth[NUM_MICROSYNTH];
 elapsedMillis midi_decay_timer_microsynth;
 extern void update_microsynth_params(void);
-elapsedMillis microsynth_lfo_control_rate;
-elapsedMillis microsynth_lfo_delay_timer[2];
+elapsedMillis microsynth_control_rate;
+elapsedMillis microsynth_delay_timer[2];
 #endif
 elapsedMillis midi_decay_timer_dexed;
 
 #ifdef USE_BRAIDS
-elapsedMillis braids_lfo_control_rate;
+elapsedMillis braids_control_rate;
 #endif
 
 #if NUM_DEXED > 1
@@ -1117,12 +1121,12 @@ void setup() {
 #endif
 
 #if defined(USE_MICROSYNTH)
-  microsynth_update_settings(0);
-  microsynth_update_settings(1);
+  microsynth_update_all_settings(0);
+  microsynth_update_all_settings(1);
 #endif
 
 #if defined(USE_BRAIDS)
-  braids_update_settings();
+  braids_update_all_settings();
 #endif
 
   // Setup effects
@@ -1595,13 +1599,13 @@ uint8_t incomingSerialByte;
 
 void loop() {
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+  //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
   // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0) {
     incomingSerialByte = Serial.read();
   }
-//#endif
+  //#endif
 
   // MIDI input handling
   check_midi_devices();
@@ -1693,9 +1697,9 @@ void loop() {
 #endif
 
 #ifdef USE_MICROSYNTH
-  if (microsynth_lfo_control_rate > MICROSYNTH_LFO_RATE_MS)  //update lfos, filters etc. when played live or by seq.
+  if (microsynth_control_rate > MICROSYNTH_CONTROL_RATE_MS)  //update lfos, filters etc. when played live or by seq.
   {
-    microsynth_lfo_control_rate = 0;
+    microsynth_control_rate = 0;
     update_microsynth_params();
     //Microsynth Realtime Screen Updates
     if (scope.scope_delay % 11 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1) {
@@ -1732,9 +1736,9 @@ void loop() {
     handle_touchscreen_braids();
     scope.draw_scope(250, -14, 60);
   }
-  if (braids_lfo_control_rate > BRAIDS_LFO_RATE_MS)  //update  filters when played live or by seq.
+  if (braids_control_rate > BRAIDS_CONTROL_RATE_MS)  //update  filters when played live or by seq.
   {
-    braids_lfo_control_rate = 0;
+    braids_control_rate = 0;
     update_braids_params();
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids)) {
       display.setTextSize(1);
@@ -2138,8 +2142,12 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       braids_mixer_filter[braids_slot]->gain(braids_osc.filter_mode - 1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.5, 1.2)));
 
     braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
-    braids_filter[braids_slot]->frequency(braids_osc.filter_freq_from);
-    braids_filter[braids_slot]->resonance(braids_osc.filter_resonance / 20);
+
+    braids_lfo_direction[braids_slot] = false;
+    braids_filter_lfo_value[braids_slot] = 0;
+
+    braids_filter[braids_slot]->setLowpass(0, braids_osc.filter_freq_from, braids_osc.filter_resonance / 10);
+
     synthBraids[braids_slot]->set_braids_pitch((inNumber + braids_osc.coarse) << 7);
     braids_envelope[braids_slot]->noteOn();
     braids_osc.note_buffer[braids_slot] = inNumber;
@@ -2289,7 +2297,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
           microsynth[instance_id].osc_freq_current = noteFreq + tunedFreq;
 
           microsynth_envelope_osc[instance_id].noteOn();
-          microsynth_lfo_delay_timer[instance_id] = 0;
+          microsynth_delay_timer[instance_id] = 0;
           microsynth[instance_id].lfo_fade = 0;
           if (microsynth[instance_id].lfo_mode > 0)  // If LFO in 1up or 1down
             microsynth[instance_id].lfo_value = 0;

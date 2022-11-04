@@ -57,7 +57,7 @@ extern AudioSynthNoisePink microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope microsynth_envelope_noise[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
-extern elapsedMillis microsynth_lfo_delay_timer[2];
+extern elapsedMillis microsynth_delay_timer[2];
 #endif
 
 extern uint8_t find_first_song_step_with_pattern(uint8_t pattern);
@@ -73,14 +73,13 @@ microsynth_t microsynth[2];
 
 #ifdef USE_BRAIDS
 extern braids_t braids_osc;
-//extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
 extern uint16_t braids_filter_state[NUM_BRAIDS];
-
-#endif
-
-#ifdef USE_BRAIDS
+extern boolean braids_lfo_direction[NUM_BRAIDS];
+extern int braids_filter_lfo_count[NUM_BRAIDS];
+extern int braids_filter_lfo_value[NUM_BRAIDS];
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
-extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
+//extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
+extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 #endif
 
 extern uint16_t COLOR_SYSTEXT;
@@ -880,7 +879,7 @@ void update_microsynth_params() {
     if (microsynth[d].lfo_delay == 0)  // no delay, instant lfo mod
     {
       microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + microsynth[d].lfo_value / 10);
-    } else if ((int)microsynth_lfo_delay_timer[d] / 10 > microsynth[d].lfo_delay && microsynth[d].lfo_fade == 0)  //init lfo fade in
+    } else if ((int)microsynth_delay_timer[d] / 10 > microsynth[d].lfo_delay && microsynth[d].lfo_fade == 0)  //init lfo fade in
     {
       microsynth[d].lfo_fade = microsynth[d].lfo_delay;
     }
@@ -895,11 +894,50 @@ void update_microsynth_params() {
 #endif
 }
 
+void update_braids_filter(uint8_t d) {
+  if (braids_filter_state[d] >= 0 && braids_filter_state[d] <= 15000) {
+    if (braids_osc.filter_mode == 1)
+      braids_filter[d]->setLowpass(0, braids_filter_state[d], 0.1 + braids_osc.filter_resonance / 10);
+    if (braids_osc.filter_mode == 2)
+      braids_filter[d]->setBandpass(0, braids_filter_state[d], 0.1 + braids_osc.filter_resonance / 10);
+    if (braids_osc.filter_mode == 3)
+      braids_filter[d]->setHighpass(0, braids_filter_state[d], 0.1 + braids_osc.filter_resonance / 10);
+  }
+}
+
 void update_braids_params() {
 #ifdef USE_BRAIDS
 
   for (uint8_t d = 0; d < NUM_BRAIDS; d++) {
+
     if (braids_envelope[d]->isActive()) {
+      // if (braids_osc.filter_lfo_speed > 0)  // LFO
+      // {
+      //   //       if (braids_lfo_direction[d] == true)
+      //   //        { braids_filter_lfo_value[d] = braids_filter_lfo_value[d] - braids_osc.filter_lfo_speed;
+      //   // braids_filter_lfo_count[d]++;
+      //   //        }
+
+      //   //       else if (braids_lfo_direction[d] == false  )
+      //   //        { braids_filter_lfo_value[d] = braids_filter_lfo_value[d] + braids_osc.filter_lfo_speed;
+      //   // braids_filter_lfo_count[d]++;
+      //   //        }
+
+      //   if (braids_lfo_direction[d] == true)
+      //     braids_filter_state[d] = braids_filter_state[d] - braids_osc.filter_lfo_speed;
+      //   if (braids_lfo_direction[d] == false)
+      //     braids_filter_state[d] = braids_filter_state[d] + braids_osc.filter_lfo_speed;
+
+      //   braids_filter_lfo_count[d]++;
+
+      //   if (braids_filter_lfo_count[d] > braids_osc.filter_lfo_intensity) {
+      //     braids_filter_lfo_count[d] = 0;
+      //     braids_lfo_direction[d] = !braids_lfo_direction[d];
+      //   }
+      // }
+      // else {
+      //   braids_filter_lfo_value[d] = 0;
+      // }
 
       if (braids_osc.filter_freq_from > braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {
         if (braids_filter_state[d] > braids_osc.filter_freq_to)  //osc filter down
@@ -908,8 +946,7 @@ void update_braids_params() {
             braids_filter_state[d] = int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001))));
           else
             braids_filter_state[d] = 0;
-
-          braids_filter[d]->frequency(braids_filter_state[d]);
+          update_braids_filter(d);
         }
       } else {
         if (braids_filter_state[d] < braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {  //osc filter up
@@ -917,7 +954,7 @@ void update_braids_params() {
             braids_filter_state[d] = braids_filter_state[d] + braids_osc.filter_speed;
           else
             braids_filter_state[d] = 15000;
-          braids_filter[d]->frequency(braids_filter_state[d]);
+          update_braids_filter(d);
         }
       }
     }

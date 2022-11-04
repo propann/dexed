@@ -51,12 +51,12 @@ extern void update_euclidean(void);
 
 #ifdef USE_MICROSYNTH
 extern microsynth_t microsynth[NUM_MICROSYNTH];
-extern void microsynth_update_settings(uint8_t instance_id);
+extern void microsynth_update_all_settings(uint8_t instance_id);
 #endif
 
 #ifdef USE_BRAIDS
 extern braids_t braids_osc;
-extern void braids_update_settings();
+extern void braids_update_all_settings();
 #endif
 
 extern uint8_t GAMEPAD_UP_0;
@@ -1007,7 +1007,7 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
         microsynth[instance_id].vel_mod_filter_osc = data_json["vel_mod_filter_osc"];
         microsynth[instance_id].vel_mod_filter_noise = data_json["vel_mod_filter_noise"];
 
-        microsynth_update_settings(instance_id);
+        microsynth_update_all_settings(instance_id);
 
         return (true);
       }
@@ -1593,7 +1593,7 @@ FLASHMEM bool load_sd_braids_json(uint8_t number) {
         braids_osc.midi_channel = data_json["midi"];
         braids_osc.pan = data_json["pan"];
 
-        braids_update_settings();
+        braids_update_all_settings();
         return (true);
       }
 #ifdef DEBUG
