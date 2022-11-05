@@ -89,10 +89,26 @@ LCDML_add(54, LCDML_0_1_6, 1, "Note Refresh", UI_func_note_refresh);
 LCDML_add(55, LCDML_0_1_6, 2, "Velocity Lvl", UI_func_velocity_level);
 LCDML_add(56, LCDML_0_1, 7, "Operator", UI_handle_OP);
 LCDML_add(57, LCDML_0_1, 8, "Save Voice", UI_func_save_voice);
+#ifdef USE_EPIANO
 LCDML_add(58, LCDML_0, 2, "E-Piano", UI_func_epiano);
+#else
+LCDML_addAdvanced(58, LCDML_0, 2, COND_hide, "E-Piano", NULL, 0, _LCDML_TYPE_default);
+#endif
+#ifdef USE_MICROSYNTH
 LCDML_add(59, LCDML_0, 3, "MicroSynth", UI_func_microsynth);
+#else
+LCDML_addAdvanced(59, LCDML_0, 3, COND_hide, "MicroSynth", NULL, 0, _LCDML_TYPE_default);
+#endif
+#ifdef USE_BRAIDS
 LCDML_add(60, LCDML_0, 4, "Braids", UI_func_braids);
+#else
+LCDML_addAdvanced(60, LCDML_0, 4, COND_hide, "Braids", NULL, 0, _LCDML_TYPE_default);
+#endif
+#ifdef USE_MULTISAMPLES
 LCDML_add(61, LCDML_0, 5, "MultiSample", UI_func_MultiSamplePlay);
+#else
+LCDML_addAdvanced(61, LCDML_0, 5, COND_hide, "MultiSample", NULL, 0, _LCDML_TYPE_default);
+#endif
 LCDML_add(62, LCDML_0, 6, "Drums", NULL);
 LCDML_add(63, LCDML_0_6, 1, "Drums Main Vol", UI_func_drums_main_volume);
 LCDML_add(64, LCDML_0_6, 2, "Drum Volumes", UI_func_drum_volume);

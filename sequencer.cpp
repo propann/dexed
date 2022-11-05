@@ -76,9 +76,6 @@ extern braids_t braids_osc;
 //extern braids_filter_state_t* braids_filter_state[NUM_BRAIDS];
 extern uint16_t braids_filter_state[NUM_BRAIDS];
 
-#endif
-
-#ifdef USE_BRAIDS
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
 extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
 #endif
@@ -93,8 +90,10 @@ extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
+#ifdef USE_MULTISAMPLES
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern multisample_s msp[NUM_MULTISAMPLES];
+#endif
 
 void seq_live_recording(void) {
   //record to sequencer if sequencer menu is active and recording is active
@@ -261,23 +260,32 @@ void sequencer_part1(void) {
           {
             if (seq.note_data[seq.current_pattern[d]][seq.step] != 130 && seq.ticks == 0) {
               //Braids Instrument
+#ifdef USE_BRAIDS
               if (seq.instrument[d] == 5) {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(braids_osc.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 4);
               }
+#endif
 
+              if (false) {}
+#ifdef USE_MULTISAMPLES
               //Multisampler Instrument
-              if (seq.instrument[d] > 5 && seq.instrument[d] < 16)  // track is for internal MultiSampler
+              else if (seq.instrument[d] > 5 && seq.instrument[d] < 16)  // track is for internal MultiSampler
               {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(msp[seq.instrument[d] - 6].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
-              } else if (seq.instrument[d] > 15 && seq.instrument[d] < 32)  // track is for external USB MIDI
+              }
+#endif
+#ifdef USE_MULTISAMPLES
+              else if (seq.instrument[d] > 15 && seq.instrument[d] < 32)  // track is for external USB MIDI
               {
 #ifdef MIDI_DEVICE_USB_HOST
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(seq.instrument[d] - 15, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 1);
 #endif
-              } else if (seq.instrument[d] > 31 && seq.instrument[d] < 48)  // track is for external DIN MIDI
+              }
+#endif
+              else if (seq.instrument[d] > 31 && seq.instrument[d] < 48)  // track is for external DIN MIDI
               {
 #ifdef MIDI_DEVICE_DIN
                 if (check_probability(seq.current_pattern[d]))
@@ -712,8 +720,10 @@ void sequencer_part2(void) {
           else if (seq.instrument[d] == 5 && seq.ticks == 7)
             handleNoteOff(braids_osc.midi_channel, seq.prev_note[d], 0, 4);
 #endif
+#ifdef USE_MULTISAMPLES
           else if (seq.instrument[d] > 5 && seq.instrument[d] < 16)  // MultiSampler
             handleNoteOff(msp[seq.instrument[d] - 6].midi_channel, seq.prev_note[d], 0, 0);
+#endif
 #ifdef MIDI_DEVICE_USB_HOST
           else if (seq.instrument[d] > 15 && seq.instrument[d] < 32 && seq.ticks == 7)  // track is for external USB MIDI
           {

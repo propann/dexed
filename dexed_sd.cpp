@@ -145,9 +145,10 @@ extern uint16_t COLOR_CHORDS;
 extern uint16_t COLOR_ARP;
 extern uint16_t COLOR_DRUMS;
 extern uint16_t COLOR_PITCHSMP;
+#ifdef USE_MULTISAMPLES
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-
+#endif
 File json;
 char filename[CONFIG_FILENAME_LEN];
 const char* sError = "*ERROR*";
@@ -2187,8 +2188,12 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   save_sd_transpose_json(number);
   save_sd_chain_json(number);
   save_sd_fx_json(number);
+#ifdef USE_EPIANO
   save_sd_epiano_json(number);
+#endif
+#ifdef USE_MULTISAMPLES
   save_sd_multisample_presets_json(number);
+#endif
 #ifdef USE_BRAIDS
   save_sd_braids_json(number);
 #endif
@@ -2494,12 +2499,16 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
   load_sd_seq_sub_patterns_json(number);
   load_sd_seq_sub_vel_json(number);
   load_sd_fx_json(number);
+#ifdef USE_EPIANO
   load_sd_epiano_json(number);
+#endif  
   load_sd_drummappings_json(number);
   load_sd_song_json(number);
   load_sd_transpose_json(number);
   load_sd_chain_json(number);
+#ifdef USE_MULTISAMPLES
   load_sd_multisample_presets_json(number);
+#endif
 #ifdef USE_BRAIDS
   load_sd_braids_json(number);
 #endif
@@ -2956,6 +2965,7 @@ FLASHMEM void string_toupper(char* s) {
   }
 }
 
+#ifdef USE_MULTISAMPLES
 FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
   if (number < 0)
     return (false);
@@ -3089,3 +3099,4 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
   }
   return (false);
 }
+#endif

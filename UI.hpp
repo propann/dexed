@@ -657,7 +657,11 @@ FLASHMEM void print_shortcut_navigator() {
     display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.print("V");
   display.setCursor(CHAR_width_small * 41, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay))
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) ||
+#ifdef USE_BRAIDS
+  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) ||
+#endif
+  LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay))
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   else
     display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -12988,6 +12992,7 @@ FLASHMEM uint8_t get_distance(uint8_t a, uint8_t b) {
   else return b - a;
 }
 
+#ifdef USE_MULTISAMPLES
 FLASHMEM void calc_low_high(uint8_t preset) {
   uint8_t result = 200;
   uint8_t result_zone = 99;
@@ -13087,8 +13092,8 @@ FLASHMEM void print_multisampler_panbar(uint8_t x, uint8_t y, uint8_t input_valu
     display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 2.83, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
   display.console = false;
 }
-
-#if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
+#endif
+#if (defined USE_MULTISAMPLES) && ( (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI) )
 
 FLASHMEM void print_msp_zone(uint8_t zone) {
   uint8_t yoffset = 7;
@@ -13169,6 +13174,7 @@ FLASHMEM void print_msp_all_zones() {
     print_msp_zone(zone);
   }
 }
+
 
 FLASHMEM void UI_func_MultiSamplePlay(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -13831,7 +13837,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           // strcat(fm.sd_full_name, "/");
           // strcat(fm.sd_full_name, fm.sd_temp_name);
           // playWAVFile(fm.sd_full_name);
-        } 
+        }
       }
     }
     if (fm.active_window == 0) {
@@ -14489,22 +14495,26 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
       _show_midi_channel(buf, 3 + i, configuration.dexed[i].midi_channel);
     }
 
+#ifdef USE_EPIANO
     snprintf_P(buf, sizeof(buf), PSTR("%s"), F("E-Piano"));
     _show_midi_channel(buf, 5, configuration.epiano.midi_channel);
-
+#endif
+#ifdef USE_MICROSYNTH
     for (uint8_t i = 0; i < 2; i++) {
       snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MicroSynth #"), i + 1);
       _show_midi_channel(buf, 6 + i, microsynth[i].midi_channel);
     }
-
+#endif
+#ifdef USE_BRAIDS
     snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Braids"));
     _show_midi_channel(buf, 8, braids_osc.midi_channel);
-
+#endif
+#ifdef USE_MULTISAMPLES
     for (uint8_t i = 0; i < 2; i++) {
       snprintf_P(buf, sizeof(buf), PSTR("%s%d"), F("MultiSample #"), i + 1);
       _show_midi_channel(buf, 9 + i, msp[i].midi_channel);
     }
-
+#endif
     snprintf_P(buf, sizeof(buf), PSTR("%s"), F("Drums"));
     _show_midi_channel(buf, 11, drum_midi_channel);
   }
@@ -14517,14 +14527,21 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
           configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 1)
           configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel + 1, 0, 16);
+#ifdef USE_EPIANO
         else if (generic_temp_select_menu == 2)
           configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
+#endif
+#ifdef USE_MICROSYNTH
         else if (generic_temp_select_menu == 3)
           microsynth[0].midi_channel = constrain(microsynth[0].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 4)
           microsynth[1].midi_channel = constrain(microsynth[1].midi_channel + 1, 0, 16);
+#endif
+#ifdef USE_BRAIDS
         else if (generic_temp_select_menu == 5)
           braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 0, 16);
+#endif
+#ifdef USE_MULTISAMPLES
         else if (generic_temp_select_menu == 6)
           msp[0].midi_channel = constrain(msp[0].midi_channel + 1, 0, 16);
         else if (generic_temp_select_menu == 7)
@@ -14539,18 +14556,27 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
           configuration.dexed[0].midi_channel = constrain(configuration.dexed[0].midi_channel - 1, 0, 16);
         else if (generic_temp_select_menu == 1)
           configuration.dexed[1].midi_channel = constrain(configuration.dexed[1].midi_channel - 1, 0, 160);
+#endif
+#ifdef USE_EPIANO
         else if (generic_temp_select_menu == 2)
           configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel - 1, 0, 16);
+#endif
+#ifdef USE_MICROSYNTH
         else if (generic_temp_select_menu == 3)
           microsynth[0].midi_channel = constrain(microsynth[0].midi_channel - 1, 0, 16);
         else if (generic_temp_select_menu == 4)
           microsynth[1].midi_channel = constrain(microsynth[1].midi_channel - 1, 0, 16);
+#endif
+#ifdef USE_BRAIDS
         else if (generic_temp_select_menu == 5)
           braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 0, 16);
+#endif
+#ifdef USE_MULTISAMPLES
         else if (generic_temp_select_menu == 6)
           msp[0].midi_channel = constrain(msp[0].midi_channel - 1, 0, 16);
         else if (generic_temp_select_menu == 7)
           msp[1].midi_channel = constrain(msp[1].midi_channel - 1, 0, 16);
+#endif
         else if (generic_temp_select_menu == 8)
           drum_midi_channel = constrain(drum_midi_channel - 1, 0, 16);
       }
@@ -14573,24 +14599,32 @@ FLASHMEM void UI_func_midi_channels(uint8_t param) {
     setModeColor(1);
     setCursor_textGrid(20, 4);
     _print_midi_channel(configuration.dexed[1].midi_channel);
+#ifdef USE_EPIANO
     setModeColor(2);
     setCursor_textGrid(20, 5);
     _print_midi_channel(configuration.epiano.midi_channel);
     setModeColor(3);
+#endif
+#ifdef USE_MICROSYNTH
     setCursor_textGrid(20, 6);
     _print_midi_channel(microsynth[0].midi_channel);
     setModeColor(4);
     setCursor_textGrid(20, 7);
     _print_midi_channel(microsynth[1].midi_channel);
+#endif
+#ifdef USE_BRAIDS
     setModeColor(5);
     setCursor_textGrid(20, 8);
     _print_midi_channel(braids_osc.midi_channel);
+#endif
+#ifdef USE_MULTISAMPLES
     setModeColor(6);
     setCursor_textGrid(20, 9);
     _print_midi_channel(msp[0].midi_channel);
     setModeColor(7);
     setCursor_textGrid(20, 10);
     _print_midi_channel(msp[1].midi_channel);
+#endif
     setModeColor(8);
     setCursor_textGrid(20, 11);
     _print_midi_channel(drum_midi_channel);
@@ -14873,6 +14907,7 @@ FLASHMEM void print_mixer_text() {
   setCursor_textGrid_small(16, 20);
   display.print(F("#2"));
 
+#ifdef USE_BRAIDS
   // Braids
   if (seq.temp_active_menu == 5)
     display.setTextColor(RED, COLOR_BACKGROUND);
@@ -14881,7 +14916,7 @@ FLASHMEM void print_mixer_text() {
   // display.print(F("BRA"));
   setCursor_textGrid_small(20, 21);
   display.print(F("BRD"));
-
+#endif
   // MSP
   if (seq.temp_active_menu == 6 || seq.temp_active_menu == 7)
     display.setTextColor(RED, COLOR_BACKGROUND);
@@ -14959,6 +14994,7 @@ FLASHMEM void print_mixer_text() {
   setCursor_textGrid_small(20, 19);
   print_formatted_number(braids_osc.sound_intensity, 3);
 #endif
+#ifdef USE_MULTISAMPLES
   // msp
   //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #1 zone played
   setCursor_textGrid_small(24, 19);
@@ -14966,7 +15002,7 @@ FLASHMEM void print_mixer_text() {
   //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #2 zone played
   setCursor_textGrid_small(28, 19);
   print_formatted_number(msp[0].sound_intensity, 3);
-
+#endif
   // drums
   temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
   // setCursor_textGrid_small(28, 19);
@@ -14988,8 +15024,10 @@ FLASHMEM void print_mixer_text() {
 }
 
 FLASHMEM void update_braids_volume() {
+#ifdef USE_BRAIDS
   for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++)
     braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 0.7)));
+#endif
 }
 
 FLASHMEM void UI_func_mixer(uint8_t param) {
@@ -15032,6 +15070,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             configuration.dexed[seq.temp_active_menu].sound_intensity = constrain(configuration.dexed[seq.temp_active_menu].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
         } else if (seq.temp_active_menu == 2)  //epiano
         {
+#ifdef USE_EPIANO
           if (LCDML.BT_checkDown()) {
             configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
             ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
@@ -15039,7 +15078,7 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
             ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
           }
-
+#endif
         } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5)  //microsynth
         {
 #ifdef USE_MICROSYNTH
@@ -15059,7 +15098,9 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             update_braids_volume();
           }
 #endif
-        } else if (seq.temp_active_menu == 6)  // msp1
+        }
+#ifdef USE_MULTISAMPLES
+        else if (seq.temp_active_menu == 6)  // msp1
         {
           if (LCDML.BT_checkDown())
             msp[0].sound_intensity = constrain(msp[0].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
@@ -15071,7 +15112,9 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             msp[1].sound_intensity = constrain(msp[1].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
             msp[1].sound_intensity = constrain(msp[1].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-        } else if (seq.temp_active_menu == 8)  //drums/samples
+        }
+#endif
+        else if (seq.temp_active_menu == 8)  //drums/samples
         {
           if (LCDML.BT_checkDown())
             temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
@@ -15141,18 +15184,22 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
 #endif
     } else if (seq.temp_active_menu == 6 && seq.edit_state)  // msp0
     {
+#ifdef USE_MULTISAMPLES
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_bar_int("", msp[0].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("MULTISAMPLE #");
       display.print(seq.temp_active_menu - 5);
+#endif
     } else if (seq.temp_active_menu == 7 && seq.edit_state)  // msp1
     {
+#ifdef USE_MULTISAMPLES
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_bar_int("", msp[1].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("MULTISAMPLE #");
       display.print(seq.temp_active_menu - 5);
+#endif
     } else if (seq.temp_active_menu == 8 && seq.edit_state)  // drums
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -16271,6 +16318,7 @@ FLASHMEM void UI_func_set_performance_name(uint8_t param) {
 }
 
 FLASHMEM void UI_func_set_multisample_name(uint8_t param) {
+#ifdef USE_MULTISAMPLES
   static uint8_t mode;
   static uint8_t ui_select_name_state;
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -16332,6 +16380,7 @@ FLASHMEM void UI_func_set_multisample_name(uint8_t param) {
   {
     encoderDir[ENC_R].reset();
   }
+#endif
 }
 
 FLASHMEM void UI_func_sysex_send_bank(uint8_t param) {

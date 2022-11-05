@@ -1435,10 +1435,12 @@ FLASHMEM void handle_touchscreen_mixer() {
     draw_volmeter(0, 170, 0, microdexed_peak_0.read());
     draw_volmeter(CHAR_width_small * 4, 170, 1, microdexed_peak_1.read());
 
+#ifdef USE_EPIANO
     if (ep_peak_l.available() && ep_peak_r.available())
       draw_volmeter(CHAR_width_small * 8, 170, 2, (ep_peak_l.read() + ep_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 8, 170, 2, 0);
+#endif
 
 #ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
@@ -1458,12 +1460,13 @@ FLASHMEM void handle_touchscreen_mixer() {
       draw_volmeter(CHAR_width_small * 20, 170, 5, 0);
 #endif
 
+#ifdef USE_MULTISAMPLES
     //msp
     draw_volmeter(CHAR_width_small * 24, 170, 6, ts.msp_peak[0]);
     ts.msp_peak[0] = ts.msp_peak[0] / 1.05;
     draw_volmeter(CHAR_width_small * 28, 170, 7, ts.msp_peak[1]);
     ts.msp_peak[1] = ts.msp_peak[1] / 1.05;
-
+#endif
 #if NUM_DRUMS > 0
     // if (drum_mixer_peak_l.available())
     //   draw_volmeter(CHAR_width_small * 28, 170, 7, drum_mixer_peak_l.read());
@@ -1502,7 +1505,10 @@ FLASHMEM void handle_touchscreen_midi_channel_page() {
     display.setTextSize(2);
     print_midi_channel_activity(19, 3, microdexed_peak_0.read());
     print_midi_channel_activity(19, 4, microdexed_peak_1.read());
+#ifdef USE_EPIANO
     print_midi_channel_activity(19, 5, (ep_peak_l.read() + ep_peak_r.read()) / 2);
+#endif
+#ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
       print_midi_channel_activity(19, 6, microsynth_peak_osc_0.read());
     else
@@ -1511,12 +1517,13 @@ FLASHMEM void handle_touchscreen_midi_channel_page() {
       print_midi_channel_activity(19, 7, microsynth_peak_osc_1.read());
     else
       print_midi_channel_activity(19, 7, 0);
-
+#endif
+#ifdef USE_BRAIDS
     if (braids_peak_l.available() && braids_peak_r.available())
       print_midi_channel_activity(19, 8, (braids_peak_l.read() + braids_peak_r.read()) / 2);
     else
       print_midi_channel_activity(19, 8, 0);
-
+#endif
     print_midi_channel_activity(19, 9, ts.msp_peak[0]);
     print_midi_channel_activity(19, 10, ts.msp_peak[1]);
     ts.msp_peak[0] = ts.msp_peak[0] / 1.05;
@@ -2118,10 +2125,12 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       else if (trk == 5)
         inChannel = braids_osc.midi_channel;
 #endif
+#ifdef USE_MULTISAMPLES
       else if (trk == 6)
         inChannel = msp[0].midi_channel;
       else if (trk == 7)
         inChannel = msp[1].midi_channel;
+#endif
     }
   }
 
@@ -2520,10 +2529,12 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
       else if (trk == 4)
         inChannel = microsynth[1].midi_channel;
 #endif
+#ifdef USE_MULTISAMPLES
       else if (trk == 5)
         inChannel = msp[0].midi_channel;
       else if (trk == 6)
         inChannel = msp[1].midi_channel;
+#endif
     }
   }
 
@@ -3634,11 +3645,17 @@ FLASHMEM void initial_values(bool init) {
     configuration.dexed[0].midi_channel = DEFAULT_DEXED_MIDI_CHANNEL_INST0;
     configuration.dexed[1].midi_channel = DEFAULT_DEXED_MIDI_CHANNEL_INST1;
     // configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + 1, 0, 16);
+#ifdef USE_MICROSYNTH
     microsynth[0].midi_channel = DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST0;
     microsynth[1].midi_channel = DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST1;
+#endif
+#ifdef USE_BRAIDS
     braids_osc.midi_channel = DEFAULT_BRAIDS_MIDI_CHANNEL;
+#endif
+#ifdef USE_MULTISAMPLES
     msp[0].midi_channel = DEFAULT_MSP_MIDI_CHANNEL_INST0;
     msp[1].midi_channel = DEFAULT_MSP_MIDI_CHANNEL_INST1;
+#endif
     // drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
   }
   check_configuration();
