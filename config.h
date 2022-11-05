@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.20"
+#define VERSION "1.4.6.21"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -74,8 +74,7 @@
 //*************************************************************************************************
 
 // USB_KEYBOARD is for a PC-Numeric Keypad, connected via USB
-// USB_GAMEPAD is for a classic 8bit/16bit style of USB Gamepad (now tested to be in default code, no need to add it here)
-// ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy. USB_GAMEPAD must be also be enabled for it to work.
+// ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy.
 
 // IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION,
 // JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
@@ -90,7 +89,7 @@
 // Left and right channel audio signal is presented on pins A21 and A22.
 
 // IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION,
-// JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
+// JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE REQUIRED.
 
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
 

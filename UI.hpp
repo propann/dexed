@@ -6139,7 +6139,7 @@ FLASHMEM void UI_func_seq_probabilities(uint8_t param) {
   }
 }
 
-void print_custom_mappings() {
+FLASHMEM void print_custom_mappings() {
   display.setTextSize(1);
   uint8_t line = 9;
   int offset = generic_temp_select_menu - 3;
@@ -6215,7 +6215,7 @@ void print_custom_mappings() {
   }
 }
 
-void print_custom_mapping_drums() {
+FLASHMEM void print_custom_mapping_drums() {
   display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND);
   display.setTextSize(1);
   setCursor_textGrid_small(1, 6);
@@ -6236,7 +6236,7 @@ void print_custom_mapping_drums() {
   display.print(F("TO REMAP YOUR FAVORITE DRUMS "));
 }
 
-void print_custom_mapping_cc() {
+FLASHMEM void print_custom_mapping_cc() {
   UI_update_instance_icons();
   display.setTextSize(1);
   setCursor_textGrid_small(1, 6);
@@ -6256,7 +6256,8 @@ void print_custom_mapping_cc() {
   display.setTextColor(RED, COLOR_BACKGROUND);
   display.print(F("ENCODER_R   "));
 }
-void print_custom_mapping_ui() {
+
+FLASHMEM void print_custom_mapping_ui() {
   display.fillRect(14 * CHAR_width + 10, 5, 20, 9, COLOR_BACKGROUND);
   display.setTextSize(1);
   setCursor_textGrid_small(1, 6);
@@ -6267,7 +6268,7 @@ void print_custom_mapping_ui() {
   display.print(F("USEFUL WHEN YOU CAN'T SEND DEFAULT CC VALUES"));
 }
 
-void print_mapping_help_text() {
+FLASHMEM void print_mapping_help_text() {
   if (seq.edit_state == false && generic_temp_select_menu == 0)
     print_custom_mapping_drums();
   else if (seq.edit_state == false && generic_temp_select_menu == 1)
@@ -6276,14 +6277,15 @@ void print_mapping_help_text() {
     print_custom_mapping_ui();
 }
 
-void draw_scrollbar_custom_mappings() {
+FLASHMEM void draw_scrollbar_custom_mappings() {
   if (generic_temp_select_menu > 2)
     drawScrollbar(DISPLAY_WIDTH - CHAR_width_small * 2, 9 * 12, 10, NUM_CUSTOM_MIDI_MAPPINGS, generic_temp_select_menu - 3, 12);
   else
     drawScrollbar(DISPLAY_WIDTH - CHAR_width_small * 2, 9 * 12, 10, NUM_CUSTOM_MIDI_MAPPINGS, 0, 12);
   print_custom_mappings();
 }
-void UI_func_custom_mappings(uint8_t param) {
+
+FLASHMEM void UI_func_custom_mappings(uint8_t param) {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -6537,7 +6539,7 @@ void UI_func_drum_volume(uint8_t param) {
   }
 }
 
-void UI_func_seq_settings(uint8_t param) {
+FLASHMEM void UI_func_seq_settings(uint8_t param) {
   char displayname[4] = { 0, 0, 0, 0 };
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -12538,7 +12540,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     print_small_intbar(38, 4, braids_osc.filter_freq_to / 100, 11, 0, 1);
     print_small_intbar(27, 5, braids_osc.filter_resonance, 12, 0, 1);
     print_small_intbar(38, 5, braids_osc.filter_speed / 10, 13, 0, 1);
-    print_small_intbar(27, 6, braids_osc.filter_lfo_intensity/100, 14, 0, 1);
+    print_small_intbar(27, 6, braids_osc.filter_lfo_intensity / 100, 14, 0, 1);
     print_small_intbar(38, 6, braids_osc.filter_lfo_speed, 15, 0, 1);
 
     setCursor_textGrid_small(33, 7);
@@ -21288,6 +21290,9 @@ FLASHMEM void splash_draw_header() {
   display.setTextSize(1);
 }
 FLASHMEM void splash_draw_D() {
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
   display.fillRect(3, 34, 89, 2, COLOR_PITCHSMP);
   display.fillRect(3, 39, 97, 2, COLOR_PITCHSMP);
   display.fillRect(3, 44, 102, 2, COLOR_PITCHSMP);
@@ -21316,12 +21321,19 @@ FLASHMEM void splash_draw_D() {
   display.fillRect(3, 104, 102, 2, COLOR_PITCHSMP);
   display.fillRect(3, 109, 97, 2, COLOR_PITCHSMP);
   display.fillRect(3, 114, 89, 2, COLOR_PITCHSMP);
+#ifdef REMOTE_CONSOLE
+  display.console = false;
+#endif
 }
+
 FLASHMEM void splash_draw_X() {
   uint16_t colors[2] = { COLOR_PITCHSMP, COLOR_SYSTEXT };
 
   for (uint8_t i = 0; i < 5; i++) {
     for (uint8_t c = 0; c < 2; c++) {
+#ifdef REMOTE_CONSOLE
+      display.console = true;
+#endif
       display.fillRect(107, 34, 27, 2, colors[c]);
       display.fillRect(186, 34, 27, 2, colors[c]);
       display.fillRect(112, 39, 27, 2, colors[c]);
@@ -21351,11 +21363,17 @@ FLASHMEM void splash_draw_X() {
       display.fillRect(181, 109, 28, 2, colors[c]);
       display.fillRect(107, 114, 27, 2, colors[c]);
       display.fillRect(186, 114, 27, 2, colors[c]);
+#ifdef REMOTE_CONSOLE
+      display.console = false;
+#endif
       delay(80);
     }
   }
 }
 FLASHMEM void splash_draw_reverseD() {
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
   display.fillRect(227, 34, 89, 2, COLOR_PITCHSMP);
   display.fillRect(220, 39, 96, 2, COLOR_PITCHSMP);
   display.fillRect(214, 44, 102, 2, COLOR_PITCHSMP);
@@ -21384,6 +21402,9 @@ FLASHMEM void splash_draw_reverseD() {
   display.fillRect(214, 104, 102, 2, COLOR_PITCHSMP);
   display.fillRect(220, 109, 96, 2, COLOR_PITCHSMP);
   display.fillRect(227, 114, 89, 2, COLOR_PITCHSMP);
+#ifdef REMOTE_CONSOLE
+  display.console = false;
+#endif
 }
 
 FLASHMEM void splash_screen1() {
@@ -21413,6 +21434,9 @@ FLASHMEM void splash_screen2() {
   display.setCursor(1 + CHAR_width_small * 4, 130);
   display.setTextColor(GREY2);
   display.print(F("https://codeberg.org/positionhigh/"));
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
   for (uint8_t r = 0; r < 8; r++) {
     for (uint8_t y = 0 + r; y < 73; y = y + 8) {
       for (uint16_t x = 0; x < DISPLAY_WIDTH; x++) {
@@ -21428,9 +21452,16 @@ FLASHMEM void splash_screen2() {
           }
           if (c > 0) {
             display.fillRect(x, y, c + 1, 1, color);
+#ifdef REMOTE_CONSOLE
+            delayMicroseconds(60);
+#endif
             x = x + c;
-          } else
+          } else {
             display.drawPixel(x, y, color);
+#ifdef REMOTE_CONSOLE
+            delayMicroseconds(60);
+#endif
+          }
         }
         c = 0;
         if (y < 26 && x > 132)
@@ -21439,46 +21470,10 @@ FLASHMEM void splash_screen2() {
     }
     delay(30);
   }
+#ifdef REMOTE_CONSOLE
+  display.console = false;
+#endif
 }
-
-////////////////////////////////////////RGB VERSION///////////////////////////////////////
-//FLASHMEM void splash_screen2() {
-//  unsigned char splash[70080]; RLE_Uncompress( splash_image, splash, 9859);
-//  uint16_t x2;
-//  uint16_t c;
-//  uint16_t color;
-//  uint16_t w = DISPLAY_WIDTH * 3;
-//  for (uint8_t y = 0; y < 73; y++)
-//  {
-//    x2 = 0;
-//    for (uint16_t x = 0; x < w; x = x + 3)
-//    {
-//      if (splash[x + 1 + y * w] != 0)
-//      {
-//      //  color = RGB24toRGB565(splash[x + y * w], splash[x + 1 + y * w], splash[x + 2 + y * w] );
-//        color = RGB24toRGB565(splash[x + y * w], splash[x + 1 + y * w], splash[x + y * w] );
-//        for (uint16_t s = 3; s < 200; s = s + 3)
-//        {
-//          if (splash[x + 1 + y * w] == splash[(x + 1 + s) + y * w] && x + s < w)
-//            c++;
-//          else break;
-//        }
-//        if (c > 0)
-//        {
-//          display.fillRect(x2, y, c + 1, 1, color);
-//          x = x + 3 * c;
-//          x2 = x2 + c;
-//        }
-//        else
-//          display.drawPixel(x2, y, color);
-//      }
-//      x2++;
-//      c = 0;
-//      if (y < 26 && x2 > 132)
-//        break;
-//    }
-//  }
-//}
 
 float scalex = 1;
 float scaley = 1;
