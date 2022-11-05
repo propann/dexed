@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.19"
+#define VERSION "1.4.6.20"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -77,7 +77,7 @@
 // USB_GAMEPAD is for a classic 8bit/16bit style of USB Gamepad (now tested to be in default code, no need to add it here)
 // ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy. USB_GAMEPAD must be also be enabled for it to work.
 
-// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION, 
+// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION,
 // JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
 
 //#define USB_KEYPAD 1
@@ -89,7 +89,7 @@
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
 
-// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION, 
+// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION,
 // JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
 
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
@@ -395,8 +395,8 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 
 #define MAX_DEXED 2  // No! - even don't think about increasing this number! IT _WILL_ PRODUCE MASSIVE PROBLEMS!
 #define CONTROL_RATE_MS 50
-#define MICROSYNTH_LFO_RATE_MS 20
-#define BRAIDS_LFO_RATE_MS 20
+#define MICROSYNTH_CONTROL_RATE_MS 20
+#define BRAIDS_CONTROL_RATE_MS 20
 #define SAVE_SYS_MS 5000
 #define VOL_MAX_FLOAT 0.95
 
@@ -984,6 +984,8 @@ typedef struct braids_s {
   uint16_t filter_freq_to;
   uint8_t filter_resonance;
   uint16_t filter_speed;
+  uint16_t filter_lfo_intensity;
+  uint8_t filter_lfo_speed;
   uint8_t rev_send;
   uint8_t flanger;
   uint8_t flanger_spread;
@@ -1022,8 +1024,8 @@ typedef struct sys_s {
   uint8_t load_at_startup_page;
   uint8_t display_rotation;
   uint8_t touch_rotation;
-  uint8_t screen_saver_start; // minutes
-  uint16_t gamepad_speed; // milliseconds
+  uint8_t screen_saver_start;  // minutes
+  uint16_t gamepad_speed;      // milliseconds
   bool ui_reverse;
 } sys_t;
 

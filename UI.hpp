@@ -50,7 +50,7 @@ extern AudioSynthEPiano ep;
 #ifdef USE_BRAIDS
 #include <synth_braids.h>
 extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
-extern void braids_update_settings();
+extern void braids_update_single_setting();
 #endif
 
 elapsedMillis gamepad_millis;
@@ -202,7 +202,7 @@ extern uint8_t remote_MIDI_CC;
 extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
-
+extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -281,7 +281,9 @@ extern AudioMixer<NUM_BRAIDS> braids_mixer;
 extern AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
 extern AudioMixer<2> braids_mixer_reverb;
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
-extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
+//extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
+extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
+
 extern AudioEffectStereoPanorama braids_stereo_panorama;
 
 extern AudioEffectFlange braids_flanger_r;
@@ -9958,7 +9960,7 @@ void UI_func_microsynth(uint8_t param) {
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //display.setTextSize(1);
     if (generic_active_function == 1)
-      microsynth_update_settings(microsynth_selected_instance);
+      microsynth_update_single_setting(microsynth_selected_instance);
     if (generic_temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -12343,6 +12345,10 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     display.print(F("RES"));
     setCursor_textGrid_small(32, 5);
     display.print(F("SPEED"));
+    setCursor_textGrid_small(22, 6);
+    display.print(F("LFO"));
+    setCursor_textGrid_small(32, 6);
+    display.print(F("L.SPD"));
     setCursor_textGrid_small(22, 7);
     display.print(F("REV. SEND"));
     setCursor_textGrid_small(22, 8);
@@ -12381,7 +12387,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (LCDML.BT_checkDown()) {
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 19);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 21);
         else if (generic_temp_select_menu == 0)
           braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + 1, 0, 100);
         else if (generic_temp_select_menu == 1) {
@@ -12411,16 +12417,20 @@ FLASHMEM void UI_func_braids(uint8_t param) {
         else if (generic_temp_select_menu == 13)
           braids_osc.filter_speed = constrain(braids_osc.filter_speed + 5, 0, 999);
         else if (generic_temp_select_menu == 14)
-          braids_osc.rev_send = constrain(braids_osc.rev_send + 1, 0, 127);
+          braids_osc.filter_lfo_intensity = constrain(braids_osc.filter_lfo_intensity + 80, 0, 15000);
         else if (generic_temp_select_menu == 15)
-          braids_osc.flanger = constrain(braids_osc.flanger + 1, 0, 127);
+          braids_osc.filter_lfo_speed = constrain(braids_osc.filter_lfo_speed + 1, 0, 254);
         else if (generic_temp_select_menu == 16)
-          braids_osc.flanger_spread = constrain(braids_osc.flanger_spread + 1, 0, 127);
+          braids_osc.rev_send = constrain(braids_osc.rev_send + 1, 0, 127);
         else if (generic_temp_select_menu == 17)
-          braids_osc.delay_send = constrain(braids_osc.delay_send + 1, 0, 127);
+          braids_osc.flanger = constrain(braids_osc.flanger + 1, 0, 127);
         else if (generic_temp_select_menu == 18)
-          braids_osc.pan = constrain(braids_osc.pan + 1, PANORAMA_MIN, PANORAMA_MAX);
+          braids_osc.flanger_spread = constrain(braids_osc.flanger_spread + 1, 0, 127);
         else if (generic_temp_select_menu == 19)
+          braids_osc.delay_send = constrain(braids_osc.delay_send + 1, 0, 127);
+        else if (generic_temp_select_menu == 20)
+          braids_osc.pan = constrain(braids_osc.pan + 1, PANORAMA_MIN, PANORAMA_MAX);
+        else if (generic_temp_select_menu == 21)
           braids_osc.midi_channel = constrain(braids_osc.midi_channel + 1, 1, 16);
       } else if (LCDML.BT_checkUp()) {
         if (generic_active_function == 0)
@@ -12455,16 +12465,20 @@ FLASHMEM void UI_func_braids(uint8_t param) {
         else if (generic_temp_select_menu == 13)
           braids_osc.filter_speed = constrain(braids_osc.filter_speed - 5, 0, 999);
         else if (generic_temp_select_menu == 14)
-          braids_osc.rev_send = constrain(braids_osc.rev_send - 1, 0, 127);
+          braids_osc.filter_lfo_intensity = constrain(braids_osc.filter_lfo_intensity - 80, 0, 15000);
         else if (generic_temp_select_menu == 15)
-          braids_osc.flanger = constrain(braids_osc.flanger - 1, 0, 127);
+          braids_osc.filter_lfo_speed = constrain(braids_osc.filter_lfo_speed - 1, 0, 254);
         else if (generic_temp_select_menu == 16)
-          braids_osc.flanger_spread = constrain(braids_osc.flanger_spread - 1, 0, 127);
+          braids_osc.rev_send = constrain(braids_osc.rev_send - 1, 0, 127);
         else if (generic_temp_select_menu == 17)
-          braids_osc.delay_send = constrain(braids_osc.delay_send - 1, 0, 127);
+          braids_osc.flanger = constrain(braids_osc.flanger - 1, 0, 127);
         else if (generic_temp_select_menu == 18)
-          braids_osc.pan = constrain(braids_osc.pan - 1, PANORAMA_MIN, PANORAMA_MAX);
+          braids_osc.flanger_spread = constrain(braids_osc.flanger_spread - 1, 0, 127);
         else if (generic_temp_select_menu == 19)
+          braids_osc.delay_send = constrain(braids_osc.delay_send - 1, 0, 127);
+        else if (generic_temp_select_menu == 20)
+          braids_osc.pan = constrain(braids_osc.pan - 1, PANORAMA_MIN, PANORAMA_MAX);
+        else if (generic_temp_select_menu == 21)
           braids_osc.midi_channel = constrain(braids_osc.midi_channel - 1, 1, 16);
       }
     }
@@ -12480,7 +12494,7 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     }
 
     //button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    braids_update_settings();
+    braids_update_single_setting();
     display.setTextSize(1);
     setModeColor(0);
     print_small_intbar(9, 3, braids_osc.sound_intensity, 0, 1, 0);
@@ -12528,22 +12542,24 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     print_small_intbar(38, 4, braids_osc.filter_freq_to / 100, 11, 0, 1);
     print_small_intbar(27, 5, braids_osc.filter_resonance, 12, 0, 1);
     print_small_intbar(38, 5, braids_osc.filter_speed / 10, 13, 0, 1);
+    print_small_intbar(27, 6, braids_osc.filter_lfo_intensity/100, 14, 0, 1);
+    print_small_intbar(38, 6, braids_osc.filter_lfo_speed, 15, 0, 1);
 
     setCursor_textGrid_small(33, 7);
-    setModeColor(14);
+    setModeColor(16);
     print_formatted_number(braids_osc.rev_send, 3);
     setCursor_textGrid_small(33, 8);
-    setModeColor(15);
+    setModeColor(17);
     print_formatted_number(braids_osc.flanger, 3);
     setCursor_textGrid_small(39, 8);
-    setModeColor(16);
+    setModeColor(18);
     print_formatted_number(braids_osc.flanger_spread, 3);
     setCursor_textGrid_small(33, 9);
-    setModeColor(17);
-    print_formatted_number(braids_osc.delay_send, 3);
-    setModeColor(18);
-    print_small_panbar(33, 10, braids_osc.pan, 18);
     setModeColor(19);
+    print_formatted_number(braids_osc.delay_send, 3);
+    setModeColor(20);
+    print_small_panbar(33, 10, braids_osc.pan, 20);
+    setModeColor(21);
     setCursor_textGrid_small(34, 11);
     print_formatted_number(braids_osc.midi_channel, 2);
   }
@@ -13704,8 +13720,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
           SD.remove(fm.sd_full_name);
-        }
-        else if (fm.sd_mode == 3)  //copy to flash
+        } else if (fm.sd_mode == 3)  //copy to flash
         {
           strcpy(fm.sd_full_name, fm.sd_new_name);
           strcat(fm.sd_full_name, "/");
@@ -13777,8 +13792,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
               print_flash_stats();
               flash_printDirectory();
             }
-        }
-         else if (fm.sd_mode == 4)  // copy to pc
+        } else if (fm.sd_mode == 4)  // copy to pc
         {
           display.console = false;
           strcpy(fm.sd_full_name, fm.sd_new_name);
@@ -14136,7 +14150,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
           SD.remove(fm.sd_full_name);
-        }  else if (fm.sd_mode == 3)  //copy to flash
+        } else if (fm.sd_mode == 3)  //copy to flash
         {
           strcpy(fm.sd_full_name, fm.sd_new_name);
           strcat(fm.sd_full_name, "/");
