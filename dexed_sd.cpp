@@ -135,14 +135,6 @@ extern float get_sample_vol_max(uint8_t sample);
 extern float get_sample_vol_min(uint8_t sample);
 extern float get_sample_reverb_send(uint8_t sample);
 extern uint8_t find_drum_number_from_note(uint8_t note);
-extern uint16_t COLOR_SYSTEXT;
-extern uint16_t COLOR_SYSTEXT_ACCENT;
-extern uint16_t COLOR_BACKGROUND;
-extern uint16_t COLOR_INSTR;
-extern uint16_t COLOR_CHORDS;
-extern uint16_t COLOR_ARP;
-extern uint16_t COLOR_DRUMS;
-extern uint16_t COLOR_PITCHSMP;
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
@@ -2230,14 +2222,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
       data_json["seq_element_shift"] = seq.element_shift;
       data_json["euclidean_active"] = seq.euclidean_active;
       data_json["euclidean_offset"] = seq.euclidean_offset;
-      data_json["COLOR_SYSTEXT"] = COLOR_SYSTEXT;
-      data_json["COLOR_SYSTEXT_ACCENT"] = COLOR_SYSTEXT_ACCENT;
-      data_json["COLOR_BACKGROUND"] = COLOR_BACKGROUND;
-      data_json["COLOR_INSTR"] = COLOR_INSTR;
-      data_json["COLOR_CHORDS"] = COLOR_CHORDS;
-      data_json["COLOR_ARP"] = COLOR_ARP;
-      data_json["COLOR_DRUMS"] = COLOR_DRUMS;
-      data_json["COLOR_PITCHSMP"] = COLOR_PITCHSMP;
+     
       for (uint8_t i = 0; i < sizeof(seq.track_type); i++) {
         data_json["track_type"][i] = seq.track_type[i];
       }
@@ -2565,16 +2550,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
         seq.element_shift = data_json["seq_element_shift"];
         seq.euclidean_active = data_json["euclidean_active"];
         seq.euclidean_offset = data_json["euclidean_offset"];
-        if (data_json["COLOR_SYSTEXT"] != data_json["COLOR_BACKGROUND"]) {
-          COLOR_SYSTEXT = data_json["COLOR_SYSTEXT"];
-          COLOR_SYSTEXT_ACCENT = data_json["COLOR_SYSTEXT_ACCENT"];
-          COLOR_BACKGROUND = data_json["COLOR_BACKGROUND"];
-          COLOR_INSTR = data_json["COLOR_INSTR"];
-          COLOR_CHORDS = data_json["COLOR_CHORDS"];
-          // COLOR_ARP = data_json["COLOR_ARP"];
-          COLOR_DRUMS = data_json["COLOR_DRUMS"];
-          COLOR_PITCHSMP = data_json["COLOR_PITCHSMP"];
-        }
+       
         AudioNoInterrupts();
         for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
 #ifdef DEBUG

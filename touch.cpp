@@ -38,7 +38,6 @@ extern void print_formatted_number(uint16_t v, uint8_t l);
 extern void virtual_keyboard_print_buttons();
 extern void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, uint8_t color);
 extern void seq_pattern_editor_update_dynamic_elements();
-extern void colors_screen_update();
 extern void microsynth_refresh_lower_screen_static_text();
 extern void microsynth_refresh_lower_screen_dynamic_text();
 extern float get_sample_p_offset(uint8_t sample);
@@ -96,15 +95,6 @@ ts_t ts;                          //touch screen
 fm_t fm;                          //file manager
 dexed_live_mod_t dexed_live_mod;  // dexed quick live modifiers for attack and release
 extern int temp_int;
-
-extern uint16_t COLOR_BACKGROUND;
-extern uint16_t COLOR_SYSTEXT;
-extern uint16_t COLOR_SYSTEXT_ACCENT;
-extern uint16_t COLOR_INSTR;
-extern uint16_t COLOR_CHORDS;
-extern uint16_t COLOR_ARP;
-extern uint16_t COLOR_DRUMS;
-extern uint16_t COLOR_PITCHSMP;
 
 FLASHMEM void helptext_l(const char *str) {
   display.setTextSize(1);
@@ -782,17 +772,6 @@ FLASHMEM void handle_touchscreen_file_manager() {
         fm.sd_mode = 4;  //copy to pc
       } else if (check_button_on_grid(46, 25)) {
         fm.sd_mode = 5;  //play/preview sample
-
-        //if (fm.sd_is_folder == false) {
-        // if (fm.sd_mode == 5 && ts.block_screen_update == false)  //preview
-        // {
-        //   strcpy(fm.sd_full_name, fm.sd_new_name);
-        //   strcat(fm.sd_full_name, "/");
-        //   strcat(fm.sd_full_name, fm.sd_temp_name);
-        //   playWAVFile(fm.sd_full_name);
-        //   ts.slowdown_UI_input = 0;
-        //   ts.block_screen_update = true;
-        // }
       }
     }
     // active_window   0 = left window (SDCARD) , 1 = FLASH
@@ -853,32 +832,6 @@ FLASHMEM void handle_touchscreen_cc_mappings() {
   ts.slowdown_UI_input++;
   if (ts.slowdown_UI_input > 7115)
     ts.block_screen_update = false;
-}
-
-FLASHMEM void handle_touchscreen_color_edit() {
-  if (touch.touched()) {
-    get_scaled_touch_point();
-
-    if (ts.p.x > 170 && ts.p.x < 170 + 36 && ts.p.y < DISPLAY_HEIGHT - CHAR_height)
-      if (ts.p.y * 1.22 > 359)
-        ts.temp_col_hue = 359;
-      else
-        ts.temp_col_hue = ts.p.y * 1.22;
-
-    else if (ts.p.x > 226 && ts.p.x < 226 + 36 && ts.p.y < DISPLAY_HEIGHT - CHAR_height) {
-      if (ts.p.y * 1.2 > 234)
-        ts.temp_col_sat = 255;
-      else
-        ts.temp_col_sat = ts.p.y * 1.2;
-
-    } else if (ts.p.x > 283 && ts.p.x < 283 + 36 && ts.p.y < DISPLAY_HEIGHT - CHAR_height) {
-      if (ts.p.y * 1.2 > 234)
-        ts.temp_col_bright = 255;
-      else
-        ts.temp_col_bright = ts.p.y * 1.2;
-    }
-    colors_screen_update();
-  }
 }
 
 FLASHMEM void handle_touchscreen_mute_matrix() {

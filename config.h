@@ -259,6 +259,15 @@
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
 
+#define COLOR_BACKGROUND 0x0000
+#define COLOR_SYSTEXT 0xFFFF
+#define COLOR_SYSTEXT_ACCENT 0x159A
+#define COLOR_INSTR 0x7BBD
+#define COLOR_CHORDS 0xE2FA
+#define COLOR_ARP 0xFC80
+#define COLOR_DRUMS 0xFE4F
+#define COLOR_PITCHSMP 0x159A
+
 #define RED 0xF000
 #define PINK 0xF81F
 #define YELLOW 0xFFEB

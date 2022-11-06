@@ -2,8 +2,6 @@
 #include "ILI9341_t3n.h"
 extern ILI9341_t3n display;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
-extern uint16_t COLOR_BACKGROUND;
-extern uint16_t COLOR_SYSTEXT;
 uint8_t psram_test_dline = 7;
 
 void fill_up_with_spaces_psram() {

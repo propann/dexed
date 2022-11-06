@@ -2,8 +2,6 @@
 #include "ILI9341_t3n.h"
 #include "sequencer.h"
 extern ILI9341_t3n display;
-extern uint16_t COLOR_SYSTEXT;
-extern uint16_t COLOR_BACKGROUND;
 extern sequencer_t seq;
 
 FLASHMEM void Realtime_Scope::FillArray() {

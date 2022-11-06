@@ -76,14 +76,6 @@ extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
 extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 #endif
 
-extern uint16_t COLOR_SYSTEXT;
-extern uint16_t COLOR_SYSTEXT_ACCENT;
-extern uint16_t COLOR_BACKGROUND;
-extern uint16_t COLOR_INSTR;
-extern uint16_t COLOR_CHORDS;
-extern uint16_t COLOR_ARP;
-extern uint16_t COLOR_DRUMS;
-extern uint16_t COLOR_PITCHSMP;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];

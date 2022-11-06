@@ -19,8 +19,6 @@
 #include "ILI9341_t3n.h"
 #include <SPI.h>
 
-extern uint16_t COLOR_BACKGROUND;
-
 // 5x7 font
 PROGMEM const unsigned char font[] = {
   0x00, 0x00, 0x00, 0x00, 0x00,  //

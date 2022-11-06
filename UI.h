@@ -154,17 +154,16 @@ LCDML_add(119, LCDML_0_15, 4, "MIDI Mapping", UI_func_custom_mappings);
 LCDML_add(120, LCDML_0_15, 5, "Favorites", UI_func_favorites);
 LCDML_add(121, LCDML_0_15, 6, "Startup Perform.", UI_func_startup_performance);
 LCDML_add(122, LCDML_0_15, 7, "Startup Page", UI_func_startup_page);
-LCDML_add(123, LCDML_0_15, 8, "Screen Colors", UI_func_colors);
-LCDML_add(124, LCDML_0_15, 9, "Misc. Settings", UI_func_misc_settings);
-LCDML_add(125, LCDML_0_15, 10, "Map Gamepad", UI_func_map_gamepad);
-LCDML_add(126, LCDML_0_15, 11, "FORMAT FLASH", UI_func_format_flash);
-LCDML_add(127, LCDML_0_15, 12, "TEST Audio Mute", UI_func_test_mute);
-LCDML_add(128, LCDML_0_15, 13, "TEST PSRAM", UI_func_test_psram);
-LCDML_add(129, LCDML_0_15, 14, "TEST Touchscreen", UI_func_test_touchscreen);
-LCDML_add(130, LCDML_0, 16, "Info", UI_func_information);
-LCDML_addAdvanced(131, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced(132, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 132
+LCDML_add(123, LCDML_0_15, 9, "Misc. Settings", UI_func_misc_settings);
+LCDML_add(124, LCDML_0_15, 10, "Map Gamepad", UI_func_map_gamepad);
+LCDML_add(125, LCDML_0_15, 11, "FORMAT FLASH", UI_func_format_flash);
+LCDML_add(126, LCDML_0_15, 12, "TEST Audio Mute", UI_func_test_mute);
+LCDML_add(127, LCDML_0_15, 13, "TEST PSRAM", UI_func_test_psram);
+LCDML_add(128, LCDML_0_15, 14, "TEST Touchscreen", UI_func_test_touchscreen);
+LCDML_add(129, LCDML_0, 16, "Info", UI_func_information);
+LCDML_addAdvanced(130, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced(131, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 131
 #endif
 
 #ifdef MODERN_UI

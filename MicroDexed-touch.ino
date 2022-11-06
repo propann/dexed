@@ -874,7 +874,6 @@ extern void handle_touchscreen_microsynth(void);
 extern void handle_touchscreen_file_manager(void);
 extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
-extern void handle_touchscreen_color_edit(void);
 extern void handle_touchscreen_arpeggio(void);
 extern void handle_touchscreen_braids(void);
 extern void handle_touchscreen_sample_editor(void);
@@ -1632,8 +1631,6 @@ void loop() {
     handle_touchscreen_file_manager();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
     handle_touchscreen_mute_matrix();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_colors))
-    handle_touchscreen_color_edit();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
     handle_touchscreen_custom_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer)) {
