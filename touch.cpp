@@ -23,11 +23,7 @@ extern void pattern_editor_menu_0();
 extern void UI_func_test_touchscreen(uint8_t param);
 extern void sub_touchscreen_test_page_init();
 extern bool remote_touched;
-
-#ifdef USE_SEQUENCER
 extern sequencer_t seq;
-#endif
-
 extern void border3_large_clear();
 extern void border3_large();
 #ifdef COMPILE_FOR_FLASH
@@ -740,7 +736,7 @@ FLASHMEM void print_file_manager_buttons() {
     draw_button_on_grid(19, 25, "COPY", "PRESET", 1);
   else
     draw_button_on_grid(19, 25, "COPY", "PRESET", 0);
-if (fm.sd_mode == 3)
+  if (fm.sd_mode == 3)
     draw_button_on_grid(28, 25, "COPY >", "FLASH", 1);
   else
     draw_button_on_grid(28, 25, "COPY >", "FLASH", 0);
@@ -748,7 +744,7 @@ if (fm.sd_mode == 3)
     draw_button_on_grid(37, 25, "COPY >", "TO PC", 1);
   else
     draw_button_on_grid(37, 25, "COPY >", "TO PC", 0);
-if (fm.sd_mode == 5)
+  if (fm.sd_mode == 5)
     draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 1);
   else
     draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 0);
@@ -772,34 +768,31 @@ FLASHMEM void handle_touchscreen_file_manager() {
     if (ts.p.y > CHAR_height_small * 24) {
       if (check_button_on_grid(1, 25)) {
         fm.sd_mode = 0;  // browse files/directories
-      }
-    else  if (check_button_on_grid(10, 25)) {
+      } else if (check_button_on_grid(10, 25)) {
         fm.sd_mode = 1;  // delete
-      }
-else if (check_button_on_grid(19, 25)) {
+      } else if (check_button_on_grid(19, 25)) {
         fm.sd_mode = 2;  //copy preset samples to flash
       }
 
-else if (check_button_on_grid(28, 25)) {
+      else if (check_button_on_grid(28, 25)) {
         fm.sd_mode = 3;  //copy to flash
-      } 
+      }
 
-  else  if (check_button_on_grid(37, 25)) {
+      else if (check_button_on_grid(37, 25)) {
         fm.sd_mode = 4;  //copy to pc
-      } 
-      else if (check_button_on_grid(46, 25)) {
-        fm.sd_mode = 5;  //play/preview sample 
+      } else if (check_button_on_grid(46, 25)) {
+        fm.sd_mode = 5;  //play/preview sample
 
-         //if (fm.sd_is_folder == false) {
-         // if (fm.sd_mode == 5 && ts.block_screen_update == false)  //preview
-            // {
-            //   strcpy(fm.sd_full_name, fm.sd_new_name);
-            //   strcat(fm.sd_full_name, "/");
-            //   strcat(fm.sd_full_name, fm.sd_temp_name);
-            //   playWAVFile(fm.sd_full_name);
-            //   ts.slowdown_UI_input = 0;
-            //   ts.block_screen_update = true;
-            // }
+        //if (fm.sd_is_folder == false) {
+        // if (fm.sd_mode == 5 && ts.block_screen_update == false)  //preview
+        // {
+        //   strcpy(fm.sd_full_name, fm.sd_new_name);
+        //   strcat(fm.sd_full_name, "/");
+        //   strcat(fm.sd_full_name, fm.sd_temp_name);
+        //   playWAVFile(fm.sd_full_name);
+        //   ts.slowdown_UI_input = 0;
+        //   ts.block_screen_update = true;
+        // }
       }
     }
     // active_window   0 = left window (SDCARD) , 1 = FLASH
@@ -1253,10 +1246,9 @@ FLASHMEM void handle_touchscreen_test_touchscreen() {
         sub_touchscreen_test_page_init();
       seq.generic_ui_delay = 0;
     }
-display.console=true;
-    display.fillRect(ts.p.x, ts.p.y,2,2, COLOR_SYSTEXT);
-    display.console=false;
-
+    display.console = true;
+    display.fillRect(ts.p.x, ts.p.y, 2, 2, COLOR_SYSTEXT);
+    display.console = false;
   }
   seq.generic_ui_delay++;
 }

@@ -83,12 +83,10 @@ extern uint32_t GAMEPAD_BUTTON_B;
 extern uint8_t gamepad_0_neutral;
 extern uint8_t gamepad_1_neutral;
 
-#ifdef USE_SEQUENCER
 #include "sequencer.h"
 extern PeriodicTimer sequencer_timer;
 extern void sequencer();
 extern sequencer_t seq;
-#endif
 
 #ifdef USE_MULTIBAND
 extern uint16_t mb_cross_freq_low;
@@ -2478,15 +2476,11 @@ FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number) {
 }
 
 FLASHMEM bool load_sd_performance_json(uint8_t number) {
-#if defined(USE_SEQUENCER)
   bool seq_was_running = false;
-
   if (seq.running) {
     seq_was_running = true;
     handleStop();
   }
-#endif
-
   dac_mute();
   handleStop();
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
@@ -2594,15 +2588,10 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
           MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
           MicroDexed[instance_id]->panic();
         }
-
         AudioInterrupts();
         dac_unmute();
-
-#if defined(USE_SEQUENCER)
-
         if (seq.euclidean_active)
           update_euclidean();
-
         for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++) {
           seq.chain_counter[d] = 0;
         }
@@ -2612,7 +2601,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
           handleStart();
         } else
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
-#endif
         return (true);
       }
 #ifdef DEBUG

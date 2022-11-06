@@ -121,15 +121,6 @@ XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - 
 extern void handle_touchscreen_multiband();
 #endif
 
-//uint16_t COLOR_BACKGROUND = 0x0000;
-//uint16_t COLOR_SYSTEXT = 0xFFFF;
-//uint16_t COLOR_SYSTEXT_ACCENT = 0x159A;
-//uint16_t COLOR_INSTR = 0x7BBD;
-//uint16_t COLOR_CHORDS = 0xE2FA;
-//uint16_t COLOR_ARP = 0x071B;
-//uint16_t COLOR_DRUMS = 0xFE4F;
-//uint16_t COLOR_PITCHSMP = 0x159A;
-
 Realtime_Scope scope;
 
 // Audio engines
@@ -146,7 +137,6 @@ AudioMixer<NUM_BRAIDS> braids_mixer;
 AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
 AudioMixer<2> braids_mixer_reverb;
 AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
-//AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
 AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 AudioEffectFlange braids_flanger_r;
 AudioEffectFlange braids_flanger_l;
@@ -156,11 +146,11 @@ AudioAnalyzePeak braids_peak_l;
 uint8_t braids_slot;
 extern void update_braids_params(void);
 braids_t braids_osc;
-boolean braids_lfo_direction[NUM_BRAIDS];
 uint16_t braids_filter_state[NUM_BRAIDS];
 uint16_t braids_filter_state_last_displayed[NUM_BRAIDS];
 extern uint16_t braids_filter_lfo_count[NUM_BRAIDS];
-
+extern bool braids_lfo_direction[NUM_BRAIDS];
+extern elapsedMillis braids_control_rate;
 #endif
 
 #if defined(USE_MICROSYNTH)
@@ -181,6 +171,7 @@ AudioAnalyzePeak microsynth_peak_osc_0;
 AudioAnalyzePeak microsynth_peak_osc_1;
 AudioAnalyzePeak microsynth_peak_noise_0;
 AudioAnalyzePeak microsynth_peak_noise_1;
+extern elapsedMillis microsynth_delay_timer[2];
 #endif
 
 #if defined(USE_FX)
@@ -831,13 +822,8 @@ int8_t midi_decay_microsynth[NUM_MICROSYNTH];
 elapsedMillis midi_decay_timer_microsynth;
 extern void update_microsynth_params(void);
 elapsedMillis microsynth_control_rate;
-elapsedMillis microsynth_delay_timer[2];
 #endif
 elapsedMillis midi_decay_timer_dexed;
-
-#ifdef USE_BRAIDS
-elapsedMillis braids_control_rate;
-#endif
 
 #if NUM_DEXED > 1
 int perform_attack_mod[NUM_DEXED] = { 0, 0 };
@@ -862,13 +848,11 @@ uint8_t drum_type[NUM_DRUMS];
 uint8_t drum_midi_channel = DRUM_MIDI_CHANNEL;
 #endif
 
-#ifdef USE_SEQUENCER
 extern sequencer_t seq;
 extern void sequencer(void);
 extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
 extern void print_arp_start_stop_button(void);
 PeriodicTimer sequencer_timer;
-#endif
 
 #ifdef USE_MULTISAMPLES
 multisample_s msp[NUM_MULTISAMPLES];
@@ -1229,10 +1213,8 @@ void setup() {
     }
   }
 
-#if defined(USE_SEQUENCER)
   // Start timer (to avoid a crash when loading the performance data)
   sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
-#endif
 
   if (digitalRead(BUT_R_PIN) == false || digitalRead(BUT_L_PIN) == false)  //is pushed
     bootup_performance_loading = false;
@@ -2144,7 +2126,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
     braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
 
     braids_lfo_direction[braids_slot] = false;
-braids_filter_lfo_count[braids_slot]=0;
+    braids_filter_lfo_count[braids_slot] = 0;
 
     braids_filter[braids_slot]->setLowpass(0, braids_osc.filter_freq_from, braids_osc.filter_resonance / 10);
 
@@ -3418,7 +3400,6 @@ void handleContinue(void) {
 }
 
 void handleStop(void) {
-#if defined(USE_SEQUENCER)
   if (seq.running) {
     sequencer_part2();
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) {
@@ -3457,7 +3438,6 @@ void handleStop(void) {
     seq.current_song_step = 0;
   else
     seq.current_song_step = seq.loop_start;
-#endif
 
 #if defined(USE_MICROSYNTH)
   microsynth_envelope_osc[0].noteOff();

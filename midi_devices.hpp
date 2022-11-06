@@ -28,11 +28,8 @@
 
 extern config_t configuration;
 
-#ifdef USE_SEQUENCER
 #include "sequencer.h"
 extern sequencer_t seq;
-#endif
-
 extern int temp_int;
 extern uint8_t GAMEPAD_UP_0;
 extern uint8_t GAMEPAD_UP_1;

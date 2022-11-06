@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.21"
+#define VERSION "1.4.6.22"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -147,7 +147,6 @@
 #define NUM_DRUMSET_CONFIG 71
 
 // SEQUENCER
-#define USE_SEQUENCER
 #define NUM_SEQ_PATTERN 32
 #define NUM_SEQ_TRACKS 8
 #define SONG_LENGTH 64
@@ -176,7 +175,7 @@
 #endif
 
 // BRAIDS
-#define USE_BRAIDS  //very early state. not ready for usage
+#define USE_BRAIDS
 #ifdef USE_BRAIDS
 #define NUM_BRAIDS 8
 #define DEFAULT_BRAIDS_MIDI_CHANNEL 6
@@ -411,11 +410,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define MAX_NOTES 32
 #define MIDI_DECAY_LEVEL_TIME 500
 #endif
-
-// MIDI
-//#ifdef MIDI_DEVICE_USB
-//#define USBCON 1  ??
-//#endif
 
 // Some optimizations
 #define USE_TEENSY_DSP 1

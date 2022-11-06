@@ -210,9 +210,7 @@ extern uint8_t drum_midi_channel;
 extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 #endif
 
-#ifdef USE_SEQUENCER
 extern sequencer_t seq;
-#endif
 
 #ifdef USE_MULTISAMPLES
 extern multisample_t msp[NUM_MULTISAMPLES];

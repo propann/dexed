@@ -5,6 +5,7 @@
 #include "effect_stereo_panorama.h"
 
 #ifdef USE_MICROSYNTH
+elapsedMillis microsynth_delay_timer[2];
 extern AudioSynthWaveform microsynth_waveform[NUM_MICROSYNTH];
 extern AudioSynthNoisePink microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope microsynth_envelope_osc[NUM_MICROSYNTH];
@@ -27,8 +28,20 @@ extern uint8_t microsynth_selected_instance;
 extern short wave_type[9];
 #endif
 
+// #ifdef USE_BRAIDS
+// extern braids_t braids_osc;
+// extern uint16_t braids_filter_state[NUM_BRAIDS];
+// extern boolean braids_lfo_direction[NUM_BRAIDS];
+// extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
+// extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
+// #endif
+
+
 #ifdef USE_BRAIDS
 #include <synth_braids.h>
+elapsedMillis braids_control_rate;
+uint16_t braids_filter_lfo_count[NUM_BRAIDS];
+boolean braids_lfo_direction[NUM_BRAIDS];
 extern uint8_t generic_active_function;
 extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 extern braids_t braids_osc;
@@ -50,10 +63,8 @@ extern uint8_t generic_temp_select_menu;
 
 extern float volume_transform(float amp);
 
-#ifdef USE_SEQUENCER
 #include "sequencer.h"
 extern sequencer_t seq;
-#endif
 
 FLASHMEM void microsynth_update_all_settings(uint8_t instance_id) {
 #ifdef USE_MICROSYNTH
@@ -100,6 +111,165 @@ FLASHMEM void microsynth_update_all_settings(uint8_t instance_id) {
   microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
   microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
   microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+#endif
+}
+
+void update_microsynth_params() {
+#ifdef USE_MICROSYNTH
+  for (uint8_t d = 0; d < NUM_MICROSYNTH; d++) {
+    if (microsynth_envelope_osc[d].isActive())  //pwm down
+    {
+      if (microsynth[d].pwm_from > microsynth[d].pwm_to) {
+        if (microsynth[d].pwm_current > microsynth[d].pwm_to) {
+          if (microsynth[d].pwm_current - microsynth[d].pwm_speed >= 0)
+            microsynth[d].pwm_current = microsynth[d].pwm_current - microsynth[d].pwm_speed;
+          else
+            microsynth[d].pwm_current = 0;
+          microsynth_waveform[d].pulseWidth(microsynth[d].pwm_current / 2000.1);
+        }
+      } else {
+        if (microsynth[d].pwm_current < microsynth[d].pwm_to)  //pwm up
+        {
+          if (microsynth[d].pwm_current + microsynth[d].pwm_speed <= 2000)
+            microsynth[d].pwm_current = microsynth[d].pwm_current + microsynth[d].pwm_speed;
+          else
+            microsynth[d].pwm_current = 2000;
+          microsynth_waveform[d].pulseWidth(microsynth[d].pwm_current / 2000.1);
+        }
+      }
+    }
+    if (microsynth[d].filter_osc_freq_from > microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0) {
+      if (microsynth[d].filter_osc_freq_current > microsynth[d].filter_osc_freq_to)  //osc filter down
+      {
+        if (int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001)))) >= 0)
+          microsynth[d].filter_osc_freq_current = int(microsynth[d].filter_osc_freq_current / float((1.01 + (microsynth[d].filter_osc_speed * 0.001))));
+        else
+          microsynth[d].filter_osc_freq_current = 0;
+
+        microsynth_filter_osc[d].frequency(microsynth[d].filter_osc_freq_current);
+      }
+    } else {
+      if (microsynth[d].filter_osc_freq_current < microsynth[d].filter_osc_freq_to && microsynth[d].filter_osc_speed != 0) {  //osc filter up
+        if (microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed <= 15000)
+          microsynth[d].filter_osc_freq_current = microsynth[d].filter_osc_freq_current + microsynth[d].filter_osc_speed;
+        else
+          microsynth[d].filter_osc_freq_current = 15000;
+        microsynth_filter_osc[d].frequency(microsynth[d].filter_osc_freq_current);
+      }
+    }
+
+    if (microsynth[d].filter_noise_freq_from > microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0) {
+      if (microsynth[d].filter_noise_freq_current > microsynth[d].filter_noise_freq_to) {
+        if (int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001)))) >= 0)
+          microsynth[d].filter_noise_freq_current = int(microsynth[d].filter_noise_freq_current / float((1.01 + (microsynth[d].filter_noise_speed * 0.001))));
+        else
+          microsynth[d].filter_noise_freq_current = 0;
+        microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
+      }
+    } else {
+      if (microsynth[d].filter_noise_freq_current < microsynth[d].filter_noise_freq_to && microsynth[d].filter_noise_speed != 0) {
+        if (microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed <= 15000)
+          microsynth[d].filter_noise_freq_current = microsynth[d].filter_noise_freq_current + microsynth[d].filter_noise_speed;
+        else
+          microsynth[d].filter_noise_freq_current = 15000;
+        microsynth_filter_noise[d].frequency(microsynth[d].filter_noise_freq_current);
+      }
+    }  //  --------------------------------------------------------- OSC LFO ----------------------------------------------------------------------
+
+    if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 0)  // LFO U&D
+    {
+      if (microsynth[d].lfo_direction == false && microsynth[d].lfo_value > microsynth[d].lfo_intensity * -1)
+        microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+
+      else if (microsynth[d].lfo_direction == true && microsynth[d].lfo_value < microsynth[d].lfo_intensity)
+        microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
+
+      if (microsynth[d].lfo_value <= microsynth[d].lfo_intensity * -1)  //switch mode 0 LFO direction
+        microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
+      else if (microsynth[d].lfo_mode == 0 && microsynth[d].lfo_value >= microsynth[d].lfo_intensity)
+        microsynth[d].lfo_direction = !microsynth[d].lfo_direction;
+    } else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 1)  // LFO Up
+    {
+      if (microsynth[d].lfo_value < microsynth[d].lfo_intensity * 10)
+        microsynth[d].lfo_value = microsynth[d].lfo_value + microsynth[d].lfo_speed;
+    } else if (microsynth[d].lfo_speed > 0 && microsynth[d].lfo_mode == 2)  // LFO Down
+    {
+      if (microsynth[d].lfo_value > microsynth[d].lfo_intensity * -10)
+        microsynth[d].lfo_value = microsynth[d].lfo_value - microsynth[d].lfo_speed;
+    }
+
+    //--------------------------------------------------------------------------- LFO FADE/DELAY ---------------------------------------------------------
+
+    if (microsynth[d].lfo_delay == 0)  // no delay, instant lfo mod
+    {
+      microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + microsynth[d].lfo_value / 10);
+    } else if ((int)microsynth_delay_timer[d] / 10 > microsynth[d].lfo_delay && microsynth[d].lfo_fade == 0)  //init lfo fade in
+    {
+      microsynth[d].lfo_fade = microsynth[d].lfo_delay;
+    }
+    if (microsynth[d].lfo_fade > 0)  //fade in to max lfo intensity
+    {
+      if (microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))) > 20 && microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))) < 10000)
+        microsynth_waveform[d].frequency(microsynth[d].osc_freq_current + ((microsynth[d].lfo_value / 10) / (1 + float(microsynth[d].lfo_fade / 10))));
+      if (microsynth[d].lfo_fade > 1)  //only count down to multiplier of 1, not 0
+        microsynth[d].lfo_fade = microsynth[d].lfo_fade - 1;
+    }
+  }
+#endif
+}
+
+void update_braids_filter(uint8_t d) {
+  if (braids_filter_state[d] >= 0 && braids_filter_state[d] <= 15000) {
+    if (braids_osc.filter_mode == 1)
+      braids_filter[d]->setLowpass(0, braids_filter_state[d], 0.1 + braids_osc.filter_resonance / 10);
+    if (braids_osc.filter_mode == 2)
+      braids_filter[d]->setBandpass(0, braids_filter_state[d], 0.1 + braids_osc.filter_resonance / 10);
+    if (braids_osc.filter_mode == 3)
+      braids_filter[d]->setHighpass(0, braids_filter_state[d], 0.1 + braids_osc.filter_resonance / 10);
+  }
+}
+
+void update_braids_params() {
+#ifdef USE_BRAIDS
+
+  for (uint8_t d = 0; d < NUM_BRAIDS; d++) {
+
+    if (braids_envelope[d]->isActive()) {
+
+      if (braids_osc.filter_freq_from > braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {
+        if (braids_filter_state[d] > braids_osc.filter_freq_to)  //osc filter down
+        {
+          if (int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0) {          
+            braids_filter_state[d] = int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001))));
+          } else
+            braids_filter_state[d] = 0;
+        }
+
+      } else {
+        if (braids_filter_state[d] < braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {  //osc filter up
+          if (braids_filter_state[d] + braids_osc.filter_speed <= 15000)
+            braids_filter_state[d] = braids_filter_state[d] + braids_osc.filter_speed;
+          else
+            braids_filter_state[d] = 15000;
+        }
+      }
+
+      if (braids_osc.filter_lfo_speed > 0 && braids_osc.filter_lfo_intensity > 0)  // LFO
+      {
+        if (braids_lfo_direction[d] == true && braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100)  > 0)
+          braids_filter_state[d] = braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100) ;
+        if (braids_lfo_direction[d] == false && braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100)  < 15000)
+          braids_filter_state[d] = braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100) ;
+
+        braids_filter_lfo_count[d]++;
+        if (braids_filter_lfo_count[d] > 512 / braids_osc.filter_lfo_speed) {
+          braids_filter_lfo_count[d] = 0;
+          braids_lfo_direction[d] = !braids_lfo_direction[d];
+        }
+      }
+    }
+    update_braids_filter(d);
+  }
 #endif
 }
 
@@ -205,7 +375,6 @@ FLASHMEM void braids_update_all_settings() {
 
 #endif
 }
-
 
 FLASHMEM void braids_update_single_setting() {
 #ifdef USE_BRAIDS
