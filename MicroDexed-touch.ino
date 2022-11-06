@@ -838,6 +838,8 @@ uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
 bool ui_save_notification_icon;
 char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+uint8_t remote_MIDI_CC = 0;
+uint8_t remote_MIDI_CC_value;
 
 #if NUM_DEXED > 1
 int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1 };
@@ -2638,9 +2640,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
   }
 }
 
-uint8_t remote_MIDI_CC = 0;
-uint8_t remote_MIDI_CC_value;
-
 void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
   inCtrl = constrain(inCtrl, 0, 127);
   inValue = constrain(inValue, 0, 127);
@@ -2734,18 +2733,23 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             }
             break;
 
-          case 20:  // RIGHT navigation
-          case 21:  // LEFT navigation
-          case 22:  // UP navigation
-          case 23:  // DOWN navigation
-          case 24:  // SELECT navigation
-          // case 25: // START navigation
-          case 26:  // BUTTON B navigation
-          case 27:  // BUTTON A navigation
-          case 28:  // init display at remote connection
+          // MDT internal CC
+          case 20: // RIGHT
+          case 21: // LEFT
+          case 22: // UP
+          case 23: // DOWN
+          case 24: // SELECT
+          // case 25: // START
+          case 26: // BUTTON B
+          case 27: // BUTTON A
+          case 28: // init display at remote connection
+          case 29: // remote touch pressed X
+          case 30: // remote touch pressed Y
+          case 31: // remote touch released
             remote_MIDI_CC = inCtrl;
             remote_MIDI_CC_value = inValue;
             break;
+          // end MDT internal CC
 
           case 32:  // BankSelect LSB
 #ifdef DEBUG
