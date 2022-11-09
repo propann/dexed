@@ -279,7 +279,6 @@ extern AudioMixer<NUM_BRAIDS> braids_mixer;
 extern AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
 extern AudioMixer<2> braids_mixer_reverb;
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
-//extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
 extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 
 extern AudioEffectStereoPanorama braids_stereo_panorama;
@@ -3693,6 +3692,7 @@ FLASHMEM void UI_func_delay_time(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     if (configuration.fx.delay_sync[selected_instance_id] > 0) {
       display_delay_sync(configuration.fx.delay_sync[selected_instance_id]);  //goto MIDI Sync
     } else {
@@ -3702,10 +3702,8 @@ FLASHMEM void UI_func_delay_time(uint8_t param) {
       display_bar_int("Delay Time", configuration.fx.delay_time[selected_instance_id], 10.0, DELAY_TIME_MIN, DELAY_TIME_MAX, 3, false, false, true);
 #endif
     }
-
     UI_update_instance_icons();
   }
-
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
@@ -3738,7 +3736,6 @@ FLASHMEM void UI_func_delay_time(uint8_t param) {
       }
 #endif
     }
-
     if (configuration.fx.delay_sync[selected_instance_id] > 0) {
       display_delay_sync(configuration.fx.delay_sync[selected_instance_id]);  //MIDI Sync Delay
     } else {
@@ -3751,9 +3748,17 @@ FLASHMEM void UI_func_delay_time(uint8_t param) {
         delay_fx[selected_instance_id]->disable(0);
       else
         delay_fx[selected_instance_id]->delay(0, constrain(configuration.fx.delay_time[selected_instance_id], DELAY_TIME_MIN, DELAY_TIME_MAX) * 10);
+
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      setCursor_textGrid_small(2, 6);
+      display.setTextSize(1);
+      display.print(F("SCROLL < 0 FOR SYNC. OPTIONS. "));
+      display.setTextSize(2);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      if (DELAY_TIME_MAX < 1000)
+        show(2, 13, 1, " ");
     }
   }
-
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
@@ -15586,7 +15591,13 @@ FLASHMEM void UI_func_voice_select(uint8_t param) {
         if (generic_temp_select_menu == 10)  // DELAY
         {
           if (LCDML.BT_checkDown()) {
+            configuration.fx.delay_level[selected_instance_id] = constrain(configuration.fx.delay_level[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
+            delay_mixer[selected_instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
           } else if (LCDML.BT_checkUp()) {
+            configuration.fx.delay_level[selected_instance_id] = constrain(configuration.fx.delay_level[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
+            delay_mixer[selected_instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
           }
         }
         if (generic_temp_select_menu == 11)  // REVERB SEND
@@ -17149,36 +17160,43 @@ FLASHMEM void display_OP_active_instance_number(uint8_t instance_id, uint8_t op)
 
 #ifdef USE_FX
 FLASHMEM void display_delay_sync(uint8_t sync) {
+
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  setCursor_textGrid_small(2, 6);
+  display.setTextSize(1);
+  display.print(F("SCROLL > FOR TIME IN MILLISECS"));
+  display.setTextSize(2);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   show(1, 1, display_cols - 2, "Delay Sync");
   if (seq.running == false) show(2, 1, 10, "MIDI Sync   ");
   else show(2, 0, 10, "Seq. Sync   ");
   switch (sync) {
     case 1:
-      show(2, 13, 6, "1/16");
+      show(2, 11, 6, "1/16");
       break;
     case 2:
-      show(2, 13, 6, "1/16T");
+      show(2, 11, 6, "1/16T");
       break;
     case 3:
-      show(2, 13, 6, "1/8");
+      show(2, 11, 6, "1/8");
       break;
     case 4:
-      show(2, 13, 6, "1/8T");
+      show(2, 11, 6, "1/8T");
       break;
     case 5:
-      show(2, 13, 6, "1/4");
+      show(2, 11, 6, "1/4");
       break;
     case 6:
-      show(2, 13, 6, "1/4T");
+      show(2, 11, 6, "1/4T");
       break;
     case 7:
-      show(2, 13, 6, "1/2");
+      show(2, 11, 6, "1/2");
       break;
     case 8:
-      show(2, 13, 6, "1/2T");
+      show(2, 11, 6, "1/2T");
       break;
     case 9:
-      show(2, 13, 6, "1/1");
+      show(2, 11, 6, "1/1");
       break;
   }
   if (seq.running == false) {
@@ -17198,7 +17216,7 @@ FLASHMEM void display_delay_sync(uint8_t sync) {
     uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
     delay_fx[selected_instance_id]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
   }
-  show(2, 18, 1, "!");
+  show(2, 16, 1, "!");
 }
 #endif
 

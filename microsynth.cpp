@@ -239,7 +239,7 @@ void update_braids_params() {
       if (braids_osc.filter_freq_from > braids_osc.filter_freq_to && braids_osc.filter_speed != 0) {
         if (braids_filter_state[d] > braids_osc.filter_freq_to)  //osc filter down
         {
-          if (int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0) {          
+          if (int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001)))) >= 0) {
             braids_filter_state[d] = int(braids_filter_state[d] / float((1.01 + (braids_osc.filter_speed * 0.001))));
           } else
             braids_filter_state[d] = 0;
@@ -254,19 +254,20 @@ void update_braids_params() {
         }
       }
 
-      if (braids_osc.filter_lfo_speed > 0 && braids_osc.filter_lfo_intensity > 0)  // LFO
-      {
-        if (braids_lfo_direction[d] == true && braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100)  > 0)
-          braids_filter_state[d] = braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100) ;
-        if (braids_lfo_direction[d] == false && braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100)  < 15000)
-          braids_filter_state[d] = braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100) ;
+    
+        if (braids_osc.filter_lfo_speed > 0 && braids_osc.filter_lfo_intensity > 0)  // LFO
+        {
+          if (braids_lfo_direction[d] == true && braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100) > 0)
+            braids_filter_state[d] = braids_filter_state[d] - (braids_osc.filter_lfo_intensity / 100);
+          if (braids_lfo_direction[d] == false && braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100) < 15000)
+            braids_filter_state[d] = braids_filter_state[d] + (braids_osc.filter_lfo_intensity / 100);
 
-        braids_filter_lfo_count[d]++;
-        if (braids_filter_lfo_count[d] > 512 / braids_osc.filter_lfo_speed) {
-          braids_filter_lfo_count[d] = 0;
-          braids_lfo_direction[d] = !braids_lfo_direction[d];
+          braids_filter_lfo_count[d]++;
+          if (braids_filter_lfo_count[d] > 512 / braids_osc.filter_lfo_speed) {
+            braids_filter_lfo_count[d] = 0;
+            braids_lfo_direction[d] = !braids_lfo_direction[d];
+          }
         }
-      }
     }
     update_braids_filter(d);
   }
@@ -301,33 +302,33 @@ FLASHMEM void microsynth_update_single_setting(uint8_t instance_id) {
   else if (microsynth[instance_id].filter_noise_mode == 3)
     microsynth_mixer_filter_noise[instance_id].gain(2, 1.0);
 
-    if (generic_temp_select_menu == 4)
-  microsynth_envelope_osc[instance_id].attack(microsynth[instance_id].env_attack * 4);
+  if (generic_temp_select_menu == 4)
+    microsynth_envelope_osc[instance_id].attack(microsynth[instance_id].env_attack * 4);
   if (generic_temp_select_menu == 5)
-  microsynth_envelope_osc[instance_id].decay(microsynth[instance_id].env_decay * 4);
+    microsynth_envelope_osc[instance_id].decay(microsynth[instance_id].env_decay * 4);
   if (generic_temp_select_menu == 6)
-  microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain / 50.1);
+    microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain / 50.1);
   if (generic_temp_select_menu == 7)
-  microsynth_envelope_osc[instance_id].release(microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release);
+    microsynth_envelope_osc[instance_id].release(microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release);
   microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   if (generic_temp_select_menu == 20)
-  microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
+    microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
   microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
- if (generic_temp_select_menu == 22)
-  microsynth_filter_noise[instance_id].resonance(microsynth[instance_id].filter_noise_resonance / 20);
+  if (generic_temp_select_menu == 22)
+    microsynth_filter_noise[instance_id].resonance(microsynth[instance_id].filter_noise_resonance / 20);
   microsynth_filter_osc[instance_id].resonance(microsynth[instance_id].filter_osc_resonance / 20);
   if (generic_temp_select_menu == 17)
-  microsynth_envelope_noise[instance_id].decay(microsynth[instance_id].noise_decay + 20);
+    microsynth_envelope_noise[instance_id].decay(microsynth[instance_id].noise_decay + 20);
   microsynth_envelope_noise[instance_id].sustain(0);
   microsynth_envelope_noise[instance_id].release(microsynth[instance_id].noise_decay * 8 + 20);
   microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
   microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
   if (generic_temp_select_menu == 16)
-  microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
+    microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
   if (generic_temp_select_menu == 0)
     microsynth_waveform[instance_id].amplitude(mapfloat(microsynth[instance_id].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
   if (generic_temp_select_menu == 1)
-  microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
+    microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
   microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
   microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 #endif

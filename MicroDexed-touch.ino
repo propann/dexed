@@ -674,14 +674,11 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
 FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
   synthBraids[instance_id] = new AudioSynthBraids();
   braids_envelope[instance_id] = new AudioEffectEnvelope();
-  //braids_filter[instance_id] = new AudioFilterStateVariable();
   braids_filter[instance_id] = new AudioFilterBiquad();
   braids_mixer_filter[instance_id] = new AudioMixer<4>;
   dynamicConnections[nDynamic++] = new AudioConnection(*synthBraids[instance_id], 0, *braids_envelope[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_envelope[instance_id], 0, *braids_filter[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 0, *braids_mixer_filter[instance_id], 0);
-  //dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 1, *braids_mixer_filter[instance_id], 1);
-  //dynamicConnections[nDynamic++] = new AudioConnection(*braids_filter[instance_id], 2, *braids_mixer_filter[instance_id], 2);
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_envelope[instance_id], 0, *braids_mixer_filter[instance_id], 3);  // filter is off
   dynamicConnections[nDynamic++] = new AudioConnection(*braids_mixer_filter[instance_id], 0, braids_mixer, instance_id);
 
