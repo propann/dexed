@@ -93,7 +93,7 @@
 
 #define I2S_AUDIO_ONLY  // for PCM5102 or other I2S DACs
 
-#define AUDIO_DEVICE_USB
+//#define AUDIO_DEVICE_USB
 //#define TEENSY_AUDIO_BOARD // for legacy reasons, only
 //#define PT8211_AUDIO
 //#define TGA_AUDIO_BOARD
