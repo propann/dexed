@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.6.24"
+#define VERSION "1.4.7"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -877,6 +877,7 @@ typedef struct fx_s {
   uint8_t delay_feedback[MAX_DEXED];
   uint8_t delay_level[MAX_DEXED];
   uint8_t delay_sync[MAX_DEXED];
+  uint8_t delay_pan[MAX_DEXED];
   uint8_t reverb_send[MAX_DEXED];
   uint8_t reverb_roomsize;
   uint8_t reverb_damping;
@@ -964,7 +965,7 @@ typedef struct microsynth_s {
   uint16_t pwm_last_displayed;
   uint8_t rev_send;
   uint8_t chorus_send;
-  uint8_t delay_send;
+  uint8_t delay_send[NUM_MICROSYNTH];
   uint8_t vel_mod_filter_osc = 0;
   uint8_t vel_mod_filter_noise = 0;
 } microsynth_t;
@@ -991,7 +992,8 @@ typedef struct braids_s {
   uint8_t rev_send;
   uint8_t flanger;
   uint8_t flanger_spread;
-  uint8_t delay_send;
+  uint8_t delay_send_1;
+  uint8_t delay_send_2;
   uint8_t midi_channel;
   uint8_t pan;
   uint8_t note_buffer[NUM_BRAIDS];
@@ -1062,6 +1064,8 @@ enum master_mixer_ports {
   MASTER_MIX_CH_MICROSYNTH,
   MASTER_MIX_CH_BRAIDS,
   MASTER_MIX_CH_WAV_PREVIEW,
+  MASTER_MIX_CH_DELAY1,
+  MASTER_MIX_CH_DELAY2,
 };
 
 enum reverb_mixer_ports {

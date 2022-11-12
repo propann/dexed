@@ -162,8 +162,10 @@ AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 AudioEffectStereoPanorama microsynth_stereo_panorama_osc[NUM_MICROSYNTH];
 AudioEffectStereoPanorama microsynth_stereo_panorama_noise[NUM_MICROSYNTH];
-AudioMixer<4> microsynth_mixer_r;
-AudioMixer<4> microsynth_mixer_l;
+AudioMixer<2> microsynth_mixer_r[NUM_MICROSYNTH];
+AudioMixer<2> microsynth_mixer_l[NUM_MICROSYNTH];
+AudioMixer<2> microsynth_main_mixer_r;
+AudioMixer<2> microsynth_main_mixer_l;
 AudioMixer<4> microsynth_mixer_filter_osc[NUM_MICROSYNTH];
 AudioMixer<4> microsynth_mixer_filter_noise[NUM_MICROSYNTH];
 AudioMixer<2> microsynth_mixer_reverb;
@@ -180,12 +182,14 @@ AudioSynthWaveform* chorus_modulator[NUM_DEXED];
 AudioFilterBiquad* modchorus_filter[NUM_DEXED];
 #endif
 AudioEffectModulatedDelay* modchorus[NUM_DEXED];
-AudioMixer<2>* chorus_mixer[NUM_DEXED];
+AudioMixer<6>* chorus_mixer[NUM_DEXED];
 AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 AudioEffectDelay* delay_fx[NUM_DEXED];
 AudioMixer<2>* delay_mixer[NUM_DEXED];
+AudioEffectMonoStereo* dexed_mono2stereo[NUM_DEXED];
+AudioEffectMonoStereo* dexed_dry_mono2stereo[NUM_DEXED];
+AudioEffectMonoStereo* delay_mono2stereo[NUM_DEXED];
 #endif
-AudioEffectMonoStereo* mono2stereo[NUM_DEXED];
 
 #if defined(USE_FX) && defined(USE_EPIANO)
 AudioEffectStereoPanorama ep_stereo_panorama;
@@ -213,8 +217,8 @@ AudioMixer<3> reverb_mixer_l;
 
 AudioEffectPlateReverb reverb;
 
-AudioMixer<8> master_mixer_r;
-AudioMixer<8> master_mixer_l;
+AudioMixer<10> master_mixer_r;
+AudioMixer<10> master_mixer_l;
 
 AudioAmplifier volume_r;
 AudioAmplifier volume_l;
@@ -577,20 +581,27 @@ AudioConnection patchCord[] = {
   { microsynth_mixer_filter_osc[1], 0, microsynth_stereo_panorama_osc[1], 0 },  //mixer 1 to panorama 1
   { microsynth_mixer_filter_osc[1], 0, microsynth_stereo_panorama_osc[1], 1 },
 
-  { microsynth_stereo_panorama_osc[0], 0, microsynth_mixer_r, 0 },  //osc 0 pan to internal mixer
-  { microsynth_stereo_panorama_osc[0], 1, microsynth_mixer_l, 0 },
+  { microsynth_stereo_panorama_osc[0], 0, microsynth_mixer_r[0], 0 },  //osc 0 pan to internal mixer
+  { microsynth_stereo_panorama_osc[0], 1, microsynth_mixer_l[0], 0 },
 
-  { microsynth_stereo_panorama_osc[1], 0, microsynth_mixer_r, 1 },  //osc 1 pan to internal mixer
-  { microsynth_stereo_panorama_osc[1], 1, microsynth_mixer_l, 1 },
+  { microsynth_stereo_panorama_osc[1], 0, microsynth_mixer_r[1], 0 },  //osc 1 pan to internal mixer
+  { microsynth_stereo_panorama_osc[1], 1, microsynth_mixer_l[1], 0 },
 
-  { microsynth_stereo_panorama_noise[0], 0, microsynth_mixer_r, 2 },  // noise 0 to mixer
-  { microsynth_stereo_panorama_noise[0], 1, microsynth_mixer_l, 2 },
+  { microsynth_stereo_panorama_noise[0], 0, microsynth_mixer_r[0], 1 },  // noise 0 to mixer
+  { microsynth_stereo_panorama_noise[0], 1, microsynth_mixer_l[0], 1 },
 
-  { microsynth_stereo_panorama_noise[1], 0, microsynth_mixer_r, 3 },  //noise 1 to mixer
-  { microsynth_stereo_panorama_noise[1], 1, microsynth_mixer_l, 3 },
+  { microsynth_stereo_panorama_noise[1], 0, microsynth_mixer_r[1], 1 },  //noise 1 to mixer
+  { microsynth_stereo_panorama_noise[1], 1, microsynth_mixer_l[1], 1 },
 
-  { microsynth_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_MICROSYNTH },  //mixer to master mixer
-  { microsynth_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_MICROSYNTH },
+
+  { microsynth_mixer_r[0], 0, microsynth_main_mixer_r, 0 },
+  { microsynth_mixer_l[0], 0, microsynth_main_mixer_l, 0 },
+
+  { microsynth_mixer_r[1], 0, microsynth_main_mixer_r, 1 },
+  { microsynth_mixer_l[1], 0, microsynth_main_mixer_l, 1 },
+
+  { microsynth_main_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_MICROSYNTH },
+  { microsynth_main_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_MICROSYNTH },
 
   { microsynth_envelope_osc[0], 0, microsynth_mixer_reverb, 0 },
   { microsynth_envelope_osc[1], 0, microsynth_mixer_reverb, 1 },
@@ -610,7 +621,7 @@ AudioConnection patchCord[] = {
 //
 uint8_t nDynamic = 0;
 #if defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT && defined(USE_BRAIDS)
-AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 12];
+AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 14];
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4];
 #elif defined(USE_FX) && MOD_FILTER_OUTPUT == MOD_NO_FILTER_OUTPUT
@@ -621,48 +632,60 @@ AudioConnection* dynamicConnections[NUM_DEXED * 4 + NUM_DRUMS * 2 8];
 
 FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   MicroDexed[instance_id] = new AudioSynthDexed(MAX_NOTES / NUM_DEXED, SAMPLE_RATE);
-  mono2stereo[instance_id] = new AudioEffectMonoStereo();
+  dexed_mono2stereo[instance_id] = new AudioEffectMonoStereo();
+  delay_mono2stereo[instance_id] = new AudioEffectMonoStereo();
+  dexed_dry_mono2stereo[instance_id] = new AudioEffectMonoStereo();
 
-#if defined(USE_FX)
   chorus_modulator[instance_id] = new AudioSynthWaveform();
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
   modchorus_filter[instance_id] = new AudioFilterBiquad();
 #endif
   modchorus[instance_id] = new AudioEffectModulatedDelay();
-  chorus_mixer[instance_id] = new AudioMixer<2>();
+  chorus_mixer[instance_id] = new AudioMixer<6>();
   delay_fb_mixer[instance_id] = new AudioMixer<2>();
   delay_fx[instance_id] = new AudioEffectDelay();
   delay_mixer[instance_id] = new AudioMixer<2>();
-#endif
 
-  if (instance_id == 0)
+  if (instance_id == 0) {
     dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_0, 0);
-  else
+  } else
     dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_1, 0);
 
-#if defined(USE_FX)
   dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *chorus_mixer[instance_id], 0);
-  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *modchorus[instance_id], 0);  //////////////////////
+  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *modchorus[instance_id], 0);
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
   dynamicConnections[nDynamic++] = new AudioConnection(*chorus_modulator[instance_id], 0, *modchorus_filter[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*modchorus_filter[instance_id], 0, *modchorus[instance_id], 1);
 #else
   dynamicConnections[nDynamic++] = new AudioConnection(*chorus_modulator[instance_id], 0, *modchorus[instance_id], 1);
 #endif
+
   dynamicConnections[nDynamic++] = new AudioConnection(*modchorus[instance_id], 0, *chorus_mixer[instance_id], 1);
   dynamicConnections[nDynamic++] = new AudioConnection(*chorus_mixer[instance_id], 0, *delay_fb_mixer[instance_id], 0);
-  dynamicConnections[nDynamic++] = new AudioConnection(*chorus_mixer[instance_id], 0, *delay_mixer[instance_id], 0);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*chorus_mixer[instance_id], 0, *delay_mixer[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_fb_mixer[instance_id], 0, *delay_fx[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_fx[instance_id], 0, *delay_fb_mixer[instance_id], 1);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_fx[instance_id], 0, *delay_mixer[instance_id], 1);
-  dynamicConnections[nDynamic++] = new AudioConnection(*delay_mixer[instance_id], 0, *mono2stereo[instance_id], 0);
-  dynamicConnections[nDynamic++] = new AudioConnection(*mono2stereo[instance_id], 0, reverb_mixer_r, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*mono2stereo[instance_id], 1, reverb_mixer_l, instance_id);
-#else
-  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *mono2stereo[instance_id], 0);
-#endif
-  dynamicConnections[nDynamic++] = new AudioConnection(*mono2stereo[instance_id], 0, master_mixer_r, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*mono2stereo[instance_id], 1, master_mixer_l, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*delay_mixer[instance_id], 0, *delay_mono2stereo[instance_id], 0);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, reverb_mixer_r, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, reverb_mixer_l, instance_id);
+
+  //microsynth delays
+  dynamicConnections[nDynamic++] = new AudioConnection(microsynth_mixer_filter_osc[0], 0, *chorus_mixer[instance_id], 2);
+  dynamicConnections[nDynamic++] = new AudioConnection(microsynth_mixer_filter_osc[1], 0, *chorus_mixer[instance_id], 3);
+
+
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *dexed_dry_mono2stereo[instance_id], 0);
+  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 1, *dexed_dry_mono2stereo[instance_id], 1);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*dexed_dry_mono2stereo[instance_id], 0, master_mixer_r, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*dexed_dry_mono2stereo[instance_id], 1, master_mixer_l, instance_id);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*delay_mono2stereo[instance_id], 0, master_mixer_r, MASTER_MIX_CH_DELAY1 + instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*delay_mono2stereo[instance_id], 1, master_mixer_l, MASTER_MIX_CH_DELAY1 + instance_id);
+
 
 #ifdef DEBUG
   Serial.print(F("Dexed-Instance: "));
@@ -699,6 +722,10 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
 
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 0, braids_peak_r, 0 };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 1, braids_peak_l, 0 };
+
+    //braids delays
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *chorus_mixer[0], 4);
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *chorus_mixer[1], 5);
   }
 }
 #endif
@@ -1283,6 +1310,10 @@ void setup() {
 #if defined(USE_MICROSYNTH)
   master_mixer_r.gain(MASTER_MIX_CH_MICROSYNTH, VOL_MAX_FLOAT);
   master_mixer_l.gain(MASTER_MIX_CH_MICROSYNTH, VOL_MAX_FLOAT);
+  master_mixer_r.gain(MASTER_MIX_CH_DELAY1, VOL_MAX_FLOAT);
+  master_mixer_l.gain(MASTER_MIX_CH_DELAY1, VOL_MAX_FLOAT);
+  master_mixer_r.gain(MASTER_MIX_CH_DELAY2, VOL_MAX_FLOAT);
+  master_mixer_l.gain(MASTER_MIX_CH_DELAY2, VOL_MAX_FLOAT);
 #endif
 #if defined(USE_BRAIDS)
   master_mixer_r.gain(MASTER_MIX_CH_BRAIDS, VOL_MAX_FLOAT);
@@ -2233,7 +2264,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 #ifdef USE_MICROSYNTH
       // Check for MicroSynth
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
-        if (microsynth[instance_id].midi_channel == MIDI_CHANNEL_OMNI || microsynth[instance_id].midi_channel == inChannel) {
+        // if (microsynth[instance_id].midi_channel == MIDI_CHANNEL_OMNI || microsynth[instance_id].midi_channel == inChannel) {
+        //hanging notes when playing notes manually with omni - noteoff issue not fixed for now
+        if (microsynth[instance_id].midi_channel == inChannel) {
           if (inNumber == MIDI_C8)  // is noise only, mute osc
           {
             microsynth_noise[instance_id].amplitude((microsynth[instance_id].noise_vol / 127.0) * inVelocity / 127);
@@ -2552,6 +2585,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
   if (device == 0) {
 #if defined(USE_MICROSYNTH)
     for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
+      // if (inChannel == microsynth[instance_id].midi_channel || (inChannel == MIDI_CHANNEL_OMNI && microsynth[instance_id].midi_channel==0)) {
       if (inChannel == microsynth[instance_id].midi_channel) {
         microsynth_envelope_osc[instance_id].noteOff();
         if (inNumber == MIDI_C8 || microsynth[instance_id].trigger_noise_with_osc)  // is noise only or is osc_with_noise
@@ -2690,7 +2724,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             Serial.println(F("PANORAMA CC"));
 #endif
             configuration.dexed[instance_id].pan = map(inValue, 0, 0x7f, PANORAMA_MIN, PANORAMA_MAX);
-            mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+            dexed_mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
             if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_panorama)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
@@ -3546,24 +3580,24 @@ FLASHMEM void set_volume(uint8_t v, uint8_t m) {
     case 0:  // stereo
       stereo2mono.stereo(true);
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-        mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+        dexed_mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
       break;
     case 1:  // mono both
       stereo2mono.stereo(false);
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-        mono2stereo[instance_id]->panorama(mapfloat(PANORAMA_DEFAULT, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+        dexed_mono2stereo[instance_id]->panorama(mapfloat(PANORAMA_DEFAULT, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
       break;
     case 2:  // mono right
       volume_l.gain(0.0);
       stereo2mono.stereo(false);
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-        mono2stereo[instance_id]->panorama(mapfloat(PANORAMA_MAX, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+        dexed_mono2stereo[instance_id]->panorama(mapfloat(PANORAMA_MAX, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
       break;
     case 3:  // mono left
       volume_r.gain(0.0);
       stereo2mono.stereo(false);
       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-        mono2stereo[instance_id]->panorama(mapfloat(PANORAMA_MIN, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+        dexed_mono2stereo[instance_id]->panorama(mapfloat(PANORAMA_MIN, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
       break;
   }
 }
@@ -3971,6 +4005,7 @@ FLASHMEM void set_fx_params(void) {
     delay_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
     delay_fb_mixer[instance_id]->gain(0, 1.0);
     delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127)));
+
     if (configuration.fx.delay_level[selected_instance_id] <= DELAY_LEVEL_MIN)
       delay_fx[instance_id]->disable(0);
     else if (configuration.fx.delay_sync[instance_id] == 0)
@@ -4083,7 +4118,7 @@ FLASHMEM void set_voiceconfig_params(uint8_t instance_id) {
   MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
 
   // PANORAMA
-  mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+  dexed_mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 }
 
 FLASHMEM void set_epiano_params(void) {

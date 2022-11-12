@@ -991,7 +991,8 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
         microsynth[instance_id].pwm_speed = data_json["pwm_speed"];
         microsynth[instance_id].rev_send = data_json["rev_send"];
         microsynth[instance_id].chorus_send = data_json["chorus_send"];
-        microsynth[instance_id].delay_send = data_json["delay_send"];
+        microsynth[instance_id].delay_send[0] = data_json["delay_send_1"];
+        microsynth[instance_id].delay_send[1] = data_json["delay_send_2"];
         microsynth[instance_id].midi_channel = data_json["midi_channel"];
         microsynth[instance_id].pan = data_json["pan"];
         microsynth[instance_id].vel_mod_filter_osc = data_json["vel_mod_filter_osc"];
@@ -1064,7 +1065,8 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
       data_json["pwm_speed"] = microsynth[instance_id].pwm_speed;
       data_json["rev_send"] = microsynth[instance_id].rev_send;
       data_json["chorus_send"] = microsynth[instance_id].chorus_send;
-      data_json["delay_send"] = microsynth[instance_id].delay_send;
+      data_json["delay_send_1"] = microsynth[instance_id].delay_send[0];
+      data_json["delay_send_2"] = microsynth[instance_id].delay_send[1];
       data_json["midi_channel"] = microsynth[instance_id].midi_channel;
       data_json["pan"] = microsynth[instance_id].pan;
       data_json["vel_mod_filter_osc"] = microsynth[instance_id].vel_mod_filter_osc;
@@ -1579,7 +1581,8 @@ FLASHMEM bool load_sd_braids_json(uint8_t number) {
         braids_osc.rev_send = data_json["rev"];
         braids_osc.flanger = data_json["flanger"];
         braids_osc.flanger_spread = data_json["flanger_spread"];
-        braids_osc.delay_send = data_json["delay"];
+        braids_osc.delay_send_1 = data_json["delay_1"];
+        braids_osc.delay_send_2 = data_json["delay_2"];
         braids_osc.midi_channel = data_json["midi"];
         braids_osc.pan = data_json["pan"];
 
@@ -1636,7 +1639,8 @@ FLASHMEM bool save_sd_braids_json(uint8_t number) {
       data_json["rev"] = braids_osc.rev_send;
       data_json["flanger"] = braids_osc.flanger;
       data_json["flanger_spread"] = braids_osc.flanger_spread;
-      data_json["delay"] = braids_osc.delay_send;
+      data_json["delay_1"] = braids_osc.delay_send_1;
+      data_json["delay_2"] = braids_osc.delay_send_2;
       data_json["midi"] = braids_osc.midi_channel;
       data_json["pan"] = braids_osc.pan;
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
