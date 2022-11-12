@@ -15541,8 +15541,14 @@ FLASHMEM void UI_func_voice_select(uint8_t param) {
         if (generic_temp_select_menu == 4) {
           if (LCDML.BT_checkDown()) {
             configuration.dexed[selected_instance_id].transpose = constrain(configuration.dexed[selected_instance_id].transpose + ENCODER[ENC_R].speed(), TRANSPOSE_MIN, TRANSPOSE_MAX);
+            MicroDexed[selected_instance_id]->setTranspose(configuration.dexed[selected_instance_id].transpose);
+            MicroDexed[selected_instance_id]->notesOff();
+            send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, configuration.dexed[selected_instance_id].transpose, 0);
           } else if (LCDML.BT_checkUp()) {
             configuration.dexed[selected_instance_id].transpose = constrain(configuration.dexed[selected_instance_id].transpose - ENCODER[ENC_R].speed(), TRANSPOSE_MIN, TRANSPOSE_MAX);
+            MicroDexed[selected_instance_id]->setTranspose(configuration.dexed[selected_instance_id].transpose);
+            MicroDexed[selected_instance_id]->notesOff();
+            send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, configuration.dexed[selected_instance_id].transpose, 0);
           }
         }
         if (generic_temp_select_menu == 5) {
