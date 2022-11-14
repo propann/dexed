@@ -15572,22 +15572,26 @@ FLASHMEM void print_voice_parameters() {
   display.print(F("SELECT INSTANCE  ->"));
   UI_update_instance_icons();
 
+  // voice name
+  display.setTextSize(2);
+  show(1, 0, 10, g_voice_name[selected_instance_id]);
+
   // global voice parameters
   display.setTextSize(1);
-  print_voice_eg(0,4,DEXED_VOICE_OFFSET,1);
+  print_voice_eg(0,5,DEXED_VOICE_OFFSET,1);
   for(uint8_t i=8; i<num_voice_params; i++) {
     uint8_t addr=DEXED_VOICE_OFFSET+i;
     uint8_t value=MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-    print_scaled_bar(0, 1+i, value, i + 1);
+    print_scaled_bar(0, 2+i, value, i + 1);
   }
 
   // current selected operator parameters
-  print_scaled_bar(29, 2, current_voice_op, num_voice_params+1);
-  print_voice_eg(29,4,current_voice_op * num_voice_op_params,num_voice_params+2);
+  print_scaled_bar(29, 3, current_voice_op, num_voice_params+1);
+  print_voice_eg(29,5,current_voice_op * num_voice_op_params,num_voice_params+2);
   for(uint8_t i=8; i<num_voice_op_params; i++) {
     uint8_t addr=current_voice_op * num_voice_op_params + i;
     uint8_t value=MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-    print_scaled_bar(29, 1+i, value, i+num_voice_params+2);
+    print_scaled_bar(29, 2+i, value, i+num_voice_params+2);
   }
 }
 
@@ -15598,20 +15602,19 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     border0();
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.setTextSize(1);
-
-    setCursor_textGrid_small(0, 3);
+    setCursor_textGrid_small(0, 4);
     display.print(F("PITCH EG"));
     for(uint8_t i=8; i<num_voice_params; i++) {
-      setCursor_textGrid_small(10, 1+i);
+      setCursor_textGrid_small(10, 2+i);
       display.print(voice_params[i].name);
     }
 
-    setCursor_textGrid_small(39, 2);
+    setCursor_textGrid_small(39, 3);
     display.print(F("EDIT OPERATOR"));
-    setCursor_textGrid_small(29, 3);
+    setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
     for(uint8_t i=8; i<num_voice_op_params; i++) {
-      setCursor_textGrid_small(39, 1+i);
+      setCursor_textGrid_small(39, 2+i);
       display.print(voice_op_params[i].name);
     }
     print_voice_parameters();
