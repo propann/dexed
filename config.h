@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7"
+#define VERSION "1.4.7.1"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -494,6 +494,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define DELAY_LEVEL_MIN 0
 #define DELAY_LEVEL_MAX 100
 #define DELAY_LEVEL_DEFAULT 0
+#define DELAY_LEVEL_GLOBAL_DEFAULT 0
 
 #define DELAY_SYNC_MIN 0
 #define DELAY_SYNC_MAX 9
@@ -876,6 +877,7 @@ typedef struct fx_s {
   uint8_t delay_time[MAX_DEXED];
   uint8_t delay_feedback[MAX_DEXED];
   uint8_t delay_level[MAX_DEXED];
+  uint8_t delay_level_global[MAX_DEXED];
   uint8_t delay_sync[MAX_DEXED];
   uint8_t delay_pan[MAX_DEXED];
   uint8_t reverb_send[MAX_DEXED];
@@ -919,6 +921,8 @@ typedef struct epiano_s {
   uint8_t sound_intensity;
   uint8_t pan;
   uint8_t midi_channel;
+  uint8_t delay_send_1;
+  uint8_t delay_send_2;
 } epiano_t;
 
 #ifdef USE_MICROSYNTH

@@ -179,10 +179,10 @@ extern elapsedMillis microsynth_delay_timer[2];
 #if defined(USE_FX)
 AudioSynthWaveform* chorus_modulator[NUM_DEXED];
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
-AudioFilterBiquad* modchorus_filter[NUM_DEXED];
+AudioFilterBiquad* dexed_chorus_filter[NUM_DEXED];
 #endif
-AudioEffectModulatedDelay* modchorus[NUM_DEXED];
-AudioMixer<6>* chorus_mixer[NUM_DEXED];
+AudioEffectModulatedDelay* dexed_chorus[NUM_DEXED];
+AudioMixer<6>* global_delay_in_mixer[NUM_DEXED];
 AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 AudioEffectDelay* delay_fx[NUM_DEXED];
 AudioMixer<2>* delay_mixer[NUM_DEXED];
@@ -638,10 +638,10 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
 
   chorus_modulator[instance_id] = new AudioSynthWaveform();
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
-  modchorus_filter[instance_id] = new AudioFilterBiquad();
+  dexed_chorus_filter[instance_id] = new AudioFilterBiquad();
 #endif
-  modchorus[instance_id] = new AudioEffectModulatedDelay();
-  chorus_mixer[instance_id] = new AudioMixer<6>();
+  dexed_chorus[instance_id] = new AudioEffectModulatedDelay();
+  global_delay_in_mixer[instance_id] = new AudioMixer<6>();
   delay_fb_mixer[instance_id] = new AudioMixer<2>();
   delay_fx[instance_id] = new AudioEffectDelay();
   delay_mixer[instance_id] = new AudioMixer<2>();
@@ -651,18 +651,21 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   } else
     dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, microdexed_peak_1, 0);
 
-  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *chorus_mixer[instance_id], 0);
-  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *modchorus[instance_id], 0);
+  dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *global_delay_in_mixer[instance_id], 0);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, *dexed_chorus[instance_id], 0);
 #if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
-  dynamicConnections[nDynamic++] = new AudioConnection(*chorus_modulator[instance_id], 0, *modchorus_filter[instance_id], 0);
-  dynamicConnections[nDynamic++] = new AudioConnection(*modchorus_filter[instance_id], 0, *modchorus[instance_id], 1);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*chorus_modulator[instance_id], 0, *dexed_chorus_filter[instance_id], 0);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*dexed_chorus_filter[instance_id], 0, *dexed_chorus[instance_id], 1);
 #else
-  dynamicConnections[nDynamic++] = new AudioConnection(*chorus_modulator[instance_id], 0, *modchorus[instance_id], 1);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*chorus_modulator[instance_id], 0, *dexed_chorus[instance_id], 1);
 #endif
 
-  dynamicConnections[nDynamic++] = new AudioConnection(*modchorus[instance_id], 0, *chorus_mixer[instance_id], 1);
-  dynamicConnections[nDynamic++] = new AudioConnection(*chorus_mixer[instance_id], 0, *delay_fb_mixer[instance_id], 0);
-  // dynamicConnections[nDynamic++] = new AudioConnection(*chorus_mixer[instance_id], 0, *delay_mixer[instance_id], 0);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*dexed_chorus[instance_id], 0, *global_delay_in_mixer[instance_id], 1);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[instance_id], 0, *delay_fb_mixer[instance_id], 0);
+  ///////
+  dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[instance_id], 0, *delay_mixer[instance_id], 0);
+  /////////
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_fb_mixer[instance_id], 0, *delay_fx[instance_id], 0);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_fx[instance_id], 0, *delay_fb_mixer[instance_id], 1);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_fx[instance_id], 0, *delay_mixer[instance_id], 1);
@@ -672,8 +675,8 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   dynamicConnections[nDynamic++] = new AudioConnection(*MicroDexed[instance_id], 0, reverb_mixer_l, instance_id);
 
   //microsynth delays
-  dynamicConnections[nDynamic++] = new AudioConnection(microsynth_mixer_filter_osc[0], 0, *chorus_mixer[instance_id], 2);
-  dynamicConnections[nDynamic++] = new AudioConnection(microsynth_mixer_filter_osc[1], 0, *chorus_mixer[instance_id], 3);
+  dynamicConnections[nDynamic++] = new AudioConnection(microsynth_mixer_filter_osc[0], 0, *global_delay_in_mixer[instance_id], 2);
+  dynamicConnections[nDynamic++] = new AudioConnection(microsynth_mixer_filter_osc[1], 0, *global_delay_in_mixer[instance_id], 3);
 
 
 
@@ -724,8 +727,8 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 1, braids_peak_l, 0 };
 
     //braids delays
-    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *chorus_mixer[0], 4);
-    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *chorus_mixer[1], 5);
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *global_delay_in_mixer[0], 4);
+    dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *global_delay_in_mixer[1], 5);
   }
 }
 #endif
@@ -1142,7 +1145,7 @@ void setup() {
     delayline[instance_id] = (int16_t*)malloc(MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
     if (delayline[instance_id] != NULL) {
       memset(delayline[instance_id], 0, MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
-      if (!modchorus[instance_id]->begin(delayline[instance_id], MOD_DELAY_SAMPLE_BUFFER)) {
+      if (!dexed_chorus[instance_id]->begin(delayline[instance_id], MOD_DELAY_SAMPLE_BUFFER)) {
 #ifdef DEBUG
         Serial.print(F("AudioEffectModulatedDelay - begin failed ["));
         Serial.print(instance_id);
@@ -1711,7 +1714,7 @@ void loop() {
     //Microsynth Realtime Screen Updates
     if (scope.scope_delay % 11 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1) {
       display.setTextSize(1);
-      setCursor_textGrid_small(15, 18);  //phtodo
+      setCursor_textGrid_small(15, 18);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       print_formatted_number(microsynth[microsynth_selected_instance].pwm_current, 3);
       microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
@@ -2795,7 +2798,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             break;
           case 93:  // CC 93: chorus level
             configuration.fx.chorus_level[selected_instance_id] = map(inValue, 0, 0x7f, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
-            chorus_mixer[selected_instance_id]->gain(1, volume_transform(mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5)));
+            global_delay_in_mixer[selected_instance_id]->gain(1, volume_transform(mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9)));
             if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_chorus_level)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
@@ -2836,8 +2839,8 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             break;
           case 107:  // CC 107: delay volume
             configuration.fx.delay_level[instance_id] = map(inValue, 0, 0x7f, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-            delay_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_level)) {
+            global_delay_in_mixer[instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_level_dexed)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3710,6 +3713,8 @@ FLASHMEM void check_configuration_fx(void) {
       configuration.fx.delay_time[instance_id] = constrain(configuration.fx.delay_time[instance_id], DELAY_TIME_MIN, DELAY_TIME_MAX);
     configuration.fx.delay_feedback[instance_id] = constrain(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
     configuration.fx.delay_level[instance_id] = constrain(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+    configuration.fx.delay_level_global[instance_id] = constrain(configuration.fx.delay_level_global[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+    configuration.fx.delay_pan[instance_id] = constrain(configuration.fx.delay_pan[instance_id], PANORAMA_MIN, PANORAMA_MAX);
     configuration.fx.delay_sync[instance_id] = constrain(configuration.fx.delay_sync[instance_id], DELAY_SYNC_MIN, DELAY_SYNC_MAX);
     configuration.fx.reverb_send[instance_id] = constrain(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX);
   }
@@ -3859,6 +3864,7 @@ FLASHMEM void init_configuration(void) {
     configuration.fx.delay_time[instance_id] = DELAY_TIME_DEFAULT / 10;
     configuration.fx.delay_feedback[instance_id] = DELAY_FEEDBACK_DEFAULT;
     configuration.fx.delay_level[instance_id] = DELAY_LEVEL_DEFAULT;
+    configuration.fx.delay_level_global[instance_id] = DELAY_LEVEL_GLOBAL_DEFAULT;
     configuration.fx.delay_sync[instance_id] = DELAY_SYNC_DEFAULT;
     configuration.fx.reverb_send[instance_id] = REVERB_SEND_DEFAULT;
 
@@ -3979,30 +3985,34 @@ FLASHMEM void set_fx_params(void) {
     }
     chorus_modulator[instance_id]->phase(0);
 
-    // phtodo test if working now:
+    // phtodo test:
     // chorus_modulator[instance_id]->frequency
     // chorus_modulator[instance_id]->amplitude
-    // 8.1.2022 it is not, check with HW
 
-    //  chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
-    //  chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
+    // chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
+    // chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
+
     chorus_modulator[instance_id]->offset(0.0);
 #if MOD_FILTER_OUTPUT == MOD_BUTTERWORTH_FILTER_OUTPUT
     // Butterworth filter, 12 db/octave
-    modchorus_filter[instance_id]->setLowpass(0, MOD_FILTER_CUTOFF_HZ, 0.707);
+    dexed_chorus_filter[instance_id]->setLowpass(0, MOD_FILTER_CUTOFF_HZ, 0.707);
 #elif MOD_FILTER_OUTPUT == MOD_LINKWITZ_RILEY_FILTER_OUTPUT
     // Linkwitz-Riley filter, 48 dB/octave
-    modchorus_filter[instance_id]->setLowpass(0, MOD_FILTER_CUTOFF_HZ, 0.54);
-    modchorus_filter[instance_id]->setLowpass(1, MOD_FILTER_CUTOFF_HZ, 1.3);
-    modchorus_filter[instance_id]->setLowpass(2, MOD_FILTER_CUTOFF_HZ, 0.54);
-    modchorus_filter[instance_id]->setLowpass(3, MOD_FILTER_CUTOFF_HZ, 1.3);
+    dexed_chorus_filter[instance_id]->setLowpass(0, MOD_FILTER_CUTOFF_HZ, 0.54);
+    dexed_chorus_filter[instance_id]->setLowpass(1, MOD_FILTER_CUTOFF_HZ, 1.3);
+    dexed_chorus_filter[instance_id]->setLowpass(2, MOD_FILTER_CUTOFF_HZ, 0.54);
+    dexed_chorus_filter[instance_id]->setLowpass(3, MOD_FILTER_CUTOFF_HZ, 1.3);
 #endif
-    chorus_mixer[instance_id]->gain(0, 1.0);
-    chorus_mixer[instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5));
+    //global_delay_in_mixer[instance_id]->gain(0, 1.0);
+    // global_delay_in_mixer[instance_id]->gain(1, 1.0);
+    //global_delay_in_mixer[instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5));
 
     // DELAY
-    delay_mixer[instance_id]->gain(0, 1.0);
-    delay_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+    //delay_mixer[instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level_global[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+    // delay_mixer[instance_id]->gain(0, 1);
+
+    delay_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level_global[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+    delay_mono2stereo[instance_id]->panorama(mapfloat(configuration.fx.delay_pan[instance_id], PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
     delay_fb_mixer[instance_id]->gain(0, 1.0);
     delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127)));
 

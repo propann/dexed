@@ -230,8 +230,7 @@ extern AudioControlSGTL5000 sgtl5000;
 
 #if defined(USE_FX)
 extern AudioSynthWaveform* chorus_modulator[NUM_DEXED];
-extern AudioEffectModulatedDelay* modchorus[NUM_DEXED];
-extern AudioMixer<6>* chorus_mixer[NUM_DEXED];
+extern AudioMixer<6>* global_delay_in_mixer[NUM_DEXED];
 extern AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 extern AudioEffectDelay* delay_fx[NUM_DEXED];
 extern AudioMixer<2>* delay_mixer[NUM_DEXED];
@@ -288,15 +287,10 @@ extern AudioEffectStereoPanorama braids_stereo_panorama;
 extern AudioEffectFlange braids_flanger_r;
 extern AudioEffectFlange braids_flanger_l;
 
-//extern short braids_l_delayline[BRAIDS_FLANGE_DELAY_LENGTH];
-//extern short braids_r_delayline[BRAIDS_FLANGE_DELAY_LENGTH];
 extern int braids_flanger_idx;
 extern int braids_flanger_depth;
 extern double braids_flanger_freq;
-
-
 #endif
-
 
 extern AudioEffectPlateReverb reverb;
 
@@ -464,9 +458,10 @@ void UI_func_chorus_frequency(uint8_t param);
 void UI_func_chorus_waveform(uint8_t param);
 void UI_func_chorus_depth(uint8_t param);
 void UI_func_chorus_level(uint8_t param);
+void UI_func_delay_level_global(uint8_t param);
+void UI_func_delay_level_dexed(uint8_t param);
 void UI_func_delay_time(uint8_t param);
 void UI_func_delay_feedback(uint8_t param);
-void UI_func_delay_level(uint8_t param);
 void UI_func_delay_panorama(uint8_t param);
 void UI_func_reverb_send(uint8_t param);
 void UI_func_filter_cutoff(uint8_t param);
@@ -3678,11 +3673,7 @@ FLASHMEM void UI_func_chorus_level(uint8_t param) {
     }
 
     display_bar_int("Chorus Lvl.", configuration.fx.chorus_level[selected_instance_id], 1.0, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 3, false, false, false);
-
-    //chorus_mixer[selected_instance_id]->gain(0, pseudo_log_curve(1.0 - mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5)));
-    //chorus_mixer[selected_instance_id]->gain(1, pseudo_log_curve(mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5)));
-    //chorus_mixer[selected_instance_id]->gain(0, 1.0 - mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5));
-    chorus_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5));
+    global_delay_in_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9));
   }
 
   if (LCDML.FUNC_close())  // ****** STABLE END *********
@@ -3811,7 +3802,7 @@ FLASHMEM void UI_func_delay_feedback(uint8_t param) {
   }
 }
 
-FLASHMEM void UI_func_delay_level(uint8_t param) {
+FLASHMEM void UI_func_delay_level_dexed(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
@@ -3841,9 +3832,42 @@ FLASHMEM void UI_func_delay_level(uint8_t param) {
 #endif
     }
 
-    display_bar_int("Delay Lvl.", configuration.fx.delay_level[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, false);
+    display_bar_int("Dexed Delay Lvl.", configuration.fx.delay_level[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, false);
 
-    chorus_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+    global_delay_in_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+  }
+
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+  }
+}
+
+FLASHMEM void UI_func_delay_level_global(uint8_t param) {
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    encoderDir[ENC_R].reset();
+
+    display_bar_int("Delay Lvl.", configuration.fx.delay_level_global[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, true);
+    UI_update_instance_icons();
+  }
+
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
+      if (LCDML.BT_checkDown()) {
+        configuration.fx.delay_level_global[selected_instance_id] = constrain(configuration.fx.delay_level_global[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+      } else if (LCDML.BT_checkUp()) {
+        configuration.fx.delay_level_global[selected_instance_id] = constrain(configuration.fx.delay_level_global[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+      } else if (LCDML.BT_checkEnter()) {
+        selected_instance_id = !selected_instance_id;
+        UI_update_instance_icons();
+      }
+    }
+
+    display_bar_int("Delay Lvl.", configuration.fx.delay_level_global[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, false);
+
+    delay_mixer[selected_instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level_global[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
   }
 
   if (LCDML.FUNC_close())  // ****** STABLE END *********
@@ -9274,7 +9298,6 @@ void UI_func_epiano(uint8_t param) {
     display.print(F("WIDTH"));
     setCursor_textGrid_small(24, 7);
     display.print(F("LFO"));
-
     display.setTextColor(GREY2);
     setCursor_textGrid_small(24, 9);
     display.print(F("CHORUS"));
@@ -9287,9 +9310,10 @@ void UI_func_epiano(uint8_t param) {
     display.print(F("DEPTH"));
     setCursor_textGrid_small(24, 13);
     display.print(F("LEVEL"));
+    setCursor_textGrid_small(24, 14);
+    display.print(F("DELAYS"));
     setCursor_textGrid_small(24, 15);
     display.print(F("REVERB S."));
-
     display.setTextColor(GREY2);
     setCursor_textGrid_small(24, 17);
     display.print(F("MIDI"));
@@ -9317,7 +9341,7 @@ void UI_func_epiano(uint8_t param) {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (LCDML.BT_checkDown()) {
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 22);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 24);
         else if (generic_active_function == 1) {
           if (generic_temp_select_menu == 0) {
             configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity + ENCODER[ENC_R].speed(), EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX);
@@ -9344,7 +9368,6 @@ void UI_func_epiano(uint8_t param) {
             configuration.epiano.detune = constrain(configuration.epiano.detune + ENCODER[ENC_R].speed(), EP_DETUNE_MIN, EP_DETUNE_MAX);
           else if (generic_temp_select_menu == 10)
             configuration.epiano.polyphony = constrain(configuration.epiano.polyphony + 1, EP_POLYPHONY_MIN, EP_POLYPHONY_MAX);
-
           else if (generic_temp_select_menu == 11)
             configuration.epiano.velocity_sense = constrain(configuration.epiano.velocity_sense + ENCODER[ENC_R].speed(), EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX);
           else if (generic_temp_select_menu == 12)
@@ -9363,19 +9386,22 @@ void UI_func_epiano(uint8_t param) {
             configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level + ENCODER[ENC_R].speed(), EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX);
             MD_sendControlChange(configuration.epiano.midi_channel, 93, configuration.fx.ep_chorus_level);
           } else if (generic_temp_select_menu == 19) {
+            configuration.epiano.delay_send_1 = constrain(configuration.epiano.delay_send_1 + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          } else if (generic_temp_select_menu == 20) {
+            configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          } else if (generic_temp_select_menu == 21) {
             configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send + ENCODER[ENC_R].speed(), EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX);
             MD_sendControlChange(configuration.epiano.midi_channel, 91, configuration.fx.ep_reverb_send);
-          }
-          if (generic_temp_select_menu == 20)
+          } else if (generic_temp_select_menu == 22)
             configuration.epiano.lowest_note = constrain(configuration.epiano.lowest_note + ENCODER[ENC_R].speed(), EP_LOWEST_NOTE_MIN, EP_LOWEST_NOTE_MAX);
-          else if (generic_temp_select_menu == 21)
+          else if (generic_temp_select_menu == 23)
             configuration.epiano.highest_note = constrain(configuration.epiano.highest_note + ENCODER[ENC_R].speed(), EP_HIGHEST_NOTE_MIN, EP_HIGHEST_NOTE_MAX);
-          else if (generic_temp_select_menu == 22)
+          else if (generic_temp_select_menu == 24)
             configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel + ENCODER[ENC_R].speed(), EP_MIDI_CHANNEL_MIN, EP_MIDI_CHANNEL_MAX);
         }
       } else if (LCDML.BT_checkUp()) {
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 22);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 24);
         else if (generic_active_function == 1) {
           if (generic_temp_select_menu == 0) {
             configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity - ENCODER[ENC_R].speed(), EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX);
@@ -9410,16 +9436,12 @@ void UI_func_epiano(uint8_t param) {
             configuration.epiano.velocity_sense = constrain(configuration.epiano.velocity_sense - ENCODER[ENC_R].speed(), EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX);
           else if (generic_temp_select_menu == 12)
             configuration.epiano.overdrive = constrain(configuration.epiano.overdrive - ENCODER[ENC_R].speed(), EP_OVERDRIVE_MIN, EP_OVERDRIVE_MAX);
-
           else if (generic_temp_select_menu == 13)
             configuration.epiano.pan_tremolo = constrain(configuration.epiano.pan_tremolo - ENCODER[ENC_R].speed(), EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX);
-
           else if (generic_temp_select_menu == 14)
             configuration.epiano.pan_lfo = constrain(configuration.epiano.pan_lfo - ENCODER[ENC_R].speed(), EP_PAN_LFO_MIN, EP_PAN_LFO_MAX);
-
           else if (generic_temp_select_menu == 15)
             configuration.fx.ep_chorus_frequency = constrain(configuration.fx.ep_chorus_frequency - ENCODER[ENC_R].speed(), EP_CHORUS_FREQUENCY_MIN, EP_CHORUS_FREQUENCY_MAX);
-
           else if (generic_temp_select_menu == 16)
             configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform - 1, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_WAVEFORM_MAX);
           else if (generic_temp_select_menu == 17)
@@ -9428,14 +9450,17 @@ void UI_func_epiano(uint8_t param) {
             configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level - ENCODER[ENC_R].speed(), EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX);
             MD_sendControlChange(configuration.epiano.midi_channel, 93, configuration.fx.ep_chorus_level);
           } else if (generic_temp_select_menu == 19) {
+            configuration.epiano.delay_send_1 = constrain(configuration.epiano.delay_send_1 - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          } else if (generic_temp_select_menu == 20) {
+            configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          } else if (generic_temp_select_menu == 21) {
             configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send - ENCODER[ENC_R].speed(), EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX);
             MD_sendControlChange(configuration.epiano.midi_channel, 91, configuration.fx.ep_reverb_send);
-          }
-          if (generic_temp_select_menu == 20)
+          } else if (generic_temp_select_menu == 22)
             configuration.epiano.lowest_note = constrain(configuration.epiano.lowest_note - ENCODER[ENC_R].speed(), EP_LOWEST_NOTE_MIN, EP_LOWEST_NOTE_MAX);
-          else if (generic_temp_select_menu == 21)
+          else if (generic_temp_select_menu == 23)
             configuration.epiano.highest_note = constrain(configuration.epiano.highest_note - ENCODER[ENC_R].speed(), EP_HIGHEST_NOTE_MIN, EP_HIGHEST_NOTE_MAX);
-          else if (generic_temp_select_menu == 22)
+          else if (generic_temp_select_menu == 24)
             configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel - ENCODER[ENC_R].speed(), EP_MIDI_CHANNEL_MIN, EP_MIDI_CHANNEL_MAX);
         }
       }
@@ -9514,24 +9539,30 @@ void UI_func_epiano(uint8_t param) {
     print_small_intbar(34, 13, configuration.fx.ep_chorus_level, 18, 1, 0);
     ep_chorus_mixer_r.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
     ep_chorus_mixer_l.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
-    print_small_intbar(34, 15, configuration.fx.ep_reverb_send, 19, 1, 0);
+    setModeColor(19);
+    setCursor_textGrid_small(34, 14);
+    print_formatted_number(configuration.epiano.delay_send_1, 3);
+    setCursor_textGrid_small(38, 14);
+    setModeColor(20);
+    print_formatted_number(configuration.epiano.delay_send_2, 3);
+    print_small_intbar(34, 15, configuration.fx.ep_reverb_send, 21, 1, 0);
     reverb_mixer_r.gain(REVERB_MIX_CH_EPIANO, volume_transform(mapfloat(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
     reverb_mixer_l.gain(REVERB_MIX_CH_EPIANO, volume_transform(mapfloat(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-    setModeColor(20);
+    setModeColor(22);
     setCursor_textGrid_small(37, 19);
     getNoteName(note_name, configuration.epiano.lowest_note);
     display.print(note_name);
     setCursor_textGrid_small(42, 19);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     print_formatted_number(configuration.epiano.lowest_note, 3);
-    setModeColor(21);
+    setModeColor(23);
     setCursor_textGrid_small(37, 20);
     getNoteName(note_name, configuration.epiano.highest_note);
     display.print(note_name);
     setCursor_textGrid_small(42, 20);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     print_formatted_number(configuration.epiano.highest_note, 3);
-    setModeColor(22);
+    setModeColor(24);
     setCursor_textGrid_small(37, 21);
     if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI) {
       display.print(F("OMNI"));
@@ -15644,11 +15675,11 @@ FLASHMEM void UI_func_voice_select(uint8_t param) {
           if (LCDML.BT_checkDown()) {
             configuration.fx.chorus_level[selected_instance_id] = constrain(configuration.fx.chorus_level[selected_instance_id] + ENCODER[ENC_R].speed(), CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
             MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.chorus_level[selected_instance_id]);
-            chorus_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5));
+            global_delay_in_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9));
           } else if (LCDML.BT_checkUp()) {
             configuration.fx.chorus_level[selected_instance_id] = constrain(configuration.fx.chorus_level[selected_instance_id] - ENCODER[ENC_R].speed(), CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
             MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.chorus_level[selected_instance_id]);
-            chorus_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.5));
+            global_delay_in_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9));
           }
         }
         if (generic_temp_select_menu == 10)  // DELAY
@@ -15656,11 +15687,11 @@ FLASHMEM void UI_func_voice_select(uint8_t param) {
           if (LCDML.BT_checkDown()) {
             configuration.fx.delay_level[selected_instance_id] = constrain(configuration.fx.delay_level[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
             MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
-            chorus_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+            global_delay_in_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
           } else if (LCDML.BT_checkUp()) {
             configuration.fx.delay_level[selected_instance_id] = constrain(configuration.fx.delay_level[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
             MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
-            chorus_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+            global_delay_in_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
           }
         }
         if (generic_temp_select_menu == 11)  // REVERB SEND
@@ -17145,7 +17176,6 @@ FLASHMEM void display_meter_float(const char* title, float value, float factor, 
   // Value
 
   display.setCursor((display_cols - size - 3) * CHAR_width, CHAR_height * 2);
-  //display_float((value + offset) * factor, size_number, size_fraction, zeros, false, sign); //this is broken for a long time, needs to be checked.
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print((value + offset) * factor);
