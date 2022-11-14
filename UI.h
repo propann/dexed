@@ -167,7 +167,9 @@ LCDML_add(132, LCDML_0_15, 14, "TEST Touchscreen", UI_func_test_touchscreen);
 LCDML_add(133, LCDML_0, 16, "Info", UI_func_information);
 LCDML_addAdvanced(134, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
 LCDML_addAdvanced(135, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 135
+LCDML_add(136, LCDML_0, 19, "Voice Editor", UI_func_voice_editor);
+
+#define _LCDML_DISP_cnt 136
 #endif
 
 #ifdef MODERN_UI

@@ -539,6 +539,7 @@ void UI_func_midi_channels(uint8_t param);
 void UI_func_misc_settings(uint8_t param);
 void UI_func_velocity_level(uint8_t param);
 void UI_func_voice_select(uint8_t param);
+void UI_func_voice_editor(uint8_t param);
 void UI_func_sysex_send_voice(uint8_t param);
 void UI_func_sysex_receive_bank(uint8_t param);
 void UI_func_sysex_send_bank(uint8_t param);
@@ -15477,6 +15478,172 @@ FLASHMEM void UI_func_voice_select_loop() {
       //          UI_update_instance_icons();
     }
 #endif
+  }
+}
+
+const char* voice_op_param_names[]={
+  "EG R1",
+  "EG R2",
+  "EG R3",
+  "EG R4",
+  "EG L1",
+  "EG L2",
+  "EG L3",
+  "EG L4",
+  "LEV SCL BRK PT",
+  "SCL LEFT DEPTH",
+  "SCL RGHT DEPTH",
+  "SCL LEFT CURVE",
+  "SCL RGHT CURVE",
+  "OSC RATE SCALE",
+  "AMP MOD SENS",
+  "KEY VEL SENS",
+  "OUTPUT LEV",
+  "OSC MODE",
+  "FREQ COARSE",
+  "FREQ FINE",
+  "OSC DETUNE"
+};
+const uint8_t num_voice_op_params=sizeof(voice_op_param_names)/4;
+
+const char* voice_param_names[]={
+  "PITCH EG R1",
+  "PITCH EG R2",
+  "PITCH EG R3",
+  "PITCH EG R4",
+  "PITCH EG L1",
+  "PITCH EG L2",
+  "PITCH EG L3",
+  "PITCH EG L4",
+  "ALGORITHM",
+  "FEEDBACK",
+  "OSC KEY SYNC",
+  "LFO SPEED",
+  "LFO DELAY",
+  "LFO PITCH MOD DEP",
+  "LFO AMP MOD DEP",
+  "LFO SYNC",
+  "LFO WAVE",
+  "LFO PITCH MOD SENS",
+  "TRANSPOSE",
+  "NAME"
+};
+
+const uint8_t num_voice_params=sizeof(voice_param_names)/4;
+uint8_t current_voice_op=0;
+
+FLASHMEM void print_voice_eg(uint8_t x, uint8_t y, uint8_t addr, uint8_t select_addr) {
+  setCursor_textGrid_small(x, y);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print(F("RATE      LEVEL "));
+  for(uint8_t i=0; i<4; i++) {
+    uint8_t value =MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i);
+    print_small_intbar(x   , y+1+i, value , select_addr + i    , 1, 1);
+    uint8_t value2=MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i + 4);
+    print_small_intbar(x+10, y+1+i, value2, select_addr + i + 4, 1, 1);
+  }
+}
+
+FLASHMEM void print_voice_parameters() {
+  display.setTextSize(1);
+  // instance selector
+  setModeColor(0);
+  display.setCursor(CHAR_width_small * 10, 6);
+  display.print(F("SELECT INSTANCE  ->"));
+  UI_update_instance_icons();
+
+  // global voice parameters
+  display.setTextSize(1);
+  print_voice_eg(0,4,DEXED_VOICE_OFFSET,1);
+  for(uint8_t i=8; i<num_voice_params; i++) {
+    uint8_t addr=DEXED_VOICE_OFFSET+i;
+    uint8_t value=MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+    print_small_intbar(0, 1+i, value, i + 1, 1, 1);
+  }
+
+  // current selected operator parameters
+  print_small_intbar(29, 2, current_voice_op, num_voice_params+1, 1, 1);
+  print_voice_eg(29,4,current_voice_op * num_voice_op_params,num_voice_params+2);
+  for(uint8_t i=8; i<num_voice_op_params; i++) {
+    uint8_t addr=current_voice_op * num_voice_op_params + i;
+    uint8_t value=MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+    print_small_intbar(29, 1+i, value, i+num_voice_params+2, 1, 1);
+  }
+}
+
+FLASHMEM void UI_func_voice_editor(uint8_t param) {
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    border0();
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setTextSize(1);
+
+    setCursor_textGrid_small(0, 3);
+    display.print(F("PITCH EG"));
+    for(uint8_t i=8; i<num_voice_params; i++) {
+      setCursor_textGrid_small(10, 1+i);
+      display.print(voice_param_names[i]);
+    }
+
+    setCursor_textGrid_small(39, 2);
+    display.print(F("EDIT OPERATOR"));
+    setCursor_textGrid_small(29, 3);
+    display.print(F("OPERATOR EG"));
+    for(uint8_t i=8; i<num_voice_op_params; i++) {
+      setCursor_textGrid_small(39, 1+i);
+      display.print(voice_op_param_names[i]);
+    }
+    print_voice_parameters();
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      if (seq.edit_state == 0) {
+        uint8_t num_options=num_voice_params + num_voice_op_params + 2;
+        if (LCDML.BT_checkDown() && generic_temp_select_menu < num_options-1) {
+          generic_temp_select_menu++;
+        } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 0) {
+          generic_temp_select_menu--;
+        }
+      } else if (seq.edit_state == 1) {
+        // decode current edit item into either a global or current operator address
+        uint8_t addr = generic_temp_select_menu - 1 < num_voice_params ? 
+          generic_temp_select_menu - 1                    + DEXED_VOICE_OFFSET :
+          generic_temp_select_menu - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+        uint8_t value;
+        if( generic_temp_select_menu == 0)
+          value = selected_instance_id;
+        else if( generic_temp_select_menu == num_voice_params+1)
+          value = current_voice_op;
+        else 
+          value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+
+        if (LCDML.BT_checkDown() && value<99) {
+          value++;
+        } else if (LCDML.BT_checkUp() && value>0) {
+          value--;
+        }
+
+        if(generic_temp_select_menu == 0)
+          selected_instance_id = value % 2;
+        else if(generic_temp_select_menu == num_voice_params+1)
+          current_voice_op = value % 6;
+        else
+          MicroDexed[selected_instance_id]->setVoiceDataElement(addr,value);
+      }
+      print_voice_parameters();
+    }
+    if (LCDML.BT_checkEnter()) {
+      seq.edit_state = 1-seq.edit_state;
+      print_voice_parameters();
+    }
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    dexed_live_mod.active_button = 0;
   }
 }
 
