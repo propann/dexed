@@ -1138,7 +1138,9 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
           configuration.fx.delay_time[i] = data_json["delay_time"][i];
           configuration.fx.delay_feedback[i] = data_json["delay_feedback"][i];
           configuration.fx.delay_level[i] = data_json["delay_level"][i];
+          configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
           configuration.fx.delay_sync[i] = data_json["delay_sync"][i];
+          configuration.fx.delay_pan[i] = data_json["delay_pan"][i];
           configuration.fx.reverb_send[i] = data_json["reverb_send"][i];
           if (configuration.fx.delay_sync[i] > 0) {
             configuration.fx.delay_time[i] = 0;
@@ -1215,7 +1217,9 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
         data_json["delay_time"][i] = configuration.fx.delay_time[i];
         data_json["delay_feedback"][i] = configuration.fx.delay_feedback[i];
         data_json["delay_level"][i] = configuration.fx.delay_level[i];
+        data_json["delay_level_global"][i] = configuration.fx.delay_level_global[i];
         data_json["delay_sync"][i] = configuration.fx.delay_sync[i];
+        data_json["delay_pan"][i] = configuration.fx.delay_pan[i];
         data_json["reverb_send"][i] = configuration.fx.reverb_send[i];
       }
       data_json["reverb_roomsize"] = configuration.fx.reverb_roomsize;
@@ -2226,7 +2230,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
       data_json["seq_element_shift"] = seq.element_shift;
       data_json["euclidean_active"] = seq.euclidean_active;
       data_json["euclidean_offset"] = seq.euclidean_offset;
-     
+
       for (uint8_t i = 0; i < sizeof(seq.track_type); i++) {
         data_json["track_type"][i] = seq.track_type[i];
       }
@@ -2554,7 +2558,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
         seq.element_shift = data_json["seq_element_shift"];
         seq.euclidean_active = data_json["euclidean_active"];
         seq.euclidean_offset = data_json["euclidean_offset"];
-       
+
         AudioNoInterrupts();
         for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
 #ifdef DEBUG
