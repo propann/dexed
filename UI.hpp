@@ -534,6 +534,7 @@ void UI_func_midi_channels(uint8_t param);
 void UI_func_misc_settings(uint8_t param);
 void UI_func_velocity_level(uint8_t param);
 void UI_func_voice_select(uint8_t param);
+void UI_func_voice_editor(uint8_t param);
 void UI_func_sysex_send_voice(uint8_t param);
 void UI_func_sysex_receive_bank(uint8_t param);
 void UI_func_sysex_send_bank(uint8_t param);
@@ -3196,7 +3197,7 @@ FLASHMEM void setModeColor(uint8_t selected_option) {
   }
 }
 
-FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
+FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t input_limit, uint8_t selected_option, boolean show_bar, boolean show_zero) {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
 
@@ -3206,21 +3207,21 @@ FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint
     print_formatted_number(input_value, 3);
 
   if (show_bar) {
-    {
-      display.console = true;
-      display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
-    }
-    if (input_value >= 0 && input_value / 3.51 > 0) {
-      {
-        display.console = true;
-        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 3.51, 10 * y + 1, 6 * 5 - 1 - input_value / 3.51, 5, COLOR_BACKGROUND);
-      }
-      if (input_value >= 1 && input_value / 3.51 > 1) {
-        display.console = true;
-        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, input_value / 3.51, 5, COLOR_PITCHSMP);
-      }
-    }
+    display.console = true;
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
+    if(input_value > input_limit) input_value = input_limit;
+    uint8_t split = (5 * CHAR_width_small - 2) * (uint16_t)input_value / input_limit;
+    display.console = true;
+    if(split < 5 * CHAR_width_small - 2)
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
+    display.console = true;
+    if(split > 0)
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
   }
+}
+
+FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
+  print_small_scaled_bar(x,y,input_value,100, selected_option,show_bar,show_zero);
 }
 
 FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
@@ -15508,6 +15509,196 @@ FLASHMEM void UI_func_voice_select_loop() {
       //          UI_update_instance_icons();
     }
 #endif
+  }
+}
+
+struct voice_param {
+  const char * name;
+  uint8_t max;
+};
+
+const struct voice_param voice_op_params[]={
+  {"EG R1",99},
+  {"EG R2",99},
+  {"EG R3",99},
+  {"EG R4",99},
+  {"EG L1",99},
+  {"EG L2",99},
+  {"EG L3",99},
+  {"EG L4",99},
+  {"LEV SCL BRK PT",99},
+  {"SCL LEFT DEPTH",99},
+  {"SCL RGHT DEPTH",99},
+  {"SCL LEFT CURVE",3},
+  {"SCL RGHT CURVE",3},
+  {"OSC RATE SCALE",7},
+  {"AMP MOD SENS",3},
+  {"KEY VEL SENS",7},
+  {"OUTPUT LEV",99},
+  {"OSC MODE",1},
+  {"FREQ COARSE",31},
+  {"FREQ FINE",99},
+  {"OSC DETUNE",14}
+};
+const uint8_t num_voice_op_params=21;
+
+const struct voice_param voice_params[]={
+  {"PITCH EG R1",99},
+  {"PITCH EG R2",99},
+  {"PITCH EG R3",99},
+  {"PITCH EG R4",99},
+  {"PITCH EG L1",99},
+  {"PITCH EG L2",99},
+  {"PITCH EG L3",99},
+  {"PITCH EG L4",99},
+  {"ALGORITHM",31},
+  {"FEEDBACK",7},
+  {"OSC KEY SYNC",1},
+  {"LFO SPEED",99},
+  {"LFO DELAY",99},
+  {"LFO PITCH MOD DEP",99},
+  {"LFO AMP MOD DEP",99},
+  {"LFO SYNC",1},
+  {"LFO WAVE",4},
+  {"LFO PITCH MOD SENS",7},
+  {"TRANSPOSE",48},
+  {"NAME",127}
+};
+
+const uint8_t num_voice_params=19;  // omit name for now
+uint8_t current_voice_op=0;
+
+FLASHMEM uint8_t get_param_limit(uint8_t select_index) {
+  if(select_index == 0) // instance id
+    return 1;
+  if(select_index - 1 < num_voice_params)
+    return voice_params[select_index - 1].max;
+  if(select_index - 1 == num_voice_params) // operator count
+    return 5;
+  return voice_op_params[select_index - 2 - num_voice_params].max;
+}
+
+FLASHMEM void print_scaled_bar(uint8_t x, uint8_t y, uint8_t value, uint8_t select_index) {
+  uint16_t limit = get_param_limit(select_index);
+  print_small_scaled_bar(x, y, value, limit, select_index, 1, 1);
+}
+
+FLASHMEM void print_voice_eg(uint8_t x, uint8_t y, uint8_t addr, uint8_t select_addr) {
+  setCursor_textGrid_small(x, y);
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.print(F("RATE      LEVEL "));
+  for(uint8_t i=0; i<4; i++) {
+    uint8_t value =MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i);
+    print_scaled_bar(x   , y+1+i, value , select_addr + i);
+    uint8_t value2=MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i + 4);
+    print_scaled_bar(x+10, y+1+i, value2, select_addr + i + 4);
+  }
+}
+
+FLASHMEM void print_voice_parameters() {
+  display.setTextSize(1);
+  // instance selector
+  setModeColor(0);
+  display.setCursor(CHAR_width_small * 10, 6);
+  display.print(F("SELECT INSTANCE  ->"));
+  UI_update_instance_icons();
+
+  // voice name
+  display.setTextSize(2);
+  show(1, 0, 10, g_voice_name[selected_instance_id]);
+
+  // global voice parameters
+  display.setTextSize(1);
+  print_voice_eg(0,5,DEXED_VOICE_OFFSET,1);
+  for(uint8_t i=8; i<num_voice_params; i++) {
+    uint8_t addr=DEXED_VOICE_OFFSET+i;
+    uint8_t value=MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+    print_scaled_bar(0, 2+i, value, i + 1);
+  }
+
+  // current selected operator parameters
+  print_scaled_bar(29, 3, current_voice_op, num_voice_params+1);
+  print_voice_eg(29,5,current_voice_op * num_voice_op_params,num_voice_params+2);
+  for(uint8_t i=8; i<num_voice_op_params; i++) {
+    uint8_t addr=current_voice_op * num_voice_op_params + i;
+    uint8_t value=MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+    print_scaled_bar(29, 2+i, value, i+num_voice_params+2);
+  }
+}
+
+FLASHMEM void UI_func_voice_editor(uint8_t param) {
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    border0();
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setTextSize(1);
+    setCursor_textGrid_small(0, 4);
+    display.print(F("PITCH EG"));
+    for(uint8_t i=8; i<num_voice_params; i++) {
+      setCursor_textGrid_small(10, 2+i);
+      display.print(voice_params[i].name);
+    }
+
+    setCursor_textGrid_small(39, 3);
+    display.print(F("EDIT OPERATOR"));
+    setCursor_textGrid_small(29, 4);
+    display.print(F("OPERATOR EG"));
+    for(uint8_t i=8; i<num_voice_op_params; i++) {
+      setCursor_textGrid_small(39, 2+i);
+      display.print(voice_op_params[i].name);
+    }
+    print_voice_parameters();
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      if (seq.edit_state == 0) {
+        uint8_t num_options=num_voice_params + num_voice_op_params + 2;
+        if (LCDML.BT_checkDown() && generic_temp_select_menu < num_options-1) {
+          generic_temp_select_menu++;
+        } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 0) {
+          generic_temp_select_menu--;
+        }
+      } else if (seq.edit_state == 1) {
+        // decode current edit item into either a global or current operator address
+        uint8_t addr = generic_temp_select_menu - 1 < num_voice_params ?
+          generic_temp_select_menu - 1                    + DEXED_VOICE_OFFSET :
+          generic_temp_select_menu - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+        uint8_t limit = get_param_limit(generic_temp_select_menu);
+        uint8_t value;
+        if( generic_temp_select_menu == 0)
+          value = selected_instance_id;
+        else if( generic_temp_select_menu == num_voice_params+1)
+          value = current_voice_op;
+        else
+          value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+
+        if (LCDML.BT_checkDown() && value < limit) {
+          value++;
+        } else if (LCDML.BT_checkUp() && value>0) {
+          value--;
+        }
+
+        if(generic_temp_select_menu == 0)
+          selected_instance_id = value;
+        else if(generic_temp_select_menu == num_voice_params+1)
+          current_voice_op = value;
+        else
+          MicroDexed[selected_instance_id]->setVoiceDataElement(addr,value);
+      }
+      print_voice_parameters();
+    }
+    if (LCDML.BT_checkEnter()) {
+      seq.edit_state = 1-seq.edit_state;
+      print_voice_parameters();
+    }
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+    dexed_live_mod.active_button = 0;
   }
 }
 
