@@ -2813,7 +2813,7 @@ FLASHMEM void lcdml_menu_control(void) {
         Serial.println(F("ENC-R long released"));
 #endif
         //LCDML.BT_quit();
-        encoderDir[ENC_R].ButtonLong(true);
+        encoderDir[ENC_R].ButtonLong(false);
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= BUT_DEBOUNCE_MS) {
 #ifdef DEBUG
         Serial.println(F("ENC-R short"));
@@ -2908,6 +2908,8 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]++;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
+        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) { //do nothing
+          ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
       }
@@ -2967,6 +2969,8 @@ FLASHMEM void lcdml_menu_control(void) {
           if (seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos] > 0)
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]--;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
+          ;
+        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) { //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -15677,7 +15681,18 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       }
       print_voice_parameters();
     }
-    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed()) {
+
+    // left encoder selects operator
+    if(encoderDir[ENC_L].Up() || encoderDir[ENC_L].Down()) {
+        if (LCDML.BT_checkDown() && current_voice_op < 5) {
+          current_voice_op++;
+        } else if (LCDML.BT_checkUp() && current_voice_op > 0) {
+          current_voice_op--;
+        }
+        print_voice_parameters();
+    }
+
+    if (encoderDir[ENC_R].ButtonLong()) {
       if (selected_instance_id == 0)
         selected_instance_id = 1;
       else
