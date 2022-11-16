@@ -15565,46 +15565,61 @@ FLASHMEM void print_scaled_bar(uint8_t x, uint8_t y, uint8_t value, uint8_t sele
   print_small_scaled_bar(x, y, value, limit, select_index, 1, 1);
 }
 
-FLASHMEM void print_voice_eg(uint8_t x, uint8_t y, uint8_t addr, uint8_t select_addr) {
+FLASHMEM void print_voice_eg(uint8_t x, uint8_t y, uint8_t addr, uint8_t select_addr, int16_t changed_param) {
   setCursor_textGrid_small(x, y);
   display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print(F("RATE      LEVEL "));
+  if(changed_param==-1)
+    display.print(F("RATE      LEVEL "));
   for (uint8_t i = 0; i < 4; i++) {
-    uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i);
-    print_scaled_bar(x, y + 1 + i, value, select_addr + i);
-    uint8_t value2 = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i + 4);
-    print_scaled_bar(x + 10, y + 1 + i, value2, select_addr + i + 4);
+    if(changed_param==-1 || changed_param==select_addr + i) {
+      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i);
+      print_scaled_bar(x, y + 1 + i, value, select_addr + i);
+    }
+    if(changed_param==-1 || changed_param==select_addr + i + 4) {
+      uint8_t value2 = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i + 4);
+      print_scaled_bar(x + 10, y + 1 + i, value2, select_addr + i + 4);
+    }
   }
 }
 
-FLASHMEM void print_voice_parameters() {
+FLASHMEM void print_voice_parameters(int16_t changed_param) {
   display.setTextSize(1);
-  // instance selector
-  setModeColor(0);
-  display.setCursor(CHAR_width_small * 10, 6);
-  display.print(F("SELECT INSTANCE  ->"));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-  // voice name
-  display.setTextSize(2);
-  show(1, 0, 10, g_voice_name[selected_instance_id]);
+  if(changed_param==-1 || changed_param==0){
+    // instance selector
+    setModeColor(0);
+    display.setCursor(CHAR_width_small * 10, 6);
+    display.print(F("SELECT INSTANCE  ->"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    // voice name
+    display.setTextSize(2);
+    show(1, 0, 10, g_voice_name[selected_instance_id]);
+  }
 
   // global voice parameters
   display.setTextSize(1);
-  print_voice_eg(0, 5, DEXED_VOICE_OFFSET, 1);
+  print_voice_eg(0, 5, DEXED_VOICE_OFFSET, 1, changed_param);
+
   for (uint8_t i = 8; i < num_voice_params; i++) {
-    uint8_t addr = DEXED_VOICE_OFFSET + i;
-    uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-    print_scaled_bar(0, 2 + i, value, i + 1);
+    if(changed_param==-1 || changed_param==i + 1) {
+      uint8_t addr = DEXED_VOICE_OFFSET + i;
+      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+      print_scaled_bar(0, 2 + i, value, i + 1);
+    }
   }
 
   // current selected operator parameters
-  print_scaled_bar(29, 3, current_voice_op, num_voice_params + 1);
-  print_voice_eg(29, 5, current_voice_op * num_voice_op_params, num_voice_params + 2);
+  if(changed_param==num_voice_params + 1) // if the operator selection has changed, all values may have too.
+    changed_param=-1;
+  if(changed_param==-1) // operator selection bar
+    print_scaled_bar(29, 3, current_voice_op, num_voice_params + 1);
+  print_voice_eg(29, 5, current_voice_op * num_voice_op_params, num_voice_params + 2, changed_param);
   for (uint8_t i = 8; i < num_voice_op_params; i++) {
-    uint8_t addr = current_voice_op * num_voice_op_params + i;
-    uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-    print_scaled_bar(29, 2 + i, value, i + num_voice_params + 2);
+    if(changed_param==-1 || changed_param==i + num_voice_params + 2) {
+      uint8_t addr = current_voice_op * num_voice_op_params + i;
+      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+      print_scaled_bar(29, 2 + i, value, i + num_voice_params + 2);
+    }
   }
 }
 
@@ -15638,18 +15653,20 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       setCursor_textGrid_small(39, 2 + i);
       display.print(voice_op_params[i].name);
     }
-    print_voice_parameters();
+    print_voice_parameters(-1);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
       if (seq.edit_state == 0) {
         uint8_t num_options = num_voice_params + num_voice_op_params + 2;
+        uint8_t last_select=generic_temp_select_menu;
         if (LCDML.BT_checkDown() && generic_temp_select_menu < num_options - 1) {
           generic_temp_select_menu++;
         } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 0) {
           generic_temp_select_menu--;
         }
+        print_voice_parameters(last_select); // make sure last item before navigation is drawn deselected
       } else if (seq.edit_state == 1) {
         // decode current edit item into either a global or current operator address
         uint8_t addr = generic_temp_select_menu - 1 < num_voice_params ? generic_temp_select_menu - 1 + DEXED_VOICE_OFFSET : generic_temp_select_menu - 2 - num_voice_params + current_voice_op * num_voice_op_params;
@@ -15675,7 +15692,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
         else
           MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
       }
-      print_voice_parameters();
+      print_voice_parameters(generic_temp_select_menu);
     }
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed()) {
       if (selected_instance_id == 0)
@@ -15683,10 +15700,10 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       else
         selected_instance_id = 0;
       UI_update_instance_icons();
-      print_voice_parameters();
+      print_voice_parameters(-1);
     } else if (LCDML.BT_checkEnter()) {
       seq.edit_state = 1 - seq.edit_state;
-      print_voice_parameters();
+      print_voice_parameters(generic_temp_select_menu);
     }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
