@@ -15625,6 +15625,8 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.print(F("ENC_R"));
     UI_update_instance_icons();
+
+    // voice global parameter names
     display.setTextSize(1);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(0, 4);
@@ -15634,6 +15636,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       display.print(voice_params[i].name);
     }
 
+    // operator parameter names
     setCursor_textGrid_small(39, 3);
     display.print(F("EDIT OPERATOR"));
     setCursor_textGrid_small(29, 4);
@@ -15666,10 +15669,10 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
         else
           value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
 
-        if (LCDML.BT_checkDown() && value < limit) {
-          value++;
-        } else if (LCDML.BT_checkUp() && value > 0) {
-          value--;
+        if (LCDML.BT_checkDown()) {
+          value = constrain(value + ENCODER[ENC_R].speed(), 0, limit);
+        } else if (LCDML.BT_checkUp()) {
+          value = constrain(value - ENCODER[ENC_R].speed(), 0, limit);
         }
 
         if (generic_temp_select_menu == 0)
