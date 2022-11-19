@@ -512,20 +512,22 @@ void draw()
         check= myPort.read();
         if (check==88)
           rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2  );
-      } else if (val2==95) // draw char
-      {
-        debug_command=7;
-        readxy();
-        readcolor();
-        readbgcolor();
-        readchar();
-        readsize();
-        check= myPort.read();
-        if (check==88)
-        {
-          drawChar((xh*256+xl), (yh*256+yl), ch, c, bgcolor, size);
-        }
-      } else if (val2==96)  //draw line
+      }
+      //else if (val2==95) // draw char
+      //{
+      //  debug_command=7;
+      //  readxy();
+      //  readcolor();
+      //  readbgcolor();
+      //  readchar();
+      //  readsize();
+      //  check= myPort.read();
+      //  if (check==88)
+      //  {
+      //    drawChar((xh*256+xl), (yh*256+yl), ch, c, bgcolor, size);
+      //  }
+      //}
+      else if (val2==96)  //draw line
       {
         debug_command=8;
         readxy();
@@ -585,6 +587,25 @@ void draw()
         if (check==88)
           initMeters();
         num_meters=hh;
+      } else if (val2==72)  // draw string
+      {
+        debug_command=13;
+        int sizeStr = myPort.read();
+        readxy();
+        readcolor();
+        readbgcolor();
+        readsize();
+
+        byte[] inBuffer = new byte[sizeStr];
+        myPort.readBytes(inBuffer);
+
+        check= myPort.read();
+        if (check==88)
+        {
+          for (int i=0; i<sizeStr; i++) {
+            drawChar((xh*256+xl)+i*6*size, (yh*256+yl), inBuffer[i], c, bgcolor, size);
+          }
+        }
       }
 
       //if (debug_command !=0) {
@@ -616,6 +637,8 @@ void draw()
       //    print ("meterchange=");
       //    print (num_meters);
       //  }
+      //  if (debug_command == 13)
+      //    print ("str");
       //  debug_command =0;
       //}
 
@@ -627,80 +650,81 @@ void draw()
         draw_volmeters();
         timer=0;
       }
-    } else if (val1 == 4) { //receive file
-      byte []filename_bytes= new byte[36];
-      String Filename = new String(filename_bytes);
-      int count=0;
-      int []filelen_bytes= new int[4];
-      Boolean filename_received=false;
-      Boolean filename_processed=false;
-      int file_size_byte_count=0;
-      Boolean file_transfer=false;
-      int filelength=0;
-      Boolean transfer_finished=false;
-
-      while (myPort.available() > 0 &&transfer_finished==false) {
-
-        if (filename_received==false )
-        {
-          val1 = myPort.read();
-          if (val1 != 5) {
-            filename_bytes[count]=(byte)val1;
-            count++;
-          } else  
-          filename_received=true;
-        }
-
-        if (filename_received && filename_processed == false )
-        {
-          Filename = new String(filename_bytes).trim();
-          print (Filename);
-          count=0;
-          filename_processed=true;
-        }
-        if (filename_received && filename_processed  && file_size_byte_count<4 && file_transfer==false )
-        {
-          val1 = myPort.read();
-          filelen_bytes[file_size_byte_count] = val1;
-          file_size_byte_count++;
-        }
-
-        if (filename_received && filename_processed  && file_size_byte_count==4 && file_transfer==false )
-        {
-          filelength = filelen_bytes[0];
-          filelength += filelen_bytes[1] << 8;
-          filelength +=filelen_bytes[2] << 16;
-          filelength +=filelen_bytes[3] << 24;
-
-          print (filelength);
-          print (" ");
-          file_size_byte_count=0;
-          count=0;
-          val1 = (byte)myPort.read();// filename detection end byte "6" 
-          if (val1==6) {
-            print ("OK ");
-            file_transfer=true;
-          }
-        }
-        if (file_transfer && count<filelength )
-        { 
-          println ("reading ");
-          if (filelength>40000000)
-            filelength=777;  // safety 40MB
-          byte []bytearray= new byte[filelength];      
-          while (myPort.available() > 0 && count<filelength) {
-            bytearray[count]=(byte)myPort.read();
-            print ( 100*(count+1) / filelength);
-            print ("% ");
-            count++;
-          }
-          println ("saving ");
-          saveBytes(Filename, bytearray);
-          println ("done ");
-          transfer_finished = true;
-        }
-      }
     }
+    //else if (val1 == 4) { //receive file
+    //  byte []filename_bytes= new byte[36];
+    //  String Filename = new String(filename_bytes);
+    //  int count=0;
+    //  int []filelen_bytes= new int[4];
+    //  Boolean filename_received=false;
+    //  Boolean filename_processed=false;
+    //  int file_size_byte_count=0;
+    //  Boolean file_transfer=false;
+    //  int filelength=0;
+    //  Boolean transfer_finished=false;
+
+    //  while (myPort.available() > 0 &&transfer_finished==false) {
+
+    //    if (filename_received==false )
+    //    {
+    //      val1 = myPort.read();
+    //      if (val1 != 5) {
+    //        filename_bytes[count]=(byte)val1;
+    //        count++;
+    //      } else  
+    //      filename_received=true;
+    //    }
+
+    //    if (filename_received && filename_processed == false )
+    //    {
+    //      Filename = new String(filename_bytes).trim();
+    //      print (Filename);
+    //      count=0;
+    //      filename_processed=true;
+    //    }
+    //    if (filename_received && filename_processed  && file_size_byte_count<4 && file_transfer==false )
+    //    {
+    //      val1 = myPort.read();
+    //      filelen_bytes[file_size_byte_count] = val1;
+    //      file_size_byte_count++;
+    //    }
+
+    //    if (filename_received && filename_processed  && file_size_byte_count==4 && file_transfer==false )
+    //    {
+    //      filelength = filelen_bytes[0];
+    //      filelength += filelen_bytes[1] << 8;
+    //      filelength +=filelen_bytes[2] << 16;
+    //      filelength +=filelen_bytes[3] << 24;
+
+    //      print (filelength);
+    //      print (" ");
+    //      file_size_byte_count=0;
+    //      count=0;
+    //      val1 = (byte)myPort.read();// filename detection end byte "6" 
+    //      if (val1==6) {
+    //        print ("OK ");
+    //        file_transfer=true;
+    //      }
+    //    }
+    //    if (file_transfer && count<filelength )
+    //    { 
+    //      println ("reading ");
+    //      if (filelength>40000000)
+    //        filelength=777;  // safety 40MB
+    //      byte []bytearray= new byte[filelength];      
+    //      while (myPort.available() > 0 && count<filelength) {
+    //        bytearray[count]=(byte)myPort.read();
+    //        print ( 100*(count+1) / filelength);
+    //        print ("% ");
+    //        count++;
+    //      }
+    //      println ("saving ");
+    //      saveBytes(Filename, bytearray);
+    //      println ("done ");
+    //      transfer_finished = true;
+    //    }
+    //  }
+    //}
   }
  // if (keyPressed)
  //   saveFrame("microdexed-######.png");

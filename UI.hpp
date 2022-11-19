@@ -200,6 +200,7 @@ extern void psram_test();
 extern void handle_touchscreen_settings_button_test();
 extern uint8_t remote_MIDI_CC;
 extern uint8_t remote_MIDI_CC_value;
+
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
 extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
@@ -931,6 +932,7 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -948,6 +950,8 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
                          uint16_t bg) {
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
+
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -965,6 +969,7 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -983,6 +988,7 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -2445,6 +2451,9 @@ FLASHMEM uint8_t get_current_cursor_id(void) {
     return (0);
 }
 
+uint8_t touchX = 0;
+uint8_t touchY = 0;
+
 FLASHMEM void lcdml_menu_control(void) {
   // If something must init, put in in the setup condition
 
@@ -2488,38 +2497,61 @@ FLASHMEM void lcdml_menu_control(void) {
   uint32_t buttons = joysticks[0].getButtons();
 
   // MIDI remote
-  switch (remote_MIDI_CC) {
-    case 24:  // SELECT
-      buttons = GAMEPAD_SELECT;
-      remote_MIDI_CC = 0;
-      remote_console_keystate_select = (remote_MIDI_CC_value == 127 ? true : false);
-      break;
-    // case 25: // START
-    // buttons = buttons + GAMEPAD_START;
-    // remote_MIDI_CC = 0;
-    //   break;
-    case 26:  // BUTTON B
-      buttons = buttons + GAMEPAD_BUTTON_B;
-      remote_MIDI_CC = 0;
-      remote_console_keystate_b = (remote_MIDI_CC_value == 127 ? true : false);
-      break;
-    case 27:  // BUTTON A
-      buttons = buttons + GAMEPAD_BUTTON_A;
-      remote_MIDI_CC = 0;
-      remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
-      break;
-    case 28:  // init display at remote connection
-      buttons = 0;
-      remote_console_keystate_select = false;
-      remote_console_keystate_a = false;
-      remote_console_keystate_b = false;
-      ts.touch_ui_drawn_in_menu = false;
-      ts.keyb_in_menu_activated = false;
-      draw_menu_ui_icons();
-      LCDML.MENU_goRoot();
-      break;
-    default:
-      break;
+  if(remote_MIDI_CC > 0) {
+    switch (remote_MIDI_CC) {
+      case 24: // SELECT
+        remote_MIDI_CC = 0;
+        buttons = GAMEPAD_SELECT;
+        remote_console_keystate_select = (remote_MIDI_CC_value == 127 ? true : false);
+        break;
+      // case 25: // START
+      // buttons = buttons + GAMEPAD_START;
+      // remote_MIDI_CC = 0;
+      //   break;
+      case 26: // BUTTON B
+        remote_MIDI_CC = 0;
+        buttons = buttons + GAMEPAD_BUTTON_B;
+        remote_console_keystate_b = (remote_MIDI_CC_value == 127 ? true : false);
+        break;
+      case 27: // BUTTON A
+        remote_MIDI_CC = 0;
+        buttons = buttons + GAMEPAD_BUTTON_A;
+        remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
+        break;
+      case 28: // init display at remote connection
+        remote_MIDI_CC = 0;
+        buttons = 0;
+        remote_console_keystate_select = false;
+        remote_console_keystate_a = false;
+        remote_console_keystate_b = false;
+        ts.touch_ui_drawn_in_menu = false;
+        ts.keyb_in_menu_activated = false;
+        draw_menu_ui_icons();
+        LCDML.MENU_goRoot();
+        break;
+      case 29: // remote touch, receive x
+        remote_MIDI_CC = 0;
+        touchX = remote_MIDI_CC_value;
+        break;
+      case 30: // remote touch, receive y
+        remote_MIDI_CC = 0;
+        touchY = remote_MIDI_CC_value;
+
+        // remote touch pressed
+        ts.p.x = touchX * 2.5 + 1;  // incoming x is divided by 2.5 minus 1
+        ts.p.y = touchY * 2.5 + 1;  // incoming y is divided by 2.5 minus 1
+        buttons = 0;
+        remote_touched = true;
+        break;
+      case 31:
+        // remote touch released
+        remote_MIDI_CC = 0;
+        remote_touched = false;
+        touchX = touchY = 0;
+        break;
+      default:
+        break;
+    }
   }
 
 #ifdef ONBOARD_BUTTON_INTERFACE
@@ -2588,32 +2620,6 @@ FLASHMEM void lcdml_menu_control(void) {
     LCDML.MENU_goRoot();
   }
   //#endif
-
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 1) {  // touch input from remote console
-    uint8_t x;
-    uint8_t y;
-    buttons = 0;
-    x = Serial.read();
-    y = Serial.read();
-    if (Serial.read() == 88)  // check value correct, receive touch point from remote mouse
-    {
-      ts.p.x = (x * 2);  // incoming x is halfed to use a single byte for fast fransfer
-      ts.p.y = y;
-      remote_touched = true;
-    }
-  }
-#endif
-
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 2) {  // touch input from remote console, mouse release
-    buttons = 0;
-    if (Serial.read() == 88)  // check value correct, receive touch release from remote mouse
-    {
-      remote_touched = false;
-    }
-  }
-#endif
 
   if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed) {
 
@@ -13383,16 +13389,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.setTextColor(COLOR_PITCHSMP);
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        display.println("SD1");
+        display.print("SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        display.println("SD2");
+        display.print("SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        display.println("SDHC");
+        display.print("SDHC");
         break;
       default:
-        display.println(F("Unknown"));
+        display.print(F("Unknown"));
     }
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster();  // clusters are collections of blocks
@@ -13808,16 +13814,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.setTextColor(COLOR_PITCHSMP);
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        display.println("SD1");
+        display.print("SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        display.println("SD2");
+        display.print("SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        display.println("SDHC");
+        display.print("SDHC");
         break;
       default:
-        display.println(F("Unknown"));
+        display.print(F("Unknown"));
     }
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster();  // clusters are collections of blocks
@@ -14175,16 +14181,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.setTextColor(COLOR_PITCHSMP);
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        display.println("SD1");
+        display.print("SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        display.println("SD2");
+        display.print("SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        display.println("SDHC");
+        display.print("SDHC");
         break;
       default:
-        display.println(F("Unknown"));
+        display.print(F("Unknown"));
     }
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster();  // clusters are collections of blocks
