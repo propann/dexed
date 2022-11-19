@@ -1163,7 +1163,6 @@ void setup() {
 #endif
 #endif
 
-#ifdef COMPILE_FOR_FLASH
   //Setup SD WAV play
 
 #ifdef DEBUG
@@ -1177,7 +1176,6 @@ void setup() {
 #ifdef COMPILE_FOR_FLASH
   master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH, 0.4);
   master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH, 0.4);
-#endif
 #endif
 
   //  Serial Flash Init
