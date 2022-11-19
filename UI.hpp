@@ -13389,16 +13389,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.setTextColor(COLOR_PITCHSMP);
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        display.println("SD1");
+        display.print("SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        display.println("SD2");
+        display.print("SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        display.println("SDHC");
+        display.print("SDHC");
         break;
       default:
-        display.println(F("Unknown"));
+        display.print(F("Unknown"));
     }
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster();  // clusters are collections of blocks
@@ -13814,16 +13814,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.setTextColor(COLOR_PITCHSMP);
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        display.println("SD1");
+        display.print("SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        display.println("SD2");
+        display.print("SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        display.println("SDHC");
+        display.print("SDHC");
         break;
       default:
-        display.println(F("Unknown"));
+        display.print(F("Unknown"));
     }
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster();  // clusters are collections of blocks
@@ -14181,16 +14181,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.setTextColor(COLOR_PITCHSMP);
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        display.println("SD1");
+        display.print("SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        display.println("SD2");
+        display.print("SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        display.println("SDHC");
+        display.print("SDHC");
         break;
       default:
-        display.println(F("Unknown"));
+        display.print(F("Unknown"));
     }
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster();  // clusters are collections of blocks

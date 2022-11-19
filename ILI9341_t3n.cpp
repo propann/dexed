@@ -1142,21 +1142,39 @@ size_t ILI9341_t3n::write(const uint8_t *buffer, size_t size) {
   // Lets try to handle some of the special font centering code that was done
   // for default fonts.
 
+#ifdef REMOTE_CONSOLE
+  Serial.write(99);
+  Serial.write(72);
+  Serial.write(size);
+  Serial.write(highByte(cursor_x));
+  Serial.write(lowByte(cursor_x));
+  Serial.write(highByte(cursor_y));
+  Serial.write(lowByte(cursor_y));
+  Serial.write(highByte(textcolor));
+  Serial.write(lowByte(textcolor));
+  Serial.write(highByte(textbgcolor));
+  Serial.write(lowByte(textbgcolor));
+  Serial.write(textsize_x);
+  Serial.write(buffer, size);
+  Serial.write(88);
+  console = false;
+#endif
+
   size_t cb = size;
   while (cb) {
     uint8_t c = *buffer++;
     cb--;
 
-    if (c == '\n') {
-      cursor_y += textsize_y * 8;
-      cursor_x = 0;
-    } else if (c == '\r') {
-      // skip em
-    } else {
+    // if (c == '\n') {
+    //   // cursor_y += textsize_y * 8;
+    //   // cursor_x = 0;
+    // } else if (c == '\r') {
+    //   // skip em
+    // } else {
       drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
                textsize_y);
       cursor_x += textsize_x * 6;
-    }
+    // }
   }
   return size;
 }
@@ -1171,24 +1189,24 @@ void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
       ((y + 8 * size_y - 1) < 0))    // Clip top   TODO: is this correct?
     return;
 
-#ifdef REMOTE_CONSOLE
-  //remote console
-  Serial.write(99);
-  Serial.write(95);
-  Serial.write(highByte(x));
-  Serial.write(lowByte(x));
-  Serial.write(highByte(y));
-  Serial.write(lowByte(y));
-  Serial.write(highByte(fgcolor));
-  Serial.write(lowByte(fgcolor));
-  Serial.write(highByte(bgcolor));
-  Serial.write(lowByte(bgcolor));
-  Serial.write(c);
-  Serial.write(size_x);
-  Serial.write(88);
-  // delayMicroseconds(60); //necessary to avoid random pixels in remote console
-  console = false;
-#endif
+// #ifdef REMOTE_CONSOLE
+//   //remote console
+//   Serial.write(99);
+//   Serial.write(95);
+//   Serial.write(highByte(x));
+//   Serial.write(lowByte(x));
+//   Serial.write(highByte(y));
+//   Serial.write(lowByte(y));
+//   Serial.write(highByte(fgcolor));
+//   Serial.write(lowByte(fgcolor));
+//   Serial.write(highByte(bgcolor));
+//   Serial.write(lowByte(bgcolor));
+//   Serial.write(c);
+//   Serial.write(size_x);
+//   Serial.write(88);
+//   // delayMicroseconds(60); //necessary to avoid random pixels in remote console
+//   console = false;
+// #endif
 
   if (c == 32) {
     if (fgcolor == bgcolor) {
