@@ -78,15 +78,6 @@ typedef struct fm_s {
   uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
-#ifdef COMPILE_FOR_QSPI
-  boolean flash_is_folder;
-  uint8_t flash_folder_depth = 0;
-  bool flash_parent_folder = false;
-  char flash_temp_name[52];
-  File flash_entry;
-  File flash_currentDirectory;
-  char flash_new_name[52];
-#endif
 } fm_t;
 
 #endif

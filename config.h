@@ -123,7 +123,6 @@
 #define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
 //#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
-//#define COMPILE_FOR_QSPI    // experimental, for testing purposes only
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -1067,7 +1066,8 @@ enum master_mixer_ports {
   MASTER_MIX_CH_EPIANO,
   MASTER_MIX_CH_MICROSYNTH,
   MASTER_MIX_CH_BRAIDS,
-  MASTER_MIX_CH_WAV_PREVIEW,
+  MASTER_MIX_CH_WAV_PREVIEW_SD,
+  MASTER_MIX_CH_WAV_PREVIEW_FLASH,
   MASTER_MIX_CH_DELAY1,
   MASTER_MIX_CH_DELAY2,
 };

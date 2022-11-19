@@ -235,13 +235,10 @@ AudioMixer<2> finalized_mixer_r;
 AudioMixer<2> finalized_mixer_l;
 #endif
 
-#ifdef COMPILE_FOR_SDCARD
-AudioPlaySdWav sd_WAV_preview;
-#endif
+AudioPlaySdWav WAV_preview_SD;
 
 #ifdef COMPILE_FOR_FLASH
-AudioPlayFlashResmp flash_WAV_preview;
-//AudioPlaySerialflashRaw         flash_WAV_preview;
+AudioPlaySerialflashRaw WAV_preview_FLASH;
 #endif
 
 // Drumset
@@ -779,18 +776,11 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id) {
 #endif
 
 FLASHMEM void create_audio_wav_preview_chain() {
-  //AudioPlaySdWav                  sd_WAV_preview;
-  //AudioPlayFlashResmp             flash_WAV_preview;
-#ifdef COMPILE_FOR_SDCARD
-  //sd_WAV[instance_id] = new AudioPlaySdWav();
-  //sd_WAV = new AudioPlaySdWav();
-  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV_preview, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW);
-  dynamicConnections[nDynamic++] = new AudioConnection(sd_WAV_preview, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW);
-#endif
-
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_SD, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_SD);
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_SD, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW_SD);
 #ifdef COMPILE_FOR_FLASH
-  dynamicConnections[nDynamic++] = new AudioConnection(flash_WAV_preview, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW);
-  dynamicConnections[nDynamic++] = new AudioConnection(flash_WAV_preview, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW);
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_FLASH, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_FLASH);
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_FLASH, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW_FLASH);
 #endif
 }
 
@@ -1182,8 +1172,12 @@ void setup() {
 #endif
 
   create_audio_wav_preview_chain();
-  master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW, 0.4);
-  master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW, 0.4);
+  master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_SD, 0.4);
+  master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW_SD, 0.4);
+#ifdef COMPILE_FOR_FLASH
+  master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH, 0.4);
+  master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH, 0.4);
+#endif
 #endif
 
   //  Serial Flash Init
@@ -1693,7 +1687,7 @@ void loop() {
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sample_editor)) {
     handle_touchscreen_sample_editor();
 
-    if (flash_WAV_preview.isPlaying()) {
+    if (WAV_preview_FLASH.isPlaying()) {
 
       //display.print(flash_WAV_preview.positionMillis();
       //  display.fillRect( (flash_WAV_preview.lengthMillis() / DISPLAY_WIDTH )* flash_WAV_preview.positionMillis() , 200, 8, 8, RED  );
@@ -1785,7 +1779,7 @@ void loop() {
     }
 
 #ifdef COMPILE_FOR_FLASH
-    if (flash_WAV_preview.isPlaying()) {
+    if (WAV_preview_FLASH.isPlaying()) {
       fm.sample_screen_position_x = fm.sample_screen_position_x + seq.wave_spacing / 10;
       if (fm.sample_screen_position_x < DISPLAY_WIDTH)
         display.fillRect(fm.sample_screen_position_x, 180, 1, 2, RED);
@@ -1915,21 +1909,29 @@ void loop() {
 ******************************************************************************/
 
 void playWAVFile(const char* filename) {
-  // #ifdef COMPILE_FOR_SDCARD
-  //   //sd_WAV_preview[fm.sd_preview_slot]->play(filename);
-  //   sd_WAV_preview.play(filename);
-  //   //sd_WAV.stop();
-  //   sd_WAV.play(filename);
-  //   // A brief delay for the library to read WAV info
-  //   //delay(25);
-  //   // Simply wait for the file to finish playing.
-  //   while (sd_WAV.isPlaying()) {
-  //   }
-  // #endif
-
+  if (fm.active_window == 0) {  //preview from sd card
+    if (WAV_preview_SD.isPlaying())
+      WAV_preview_SD.stop();
+    WAV_preview_SD.play(filename);
+    while (WAV_preview_SD.isPlaying()) {
+      display.fillRect(6, 190, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_SD.lengthMillis()) * WAV_preview_SD.positionMillis() + 1, 5, RED);
+      delay(25);
+    }
+    delay(25);
+    display.fillRect(6, 190, DISPLAY_WIDTH - 7, 5, COLOR_BACKGROUND);
+  }
 #ifdef COMPILE_FOR_FLASH
-  //flash_WAV_preview.stop();
-  flash_WAV_preview.playWav(filename);
+if (fm.active_window == 1) {  //preview from flash
+    if (WAV_preview_FLASH.isPlaying())
+      WAV_preview_FLASH.stop();
+    WAV_preview_FLASH.play(filename);
+    while (WAV_preview_FLASH.isPlaying()) {
+      display.fillRect(6, 190, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_FLASH.lengthMillis()) * WAV_preview_FLASH.positionMillis() + 1, 5, RED);
+      delay(25);
+    }
+    delay(25);
+    display.fillRect(6, 190, DISPLAY_WIDTH - 7, 5, COLOR_BACKGROUND);
+  }
 #endif
 }
 

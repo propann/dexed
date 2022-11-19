@@ -29,9 +29,6 @@ extern void border3_large();
 #ifdef COMPILE_FOR_FLASH
 extern void flash_printDirectory();
 #endif
-#ifdef COMPILE_FOR_QSPI
-extern void flash_printDirectory(File flash_currentDirectory);
-#endif
 extern void sd_printDirectory(File currentDirectory);
 extern uint8_t find_longest_chain();
 extern void print_formatted_number(uint16_t v, uint8_t l);
@@ -755,7 +752,7 @@ FLASHMEM void handle_touchscreen_file_manager() {
 
     // check touch buttons
 
-    if (ts.p.y > CHAR_height_small * 24) {
+    if (ts.p.y > CHAR_height_small * 20) {
       if (check_button_on_grid(1, 25)) {
         fm.sd_mode = 0;  // browse files/directories
       } else if (check_button_on_grid(10, 25)) {
@@ -763,11 +760,9 @@ FLASHMEM void handle_touchscreen_file_manager() {
       } else if (check_button_on_grid(19, 25)) {
         fm.sd_mode = 2;  //copy preset samples to flash
       }
-
       else if (check_button_on_grid(28, 25)) {
         fm.sd_mode = 3;  //copy to flash
       }
-
       else if (check_button_on_grid(37, 25)) {
         fm.sd_mode = 4;  //copy to pc
       } else if (check_button_on_grid(46, 25)) {
@@ -775,9 +770,9 @@ FLASHMEM void handle_touchscreen_file_manager() {
       }
     }
     // active_window   0 = left window (SDCARD) , 1 = FLASH
-    else if (ts.p.x > 1 && ts.p.y > 1 && ts.p.x < CHAR_width_small * 29 && ts.p.y < CHAR_height_small * 24) {
+    else if (ts.p.x > 1 && ts.p.x < CHAR_width_small * 29 ) {
       fm.active_window = 0;
-    } else if (ts.p.x > CHAR_width_small * 29 && ts.p.y > 1 && ts.p.y < CHAR_height_small * 24) {
+    } else if (ts.p.x > CHAR_width_small * 29  ) {
       fm.active_window = 1;
     }
     print_file_manager_buttons();
@@ -785,9 +780,6 @@ FLASHMEM void handle_touchscreen_file_manager() {
 
 #ifdef COMPILE_FOR_FLASH
     flash_printDirectory();
-#endif
-#ifdef COMPILE_FOR_QSPI
-    flash_printDirectory(fm.flash_currentDirectory);
 #endif
   }
   ts.slowdown_UI_input++;
