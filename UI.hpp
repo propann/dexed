@@ -932,6 +932,7 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -949,6 +950,8 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
                          uint16_t bg) {
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
+
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -966,6 +969,7 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -984,6 +988,7 @@ FLASHMEM void drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
   int16_t byteWidth = (w + 7) / 8;  // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
+  display.console = true;
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
