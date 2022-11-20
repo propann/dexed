@@ -4335,18 +4335,77 @@ FLASHMEM void check_and_create_directories(void) {
 #ifdef DEBUG
     Serial.println(F("Directory check... "));
 #endif
-    // create directories for banks
-    for (i = 0; i < MAX_BANKS; i++) {
-      snprintf_P(tmp, sizeof(tmp), PSTR("/%d"), i);
-      if (!SD.exists(tmp)) {
+
+    // Create directories for Dexed banks
+    snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), DEXED_CONFIG_PATH);
+    if (SD.exists(tmp)) {
+      SD.remove(tmp);
+    } else {
 #ifdef DEBUG
         Serial.print(F("Creating directory "));
         Serial.println(tmp);
 #endif
-        SD.mkdir(tmp);
+      SD.mkdir(tmp);
+
+      // Create all Dexed bank directories
+      for (i = 0; i < MAX_BANKS; i++) {
+        snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), DEXED_CONFIG_PATH, i);
+        if (!SD.exists(tmp)) {
+  #ifdef DEBUG
+          Serial.print(F("Creating directory "));
+          Serial.println(tmp);
+  #endif
+          SD.mkdir(tmp);
+        }
       }
     }
 
+    // 2022/11/19 update SD: move banks into /DEXED
+    File sysex_dir;
+    for (i = 0; i < MAX_BANKS; i++) {
+      snprintf_P(tmp, sizeof(tmp), PSTR("/%d"), i);
+      if (SD.exists(tmp)) {
+        sysex_dir = SD.open(tmp);
+
+        if (!sysex_dir) {
+          break;
+        }
+
+        // move file into new /DEXED folder
+        File entry;
+        do {
+          entry = sysex_dir.openNextFile();
+        } while (entry.isDirectory());
+
+        char sysexFilename[FILENAME_LEN];
+        char sysexPath[FILENAME_LEN];
+        strcpy(sysexFilename, entry.name());
+        snprintf_P(sysexPath, sizeof(sysexPath), PSTR("/%d/%s"), i, sysexFilename);
+#ifdef DEBUG
+        Serial.printf("move %s to /%s%s\n", sysexPath, DEXED_CONFIG_PATH, sysexPath);
+#endif
+        entry.close();
+        sysex_dir.close();
+
+        File myFileIn = SD.open(sysexPath, FILE_READ);
+        byte buffer[4104];
+        myFileIn.read(buffer, 4104);
+        myFileIn.close();
+        SD.remove(sysexPath);
+
+        snprintf_P(sysexPath, sizeof(sysexPath), PSTR("/%s/%d/%s"), DEXED_CONFIG_PATH, i, sysexFilename);
+        if (SD.exists(sysexPath)) {
+          SD.remove(sysexPath);
+        }
+        File myFileOut = SD.open(sysexPath, FILE_WRITE);
+        myFileOut.write(buffer, 4104);
+        myFileOut.close();
+
+        SD.rmdir(tmp);
+      }
+    }
+
+    // Create directory for performances
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s"), PERFORMANCE_CONFIG_PATH);
     if (!SD.exists(tmp)) {
 #ifdef DEBUG

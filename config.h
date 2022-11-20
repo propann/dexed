@@ -340,6 +340,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 // EEPROM address
 #define EEPROM_START_ADDRESS 0xFF
 
+#define DEXED_CONFIG_PATH "DEXED"
 #define MAX_BANKS 100
 #define MAX_VOICES 32      // voices per bank
 #define BANK_NAME_LEN 11   // 10 (plus '\0')

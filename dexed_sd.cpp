@@ -155,12 +155,12 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 
   if (sd_card > 0) {
     File sysex_dir;
-    char bankdir[4];
+    char bankdir[FILENAME_LEN];
     char bank_name[BANK_NAME_LEN];
     char voice_name[VOICE_NAME_LEN];
     uint8_t data[128];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%d"), b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -197,7 +197,7 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
     strcpy(g_bank_name[instance_id], bank_name);
 #ifdef DEBUG
     char filename[FILENAME_LEN];
-    snprintf_P(filename, sizeof(filename), PSTR("/%d/%s.syx"), b, bank_name);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, b, bank_name);
     Serial.print(F("Loading voice from "));
     Serial.print(filename);
     Serial.print(F(" bank:["));
@@ -268,7 +268,7 @@ FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
     char filename[FILENAME_LEN];
     uint8_t data[128];
 
-    snprintf_P(filename, sizeof(filename), PSTR("/%d/%s.syx"), b, g_bank_name[instance_id]);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, b, g_bank_name[instance_id]);
 
     AudioNoInterrupts();
     sysex = SD.open(filename, FILE_WRITE);
@@ -471,9 +471,9 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data) {
     Serial.println(F("."));
 #endif
 
-    // first remove old bank
-    sscanf(bank_filename, "/%d/%s", &bank_number, tmp);
-    snprintf_P(tmp, sizeof(tmp), PSTR("/%d"), bank_number);
+    // first remove old bank => find the bank number
+    sscanf(bank_filename, "/%s/%d/%s", tmp, &bank_number, tmp2);
+    snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), DEXED_CONFIG_PATH, bank_number);
     AudioNoInterrupts();
     root = SD.open(tmp);
     while (42 == 42) {
@@ -486,10 +486,10 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data) {
           Serial.print(F("/"));
           Serial.println(entry.name());
 #endif
-          snprintf_P(tmp2, sizeof(tmp2), PSTR("%s/%s"), tmp, entry.name());
+          snprintf_P(tmp2, sizeof(tmp2), PSTR("/%s/%s/%s"), DEXED_CONFIG_PATH, tmp, entry.name());
           entry.close();
-#ifndef DEBUG
-          SD.remove(tmp2);
+#ifdef DEBUG
+          Serial.printf("Remove file %s\n", tmp2);
 #else
           bool r = SD.remove(tmp2);
           if (r == false) {
@@ -506,7 +506,7 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data) {
     }
     root.close();
 
-    // store new bank at /<b>/<bank_name>.syx
+    // store new bank at /DEXED/<b>/<bank_name>.syx
 #ifdef DEBUG
     Serial.print(F("Storing bank as "));
     Serial.print(bank_filename);
@@ -2783,9 +2783,9 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
 
   if (sd_card > 0) {
     File sysex_dir;
-    char bankdir[4];
+    char bankdir[FILENAME_LEN];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%d"), b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -2838,9 +2838,9 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 
   if (sd_card > 0) {
     File sysex_dir;
-    char bankdir[4];
+    char bankdir[FILENAME_LEN];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%d"), b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -2875,7 +2875,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     char bank_name[BANK_NAME_LEN];
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    Serial.printf_P(PSTR("Get voice name from [/%d/%s.syx]\n"), b, bank_name);
+    Serial.printf_P(PSTR("Get voice name from [/%s/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b, bank_name);
 #endif
     memset(voice_name, 0, VOICE_NAME_LEN);
     entry.seek(124 + (v * 128));
