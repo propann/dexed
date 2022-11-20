@@ -15879,7 +15879,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param) {
 #endif
             char tmp[FILENAME_LEN];
             strcpy(tmp, receive_bank_filename);
-            snprintf_P(receive_bank_filename, sizeof(receive_bank_filename), PSTR("/%d/%s.syx"), bank_number, tmp);
+            snprintf_P(receive_bank_filename, sizeof(receive_bank_filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp);
 #ifdef DEBUG
             Serial.print(F("Receiving into bank "));
             Serial.print(bank_number);
@@ -16066,7 +16066,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param) {
     } else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
       if (strcmp("*ERROR*", tmp_bank_name) != 0) {
         char filename[FILENAME_LEN];
-        snprintf_P(filename, sizeof(filename), PSTR("/%d/%s.syx"), bank_number, tmp_bank_name);
+        snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
 #ifdef DEBUG
         Serial.print(F("Send bank "));
         Serial.print(filename);
@@ -16185,7 +16185,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param) {
         case 2:
           if (strcmp("*ERROR*", tmp_bank_name) != 0) {
             char filename[FILENAME_LEN];
-            snprintf_P(filename, sizeof(filename), PSTR("/%d/%s.syx"), bank_number, tmp_bank_name);
+            snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
 #ifdef DEBUG
             Serial.print(F("Send voice "));
             Serial.print(voice_number);
