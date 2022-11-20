@@ -349,8 +349,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define CONFIG_FILENAME_LEN 50
 #define DRUM_NAME_LEN 21
 
-#define FAV_CONFIG_PATH "FAVCFG"
-#define FAV_CONFIG_NAME "FAVCFG"
+#define FAV_CONFIG_PATH "DEXED/FAVCFG"
 
 #define PERFORMANCE_CONFIG_PATH "PERFORMANCE"
 #define SEQUENCER_CONFIG_NAME "sequencer"

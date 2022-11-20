@@ -17755,7 +17755,7 @@ FLASHMEM void locate_random_non_favorite() {
 FLASHMEM bool check_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
-  char tmp[18];
+  char tmp[CONFIG_FILENAME_LEN];
   File myFav;
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
@@ -18227,7 +18227,7 @@ FLASHMEM void UI_func_clear_all(uint8_t param) {
 FLASHMEM void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id) {
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
-  char tmp[18];
+  char tmp[CONFIG_FILENAME_LEN];
   display.console = true;
   File myFav;
   if (sd_card > 0) {
@@ -18252,7 +18252,7 @@ FLASHMEM void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id) {
 
 FLASHMEM bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id) {
   b = constrain(b, 0, MAX_BANKS - 1);
-  char tmp[18];
+  char tmp[CONFIG_FILENAME_LEN];
 
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
@@ -18282,8 +18282,8 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
-  char tmp[18];
-  char tmpfolder[18];
+  char tmp[CONFIG_FILENAME_LEN];
+  char tmpfolder[CONFIG_FILENAME_LEN];
   File myFav;
   uint8_t i = 0, countfavs = 0;
   if (sd_card > 0) {

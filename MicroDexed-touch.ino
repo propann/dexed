@@ -4463,6 +4463,48 @@ FLASHMEM void check_and_create_directories(void) {
       SD.mkdir(tmp);
       }
     */
+
+    // 2022/11/22 move existing favourites into /DEXED
+    if (SD.exists("FAVCFG")) {
+
+      SD.mkdir(FAV_CONFIG_PATH);
+
+      for (i = 0; i < MAX_BANKS; i++) {
+        snprintf_P(tmp, sizeof(tmp), PSTR("/FAVCFG/%d"), i);
+
+        if (SD.exists(tmp)) {
+          char favPath[FILENAME_LEN];
+          char favFilename[FILENAME_LEN];
+
+          strcpy(favPath, tmp);
+
+          snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, i);
+          SD.mkdir(tmp);
+
+          File fav_bank = SD.open(favPath);
+          while (true) {
+            File fav = fav_bank.openNextFile();
+            if (!fav) break;
+
+            strcpy(favFilename, fav.name());
+            snprintf_P(favPath, sizeof(favPath), PSTR("/%s/%d/%s"), "FAVCFG", i, favFilename);
+            fav.close();
+
+            SD.remove(favPath);
+
+            snprintf_P(favPath, sizeof(favPath), PSTR("/%s/%d/%s"), FAV_CONFIG_PATH, i, favFilename);
+            File myFileOut = SD.open(favPath, FILE_WRITE);
+            myFileOut.close();
+          }
+          fav_bank.close();
+          snprintf_P(tmp, sizeof(tmp), PSTR("FAVCFG/%d"), i);
+          SD.rmdir(tmp);
+        }
+      }
+
+      SD.rmdir("/FAVCFG");
+    }
+
   }
 #ifdef DEBUG
   Serial.println(F("SD card check end"));
