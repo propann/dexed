@@ -1142,6 +1142,7 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
           configuration.fx.delay_sync[i] = data_json["delay_sync"][i];
           configuration.fx.delay_pan[i] = data_json["delay_pan"][i];
           configuration.fx.reverb_send[i] = data_json["reverb_send"][i];
+          configuration.fx.delay_to_reverb[i] = data_json["delay_to_reverb"][i];
           if (configuration.fx.delay_sync[i] > 0) {
             configuration.fx.delay_time[i] = 0;
           }
@@ -1221,6 +1222,7 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
         data_json["delay_sync"][i] = configuration.fx.delay_sync[i];
         data_json["delay_pan"][i] = configuration.fx.delay_pan[i];
         data_json["reverb_send"][i] = configuration.fx.reverb_send[i];
+        data_json["delay_to_reverb"][i] = configuration.fx.delay_to_reverb[i];
       }
       data_json["reverb_roomsize"] = configuration.fx.reverb_roomsize;
       data_json["reverb_damping"] = configuration.fx.reverb_damping;
