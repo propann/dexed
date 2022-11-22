@@ -15050,15 +15050,16 @@ struct voice_param {
   uint8_t max;
 };
 
+
 const struct voice_param voice_op_params[] = {
-  { "EG R1", 99 },
-  { "EG R2", 99 },
-  { "EG R3", 99 },
-  { "EG R4", 99 },
-  { "EG L1", 99 },
-  { "EG L2", 99 },
-  { "EG L3", 99 },
-  { "EG L4", 99 },
+  { "R1", 99 },
+  { "R2", 99 },
+  { "R3", 99 },
+  { "R4", 99 },
+  { "L1", 99 },
+  { "L2", 99 },
+  { "L3", 99 },
+  { "L4", 99 },
   { "LEV SCL BRK PT", 99 },
   { "SCL LEFT DEPTH", 99 },
   { "SCL RGHT DEPTH", 99 },
@@ -15076,14 +15077,14 @@ const struct voice_param voice_op_params[] = {
 const uint8_t num_voice_op_params = 21;
 
 const struct voice_param voice_params[] = {
-  { "PITCH EG R1", 99 },
-  { "PITCH EG R2", 99 },
-  { "PITCH EG R3", 99 },
-  { "PITCH EG R4", 99 },
-  { "PITCH EG L1", 99 },
-  { "PITCH EG L2", 99 },
-  { "PITCH EG L3", 99 },
-  { "PITCH EG L4", 99 },
+  { "R1", 99 },
+  { "R2", 99 },
+  { "R3", 99 },
+  { "R4", 99 },
+  { "L1", 99 },
+  { "L2", 99 },
+  { "L3", 99 },
+  { "L4", 99 },
   { "ALGORITHM", 31 },
   { "FEEDBACK", 7 },
   { "OSC KEY SYNC", 1 },
@@ -15101,80 +15102,172 @@ const struct voice_param voice_params[] = {
 const uint8_t num_voice_params = 19;  // omit name for now
 uint8_t current_voice_op = 0;
 
-FLASHMEM uint8_t get_param_limit(uint8_t select_index) {
-  if (select_index == 0)  // instance id
-    return 1;
-  if (select_index - 1 < num_voice_params)
-    return voice_params[select_index - 1].max;
-  if (select_index - 1 == num_voice_params)  // operator count
-    return 5;
-  return voice_op_params[select_index - 2 - num_voice_params].max;
+FLASHMEM int16_t encoder_change(bool fast) {
+  int8_t dir = LCDML.BT_checkDown() ? 1 : -1;
+
+  if(fast) return dir * ENCODER[ENC_R].speed();
+  else     return dir;
 }
 
-FLASHMEM void print_scaled_bar(uint8_t x, uint8_t y, uint8_t value, uint8_t select_index) {
-  uint16_t limit = get_param_limit(select_index);
-  print_small_scaled_bar(x, y, value, limit, select_index, 1, 1);
-}
+struct param_editor{
+  const char* name;
+  uint8_t limit_min, limit_max;
+  bool fast;
+  uint8_t x,y;
+  uint8_t select_id;
 
-FLASHMEM void print_voice_eg(uint8_t x, uint8_t y, uint8_t addr, uint8_t select_addr, int16_t changed_param) {
-  setCursor_textGrid_small(x, y);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  if (changed_param == -1)
-    display.print(F("RATE      LEVEL "));
-  for (uint8_t i = 0; i < 4; i++) {
-    if (changed_param == -1 || changed_param == select_addr + i) {
-      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i);
-      print_scaled_bar(x, y + 1 + i, value, select_addr + i);
+  uint8_t* value;
+  uint8_t(*getter  )(struct param_editor* param);
+  void   (*setter  )(struct param_editor* param, uint8_t value);
+  void   (*renderer)(struct param_editor* param, bool refresh);
+
+  uint8_t get() {
+    if(getter!=NULL)     return getter(this);
+    return 0;
+  };
+  void set(uint8_t _value) {
+    if(setter!=NULL)     setter(this,_value);
+  };
+
+  void draw_editor(bool refresh) {
+    if(renderer != NULL) {
+      renderer(this,refresh);
+      return;
     }
-    if (changed_param == -1 || changed_param == select_addr + i + 4) {
-      uint8_t value2 = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i + 4);
-      print_scaled_bar(x + 10, y + 1 + i, value2, select_addr + i + 4);
+    display.setTextSize(1);
+    if(!refresh) {
+      setCursor_textGrid_small(this->x+10, this->y);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.print(this->name);
     }
-  }
-}
+    print_small_scaled_bar  (x, y, get()-limit_min, limit_max-limit_min, select_id, 1, 1);
+  };
 
-FLASHMEM void print_voice_parameters(int16_t changed_param) {
-  display.setTextSize(1);
-
-  if (changed_param == -1 || changed_param == 0) {
-    // instance selector
-    setModeColor(0);
-    display.setCursor(CHAR_width_small * 10, 6);
-    display.print(F("SELECT INSTANCE  ->"));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    // voice name
-    display.setTextSize(2);
-    show(1, 0, 10, g_voice_name[selected_instance_id]);
-  }
-
-  // global voice parameters
-  display.setTextSize(1);
-  print_voice_eg(0, 5, DEXED_VOICE_OFFSET, 1, changed_param);
-
-  for (uint8_t i = 8; i < num_voice_params; i++) {
-    if (changed_param == -1 || changed_param == i + 1) {
-      uint8_t addr = DEXED_VOICE_OFFSET + i;
-      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-      print_scaled_bar(0, 2 + i, value, i + 1);
+  uint8_t handle_parameter_editor() {
+    if (seq.edit_state == 1) {
+      int16_t change = encoder_change(fast);
+      set(constrain(get() + change, limit_min, limit_max));
+      draw_editor(true);
     }
+    return this->get();
+  };
+};
+
+#define UI_MAX_EDITORS 64
+struct UI {
+  uint8_t x,y;
+  uint8_t num_editors;
+  
+  struct param_editor editors[UI_MAX_EDITORS];
+
+  void clear() {
+    num_editors=0;
+    seq.edit_state=0;
+  };
+
+  void setCursor(uint8_t _x, uint8_t _y) {
+    x=_x; y=_y;
+  };
+
+  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    uint8_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, uint8_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    editors[num_editors]=(struct param_editor){
+      name, limit_min, limit_max, limit_max-limit_min > 32, x, y, num_editors, valuePtr,
+      getter, setter, renderer
+    };
+    editors[num_editors].draw_editor(false);
+    y++;
+    num_editors++;
+  };
+
+  // editor providing default getter + setters
+  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      [](struct param_editor* editor)->uint8_t{return *(editor->value);},
+      [](struct param_editor* editor, uint8_t value)->void{*(editor->value)=value;},
+      renderer
+    );
+  };
+
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max,
+    uint8_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, uint8_t value)
+  ) {
+    addCustomEditor(name, limit_min, limit_max, NULL, getter, setter, NULL);
   }
 
-  // current selected operator parameters
-  if (changed_param == num_voice_params + 1)  // if the operator selection has changed, all values may have too.
-    changed_param = -1;
-  if (changed_param == -1)  // operator selection bar
-    print_scaled_bar(29, 3, current_voice_op, num_voice_params + 1);
-  print_voice_eg(29, 5, current_voice_op * num_voice_op_params, num_voice_params + 2, changed_param);
-  for (uint8_t i = 8; i < num_voice_op_params; i++) {
-    if (changed_param == -1 || changed_param == i + num_voice_params + 2) {
-      uint8_t addr = current_voice_op * num_voice_op_params + i;
-      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-      print_scaled_bar(29, 2 + i, value, i + num_voice_params + 2);
-    }
+  // editor without any custom getter / setter / renderer
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr) {
+    addCustomEditor(name, limit_min, limit_max, valuePtr, NULL);
   }
+
+  void handle_parameter_navigation() {
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
+      seq.edit_state=1-seq.edit_state;
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+
+    if (seq.edit_state == 0) {
+      uint8_t last = generic_temp_select_menu;
+      generic_temp_select_menu += encoder_change(false);
+      generic_temp_select_menu = constrain(generic_temp_select_menu, 0, num_editors-1);
+      editors[last]                    .draw_editor(true);
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+  };
+
+  void draw_editors(bool refresh) {
+    for(uint8_t i=0; i<num_editors; i++)
+      editors[i].draw_editor(refresh);
+  };
+
+  uint8_t handle_current_editor() {
+    return editors[generic_temp_select_menu].handle_parameter_editor();
+  };
+
+  bool encoders_changed() {
+    return (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter();
+  }
+
+  uint8_t handle_input() {
+    if(encoders_changed()) {
+      handle_parameter_navigation();
+      return handle_current_editor();
+    }
+    return -1;
+  };
+
+} ui;
+
+uint8_t dexed_getter(struct param_editor* param){
+  uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+  return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+};
+void dexed_setter(struct param_editor* param, uint8_t value){
+  uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id- 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+  MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
+};
+uint8_t dexed_op_getter(struct param_editor* param){
+  return current_voice_op;
+};
+void dexed_op_setter(struct param_editor* param, uint8_t value){
+  current_voice_op=value;
+  ui.draw_editors(true);
+};
+void dexed_instance_id_renderer(struct param_editor* param, bool refresh) {
+  UI_update_instance_icons();
+  display.setTextSize(2);
+  show(1, 0, 10, g_voice_name[selected_instance_id]);
 }
 
 FLASHMEM void UI_func_voice_editor(uint8_t param) {
+
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     display.fillScreen(COLOR_BACKGROUND);
@@ -15188,87 +15281,61 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     display.print(F("ENC_R"));
     UI_update_instance_icons();
 
-    // voice global parameter names
+    ui.clear();
+
+    ui.setCursor(0,1);
+    ui.addCustomEditor("INSTANCE", 0, 1, &selected_instance_id,&dexed_instance_id_renderer);
+
+    // voice global parameters
     display.setTextSize(1);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(0, 4);
     display.print(F("PITCH EG"));
-    for (uint8_t i = 8; i < num_voice_params; i++) {
-      setCursor_textGrid_small(10, 2 + i);
-      display.print(voice_params[i].name);
-    }
 
-    // operator parameter names
-    setCursor_textGrid_small(39, 3);
-    display.print(F("EDIT OPERATOR"));
+    ui.setCursor(0,5);
+    for (uint8_t i = 0; i < 4; i++)
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max,&dexed_getter, &dexed_setter);
+    ui.setCursor(14,5);
+    for (uint8_t i = 4; i < 8; i++)
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max,&dexed_getter, &dexed_setter);
+    ui.setCursor(0,9);
+    for (uint8_t i = 8; i < num_voice_params; i++)
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max,&dexed_getter, &dexed_setter);
+
+    // operator parameters
+    ui.setCursor(29,3);
+    ui.addCustomEditor((const char*)F("EDIT OPERATOR"), 0, 5, NULL, dexed_op_getter, dexed_op_setter, NULL);
+
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
-    for (uint8_t i = 8; i < num_voice_op_params; i++) {
-      setCursor_textGrid_small(39, 2 + i);
-      display.print(voice_op_params[i].name);
-    }
-    print_voice_parameters(-1);
+    ui.setCursor(27,5);
+    for (uint8_t i = 0; i < 4; i++)
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max,&dexed_getter, &dexed_setter);
+    ui.setCursor(41,5);
+    for (uint8_t i = 4; i < 8; i++)
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max,&dexed_getter, &dexed_setter);
+    ui.setCursor(27,9);
+    for (uint8_t i = 8; i < num_voice_op_params; i++)
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max,&dexed_getter, &dexed_setter);
+
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (seq.edit_state == 0) {
-        uint8_t num_options = num_voice_params + num_voice_op_params + 2;
-        uint8_t last_select = generic_temp_select_menu;
-        if (LCDML.BT_checkDown() && generic_temp_select_menu < num_options - 1) {
-          generic_temp_select_menu++;
-        } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 0) {
-          generic_temp_select_menu--;
-        }
-        print_voice_parameters(last_select);  // make sure last item before navigation is drawn deselected
-      } else if (seq.edit_state == 1) {
-        // decode current edit item into either a global or current operator address
-        uint8_t addr = generic_temp_select_menu - 1 < num_voice_params ? generic_temp_select_menu - 1 + DEXED_VOICE_OFFSET : generic_temp_select_menu - 2 - num_voice_params + current_voice_op * num_voice_op_params;
-        uint8_t limit = get_param_limit(generic_temp_select_menu);
-        uint8_t value;
-        if (generic_temp_select_menu == 0)
-          value = selected_instance_id;
-        else if (generic_temp_select_menu == num_voice_params + 1)
-          value = current_voice_op;
-        else
-          value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-
-        if (LCDML.BT_checkDown()) {
-          value = constrain(value + ENCODER[ENC_R].speed(), 0, limit);
-        } else if (LCDML.BT_checkUp()) {
-          value = constrain(value - ENCODER[ENC_R].speed(), 0, limit);
-        }
-
-        if (generic_temp_select_menu == 0)
-          selected_instance_id = value;
-        else if (generic_temp_select_menu == num_voice_params + 1)
-          current_voice_op = value;
-        else
-          MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
-      }
-      print_voice_parameters(generic_temp_select_menu);
-    }
+    ui.handle_input();
 
     // left encoder selects operator
-    if (encoderDir[ENC_L].Up() || encoderDir[ENC_L].Down()) {
+    /*if (encoderDir[ENC_L].Up() || encoderDir[ENC_L].Down()) {
       if (LCDML.BT_checkDown() && current_voice_op < 5) {
         current_voice_op++;
       } else if (LCDML.BT_checkUp() && current_voice_op > 0) {
         current_voice_op--;
       }
       print_voice_parameters(num_voice_params + 1);
-    }
+    }*/
 
     if (encoderDir[ENC_R].ButtonLong()) {
-      if (selected_instance_id == 0)
-        selected_instance_id = 1;
-      else
-        selected_instance_id = 0;
-      UI_update_instance_icons();
-      print_voice_parameters(-1);
-    } else if (LCDML.BT_checkEnter()) {
-      seq.edit_state = 1 - seq.edit_state;
-      print_voice_parameters(generic_temp_select_menu);
+      selected_instance_id = 1 -selected_instance_id;
+      ui.draw_editors(true);
     }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
