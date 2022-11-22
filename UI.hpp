@@ -3188,31 +3188,41 @@ FLASHMEM void setModeColor(uint8_t selected_option) {
   }
 }
 
-FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t input_limit, uint8_t selected_option, boolean show_bar, boolean show_zero) {
+FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
 
   if (show_zero == false && input_value == 0)
     display.print(F("OFF"));
+  else if(limit_min < 0)
+    print_formatted_number_signed(input_value, 2);
   else
     print_formatted_number(input_value, 3);
 
   if (show_bar) {
     display.console = true;
     display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
-    if (input_value > input_limit) input_value = input_limit;
-    uint8_t split = (5 * CHAR_width_small - 2) * (uint16_t)input_value / input_limit;
-    display.console = true;
-    if (split < 5 * CHAR_width_small - 2)
-      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
-    display.console = true;
-    if (split > 0)
-      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
+
+    if(limit_min>=0) { // filled bar
+      uint8_t split = (5 * CHAR_width_small - 2) * (input_value-limit_min) / (limit_max-limit_min);
+      display.console = true;
+      if (split < 5 * CHAR_width_small - 2)
+        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
+      display.console = true;
+      if (split > 0)
+        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
+    } else { // pan bar
+      uint8_t split = (5 * CHAR_width_small - 2 - 3) * (input_value-limit_min) / (limit_max-limit_min);
+      display.console = true;
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
+      display.console = true;
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
+    }
   }
 }
 
 FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
-  print_small_scaled_bar(x, y, input_value, 100, selected_option, show_bar, show_zero);
+  print_small_scaled_bar(x, y, input_value, 0, 100, selected_option, show_bar, show_zero);
 }
 
 FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
@@ -3245,7 +3255,9 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
 }
 
 FLASHMEM int16_t encoder_change(bool fast) {
-  int8_t dir = LCDML.BT_checkDown() ? 1 : -1;
+  int8_t dir = 0;
+  if(LCDML.BT_checkDown()) dir= 1;
+  if(LCDML.BT_checkUp()  ) dir=-1;
 
   if(fast) return dir * ENCODER[ENC_R].speed();
   else     return dir;
@@ -3253,21 +3265,21 @@ FLASHMEM int16_t encoder_change(bool fast) {
 
 struct param_editor{
   const char* name;
-  uint8_t limit_min, limit_max;
+  int16_t limit_min, limit_max;
   bool fast;
   uint8_t x,y;
   uint8_t select_id;
 
-  uint8_t* value;
-  uint8_t(*getter  )(struct param_editor* param);
-  void   (*setter  )(struct param_editor* param, uint8_t value);
+  void* value;
+  int16_t(*getter  )(struct param_editor* param);
+  void   (*setter  )(struct param_editor* param, int16_t value);
   void   (*renderer)(struct param_editor* param, bool refresh);
 
-  uint8_t get() {
+  int16_t get() {
     if(getter!=NULL)     return getter(this);
     return 0;
   };
-  void set(uint8_t _value) {
+  void set(int16_t _value) {
     if(setter!=NULL)     setter(this,_value);
   };
 
@@ -3282,14 +3294,16 @@ struct param_editor{
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       display.print(this->name);
     }
-    print_small_scaled_bar  (x, y, get()-limit_min, limit_max-limit_min, select_id, 1, 1);
+    print_small_scaled_bar  (x, y, get(), limit_min, limit_max, select_id, 1, 1);
   };
 
-  uint8_t handle_parameter_editor() {
+  int16_t handle_parameter_editor() {
     if (seq.edit_state == 1) {
       int16_t change = encoder_change(fast);
-      set(constrain(get() + change, limit_min, limit_max));
-      draw_editor(true);
+      if(change != 0) {
+        set(constrain(get() + change, limit_min, limit_max));
+        draw_editor(true);
+      }
     }
     return this->get();
   };
@@ -3303,17 +3317,23 @@ struct UI {
   struct param_editor editors[UI_MAX_EDITORS];
 
   void clear() {
+    display.fillScreen(COLOR_BACKGROUND);
     num_editors=0;
+  };
+
+  void reset() {
+    clear();
     seq.edit_state=0;
+    generic_temp_select_menu=0;
   };
 
   void setCursor(uint8_t _x, uint8_t _y) {
     x=_x; y=_y;
   };
 
-  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-    uint8_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, uint8_t value),
+  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
     void   (*renderer)(struct param_editor* param, bool refresh)
   ) {
     editors[num_editors]=(struct param_editor){
@@ -3325,29 +3345,46 @@ struct UI {
     num_editors++;
   };
 
-  // editor providing default getter + setters
-  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+  void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
     void   (*renderer)(struct param_editor* param, bool refresh)
   ) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      [](struct param_editor* editor)->uint8_t{return *(editor->value);},
-      [](struct param_editor* editor, uint8_t value)->void{*(editor->value)=value;},
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((float32_t*)editor->value) * 100;},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((float32_t*)editor->value) = value / 100.f;},
       renderer
     );
   };
 
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max,
-    uint8_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, uint8_t value)
+  // editor providing default getter + setters
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh)
   ) {
-    addCustomEditor(name, limit_min, limit_max, NULL, getter, setter, NULL);
-  }
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
+      renderer
+    );
+  };
 
-  // editor without any custom getter / setter / renderer
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr) {
-    addCustomEditor(name, limit_min, limit_max, valuePtr, NULL);
-  }
+  // editor providing default getter + setters
+  void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, NULL,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
+      renderer
+    );
+  };
 
   void handle_parameter_navigation() {
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
@@ -15246,18 +15283,18 @@ const uint8_t num_voice_params = 19;  // omit name for now
 uint8_t current_voice_op = 0;
 
 
-uint8_t dexed_getter(struct param_editor* param){
-  uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+int16_t dexed_getter(struct param_editor* param){
+  int8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
 };
-void dexed_setter(struct param_editor* param, uint8_t value){
+void dexed_setter(struct param_editor* param, int16_t value){
   uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id- 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
 };
-uint8_t dexed_op_getter(struct param_editor* param){
+int16_t dexed_op_getter(struct param_editor* param){
   return current_voice_op;
 };
-void dexed_op_setter(struct param_editor* param, uint8_t value){
+void dexed_op_setter(struct param_editor* param, int16_t value){
   current_voice_op=value;
   ui.draw_editors(true);
 };
@@ -15271,7 +15308,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
-    display.fillScreen(COLOR_BACKGROUND);
+    ui.reset();
     border0();
     helptext_l("BACK");
     display.setTextSize(1);
@@ -15282,10 +15319,8 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     display.print(F("ENC_R"));
     UI_update_instance_icons();
 
-    ui.clear();
-
     ui.setCursor(0,1);
-    ui.addCustomEditor("INSTANCE", 0, 1, &selected_instance_id,&dexed_instance_id_renderer);
+    ui.addEditor("INSTANCE", 0, 1, &selected_instance_id, NULL, NULL, &dexed_instance_id_renderer);
 
     // voice global parameters
     display.setTextSize(1);
@@ -15295,29 +15330,29 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
     ui.setCursor(0,5);
     for (uint8_t i = 0; i < 4; i++)
-      ui.addEditor(voice_params[i].name, 0, voice_params[i].max,&dexed_getter, &dexed_setter);
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
     ui.setCursor(14,5);
     for (uint8_t i = 4; i < 8; i++)
-      ui.addEditor(voice_params[i].name, 0, voice_params[i].max,&dexed_getter, &dexed_setter);
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
     ui.setCursor(0,9);
     for (uint8_t i = 8; i < num_voice_params; i++)
-      ui.addEditor(voice_params[i].name, 0, voice_params[i].max,&dexed_getter, &dexed_setter);
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
 
     // operator parameters
     ui.setCursor(29,3);
-    ui.addCustomEditor((const char*)F("EDIT OPERATOR"), 0, 5, NULL, dexed_op_getter, dexed_op_setter, NULL);
+    ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter, NULL);
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
     ui.setCursor(27,5);
     for (uint8_t i = 0; i < 4; i++)
-      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max,&dexed_getter, &dexed_setter);
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
     ui.setCursor(41,5);
     for (uint8_t i = 4; i < 8; i++)
-      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max,&dexed_getter, &dexed_setter);
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
     ui.setCursor(27,9);
     for (uint8_t i = 8; i < num_voice_op_params; i++)
-      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max,&dexed_getter, &dexed_setter);
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
 
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
