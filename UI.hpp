@@ -3196,7 +3196,10 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
     display.print(F("OFF"));
   else if(limit_min < 0)
     print_formatted_number_signed(input_value, 2);
-  else
+  else if(limit_max <= 99) {
+    setCursor_textGrid_small(x+1, y);
+    print_formatted_number(input_value, 2);
+  } else
     print_formatted_number(input_value, 3);
 
   if (show_bar) {
@@ -3345,10 +3348,11 @@ struct UI {
     num_editors++;
   };
 
+  // editor providing default float32_t getter + setters if missed out
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
-    int16_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, int16_t value),
-    void   (*renderer)(struct param_editor* param, bool refresh)
+    int16_t(*getter)(struct param_editor* param) = NULL,
+    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
   ) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
@@ -3358,11 +3362,11 @@ struct UI {
     );
   };
 
-  // editor providing default getter + setters
+  // editor providing default uint8_t getter + setters if missed out
   void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-    int16_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, int16_t value),
-    void   (*renderer)(struct param_editor* param, bool refresh)
+    int16_t(*getter)(struct param_editor* param) = NULL,
+    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
   ) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
@@ -3372,11 +3376,11 @@ struct UI {
     );
   };
 
-  // editor providing default getter + setters
+  // editor providing custom getter + setters dont using valuePtr
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
     int16_t(*getter)(struct param_editor* param),
     void   (*setter)(struct param_editor* param, int16_t value),
-    void   (*renderer)(struct param_editor* param, bool refresh)
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
   ) {
     addCustomEditor(
       name, limit_min, limit_max, NULL,
@@ -15330,29 +15334,29 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
     ui.setCursor(0,5);
     for (uint8_t i = 0; i < 4; i++)
-      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(14,5);
     for (uint8_t i = 4; i < 8; i++)
-      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(0,9);
     for (uint8_t i = 8; i < num_voice_params; i++)
-      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
     // operator parameters
     ui.setCursor(29,3);
-    ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter, NULL);
+    ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
     ui.setCursor(27,5);
     for (uint8_t i = 0; i < 4; i++)
-      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(41,5);
     for (uint8_t i = 4; i < 8; i++)
-      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(27,9);
     for (uint8_t i = 8; i < num_voice_op_params; i++)
-      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, NULL, &dexed_getter, &dexed_setter, NULL);
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
 
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
