@@ -3244,6 +3244,149 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
   display.fillRect(CHAR_width_small * x + 1 + input_value / 2.30, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
 }
 
+FLASHMEM int16_t encoder_change(bool fast) {
+  int8_t dir = LCDML.BT_checkDown() ? 1 : -1;
+
+  if(fast) return dir * ENCODER[ENC_R].speed();
+  else     return dir;
+}
+
+struct param_editor{
+  const char* name;
+  uint8_t limit_min, limit_max;
+  bool fast;
+  uint8_t x,y;
+  uint8_t select_id;
+
+  uint8_t* value;
+  uint8_t(*getter  )(struct param_editor* param);
+  void   (*setter  )(struct param_editor* param, uint8_t value);
+  void   (*renderer)(struct param_editor* param, bool refresh);
+
+  uint8_t get() {
+    if(getter!=NULL)     return getter(this);
+    return 0;
+  };
+  void set(uint8_t _value) {
+    if(setter!=NULL)     setter(this,_value);
+  };
+
+  void draw_editor(bool refresh) {
+    if(renderer != NULL) {
+      renderer(this,refresh);
+      return;
+    }
+    display.setTextSize(1);
+    if(!refresh) {
+      setCursor_textGrid_small(this->x+10, this->y);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.print(this->name);
+    }
+    print_small_scaled_bar  (x, y, get()-limit_min, limit_max-limit_min, select_id, 1, 1);
+  };
+
+  uint8_t handle_parameter_editor() {
+    if (seq.edit_state == 1) {
+      int16_t change = encoder_change(fast);
+      set(constrain(get() + change, limit_min, limit_max));
+      draw_editor(true);
+    }
+    return this->get();
+  };
+};
+
+#define UI_MAX_EDITORS 64
+struct UI {
+  uint8_t x,y;
+  uint8_t num_editors;
+  
+  struct param_editor editors[UI_MAX_EDITORS];
+
+  void clear() {
+    num_editors=0;
+    seq.edit_state=0;
+  };
+
+  void setCursor(uint8_t _x, uint8_t _y) {
+    x=_x; y=_y;
+  };
+
+  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    uint8_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, uint8_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    editors[num_editors]=(struct param_editor){
+      name, limit_min, limit_max, limit_max-limit_min > 32, x, y, num_editors, valuePtr,
+      getter, setter, renderer
+    };
+    editors[num_editors].draw_editor(false);
+    y++;
+    num_editors++;
+  };
+
+  // editor providing default getter + setters
+  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      [](struct param_editor* editor)->uint8_t{return *(editor->value);},
+      [](struct param_editor* editor, uint8_t value)->void{*(editor->value)=value;},
+      renderer
+    );
+  };
+
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max,
+    uint8_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, uint8_t value)
+  ) {
+    addCustomEditor(name, limit_min, limit_max, NULL, getter, setter, NULL);
+  }
+
+  // editor without any custom getter / setter / renderer
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr) {
+    addCustomEditor(name, limit_min, limit_max, valuePtr, NULL);
+  }
+
+  void handle_parameter_navigation() {
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
+      seq.edit_state=1-seq.edit_state;
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+
+    if (seq.edit_state == 0) {
+      uint8_t last = generic_temp_select_menu;
+      generic_temp_select_menu += encoder_change(false);
+      generic_temp_select_menu = constrain(generic_temp_select_menu, 0, num_editors-1);
+      editors[last]                    .draw_editor(true);
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+  };
+
+  void draw_editors(bool refresh) {
+    for(uint8_t i=0; i<num_editors; i++)
+      editors[i].draw_editor(refresh);
+  };
+
+  uint8_t handle_current_editor() {
+    return editors[generic_temp_select_menu].handle_parameter_editor();
+  };
+
+  bool encoders_changed() {
+    return (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter();
+  }
+
+  uint8_t handle_input() {
+    if(encoders_changed()) {
+      handle_parameter_navigation();
+      return handle_current_editor();
+    }
+    return -1;
+  };
+
+} ui;
+
 FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -15102,148 +15245,6 @@ const struct voice_param voice_params[] = {
 const uint8_t num_voice_params = 19;  // omit name for now
 uint8_t current_voice_op = 0;
 
-FLASHMEM int16_t encoder_change(bool fast) {
-  int8_t dir = LCDML.BT_checkDown() ? 1 : -1;
-
-  if(fast) return dir * ENCODER[ENC_R].speed();
-  else     return dir;
-}
-
-struct param_editor{
-  const char* name;
-  uint8_t limit_min, limit_max;
-  bool fast;
-  uint8_t x,y;
-  uint8_t select_id;
-
-  uint8_t* value;
-  uint8_t(*getter  )(struct param_editor* param);
-  void   (*setter  )(struct param_editor* param, uint8_t value);
-  void   (*renderer)(struct param_editor* param, bool refresh);
-
-  uint8_t get() {
-    if(getter!=NULL)     return getter(this);
-    return 0;
-  };
-  void set(uint8_t _value) {
-    if(setter!=NULL)     setter(this,_value);
-  };
-
-  void draw_editor(bool refresh) {
-    if(renderer != NULL) {
-      renderer(this,refresh);
-      return;
-    }
-    display.setTextSize(1);
-    if(!refresh) {
-      setCursor_textGrid_small(this->x+10, this->y);
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      display.print(this->name);
-    }
-    print_small_scaled_bar  (x, y, get()-limit_min, limit_max-limit_min, select_id, 1, 1);
-  };
-
-  uint8_t handle_parameter_editor() {
-    if (seq.edit_state == 1) {
-      int16_t change = encoder_change(fast);
-      set(constrain(get() + change, limit_min, limit_max));
-      draw_editor(true);
-    }
-    return this->get();
-  };
-};
-
-#define UI_MAX_EDITORS 64
-struct UI {
-  uint8_t x,y;
-  uint8_t num_editors;
-  
-  struct param_editor editors[UI_MAX_EDITORS];
-
-  void clear() {
-    num_editors=0;
-    seq.edit_state=0;
-  };
-
-  void setCursor(uint8_t _x, uint8_t _y) {
-    x=_x; y=_y;
-  };
-
-  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-    uint8_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, uint8_t value),
-    void   (*renderer)(struct param_editor* param, bool refresh)
-  ) {
-    editors[num_editors]=(struct param_editor){
-      name, limit_min, limit_max, limit_max-limit_min > 32, x, y, num_editors, valuePtr,
-      getter, setter, renderer
-    };
-    editors[num_editors].draw_editor(false);
-    y++;
-    num_editors++;
-  };
-
-  // editor providing default getter + setters
-  void addCustomEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-    void   (*renderer)(struct param_editor* param, bool refresh)
-  ) {
-    addCustomEditor(
-      name, limit_min, limit_max, valuePtr,
-      [](struct param_editor* editor)->uint8_t{return *(editor->value);},
-      [](struct param_editor* editor, uint8_t value)->void{*(editor->value)=value;},
-      renderer
-    );
-  };
-
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max,
-    uint8_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, uint8_t value)
-  ) {
-    addCustomEditor(name, limit_min, limit_max, NULL, getter, setter, NULL);
-  }
-
-  // editor without any custom getter / setter / renderer
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr) {
-    addCustomEditor(name, limit_min, limit_max, valuePtr, NULL);
-  }
-
-  void handle_parameter_navigation() {
-    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
-      seq.edit_state=1-seq.edit_state;
-      editors[generic_temp_select_menu].draw_editor(true);
-    }
-
-    if (seq.edit_state == 0) {
-      uint8_t last = generic_temp_select_menu;
-      generic_temp_select_menu += encoder_change(false);
-      generic_temp_select_menu = constrain(generic_temp_select_menu, 0, num_editors-1);
-      editors[last]                    .draw_editor(true);
-      editors[generic_temp_select_menu].draw_editor(true);
-    }
-  };
-
-  void draw_editors(bool refresh) {
-    for(uint8_t i=0; i<num_editors; i++)
-      editors[i].draw_editor(refresh);
-  };
-
-  uint8_t handle_current_editor() {
-    return editors[generic_temp_select_menu].handle_parameter_editor();
-  };
-
-  bool encoders_changed() {
-    return (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter();
-  }
-
-  uint8_t handle_input() {
-    if(encoders_changed()) {
-      handle_parameter_navigation();
-      return handle_current_editor();
-    }
-    return -1;
-  };
-
-} ui;
 
 uint8_t dexed_getter(struct param_editor* param){
   uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
