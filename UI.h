@@ -158,10 +158,11 @@ LCDML_add(123, LCDML_0_15, 12, "TEST Audio Mute", UI_func_test_mute);
 LCDML_add(124, LCDML_0_15, 13, "TEST PSRAM", UI_func_test_psram);
 LCDML_add(125, LCDML_0_15, 14, "TEST Touchscreen", UI_func_test_touchscreen);
 LCDML_add(126, LCDML_0, 16, "Info", UI_func_information);
-LCDML_addAdvanced(127, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced(128, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
+LCDML_add(127, LCDML_0, 17, "Master Effects", UI_func_master_effects);
+LCDML_addAdvanced(128, LCDML_0, 18, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced(129, LCDML_0, 19, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
 
-#define _LCDML_DISP_cnt 128
+#define _LCDML_DISP_cnt 129
 #endif
 
 #ifdef MODERN_UI

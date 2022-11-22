@@ -496,6 +496,7 @@ void UI_func_portamento_glissando(uint8_t param);
 void UI_func_portamento_time(uint8_t param);
 void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
+void UI_func_master_effects(uint8_t param);
 void UI_func_not_available(uint8_t param);
 void UI_func_braids(uint8_t param);
 void UI_func_multiband_dynamics(uint8_t param);
@@ -2492,9 +2493,9 @@ FLASHMEM void lcdml_menu_control(void) {
   uint32_t buttons = joysticks[0].getButtons();
 
   // MIDI remote
-  if(remote_MIDI_CC > 0) {
+  if (remote_MIDI_CC > 0) {
     switch (remote_MIDI_CC) {
-      case 24: // SELECT
+      case 24:  // SELECT
         remote_MIDI_CC = 0;
         buttons = GAMEPAD_SELECT;
         remote_console_keystate_select = (remote_MIDI_CC_value == 127 ? true : false);
@@ -2503,17 +2504,17 @@ FLASHMEM void lcdml_menu_control(void) {
       // buttons = buttons + GAMEPAD_START;
       // remote_MIDI_CC = 0;
       //   break;
-      case 26: // BUTTON B
+      case 26:  // BUTTON B
         remote_MIDI_CC = 0;
         buttons = buttons + GAMEPAD_BUTTON_B;
         remote_console_keystate_b = (remote_MIDI_CC_value == 127 ? true : false);
         break;
-      case 27: // BUTTON A
+      case 27:  // BUTTON A
         remote_MIDI_CC = 0;
         buttons = buttons + GAMEPAD_BUTTON_A;
         remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
         break;
-      case 28: // init display at remote connection
+      case 28:  // init display at remote connection
         remote_MIDI_CC = 0;
         buttons = 0;
         remote_console_keystate_select = false;
@@ -2524,11 +2525,11 @@ FLASHMEM void lcdml_menu_control(void) {
         draw_menu_ui_icons();
         LCDML.MENU_goRoot();
         break;
-      case 29: // remote touch, receive x
+      case 29:  // remote touch, receive x
         remote_MIDI_CC = 0;
         touchX = remote_MIDI_CC_value;
         break;
-      case 30: // remote touch, receive y
+      case 30:  // remote touch, receive y
         remote_MIDI_CC = 0;
         touchY = remote_MIDI_CC_value;
 
@@ -2909,7 +2910,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]++;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) { //do nothing
+        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -2971,7 +2972,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]--;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) { //do nothing
+        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -3200,7 +3201,8 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
 
   if (show_bar) {
     display.console = true;
-    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
+
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, input_value==0 ? GREY2 : COLOR_SYSTEXT);
 
     if(limit_min>=0) { // filled bar
       uint8_t split = (5 * CHAR_width_small - 2) * (input_value-limit_min) / (limit_max-limit_min);
@@ -11143,6 +11145,268 @@ void UI_func_save_performance(uint8_t param) {
   }
 }
 
+FLASHMEM void display_delay_sync_mastereffects(uint8_t sync, uint8_t instance) {
+
+  //display.setTextColor(GREY2, COLOR_BACKGROUND);
+  //setCursor_textGrid_small(9, 5);
+  //display.setTextSize(1);
+  //display.print(F("SCROLL > FOR TIME IN MILLISECS"));
+  //display.setTextSize(2);
+  //display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  //show(1, 1, display_cols - 2, "Delay Sync");
+  //if (seq.running == false) show(2, 1, 10, "MIDI Sync   ");
+  //else show(2, 1, 10, "Seq. Sync   ");
+  switch (sync) {
+    case 1:
+      display.print(F("1/16 "));
+      break;
+    case 2:
+      display.print(F("1/16T"));
+      break;
+    case 3:
+      display.print(F("1/8  "));
+      break;
+    case 4:
+      display.print(F("1/8T "));
+      break;
+    case 5:
+      display.print(F("1/4  "));
+      break;
+    case 6:
+      display.print(F("1/4T "));
+      break;
+    case 7:
+      display.print(F("1/2  "));
+      break;
+    case 8:
+      display.print(F("1/2T "));
+      break;
+    case 9:
+      display.print(F("1/1  "));
+      break;
+  }
+  if (seq.running == false) {
+
+    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / midi_bpm + 0.5);
+    if (midi_sync_delay_time > DELAY_MAX_TIME) {
+#ifdef DEBUG
+      Serial.println(F("Calculated MIDI-Sync delay: "));
+      Serial.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
+      Serial.println(F("ms"));
+      Serial.println(F("MIDI-Sync delay: midi_sync_delay_time"));
+      Serial.print(midi_sync_delay_time, DEC);
+      Serial.println(F("ms"));
+#endif
+    }
+  } else {
+    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
+    delay_fx[instance]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
+  }
+}
+
+FLASHMEM void print_delay_sync_master_effects_toggle(uint8_t instance) {
+
+  if (configuration.fx.delay_sync[instance] > 0) {
+    if (instance == 0)
+      setCursor_textGrid_small(6, 6);
+    else
+      setCursor_textGrid_small(22, 6);
+
+    display.setTextColor(COLOR_SYSTEXT, RED);
+    display.print(F("ON "));
+  } else {
+    if (instance == 0)
+      setCursor_textGrid_small(6, 6);
+    else
+      setCursor_textGrid_small(22, 6);
+    display.setTextColor(GREY1, GREY2);
+    display.print(F("OFF"));
+  }
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+}
+
+
+void print_static_text_master_effects() {
+  display.setTextSize(1);
+  display.setTextColor(RED, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 1);
+  display.print(F("MASTER EFFECTS"));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 3);
+  display.print(F("DELAY A"));
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 5);
+  display.print(F("TIME"));
+  setCursor_textGrid_small(10, 5);
+  display.print(F("MS"));
+  setCursor_textGrid_small(1, 6);
+  display.print(F("SYNC"));
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 8);
+  display.print(F("FDBK"));
+  setCursor_textGrid_small(1, 9);
+  display.print(F("PAN"));
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(17, 3);
+  display.print(F("DELAY B"));
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(17, 5);
+  display.print(F("TIME"));
+  setCursor_textGrid_small(26, 5);
+  display.print(F("MS"));
+  setCursor_textGrid_small(17, 6);
+  display.print(F("SYNC"));
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(17, 8);
+  display.print(F("FDBK"));
+  setCursor_textGrid_small(17, 9);
+  display.print(F("PAN"));
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(33, 3);
+  display.print(F("REVERB"));
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(33, 5);
+  display.print(F("ROOMSIZE"));
+  setCursor_textGrid_small(33, 6);
+  display.print(F("DAMPING"));
+  setCursor_textGrid_small(33, 7);
+  display.print(F("LOWPASS"));
+  setCursor_textGrid_small(33, 8);
+  display.print(F("LODAMP"));
+  setCursor_textGrid_small(33, 9);
+  display.print(F("HIDAMP"));
+  setCursor_textGrid_small(33, 10);
+  display.print(F("DIFFUSION"));
+  setCursor_textGrid_small(33, 11);
+  display.print(F("LEVEL"));
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 12);
+
+  display.print(F("SEND LEVELS"));
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(1, 14);
+  display.print(F("DX1"));
+  setCursor_textGrid_small(1, 15);
+  display.print(F("EP"));
+  setCursor_textGrid_small(1, 16);
+  display.print(F("MS1"));
+  setCursor_textGrid_small(1, 17);
+  display.print(F("MS2"));
+  setCursor_textGrid_small(1, 18);
+  display.print(F("BRD"));
+  setCursor_textGrid_small(1, 19);
+  display.print(F("REV"));
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  setCursor_textGrid_small(17, 14);
+  display.print(F("DX2"));
+  setCursor_textGrid_small(17, 15);
+  display.print(F("EP"));
+  setCursor_textGrid_small(17, 16);
+  display.print(F("MS1"));
+  setCursor_textGrid_small(17, 17);
+  display.print(F("MS2"));
+  setCursor_textGrid_small(17, 18);
+  display.print(F("BRD"));
+  setCursor_textGrid_small(17, 19);
+  display.print(F("REV"));
+
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+
+  setCursor_textGrid_small(33, 14);
+  display.print(F("DX1"));
+  setCursor_textGrid_small(33, 15);
+  display.print(F("DX2"));
+  setCursor_textGrid_small(33, 16);
+  display.print(F("EP"));
+  setCursor_textGrid_small(33, 17);
+  display.print(F("MS1"));
+  setCursor_textGrid_small(33, 18);
+  display.print(F("MS2"));
+  setCursor_textGrid_small(33, 19);
+  display.print(F("BRD"));
+}
+
+void UI_func_master_effects(uint8_t param) {
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+    print_static_text_master_effects();
+
+    print_delay_sync_master_effects_toggle(0);
+    print_delay_sync_master_effects_toggle(1);
+
+    setCursor_textGrid_small(10, 6);
+    display_delay_sync_mastereffects(configuration.fx.delay_sync[0], 0);
+    setCursor_textGrid_small(26, 6);
+    display_delay_sync_mastereffects(configuration.fx.delay_sync[1], 1);
+
+    setCursor_textGrid_small(6, 5);
+    print_formatted_number(configuration.fx.delay_time[0] * 10, 3);
+    setCursor_textGrid_small(22, 5);
+    print_formatted_number(configuration.fx.delay_time[1] * 10, 3);
+
+    print_small_intbar(6, 8, configuration.fx.delay_feedback[0], 0, 1, 0);
+    print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 0, 1, 0);
+
+    print_small_panbar(6, 9, configuration.fx.delay_pan[0], 0);
+    print_small_panbar(22, 9, configuration.fx.delay_pan[1], 0);
+
+    print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 0, 1, 0);
+    print_small_intbar(43, 6, configuration.fx.reverb_damping, 0, 1, 0);
+    print_small_intbar(43, 7, configuration.fx.reverb_lowpass, 0, 1, 0);
+    print_small_intbar(43, 8, configuration.fx.reverb_lodamp, 0, 1, 0);
+    print_small_intbar(43, 9, configuration.fx.reverb_hidamp, 0, 1, 0);
+    print_small_intbar(43, 10, configuration.fx.reverb_diffusion, 0, 1, 0);
+    print_small_intbar(43, 11, configuration.fx.reverb_level, 0, 1, 0);
+
+    print_small_intbar(6, 14, configuration.fx.delay_level[0], 0, 1, 0);
+    print_small_intbar(6, 15, configuration.epiano.delay_send_1, 0, 1, 0);
+    print_small_intbar(6, 16, microsynth[0].delay_send[0], 0, 1, 0);
+    print_small_intbar(6, 17, microsynth[1].delay_send[0], 0, 1, 0);
+    print_small_intbar(6, 18, braids_osc.delay_send_1, 0, 1, 0);
+    print_small_intbar(6, 19, configuration.fx.delay_to_reverb[0], 0, 1, 0);
+
+    print_small_intbar(22, 14, configuration.fx.delay_level[1], 0, 1, 0);
+    print_small_intbar(22, 15, configuration.epiano.delay_send_2, 0, 1, 0);
+    print_small_intbar(22, 16, microsynth[0].delay_send[1], 0, 1, 0);
+    print_small_intbar(22, 17, microsynth[1].delay_send[1], 0, 1, 0);
+    print_small_intbar(22, 18, braids_osc.delay_send_2, 0, 1, 0);
+    print_small_intbar(22, 19, configuration.fx.delay_to_reverb[1], 0, 1, 0);
+
+    print_small_intbar(43, 14, configuration.fx.reverb_send[0], 0, 1, 0);
+    print_small_intbar(43, 15, configuration.fx.reverb_send[1], 0, 1, 0);
+    print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 0, 1, 0);
+    print_small_intbar(43, 17, microsynth[0].rev_send, 0, 1, 0);
+    print_small_intbar(43, 18, microsynth[1].rev_send, 0, 1, 0);
+    print_small_intbar(43, 19, braids_osc.rev_send, 0, 1, 0);
+
+
+
+    helptext_l("BACK");
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    {
+      ;
+    }
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
 void UI_func_information(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -15049,7 +15313,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
-    display.fillScreen(COLOR_BACKGROUND);
+    ui.clear();
     encoderDir[ENC_R].reset();
     dexed_live_mod.active_button = 0;
   }
@@ -17072,7 +17336,7 @@ FLASHMEM void locate_random_non_favorite() {
 FLASHMEM bool check_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
-  char tmp[18];
+  char tmp[CONFIG_FILENAME_LEN];
   File myFav;
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
@@ -17544,7 +17808,7 @@ FLASHMEM void UI_func_clear_all(uint8_t param) {
 FLASHMEM void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id) {
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
-  char tmp[18];
+  char tmp[CONFIG_FILENAME_LEN];
   display.console = true;
   File myFav;
   if (sd_card > 0) {
@@ -17569,7 +17833,7 @@ FLASHMEM void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id) {
 
 FLASHMEM bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id) {
   b = constrain(b, 0, MAX_BANKS - 1);
-  char tmp[18];
+  char tmp[CONFIG_FILENAME_LEN];
 
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
@@ -17599,8 +17863,8 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
-  char tmp[18];
-  char tmpfolder[18];
+  char tmp[CONFIG_FILENAME_LEN];
+  char tmpfolder[CONFIG_FILENAME_LEN];
   File myFav;
   uint8_t i = 0, countfavs = 0;
   if (sd_card > 0) {

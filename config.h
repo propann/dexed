@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.1"
+#define VERSION "1.4.7.2"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -348,8 +348,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define CONFIG_FILENAME_LEN 50
 #define DRUM_NAME_LEN 21
 
-#define FAV_CONFIG_PATH "FAVCFG"
-#define FAV_CONFIG_NAME "FAVCFG"
+#define FAV_CONFIG_PATH "DEXED/FAVCFG"
 
 #define PERFORMANCE_CONFIG_PATH "PERFORMANCE"
 #define SEQUENCER_CONFIG_NAME "sequencer"
@@ -881,6 +880,7 @@ typedef struct fx_s {
   uint8_t delay_sync[MAX_DEXED];
   uint8_t delay_pan[MAX_DEXED];
   uint8_t reverb_send[MAX_DEXED];
+  uint8_t delay_to_reverb[MAX_DEXED];
   uint8_t reverb_roomsize;
   uint8_t reverb_damping;
   uint8_t reverb_lowpass;
