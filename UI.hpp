@@ -466,8 +466,6 @@ void UI_func_delay_panorama(uint8_t param);
 void UI_func_reverb_send(uint8_t param);
 void UI_func_filter_cutoff(uint8_t param);
 void UI_func_filter_resonance(uint8_t param);
-void UI_func_drum_reverb_send(uint8_t param);
-
 void UI_func_transpose(uint8_t param);
 void UI_func_tune(uint8_t param);
 void UI_func_midi_channel(uint8_t param);
@@ -526,7 +524,6 @@ void UI_func_smart_filter(uint8_t param);
 void UI_func_seq_probabilities(uint8_t param);
 void UI_func_mixer(uint8_t param);
 void UI_func_song(uint8_t param);
-void UI_func_drum_midi_channel(uint8_t param);
 void UI_func_load_performance(uint8_t param);
 void UI_func_save_performance(uint8_t param);
 void UI_func_save_voice(uint8_t param);
@@ -573,11 +570,7 @@ void locate_previous_favorite();
 void locate_next_favorite();
 void locate_next_non_favorite();
 void locate_random_non_favorite();
-void UI_func_drums_main_volume(uint8_t param);
-void UI_func_drum_volume(uint8_t param);
-void UI_func_drum_pan(uint8_t param);
-void UI_func_drum_pitch(uint8_t param);
-void UI_func_drum_tune_offset(uint8_t param);
+void UI_func_drums(uint8_t param);
 void UI_func_format_flash(uint8_t param);
 void UI_func_test_mute(uint8_t param);
 void UI_func_test_psram(uint8_t param);
@@ -599,6 +592,9 @@ uint8_t last_menu_depth = 99;
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL);  // normal root menu element (do not change)
 LCDMenuLib2 LCDML(LCDML_0, _LCDML_DISP_rows, _LCDML_DISP_cols, lcdml_menu_display, lcdml_menu_clear, lcdml_menu_control);
+
+
+
 
 #include "UI.h"
 
@@ -3189,34 +3185,45 @@ FLASHMEM void setModeColor(uint8_t selected_option) {
   }
 }
 
-FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t input_limit, uint8_t selected_option, boolean show_bar, boolean show_zero) {
+FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
 
   if (show_zero == false && input_value == 0)
     display.print(F("OFF"));
-  else
+  else if(limit_min < 0)
+    print_formatted_number_signed(input_value, 2);
+  else if(limit_max <= 99) {
+    setCursor_textGrid_small(x+1, y);
+    print_formatted_number(input_value, 2);
+  } else
     print_formatted_number(input_value, 3);
 
   if (show_bar) {
     display.console = true;
-    if (input_value == 0)
-      display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, GREY2);
-    else
-      display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
-    if (input_value > input_limit) input_value = input_limit;
-    uint8_t split = (5 * CHAR_width_small - 2) * (uint16_t)input_value / input_limit;
-    display.console = true;
-    if (split < 5 * CHAR_width_small - 2)
-      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
-    display.console = true;
-    if (split > 0)
-      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
+
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, input_value==0 ? GREY2 : COLOR_SYSTEXT);
+
+    if(limit_min>=0) { // filled bar
+      uint8_t split = (5 * CHAR_width_small - 2) * (input_value-limit_min) / (limit_max-limit_min);
+      display.console = true;
+      if (split < 5 * CHAR_width_small - 2)
+        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
+      display.console = true;
+      if (split > 0)
+        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
+    } else { // pan bar
+      uint8_t split = (5 * CHAR_width_small - 2 - 3) * (input_value-limit_min) / (limit_max-limit_min);
+      display.console = true;
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
+      display.console = true;
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
+    }
   }
 }
 
 FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
-  print_small_scaled_bar(x, y, input_value, 100, selected_option, show_bar, show_zero);
+  print_small_scaled_bar(x, y, input_value, 0, 100, selected_option, show_bar, show_zero);
 }
 
 FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
@@ -3247,6 +3254,177 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
   display.fillRect(CHAR_width_small * x + 1, 10 * y + 1, 3 * CHAR_width_small - 2, 5, COLOR_BACKGROUND);
   display.fillRect(CHAR_width_small * x + 1 + input_value / 2.30, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
 }
+
+FLASHMEM int16_t encoder_change(bool fast) {
+  int8_t dir = 0;
+  if(LCDML.BT_checkDown()) dir= 1;
+  if(LCDML.BT_checkUp()  ) dir=-1;
+
+  if(fast) return dir * ENCODER[ENC_R].speed();
+  else     return dir;
+}
+
+struct param_editor{
+  const char* name;
+  int16_t limit_min, limit_max;
+  bool fast;
+  uint8_t x,y;
+  uint8_t select_id;
+
+  void* value;
+  int16_t(*getter  )(struct param_editor* param);
+  void   (*setter  )(struct param_editor* param, int16_t value);
+  void   (*renderer)(struct param_editor* param, bool refresh);
+
+  int16_t get() {
+    if(getter!=NULL)     return getter(this);
+    return 0;
+  };
+  void set(int16_t _value) {
+    if(setter!=NULL)     setter(this,_value);
+  };
+
+  void draw_editor(bool refresh) {
+    if(renderer != NULL) {
+      renderer(this,refresh);
+      return;
+    }
+    display.setTextSize(1);
+    if(!refresh) {
+      setCursor_textGrid_small(this->x+10, this->y);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.print(this->name);
+    }
+    print_small_scaled_bar  (x, y, get(), limit_min, limit_max, select_id, 1, 1);
+  };
+
+  int16_t handle_parameter_editor() {
+    if (seq.edit_state == 1) {
+      int16_t change = encoder_change(fast);
+      if(change != 0) {
+        set(constrain(get() + change, limit_min, limit_max));
+        draw_editor(true);
+      }
+    }
+    return this->get();
+  };
+};
+
+#define UI_MAX_EDITORS 64
+struct UI {
+  uint8_t x,y;
+  uint8_t num_editors;
+  
+  struct param_editor editors[UI_MAX_EDITORS];
+
+  void clear() {
+    display.fillScreen(COLOR_BACKGROUND);
+    num_editors=0;
+  };
+
+  void reset() {
+    clear();
+    seq.edit_state=0;
+    generic_temp_select_menu=0;
+  };
+
+  void setCursor(uint8_t _x, uint8_t _y) {
+    x=_x; y=_y;
+  };
+
+  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    editors[num_editors]=(struct param_editor){
+      name, limit_min, limit_max, limit_max-limit_min > 32, x, y, num_editors, valuePtr,
+      getter, setter, renderer
+    };
+    editors[num_editors].draw_editor(false);
+    y++;
+    num_editors++;
+  };
+
+  // editor providing default float32_t getter + setters if missed out
+  void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
+    int16_t(*getter)(struct param_editor* param) = NULL,
+    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((float32_t*)editor->value) * 100;},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((float32_t*)editor->value) = value / 100.f;},
+      renderer
+    );
+  };
+
+  // editor providing default uint8_t getter + setters if missed out
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    int16_t(*getter)(struct param_editor* param) = NULL,
+    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
+      renderer
+    );
+  };
+
+  // editor providing custom getter + setters dont using valuePtr
+  void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, NULL,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
+      renderer
+    );
+  };
+
+  void handle_parameter_navigation() {
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
+      seq.edit_state=1-seq.edit_state;
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+
+    if (seq.edit_state == 0) {
+      uint8_t last = generic_temp_select_menu;
+      generic_temp_select_menu += encoder_change(false);
+      generic_temp_select_menu = constrain(generic_temp_select_menu, 0, num_editors-1);
+      editors[last]                    .draw_editor(true);
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+  };
+
+  void draw_editors(bool refresh) {
+    for(uint8_t i=0; i<num_editors; i++)
+      editors[i].draw_editor(refresh);
+  };
+
+  uint8_t handle_current_editor() {
+    return editors[generic_temp_select_menu].handle_parameter_editor();
+  };
+
+  bool encoders_changed() {
+    return (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter();
+  }
+
+  uint8_t handle_input() {
+    if(encoders_changed()) {
+      handle_parameter_navigation();
+      return handle_current_editor();
+    }
+    return -1;
+  };
+
+} ui;
 
 FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -5542,304 +5720,6 @@ FLASHMEM void UI_handle_OP(uint8_t param) {
   }
 }
 
-FLASHMEM void UI_func_drum_reverb_send(uint8_t param) {
-  char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    temp_int = (int)(drum_config[activesample].reverb_send * 100);
-    setCursor_textGrid(1, 1);
-    display.print(F("Drum Rev. Send"));
-    setCursor_textGrid(2, 2);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-    display.print(displayname);
-    show(2, 5, 7, basename(drum_config[activesample].name));
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (menu_select_toggle == false) {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          // activesample = constrain(activesample + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-          smart_filter(1);
-        } else if (LCDML.BT_checkUp()) {
-          // activesample = constrain(activesample - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-          smart_filter(0);
-        }
-      }
-    } else {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, REVERB_SEND_MAX);
-        } else if (LCDML.BT_checkUp()) {
-          temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, REVERB_SEND_MAX);
-        }
-      }
-    }
-    if (LCDML.BT_checkEnter()) {
-      if (menu_select_toggle) {
-        menu_select_toggle = false;
-      } else {
-        menu_select_toggle = true;
-        temp_int = (int)(drum_config[activesample].reverb_send * 100);
-      }
-    }
-    if (menu_select_toggle == false) {
-      setCursor_textGrid(12, 2);
-      display.print(" ");
-      setCursor_textGrid(16, 2);
-      display.print(" ");
-      setCursor_textGrid(1, 2);
-      display.print("[");
-      setCursor_textGrid(4, 2);
-      display.print("]");
-      setCursor_textGrid(2, 2);
-      snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-      display.print(displayname);
-      show(2, 5, 7, basename(drum_config[activesample].name));
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), (int)(drum_config[activesample].reverb_send * 100));
-      setCursor_textGrid(13, 2);
-      display.print(displayname);
-    } else {
-      setCursor_textGrid(1, 2);
-      display.print(" ");
-      setCursor_textGrid(4, 2);
-      display.print(" ");
-      setCursor_textGrid(12, 2);
-      display.print("[");
-      setCursor_textGrid(16, 2);
-      display.print("]");
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), temp_int);
-      setCursor_textGrid(13, 2);
-      display.print(displayname);
-      drum_config[activesample].reverb_send = mapfloat(temp_int, 0, 100, 0.0, 1.0);
-    }
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_drum_midi_channel(uint8_t param) {
-#if NUM_DRUMS > 0
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("MIDI Channel"));
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (LCDML.BT_checkDown() && encoderDir[ENC_R].Down())
-      drum_midi_channel = constrain(drum_midi_channel + ENCODER[ENC_R].speed(), MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX);
-    else if (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())
-      drum_midi_channel = constrain(drum_midi_channel - ENCODER[ENC_R].speed(), MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX);
-
-    setCursor_textGrid(1, 2);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    if (drum_midi_channel == 0) {
-      display.print(F("[OMNI]"));
-    } else {
-      display_int(drum_midi_channel, 4, false, true, false);
-    }
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_drums_main_volume(uint8_t param) {
-#if NUM_DRUMS > 0
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    temp_int = mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0, 100);
-    display_bar_int("Drums Volume", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, true);
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 100);
-      } else if (LCDML.BT_checkUp()) {
-        temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 100);
-      }
-    }
-    display_bar_int("Drums Volume", temp_int, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
-    master_mixer_r.gain(3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
-    master_mixer_l.gain(3, volume_transform(mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT)));
-    seq.drums_volume = mapfloat(temp_int, 0, 100, 0.0, VOL_MAX_FLOAT);
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_drum_tune_offset(uint8_t param) {
-#if NUM_DRUMS > 0
-  char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    temp_int = (int)(drum_config[activesample].p_offset * 200);
-    setCursor_textGrid(1, 1);
-    display.print(F("DrumSmp. Tune"));
-    setCursor_textGrid(2, 2);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-    display.print(displayname);
-    show(2, 5, 8, basename(drum_config[activesample].name));
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (menu_select_toggle == false) {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          activesample = constrain(activesample + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-        } else if (LCDML.BT_checkUp()) {
-          activesample = constrain(activesample - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-        }
-      }
-    } else {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 400);
-        } else if (LCDML.BT_checkUp()) {
-          temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 400);
-        }
-      }
-    }
-    if (LCDML.BT_checkEnter()) {
-      if (menu_select_toggle) {
-        menu_select_toggle = false;
-      } else {
-        menu_select_toggle = true;
-        temp_int = (int)(drum_config[activesample].p_offset * 200);
-      }
-    }
-    if (menu_select_toggle == false) {
-      setCursor_textGrid(13, 2);
-      display.print(" ");
-      setCursor_textGrid(17, 2);
-      display.print(" ");
-      setCursor_textGrid(1, 2);
-      display.print("[");
-      setCursor_textGrid(4, 2);
-      display.print("]");
-      setCursor_textGrid(2, 2);
-      snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-      display.print(displayname);
-      show(2, 5, 8, basename(drum_config[activesample].name));
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), (int)(drum_config[activesample].p_offset * 200));
-      setCursor_textGrid(14, 2);
-      display.print(displayname);
-    } else {
-      temp_float = mapfloat(temp_int, 0, 400, 0.0, 2.0);
-      setCursor_textGrid(1, 2);
-      display.print(" ");
-      setCursor_textGrid(4, 2);
-      display.print(" ");
-      setCursor_textGrid(13, 2);
-      display.print("[");
-      setCursor_textGrid(17, 2);
-      display.print("]");
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), temp_int);
-      setCursor_textGrid(14, 2);
-      display.print(displayname);
-      drum_config[activesample].p_offset = temp_float;
-    }
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_drum_pitch(uint8_t param) {
-#if NUM_DRUMS > 0
-  char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    temp_int = (int)(drum_config[activesample].pitch * 200);
-    setCursor_textGrid(1, 1);
-    display.print(F("DrumSmp. Pitch"));
-    setCursor_textGrid(2, 2);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-    display.print(displayname);
-    show(2, 5, 8, basename(drum_config[activesample].name));
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (menu_select_toggle == false) {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          activesample = constrain(activesample + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-        } else if (LCDML.BT_checkUp()) {
-          activesample = constrain(activesample - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-        }
-      }
-    } else {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 400);
-        } else if (LCDML.BT_checkUp()) {
-          temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 400);
-        }
-      }
-    }
-    if (LCDML.BT_checkEnter()) {
-      if (menu_select_toggle) {
-        menu_select_toggle = false;
-      } else {
-        menu_select_toggle = true;
-        temp_int = (int)(drum_config[activesample].pitch * 200);
-      }
-    }
-    if (menu_select_toggle == false) {
-      setCursor_textGrid(13, 2);
-      display.print(" ");
-      setCursor_textGrid(17, 2);
-      display.print(" ");
-      setCursor_textGrid(1, 2);
-      display.print("[");
-      setCursor_textGrid(4, 2);
-      display.print("]");
-      setCursor_textGrid(2, 2);
-      snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-      display.print(displayname);
-      show(2, 5, 8, basename(drum_config[activesample].name));
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), (int)(drum_config[activesample].pitch * 200));
-      setCursor_textGrid(14, 2);
-      display.print(displayname);
-    } else {
-      temp_float = mapfloat(temp_int, 0, 400, 0.0, 2.0);
-      setCursor_textGrid(1, 2);
-      display.print(" ");
-      setCursor_textGrid(4, 2);
-      display.print(" ");
-      setCursor_textGrid(13, 2);
-      display.print("[");
-      setCursor_textGrid(17, 2);
-      display.print("]");
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), temp_int);
-      setCursor_textGrid(14, 2);
-      display.print(displayname);
-      drum_config[activesample].pitch = temp_float;
-    }
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
 void pattern_preview_in_probability_editor(uint8_t line, uint8_t patternno) {
   display.setTextSize(1);
   seq.active_pattern = patternno;
@@ -6316,84 +6196,55 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
   }
 }
 
-void UI_func_drum_volume(uint8_t param) {
-  char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
+void create_drums_ui();
+
+void drum_name_renderer(struct param_editor* editor, bool refresh) {
+  char number[]="00:";
+  snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
+  display.setTextSize(2);
+  setModeColor(editor->select_id);
+  show(editor->y, editor->x, 10, number);
+  show(editor->y, editor->x+3, 10, basename(drum_config[activesample].name));
+}
+
+void activesample_setter(param_editor* editor, int16_t id) {
+  activesample=id;
+  create_drums_ui();
+}
+
+// the drum UI needs to be recreated frequently, if activesample changes.
+void create_drums_ui() {
+
+  ui.clear(); // just recreate UI without resetting selection / edit mode
+
+  ui.setCursor(1,1);
+  ui.addEditor((const char*)F(""), 0, 99, &activesample, NULL, &activesample_setter, &drum_name_renderer);
+
+  ui.setCursor(1,4);
+  ui.addEditor((const char*)F("VOLUME"), 0, 99, &drum_config[activesample].vol_max);
+  ui.addEditor((const char*)F("PAN"), -99, 99, &drum_config[activesample].pan);
+  ui.addEditor((const char*)F("REVERB"), 0, 99, &drum_config[activesample].reverb_send);
+  ui.addEditor((const char*)F("PITCH"), 0, 200, &drum_config[activesample].pitch);
+  ui.addEditor((const char*)F("TUNE"), 0, 200, &drum_config[activesample].p_offset);
+
+  ui.setCursor(1,10);
+  ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
+  ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
+}
+
+void UI_func_drums(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
-    encoderDir[ENC_R].reset();
-    temp_int = (int)(drum_config[activesample].vol_max * 100);
-    setCursor_textGrid(1, 1);
-    display.print(F("DrumSmp. Volume"));
-
-    setCursor_textGrid(2, 2);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-    display.print(displayname);
-    show(2, 4, 8, basename(drum_config[activesample].name));
+    ui.reset();
+    create_drums_ui();
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
-    if (menu_select_toggle == false) {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          // activesample = constrain(activesample + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-          smart_filter(1);
-        } else if (LCDML.BT_checkUp()) {
-          //  activesample = constrain(activesample - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 2);
-          smart_filter(0);
-        }
-      }
-    } else {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-        if (LCDML.BT_checkDown()) {
-          temp_int = constrain(temp_int + ENCODER[ENC_R].speed(), 0, 100);
-        } else if (LCDML.BT_checkUp()) {
-          temp_int = constrain(temp_int - ENCODER[ENC_R].speed(), 0, 100);
-        }
-      }
-    }
-    if (LCDML.BT_checkEnter()) {
-      if (menu_select_toggle) {
-        menu_select_toggle = false;
-      } else {
-        menu_select_toggle = true;
-        temp_int = (int)(drum_config[activesample].vol_max * 100);
-      }
-    }
-    if (menu_select_toggle == false) {
-      setCursor_textGrid(12, 2);
-      display.print(" ");
-      setCursor_textGrid(16, 2);
-      display.print(" ");
-      setCursor_textGrid(1, 2);
-      display.print("[");
-      setCursor_textGrid(4, 2);
-      display.print("]");
-      setCursor_textGrid(2, 2);
-      snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), activesample);
-      display.print(displayname);
-      show(2, 5, 7, basename(drum_config[activesample].name));
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), (int)(drum_config[activesample].vol_max * 100));
-      setCursor_textGrid(13, 2);
-      display.print(displayname);
-    } else {
-      temp_float = mapfloat(temp_int, 0, 100, 0.0, 1.0);
-      setCursor_textGrid(1, 2);
-      display.print(" ");
-      setCursor_textGrid(4, 2);
-      display.print(" ");
-      setCursor_textGrid(12, 2);
-      display.print("[");
-      setCursor_textGrid(16, 2);
-      display.print("]");
-      snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), temp_int);
-      setCursor_textGrid(13, 2);
-      display.print(displayname);
-      drum_config[activesample].vol_max = temp_float;
-    }
+    ui.handle_input();
   }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  if (LCDML.FUNC_close())  // ****** CLOSE *********
   {
-    encoderDir[ENC_R].reset();
+    ui.clear();
   }
 }
 
@@ -15316,15 +15167,16 @@ struct voice_param {
   uint8_t max;
 };
 
+
 const struct voice_param voice_op_params[] = {
-  { "EG R1", 99 },
-  { "EG R2", 99 },
-  { "EG R3", 99 },
-  { "EG R4", 99 },
-  { "EG L1", 99 },
-  { "EG L2", 99 },
-  { "EG L3", 99 },
-  { "EG L4", 99 },
+  { "R1", 99 },
+  { "R2", 99 },
+  { "R3", 99 },
+  { "R4", 99 },
+  { "L1", 99 },
+  { "L2", 99 },
+  { "L3", 99 },
+  { "L4", 99 },
   { "LEV SCL BRK PT", 99 },
   { "SCL LEFT DEPTH", 99 },
   { "SCL RGHT DEPTH", 99 },
@@ -15342,14 +15194,14 @@ const struct voice_param voice_op_params[] = {
 const uint8_t num_voice_op_params = 21;
 
 const struct voice_param voice_params[] = {
-  { "PITCH EG R1", 99 },
-  { "PITCH EG R2", 99 },
-  { "PITCH EG R3", 99 },
-  { "PITCH EG R4", 99 },
-  { "PITCH EG L1", 99 },
-  { "PITCH EG L2", 99 },
-  { "PITCH EG L3", 99 },
-  { "PITCH EG L4", 99 },
+  { "R1", 99 },
+  { "R2", 99 },
+  { "R3", 99 },
+  { "R4", 99 },
+  { "L1", 99 },
+  { "L2", 99 },
+  { "L3", 99 },
+  { "L4", 99 },
   { "ALGORITHM", 31 },
   { "FEEDBACK", 7 },
   { "OSC KEY SYNC", 1 },
@@ -15367,83 +15219,33 @@ const struct voice_param voice_params[] = {
 const uint8_t num_voice_params = 19;  // omit name for now
 uint8_t current_voice_op = 0;
 
-FLASHMEM uint8_t get_param_limit(uint8_t select_index) {
-  if (select_index == 0)  // instance id
-    return 1;
-  if (select_index - 1 < num_voice_params)
-    return voice_params[select_index - 1].max;
-  if (select_index - 1 == num_voice_params)  // operator count
-    return 5;
-  return voice_op_params[select_index - 2 - num_voice_params].max;
-}
 
-FLASHMEM void print_scaled_bar(uint8_t x, uint8_t y, uint8_t value, uint8_t select_index) {
-  uint16_t limit = get_param_limit(select_index);
-  print_small_scaled_bar(x, y, value, limit, select_index, 1, 1);
-}
-
-FLASHMEM void print_voice_eg(uint8_t x, uint8_t y, uint8_t addr, uint8_t select_addr, int16_t changed_param) {
-  setCursor_textGrid_small(x, y);
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  if (changed_param == -1)
-    display.print(F("RATE      LEVEL "));
-  for (uint8_t i = 0; i < 4; i++) {
-    if (changed_param == -1 || changed_param == select_addr + i) {
-      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i);
-      print_scaled_bar(x, y + 1 + i, value, select_addr + i);
-    }
-    if (changed_param == -1 || changed_param == select_addr + i + 4) {
-      uint8_t value2 = MicroDexed[selected_instance_id]->getVoiceDataElement(addr + i + 4);
-      print_scaled_bar(x + 10, y + 1 + i, value2, select_addr + i + 4);
-    }
-  }
-}
-
-FLASHMEM void print_voice_parameters(int16_t changed_param) {
-  display.setTextSize(1);
-
-  if (changed_param == -1 || changed_param == 0) {
-    // instance selector
-    setModeColor(0);
-    display.setCursor(CHAR_width_small * 10, 6);
-    display.print(F("SELECT INSTANCE  ->"));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    // voice name
-    display.setTextSize(2);
-    show(1, 0, 10, g_voice_name[selected_instance_id]);
-  }
-
-  // global voice parameters
-  display.setTextSize(1);
-  print_voice_eg(0, 5, DEXED_VOICE_OFFSET, 1, changed_param);
-
-  for (uint8_t i = 8; i < num_voice_params; i++) {
-    if (changed_param == -1 || changed_param == i + 1) {
-      uint8_t addr = DEXED_VOICE_OFFSET + i;
-      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-      print_scaled_bar(0, 2 + i, value, i + 1);
-    }
-  }
-
-  // current selected operator parameters
-  if (changed_param == num_voice_params + 1)  // if the operator selection has changed, all values may have too.
-    changed_param = -1;
-  if (changed_param == -1)  // operator selection bar
-    print_scaled_bar(29, 3, current_voice_op, num_voice_params + 1);
-  print_voice_eg(29, 5, current_voice_op * num_voice_op_params, num_voice_params + 2, changed_param);
-  for (uint8_t i = 8; i < num_voice_op_params; i++) {
-    if (changed_param == -1 || changed_param == i + num_voice_params + 2) {
-      uint8_t addr = current_voice_op * num_voice_op_params + i;
-      uint8_t value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-      print_scaled_bar(29, 2 + i, value, i + num_voice_params + 2);
-    }
-  }
+int16_t dexed_getter(struct param_editor* param){
+  int8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+  return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
+};
+void dexed_setter(struct param_editor* param, int16_t value){
+  uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id- 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+  MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
+};
+int16_t dexed_op_getter(struct param_editor* param){
+  return current_voice_op;
+};
+void dexed_op_setter(struct param_editor* param, int16_t value){
+  current_voice_op=value;
+  ui.draw_editors(true);
+};
+void dexed_instance_id_renderer(struct param_editor* param, bool refresh) {
+  UI_update_instance_icons();
+  display.setTextSize(2);
+  show(1, 0, 10, g_voice_name[selected_instance_id]);
 }
 
 FLASHMEM void UI_func_voice_editor(uint8_t param) {
+
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
-    display.fillScreen(COLOR_BACKGROUND);
+    ui.reset();
     border0();
     helptext_l("BACK");
     display.setTextSize(1);
@@ -15454,107 +15256,64 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     display.print(F("ENC_R"));
     UI_update_instance_icons();
 
-    // voice global parameter names
+    ui.setCursor(0,1);
+    ui.addEditor("INSTANCE", 0, 1, &selected_instance_id, NULL, NULL, &dexed_instance_id_renderer);
+
+    // voice global parameters
     display.setTextSize(1);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(0, 4);
     display.print(F("PITCH EG"));
-    for (uint8_t i = 8; i < num_voice_params; i++) {
-      setCursor_textGrid_small(10, 2 + i);
-      display.print(voice_params[i].name);
-    }
 
-    // operator parameter names
-    setCursor_textGrid_small(39, 3);
-    display.print(F("EDIT OPERATOR"));
+    ui.setCursor(0,5);
+    for (uint8_t i = 0; i < 4; i++)
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
+    ui.setCursor(14,5);
+    for (uint8_t i = 4; i < 8; i++)
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
+    ui.setCursor(0,9);
+    for (uint8_t i = 8; i < num_voice_params; i++)
+      ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
+
+    // operator parameters
+    ui.setCursor(29,3);
+    ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
+
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
-    for (uint8_t i = 8; i < num_voice_op_params; i++) {
-      setCursor_textGrid_small(39, 2 + i);
-      display.print(voice_op_params[i].name);
-    }
-    print_voice_parameters(-1);
+    ui.setCursor(27,5);
+    for (uint8_t i = 0; i < 4; i++)
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
+    ui.setCursor(41,5);
+    for (uint8_t i = 4; i < 8; i++)
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
+    ui.setCursor(27,9);
+    for (uint8_t i = 8; i < num_voice_op_params; i++)
+      ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
+
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (seq.edit_state == 0) {
-        uint8_t num_options = num_voice_params + num_voice_op_params + 2;
-        uint8_t last_select = generic_temp_select_menu;
-        if (LCDML.BT_checkDown() && generic_temp_select_menu < num_options - 1) {
-          generic_temp_select_menu++;
-        } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 0) {
-          generic_temp_select_menu--;
-        }
-        print_voice_parameters(last_select);  // make sure last item before navigation is drawn deselected
-      } else if (seq.edit_state == 1) {
-        // decode current edit item into either a global or current operator address
-        uint8_t addr = generic_temp_select_menu - 1 < num_voice_params ? generic_temp_select_menu - 1 + DEXED_VOICE_OFFSET : generic_temp_select_menu - 2 - num_voice_params + current_voice_op * num_voice_op_params;
-        uint8_t limit = get_param_limit(generic_temp_select_menu);
-        uint8_t value;
-        if (generic_temp_select_menu == 0) {
-          value = selected_instance_id;
-
-          if (LCDML.BT_checkDown()) {
-            if (selected_instance_id != 1) {
-              selected_instance_id = 1;
-              UI_update_instance_icons();
-              print_voice_parameters(-1);
-            }
-          } else if (LCDML.BT_checkUp()) {
-            if (selected_instance_id != 0) {
-              selected_instance_id = 0;
-              UI_update_instance_icons();
-              print_voice_parameters(-1);
-            }
-          }
-
-        } else if (generic_temp_select_menu == num_voice_params + 1)
-          value = current_voice_op;
-        else
-          value = MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
-
-        if (LCDML.BT_checkDown()) {
-          value = constrain(value + ENCODER[ENC_R].speed(), 0, limit);
-        } else if (LCDML.BT_checkUp()) {
-          value = constrain(value - ENCODER[ENC_R].speed(), 0, limit);
-        }
-
-        if (generic_temp_select_menu == 0)
-          selected_instance_id = value;
-        else if (generic_temp_select_menu == num_voice_params + 1)
-          current_voice_op = value;
-        else
-          MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
-      }
-      print_voice_parameters(generic_temp_select_menu);
-    }
+    ui.handle_input();
 
     // left encoder selects operator
-    if (encoderDir[ENC_L].Up() || encoderDir[ENC_L].Down()) {
+    /*if (encoderDir[ENC_L].Up() || encoderDir[ENC_L].Down()) {
       if (LCDML.BT_checkDown() && current_voice_op < 5) {
         current_voice_op++;
       } else if (LCDML.BT_checkUp() && current_voice_op > 0) {
         current_voice_op--;
       }
       print_voice_parameters(num_voice_params + 1);
-    }
+    }*/
 
     if (encoderDir[ENC_R].ButtonLong()) {
-      if (selected_instance_id == 0)
-        selected_instance_id = 1;
-      else
-        selected_instance_id = 0;
-      UI_update_instance_icons();
-      print_voice_parameters(-1);
-    } else if (LCDML.BT_checkEnter()) {
-      seq.edit_state = 1 - seq.edit_state;
-      print_voice_parameters(generic_temp_select_menu);
+      selected_instance_id = 1 -selected_instance_id;
+      ui.draw_editors(true);
     }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
-    display.fillScreen(COLOR_BACKGROUND);
+    ui.clear();
     encoderDir[ENC_R].reset();
     dexed_live_mod.active_button = 0;
   }
