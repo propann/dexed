@@ -14773,8 +14773,17 @@ void send_sysex_if_changed(uint8_t id, uint8_t* valuePtr, uint8_t* changedValueP
   if(valuePtr == changedValuePtr) 
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, id, *((uint8_t*)valuePtr), 2);
 }
+
+int16_t dexed_controller_getter(struct param_editor* editor) {
+  // compute pointer to instance-current memory location of selected parameter
+  uint8_t* ptr = (uint8_t*)( (char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
+  return *ptr;
+}
+
 void dexed_controller_setter(struct param_editor* editor, int16_t value) {
-  *((uint8_t*)editor->value) = value;
+  // compute pointer to instance-current memory location of selected parameter
+  uint8_t* ptr = (uint8_t*)( (char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
+  *ptr = (uint8_t)value;
 
     MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
     MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
@@ -14801,44 +14810,42 @@ FLASHMEM void UI_func_dexed_controllers(uint8_t param) {
   {
     ui.reset();
     ui.setCursor(1,1);
-    ui.addEditor("INSTANCE", 0, 1, &selected_instance_id, NULL, NULL, &dexed_instance_id_renderer);
+    addInstanceEditor(&dexed_voice_name_renderer);
 
     ui.setCursor(1,5);
     ui.printLn("PITCH BEND WHEEL");
-    ui.addEditor("PB RANGE", PB_RANGE_MIN, PB_RANGE_MAX, &configuration.dexed[selected_instance_id].pb_range, NULL, &dexed_controller_setter);
-    ui.addEditor("PB STEP",  PB_STEP_MIN, PB_STEP_MAX,   &configuration.dexed[selected_instance_id].pb_step , NULL, &dexed_controller_setter);
+    ui.addEditor("PB RANGE", PB_RANGE_MIN, PB_RANGE_MAX, &configuration.dexed[0].pb_range,
+      &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("PB STEP",  PB_STEP_MIN, PB_STEP_MAX,   &configuration.dexed[0].pb_step ,
+      &dexed_controller_getter, &dexed_controller_setter);
 
     ui.printLn("");
     ui.printLn("MODULATION WHEEL");
-    ui.addEditor("MW RANGE", MW_RANGE_MIN, MW_RANGE_MAX, &configuration.dexed[selected_instance_id].mw_range, NULL, &dexed_controller_setter);
-    ui.addEditor("MW ASSIGN", MW_ASSIGN_MIN , MW_ASSIGN_MAX, &configuration.dexed[selected_instance_id].mw_assign, NULL, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("MW MODE", MW_MODE_MIN , MW_MODE_MAX , &configuration.dexed[selected_instance_id].mw_mode, NULL, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("MW RANGE", MW_RANGE_MIN, MW_RANGE_MAX, &configuration.dexed[0].mw_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("MW ASSIGN", MW_ASSIGN_MIN , MW_ASSIGN_MAX, &configuration.dexed[0].mw_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("MW MODE", MW_MODE_MIN , MW_MODE_MAX , &configuration.dexed[0].mw_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
 
     ui.printLn("");
     ui.printLn("FOOT CONTROLLER");
-    ui.addEditor("FC RANGE", FC_RANGE_MIN, FC_RANGE_MAX, &configuration.dexed[selected_instance_id].fc_range, NULL, &dexed_controller_setter);
-    ui.addEditor("FC ASSIGN", FC_ASSIGN_MIN, FC_ASSIGN_MAX, &configuration.dexed[selected_instance_id].fc_assign, NULL, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("FC MODE", FC_MODE_MIN , FC_MODE_MAX , &configuration.dexed[selected_instance_id].fc_mode, NULL, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("FC RANGE", FC_RANGE_MIN, FC_RANGE_MAX, &configuration.dexed[0].fc_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("FC ASSIGN", FC_ASSIGN_MIN, FC_ASSIGN_MAX, &configuration.dexed[0].fc_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("FC MODE", FC_MODE_MIN , FC_MODE_MAX , &configuration.dexed[0].fc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
 
     ui.setCursor(29,5+4);
     ui.printLn("BREATH CONTROLLER");
-    ui.addEditor("BC RANGE", BC_RANGE_MIN, BC_RANGE_MAX, &configuration.dexed[selected_instance_id].bc_range, NULL, &dexed_controller_setter);
-    ui.addEditor("BC ASSIGN", BC_ASSIGN_MIN, BC_ASSIGN_MAX, &configuration.dexed[selected_instance_id].bc_assign, NULL, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("BC MODE", BC_MODE_MIN , BC_MODE_MAX , &configuration.dexed[selected_instance_id].bc_mode, NULL, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("BC RANGE", BC_RANGE_MIN, BC_RANGE_MAX, &configuration.dexed[0].bc_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("BC ASSIGN", BC_ASSIGN_MIN, BC_ASSIGN_MAX, &configuration.dexed[0].bc_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("BC MODE", BC_MODE_MIN , BC_MODE_MAX , &configuration.dexed[0].bc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
 
     ui.printLn("");
     ui.printLn("AFTERTOUCH");
-    ui.addEditor("AT RANGE", AT_RANGE_MIN, AT_RANGE_MAX, &configuration.dexed[selected_instance_id].at_range, NULL, &dexed_controller_setter);
-    ui.addEditor("AT ASSIGN", AT_ASSIGN_MIN , AT_ASSIGN_MAX, &configuration.dexed[selected_instance_id].at_assign, NULL, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("AT MODE", AT_MODE_MIN , AT_MODE_MAX , &configuration.dexed[selected_instance_id].at_mode, NULL, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("AT RANGE", AT_RANGE_MIN, AT_RANGE_MAX, &configuration.dexed[0].at_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("AT ASSIGN", AT_ASSIGN_MIN , AT_ASSIGN_MAX, &configuration.dexed[0].at_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("AT MODE", AT_MODE_MIN , AT_MODE_MAX , &configuration.dexed[0].at_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     ui.handle_input();
-    if (encoderDir[ENC_R].ButtonLong()) {
-      selected_instance_id = 1 -selected_instance_id;
-      ui.draw_editors(true);
-    }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
