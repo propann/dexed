@@ -2795,10 +2795,10 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             configuration.fx.reverb_send[selected_instance_id] = map(inValue, 0, 0x7f, REVERB_SEND_MIN, REVERB_SEND_MAX);
             reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
             reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_reverb_send)) {
-              LCDML.OTHER_updateFunc();
-              LCDML.loop_menu();
-            }
+            // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_reverb_send)) {
+            //   LCDML.OTHER_updateFunc();
+            //   LCDML.loop_menu();
+            // }
             break;
           case 93:  // CC 93: chorus level
             configuration.fx.chorus_level[selected_instance_id] = map(inValue, 0, 0x7f, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
@@ -2828,26 +2828,26 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
           case 105:  // CC 105: delay time
             configuration.fx.delay_time[instance_id] = map(inValue, 0, 0x7f, DELAY_TIME_MIN, DELAY_TIME_MAX);
             delay_fx[instance_id]->delay(0, constrain(configuration.fx.delay_time[instance_id] * 10, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_time)) {
-              LCDML.OTHER_updateFunc();
-              LCDML.loop_menu();
-            }
+            // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_time)) {
+            //   LCDML.OTHER_updateFunc();
+            //   LCDML.loop_menu();
+            // }
             break;
           case 106:  // CC 106: delay feedback
             configuration.fx.delay_feedback[instance_id] = map(inValue, 0, 0x7f, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
             delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127)));  // amount of feedback
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_feedback)) {
-              LCDML.OTHER_updateFunc();
-              LCDML.loop_menu();
-            }
+            // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_feedback)) {
+            //   LCDML.OTHER_updateFunc();
+            //   LCDML.loop_menu();
+            // }
             break;
           case 107:  // CC 107: delay volume
             configuration.fx.delay_level[instance_id] = map(inValue, 0, 0x7f, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
             global_delay_in_mixer[instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_level_dexed)) {
-              LCDML.OTHER_updateFunc();
-              LCDML.loop_menu();
-            }
+            // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_level_dexed)) {
+            //   LCDML.OTHER_updateFunc();
+            //   LCDML.loop_menu();
+            // }
             break;
           case 120:
             MicroDexed[instance_id]->panic();
