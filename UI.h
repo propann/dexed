@@ -92,7 +92,6 @@ LCDML_add(58, LCDML_0, 5, "MultiSample", UI_func_MultiSamplePlay);
 LCDML_add(59, LCDML_0, 6, "Drums", UI_func_drums);
 LCDML_add(60, LCDML_0, 7, "Master Effects", NULL);
 LCDML_add(61, LCDML_0_7, 1, "Delay+Reverb", UI_func_master_effects);
-//LCDML_add(82, LCDML_0_7_2, 4, "Level", UI_func_delay_level_global);
 LCDML_add(62, LCDML_0_7, 2, "Multiband", UI_func_multiband_dynamics);
 LCDML_add(63, LCDML_0_7, 3, "EQ (only SGTL)", NULL);
 LCDML_add(64, LCDML_0_7_3, 1, "Low-Cut", UI_func_eq_1);
