@@ -203,6 +203,8 @@ extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
 extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
+extern void sd_go_parent_folder();
+extern void sd_update_display();
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -3037,7 +3039,13 @@ FLASHMEM void lcdml_menu_control(void) {
 
     // long left-press starts/stops sequencer
 
-    toggle_sequencer_play_status();
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager)) {  //when in filemanager, long push ENC-L goes up one directory
+      sd_go_parent_folder();
+      sd_update_display();
+
+    } else
+      toggle_sequencer_play_status();
+
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
       print_voice_select_default_help();
 
@@ -11079,8 +11087,8 @@ void update_all_values_master_effects() {
   print_small_panbar(6, 9, configuration.fx.delay_pan[0], 3);
   print_small_panbar(22, 9, configuration.fx.delay_pan[1], 13);
 
-  print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4,1,0);
-  print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14,1,0);
+  print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4, 1, 0);
+  print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14, 1, 0);
 
   print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 21, 1, 0);
   print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 22, 1, 0);
@@ -11157,7 +11165,7 @@ void UI_func_master_effects(uint8_t param) {
           print_small_panbar(6, 9, configuration.fx.delay_pan[0], 3);
         } else if (generic_temp_select_menu == 4) {  //level
           master_effects_delay_level_global(0);
-            print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4,1,0);
+          print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4, 1, 0);
         } else if (generic_temp_select_menu == 5) {
           if (LCDML.BT_checkDown()) {
             configuration.fx.delay_level[0] = constrain(configuration.fx.delay_level[0] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
@@ -11219,7 +11227,7 @@ void UI_func_master_effects(uint8_t param) {
           print_small_panbar(22, 9, configuration.fx.delay_pan[1], 13);
         } else if (generic_temp_select_menu == 14) {  //level
           master_effects_delay_level_global(1);
-          print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14,1,0);
+          print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14, 1, 0);
         } else if (generic_temp_select_menu == 15) {  //dx2 delay send
           if (LCDML.BT_checkDown()) {
             configuration.fx.delay_level[1] = constrain(configuration.fx.delay_level[1] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
@@ -13309,6 +13317,29 @@ FLASHMEM void sd_card_count_files_from_directory(File dir) {
   }
 }
 
+void sd_go_parent_folder() {
+  if (fm.sd_folder_depth < 2) {
+    fm.sd_folder_depth = 0;
+    fm.sd_skip_files = 0;
+    strcpy(fm.sd_new_name, "/");
+  } else {
+    // path has at least one parent folder
+    for (uint8_t count = strlen(fm.sd_new_name); count > 0; count--) {
+      if (fm.sd_new_name[count] == 0x2f) {
+        fm.sd_new_name[count] = '\0';
+        break;
+      }
+    }
+    fm.sd_folder_depth--;
+  }
+
+  fm.sd_selected_file = 0;
+}
+void sd_update_display() {
+  fm.sd_currentDirectory = SD.open(fm.sd_new_name);
+  sd_printDirectory(fm.sd_currentDirectory);
+}
+
 #ifdef COMPILE_FOR_FLASH
 FLASHMEM void UI_func_file_manager(uint8_t param) {
   uint32_t volumesize;
@@ -13704,6 +13735,10 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 1);
       }
     }
+    if (fm.back) {
+      display.fillRect(10, 10, 40, 40, RED);
+      fm.back = false;
+    }
     if (fm.active_window == 0) {
       if (fm.sd_new_name[0] != 0x2f)
         fm.sd_new_name[0] = 0x2f;
@@ -13829,6 +13864,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         fm.sd_selected_file = constrain(fm.sd_selected_file - 1, 0, fm.sd_cap_rows);
       }
     }
+
     if (LCDML.BT_checkEnter() && fm.active_window == 0)  // left window, SDCARD
     {
       if (fm.sd_is_folder) {

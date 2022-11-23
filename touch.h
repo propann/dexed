@@ -43,7 +43,6 @@ typedef struct ts_s {
 
 typedef struct fm_s {
   uint8_t wav_recorder_mode = 0;
-
 #ifdef COMPILE_FOR_SDCARD
   uint8_t sample_source = 0;  // 0 = SD, 1 = FLASH
 #endif

@@ -1919,7 +1919,7 @@ void playWAVFile(const char* filename) {
     display.fillRect(6, 190, DISPLAY_WIDTH - 7, 5, COLOR_BACKGROUND);
   }
 #ifdef COMPILE_FOR_FLASH
-if (fm.active_window == 1) {  //preview from flash
+  if (fm.active_window == 1) {  //preview from flash
     if (WAV_preview_FLASH.isPlaying())
       WAV_preview_FLASH.stop();
     WAV_preview_FLASH.play(filename);
@@ -2734,22 +2734,22 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             break;
 
           // MDT internal CC
-          case 20: // RIGHT
-          case 21: // LEFT
-          case 22: // UP
-          case 23: // DOWN
-          case 24: // SELECT
+          case 20:  // RIGHT
+          case 21:  // LEFT
+          case 22:  // UP
+          case 23:  // DOWN
+          case 24:  // SELECT
           // case 25: // START
-          case 26: // BUTTON B
-          case 27: // BUTTON A
-          case 28: // init display at remote connection
-          case 29: // remote touch pressed X
-          case 30: // remote touch pressed Y
-          case 31: // remote touch released
+          case 26:  // BUTTON B
+          case 27:  // BUTTON A
+          case 28:  // init display at remote connection
+          case 29:  // remote touch pressed X
+          case 30:  // remote touch pressed Y
+          case 31:  // remote touch released
             remote_MIDI_CC = inCtrl;
             remote_MIDI_CC_value = inValue;
             break;
-          // end MDT internal CC
+            // end MDT internal CC
 
           case 32:  // BankSelect LSB
 #ifdef DEBUG
@@ -4342,8 +4342,8 @@ FLASHMEM void check_and_create_directories(void) {
       SD.remove(tmp);
     } else {
 #ifdef DEBUG
-        Serial.print(F("Creating directory "));
-        Serial.println(tmp);
+      Serial.print(F("Creating directory "));
+      Serial.println(tmp);
 #endif
       SD.mkdir(tmp);
 
@@ -4351,10 +4351,10 @@ FLASHMEM void check_and_create_directories(void) {
       for (i = 0; i < MAX_BANKS; i++) {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), DEXED_CONFIG_PATH, i);
         if (!SD.exists(tmp)) {
-  #ifdef DEBUG
+#ifdef DEBUG
           Serial.print(F("Creating directory "));
           Serial.println(tmp);
-  #endif
+#endif
           SD.mkdir(tmp);
         }
       }
@@ -4504,7 +4504,6 @@ FLASHMEM void check_and_create_directories(void) {
 
       SD.rmdir("/FAVCFG");
     }
-
   }
 #ifdef DEBUG
   Serial.println(F("SD card check end"));
