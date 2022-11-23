@@ -13317,6 +13317,35 @@ void sd_go_parent_folder() {
 void sd_update_display() {
   fm.sd_currentDirectory = SD.open(fm.sd_new_name);
   sd_printDirectory(fm.sd_currentDirectory);
+
+  sd_card_count_files_from_directory(fm.sd_currentDirectory);
+  display.setCursor(CHAR_width_small * 8, 2 * CHAR_height_small);
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  print_formatted_number(fm.sd_sum_files, 3);
+  show_smallfont_noGrid(3 * CHAR_height_small, CHAR_width_small * 7, 20, fm.sd_new_name);
+  show_smallfont_noGrid(5 * CHAR_height_small, CHAR_width_small * 1, 20, fm.sd_temp_name);
+
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+
+  if (fm.sd_is_folder) {
+    display.setCursor(CHAR_width_small * 14, 4 * CHAR_height_small);
+    display.setTextColor(GREEN);
+    display.print(F("FOLDER"));
+    display.setCursor(CHAR_width_small * 9, 4 * CHAR_height_small);
+    display.setTextColor(GREY2);
+    display.print(F("FILE"));
+  } else {
+    display.setCursor(CHAR_width_small * 9, 4 * CHAR_height_small);
+    display.setTextColor(GREEN);
+    display.print(F("FILE"));
+    display.setCursor(CHAR_width_small * 14, 4 * CHAR_height_small);
+    display.setTextColor(GREY2);
+    display.print(F("FOLDER"));
+  }
+  if (fm.sd_is_folder)
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  else
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
 #ifdef COMPILE_FOR_FLASH
