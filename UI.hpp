@@ -3243,11 +3243,11 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
 }
 
 FLASHMEM int16_t encoder_change(bool fast) {
-  int8_t dir = 0;
+  int16_t dir = 0;
   if(LCDML.BT_checkDown()) dir= 1;
   if(LCDML.BT_checkUp()  ) dir=-1;
 
-  if(fast) return dir * ENCODER[ENC_R].speed();
+  if(fast) return dir * (ENCODER[ENC_R].speed() + ENCODER[ENC_L].speed());
   else     return dir;
 }
 
@@ -3301,12 +3301,17 @@ struct param_editor{
 struct UI {
   uint8_t x,y;
   uint8_t num_editors;
-  
   struct param_editor editors[UI_MAX_EDITORS];
-
+  struct param_editor* encoderLeftHandler=NULL;
+  struct param_editor* buttonLongHandler=NULL;
+ 
   void clear() {
     display.fillScreen(COLOR_BACKGROUND);
+    border0();
+    helptext_l("BACK");
     num_editors=0;
+    buttonLongHandler=NULL;
+    encoderLeftHandler=NULL;
   };
 
   void reset() {
@@ -3383,6 +3388,14 @@ struct UI {
     );
   };
 
+  void enableButtonLongEditor() {
+    buttonLongHandler = &editors[num_editors-1];
+  }
+
+  void enableLeftEncoderEditor() {
+    encoderLeftHandler = &editors[num_editors-1];
+  }
+
   void handle_parameter_navigation() {
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
       seq.edit_state=1-seq.edit_state;
@@ -3391,8 +3404,7 @@ struct UI {
 
     if (seq.edit_state == 0) {
       uint8_t last = generic_temp_select_menu;
-      generic_temp_select_menu += encoder_change(false);
-      generic_temp_select_menu = constrain(generic_temp_select_menu, 0, num_editors-1);
+      generic_temp_select_menu = constrain(generic_temp_select_menu+encoder_change(false), 0, num_editors-1);
       editors[last]                    .draw_editor(true);
       editors[generic_temp_select_menu].draw_editor(true);
     }
@@ -3407,19 +3419,62 @@ struct UI {
     return editors[generic_temp_select_menu].handle_parameter_editor();
   };
 
-  bool encoders_changed() {
-    return (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter();
+  bool encoder_changed(uint8_t id) {
+    return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
   }
 
-  uint8_t handle_input() {
-    if(encoders_changed()) {
+  void handle_input() {
+    // set currently selected editor's value by right encoder
+    if(encoder_changed(ENC_R)) {
       handle_parameter_navigation();
-      return handle_current_editor();
+      handle_current_editor();
     }
-    return -1;
+    // optionally set a specific editor's value by left encoder
+    if(encoderLeftHandler && encoder_changed(ENC_L)) {
+      encoderLeftHandler->handle_parameter_editor();
+    }
+    // optionally toggle a specific editor by long button press
+    if(buttonLongHandler && encoderDir[ENC_R].ButtonLong()) {
+      buttonLongHandler->set(1 - buttonLongHandler->get()); // toggle value between 0 and 1
+      buttonLongHandler->draw_editor(true);
+    }
   };
 
 } ui;
+
+void draw_instance_editor(struct param_editor* editor, bool refresh) {
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextSize(1);
+
+  if(!refresh) {
+    display.setCursor(CHAR_width_small * 34, 6);
+    display.print(F("OR LONG PUSH "));
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("ENC_R"));
+  }
+
+  display.setCursor(CHAR_width_small * 10, 6);
+  if(generic_temp_select_menu == editor->select_id) {
+    setModeColor(editor->select_id);
+    display.print(F("SELECT INSTANCE  ->"));
+  }else{
+    display.print(F("                   "));
+  }
+
+  UI_update_instance_icons();
+}  
+
+void addInstanceEditor(
+  void   (*renderer)(struct param_editor* param, bool refresh) = &draw_instance_editor
+) {
+  ui.addEditor("INSTANCE",0,1,&selected_instance_id, NULL,
+    [](struct param_editor* editor, int16_t value)->void{selected_instance_id=value; ui.draw_editors(true);},
+    renderer
+  );
+  ui.enableButtonLongEditor();
+}
+
 
 FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -14607,8 +14662,8 @@ void dexed_op_setter(struct param_editor* param, int16_t value){
   current_voice_op=value;
   ui.draw_editors(true);
 };
-void dexed_instance_id_renderer(struct param_editor* param, bool refresh) {
-  UI_update_instance_icons();
+void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
+  draw_instance_editor(param, refresh);
   display.setTextSize(2);
   show(1, 0, 10, g_voice_name[selected_instance_id]);
 }
@@ -14618,18 +14673,10 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
-    border0();
-    helptext_l("BACK");
-    display.setTextSize(1);
-    display.setCursor(CHAR_width_small * 34, 6);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(F("OR LONG PUSH "));
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("ENC_R"));
-    UI_update_instance_icons();
 
     ui.setCursor(0,1);
-    ui.addEditor("INSTANCE", 0, 1, &selected_instance_id, NULL, NULL, &dexed_instance_id_renderer);
+
+    addInstanceEditor(&dexed_voice_name_renderer);
 
     // voice global parameters
     display.setTextSize(1);
@@ -14648,8 +14695,9 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
     // operator parameters
-    ui.setCursor(29,3);
+    ui.setCursor(27,3);
     ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
+    ui.enableLeftEncoderEditor();
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
@@ -14662,7 +14710,6 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     ui.setCursor(27,9);
     for (uint8_t i = 8; i < num_voice_op_params; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
-
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -14678,10 +14725,6 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       print_voice_parameters(num_voice_params + 1);
     }*/
 
-    if (encoderDir[ENC_R].ButtonLong()) {
-      selected_instance_id = 1 -selected_instance_id;
-      ui.draw_editors(true);
-    }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
