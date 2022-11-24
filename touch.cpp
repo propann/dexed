@@ -3,12 +3,10 @@
 #include "sequencer.h"
 #include <LCDMenuLib2.h>
 #include "ILI9341_t3n.h"
-
-#ifdef USE_MULTIBAND
 #include "scope.h"
 #include <Audio.h>
 #include "template_mixer.hpp"
-#endif
+
 
 extern ILI9341_t3n display;
 extern config_t configuration;
@@ -66,7 +64,6 @@ extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern braids_t braids_osc;
 #endif
 
-#ifdef USE_MULTIBAND
 extern void mb_set_mutes();
 extern bool mb_solo_low;
 extern bool mb_solo_mid;
@@ -86,7 +83,6 @@ extern uint8_t generic_temp_select_menu;
 extern void mb_set_mutes();
 extern void mb_set_master();
 extern void mb_set_compressor();
-#endif
 
 ts_t ts;                          //touch screen
 fm_t fm;                          //file manager
@@ -1027,16 +1023,13 @@ FLASHMEM void handle_touchscreen_menu() {
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-#ifdef USE_MULTIBAND
 FLASHMEM void toggle_generic_active_function() {
   if (generic_active_function == 0)
     generic_active_function = 1;
   else
     generic_active_function = 0;
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void handle_touchscreen_multiband() {
   if (touch.touched()) {
     get_scaled_touch_point();
@@ -1123,11 +1116,6 @@ FLASHMEM void handle_touchscreen_multiband() {
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
-#else
-FLASHMEM void handle_touchscreen_multiband() {
-  ;
-}
-#endif
 
 extern int temp_int;
 

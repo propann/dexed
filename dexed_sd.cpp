@@ -88,7 +88,6 @@ extern PeriodicTimer sequencer_timer;
 extern void sequencer();
 extern sequencer_t seq;
 
-#ifdef USE_MULTIBAND
 extern uint16_t mb_cross_freq_low;
 extern uint16_t mb_cross_freq_mid;
 extern uint16_t mb_cross_freq_upper_mid;
@@ -112,7 +111,6 @@ extern bool mb_solo_mid;
 extern bool mb_solo_upper_mid;
 extern bool mb_solo_high;
 extern uint8_t mb_global_ratio;
-#endif
 
 extern float midi_volume_transform(uint8_t midi_amp);
 extern void set_sample_note(uint8_t sample, uint8_t note);
@@ -1676,7 +1674,7 @@ FLASHMEM bool save_sd_braids_json(uint8_t number) {
 /******************************************************************************
    SD MULTIBAND
  ******************************************************************************/
-#ifdef USE_MULTIBAND
+
 FLASHMEM bool load_sd_multiband_json(uint8_t number) {
   if (number < 0)
     return (false);
@@ -1811,7 +1809,6 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number) {
   AudioInterrupts();
   return (false);
 }
-#endif
 
 /******************************************************************************
    SD SEQUENCER
@@ -2192,9 +2189,8 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
 #ifdef USE_BRAIDS
   save_sd_braids_json(number);
 #endif
-#ifdef USE_MULTIBAND
   save_sd_multiband_json(number);
-#endif
+
 
   for (uint8_t i = 0; i < MAX_DEXED; i++) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, number, VOICE_CONFIG_NAME, i);
@@ -2492,9 +2488,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
 #ifdef USE_BRAIDS
   load_sd_braids_json(number);
 #endif
-#ifdef USE_MULTIBAND
   load_sd_multiband_json(number);
-#endif
   configuration.sys.performance_number = number;
 
   if (sd_card > 0) {
