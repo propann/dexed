@@ -203,6 +203,8 @@ extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
 extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
+extern void sd_go_parent_folder();
+extern void sd_update_display();
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -447,25 +449,27 @@ void lcdml_menu_clear(void);
 void lcdml_menu_control(void);
 void mFunc_screensaver(uint8_t param);
 
-void UI_func_reverb_roomsize(uint8_t param);
-void UI_func_reverb_damping(uint8_t param);
-void UI_func_reverb_lowpass(uint8_t param);
-void UI_func_reverb_lodamp(uint8_t param);
-void UI_func_reverb_hidamp(uint8_t param);
-void UI_func_reverb_diffusion(uint8_t param);
-void UI_func_reverb_level(uint8_t param);
+void reverb_roomsize();
+void reverb_lowpass();
+void reverb_lodamp();
+void reverb_hidamp();
+void reverb_diffusion();
+void reverb_level();
 void UI_func_chorus_frequency(uint8_t param);
 void UI_func_chorus_waveform(uint8_t param);
 void UI_func_chorus_depth(uint8_t param);
 void UI_func_chorus_level(uint8_t param);
+void set_delay_sync(uint8_t sync, uint8_t instance);
 void UI_func_delay_level_global(uint8_t param);
 void UI_func_delay_level_dexed(uint8_t param);
-void UI_func_delay_time(uint8_t param);
-void UI_func_delay_feedback(uint8_t param);
-void UI_func_delay_panorama(uint8_t param);
-void UI_func_reverb_send(uint8_t param);
+void master_effects_set_delay_time(uint8_t instance);
+void master_effects_set_delay_feedback(uint8_t instance);
+void master_effects_set_delay_panorama(uint8_t instance);
+void master_effects_set_reverb_send(uint8_t instance);
 void UI_func_filter_cutoff(uint8_t param);
 void UI_func_filter_resonance(uint8_t param);
+void UI_func_drum_reverb_send(uint8_t param);
+
 void UI_func_transpose(uint8_t param);
 void UI_func_tune(uint8_t param);
 void UI_func_midi_channel(uint8_t param);
@@ -546,7 +550,6 @@ void display_meter_int(const char* title, uint32_t value, float factor, float of
 void display_meter_float(const char* title, float value, float factor, float offset, int32_t min_value, int32_t max_value, uint8_t size_number, uint8_t size_fraction, bool zeros, bool sign, bool init);
 void display_OP_active_instance_number(uint8_t instance_id, uint8_t op);
 void display_special_chars(uint8_t mode);
-void display_delay_sync(uint8_t sync);
 void string_trim(char* s);
 void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id);
 void draw_favorite_icon(uint8_t b, uint8_t v, uint8_t instance_id);
@@ -579,9 +582,6 @@ uint8_t last_menu_depth = 99;
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL);  // normal root menu element (do not change)
 LCDMenuLib2 LCDML(LCDML_0, _LCDML_DISP_rows, _LCDML_DISP_cols, lcdml_menu_display, lcdml_menu_clear, lcdml_menu_control);
-
-
-
 
 #include "UI.h"
 
@@ -2170,7 +2170,6 @@ FLASHMEM void toggle_sequencer_play_status() {
   }
 }
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_right() {
 
   if (remote_MIDI_CC == 20) {
@@ -2193,9 +2192,7 @@ FLASHMEM boolean key_right() {
 
   return false;
 }
-//#endif
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_left() {
 
   if (remote_MIDI_CC == 21) {
@@ -2218,9 +2215,7 @@ FLASHMEM boolean key_left() {
 
   return false;
 }
-//#endif
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_up() {
 
   if (remote_MIDI_CC == 22) {
@@ -2243,9 +2238,7 @@ FLASHMEM boolean key_up() {
 
   return false;
 }
-//#endif
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM boolean key_down() {
 
   if (remote_MIDI_CC == 23) {
@@ -2268,9 +2261,7 @@ FLASHMEM boolean key_down() {
 
   return false;
 }
-//#endif
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
 FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
   if (gamepad_millis > configuration.sys.gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && key_right()) {
     seq.cycle_touch_element = 6;  // goto chain edit
@@ -2765,8 +2756,6 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-  //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
-
   uint32_t buttons = joysticks[0].getButtons();
 
   // MIDI remote
@@ -2830,12 +2819,6 @@ FLASHMEM void lcdml_menu_control(void) {
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
 
-    // buttons = 0;
-    // if (digitalRead(BI_SELECT) && digitalRead(BI_START) && digitalRead(BI_BUTTON_A) && digitalRead(BI_BUTTON_B)) {
-    //   buttons = gamepad_buttons_neutral;
-    // } else
-    // {
-
     if (digitalRead(BI_SELECT) == false)
       buttons = GAMEPAD_SELECT;
     if (digitalRead(BI_START) == false) {
@@ -2854,7 +2837,6 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-  //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
   if (incomingSerialByte == '0' || remote_console_keystate_select) {
     buttons = GAMEPAD_SELECT;
     remote_console_keystate_select = true;
@@ -2931,11 +2913,10 @@ FLASHMEM void lcdml_menu_control(void) {
       }
 
 
-      if ((LCDML.FUNC_getID() > 1 && LCDML.FUNC_getID() < 58) || (LCDML.FUNC_getID() > 61 && LCDML.FUNC_getID() < 88))  //"1-line menus", reverse y
+      if ((LCDML.FUNC_getID() > 2 && LCDML.FUNC_getID() < 55) || (LCDML.FUNC_getID() > 62 && LCDML.FUNC_getID() < 71))  //"1-line menus", reverse y
       {
         reverse_y = true;
       }
-
 
       // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on that and the edit state of the field, this needs special handling for gamepad usage
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker)) {
@@ -3314,7 +3295,13 @@ FLASHMEM void lcdml_menu_control(void) {
 
     // long left-press starts/stops sequencer
 
-    toggle_sequencer_play_status();
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager)) {  //when in filemanager, long push ENC-L goes up one directory
+      sd_go_parent_folder();
+      sd_update_display();
+
+    } else
+      toggle_sequencer_play_status();
+
     if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
       print_voice_select_default_help();
 
@@ -3480,7 +3467,6 @@ void addInstanceEditor(
   ui.enableButtonLongEditor();
 }
 
-
 FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -3559,200 +3545,59 @@ FLASHMEM void UI_func_map_gamepad(uint8_t param) {
 }
 
 #ifdef USE_FX
-FLASHMEM void UI_func_reverb_roomsize(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Room", configuration.fx.reverb_roomsize, 1.0, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize + ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize - ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
-    }
-    display_bar_int("Reverb Room", configuration.fx.reverb_roomsize, 1.0, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 3, false, false, false);
-
-    reverb.size(mapfloat(configuration.fx.reverb_roomsize, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 0.0, 1.0));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+FLASHMEM void reverb_roomsize() {
+  if (LCDML.BT_checkDown())
+    configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize + ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
+  else if (LCDML.BT_checkUp())
+    configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize - ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
+  //display_bar_int("Reverb Room", configuration.fx.reverb_roomsize, 1.0, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 3, false, false, false);
+  reverb.size(mapfloat(configuration.fx.reverb_roomsize, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 0.0, 1.0));
 }
 
-#if USE_PLATEREVERB != 1
-FLASHMEM void UI_func_reverb_damping(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Damp.", configuration.fx.reverb_damping, 1.0, REVERB_DAMPING_MIN, REVERB_DAMPING_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_damping = constrain(configuration.fx.reverb_damping + ENCODER[ENC_R].speed(), REVERB_DAMPING_MIN, REVERB_DAMPING_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_damping = constrain(configuration.fx.reverb_damping - ENCODER[ENC_R].speed(), REVERB_DAMPING_MIN, REVERB_DAMPING_MAX);
-    }
-
-    display_bar_int("Reverb Damp.", configuration.fx.reverb_damping, 1.0, REVERB_DAMPING_MIN, REVERB_DAMPING_MAX, 3, false, false, false);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-#else
-FLASHMEM void UI_func_reverb_lowpass(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-
-    display_bar_int("Reverb Lowpass", configuration.fx.reverb_lowpass, 1.0, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_lowpass = constrain(configuration.fx.reverb_lowpass + ENCODER[ENC_R].speed(), REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_lowpass = constrain(configuration.fx.reverb_lowpass - ENCODER[ENC_R].speed(), REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX);
-    }
-
-    display_bar_int("Reverb Lowpass", configuration.fx.reverb_lowpass, 1.0, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX, 3, false, false, false);
-
-    reverb.lowpass(mapfloat(configuration.fx.reverb_lowpass, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX, 0.0, 1.0));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-
-    encoderDir[ENC_R].reset();
-  }
+FLASHMEM void reverb_lowpass() {
+  if (LCDML.BT_checkDown())
+    configuration.fx.reverb_lowpass = constrain(configuration.fx.reverb_lowpass + ENCODER[ENC_R].speed(), REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX);
+  else if (LCDML.BT_checkUp())
+    configuration.fx.reverb_lowpass = constrain(configuration.fx.reverb_lowpass - ENCODER[ENC_R].speed(), REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX);
+  // display_bar_int("Reverb Lowpass", configuration.fx.reverb_lowpass, 1.0, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX, 3, false, false, false);
+  reverb.lowpass(mapfloat(configuration.fx.reverb_lowpass, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX, 0.0, 1.0));
 }
 
-FLASHMEM void UI_func_reverb_lodamp(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Lodamp.", configuration.fx.reverb_lodamp, 1.0, REVERB_LODAMP_MIN, REVERB_LODAMP_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_lodamp = constrain(configuration.fx.reverb_lodamp + ENCODER[ENC_R].speed(), REVERB_LODAMP_MIN, REVERB_LODAMP_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_lodamp = constrain(configuration.fx.reverb_lodamp - ENCODER[ENC_R].speed(), REVERB_LODAMP_MIN, REVERB_LODAMP_MAX);
-    }
-
-    display_bar_int("Reverb Lodamp.", configuration.fx.reverb_lodamp, 1.0, REVERB_LODAMP_MIN, REVERB_LODAMP_MAX, 3, false, false, false);
-
-    reverb.lodamp(mapfloat(configuration.fx.reverb_lodamp, REVERB_LODAMP_MIN, REVERB_LODAMP_MAX, 0.0, 1.0));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+FLASHMEM void reverb_lodamp() {
+  if (LCDML.BT_checkDown())
+    configuration.fx.reverb_lodamp = constrain(configuration.fx.reverb_lodamp + ENCODER[ENC_R].speed(), REVERB_LODAMP_MIN, REVERB_LODAMP_MAX);
+  else if (LCDML.BT_checkUp())
+    configuration.fx.reverb_lodamp = constrain(configuration.fx.reverb_lodamp - ENCODER[ENC_R].speed(), REVERB_LODAMP_MIN, REVERB_LODAMP_MAX);
+  // display_bar_int("Reverb Lodamp.", configuration.fx.reverb_lodamp, 1.0, REVERB_LODAMP_MIN, REVERB_LODAMP_MAX, 3, false, false, false);
+  reverb.lodamp(mapfloat(configuration.fx.reverb_lodamp, REVERB_LODAMP_MIN, REVERB_LODAMP_MAX, 0.0, 1.0));
 }
 
-FLASHMEM void UI_func_reverb_hidamp(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Hidamp.", configuration.fx.reverb_hidamp, 1.0, REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_hidamp = constrain(configuration.fx.reverb_hidamp + ENCODER[ENC_R].speed(), REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_hidamp = constrain(configuration.fx.reverb_hidamp - ENCODER[ENC_R].speed(), REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX);
-    }
-
-    display_bar_int("Reverb Hidamp.", configuration.fx.reverb_hidamp, 1.0, REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX, 3, false, false, false);
-
-    reverb.hidamp(mapfloat(configuration.fx.reverb_hidamp, REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX, 0.0, 1.0));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+FLASHMEM void reverb_hidamp() {
+  if (LCDML.BT_checkDown())
+    configuration.fx.reverb_hidamp = constrain(configuration.fx.reverb_hidamp + ENCODER[ENC_R].speed(), REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX);
+  else if (LCDML.BT_checkUp())
+    configuration.fx.reverb_hidamp = constrain(configuration.fx.reverb_hidamp - ENCODER[ENC_R].speed(), REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX);
+  // display_bar_int("Reverb Hidamp.", configuration.fx.reverb_hidamp, 1.0, REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX, 3, false, false, false);
+  reverb.hidamp(mapfloat(configuration.fx.reverb_hidamp, REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX, 0.0, 1.0));
 }
 
-FLASHMEM void UI_func_reverb_diffusion(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Diff.", configuration.fx.reverb_diffusion, 1.0, REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_diffusion = constrain(configuration.fx.reverb_diffusion + ENCODER[ENC_R].speed(), REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_diffusion = constrain(configuration.fx.reverb_diffusion - ENCODER[ENC_R].speed(), REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX);
-    }
-
-    display_bar_int("Reverb Diff.", configuration.fx.reverb_diffusion, 1.0, REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX, 3, false, false, false);
-
-    reverb.diffusion(mapfloat(configuration.fx.reverb_diffusion, REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX, 0.0, 1.0));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+FLASHMEM void reverb_diffusion() {
+  if (LCDML.BT_checkDown())
+    configuration.fx.reverb_diffusion = constrain(configuration.fx.reverb_diffusion + ENCODER[ENC_R].speed(), REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX);
+  else if (LCDML.BT_checkUp())
+    configuration.fx.reverb_diffusion = constrain(configuration.fx.reverb_diffusion - ENCODER[ENC_R].speed(), REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX);
+  // display_bar_int("Reverb Diff.", configuration.fx.reverb_diffusion, 1.0, REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX, 3, false, false, false);
+  reverb.diffusion(mapfloat(configuration.fx.reverb_diffusion, REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX, 0.0, 1.0));
 }
-#endif  // PLATEREVERB != 1
 
-FLASHMEM void UI_func_reverb_level(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Level", configuration.fx.reverb_level, 1.0, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 3, false, false, true);
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown())
-        configuration.fx.reverb_level = constrain(configuration.fx.reverb_level + ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.fx.reverb_level = constrain(configuration.fx.reverb_level - ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
-    }
-    display_bar_int("Reverb Level", configuration.fx.reverb_level, 1.0, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 3, false, false, true);
-    master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
-    master_mixer_l.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+FLASHMEM void reverb_level() {
+  if (LCDML.BT_checkDown())
+    configuration.fx.reverb_level = constrain(configuration.fx.reverb_level + ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
+  else if (LCDML.BT_checkUp())
+    configuration.fx.reverb_level = constrain(configuration.fx.reverb_level - ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
+  //display_bar_int("Reverb Level", configuration.fx.reverb_level, 1.0, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 3, false, false, true);
+  master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
+  master_mixer_l.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
 }
 
 FLASHMEM void UI_func_chorus_frequency(uint8_t param) {
@@ -3911,124 +3756,53 @@ FLASHMEM void UI_func_chorus_level(uint8_t param) {
   }
 }
 
-FLASHMEM void UI_func_delay_time(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    if (configuration.fx.delay_sync[selected_instance_id] > 0) {
-      display_delay_sync(configuration.fx.delay_sync[selected_instance_id]);  //goto MIDI Sync
-    } else {
-#if DELAY_TIME_MAX >= 100
-      display_bar_int("Delay Time", configuration.fx.delay_time[selected_instance_id], 10.0, DELAY_TIME_MIN, DELAY_TIME_MAX, 4, false, false, true);
-#else
-      display_bar_int("Delay Time", configuration.fx.delay_time[selected_instance_id], 10.0, DELAY_TIME_MIN, DELAY_TIME_MAX, 3, false, false, true);
-#endif
-    }
-    UI_update_instance_icons();
+FLASHMEM void master_effects_set_delay_time(uint8_t instance) {
+
+  if (configuration.fx.delay_sync[instance] > 0) {
+    set_delay_sync(configuration.fx.delay_sync[instance], instance);  //go to MIDI Sync
   }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        if (configuration.fx.delay_time[selected_instance_id] == DELAY_TIME_MIN && configuration.fx.delay_sync[selected_instance_id] > DELAY_SYNC_MIN) {
-          // MIDI-sync delay
-          configuration.fx.delay_sync[selected_instance_id] = constrain(configuration.fx.delay_sync[selected_instance_id] - 1, DELAY_SYNC_MIN, DELAY_SYNC_MAX);
-        } else {
-          configuration.fx.delay_time[selected_instance_id] = constrain(configuration.fx.delay_time[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
-          MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 105, configuration.fx.delay_time[selected_instance_id]);
-        }
-      } else if (LCDML.BT_checkUp()) {
-        if (configuration.fx.delay_time[selected_instance_id] == DELAY_TIME_MIN && configuration.fx.delay_sync[selected_instance_id] > DELAY_SYNC_MIN) {
-          // MIDI-sync delay
-          configuration.fx.delay_sync[selected_instance_id] = constrain(configuration.fx.delay_sync[selected_instance_id] + 1, DELAY_SYNC_MIN, DELAY_SYNC_MAX);
-        } else {
-          if (configuration.fx.delay_time[selected_instance_id] == DELAY_TIME_MIN)
-            configuration.fx.delay_sync[selected_instance_id] = DELAY_SYNC_MIN + 1;
-          else {
-            configuration.fx.delay_time[selected_instance_id] = constrain(configuration.fx.delay_time[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
-            MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 105, configuration.fx.delay_time[selected_instance_id]);
-          }
-        }
-      } else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-        UI_update_instance_icons();
-        if (configuration.fx.delay_sync[selected_instance_id] == 0) {
-          display.setTextSize(2);
-          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          setCursor_textGrid(6, 2);
-          display.print(F("       "));
-        }
+
+  if (LCDML.BT_checkDown()) {
+    if (configuration.fx.delay_time[instance] == DELAY_TIME_MIN && configuration.fx.delay_sync[instance] > DELAY_SYNC_MIN) {
+      // MIDI-sync delay
+      configuration.fx.delay_sync[instance] = constrain(configuration.fx.delay_sync[instance] - 1, DELAY_SYNC_MIN, DELAY_SYNC_MAX);
+    } else {
+      configuration.fx.delay_time[instance] = constrain(configuration.fx.delay_time[instance] + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+      MD_sendControlChange(configuration.dexed[instance].midi_channel, 105, configuration.fx.delay_time[instance]);
+    }
+  } else if (LCDML.BT_checkUp()) {
+    if (configuration.fx.delay_time[instance] == DELAY_TIME_MIN && configuration.fx.delay_sync[instance] > DELAY_SYNC_MIN) {
+      // MIDI-sync delay
+      configuration.fx.delay_sync[instance] = constrain(configuration.fx.delay_sync[instance] + 1, DELAY_SYNC_MIN, DELAY_SYNC_MAX);
+    } else {
+      if (configuration.fx.delay_time[instance] == DELAY_TIME_MIN)
+        configuration.fx.delay_sync[instance] = DELAY_SYNC_MIN + 1;
+      else {
+        configuration.fx.delay_time[instance] = constrain(configuration.fx.delay_time[instance] - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+        MD_sendControlChange(configuration.dexed[instance].midi_channel, 105, configuration.fx.delay_time[instance]);
       }
     }
-    if (configuration.fx.delay_sync[selected_instance_id] > 0) {
-      display_delay_sync(configuration.fx.delay_sync[selected_instance_id]);  //MIDI Sync Delay
-    } else {
-#if DELAY_TIME_MAX >= 100
-      display_bar_int("Delay Time", configuration.fx.delay_time[selected_instance_id], 10.0, DELAY_TIME_MIN, DELAY_TIME_MAX, 4, false, false, true);
-#else
-      display_bar_int("Delay Time", configuration.fx.delay_time[selected_instance_id], 10.0, DELAY_TIME_MIN, DELAY_TIME_MAX, 3, false, false, true);
-#endif
-      if (configuration.fx.delay_time[selected_instance_id] <= DELAY_TIME_MIN)
-        delay_fx[selected_instance_id]->disable(0);
-      else
-        delay_fx[selected_instance_id]->delay(0, constrain(configuration.fx.delay_time[selected_instance_id], DELAY_TIME_MIN, DELAY_TIME_MAX) * 10);
-
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      setCursor_textGrid_small(2, 6);
-      display.setTextSize(1);
-      display.print(F("SCROLL < 0 FOR SYNC. OPTIONS. "));
-      display.setTextSize(2);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      if (DELAY_TIME_MAX < 1000)
-        show(2, 13, 1, " ");
-    }
   }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
+  if (configuration.fx.delay_sync[instance] > 0) {
+    set_delay_sync(configuration.fx.delay_sync[instance], instance);  //MIDI Sync Delay
+  } else {
+
+    if (configuration.fx.delay_time[instance] <= DELAY_TIME_MIN)
+      delay_fx[instance]->disable(0);
+    else
+      delay_fx[instance]->delay(0, constrain(configuration.fx.delay_time[instance], DELAY_TIME_MIN, DELAY_TIME_MAX) * 10);
   }
 }
 
-FLASHMEM void UI_func_delay_feedback(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Delay Feedb.", configuration.fx.delay_feedback[selected_instance_id], 1.0, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 3, false, false, true);
-
-
-    UI_update_instance_icons();
+FLASHMEM void master_effects_set_delay_feedback(uint8_t instance) {
+  if (LCDML.BT_checkDown()) {
+    configuration.fx.delay_feedback[instance] = constrain(configuration.fx.delay_feedback[instance] + ENCODER[ENC_R].speed(), DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
+    MD_sendControlChange(configuration.dexed[instance].midi_channel, 106, configuration.fx.delay_feedback[instance]);
+  } else if (LCDML.BT_checkUp()) {
+    configuration.fx.delay_feedback[instance] = constrain(configuration.fx.delay_feedback[instance] - ENCODER[ENC_R].speed(), DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
+    MD_sendControlChange(configuration.dexed[instance].midi_channel, 106, configuration.fx.delay_feedback[instance]);
   }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.delay_feedback[selected_instance_id] = constrain(configuration.fx.delay_feedback[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 106, configuration.fx.delay_feedback[selected_instance_id]);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.delay_feedback[selected_instance_id] = constrain(configuration.fx.delay_feedback[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 106, configuration.fx.delay_feedback[selected_instance_id]);
-      }
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("Delay Feedb.", configuration.fx.delay_feedback[selected_instance_id], 1.0, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 3, false, false, false);
-
-    delay_fb_mixer[selected_instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[selected_instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127)));  // amount of feedback
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+  delay_fb_mixer[instance]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127)));  // amount of feedback
 }
 
 FLASHMEM void UI_func_delay_level_dexed(uint8_t param) {
@@ -4072,79 +3846,26 @@ FLASHMEM void UI_func_delay_level_dexed(uint8_t param) {
   }
 }
 
-FLASHMEM void UI_func_delay_level_global(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Delay Lvl.", configuration.fx.delay_level_global[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, true);
-    UI_update_instance_icons();
+FLASHMEM void master_effects_delay_level_global(uint8_t instance) {
+  if (LCDML.BT_checkDown()) {
+    configuration.fx.delay_level_global[instance] = constrain(configuration.fx.delay_level_global[instance] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+  } else if (LCDML.BT_checkUp()) {
+    configuration.fx.delay_level_global[instance] = constrain(configuration.fx.delay_level_global[instance] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
   }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.delay_level_global[selected_instance_id] = constrain(configuration.fx.delay_level_global[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.delay_level_global[selected_instance_id] = constrain(configuration.fx.delay_level_global[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-      } else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-        UI_update_instance_icons();
-      }
-    }
-
-    display_bar_int("Delay Lvl.", configuration.fx.delay_level_global[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, false);
-
-    delay_mixer[selected_instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_level_global[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+  delay_mixer[instance]->gain(1, midi_volume_transform(map(configuration.fx.delay_level_global[instance], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
 }
 
-FLASHMEM void UI_func_reverb_send(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Reverb Send", configuration.fx.reverb_send[selected_instance_id], 1.0, REVERB_SEND_MIN, REVERB_SEND_MAX, 3, false, false, true);
-
-
-    UI_update_instance_icons();
+FLASHMEM void master_effects_set_reverb_send(uint8_t instance) {
+  if (LCDML.BT_checkDown()) {
+    configuration.fx.reverb_send[instance] = constrain(configuration.fx.reverb_send[instance] + ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
+    MD_sendControlChange(configuration.dexed[instance].midi_channel, 91, configuration.fx.reverb_send[instance]);
+  } else if (LCDML.BT_checkUp()) {
+    configuration.fx.reverb_send[instance] = constrain(configuration.fx.reverb_send[instance] - ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
+    MD_sendControlChange(configuration.dexed[instance].midi_channel, 91, configuration.fx.reverb_send[instance]);
   }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.reverb_send[selected_instance_id] = constrain(configuration.fx.reverb_send[selected_instance_id] + ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 91, configuration.fx.reverb_send[selected_instance_id]);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.reverb_send[selected_instance_id] = constrain(configuration.fx.reverb_send[selected_instance_id] - ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 91, configuration.fx.reverb_send[selected_instance_id]);
-      }
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("Reverb Send", configuration.fx.reverb_send[selected_instance_id], 1.0, REVERB_SEND_MIN, REVERB_SEND_MAX, 3, false, false, false);
-
-    reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-    reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+  // display_bar_int("Reverb Send", configuration.fx.reverb_send[instance], 1.0, REVERB_SEND_MIN, REVERB_SEND_MAX, 3, false, false, false);
+  reverb_mixer_r.gain(instance, volume_transform(mapfloat(configuration.fx.reverb_send[instance], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+  reverb_mixer_l.gain(instance, volume_transform(mapfloat(configuration.fx.reverb_send[instance], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
 }
 
 FLASHMEM void UI_func_filter_cutoff(uint8_t param) {
@@ -4500,40 +4221,13 @@ FLASHMEM void UI_func_sound_intensity(uint8_t param) {
   }
 }
 
-FLASHMEM void UI_func_delay_panorama(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("Panorama"));
-    display.setTextSize(1);
-    setCursor_textGrid(1, 3);
-    display.print(F("TOGGLE DELAY A/B WITH ENC_R"));
-    print_small_panbar(2, 4, configuration.fx.delay_pan[selected_instance_id], 0);
-    UI_update_instance_icons();
+FLASHMEM void master_effects_set_delay_panorama(uint8_t instance) {
+  if (LCDML.BT_checkDown()) {
+    configuration.fx.delay_pan[instance] = constrain(configuration.fx.delay_pan[instance] + ENCODER[ENC_R].speed(), PANORAMA_MIN, PANORAMA_MAX);
+  } else if (LCDML.BT_checkUp()) {
+    configuration.fx.delay_pan[instance] = constrain(configuration.fx.delay_pan[instance] - ENCODER[ENC_R].speed(), PANORAMA_MIN, PANORAMA_MAX);
   }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) {
-      configuration.fx.delay_pan[selected_instance_id] = constrain(configuration.fx.delay_pan[selected_instance_id] + ENCODER[ENC_R].speed(), PANORAMA_MIN, PANORAMA_MAX);
-    } else if (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) {
-      configuration.fx.delay_pan[selected_instance_id] = constrain(configuration.fx.delay_pan[selected_instance_id] - ENCODER[ENC_R].speed(), PANORAMA_MIN, PANORAMA_MAX);
-    }
-
-    else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
-      selected_instance_id = !selected_instance_id;
-      UI_update_instance_icons();
-    }
-    display.setTextSize(1);
-    print_small_panbar(2, 4, configuration.fx.delay_pan[selected_instance_id], 0);
-    delay_mono2stereo[selected_instance_id]->panorama(mapfloat(configuration.fx.delay_pan[selected_instance_id], PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
+  delay_mono2stereo[instance]->panorama(mapfloat(configuration.fx.delay_pan[instance], PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 }
 
 FLASHMEM void UI_func_panorama(uint8_t param) {
@@ -5631,35 +5325,35 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
 void create_drums_ui();
 
 void drum_name_renderer(struct param_editor* editor, bool refresh) {
-  char number[]="00:";
+  char number[] = "00:";
   snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
   display.setTextSize(2);
   setModeColor(editor->select_id);
   show(editor->y, editor->x, 10, number);
-  show(editor->y, editor->x+3, 10, basename(drum_config[activesample].name));
+  show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
 }
 
 void activesample_setter(param_editor* editor, int16_t id) {
-  activesample=id;
+  activesample = id;
   create_drums_ui();
 }
 
 // the drum UI needs to be recreated frequently, if activesample changes.
 void create_drums_ui() {
 
-  ui.clear(); // just recreate UI without resetting selection / edit mode
+  ui.clear();  // just recreate UI without resetting selection / edit mode
 
-  ui.setCursor(1,1);
+  ui.setCursor(1, 1);
   ui.addEditor((const char*)F(""), 0, 99, &activesample, NULL, &activesample_setter, &drum_name_renderer);
 
-  ui.setCursor(1,4);
+  ui.setCursor(1, 4);
   ui.addEditor((const char*)F("VOLUME"), 0, 99, &drum_config[activesample].vol_max);
   ui.addEditor((const char*)F("PAN"), -99, 99, &drum_config[activesample].pan);
   ui.addEditor((const char*)F("REVERB"), 0, 99, &drum_config[activesample].reverb_send);
   ui.addEditor((const char*)F("PITCH"), 0, 200, &drum_config[activesample].pitch);
   ui.addEditor((const char*)F("TUNE"), 0, 200, &drum_config[activesample].p_offset);
 
-  ui.setCursor(1,10);
+  ui.setCursor(1, 10);
   ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
   ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
 }
@@ -8374,13 +8068,14 @@ void UI_func_seq_pattern_editor(uint8_t param) {
 }
 
 void UI_toplineInfoText(uint8_t s) {
+  //s=size 1/2 lines
+  display.console = true;
   if (s == 2)
     display.fillRect(0, 0, DISPLAY_WIDTH - 1, CHAR_height_small * 2 + 3, COLOR_PITCHSMP);
   else if (s == 1)
     display.fillRect(0, 0, DISPLAY_WIDTH - 1, CHAR_height_small * 1 + 3, COLOR_PITCHSMP);
-  //s=size 1/2 lines
+  display.console = false;
 }
-
 
 void update_microsynth_instance_icons() {
   if (microsynth_selected_instance == 0) {
@@ -10577,17 +10272,27 @@ void UI_func_save_performance(uint8_t param) {
   }
 }
 
-FLASHMEM void display_delay_sync_mastereffects(uint8_t sync, uint8_t instance) {
+FLASHMEM void set_delay_sync(uint8_t sync, uint8_t instance) {
 
-  //display.setTextColor(GREY2, COLOR_BACKGROUND);
-  //setCursor_textGrid_small(9, 5);
-  //display.setTextSize(1);
-  //display.print(F("SCROLL > FOR TIME IN MILLISECS"));
-  //display.setTextSize(2);
-  //display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //show(1, 1, display_cols - 2, "Delay Sync");
-  //if (seq.running == false) show(2, 1, 10, "MIDI Sync   ");
-  //else show(2, 1, 10, "Seq. Sync   ");
+  if (seq.running == false) {
+    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / midi_bpm + 0.5);
+    if (midi_sync_delay_time > DELAY_MAX_TIME) {
+#ifdef DEBUG
+      Serial.println(F("Calculated MIDI-Sync delay: "));
+      Serial.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
+      Serial.println(F("ms"));
+      Serial.println(F("MIDI-Sync delay: midi_sync_delay_time"));
+      Serial.print(midi_sync_delay_time, DEC);
+      Serial.println(F("ms"));
+#endif
+    }
+  } else {
+    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
+    delay_fx[instance]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
+  }
+}
+
+FLASHMEM void print_sync_timing(uint8_t sync) {
   switch (sync) {
     case 1:
       display.print(F("1/16 "));
@@ -10617,46 +10322,37 @@ FLASHMEM void display_delay_sync_mastereffects(uint8_t sync, uint8_t instance) {
       display.print(F("1/1  "));
       break;
   }
-  if (seq.running == false) {
-
-    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / midi_bpm + 0.5);
-    if (midi_sync_delay_time > DELAY_MAX_TIME) {
-#ifdef DEBUG
-      Serial.println(F("Calculated MIDI-Sync delay: "));
-      Serial.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
-      Serial.println(F("ms"));
-      Serial.println(F("MIDI-Sync delay: midi_sync_delay_time"));
-      Serial.print(midi_sync_delay_time, DEC);
-      Serial.println(F("ms"));
-#endif
-    }
-  } else {
-    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
-    delay_fx[instance]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
-  }
 }
 
-FLASHMEM void print_delay_sync_master_effects_toggle(uint8_t instance) {
+FLASHMEM void print_delay_sync_status(uint8_t instance) {
 
   if (configuration.fx.delay_sync[instance] > 0) {
-    if (instance == 0)
+    if (instance == 0) {
       setCursor_textGrid_small(6, 6);
-    else
+    } else {
       setCursor_textGrid_small(22, 6);
-
-    display.setTextColor(COLOR_SYSTEXT, RED);
-    display.print(F("ON "));
-  } else {
-    if (instance == 0)
-      setCursor_textGrid_small(6, 6);
-    else
-      setCursor_textGrid_small(22, 6);
+    }
     display.setTextColor(GREY1, GREY2);
+    display.print(F("ON "));
+    if (instance == 0)
+      setCursor_textGrid_small(10, 6);
+    else
+      setCursor_textGrid_small(26, 6);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    print_sync_timing(configuration.fx.delay_sync[instance]);
+
+  } else {
+    if (instance == 0) {
+      setCursor_textGrid_small(6, 6);
+    } else {
+      setCursor_textGrid_small(22, 6);
+    }
+    display.setTextColor(GREY2, GREY3);
     display.print(F("OFF"));
+    print_empty_spaces(6);
   }
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
-
 
 void print_static_text_master_effects() {
   display.setTextSize(1);
@@ -10680,6 +10376,8 @@ void print_static_text_master_effects() {
   display.print(F("FDBK"));
   setCursor_textGrid_small(1, 9);
   display.print(F("PAN"));
+  setCursor_textGrid_small(1, 10);
+  display.print(F("LEVEL"));
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(17, 3);
@@ -10697,6 +10395,8 @@ void print_static_text_master_effects() {
   display.print(F("FDBK"));
   setCursor_textGrid_small(17, 9);
   display.print(F("PAN"));
+  setCursor_textGrid_small(17, 10);
+  display.print(F("LEVEL"));
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(33, 3);
@@ -10705,16 +10405,14 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(33, 5);
   display.print(F("ROOMSIZE"));
   setCursor_textGrid_small(33, 6);
-  display.print(F("DAMPING"));
-  setCursor_textGrid_small(33, 7);
   display.print(F("LOWPASS"));
-  setCursor_textGrid_small(33, 8);
+  setCursor_textGrid_small(33, 7);
   display.print(F("LODAMP"));
-  setCursor_textGrid_small(33, 9);
+  setCursor_textGrid_small(33, 8);
   display.print(F("HIDAMP"));
-  setCursor_textGrid_small(33, 10);
+  setCursor_textGrid_small(33, 9);
   display.print(F("DIFFUSION"));
-  setCursor_textGrid_small(33, 11);
+  setCursor_textGrid_small(33, 10);
   display.print(F("LEVEL"));
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -10766,70 +10464,285 @@ void print_static_text_master_effects() {
   display.print(F("BRD"));
 }
 
+void print_delay_time(uint8_t instance, uint8_t param) {
+  setModeColor(param);
+  if (instance == 0)
+    setCursor_textGrid_small(6, 5);
+  else
+    setCursor_textGrid_small(22, 5);
+
+  if (configuration.fx.delay_sync[instance] > 0)
+    display.print(F("---"));
+  else
+    print_formatted_number(configuration.fx.delay_time[instance] * 10, 3);
+}
+
+void update_all_values_master_effects() {
+
+  print_delay_sync_status(0);
+  print_delay_sync_status(1);
+
+  print_delay_time(0, 1);
+  print_delay_time(1, 11);
+
+  print_small_intbar(6, 8, configuration.fx.delay_feedback[0], 2, 1, 0);
+  print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 12, 1, 0);
+
+  print_small_panbar(6, 9, configuration.fx.delay_pan[0], 3);
+  print_small_panbar(22, 9, configuration.fx.delay_pan[1], 13);
+
+  print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4, 1, 0);
+  print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14, 1, 0);
+
+  print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 21, 1, 0);
+  print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 22, 1, 0);
+  print_small_intbar(43, 7, configuration.fx.reverb_lodamp, 23, 1, 0);
+  print_small_intbar(43, 8, configuration.fx.reverb_hidamp, 24, 1, 0);
+  print_small_intbar(43, 9, configuration.fx.reverb_diffusion, 25, 1, 0);
+  print_small_intbar(43, 10, configuration.fx.reverb_level, 26, 1, 0);
+
+  print_small_intbar(6, 14, configuration.fx.delay_level[0], 5, 1, 0);
+  print_small_intbar(6, 15, configuration.epiano.delay_send_1, 6, 1, 0);
+  print_small_intbar(6, 16, microsynth[0].delay_send[0], 7, 1, 0);
+  print_small_intbar(6, 17, microsynth[1].delay_send[0], 8, 1, 0);
+  print_small_intbar(6, 18, braids_osc.delay_send_1, 9, 1, 0);
+  print_small_intbar(6, 19, configuration.fx.delay_to_reverb[0], 10, 1, 0);
+
+  print_small_intbar(22, 14, configuration.fx.delay_level[1], 15, 1, 0);
+  print_small_intbar(22, 15, configuration.epiano.delay_send_2, 16, 1, 0);
+  print_small_intbar(22, 16, microsynth[0].delay_send[1], 17, 1, 0);
+  print_small_intbar(22, 17, microsynth[1].delay_send[1], 18, 1, 0);
+  print_small_intbar(22, 18, braids_osc.delay_send_2, 19, 1, 0);
+  print_small_intbar(22, 19, configuration.fx.delay_to_reverb[1], 20, 1, 0);
+
+  print_small_intbar(43, 14, configuration.fx.reverb_send[0], 27, 1, 0);
+  print_small_intbar(43, 15, configuration.fx.reverb_send[1], 28, 1, 0);
+  print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 29, 1, 0);
+  print_small_intbar(43, 17, microsynth[0].rev_send, 30, 1, 0);
+  print_small_intbar(43, 18, microsynth[1].rev_send, 31, 1, 0);
+  print_small_intbar(43, 19, braids_osc.rev_send, 32, 1, 0);
+}
+
 void UI_func_master_effects(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+    generic_temp_select_menu = 1;
     print_static_text_master_effects();
-
-    print_delay_sync_master_effects_toggle(0);
-    print_delay_sync_master_effects_toggle(1);
-
-    setCursor_textGrid_small(10, 6);
-    display_delay_sync_mastereffects(configuration.fx.delay_sync[0], 0);
-    setCursor_textGrid_small(26, 6);
-    display_delay_sync_mastereffects(configuration.fx.delay_sync[1], 1);
-
-    setCursor_textGrid_small(6, 5);
-    print_formatted_number(configuration.fx.delay_time[0] * 10, 3);
-    setCursor_textGrid_small(22, 5);
-    print_formatted_number(configuration.fx.delay_time[1] * 10, 3);
-
-    print_small_intbar(6, 8, configuration.fx.delay_feedback[0], 0, 1, 0);
-    print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 0, 1, 0);
-
-    print_small_panbar(6, 9, configuration.fx.delay_pan[0], 0);
-    print_small_panbar(22, 9, configuration.fx.delay_pan[1], 0);
-
-    print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 0, 1, 0);
-    print_small_intbar(43, 6, configuration.fx.reverb_damping, 0, 1, 0);
-    print_small_intbar(43, 7, configuration.fx.reverb_lowpass, 0, 1, 0);
-    print_small_intbar(43, 8, configuration.fx.reverb_lodamp, 0, 1, 0);
-    print_small_intbar(43, 9, configuration.fx.reverb_hidamp, 0, 1, 0);
-    print_small_intbar(43, 10, configuration.fx.reverb_diffusion, 0, 1, 0);
-    print_small_intbar(43, 11, configuration.fx.reverb_level, 0, 1, 0);
-
-    print_small_intbar(6, 14, configuration.fx.delay_level[0], 0, 1, 0);
-    print_small_intbar(6, 15, configuration.epiano.delay_send_1, 0, 1, 0);
-    print_small_intbar(6, 16, microsynth[0].delay_send[0], 0, 1, 0);
-    print_small_intbar(6, 17, microsynth[1].delay_send[0], 0, 1, 0);
-    print_small_intbar(6, 18, braids_osc.delay_send_1, 0, 1, 0);
-    print_small_intbar(6, 19, configuration.fx.delay_to_reverb[0], 0, 1, 0);
-
-    print_small_intbar(22, 14, configuration.fx.delay_level[1], 0, 1, 0);
-    print_small_intbar(22, 15, configuration.epiano.delay_send_2, 0, 1, 0);
-    print_small_intbar(22, 16, microsynth[0].delay_send[1], 0, 1, 0);
-    print_small_intbar(22, 17, microsynth[1].delay_send[1], 0, 1, 0);
-    print_small_intbar(22, 18, braids_osc.delay_send_2, 0, 1, 0);
-    print_small_intbar(22, 19, configuration.fx.delay_to_reverb[1], 0, 1, 0);
-
-    print_small_intbar(43, 14, configuration.fx.reverb_send[0], 0, 1, 0);
-    print_small_intbar(43, 15, configuration.fx.reverb_send[1], 0, 1, 0);
-    print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 0, 1, 0);
-    print_small_intbar(43, 17, microsynth[0].rev_send, 0, 1, 0);
-    print_small_intbar(43, 18, microsynth[1].rev_send, 0, 1, 0);
-    print_small_intbar(43, 19, braids_osc.rev_send, 0, 1, 0);
-
-
-
+    update_all_values_master_effects();
     helptext_l("BACK");
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
-    if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    {
-      ;
+
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
+
+      if (seq.edit_state == 0) {
+
+        if (LCDML.BT_checkDown() && generic_temp_select_menu < 32) {
+          generic_temp_select_menu++;
+        } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 1) {
+          generic_temp_select_menu--;
+        }
+        update_all_values_master_effects();
+      }
+
+      if (LCDML.BT_checkEnter()) {
+
+        seq.edit_state = !seq.edit_state;
+      }
+
+
+      if (seq.edit_state == 1) {
+
+        if (generic_temp_select_menu == 1) {  //delay time
+          master_effects_set_delay_time(0);
+          print_delay_time(0, 1);
+          print_delay_sync_status(0);
+        }
+        if (generic_temp_select_menu == 2) {
+          master_effects_set_delay_feedback(0);  // feedback instance 0
+          print_small_intbar(6, 8, configuration.fx.delay_feedback[0], 2, 1, 0);
+        } else if (generic_temp_select_menu == 3) {  //pan
+          master_effects_set_delay_panorama(0);
+          print_small_panbar(6, 9, configuration.fx.delay_pan[0], 3);
+        } else if (generic_temp_select_menu == 4) {  //level
+          master_effects_delay_level_global(0);
+          print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4, 1, 0);
+        } else if (generic_temp_select_menu == 5) {
+          if (LCDML.BT_checkDown()) {
+            configuration.fx.delay_level[0] = constrain(configuration.fx.delay_level[0] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            MD_sendControlChange(configuration.dexed[0].midi_channel, 107, configuration.fx.delay_level[0]);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.fx.delay_level[0] = constrain(configuration.fx.delay_level[0] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            MD_sendControlChange(configuration.dexed[0].midi_channel, 107, configuration.fx.delay_level[0]);
+          }
+          print_small_intbar(6, 14, configuration.fx.delay_level[0], 5, 1, 0);
+        } else if (generic_temp_select_menu == 6) {  //epiano delay level
+          if (LCDML.BT_checkDown()) {
+            configuration.epiano.delay_send_1 = constrain(configuration.epiano.delay_send_1 + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.epiano.delay_send_1 = constrain(configuration.epiano.delay_send_1 - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          }
+          print_small_intbar(6, 15, configuration.epiano.delay_send_1, 6, 1, 0);
+        } else if (generic_temp_select_menu == 7) {  //microsynth 1 delay1 level
+          if (LCDML.BT_checkDown()) {
+            microsynth[0].delay_send[0] = constrain(microsynth[0].delay_send[0] + ENCODER[ENC_R].speed(), 0, 100);
+          } else if (LCDML.BT_checkUp()) {
+            microsynth[0].delay_send[0] = constrain(microsynth[0].delay_send[0] - ENCODER[ENC_R].speed(), 0, 100);
+          }
+          global_delay_in_mixer[0]->gain(2, mapfloat(microsynth[0].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+          print_small_intbar(6, 16, microsynth[0].delay_send[0], 7, 1, 0);
+        } else if (generic_temp_select_menu == 8) {  //microsynth 2 delay1 level
+          if (LCDML.BT_checkDown()) {
+            microsynth[1].delay_send[0] = constrain(microsynth[1].delay_send[0] + ENCODER[ENC_R].speed(), 0, 100);
+          } else if (LCDML.BT_checkUp()) {
+            microsynth[1].delay_send[0] = constrain(microsynth[1].delay_send[0] - ENCODER[ENC_R].speed(), 0, 100);
+          }
+          global_delay_in_mixer[0]->gain(3, mapfloat(microsynth[1].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+          print_small_intbar(6, 17, microsynth[1].delay_send[0], 8, 1, 0);
+        } else if (generic_temp_select_menu == 9) {  //braids delay level
+          if (LCDML.BT_checkDown()) {
+            braids_osc.delay_send_1 = constrain(braids_osc.delay_send_1 + ENCODER[ENC_R].speed(), 0, 127);
+          } else if (LCDML.BT_checkUp()) {
+            braids_osc.delay_send_1 = constrain(braids_osc.delay_send_1 - ENCODER[ENC_R].speed(), 0, 127);
+          }
+          global_delay_in_mixer[0]->gain(4, mapfloat(braids_osc.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+          print_small_intbar(6, 18, braids_osc.delay_send_1, 9, 1, 0);
+
+        } else if (generic_temp_select_menu == 10) {  //delay1 to reverb send
+          if (LCDML.BT_checkDown()) {
+
+          } else if (LCDML.BT_checkUp()) {
+          }
+          print_small_intbar(6, 19, configuration.fx.delay_to_reverb[0], 10, 1, 0);
+        }
+
+        if (generic_temp_select_menu == 11) {  //delay time
+          master_effects_set_delay_time(1);
+          print_delay_time(1, 11);
+          print_delay_sync_status(1);
+        } else if (generic_temp_select_menu == 12) {
+          master_effects_set_delay_feedback(1);  // feedback
+          print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 12, 1, 0);
+        } else if (generic_temp_select_menu == 13) {  //pan
+          master_effects_set_delay_panorama(1);
+          print_small_panbar(22, 9, configuration.fx.delay_pan[1], 13);
+        } else if (generic_temp_select_menu == 14) {  //level
+          master_effects_delay_level_global(1);
+          print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14, 1, 0);
+        } else if (generic_temp_select_menu == 15) {  //dx2 delay send
+          if (LCDML.BT_checkDown()) {
+            configuration.fx.delay_level[1] = constrain(configuration.fx.delay_level[1] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            MD_sendControlChange(configuration.dexed[1].midi_channel, 107, configuration.fx.delay_level[1]);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.fx.delay_level[1] = constrain(configuration.fx.delay_level[1] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            MD_sendControlChange(configuration.dexed[1].midi_channel, 107, configuration.fx.delay_level[1]);
+          }
+          print_small_intbar(22, 14, configuration.fx.delay_level[1], 15, 1, 0);
+        } else if (generic_temp_select_menu == 16) {  //ep send
+          if (LCDML.BT_checkDown()) {
+            configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_TIME_MAX);
+          }
+          print_small_intbar(22, 15, configuration.epiano.delay_send_2, 16, 1, 0);
+        } else if (generic_temp_select_menu == 17) {  // microsynth 1 delay2 level
+          if (LCDML.BT_checkDown()) {
+            microsynth[0].delay_send[1] = constrain(microsynth[0].delay_send[1] + ENCODER[ENC_R].speed(), 0, 100);
+          } else if (LCDML.BT_checkUp()) {
+            microsynth[0].delay_send[1] = constrain(microsynth[0].delay_send[1] - ENCODER[ENC_R].speed(), 0, 100);
+          }
+          global_delay_in_mixer[1]->gain(2, mapfloat(microsynth[0].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+          print_small_intbar(22, 16, microsynth[0].delay_send[1], 17, 1, 0);
+        } else if (generic_temp_select_menu == 18) {  // microsynth 2 delay2 level
+          if (LCDML.BT_checkDown()) {
+            microsynth[1].delay_send[1] = constrain(microsynth[1].delay_send[1] + ENCODER[ENC_R].speed(), 0, 100);
+          } else if (LCDML.BT_checkUp()) {
+            microsynth[1].delay_send[1] = constrain(microsynth[1].delay_send[1] - ENCODER[ENC_R].speed(), 0, 100);
+          }
+          global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+          print_small_intbar(22, 17, microsynth[1].delay_send[1], 18, 1, 0);
+        } else if (generic_temp_select_menu == 19) {  //braids delay2 level
+          if (LCDML.BT_checkDown()) {
+            braids_osc.delay_send_2 = constrain(braids_osc.delay_send_2 + ENCODER[ENC_R].speed(), 0, 127);
+          } else if (LCDML.BT_checkUp()) {
+            braids_osc.delay_send_2 = constrain(braids_osc.delay_send_2 - ENCODER[ENC_R].speed(), 0, 127);
+          }
+          global_delay_in_mixer[1]->gain(5, mapfloat(braids_osc.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+          print_small_intbar(22, 18, braids_osc.delay_send_2, 19, 1, 0);
+        } else if (generic_temp_select_menu == 20) {  //delay2 to reverb
+          if (LCDML.BT_checkDown()) {
+
+          } else if (LCDML.BT_checkUp()) {
+          }
+          print_small_intbar(22, 19, configuration.fx.delay_to_reverb[1], 20, 1, 0);
+
+        }
+
+        else if (generic_temp_select_menu == 21) {  //reverb room size
+          reverb_roomsize();
+          print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 21, 1, 0);
+        } else if (generic_temp_select_menu == 22) {
+          reverb_lowpass();
+          print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 22, 1, 0);
+        } else if (generic_temp_select_menu == 23) {
+          reverb_lodamp();
+          print_small_intbar(43, 7, configuration.fx.reverb_lodamp, 23, 1, 0);
+        } else if (generic_temp_select_menu == 24) {
+          reverb_hidamp();
+          print_small_intbar(43, 8, configuration.fx.reverb_hidamp, 24, 1, 0);
+        } else if (generic_temp_select_menu == 25) {
+          reverb_diffusion();
+          print_small_intbar(43, 9, configuration.fx.reverb_diffusion, 25, 1, 0);
+        } else if (generic_temp_select_menu == 26) {
+          reverb_level();
+          print_small_intbar(43, 10, configuration.fx.reverb_level, 26, 1, 0);
+        } else if (generic_temp_select_menu == 27) {
+          master_effects_set_reverb_send(0);
+          print_small_intbar(43, 14, configuration.fx.reverb_send[0], 27, 1, 0);
+        } else if (generic_temp_select_menu == 28) {
+          master_effects_set_reverb_send(1);
+          print_small_intbar(43, 15, configuration.fx.reverb_send[1], 28, 1, 0);
+        } else if (generic_temp_select_menu == 29) {  //epiano reverb send
+          if (LCDML.BT_checkDown()) {
+            configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send + ENCODER[ENC_R].speed(), EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX);
+            MD_sendControlChange(configuration.epiano.midi_channel, 91, configuration.fx.ep_reverb_send);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send - ENCODER[ENC_R].speed(), EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX);
+            MD_sendControlChange(configuration.epiano.midi_channel, 91, configuration.fx.ep_reverb_send);
+          }
+          reverb_mixer_r.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
+          reverb_mixer_l.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
+          print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 29, 1, 0);
+        } else if (generic_temp_select_menu == 30) {
+          if (LCDML.BT_checkDown()) {
+            microsynth[0].rev_send = constrain(microsynth[0].rev_send + ENCODER[ENC_R].speed(), ENCODER[ENC_R].speed(), 127);
+          } else if (LCDML.BT_checkUp()) {
+            microsynth[0].rev_send = constrain(microsynth[0].rev_send - ENCODER[ENC_R].speed(), ENCODER[ENC_R].speed(), 127);
+          }
+          microsynth_mixer_reverb.gain(0, volume_transform(mapfloat(microsynth[0].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+          print_small_intbar(43, 17, microsynth[0].rev_send, 30, 1, 0);
+        } else if (generic_temp_select_menu == 31) {
+          if (LCDML.BT_checkDown()) {
+            microsynth[1].rev_send = constrain(microsynth[1].rev_send + ENCODER[ENC_R].speed(), ENCODER[ENC_R].speed(), 127);
+          } else if (LCDML.BT_checkUp()) {
+            microsynth[1].rev_send = constrain(microsynth[1].rev_send - ENCODER[ENC_R].speed(), ENCODER[ENC_R].speed(), 127);
+          }
+          microsynth_mixer_reverb.gain(1, volume_transform(mapfloat(microsynth[1].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+          print_small_intbar(43, 18, microsynth[1].rev_send, 31, 1, 0);
+        } else if (generic_temp_select_menu == 32) {
+          if (LCDML.BT_checkDown()) {
+            braids_osc.rev_send = constrain(braids_osc.rev_send + ENCODER[ENC_R].speed(), 0, 127);
+          } else if (LCDML.BT_checkUp()) {
+            braids_osc.rev_send = constrain(braids_osc.rev_send - ENCODER[ENC_R].speed(), 0, 127);
+          }
+          braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+          braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+          print_small_intbar(43, 19, braids_osc.rev_send, 32, 1, 0);
+        }
+      }
     }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
@@ -12808,6 +12721,58 @@ FLASHMEM void sd_card_count_files_from_directory(File dir) {
   }
 }
 
+void sd_go_parent_folder() {
+  if (fm.sd_folder_depth < 2) {
+    fm.sd_folder_depth = 0;
+    fm.sd_skip_files = 0;
+    strcpy(fm.sd_new_name, "/");
+  } else {
+    // path has at least one parent folder
+    for (uint8_t count = strlen(fm.sd_new_name); count > 0; count--) {
+      if (fm.sd_new_name[count] == 0x2f) {
+        fm.sd_new_name[count] = '\0';
+        break;
+      }
+    }
+    fm.sd_folder_depth--;
+  }
+
+  fm.sd_selected_file = 0;
+}
+void sd_update_display() {
+  fm.sd_currentDirectory = SD.open(fm.sd_new_name);
+  sd_printDirectory(fm.sd_currentDirectory);
+
+  sd_card_count_files_from_directory(fm.sd_currentDirectory);
+  display.setCursor(CHAR_width_small * 8, 2 * CHAR_height_small);
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  print_formatted_number(fm.sd_sum_files, 3);
+  show_smallfont_noGrid(3 * CHAR_height_small, CHAR_width_small * 7, 20, fm.sd_new_name);
+  show_smallfont_noGrid(5 * CHAR_height_small, CHAR_width_small * 1, 20, fm.sd_temp_name);
+
+  display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+
+  if (fm.sd_is_folder) {
+    display.setCursor(CHAR_width_small * 14, 4 * CHAR_height_small);
+    display.setTextColor(GREEN);
+    display.print(F("FOLDER"));
+    display.setCursor(CHAR_width_small * 9, 4 * CHAR_height_small);
+    display.setTextColor(GREY2);
+    display.print(F("FILE"));
+  } else {
+    display.setCursor(CHAR_width_small * 9, 4 * CHAR_height_small);
+    display.setTextColor(GREEN);
+    display.print(F("FILE"));
+    display.setCursor(CHAR_width_small * 14, 4 * CHAR_height_small);
+    display.setTextColor(GREY2);
+    display.print(F("FOLDER"));
+  }
+  if (fm.sd_is_folder)
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  else
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+}
+
 #ifdef COMPILE_FOR_FLASH
 FLASHMEM void UI_func_file_manager(uint8_t param) {
   uint32_t volumesize;
@@ -13328,6 +13293,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         fm.sd_selected_file = constrain(fm.sd_selected_file - 1, 0, fm.sd_cap_rows);
       }
     }
+
     if (LCDML.BT_checkEnter() && fm.active_window == 0)  // left window, SDCARD
     {
       if (fm.sd_is_folder) {
@@ -14652,19 +14618,19 @@ const uint8_t num_voice_params = 19;  // omit name for now
 uint8_t current_voice_op = 0;
 
 
-int16_t dexed_getter(struct param_editor* param){
+int16_t dexed_getter(struct param_editor* param) {
   int8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
 };
-void dexed_setter(struct param_editor* param, int16_t value){
-  uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id- 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
+void dexed_setter(struct param_editor* param, int16_t value) {
+  uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
 };
-int16_t dexed_op_getter(struct param_editor* param){
+int16_t dexed_op_getter(struct param_editor* param) {
   return current_voice_op;
 };
-void dexed_op_setter(struct param_editor* param, int16_t value){
-  current_voice_op=value;
+void dexed_op_setter(struct param_editor* param, int16_t value) {
+  current_voice_op = value;
   ui.draw_editors(true);
 };
 void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
@@ -14689,13 +14655,13 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     setCursor_textGrid_small(0, 4);
     display.print(F("PITCH EG"));
 
-    ui.setCursor(0,5);
+    ui.setCursor(0, 5);
     for (uint8_t i = 0; i < 4; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
-    ui.setCursor(14,5);
+    ui.setCursor(14, 5);
     for (uint8_t i = 4; i < 8; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
-    ui.setCursor(0,9);
+    ui.setCursor(0, 9);
     for (uint8_t i = 8; i < num_voice_params; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
@@ -14706,13 +14672,13 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
-    ui.setCursor(27,5);
+    ui.setCursor(27, 5);
     for (uint8_t i = 0; i < 4; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
-    ui.setCursor(41,5);
+    ui.setCursor(41, 5);
     for (uint8_t i = 4; i < 8; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
-    ui.setCursor(27,9);
+    ui.setCursor(27, 9);
     for (uint8_t i = 8; i < num_voice_op_params; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
   }
@@ -16588,68 +16554,6 @@ FLASHMEM void display_OP_active_instance_number(uint8_t instance_id, uint8_t op)
     }
   }
 }
-
-#ifdef USE_FX
-FLASHMEM void display_delay_sync(uint8_t sync) {
-
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-  setCursor_textGrid_small(2, 6);
-  display.setTextSize(1);
-  display.print(F("SCROLL > FOR TIME IN MILLISECS"));
-  display.setTextSize(2);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  show(1, 1, display_cols - 2, "Delay Sync");
-  if (seq.running == false) show(2, 1, 10, "MIDI Sync   ");
-  else show(2, 1, 10, "Seq. Sync   ");
-  switch (sync) {
-    case 1:
-      show(2, 11, 6, "1/16");
-      break;
-    case 2:
-      show(2, 11, 6, "1/16T");
-      break;
-    case 3:
-      show(2, 11, 6, "1/8");
-      break;
-    case 4:
-      show(2, 11, 6, "1/8T");
-      break;
-    case 5:
-      show(2, 11, 6, "1/4");
-      break;
-    case 6:
-      show(2, 11, 6, "1/4T");
-      break;
-    case 7:
-      show(2, 11, 6, "1/2");
-      break;
-    case 8:
-      show(2, 11, 6, "1/2T");
-      break;
-    case 9:
-      show(2, 11, 6, "1/1");
-      break;
-  }
-  if (seq.running == false) {
-
-    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / midi_bpm + 0.5);
-    if (midi_sync_delay_time > DELAY_MAX_TIME) {
-#ifdef DEBUG
-      Serial.println(F("Calculated MIDI-Sync delay: "));
-      Serial.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
-      Serial.println(F("ms"));
-      Serial.println(F("MIDI-Sync delay: midi_sync_delay_time"));
-      Serial.print(midi_sync_delay_time, DEC);
-      Serial.println(F("ms"));
-#endif
-    }
-  } else {
-    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
-    delay_fx[selected_instance_id]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
-  }
-  show(2, 16, 1, "!");
-}
-#endif
 
 FLASHMEM void string_trim(char* s) {
   int i;

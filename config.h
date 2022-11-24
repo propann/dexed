@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.2"
+#define VERSION "1.4.7.4"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -251,9 +251,6 @@
 //*************************************************************************************************
 //* UI
 //*************************************************************************************************
-
-#define CLASSIC_UI
-//#define MODERN_UI
 
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
