@@ -2424,9 +2424,9 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
 
-  if(limit_min==0 && limit_max==1)
+  if (limit_min == 0 && limit_max == 1)
     display.print(input_value ? F("ON ") : F("OFF"));
-  else if (show_zero == false  && input_value == 0)
+  else if (show_zero == false && input_value == 0)
     display.print(F("OFF"));
   else if (limit_min < 0)
     print_formatted_number_signed(input_value, 2);
@@ -2573,12 +2573,12 @@ struct UI {
     y = _y;
   };
 
-  void printLn(const char* text, uint32_t color=COLOR_SYSTEXT) {
+  void printLn(const char* text, uint32_t color = COLOR_SYSTEXT) {
     display.setTextSize(1);
     setCursor_textGrid_small(x, y);
     display.setTextColor(color);
     display.print(text);
-    y+=1;
+    y += 1;
   }
 
   void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
@@ -4355,7 +4355,7 @@ void prepare_multi_options(struct param_editor* editor, bool refresh) {
 }
 
 void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
-  dexed_current_instance_setter(editor,value);
+  dexed_current_instance_setter(editor, value);
   dexed_t& dexed = configuration.dexed[selected_instance_id];
   MicroDexed[selected_instance_id]->setPortamento(dexed.portamento_mode, dexed.portamento_glissando, dexed.portamento_time);
   send_sysex_param(dexed.midi_channel, 67, dexed.portamento_mode, 2);
@@ -4381,65 +4381,61 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.printLn("DEXED INSTANCE SETUP");
     ui.printLn("");
 
-    ui.printLn("PORTAMENTO",GREY2);
-    ui.addEditor("MODE"     , PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX, &configuration.dexed[0].portamento_mode,
-      &dexed_current_instance_getter, &dexed_portamento_setter, [](struct param_editor* editor, bool refresh){
-        prepare_multi_options(editor,refresh);
-        uint8_t mode = editor->get();
-        uint8_t monopoly = configuration.dexed[selected_instance_id].monopoly;
-        if (!mode &&  monopoly) display.print("[RETAIN]");
-        if (!mode && !monopoly) display.print("[FINGER]");
-        if ( mode &&  monopoly) display.print("[FOLLOW]");
-        if ( mode && !monopoly) display.print("[FULL  ]");
-      });
+    ui.printLn("PORTAMENTO", GREY2);
+    ui.addEditor("MODE", PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX, &configuration.dexed[0].portamento_mode,
+                 &dexed_current_instance_getter, &dexed_portamento_setter, [](struct param_editor* editor, bool refresh) {
+                   prepare_multi_options(editor, refresh);
+                   uint8_t mode = editor->get();
+                   uint8_t monopoly = configuration.dexed[selected_instance_id].monopoly;
+                   if (!mode && monopoly) display.print("[RETAIN]");
+                   if (!mode && !monopoly) display.print("[FINGER]");
+                   if (mode && monopoly) display.print("[FOLLOW]");
+                   if (mode && !monopoly) display.print("[FULL  ]");
+                 });
     ui.addEditor("GLISSANDO", PORTAMENTO_GLISSANDO_MIN, PORTAMENTO_GLISSANDO_MAX, &configuration.dexed[0].portamento_glissando,
                  &dexed_current_instance_getter, &dexed_portamento_setter);
-    ui.addEditor("TIME"     , PORTAMENTO_TIME_MIN, PORTAMENTO_TIME_MAX, &configuration.dexed[0].portamento_time,
+    ui.addEditor("TIME", PORTAMENTO_TIME_MIN, PORTAMENTO_TIME_MAX, &configuration.dexed[0].portamento_time,
                  &dexed_current_instance_getter, &dexed_portamento_setter);
     ui.printLn("");
 
-    ui.addEditor("POLYPHONY" , POLYPHONY_MIN, POLYPHONY_MAX, &configuration.dexed[0].polyphony,
-     &dexed_current_instance_getter, [](param_editor* editor, int16_t value){
-       dexed_current_instance_setter(editor,value);
-       MicroDexed[selected_instance_id]->setMaxNotes(value);
-     }
-    );
-    ui.addEditor("MONO/POLY" , MONOPOLY_MIN, MONOPOLY_MAX, &configuration.dexed[0].monopoly,
-      &dexed_current_instance_getter, [](param_editor* editor, int16_t value){
-        dexed_current_instance_setter(editor,value);
-        MicroDexed[selected_instance_id]->setMonoMode(!value);
-      }
-    );
+    ui.addEditor("POLYPHONY", POLYPHONY_MIN, POLYPHONY_MAX, &configuration.dexed[0].polyphony,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MicroDexed[selected_instance_id]->setMaxNotes(value);
+                 });
+    ui.addEditor("MONO/POLY", MONOPOLY_MIN, MONOPOLY_MAX, &configuration.dexed[0].monopoly,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MicroDexed[selected_instance_id]->setMonoMode(!value);
+                 });
 
     ui.printLn("");
 
-    ui.addEditor("TRANSPOSE" , TRANSPOSE_MIN, TRANSPOSE_MAX, &configuration.dexed[0].transpose,
-      &dexed_current_instance_getter, [](param_editor* editor, int16_t value){
-        dexed_current_instance_setter(editor,value);
-        MicroDexed[selected_instance_id]->setTranspose(value);
-        MicroDexed[selected_instance_id]->notesOff();
-        send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, value, 0);
-      }
-    );
-    ui.addEditor("FINE TUNE" , TUNE_MIN, TUNE_MAX, &configuration.dexed[0].tune,
-      &dexed_current_instance_getter, [](param_editor* editor, int16_t value){
-        dexed_current_instance_setter(editor,value);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, value);
-      }
-    );
+    ui.addEditor("TRANSPOSE", TRANSPOSE_MIN, TRANSPOSE_MAX, &configuration.dexed[0].transpose,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MicroDexed[selected_instance_id]->setTranspose(value);
+                   MicroDexed[selected_instance_id]->notesOff();
+                   send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, value, 0);
+                 });
+    ui.addEditor("FINE TUNE", TUNE_MIN, TUNE_MAX, &configuration.dexed[0].tune,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, value);
+                 });
     ui.printLn("");
-    
-    ui.printLn("INTERNALS",GREY2);
+
+    ui.printLn("INTERNALS", GREY2);
     ui.addEditor("NOTE REFRESH", NOTE_REFRESH_MIN, NOTE_REFRESH_MAX, &configuration.dexed[0].note_refresh,
-      &dexed_current_instance_getter, [](param_editor* editor, int16_t value){
-        dexed_current_instance_setter(editor,value);
-        MicroDexed[selected_instance_id]->setNoteRefreshMode(value);
-      }
-      //   display.print(F("[NORMAL     ]"));
-      //   display.print(F("[RETRIGGERED]"));
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MicroDexed[selected_instance_id]->setNoteRefreshMode(value);
+                 }
+                 //   display.print(F("[NORMAL     ]"));
+                 //   display.print(F("[RETRIGGERED]"));
     );
-    ui.addEditor("VELOCITY LEVEL" , VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX, &configuration.dexed[0].velocity_level,
-      &dexed_current_instance_getter,&dexed_current_instance_setter);
+    ui.addEditor("VELOCITY LEVEL", VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX, &configuration.dexed[0].velocity_level,
+                 &dexed_current_instance_getter, &dexed_current_instance_setter);
 
     // ui.setCursor(29, 5 + 4);
   }

@@ -32,7 +32,7 @@ boolean COND_hide()  // hide a menu element
 
 // the id numbers MUST be kept in incrementing sequence.
 // when menu options are added or removed, they must be renumbered!
-// To do this automatically, paste the code below beginning with the second line 
+// To do this automatically, paste the code below beginning with the second line
 //  into the following command:
 // cat -n | sed -E 's/([0-9]+)([^0-9]+)([0-9]+)(.*+)/\2\1\4/'
 
