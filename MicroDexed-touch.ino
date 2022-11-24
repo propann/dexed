@@ -2777,7 +2777,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             break;
           case 65:
             MicroDexed[instance_id]->setPortamento(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_portamento_mode)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_setup)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -2786,7 +2786,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             configuration.dexed[selected_instance_id].tune = map(inValue, 0, 0x7f, TUNE_MIN, TUNE_MAX);
             MicroDexed[selected_instance_id]->setMasterTune((int((configuration.dexed[selected_instance_id].tune - 100) / 100.0 * 0x4000) << 11) * (1.0 / 12));
             MicroDexed[selected_instance_id]->doRefreshVoice();
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_tune)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_setup)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3044,7 +3044,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 67:
             configuration.dexed[instance_id].portamento_mode = constrain(sysex[5], PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX);
             MicroDexed[instance_id]->setPortamento(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_portamento_mode)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_setup)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3052,7 +3052,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 68:
             configuration.dexed[instance_id].portamento_glissando = constrain(sysex[5], PORTAMENTO_GLISSANDO_MIN, PORTAMENTO_GLISSANDO_MAX);
             MicroDexed[instance_id]->setPortamento(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_portamento_glissando)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_setup)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3060,7 +3060,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 69:
             configuration.dexed[instance_id].portamento_time = constrain(sysex[5], PORTAMENTO_TIME_MIN, PORTAMENTO_TIME_MAX);
             MicroDexed[instance_id]->setPortamento(configuration.dexed[instance_id].portamento_mode, configuration.dexed[instance_id].portamento_glissando, configuration.dexed[instance_id].portamento_time);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_portamento_time)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_setup)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
