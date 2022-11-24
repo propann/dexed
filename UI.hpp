@@ -481,20 +481,7 @@ void UI_func_stereo_mono(uint8_t param);
 void UI_func_note_refresh(uint8_t param);
 void UI_func_polyphony(uint8_t param);
 void UI_func_mono_poly(uint8_t param);
-void UI_func_pb_range(uint8_t param);
-void UI_func_pb_step(uint8_t param);
-void UI_func_mw_range(uint8_t param);
-void UI_func_mw_assign(uint8_t param);
-void UI_func_mw_mode(uint8_t param);
-void UI_func_fc_range(uint8_t param);
-void UI_func_fc_assign(uint8_t param);
-void UI_func_fc_mode(uint8_t param);
-void UI_func_bc_range(uint8_t param);
-void UI_func_bc_assign(uint8_t param);
-void UI_func_bc_mode(uint8_t param);
-void UI_func_at_range(uint8_t param);
-void UI_func_at_assign(uint8_t param);
-void UI_func_at_mode(uint8_t param);
+void UI_func_dexed_controllers(uint8_t param);
 void UI_func_portamento_mode(uint8_t param);
 void UI_func_portamento_glissando(uint8_t param);
 void UI_func_portamento_time(uint8_t param);
@@ -2426,6 +2413,294 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons) {
 }
 //#endif
 
+//####################################################################################################################################################################################################
+
+/***********************************************************************
+   MENU
+ ***********************************************************************/
+
+FLASHMEM void setModeColor(uint8_t selected_option) {
+  if (generic_temp_select_menu == selected_option) {
+    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+  } else
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  if ((generic_temp_select_menu == selected_option && generic_active_function == 1) || (generic_temp_select_menu == selected_option && seq.edit_state == 1)) {
+    display.setTextColor(COLOR_SYSTEXT, RED);
+  }
+}
+
+FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
+  setCursor_textGrid_small(x, y);
+  setModeColor(selected_option);
+
+  if (show_zero == false && input_value == 0)
+    display.print(F("OFF"));
+  else if(limit_min < 0)
+    print_formatted_number_signed(input_value, 2);
+  else if(limit_max <= 99) {
+    setCursor_textGrid_small(x+1, y);
+    print_formatted_number(input_value, 2);
+  } else
+    print_formatted_number(input_value, 3);
+
+  if (show_bar) {
+    display.console = true;
+
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, input_value==0 ? GREY2 : COLOR_SYSTEXT);
+
+    if(limit_min>=0) { // filled bar
+      uint8_t split = (5 * CHAR_width_small - 2) * (input_value-limit_min) / (limit_max-limit_min);
+      display.console = true;
+      if (split < 5 * CHAR_width_small - 2)
+        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
+      display.console = true;
+      if (split > 0)
+        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
+    } else { // pan bar
+      uint8_t split = (5 * CHAR_width_small - 2 - 3) * (input_value-limit_min) / (limit_max-limit_min);
+      display.console = true;
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
+      display.console = true;
+      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
+    }
+  }
+}
+
+FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
+  print_small_scaled_bar(x, y, input_value, 0, 100, selected_option, show_bar, show_zero);
+}
+
+FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
+  setCursor_textGrid_small(x, y);
+  setModeColor(selected_option);
+  if (input_value < 20) {
+    display.print(F("L"));
+    print_formatted_number(20 - input_value, 2);
+  } else if (input_value > 20) {
+    display.print(F("R"));
+    print_formatted_number(input_value - 20, 2);
+  } else {
+    display.print(F("C"));
+    print_formatted_number(input_value - 20, 2);
+  }
+  display.console = true;
+  display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
+  display.console = true;
+  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
+  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 1.60, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
+}
+FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
+  setCursor_textGrid_small(x, y);
+  setModeColor(selected_option);
+  display.console = true;
+  display.drawRect(CHAR_width_small * x, 10 * y, 3 * CHAR_width_small, 7, COLOR_SYSTEXT);
+  display.console = true;
+  display.fillRect(CHAR_width_small * x + 1, 10 * y + 1, 3 * CHAR_width_small - 2, 5, COLOR_BACKGROUND);
+  display.fillRect(CHAR_width_small * x + 1 + input_value / 2.30, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
+}
+
+FLASHMEM int16_t encoder_change(bool fast) {
+  int16_t dir = 0;
+  if(LCDML.BT_checkDown()) dir= 1;
+  if(LCDML.BT_checkUp()  ) dir=-1;
+
+  if(fast) return dir * (ENCODER[ENC_R].speed() + ENCODER[ENC_L].speed());
+  else     return dir;
+}
+
+struct param_editor{
+  const char* name;
+  int16_t limit_min, limit_max;
+  bool fast;
+  uint8_t x,y;
+  uint8_t select_id;
+
+  void* value;
+  int16_t(*getter  )(struct param_editor* param);
+  void   (*setter  )(struct param_editor* param, int16_t value);
+  void   (*renderer)(struct param_editor* param, bool refresh);
+
+  int16_t get() {
+    if(getter!=NULL)     return getter(this);
+    return 0;
+  };
+  void set(int16_t _value) {
+    if(setter!=NULL)     setter(this,_value);
+  };
+
+  void draw_editor(bool refresh) {
+    if(renderer != NULL) {
+      renderer(this,refresh);
+      return;
+    }
+    display.setTextSize(1);
+    if(!refresh) {
+      setCursor_textGrid_small(this->x+10, this->y);
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+      display.print(this->name);
+    }
+    print_small_scaled_bar  (x, y, get(), limit_min, limit_max, select_id, 1, 1);
+  };
+
+  void handle_parameter_editor() {
+    int16_t change = encoder_change(fast);
+    if(change != 0) {
+      set(constrain(get() + change, limit_min, limit_max));
+      draw_editor(true);
+    }
+  };
+};
+
+#define UI_MAX_EDITORS 64
+struct UI {
+  uint8_t x,y;
+  uint8_t num_editors;
+  struct param_editor editors[UI_MAX_EDITORS];
+  struct param_editor* encoderLeftHandler=NULL;
+  struct param_editor* buttonLongHandler=NULL;
+ 
+  void clear() {
+    display.fillScreen(COLOR_BACKGROUND);
+    border0();
+    helptext_l("BACK");
+    num_editors=0;
+    buttonLongHandler=NULL;
+    encoderLeftHandler=NULL;
+  };
+
+  void reset() {
+    clear();
+    seq.edit_state=0;
+    generic_temp_select_menu=0;
+  };
+
+  void setCursor(uint8_t _x, uint8_t _y) {
+    x=_x; y=_y;
+  };
+
+  void printLn(const char* text) {
+    display.setTextSize(1);
+    setCursor_textGrid_small(x, y);
+    display.setTextColor(COLOR_SYSTEXT);
+    display.print(text);
+    y++;
+  }
+
+  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh)
+  ) {
+    editors[num_editors]=(struct param_editor){
+      name, limit_min, limit_max, limit_max-limit_min > 32, x, y, num_editors, valuePtr,
+      getter, setter, renderer
+    };
+    editors[num_editors].draw_editor(false);
+    y++;
+    num_editors++;
+  };
+
+  // editor providing default float32_t getter + setters if missed out
+  void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
+    int16_t(*getter)(struct param_editor* param) = NULL,
+    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((float32_t*)editor->value) * 100;},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((float32_t*)editor->value) = value / 100.f;},
+      renderer
+    );
+  };
+
+  // editor providing default uint8_t getter + setters if missed out
+  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
+    int16_t(*getter)(struct param_editor* param) = NULL,
+    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, valuePtr,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
+      renderer
+    );
+  };
+
+  // editor providing custom getter + setters dont using valuePtr
+  void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
+    int16_t(*getter)(struct param_editor* param),
+    void   (*setter)(struct param_editor* param, int16_t value),
+    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
+  ) {
+    addCustomEditor(
+      name, limit_min, limit_max, NULL,
+      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
+      renderer
+    );
+  };
+
+  void enableButtonLongEditor() {
+    buttonLongHandler = &editors[num_editors-1];
+  }
+
+  void enableLeftEncoderEditor() {
+    encoderLeftHandler = &editors[num_editors-1];
+  }
+
+  void handle_parameter_navigation() {
+    if (seq.edit_state == 0) {
+      uint8_t last = generic_temp_select_menu;
+      generic_temp_select_menu = constrain(generic_temp_select_menu+encoder_change(false), 0, num_editors-1);
+      editors[last]                    .draw_editor(true);
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+  };
+
+  void draw_editors(bool refresh) {
+    for(uint8_t i=0; i<num_editors; i++)
+      editors[i].draw_editor(refresh);
+  };
+
+  void handle_current_editor() {
+    editors[generic_temp_select_menu].handle_parameter_editor();
+  };
+
+  bool encoder_changed(uint8_t id) {
+    return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
+  }
+
+  void handle_input() {
+    // toggle between navigate and value editing
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
+      seq.edit_state=1-seq.edit_state;
+      editors[generic_temp_select_menu].draw_editor(true);
+    }
+
+    // set currently selected editor or the editor's value by right encoder
+    if(encoder_changed(ENC_R)) {
+      if (seq.edit_state == 0) 
+        handle_parameter_navigation();
+      else
+        handle_current_editor();
+    }
+
+    // optionally set a specific editor's value by left encoder
+    if(encoderLeftHandler && encoder_changed(ENC_L)) {
+      encoderLeftHandler->handle_parameter_editor();
+    }
+    // optionally toggle a specific editor by long button press
+    if(buttonLongHandler && encoderDir[ENC_R].ButtonLong()) {
+      buttonLongHandler->set(1 - buttonLongHandler->get()); // toggle value between 0 and 1
+      buttonLongHandler->draw_editor(true);
+    }
+  };
+
+} ui;
+
+
 /***********************************************************************
    MENU CONTROL
  ***********************************************************************/
@@ -2440,6 +2715,8 @@ FLASHMEM uint8_t get_current_cursor_id(void) {
 
 uint8_t touchX = 0;
 uint8_t touchY = 0;
+
+
 
 FLASHMEM void lcdml_menu_control(void) {
   // If something must init, put in in the setup condition
@@ -2812,7 +3089,7 @@ FLASHMEM void lcdml_menu_control(void) {
     Serial.println(F("ENC-R long recognized"));
 #endif
     encoderDir[ENC_R].ButtonLong(true);
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
+    if (ui.buttonLongHandler!=NULL || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
       LCDML.BT_enter();
       LCDML.OTHER_updateFunc();
       LCDML.loop_menu();
@@ -2891,7 +3168,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]++;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) {  //do nothing
+        } else if (ui.encoderLeftHandler != NULL) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -2953,7 +3230,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]--;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor)) {  //do nothing
+        } else if (ui.encoderLeftHandler != NULL) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -3035,6 +3312,7 @@ FLASHMEM void lcdml_menu_control(void) {
     encoderDir[ENC_R].reset();
   }
 }
+
 
 /***********************************************************************
    MENU DISPLAY
@@ -3156,268 +3434,38 @@ FLASHMEM void lcdml_menu_display(void) {
   }
 }
 
-//####################################################################################################################################################################################################
+void draw_instance_editor(struct param_editor* editor, bool refresh) {
 
-/***********************************************************************
-   MENU
- ***********************************************************************/
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextSize(1);
 
-FLASHMEM void setModeColor(uint8_t selected_option) {
-  if (generic_temp_select_menu == selected_option) {
-    display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-  } else
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  if ((generic_temp_select_menu == selected_option && generic_active_function == 1) || (generic_temp_select_menu == selected_option && seq.edit_state == 1)) {
-    display.setTextColor(COLOR_SYSTEXT, RED);
-  }
-}
-
-FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
-  setCursor_textGrid_small(x, y);
-  setModeColor(selected_option);
-
-  if (show_zero == false && input_value == 0)
-    display.print(F("OFF"));
-  else if (limit_min < 0)
-    print_formatted_number_signed(input_value, 2);
-  else if (limit_max <= 99) {
-    setCursor_textGrid_small(x + 1, y);
-    print_formatted_number(input_value, 2);
-  } else
-    print_formatted_number(input_value, 3);
-
-  if (show_bar) {
-    display.console = true;
-
-    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, input_value == 0 ? GREY2 : COLOR_SYSTEXT);
-
-    if (limit_min >= 0) {  // filled bar
-      uint8_t split = (5 * CHAR_width_small - 2) * (input_value - limit_min) / (limit_max - limit_min);
-      display.console = true;
-      if (split < 5 * CHAR_width_small - 2)
-        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
-      display.console = true;
-      if (split > 0)
-        display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
-    } else {  // pan bar
-      uint8_t split = (5 * CHAR_width_small - 2 - 3) * (input_value - limit_min) / (limit_max - limit_min);
-      display.console = true;
-      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
-      display.console = true;
-      display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
-    }
-  }
-}
-
-FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
-  print_small_scaled_bar(x, y, input_value, 0, 100, selected_option, show_bar, show_zero);
-}
-
-FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
-  setCursor_textGrid_small(x, y);
-  setModeColor(selected_option);
-  if (input_value < 20) {
-    display.print(F("L"));
-    print_formatted_number(20 - input_value, 2);
-  } else if (input_value > 20) {
-    display.print(F("R"));
-    print_formatted_number(input_value - 20, 2);
-  } else {
-    display.print(F("C"));
-    print_formatted_number(input_value - 20, 2);
-  }
-  display.console = true;
-  display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, COLOR_SYSTEXT);
-  display.console = true;
-  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
-  display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + input_value / 1.60, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
-}
-FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
-  setCursor_textGrid_small(x, y);
-  setModeColor(selected_option);
-  display.console = true;
-  display.drawRect(CHAR_width_small * x, 10 * y, 3 * CHAR_width_small, 7, COLOR_SYSTEXT);
-  display.console = true;
-  display.fillRect(CHAR_width_small * x + 1, 10 * y + 1, 3 * CHAR_width_small - 2, 5, COLOR_BACKGROUND);
-  display.fillRect(CHAR_width_small * x + 1 + input_value / 2.30, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
-}
-
-FLASHMEM int16_t encoder_change(bool fast) {
-  int8_t dir = 0;
-  if (LCDML.BT_checkDown()) dir = 1;
-  if (LCDML.BT_checkUp()) dir = -1;
-
-  if (fast) return dir * ENCODER[ENC_R].speed();
-  else return dir;
-}
-
-struct param_editor {
-  const char* name;
-  int16_t limit_min, limit_max;
-  bool fast;
-  uint8_t x, y;
-  uint8_t select_id;
-
-  void* value;
-  int16_t (*getter)(struct param_editor* param);
-  void (*setter)(struct param_editor* param, int16_t value);
-  void (*renderer)(struct param_editor* param, bool refresh);
-
-  int16_t get() {
-    if (getter != NULL) return getter(this);
-    return 0;
-  };
-  void set(int16_t _value) {
-    if (setter != NULL) setter(this, _value);
-  };
-
-  void draw_editor(bool refresh) {
-    if (renderer != NULL) {
-      renderer(this, refresh);
-      return;
-    }
-    display.setTextSize(1);
-    if (!refresh) {
-      setCursor_textGrid_small(this->x + 10, this->y);
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      display.print(this->name);
-    }
-    print_small_scaled_bar(x, y, get(), limit_min, limit_max, select_id, 1, 1);
-  };
-
-  int16_t handle_parameter_editor() {
-    if (seq.edit_state == 1) {
-      int16_t change = encoder_change(fast);
-      if (change != 0) {
-        set(constrain(get() + change, limit_min, limit_max));
-        draw_editor(true);
-      }
-    }
-    return this->get();
-  };
-};
-
-#define UI_MAX_EDITORS 64
-struct UI {
-  uint8_t x, y;
-  uint8_t num_editors;
-
-  struct param_editor editors[UI_MAX_EDITORS];
-
-  void clear() {
-    display.fillScreen(COLOR_BACKGROUND);
-    num_editors = 0;
-  };
-
-  void reset() {
-    clear();
-    seq.edit_state = 0;
-    generic_temp_select_menu = 0;
-  };
-
-  void setCursor(uint8_t _x, uint8_t _y) {
-    x = _x;
-    y = _y;
-  };
-
-  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
-                       int16_t (*getter)(struct param_editor* param),
-                       void (*setter)(struct param_editor* param, int16_t value),
-                       void (*renderer)(struct param_editor* param, bool refresh)) {
-    editors[num_editors] = (struct param_editor){
-      name, limit_min, limit_max, limit_max - limit_min > 32, x, y, num_editors, valuePtr,
-      getter, setter, renderer
-    };
-    editors[num_editors].draw_editor(false);
-    y++;
-    num_editors++;
-  };
-
-  // editor providing default float32_t getter + setters if missed out
-  void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
-                 int16_t (*getter)(struct param_editor* param) = NULL,
-                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
-    addCustomEditor(
-      name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
-        return *((float32_t*)editor->value) * 100;
-      },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
-        *((float32_t*)editor->value) = value / 100.f;
-      },
-      renderer);
-  };
-
-  // editor providing default uint8_t getter + setters if missed out
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-                 int16_t (*getter)(struct param_editor* param) = NULL,
-                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
-    addCustomEditor(
-      name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
-        return *((uint8_t*)editor->value);
-      },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
-        *((uint8_t*)editor->value) = value;
-      },
-      renderer);
-  };
-
-  // editor providing custom getter + setters dont using valuePtr
-  void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
-                 int16_t (*getter)(struct param_editor* param),
-                 void (*setter)(struct param_editor* param, int16_t value),
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
-    addCustomEditor(
-      name, limit_min, limit_max, NULL,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
-        return *((uint8_t*)editor->value);
-      },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
-        *((uint8_t*)editor->value) = value;
-      },
-      renderer);
-  };
-
-  void handle_parameter_navigation() {
-    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
-      seq.edit_state = 1 - seq.edit_state;
-      editors[generic_temp_select_menu].draw_editor(true);
-    }
-
-    if (seq.edit_state == 0) {
-      uint8_t last = generic_temp_select_menu;
-      generic_temp_select_menu += encoder_change(false);
-      generic_temp_select_menu = constrain(generic_temp_select_menu, 0, num_editors - 1);
-      editors[last].draw_editor(true);
-      editors[generic_temp_select_menu].draw_editor(true);
-    }
-  };
-
-  void draw_editors(bool refresh) {
-    for (uint8_t i = 0; i < num_editors; i++)
-      editors[i].draw_editor(refresh);
-  };
-
-  uint8_t handle_current_editor() {
-    return editors[generic_temp_select_menu].handle_parameter_editor();
-  };
-
-  bool encoders_changed() {
-    return (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || LCDML.BT_checkEnter();
+  if(!refresh) {
+    display.setCursor(CHAR_width_small * 34, 6);
+    display.print(F("OR LONG PUSH "));
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("ENC_R"));
   }
 
-  uint8_t handle_input() {
-    if (encoders_changed()) {
-      handle_parameter_navigation();
-      return handle_current_editor();
-    }
-    return -1;
-  };
+  display.setCursor(CHAR_width_small * 10, 6);
+  if(generic_temp_select_menu == editor->select_id) {
+    setModeColor(editor->select_id);
+    display.print(F("SELECT INSTANCE  ->"));
+  }else{
+    display.print(F("                   "));
+  }
 
-} ui;
+  UI_update_instance_icons();
+}  
+
+void addInstanceEditor(
+  void   (*renderer)(struct param_editor* param, bool refresh) = &draw_instance_editor
+) {
+  ui.addEditor("INSTANCE",0,1,&selected_instance_id, NULL,
+    [](struct param_editor* editor, int16_t value)->void{selected_instance_id=value; ui.draw_editors(true);},
+    renderer
+  );
+  ui.enableButtonLongEditor();
+}
 
 FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -4592,629 +4640,6 @@ FLASHMEM void UI_func_pb_step(uint8_t param) {
 
     MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 66, configuration.dexed[selected_instance_id].pb_step, 2);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_mw_range(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("MW Range", configuration.dexed[selected_instance_id].mw_range, 1.0, MW_RANGE_MIN, MW_RANGE_MAX, 2, false, false, true);
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].mw_range = constrain(configuration.dexed[selected_instance_id].mw_range + ENCODER[ENC_R].speed(), MW_RANGE_MIN, MW_RANGE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].mw_range = constrain(configuration.dexed[selected_instance_id].mw_range - ENCODER[ENC_R].speed(), MW_RANGE_MIN, MW_RANGE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("MW Range", configuration.dexed[selected_instance_id].mw_range, 1.0, MW_RANGE_MIN, MW_RANGE_MAX, 2, false, false, false);
-
-    MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 70, configuration.dexed[selected_instance_id].mw_range, 2);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_mw_assign(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("MW Assign"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].mw_assign = constrain(configuration.dexed[selected_instance_id].mw_assign + 1, MW_ASSIGN_MIN, MW_ASSIGN_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].mw_assign = constrain(configuration.dexed[selected_instance_id].mw_assign - 1, MW_ASSIGN_MIN, MW_ASSIGN_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 71, configuration.dexed[selected_instance_id].mw_assign, 2);
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].mw_assign) {
-      case 0:
-        display.print(F("[   NONE    ]"));
-        break;
-      case 1:
-        display.print(F("[PTCH       ]"));
-        break;
-      case 2:
-        display.print(F("[     AMP   ]"));
-        break;
-      case 3:
-        display.print(F("[PTCH AMP   ]"));
-        break;
-      case 4:
-        display.print(F("[         EG]"));
-        break;
-      case 5:
-        display.print(F("[PTCH     EG]"));
-        break;
-      case 6:
-        display.print(F("[     AMP EG]"));
-        break;
-      case 7:
-        display.print(F("[PTCH AMP EG]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_mw_mode(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("MW Mode"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].mw_mode = constrain(configuration.dexed[selected_instance_id].mw_mode + 1, MW_MODE_MIN, MW_MODE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].mw_mode = constrain(configuration.dexed[selected_instance_id].mw_mode - 1, MW_MODE_MIN, MW_MODE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
-    MicroDexed[selected_instance_id]->ControllersRefresh();
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].mw_mode) {
-      case 0:
-        display.print(F("[LINEAR      ]"));
-        break;
-      case 1:
-        display.print(F("[REVERSE LIN.]"));
-        break;
-      case 2:
-        display.print(F("[DIRECT      ]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_fc_range(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("FC Range", configuration.dexed[selected_instance_id].fc_range, 1.0, FC_RANGE_MIN, FC_RANGE_MAX, 2, false, false, true);
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].fc_range = constrain(configuration.dexed[selected_instance_id].fc_range + ENCODER[ENC_R].speed(), FC_RANGE_MIN, FC_RANGE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].fc_range = constrain(configuration.dexed[selected_instance_id].fc_range - ENCODER[ENC_R].speed(), FC_RANGE_MIN, FC_RANGE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("FC Range", configuration.dexed[selected_instance_id].fc_range, 1.0, FC_RANGE_MIN, FC_RANGE_MAX, 2, false, false, false);
-
-    MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 72, configuration.dexed[selected_instance_id].fc_range, 2);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_fc_assign(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("FC Assign"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].fc_assign = constrain(configuration.dexed[selected_instance_id].fc_assign + 1, FC_ASSIGN_MIN, FC_ASSIGN_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].fc_assign = constrain(configuration.dexed[selected_instance_id].fc_assign - 1, FC_ASSIGN_MIN, FC_ASSIGN_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 73, configuration.dexed[selected_instance_id].fc_assign, 2);
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].fc_assign) {
-      case 0:
-        display.print(F("[   NONE    ]"));
-        break;
-      case 1:
-        display.print(F("[PTCH       ]"));
-        break;
-      case 2:
-        display.print(F("[     AMP   ]"));
-        break;
-      case 3:
-        display.print(F("[PTCH AMP   ]"));
-        break;
-      case 4:
-        display.print(F("[         EG]"));
-        break;
-      case 5:
-        display.print(F("[PTCH     EG]"));
-        break;
-      case 6:
-        display.print(F("[     AMP EG]"));
-        break;
-      case 7:
-        display.print(F("[PTCH AMP EG]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_fc_mode(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("FC Mode"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].fc_mode = constrain(configuration.dexed[selected_instance_id].fc_mode + 1, FC_MODE_MIN, FC_MODE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].fc_mode = constrain(configuration.dexed[selected_instance_id].fc_mode - 1, FC_MODE_MIN, FC_MODE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
-    MicroDexed[selected_instance_id]->ControllersRefresh();
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].fc_mode) {
-      case 0:
-        display.print(F("[LINEAR      ]"));
-        break;
-      case 1:
-        display.print(F("[REVERSE LIN.]"));
-        break;
-      case 2:
-        display.print(F("[DIRECT      ]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_bc_range(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("BC Range", configuration.dexed[selected_instance_id].bc_range, 1.0, BC_RANGE_MIN, BC_RANGE_MAX, 2, false, false, true);
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].bc_range = constrain(configuration.dexed[selected_instance_id].bc_range + ENCODER[ENC_R].speed(), BC_RANGE_MIN, BC_RANGE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].bc_range = constrain(configuration.dexed[selected_instance_id].bc_range - ENCODER[ENC_R].speed(), BC_RANGE_MIN, BC_RANGE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("BC Range", configuration.dexed[selected_instance_id].bc_range, 1.0, BC_RANGE_MIN, BC_RANGE_MAX, 2, false, false, false);
-
-    MicroDexed[selected_instance_id]->setBCController(configuration.dexed[selected_instance_id].bc_range, configuration.dexed[selected_instance_id].bc_assign, configuration.dexed[selected_instance_id].bc_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 74, configuration.dexed[selected_instance_id].bc_range, 2);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_bc_assign(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("BC Assign"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].bc_assign = constrain(configuration.dexed[selected_instance_id].bc_assign + 1, BC_ASSIGN_MIN, BC_ASSIGN_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].bc_assign = constrain(configuration.dexed[selected_instance_id].bc_assign - 1, BC_ASSIGN_MIN, BC_ASSIGN_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setBCController(configuration.dexed[selected_instance_id].bc_range, configuration.dexed[selected_instance_id].bc_assign, configuration.dexed[selected_instance_id].bc_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 75, configuration.dexed[selected_instance_id].bc_assign, 2);
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].bc_assign) {
-      case 0:
-        display.print(F("[   NONE    ]"));
-        break;
-      case 1:
-        display.print(F("[PTCH       ]"));
-        break;
-      case 2:
-        display.print(F("[     AMP   ]"));
-        break;
-      case 3:
-        display.print(F("[PTCH AMP   ]"));
-        break;
-      case 4:
-        display.print(F("[         EG]"));
-        break;
-      case 5:
-        display.print(F("[PTCH     EG]"));
-        break;
-      case 6:
-        display.print(F("[     AMP EG]"));
-        break;
-      case 7:
-        display.print(F("[PTCH AMP EG]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_bc_mode(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("BC Mode"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].bc_mode = constrain(configuration.dexed[selected_instance_id].bc_mode + 1, BC_MODE_MIN, BC_MODE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].bc_mode = constrain(configuration.dexed[selected_instance_id].bc_mode - 1, BC_MODE_MIN, BC_MODE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setBCController(configuration.dexed[selected_instance_id].bc_range, configuration.dexed[selected_instance_id].bc_assign, configuration.dexed[selected_instance_id].bc_mode);
-    MicroDexed[selected_instance_id]->ControllersRefresh();
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].bc_mode) {
-      case 0:
-        display.print(F("[LINEAR      ]"));
-        break;
-      case 1:
-        display.print(F("[REVERSE LIN.]"));
-        break;
-      case 2:
-        display.print(F("[DIRECT      ]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_at_range(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("AT Range", configuration.dexed[selected_instance_id].at_range, 1.0, AT_RANGE_MIN, AT_RANGE_MAX, 2, false, false, true);
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].at_range = constrain(configuration.dexed[selected_instance_id].at_range + ENCODER[ENC_R].speed(), AT_RANGE_MIN, AT_RANGE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].at_range = constrain(configuration.dexed[selected_instance_id].at_range - ENCODER[ENC_R].speed(), AT_RANGE_MIN, AT_RANGE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("AT Range", configuration.dexed[selected_instance_id].at_range, 1.0, AT_RANGE_MIN, AT_RANGE_MAX, 2, false, false, false);
-
-    MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 76, configuration.dexed[selected_instance_id].at_range, 2);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_at_assign(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("AT Assign"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].at_assign = constrain(configuration.dexed[selected_instance_id].at_assign + 1, AT_ASSIGN_MIN, AT_ASSIGN_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].at_assign = constrain(configuration.dexed[selected_instance_id].at_assign - 1, AT_ASSIGN_MIN, AT_ASSIGN_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
-    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 77, configuration.dexed[selected_instance_id].at_assign, 2);
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].at_assign) {
-      case 0:
-        display.print(F("[   NONE    ]"));
-        break;
-      case 1:
-        display.print(F("[PTCH       ]"));
-        break;
-      case 2:
-        display.print(F("[     AMP   ]"));
-        break;
-      case 3:
-        display.print(F("[PTCH AMP   ]"));
-        break;
-      case 4:
-        display.print(F("[         EG]"));
-        break;
-      case 5:
-        display.print(F("[PTCH     EG]"));
-        break;
-      case 6:
-        display.print(F("[     AMP EG]"));
-        break;
-      case 7:
-        display.print(F("[PTCH AMP EG]"));
-        break;
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_at_mode(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    setCursor_textGrid(1, 1);
-    display.print(F("AT Mode"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].at_mode = constrain(configuration.dexed[selected_instance_id].at_mode + 1, AT_MODE_MIN, AT_MODE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].at_mode = constrain(configuration.dexed[selected_instance_id].at_mode - 1, AT_MODE_MIN, AT_MODE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
-    MicroDexed[selected_instance_id]->ControllersRefresh();
-
-    setCursor_textGrid(1, 2);
-    switch (configuration.dexed[selected_instance_id].at_mode) {
-      case 0:
-        display.print(F("[LINEAR      ]"));
-        break;
-      case 1:
-        display.print(F("[REVERSE LIN.]"));
-        break;
-      case 2:
-        display.print(F("[DIRECT      ]"));
-        break;
-    }
   }
 
   if (LCDML.FUNC_close())  // ****** STABLE END *********
@@ -15208,8 +14633,8 @@ void dexed_op_setter(struct param_editor* param, int16_t value) {
   current_voice_op = value;
   ui.draw_editors(true);
 };
-void dexed_instance_id_renderer(struct param_editor* param, bool refresh) {
-  UI_update_instance_icons();
+void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
+  draw_instance_editor(param, refresh);
   display.setTextSize(2);
   show(1, 0, 10, g_voice_name[selected_instance_id]);
 }
@@ -15219,18 +14644,10 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
-    border0();
-    helptext_l("BACK");
-    display.setTextSize(1);
-    display.setCursor(CHAR_width_small * 34, 6);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(F("OR LONG PUSH "));
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("ENC_R"));
-    UI_update_instance_icons();
 
-    ui.setCursor(0, 1);
-    ui.addEditor("INSTANCE", 0, 1, &selected_instance_id, NULL, NULL, &dexed_instance_id_renderer);
+    ui.setCursor(0,1);
+
+    addInstanceEditor(&dexed_voice_name_renderer);
 
     // voice global parameters
     display.setTextSize(1);
@@ -15249,8 +14666,9 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
     // operator parameters
-    ui.setCursor(29, 3);
+    ui.setCursor(27,3);
     ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
+    ui.enableLeftEncoderEditor();
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
@@ -15267,27 +14685,133 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     ui.handle_input();
-
-    // left encoder selects operator
-    /*if (encoderDir[ENC_L].Up() || encoderDir[ENC_L].Down()) {
-      if (LCDML.BT_checkDown() && current_voice_op < 5) {
-        current_voice_op++;
-      } else if (LCDML.BT_checkUp() && current_voice_op > 0) {
-        current_voice_op--;
-      }
-      print_voice_parameters(num_voice_params + 1);
-    }*/
-
-    if (encoderDir[ENC_R].ButtonLong()) {
-      selected_instance_id = 1 - selected_instance_id;
-      ui.draw_editors(true);
-    }
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
   {
     ui.clear();
     encoderDir[ENC_R].reset();
     dexed_live_mod.active_button = 0;
+  }
+}
+
+void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
+  display.setTextSize(1);
+  if(!refresh) {
+    setCursor_textGrid_small(editor->x+10, editor->y);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(editor->name);
+  }
+  uint8_t mode=editor->get();
+  setModeColor(editor->select_id);
+  setCursor_textGrid_small(editor->x, editor->y);
+  display.print("          ");
+  setCursor_textGrid_small(editor->x, editor->y);
+  if(mode==0) display.print("LINEAR");
+  if(mode==1) display.print("REV.LINEAR");
+  if(mode==2) display.print("DIRECT");
+}
+
+void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
+  display.setTextSize(1);
+  if(!refresh) {
+    setCursor_textGrid_small(editor->x+10, editor->y);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(editor->name);
+  }
+
+  uint8_t mode=editor->get();
+  setModeColor(editor->select_id);
+  setCursor_textGrid_small(editor->x, editor->y);
+  display.print("          ");
+  setCursor_textGrid_small(editor->x, editor->y);
+  if(mode & 1) display.print("PTH ");
+  if(mode & 2) display.print("AMP ");
+  if(mode & 4) display.print("EG");
+}
+
+void send_sysex_if_changed(uint8_t id, uint8_t* valuePtr, uint8_t* changedValuePtr) {
+  if(valuePtr == changedValuePtr) 
+    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, id, *((uint8_t*)valuePtr), 2);
+}
+
+int16_t dexed_controller_getter(struct param_editor* editor) {
+  // the controller parameter may be from either instance, which may be
+  // switched at any time. So recompute the value pointer in respect of the instance!
+  uint8_t* ptr = (uint8_t*)( (char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
+  return *ptr;
+}
+
+void dexed_controller_setter(struct param_editor* editor, int16_t value) {
+  // the controller parameter may be from either instance, which may be
+  // switched at any time. So recompute the value pointer in respect of the instance!
+  uint8_t* ptr = (uint8_t*)( (char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
+  *ptr = (uint8_t)value;
+
+    MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
+    MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
+      MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
+    MicroDexed[selected_instance_id]->setBCController(configuration.dexed[selected_instance_id].bc_range, configuration.dexed[selected_instance_id].bc_assign, configuration.dexed[selected_instance_id].bc_mode);
+    MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
+    MicroDexed[selected_instance_id]->ControllersRefresh();
+
+  send_sysex_if_changed(65, &configuration.dexed[selected_instance_id].pb_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(66, &configuration.dexed[selected_instance_id].pb_step,   (uint8_t*)editor->value);
+  send_sysex_if_changed(70, &configuration.dexed[selected_instance_id].mw_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(71, &configuration.dexed[selected_instance_id].mw_assign, (uint8_t*)editor->value);
+  send_sysex_if_changed(72, &configuration.dexed[selected_instance_id].fc_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(73, &configuration.dexed[selected_instance_id].fc_assign, (uint8_t*)editor->value);
+  send_sysex_if_changed(74, &configuration.dexed[selected_instance_id].bc_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(75, &configuration.dexed[selected_instance_id].bc_assign, (uint8_t*)editor->value);
+  send_sysex_if_changed(76, &configuration.dexed[selected_instance_id].at_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(77, &configuration.dexed[selected_instance_id].at_assign, (uint8_t*)editor->value);
+}
+
+FLASHMEM void UI_func_dexed_controllers(uint8_t param) {
+
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    ui.reset();
+    ui.setCursor(1,1);
+    addInstanceEditor(&dexed_voice_name_renderer);
+
+    ui.setCursor(1,5);
+    ui.printLn("PITCH BEND WHEEL");
+    ui.addEditor("PB RANGE", PB_RANGE_MIN, PB_RANGE_MAX, &configuration.dexed[0].pb_range,
+      &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("PB STEP",  PB_STEP_MIN, PB_STEP_MAX,   &configuration.dexed[0].pb_step ,
+      &dexed_controller_getter, &dexed_controller_setter);
+
+    ui.printLn("");
+    ui.printLn("MODULATION WHEEL");
+    ui.addEditor("MW RANGE", MW_RANGE_MIN, MW_RANGE_MAX, &configuration.dexed[0].mw_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("MW ASSIGN", MW_ASSIGN_MIN , MW_ASSIGN_MAX, &configuration.dexed[0].mw_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("MW MODE", MW_MODE_MIN , MW_MODE_MAX , &configuration.dexed[0].mw_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+
+    ui.printLn("");
+    ui.printLn("FOOT CONTROLLER");
+    ui.addEditor("FC RANGE", FC_RANGE_MIN, FC_RANGE_MAX, &configuration.dexed[0].fc_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("FC ASSIGN", FC_ASSIGN_MIN, FC_ASSIGN_MAX, &configuration.dexed[0].fc_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("FC MODE", FC_MODE_MIN , FC_MODE_MAX , &configuration.dexed[0].fc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+
+    ui.setCursor(29,5+4);
+    ui.printLn("BREATH CONTROLLER");
+    ui.addEditor("BC RANGE", BC_RANGE_MIN, BC_RANGE_MAX, &configuration.dexed[0].bc_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("BC ASSIGN", BC_ASSIGN_MIN, BC_ASSIGN_MAX, &configuration.dexed[0].bc_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("BC MODE", BC_MODE_MIN , BC_MODE_MAX , &configuration.dexed[0].bc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+
+    ui.printLn("");
+    ui.printLn("AFTERTOUCH");
+    ui.addEditor("AT RANGE", AT_RANGE_MIN, AT_RANGE_MAX, &configuration.dexed[0].at_range, &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("AT ASSIGN", AT_ASSIGN_MIN , AT_ASSIGN_MAX, &configuration.dexed[0].at_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("AT MODE", AT_MODE_MIN , AT_MODE_MAX , &configuration.dexed[0].at_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    ui.handle_input();
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    ui.clear();
   }
 }
 

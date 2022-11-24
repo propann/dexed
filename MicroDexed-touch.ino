@@ -3028,7 +3028,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 65:
             configuration.dexed[instance_id].pb_range = constrain(sysex[5], PB_RANGE_MIN, PB_RANGE_MAX);
             MicroDexed[instance_id]->setPitchbendRange(configuration.dexed[instance_id].pb_range);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_pb_range)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3036,7 +3036,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 66:
             configuration.dexed[instance_id].pb_step = constrain(sysex[5], PB_STEP_MIN, PB_STEP_MAX);
             MicroDexed[instance_id]->setPitchbendRange(configuration.dexed[instance_id].pb_step);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_pb_step)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3068,7 +3068,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 70:
             configuration.dexed[instance_id].mw_range = constrain(sysex[5], MW_RANGE_MIN, MW_RANGE_MAX);
             MicroDexed[instance_id]->setModWheelRange(configuration.dexed[instance_id].mw_range);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mw_range)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3076,7 +3076,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 71:
             configuration.dexed[instance_id].mw_assign = constrain(sysex[5], MW_ASSIGN_MIN, MW_ASSIGN_MAX);
             MicroDexed[instance_id]->setModWheelTarget(configuration.dexed[instance_id].mw_assign);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mw_assign)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3084,7 +3084,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 72:
             configuration.dexed[instance_id].fc_range = constrain(sysex[5], FC_RANGE_MIN, FC_RANGE_MAX);
             MicroDexed[instance_id]->setFootControllerRange(configuration.dexed[instance_id].fc_range);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_fc_range)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3092,7 +3092,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 73:
             configuration.dexed[instance_id].fc_assign = constrain(sysex[5], FC_ASSIGN_MIN, FC_ASSIGN_MAX);
             MicroDexed[instance_id]->setFootControllerTarget(configuration.dexed[instance_id].fc_assign);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_fc_assign)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3100,7 +3100,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 74:
             configuration.dexed[instance_id].bc_range = constrain(sysex[5], BC_RANGE_MIN, BC_RANGE_MAX);
             MicroDexed[instance_id]->setBreathControllerRange(configuration.dexed[instance_id].bc_range);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_bc_range)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3108,7 +3108,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 75:
             configuration.dexed[instance_id].bc_assign = constrain(sysex[5], BC_ASSIGN_MIN, BC_ASSIGN_MAX);
             MicroDexed[instance_id]->setBreathControllerTarget(configuration.dexed[instance_id].bc_assign);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_bc_assign)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3116,7 +3116,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 76:
             configuration.dexed[instance_id].at_range = constrain(sysex[5], AT_RANGE_MIN, AT_RANGE_MAX);
             MicroDexed[instance_id]->setAftertouchRange(configuration.dexed[instance_id].at_range);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_at_range)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
@@ -3124,7 +3124,7 @@ void handleSystemExclusive(byte* sysex, uint len) {
           case 77:
             configuration.dexed[instance_id].at_assign = constrain(sysex[5], AT_ASSIGN_MIN, AT_ASSIGN_MAX);
             MicroDexed[instance_id]->setAftertouchTarget(configuration.dexed[instance_id].at_assign);
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_at_assign)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
