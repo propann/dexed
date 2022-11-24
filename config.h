@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.4"
+#define VERSION "1.4.7.5"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -180,9 +180,6 @@
 #define DEFAULT_BRAIDS_MIDI_CHANNEL 6
 #endif
 
-// MULTIBAND COMPRESSOR
-#define USE_MULTIBAND
-
 #define VIRT_KEYB_YPOS 166
 
 // CHORUS parameters
@@ -196,9 +193,6 @@
 #define SGTL5000_AUDIO_ENHANCE 1
 //#define SGTL5000_AUDIO_THRU 1
 #define SGTL5000_HEADPHONE_VOLUME 0.8
-#endif
-#if defined(TEENSY4)
-#define USE_PLATEREVERB 1
 #endif
 
 // DELAYTIME

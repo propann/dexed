@@ -47,17 +47,6 @@
 #include "TeensyVariablePlaybackFlash.h"
 #endif
 
-#ifdef COMPILE_FOR_QSPI
-#include <LittleFS.h>
-LittleFS_QSPIFlash myfs;
-//LittleFS_Program         myfs;
-#define PROG_FLASH_SIZE 960 * 1024 * 7  // Specify size to use of onboard Teensy Program Flash chip
-char szDiskMem[] = "QSPI_DISK";
-uint32_t diskSize;
-//#include "TeensyVariablePlaybackQSPI.h"
-#include <TeensyVariablePlayback.h>
-#endif
-
 #ifdef USE_BRAIDS
 #include <synth_braids.h>
 // Allocate the delay lines for left and right channels
@@ -75,9 +64,7 @@ using namespace TeensyTimerTool;
 #include "microsynth.h"
 #endif
 
-#ifdef USE_MULTIBAND
 #include "effect_dynamics.h"
-#endif
 
 #include "midi_devices.hpp"
 #include "synth_dexed.h"
@@ -117,9 +104,7 @@ bool bootup_performance_loading = true;
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
 
-#ifdef USE_MULTIBAND
 extern void handle_touchscreen_multiband();
-#endif
 
 Realtime_Scope scope;
 
@@ -230,10 +215,8 @@ AudioMixer<2> audio_thru_mixer_r;
 AudioMixer<2> audio_thru_mixer_l;
 #endif
 
-#ifdef USE_MULTIBAND
 AudioMixer<2> finalized_mixer_r;
 AudioMixer<2> finalized_mixer_l;
-#endif
 
 AudioPlaySdWav WAV_preview_SD;
 
@@ -246,12 +229,6 @@ AudioPlaySerialflashRaw WAV_preview_FLASH;
 
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp* Drum[NUM_DRUMS];
-//AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
-#endif
-
-#ifdef COMPILE_FOR_QSPI
-//AudioPlayQSPIResmp*          Drum[NUM_DRUMS];
-AudioPlayLfsResmp* Drum[NUM_DRUMS];
 //AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
 #endif
 
@@ -269,8 +246,8 @@ AudioMixer<NUM_DRUMS> drum_mixer_l;
 AudioAnalyzePeak drum_mixer_peak_r;
 AudioAnalyzePeak drum_mixer_peak_l;
 
-AudioMixer<8> drum_reverb_send_mixer_r;
-AudioMixer<8> drum_reverb_send_mixer_l;
+AudioMixer<NUM_DRUMS> drum_reverb_send_mixer_r;
+AudioMixer<NUM_DRUMS> drum_reverb_send_mixer_l;
 #endif
 
 AudioAnalyzePeak reverb_return_peak_r;
@@ -304,7 +281,6 @@ AudioOutputUSB usb1;
 AudioInputI2S i2s1in;
 #endif
 
-#ifdef USE_MULTIBAND
 AudioFilterBiquad mb_filter_l_0;
 AudioFilterBiquad mb_filter_l_1;
 AudioFilterBiquad mb_filter_l_2;
@@ -351,7 +327,6 @@ AudioAnalyzePeak mb_before_l;
 AudioAnalyzePeak mb_before_r;
 AudioAnalyzePeak mb_after_l;
 AudioAnalyzePeak mb_after_r;
-#endif
 
 // WAV/AUDIO Recording
 AudioRecordQueue record_queue_l;
@@ -364,19 +339,16 @@ File frec;
 AudioConnection patchCord[] = {
 // Audio chain tail
 #if defined(USE_FX)
-#ifdef USE_PLATEREVERB
   { reverb_mixer_r, 0, reverb, 0 },
   { reverb_mixer_l, 0, reverb, 1 },
   { reverb, 0, master_mixer_r, MASTER_MIX_CH_REVERB },
   { reverb, 1, master_mixer_l, MASTER_MIX_CH_REVERB },
-#endif
 #endif
   { master_mixer_l, volume_l },
   { master_mixer_r, volume_r },
   { volume_l, 0, stereo2mono, 1 },
   { volume_r, 0, stereo2mono, 0 },
 
-#ifdef USE_MULTIBAND
   { master_mixer_l, 0, master_peak_l, 0 },
   { master_mixer_r, 0, master_peak_r, 0 },
 
@@ -385,10 +357,6 @@ AudioConnection patchCord[] = {
 
   { mb_mixer_l, 0, mb_after_l, 0 },
   { mb_mixer_r, 0, mb_after_r, 0 },
-#else
-  { stereo2mono, 0, master_peak_l, 0 },
-  { stereo2mono, 0, master_peak_r, 0 },
-#endif
 
   //Realtime Scope
   { stereo2mono, 0, scope, 0 },
@@ -397,7 +365,6 @@ AudioConnection patchCord[] = {
 #if defined(TEENSY_AUDIO_BOARD)
 #ifndef SGTL5000_AUDIO_THRU
 
-#ifdef USE_MULTIBAND
   { stereo2mono, 0, finalized_mixer_l, 0 },
   { stereo2mono, 1, finalized_mixer_r, 0 },
 
@@ -418,14 +385,10 @@ AudioConnection patchCord[] = {
 
   { finalized_mixer_l, 0, i2s1, 0 },
   { finalized_mixer_r, 0, i2s1, 1 },
-#else
-  { stereo2mono, 0, i2s1, 0 },
-  { stereo2mono, 1, i2s1, 1 },
-#endif
+
 #endif
 #elif defined(I2S_AUDIO_ONLY)
 
-#ifdef USE_MULTIBAND
   { stereo2mono, 0, finalized_mixer_l, 0 },
   { stereo2mono, 1, finalized_mixer_r, 0 },
 
@@ -451,10 +414,6 @@ AudioConnection patchCord[] = {
   { finalized_mixer_l, 0, record_queue_l, 0 },
   { finalized_mixer_r, 0, record_queue_r, 0 },
 
-#else
-  { stereo2mono, 0, i2s1, 0 },
-  { stereo2mono, 1, i2s1, 1 },
-#endif
 
 #elif defined(TGA_AUDIO_BOARD)
   { stereo2mono, 0, i2s1, 0 },
@@ -472,13 +431,8 @@ AudioConnection patchCord[] = {
 #endif
 
 #ifdef AUDIO_DEVICE_USB
-#ifdef USE_MULTIBAND
   { finalized_mixer_l, 0, usb1, 0 },
   { finalized_mixer_r, 0, usb1, 1 },
-#else
-  { stereo2mono, 0, usb1, 0 },
-  { stereo2mono, 1, usb1, 1 },
-#endif
 #endif
 
 #if defined(TEENSY_AUDIO_BOARD) && defined(SGTL5000_AUDIO_THRU)
@@ -741,11 +695,6 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id) {
 #ifdef COMPILE_FOR_FLASH
   Drum[instance_id] = new AudioPlayFlashResmp();
   //Drum[instance_id] = new AudioPlaySerialflashRaw();
-#endif
-
-#ifdef COMPILE_FOR_QSPI
-  //Drum[instance_id] = new AudioPlayQSPIResmp();
-  Drum[instance_id] = new AudioPlayLfsResmp(myfs);
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -1188,23 +1137,6 @@ void setup() {
   }
 #endif
 
-#ifdef COMPILE_FOR_QSPI
-  diskSize = PROG_FLASH_SIZE;
-  // Serial (QSPI) Flash Init
-#ifdef DEBUG
-  Serial.println(F("Initializing Flash Chip"));
-#endif
-  //if (!myfs.begin(diskSize)) { //progmem
-  if (!myfs.begin()) {
-#ifdef DEBUG
-    Serial.printf_P(PSTR"Error starting %s\n"), szDiskMem);
-#endif
-    while (1)
-      ;
-  }
-
-#endif
-
   // Start SD card
   sd_card = check_sd_cards();
 
@@ -1332,12 +1264,10 @@ void setup() {
   audio_thru_mixer_l.gain(3, 0.0);
 #endif
 
-#ifdef USE_MULTIBAND
   finalized_mixer_l.gain(0, VOL_MAX_FLOAT);  //normal output, mute multiband
   finalized_mixer_r.gain(0, VOL_MAX_FLOAT);
   finalized_mixer_l.gain(1, 0);
   finalized_mixer_r.gain(1, 0);
-#endif
 
 #ifdef DEBUG
   Serial.println(F("<setup end>"));
@@ -1629,15 +1559,11 @@ void loop() {
     handle_touchscreen_menu();
     display.console = false;
     scope.draw_scope(230, 18, 87);
-  }
-#ifdef USE_MULTIBAND
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics)) {
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics)) {
     display.console = true;
     scope.draw_scope(188, -5, 128);
     handle_touchscreen_multiband();
-  }
-#endif
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select)) {
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select)) {
     handle_touchscreen_voice_select();
     display.console = true;
     scope.draw_scope(217, 30, 102);
@@ -1935,7 +1861,7 @@ void playWAVFile(const char* filename) {
 
 bool msp_playmode_sample_slot[NUM_DRUMS];  // needs to be moved in COMPILE_FOR_FLASH
 //#ifdef COMPILE_FOR_FLASH
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+#if defined(COMPILE_FOR_FLASH)
 
 
 void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
@@ -2201,7 +2127,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       }
     }
 
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+#if defined(COMPILE_FOR_FLASH)
     // Multisamples
     //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
     for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++) {
@@ -2341,7 +2267,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
         for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++) {
           if (inNumber == drum_config[d].midinote) {
 
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+#if defined(COMPILE_FOR_FLASH)
             char temp_name[26];
 #endif
 
@@ -2372,7 +2298,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                 Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_QSPI)
+#if defined(COMPILE_FOR_FLASH)
                 snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
@@ -3398,11 +3324,9 @@ void handleStart(void) {
   seq.arp_note = 0;
   seq.arp_chord = 0;
 
-#ifdef USE_MULTIBAND
   mb_set_mutes();
   mb_set_compressor();
   mb_set_master();
-#endif
 
   if (seq.loop_start == 99)  // no loop start set, start at step 0
     seq.current_song_step = 0;

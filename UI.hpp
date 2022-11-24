@@ -82,7 +82,6 @@ int gamepad_1_neutral;
 bool remote_touched;
 extern void draw_menu_ui_icons();
 
-#ifdef USE_MULTIBAND
 uint16_t mb_cross_freq_low = 140;
 uint16_t mb_cross_freq_mid = 2100;
 uint16_t mb_cross_freq_upper_mid = 5200;
@@ -127,7 +126,6 @@ extern AudioMixer<4> mb_mixer_r;
 extern AudioMixer<2> finalized_mixer_r;
 extern AudioMixer<2> finalized_mixer_l;
 extern void clear_volmeter(int x, int y);
-#endif
 
 #define _LCDML_DISP_cols display_cols
 #define _LCDML_DISP_rows display_rows
@@ -10555,7 +10553,6 @@ FLASHMEM void not_available_message() {
   helptext_l("BACK");
 }
 
-#ifdef USE_MULTIBAND
 FLASHMEM void print_mb_params() {
   display.setTextSize(1);
   setCursor_textGrid_small(12, 1);
@@ -10596,9 +10593,7 @@ FLASHMEM void print_mb_params() {
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(" ");
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_set_mutes() {
   if (mb_solo_low) {
     mb_mixer_l.gain(0, VOL_MAX_FLOAT + mb_global_gain + mb_gain_low);
@@ -10639,9 +10634,7 @@ FLASHMEM void mb_set_mutes() {
     mb_mixer_r.gain(3, 1.0 + mb_global_gain + mb_gain_high);
   }
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_set_master() {
   if (multiband_active) {
     finalized_mixer_l.gain(0, 0);  //mute normal output
@@ -10656,9 +10649,7 @@ FLASHMEM void mb_set_master() {
     finalized_mixer_r.gain(1, 0);
   }
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_set_compressor() {
   //  mb_compressor_l_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
   //  mb_compressor_r_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
@@ -10733,9 +10724,7 @@ FLASHMEM void mb_set_compressor() {
   //  mb_filter_l_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
   //  mb_filter_r_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_print_solo_buttons() {
   if (generic_temp_select_menu == 3 && generic_active_function == 0) {
     if (mb_solo_high) draw_button_on_grid(9, 8, "SOLO", "ON ", 1);
@@ -10769,9 +10758,7 @@ FLASHMEM void mb_print_solo_buttons() {
     else draw_button_on_grid(9, 26, "SOLO", "  ", mb_solo_low);
   }
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_print_threshold_buttons() {
   char temp_char[4];
   if (generic_temp_select_menu == 7 && generic_active_function == 0)
@@ -10802,9 +10789,7 @@ FLASHMEM void mb_print_threshold_buttons() {
   else if (generic_temp_select_menu == 21)
     draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 0);
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_print_freq_and_q() {
   for (int y = 0; y < 4; y++) {
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -10878,9 +10863,7 @@ FLASHMEM void mb_print_freq_and_q() {
     }
   }
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void mb_clear_caches() {
   memset(ts.displayed_peak, 0, sizeof(ts.displayed_peak));
   clear_volmeter(CHAR_width_small * 1, 228);
@@ -10888,9 +10871,7 @@ FLASHMEM void mb_clear_caches() {
   clear_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228);
   clear_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228);
 }
-#endif
 
-#ifdef USE_MULTIBAND
 FLASHMEM void UI_func_multiband_dynamics(uint8_t param) {
   char temp_char[4];
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -11123,17 +11104,6 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
-#else
-FLASHMEM void UI_func_multiband_dynamics(uint8_t param) {
-  if (LCDML.FUNC_setup())
-    not_available_message();
-  if (LCDML.FUNC_close()) {
-    display.fillScreen(COLOR_BACKGROUND);
-    encoderDir[ENC_R].reset();
-  }
-}
-#endif
-
 
 void startRecording() {
   display.setTextSize(2);
@@ -16458,12 +16428,12 @@ FLASHMEM void UI_func_format_flash(uint8_t param) {
     display.print(F("FORMAT FLASH?  "));
     setCursor_textGrid(1, 2);
     display.print(F("PUSH TO CONFIRM"));
-#if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
+#if (defined COMPILE_FOR_FLASH)
     print_flash_stats();
 #endif
     display.setTextSize(2);
   }
-#if (defined COMPILE_FOR_FLASH) || (defined COMPILE_FOR_QSPI)
+#if (defined COMPILE_FOR_FLASH)
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
 #ifdef COMPILE_FOR_FLASH
@@ -16520,37 +16490,6 @@ FLASHMEM void UI_func_format_flash(uint8_t param) {
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         }
       }
-    }
-#endif
-
-#ifdef COMPILE_FOR_QSPI
-    if (LCDML.BT_checkEnter())  // SPI FLASH
-    {
-      setCursor_textGrid(1, 4);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.print(F("FLASH MEMORY HAS"));
-      setCursor_textGrid(1, 5);
-      display.print(myfs.totalSize());
-      display.print(F(" BYTES."));
-      setCursor_textGrid(1, 7);
-      myfs.quickFormat();
-      //Serial.println(F("LittleFS initialized."));
-
-      //      uint32_t timeMe;
-      //      timeMe = micros();
-      //      //  myfs.lowLevelFormat('.');
-      //      timeMe = micros() - timeMe;
-      //      setCursor_textGrid(1, 10);
-      //      display.print( timeMe );
-
-      display.fillRect(0, 7 * CHAR_height, DISPLAY_WIDTH, DISPLAY_HEIGHT, COLOR_BACKGROUND);
-      setCursor_textGrid(1, 2);
-      display.setTextColor(GREEN, COLOR_BACKGROUND);
-      display.print(F("done!           "));
-      helptext_l("BACK");
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      print_flash_stats();
-      display.setTextSize(2);
     }
 #endif
   }

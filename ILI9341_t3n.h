@@ -105,16 +105,9 @@
 #ifdef __cplusplus
 // At all other speeds, _pspi->beginTransaction() will use the fastest available
 // clock
-#ifdef KINETISK
-#define ILI9341_SPICLOCK 30000000
+
+#define ILI9341_SPICLOCK 60000000
 #define ILI9341_SPICLOCK_READ 2000000
-#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)  // Teensy 4.x
-#define ILI9341_SPICLOCK 30000000u
-#define ILI9341_SPICLOCK_READ 2000000
-#else
-#define ILI9341_SPICLOCK 30000000
-#define ILI9341_SPICLOCK_READ 2000000
-#endif
 
 class ILI9341_t3n : public Print {
 public:
