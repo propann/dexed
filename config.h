@@ -120,8 +120,8 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-//#define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
-#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
+#define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
+//#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 
 //*************************************************************************************************
