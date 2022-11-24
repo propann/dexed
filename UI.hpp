@@ -2435,10 +2435,10 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
 
   if (show_zero == false && input_value == 0)
     display.print(F("OFF"));
-  else if(limit_min < 0)
+  else if (limit_min < 0)
     print_formatted_number_signed(input_value, 2);
-  else if(limit_max <= 99) {
-    setCursor_textGrid_small(x+1, y);
+  else if (limit_max <= 99) {
+    setCursor_textGrid_small(x + 1, y);
     print_formatted_number(input_value, 2);
   } else
     print_formatted_number(input_value, 3);
@@ -2446,18 +2446,18 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
   if (show_bar) {
     display.console = true;
 
-    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, input_value==0 ? GREY2 : COLOR_SYSTEXT);
+    display.drawRect(CHAR_width_small * x + 4 * CHAR_width_small, 10 * y, 5 * CHAR_width_small, 7, input_value == 0 ? GREY2 : COLOR_SYSTEXT);
 
-    if(limit_min>=0) { // filled bar
-      uint8_t split = (5 * CHAR_width_small - 2) * (input_value-limit_min) / (limit_max-limit_min);
+    if (limit_min >= 0) {  // filled bar
+      uint8_t split = (5 * CHAR_width_small - 2) * (input_value - limit_min) / (limit_max - limit_min);
       display.console = true;
       if (split < 5 * CHAR_width_small - 2)
         display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1 + split, 10 * y + 1, 5 * CHAR_width_small - 2 - split, 5, COLOR_BACKGROUND);
       display.console = true;
       if (split > 0)
         display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, split, 5, COLOR_PITCHSMP);
-    } else { // pan bar
-      uint8_t split = (5 * CHAR_width_small - 2 - 3) * (input_value-limit_min) / (limit_max-limit_min);
+    } else {  // pan bar
+      uint8_t split = (5 * CHAR_width_small - 2 - 3) * (input_value - limit_min) / (limit_max - limit_min);
       display.console = true;
       display.fillRect(CHAR_width_small * x + 4 * CHAR_width_small + 1, 10 * y + 1, 5 * CHAR_width_small - 2, 7 - 2, COLOR_BACKGROUND);
       display.console = true;
@@ -2501,50 +2501,51 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
 
 FLASHMEM int16_t encoder_change(bool fast) {
   int16_t dir = 0;
-  if(LCDML.BT_checkDown()) dir= 1;
-  if(LCDML.BT_checkUp()  ) dir=-1;
+  if (LCDML.BT_checkDown()) dir = 1;
+  if (LCDML.BT_checkUp()) dir = -1;
 
-  if(fast) return dir * (ENCODER[ENC_R].speed() + ENCODER[ENC_L].speed());
-  else     return dir;
+  //if(fast) return dir * (ENCODER[ENC_R].speed() + ENCODER[ENC_L].speed());
+  if (fast) return dir * (ENCODER[ENC_R].speed());
+  else return dir;
 }
 
-struct param_editor{
+struct param_editor {
   const char* name;
   int16_t limit_min, limit_max;
   bool fast;
-  uint8_t x,y;
+  uint8_t x, y;
   uint8_t select_id;
 
   void* value;
-  int16_t(*getter  )(struct param_editor* param);
-  void   (*setter  )(struct param_editor* param, int16_t value);
-  void   (*renderer)(struct param_editor* param, bool refresh);
+  int16_t (*getter)(struct param_editor* param);
+  void (*setter)(struct param_editor* param, int16_t value);
+  void (*renderer)(struct param_editor* param, bool refresh);
 
   int16_t get() {
-    if(getter!=NULL)     return getter(this);
+    if (getter != NULL) return getter(this);
     return 0;
   };
   void set(int16_t _value) {
-    if(setter!=NULL)     setter(this,_value);
+    if (setter != NULL) setter(this, _value);
   };
 
   void draw_editor(bool refresh) {
-    if(renderer != NULL) {
-      renderer(this,refresh);
+    if (renderer != NULL) {
+      renderer(this, refresh);
       return;
     }
     display.setTextSize(1);
-    if(!refresh) {
-      setCursor_textGrid_small(this->x+10, this->y);
+    if (!refresh) {
+      setCursor_textGrid_small(this->x + 10, this->y);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       display.print(this->name);
     }
-    print_small_scaled_bar  (x, y, get(), limit_min, limit_max, select_id, 1, 1);
+    print_small_scaled_bar(x, y, get(), limit_min, limit_max, select_id, 1, 1);
   };
 
   void handle_parameter_editor() {
     int16_t change = encoder_change(fast);
-    if(change != 0) {
+    if (change != 0) {
       set(constrain(get() + change, limit_min, limit_max));
       draw_editor(true);
     }
@@ -2553,29 +2554,30 @@ struct param_editor{
 
 #define UI_MAX_EDITORS 64
 struct UI {
-  uint8_t x,y;
+  uint8_t x, y;
   uint8_t num_editors;
   struct param_editor editors[UI_MAX_EDITORS];
-  struct param_editor* encoderLeftHandler=NULL;
-  struct param_editor* buttonLongHandler=NULL;
- 
+  struct param_editor* encoderLeftHandler = NULL;
+  struct param_editor* buttonLongHandler = NULL;
+
   void clear() {
     display.fillScreen(COLOR_BACKGROUND);
     border0();
     helptext_l("BACK");
-    num_editors=0;
-    buttonLongHandler=NULL;
-    encoderLeftHandler=NULL;
+    num_editors = 0;
+    buttonLongHandler = NULL;
+    encoderLeftHandler = NULL;
   };
 
   void reset() {
     clear();
-    seq.edit_state=0;
-    generic_temp_select_menu=0;
+    seq.edit_state = 0;
+    generic_temp_select_menu = 0;
   };
 
   void setCursor(uint8_t _x, uint8_t _y) {
-    x=_x; y=_y;
+    x = _x;
+    y = _y;
   };
 
   void printLn(const char* text) {
@@ -2587,12 +2589,11 @@ struct UI {
   }
 
   void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
-    int16_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, int16_t value),
-    void   (*renderer)(struct param_editor* param, bool refresh)
-  ) {
-    editors[num_editors]=(struct param_editor){
-      name, limit_min, limit_max, limit_max-limit_min > 32, x, y, num_editors, valuePtr,
+                       int16_t (*getter)(struct param_editor* param),
+                       void (*setter)(struct param_editor* param, int16_t value),
+                       void (*renderer)(struct param_editor* param, bool refresh)) {
+    editors[num_editors] = (struct param_editor){
+      name, limit_min, limit_max, limit_max - limit_min > 32, x, y, num_editors, valuePtr,
       getter, setter, renderer
     };
     editors[num_editors].draw_editor(false);
@@ -2602,65 +2603,71 @@ struct UI {
 
   // editor providing default float32_t getter + setters if missed out
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
-    int16_t(*getter)(struct param_editor* param) = NULL,
-    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
-    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
-  ) {
+                 int16_t (*getter)(struct param_editor* param) = NULL,
+                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
+                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((float32_t*)editor->value) * 100;},
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((float32_t*)editor->value) = value / 100.f;},
-      renderer
-    );
+      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+        return *((float32_t*)editor->value) * 100;
+      },
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+        *((float32_t*)editor->value) = value / 100.f;
+      },
+      renderer);
   };
 
   // editor providing default uint8_t getter + setters if missed out
   void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-    int16_t(*getter)(struct param_editor* param) = NULL,
-    void   (*setter)(struct param_editor* param, int16_t value) = NULL,
-    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
-  ) {
+                 int16_t (*getter)(struct param_editor* param) = NULL,
+                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
+                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
-      renderer
-    );
+      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+        return *((uint8_t*)editor->value);
+      },
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+        *((uint8_t*)editor->value) = value;
+      },
+      renderer);
   };
 
   // editor providing custom getter + setters dont using valuePtr
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
-    int16_t(*getter)(struct param_editor* param),
-    void   (*setter)(struct param_editor* param, int16_t value),
-    void   (*renderer)(struct param_editor* param, bool refresh) = NULL
-  ) {
+                 int16_t (*getter)(struct param_editor* param),
+                 void (*setter)(struct param_editor* param, int16_t value),
+                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, NULL,
-      getter != NULL ? getter : [](struct param_editor* editor)->int16_t{return *((uint8_t*)editor->value);},
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value)->void{*((uint8_t*)editor->value)=value;},
-      renderer
-    );
+      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+        return *((uint8_t*)editor->value);
+      },
+      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+        *((uint8_t*)editor->value) = value;
+      },
+      renderer);
   };
 
   void enableButtonLongEditor() {
-    buttonLongHandler = &editors[num_editors-1];
+    buttonLongHandler = &editors[num_editors - 1];
   }
 
   void enableLeftEncoderEditor() {
-    encoderLeftHandler = &editors[num_editors-1];
+    encoderLeftHandler = &editors[num_editors - 1];
   }
 
   void handle_parameter_navigation() {
     if (seq.edit_state == 0) {
       uint8_t last = generic_temp_select_menu;
-      generic_temp_select_menu = constrain(generic_temp_select_menu+encoder_change(false), 0, num_editors-1);
-      editors[last]                    .draw_editor(true);
+      generic_temp_select_menu = constrain(generic_temp_select_menu + encoder_change(false), 0, num_editors - 1);
+      editors[last].draw_editor(true);
       editors[generic_temp_select_menu].draw_editor(true);
     }
   };
 
   void draw_editors(bool refresh) {
-    for(uint8_t i=0; i<num_editors; i++)
+    for (uint8_t i = 0; i < num_editors; i++)
       editors[i].draw_editor(refresh);
   };
 
@@ -2675,25 +2682,25 @@ struct UI {
   void handle_input() {
     // toggle between navigate and value editing
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
-      seq.edit_state=1-seq.edit_state;
+      seq.edit_state = 1 - seq.edit_state;
       editors[generic_temp_select_menu].draw_editor(true);
     }
 
     // set currently selected editor or the editor's value by right encoder
-    if(encoder_changed(ENC_R)) {
-      if (seq.edit_state == 0) 
+    if (encoder_changed(ENC_R)) {
+      if (seq.edit_state == 0)
         handle_parameter_navigation();
       else
         handle_current_editor();
     }
 
     // optionally set a specific editor's value by left encoder
-    if(encoderLeftHandler && encoder_changed(ENC_L)) {
+    if (encoderLeftHandler && encoder_changed(ENC_L)) {
       encoderLeftHandler->handle_parameter_editor();
     }
     // optionally toggle a specific editor by long button press
-    if(buttonLongHandler && encoderDir[ENC_R].ButtonLong()) {
-      buttonLongHandler->set(1 - buttonLongHandler->get()); // toggle value between 0 and 1
+    if (buttonLongHandler && encoderDir[ENC_R].ButtonLong()) {
+      buttonLongHandler->set(1 - buttonLongHandler->get());  // toggle value between 0 and 1
       buttonLongHandler->draw_editor(true);
     }
   };
@@ -3089,7 +3096,7 @@ FLASHMEM void lcdml_menu_control(void) {
     Serial.println(F("ENC-R long recognized"));
 #endif
     encoderDir[ENC_R].ButtonLong(true);
-    if (ui.buttonLongHandler!=NULL || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
+    if (ui.buttonLongHandler != NULL || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
       LCDML.BT_enter();
       LCDML.OTHER_updateFunc();
       LCDML.loop_menu();
@@ -3439,7 +3446,7 @@ void draw_instance_editor(struct param_editor* editor, bool refresh) {
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
 
-  if(!refresh) {
+  if (!refresh) {
     display.setCursor(CHAR_width_small * 34, 6);
     display.print(F("OR LONG PUSH "));
     display.setTextColor(RED, COLOR_BACKGROUND);
@@ -3447,23 +3454,25 @@ void draw_instance_editor(struct param_editor* editor, bool refresh) {
   }
 
   display.setCursor(CHAR_width_small * 10, 6);
-  if(generic_temp_select_menu == editor->select_id) {
+  if (generic_temp_select_menu == editor->select_id) {
     setModeColor(editor->select_id);
     display.print(F("SELECT INSTANCE  ->"));
-  }else{
+  } else {
     display.print(F("                   "));
   }
 
   UI_update_instance_icons();
-}  
+}
 
 void addInstanceEditor(
-  void   (*renderer)(struct param_editor* param, bool refresh) = &draw_instance_editor
-) {
-  ui.addEditor("INSTANCE",0,1,&selected_instance_id, NULL,
-    [](struct param_editor* editor, int16_t value)->void{selected_instance_id=value; ui.draw_editors(true);},
-    renderer
-  );
+  void (*renderer)(struct param_editor* param, bool refresh) = &draw_instance_editor) {
+  ui.addEditor(
+    "INSTANCE", 0, 1, &selected_instance_id, NULL,
+    [](struct param_editor* editor, int16_t value) -> void {
+      selected_instance_id = value;
+      ui.draw_editors(true);
+    },
+    renderer);
   ui.enableButtonLongEditor();
 }
 
@@ -5344,7 +5353,7 @@ void create_drums_ui() {
   ui.clear();  // just recreate UI without resetting selection / edit mode
 
   ui.setCursor(1, 1);
-  ui.addEditor((const char*)F(""), 0, 99, &activesample, NULL, &activesample_setter, &drum_name_renderer);
+  ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample, NULL, &activesample_setter, &drum_name_renderer);
 
   ui.setCursor(1, 4);
   ui.addEditor((const char*)F("VOLUME"), 0, 99, &drum_config[activesample].vol_max);
@@ -10359,11 +10368,11 @@ void print_static_text_master_effects() {
   display.setTextColor(RED, COLOR_BACKGROUND);
   setCursor_textGrid_small(1, 1);
   display.print(F("MASTER EFFECTS"));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextColor(COLOR_SYSTEXT, GREY4);
   setCursor_textGrid_small(1, 3);
   display.print(F("DELAY A"));
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY4);
   setCursor_textGrid_small(1, 5);
   display.print(F("TIME"));
   setCursor_textGrid_small(10, 5);
@@ -10371,7 +10380,7 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(1, 6);
   display.print(F("SYNC"));
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY4);
   setCursor_textGrid_small(1, 8);
   display.print(F("FDBK"));
   setCursor_textGrid_small(1, 9);
@@ -10379,10 +10388,10 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(1, 10);
   display.print(F("LEVEL"));
 
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextColor(COLOR_SYSTEXT, GREY3);
   setCursor_textGrid_small(17, 3);
   display.print(F("DELAY B"));
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY3);
   setCursor_textGrid_small(17, 5);
   display.print(F("TIME"));
   setCursor_textGrid_small(26, 5);
@@ -10390,7 +10399,7 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(17, 6);
   display.print(F("SYNC"));
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY3);
   setCursor_textGrid_small(17, 8);
   display.print(F("FDBK"));
   setCursor_textGrid_small(17, 9);
@@ -10398,10 +10407,10 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(17, 10);
   display.print(F("LEVEL"));
 
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextColor(COLOR_SYSTEXT, GREY4);
   setCursor_textGrid_small(33, 3);
   display.print(F("REVERB"));
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY4);
   setCursor_textGrid_small(33, 5);
   display.print(F("ROOMSIZE"));
   setCursor_textGrid_small(33, 6);
@@ -10415,12 +10424,12 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(33, 10);
   display.print(F("LEVEL"));
 
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextColor(COLOR_SYSTEXT, GREY4);
   setCursor_textGrid_small(1, 12);
 
   display.print(F("SEND LEVELS"));
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY4);
   setCursor_textGrid_small(1, 14);
   display.print(F("DX1"));
   setCursor_textGrid_small(1, 15);
@@ -10434,7 +10443,7 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(1, 19);
   display.print(F("REV"));
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY3);
   setCursor_textGrid_small(17, 14);
   display.print(F("DX2"));
   setCursor_textGrid_small(17, 15);
@@ -10448,7 +10457,7 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(17, 19);
   display.print(F("REV"));
 
-  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, GREY4);
 
   setCursor_textGrid_small(33, 14);
   display.print(F("DX1"));
@@ -10528,6 +10537,11 @@ void UI_func_master_effects(uint8_t param) {
   {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+
+    display.fillRect(0, 24, 95, DISPLAY_HEIGHT - 60, GREY4);
+    display.fillRect(98, 24, 92, DISPLAY_HEIGHT - 60, GREY3);
+    display.fillRect(193, 24, 130, DISPLAY_HEIGHT - 60, GREY4);
+
     generic_temp_select_menu = 1;
     print_static_text_master_effects();
     update_all_values_master_effects();
@@ -10539,7 +10553,6 @@ void UI_func_master_effects(uint8_t param) {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
 
       if (seq.edit_state == 0) {
-
         if (LCDML.BT_checkDown() && generic_temp_select_menu < 32) {
           generic_temp_select_menu++;
         } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 1) {
@@ -10547,15 +10560,10 @@ void UI_func_master_effects(uint8_t param) {
         }
         update_all_values_master_effects();
       }
-
       if (LCDML.BT_checkEnter()) {
-
         seq.edit_state = !seq.edit_state;
       }
-
-
       if (seq.edit_state == 1) {
-
         if (generic_temp_select_menu == 1) {  //delay time
           master_effects_set_delay_time(0);
           print_delay_time(0, 1);
@@ -14645,7 +14653,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   {
     ui.reset();
 
-    ui.setCursor(0,1);
+    ui.setCursor(0, 1);
 
     addInstanceEditor(&dexed_voice_name_renderer);
 
@@ -14666,7 +14674,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
     // operator parameters
-    ui.setCursor(27,3);
+    ui.setCursor(27, 3);
     ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
     ui.enableLeftEncoderEditor();
 
@@ -14696,73 +14704,73 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
 void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
   display.setTextSize(1);
-  if(!refresh) {
-    setCursor_textGrid_small(editor->x+10, editor->y);
+  if (!refresh) {
+    setCursor_textGrid_small(editor->x + 10, editor->y);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.print(editor->name);
   }
-  uint8_t mode=editor->get();
+  uint8_t mode = editor->get();
   setModeColor(editor->select_id);
   setCursor_textGrid_small(editor->x, editor->y);
   display.print("          ");
   setCursor_textGrid_small(editor->x, editor->y);
-  if(mode==0) display.print("LINEAR");
-  if(mode==1) display.print("REV.LINEAR");
-  if(mode==2) display.print("DIRECT");
+  if (mode == 0) display.print("LINEAR");
+  if (mode == 1) display.print("REV.LINEAR");
+  if (mode == 2) display.print("DIRECT");
 }
 
 void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
   display.setTextSize(1);
-  if(!refresh) {
-    setCursor_textGrid_small(editor->x+10, editor->y);
+  if (!refresh) {
+    setCursor_textGrid_small(editor->x + 10, editor->y);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     display.print(editor->name);
   }
 
-  uint8_t mode=editor->get();
+  uint8_t mode = editor->get();
   setModeColor(editor->select_id);
   setCursor_textGrid_small(editor->x, editor->y);
   display.print("          ");
   setCursor_textGrid_small(editor->x, editor->y);
-  if(mode & 1) display.print("PTH ");
-  if(mode & 2) display.print("AMP ");
-  if(mode & 4) display.print("EG");
+  if (mode & 1) display.print("PTH ");
+  if (mode & 2) display.print("AMP ");
+  if (mode & 4) display.print("EG");
 }
 
 void send_sysex_if_changed(uint8_t id, uint8_t* valuePtr, uint8_t* changedValuePtr) {
-  if(valuePtr == changedValuePtr) 
+  if (valuePtr == changedValuePtr)
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, id, *((uint8_t*)valuePtr), 2);
 }
 
 int16_t dexed_controller_getter(struct param_editor* editor) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
-  uint8_t* ptr = (uint8_t*)( (char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
+  uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
   return *ptr;
 }
 
 void dexed_controller_setter(struct param_editor* editor, int16_t value) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
-  uint8_t* ptr = (uint8_t*)( (char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
+  uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
   *ptr = (uint8_t)value;
 
-    MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
-    MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
-      MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
-    MicroDexed[selected_instance_id]->setBCController(configuration.dexed[selected_instance_id].bc_range, configuration.dexed[selected_instance_id].bc_assign, configuration.dexed[selected_instance_id].bc_mode);
-    MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
-    MicroDexed[selected_instance_id]->ControllersRefresh();
+  MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
+  MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
+  MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
+  MicroDexed[selected_instance_id]->setBCController(configuration.dexed[selected_instance_id].bc_range, configuration.dexed[selected_instance_id].bc_assign, configuration.dexed[selected_instance_id].bc_mode);
+  MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
+  MicroDexed[selected_instance_id]->ControllersRefresh();
 
-  send_sysex_if_changed(65, &configuration.dexed[selected_instance_id].pb_range,  (uint8_t*)editor->value);
-  send_sysex_if_changed(66, &configuration.dexed[selected_instance_id].pb_step,   (uint8_t*)editor->value);
-  send_sysex_if_changed(70, &configuration.dexed[selected_instance_id].mw_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(65, &configuration.dexed[selected_instance_id].pb_range, (uint8_t*)editor->value);
+  send_sysex_if_changed(66, &configuration.dexed[selected_instance_id].pb_step, (uint8_t*)editor->value);
+  send_sysex_if_changed(70, &configuration.dexed[selected_instance_id].mw_range, (uint8_t*)editor->value);
   send_sysex_if_changed(71, &configuration.dexed[selected_instance_id].mw_assign, (uint8_t*)editor->value);
-  send_sysex_if_changed(72, &configuration.dexed[selected_instance_id].fc_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(72, &configuration.dexed[selected_instance_id].fc_range, (uint8_t*)editor->value);
   send_sysex_if_changed(73, &configuration.dexed[selected_instance_id].fc_assign, (uint8_t*)editor->value);
-  send_sysex_if_changed(74, &configuration.dexed[selected_instance_id].bc_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(74, &configuration.dexed[selected_instance_id].bc_range, (uint8_t*)editor->value);
   send_sysex_if_changed(75, &configuration.dexed[selected_instance_id].bc_assign, (uint8_t*)editor->value);
-  send_sysex_if_changed(76, &configuration.dexed[selected_instance_id].at_range,  (uint8_t*)editor->value);
+  send_sysex_if_changed(76, &configuration.dexed[selected_instance_id].at_range, (uint8_t*)editor->value);
   send_sysex_if_changed(77, &configuration.dexed[selected_instance_id].at_assign, (uint8_t*)editor->value);
 }
 
@@ -14771,39 +14779,39 @@ FLASHMEM void UI_func_dexed_controllers(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
-    ui.setCursor(1,1);
+    ui.setCursor(1, 1);
     addInstanceEditor(&dexed_voice_name_renderer);
 
-    ui.setCursor(1,5);
+    ui.setCursor(1, 5);
     ui.printLn("PITCH BEND WHEEL");
     ui.addEditor("PB RANGE", PB_RANGE_MIN, PB_RANGE_MAX, &configuration.dexed[0].pb_range,
-      &dexed_controller_getter, &dexed_controller_setter);
-    ui.addEditor("PB STEP",  PB_STEP_MIN, PB_STEP_MAX,   &configuration.dexed[0].pb_step ,
-      &dexed_controller_getter, &dexed_controller_setter);
+                 &dexed_controller_getter, &dexed_controller_setter);
+    ui.addEditor("PB STEP", PB_STEP_MIN, PB_STEP_MAX, &configuration.dexed[0].pb_step,
+                 &dexed_controller_getter, &dexed_controller_setter);
 
     ui.printLn("");
     ui.printLn("MODULATION WHEEL");
     ui.addEditor("MW RANGE", MW_RANGE_MIN, MW_RANGE_MAX, &configuration.dexed[0].mw_range, &dexed_controller_getter, &dexed_controller_setter);
-    ui.addEditor("MW ASSIGN", MW_ASSIGN_MIN , MW_ASSIGN_MAX, &configuration.dexed[0].mw_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("MW MODE", MW_MODE_MIN , MW_MODE_MAX , &configuration.dexed[0].mw_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("MW ASSIGN", MW_ASSIGN_MIN, MW_ASSIGN_MAX, &configuration.dexed[0].mw_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("MW MODE", MW_MODE_MIN, MW_MODE_MAX, &configuration.dexed[0].mw_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
 
     ui.printLn("");
     ui.printLn("FOOT CONTROLLER");
     ui.addEditor("FC RANGE", FC_RANGE_MIN, FC_RANGE_MAX, &configuration.dexed[0].fc_range, &dexed_controller_getter, &dexed_controller_setter);
     ui.addEditor("FC ASSIGN", FC_ASSIGN_MIN, FC_ASSIGN_MAX, &configuration.dexed[0].fc_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("FC MODE", FC_MODE_MIN , FC_MODE_MAX , &configuration.dexed[0].fc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("FC MODE", FC_MODE_MIN, FC_MODE_MAX, &configuration.dexed[0].fc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
 
-    ui.setCursor(29,5+4);
+    ui.setCursor(29, 5 + 4);
     ui.printLn("BREATH CONTROLLER");
     ui.addEditor("BC RANGE", BC_RANGE_MIN, BC_RANGE_MAX, &configuration.dexed[0].bc_range, &dexed_controller_getter, &dexed_controller_setter);
     ui.addEditor("BC ASSIGN", BC_ASSIGN_MIN, BC_ASSIGN_MAX, &configuration.dexed[0].bc_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("BC MODE", BC_MODE_MIN , BC_MODE_MAX , &configuration.dexed[0].bc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("BC MODE", BC_MODE_MIN, BC_MODE_MAX, &configuration.dexed[0].bc_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
 
     ui.printLn("");
     ui.printLn("AFTERTOUCH");
     ui.addEditor("AT RANGE", AT_RANGE_MIN, AT_RANGE_MAX, &configuration.dexed[0].at_range, &dexed_controller_getter, &dexed_controller_setter);
-    ui.addEditor("AT ASSIGN", AT_ASSIGN_MIN , AT_ASSIGN_MAX, &configuration.dexed[0].at_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
-    ui.addEditor("AT MODE", AT_MODE_MIN , AT_MODE_MAX , &configuration.dexed[0].at_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
+    ui.addEditor("AT ASSIGN", AT_ASSIGN_MIN, AT_ASSIGN_MAX, &configuration.dexed[0].at_assign, &dexed_controller_getter, &dexed_controller_setter, &dexed_assign_renderer);
+    ui.addEditor("AT MODE", AT_MODE_MIN, AT_MODE_MAX, &configuration.dexed[0].at_mode, &dexed_controller_getter, &dexed_controller_setter, &dexed_mode_renderer);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
