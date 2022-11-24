@@ -2653,7 +2653,7 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
 #endif
             configuration.dexed[instance_id].pan = map(inValue, 0, 0x7f, PANORAMA_MIN, PANORAMA_MAX);
             dexed_mono2stereo[instance_id]->panorama(mapfloat(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_panorama)) {
+            if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_audio)) {
               LCDML.OTHER_updateFunc();
               LCDML.loop_menu();
             }
