@@ -2297,6 +2297,10 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons) {
     print_shortcut_navigator();
     print_song_mode_help();
     gamepad_millis = 0;
+  } else if (buttons == GAMEPAD_SELECT && key_up()) {
+    generic_temp_select_menu = 6;  //preselect BPM
+    LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
+    gamepad_millis = 0;
   } else if (seq.cycle_touch_element > 7 && buttons == GAMEPAD_SELECT && key_right()) {  // go to pattern editor
     gamepad_millis = 0;
     seq.quicknav_song_to_pattern_jump = true;
@@ -2900,9 +2904,9 @@ FLASHMEM void lcdml_menu_control(void) {
         gamepad_millis = 0;
         LCDML.OTHER_jumpToFunc(UI_func_song);
       }
-    }
-
-    else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
+    } else if (buttons == GAMEPAD_SELECT && key_down() && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_settings)) {
+      LCDML.OTHER_jumpToFunc(UI_func_song);  //go back from seq.settings to song
+    } else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
       bool reverse_y = false;
       bool xy_navigation = false;
 
@@ -5386,7 +5390,8 @@ FLASHMEM void UI_func_seq_settings(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     display.fillScreen(COLOR_BACKGROUND);
-    generic_temp_select_menu = 0;
+    if (generic_temp_select_menu != 6)  //preselect BPM when coming from song edit by quick navigation
+      generic_temp_select_menu = 0;
     generic_active_function = false;
     encoderDir[ENC_R].reset();
     display.setTextSize(1);
