@@ -461,10 +461,19 @@ FLASHMEM void virtual_keyboard_update_all_key_states() {
 void get_scaled_touch_point() {
   LCDML.SCREEN_resetTimer();
   if (remote_touched == false) {
-    ts.p = touch.getPoint();
-    // Scale from ~0->4000 to tft
+   
+    if (ts.finished_calibration){
+       ts.p = touch.getPixel();
+   // ts.p.x = map(ts.p.x, ts.calib_x_min, ts.calib_x_max, 0, TFT_HEIGHT);
+   // ts.p.y = map(ts.p.y, ts.calib_y_min, ts.calib_y_max, 0, TFT_WIDTH);
+    }
+    else
+    {
+       // Scale from ~0->4000 to tft
+       ts.p = touch.getPoint();
     ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
     ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
+    }
   }
 }
 

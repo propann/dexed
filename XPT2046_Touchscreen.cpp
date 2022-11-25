@@ -21,6 +21,7 @@
 */
 
 #include "XPT2046_Touchscreen.h"
+#include "config.h"
 
 #define Z_THRESHOLD 400
 #define Z_THRESHOLD_INT 75
@@ -54,6 +55,39 @@ extern bool remote_touched;
 TS_Point XPT2046_Touchscreen::getPoint() {
   update();
   return TS_Point(xraw, yraw, zraw);
+}
+
+TS_Point XPT2046_Touchscreen::getPixel() {
+  update();
+
+// #if defined(SWAP_AXES) && SWAP_AXES
+//   uint16_t xPixel = (uint16_t)(_cal_dx * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
+//   uint16_t yPixel = (uint16_t)(_cal_dy * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
+// #else
+  uint16_t xPixel = (uint16_t)(_cal_dx * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
+  uint16_t yPixel = (uint16_t)(_cal_dy * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
+//#endif
+
+ // this->rotateCal(xPixel, yPixel);
+
+  return TS_Point(xPixel, yPixel, zraw);
+}
+
+void XPT2046_Touchscreen::getCalibrationPoints(uint16_t &x1, uint16_t &y1, uint16_t &x2, uint16_t &y2) {
+  x1 = y1 = CAL_OFFSET;
+  x2 = DISPLAY_WIDTH - CAL_OFFSET;
+  y2 = DISPLAY_HEIGHT - CAL_OFFSET;
+}
+
+void XPT2046_Touchscreen::setCalibration (TS_Calibration cal) {
+  _cal_dx = DISPLAY_WIDTH - 2 * CAL_OFFSET;
+  _cal_dy = DISPLAY_HEIGHT - 2 * CAL_OFFSET;
+
+  _cal_vi1 = cal.vi1;
+  _cal_vj1 = cal.vj1;
+  _cal_dvi = (int32_t)cal.vi2 - cal.vi1;
+  _cal_dvj = (int32_t)cal.vj2 - cal.vj1;
+
 }
 
 bool XPT2046_Touchscreen::tirqTouched() {

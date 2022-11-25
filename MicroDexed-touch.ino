@@ -1339,7 +1339,6 @@ FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value) {
     Serial.write(lowByte(height));
     Serial.write(arr);
     Serial.write(88);
-    // delayMicroseconds(50);  //necessary to avoid random pixels in remote console
   }
 #endif
 
@@ -1779,7 +1778,7 @@ void loop() {
       if (LCDML.FUNC_getID() == 255) {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
-      } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
+      } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_calibrate_touch)) {
         draw_button_on_grid(2, 23, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
       }
@@ -1800,7 +1799,7 @@ void loop() {
       display.fillRect(2 * CHAR_width_small, 25 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
       ui_save_notification_icon = false;
       display.console = false;
-    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings)) {
+    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_calibrate_touch)) {
       display.console = true;
       display.fillRect(2 * CHAR_width_small, 23 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
       ui_save_notification_icon = false;
@@ -4088,6 +4087,12 @@ FLASHMEM void set_epiano_params(void) {
 FLASHMEM void set_sys_params(void) {
   // set initial volume
   set_volume(configuration.sys.vol, configuration.sys.mono);
+
+  if (configuration.sys.calib_x_min != configuration.sys.calib_x_max) {
+    TS_Calibration newCalibration = TS_Calibration(configuration.sys.calib_x_min, configuration.sys.calib_y_min, configuration.sys.calib_x_max, configuration.sys.calib_y_max);
+    touch.setCalibration(newCalibration);
+    ts.finished_calibration = true;
+  }
 }
 
 /******************************************************************************

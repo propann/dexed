@@ -328,12 +328,12 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD) || defined(ONBOARD_BUTTON_INTERFACE)
+
 extern uint8_t incomingSerialByte;
 bool remote_console_keystate_select;
 bool remote_console_keystate_a;
 bool remote_console_keystate_b;
-//#endif
+
 
 #ifdef COMPILE_FOR_FLASH
 extern flash_t flash_infos;
@@ -528,6 +528,7 @@ void UI_func_eq_7(uint8_t param);
 void UI_func_startup_performance(uint8_t param);
 void UI_func_startup_page(uint8_t param);
 void UI_func_map_gamepad(uint8_t param);
+void UI_func_calibrate_touch(uint8_t param);
 void UI_func_favorites(uint8_t param);
 void UI_func_epiano(uint8_t param);
 void UI_update_instance_icons();
@@ -13232,18 +13233,18 @@ FLASHMEM void _render_misc_settings() {
   display.print(F("TOUCH SCREEN ROTATION"));
   setCursor_textGrid_small(2, 11);
   display.print(F("REVERSE UI (ENCODERS ON TOP)"));
-
+  setCursor_textGrid_small(2, 12);
+  display.print(F("TOUCHSCREEN ADJUST    X MIN"));
+  setCursor_textGrid_small(2, 13);
+  display.print(F("TOUCHSCREEN ADJUST    Y MIN"));
+  setCursor_textGrid_small(36, 12);
+  display.print(F("X MAX"));
+  setCursor_textGrid_small(36, 13);
+  display.print(F("Y MAX"));
   setCursor_textGrid_small(42, 7);
-  //#ifdef USB_GAMEPAD
   print_formatted_number(configuration.sys.gamepad_speed, 3);
   setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
-  //#endif
-  // #ifndef USB_GAMEPAD
-  //   setCursor_textGrid_small(42, 7);
-  //   display.setTextColor(GREY2, COLOR_BACKGROUND);
-  //   display.print(F("N/A"));
-  // #endif
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   setCursor_textGrid_small(42, 8);
@@ -13256,10 +13257,15 @@ FLASHMEM void _render_misc_settings() {
   setCursor_textGrid_small(42, 11);
   display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
 
+  setCursor_textGrid_small(30, 12);
+  print_formatted_number(configuration.sys.calib_x_min, 3);
+  setCursor_textGrid_small(30, 13);
+  print_formatted_number(configuration.sys.calib_y_min, 3);
+
   setCursor_textGrid_small(42, 12);
-  display.setTextColor(RED, COLOR_BACKGROUND);
-  setCursor_textGrid_small(12, 21);
-  display.print(F("WRITE YOUR CHRISTMAS WISH(ES) ON DISCORD"));
+  print_formatted_number(configuration.sys.calib_x_max, 4);
+  setCursor_textGrid_small(42, 13);
+  print_formatted_number(configuration.sys.calib_y_max, 4);
 }
 
 FLASHMEM void UI_func_misc_settings(uint8_t param) {
@@ -13278,7 +13284,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
       if (LCDML.BT_checkDown()) {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 4);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 8);
         else if (generic_temp_select_menu == menu++) {
           //#ifdef USB_GAMEPAD
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -13296,12 +13302,24 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
           settings_modified = 5;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_x_min = constrain(configuration.sys.calib_x_min + ENCODER[ENC_R].speed(), 100, 999);
+          settings_modified = 6;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_x_max = constrain(configuration.sys.calib_x_max + ENCODER[ENC_R].speed(), 2800, 4000);
+          settings_modified = 7;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_y_min = constrain(configuration.sys.calib_y_min + ENCODER[ENC_R].speed(), 100, 999);
+          settings_modified = 8;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_y_max = constrain(configuration.sys.calib_y_max + ENCODER[ENC_R].speed(), 2800, 4000);
+          settings_modified = 9;
         }
 
       } else if (LCDML.BT_checkUp()) {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 4);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 8);
         else if (generic_temp_select_menu == menu++) {
           //#ifdef USB_GAMEPAD
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -13319,6 +13337,18 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
         } else if (generic_temp_select_menu == menu++) {
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
           settings_modified = 5;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_x_min = constrain(configuration.sys.calib_x_min - ENCODER[ENC_R].speed(), 100, 999);
+          settings_modified = 6;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_x_max = constrain(configuration.sys.calib_x_max - ENCODER[ENC_R].speed(), 2800, 4000);
+          settings_modified = 7;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_y_min = constrain(configuration.sys.calib_y_min - ENCODER[ENC_R].speed(), 100, 999);
+          settings_modified = 8;
+        } else if (generic_temp_select_menu == menu++) {
+          configuration.sys.calib_y_max = constrain(configuration.sys.calib_y_max - ENCODER[ENC_R].speed(), 2800, 4000);
+          settings_modified = 9;
         }
       }
     }
@@ -13338,16 +13368,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     // Gamepad settings
     setModeColor(0);
     setCursor_textGrid_small(42, 7);
-    //#ifdef USB_GAMEPAD
 
     print_formatted_number(configuration.sys.gamepad_speed, 3);
     setCursor_textGrid_small(46, 7);
     display.print(F("ms"));
-    //#endif
-    //#ifndef USB_GAMEPAD
-    //    display.setTextColor(GREY2, COLOR_BACKGROUND);
-    //    display.print(F("N/A"));
-    //#endif
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     // Screen saver starts after xx seconds
@@ -13381,6 +13405,23 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     setModeColor(4);
     setCursor_textGrid_small(42, 11);
     display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
+
+    //Manual Touch Screen Adjustments
+    setModeColor(5);
+    setCursor_textGrid_small(30, 12);
+    print_formatted_number(configuration.sys.calib_x_min, 3);
+    setModeColor(6);
+    setCursor_textGrid_small(42, 12);
+    print_formatted_number(configuration.sys.calib_x_max, 4);
+    setModeColor(7);
+    setCursor_textGrid_small(30, 13);
+    print_formatted_number(configuration.sys.calib_y_min, 3);
+    setModeColor(8);
+    setCursor_textGrid_small(42, 13);
+    print_formatted_number(configuration.sys.calib_y_max, 4);
+    //Manual Touch Screen Adjustments END
+
+
     if (settings_modified == 5) {
       if (configuration.sys.display_rotation == DISPLAY_ROTATION_DEFAULT) {
         configuration.sys.display_rotation = DISPLAY_ROTATION_INVERTED;
@@ -13397,10 +13438,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
       generic_active_function = 0;
       generic_temp_select_menu = 0;
       _render_misc_settings();
+    } else if (settings_modified > 5) {
+      set_sys_params(); //update Touch Screen Calibration
     }
-
     if (settings_modified > 0) {
-      //save_sd_sys_json();
       save_sys_flag = true;
       save_sys = SAVE_SYS_MS / 2;
       settings_modified = 0;
@@ -20688,5 +20729,109 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
       break;
   }
 }
-
 #endif
+
+static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
+  display.drawLine(x - 8, y, x - 8 + 16, y, COLOR_SYSTEXT);
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
+  display.drawLine(x, y - 8, x, y - 8 + 16, COLOR_SYSTEXT);
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
+  display.drawCircle(x, y, 8, COLOR_SYSTEXT);
+#ifdef REMOTE_CONSOLE
+  display.console = false;
+#endif
+  while (!touch.touched()) {
+    delay(10);
+  }
+
+  TS_Point p = touch.getPoint();
+
+  vi = p.x;
+  vj = p.y;
+
+  display.drawLine(x - 8, y, x - 8 + 16, y, COLOR_BACKGROUND);
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
+  display.drawLine(x, y - 8, x, y - 8 + 16, COLOR_BACKGROUND);
+#ifdef REMOTE_CONSOLE
+  display.console = true;
+#endif
+  display.drawCircle(x, y, 8, COLOR_BACKGROUND);
+#ifdef REMOTE_CONSOLE
+  display.console = false;
+#endif
+}
+
+void calibrate() {
+  uint16_t x1, y1, x2, y2;
+  uint16_t vi1, vj1, vi2, vj2;
+  touch.getCalibrationPoints(x1, y1, x2, y2);
+  calibratePoint(x1, y1, vi1, vj1);
+  delay(500);
+  calibratePoint(x2, y2, vi2, vj2);
+  TS_Calibration newCalibration = TS_Calibration(vi1, vj1, vi2, vj2);
+  configuration.sys.calib_x_min = vi1;
+  configuration.sys.calib_y_min = vj1;
+  configuration.sys.calib_x_max = vi2;
+  configuration.sys.calib_y_max = vj2;
+  ts.finished_calibration = true;
+  touch.setCalibration(newCalibration);
+  char buf[30];
+  snprintf(buf, sizeof(buf), "%d,%d,%d,%d", (int)vi1, (int)vj1, (int)vi2, (int)vj2);
+  setCursor_textGrid_small(13, 2);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print("SET CALIBRATION PARAMS:");
+  setCursor_textGrid_small(13, 4);
+  display.print(buf);
+  display.setTextColor(GREEN, COLOR_BACKGROUND);
+  setCursor_textGrid_small(13, 6);
+  display.print("FINISHED!");
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  setCursor_textGrid_small(13, 11);
+  display.print("PUSH ");
+  display.setTextColor(COLOR_SYSTEXT, RED);
+  display.print("ENC_R");
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(" TO CONTINUE ON");
+  setCursor_textGrid_small(13, 12);
+  display.print(F("TOUCH TESTING PAGE ..     "));
+  helptext_r("TESTING PAGE");
+  save_sys_flag = true;
+  save_sys = SAVE_SYS_MS / 2;
+}
+
+FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    ts.finished_calibration = false;
+    display.setTextSize(1);
+    display.fillScreen(COLOR_BACKGROUND);
+    setCursor_textGrid_small(13, 11);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(F("TOUCH CROSSHAIR POINTS"));
+    setCursor_textGrid_small(13, 12);
+    display.print(F("TO CALIBRATE TOUCHSCREEN"));
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    if (ts.finished_calibration == false)
+      calibrate();
+    if (LCDML.BT_checkEnter()) {
+      if (ts.finished_calibration)
+        LCDML.OTHER_jumpToFunc(UI_func_test_touchscreen);
+    }
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    display.fillScreen(COLOR_BACKGROUND);
+    encoderDir[ENC_R].reset();
+  }
+}

@@ -41,6 +41,17 @@ public:
   int16_t x, y, z;
 };
 
+class TS_Calibration {
+public:
+  TS_Calibration(void)
+    : vi1(0), vj1(0), vi2(0), vj2(0) {}
+
+  TS_Calibration(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+    : vi1(x1), vj1(y1), vi2(x2), vj2(y2) {}
+
+  uint16_t vi1, vj1, vi2, vj2;
+};
+
 class XPT2046_Touchscreen {
 public:
   constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255)
@@ -48,13 +59,21 @@ public:
   bool begin(SPIClass &wspi = SPI1);
 
   TS_Point getPoint();
+  TS_Point getPixel();
   bool tirqTouched();
   bool touched();
   void readData(uint16_t *x, uint16_t *y, uint8_t *z);
   bool bufferEmpty();
+  uint16_t CAL_OFFSET = 20;
   uint8_t bufferSize() {
     return 1;
   }
+  void getCalibrationPoints(uint16_t &x1, uint16_t &y1, uint16_t &x2, uint16_t &y2);
+  void setCalibration(TS_Calibration cal);
+  TS_Calibration getCalibrationObject(uint16_t vi1, uint16_t vj1, uint16_t vi2, uint16_t vj2) {
+    return TS_Calibration(vi1, vj1, vi2, vj2);
+  }
+
   void setRotation(uint8_t n) {
     rotation = n % 4;
   }
@@ -66,6 +85,8 @@ private:
   uint8_t csPin, tirqPin, rotation = 1;
   int16_t xraw = 0, yraw = 0, zraw = 0;
   uint32_t msraw = 0x80000000;
+  int32_t _cal_dx = 0, _cal_dy = 0, _cal_dvi = 0, _cal_dvj = 0;
+  uint16_t _cal_vi1 = 0, _cal_vj1 = 0;
   SPIClass *_pspi = nullptr;
 #if defined(_FLEXIO_SPI_H_)
   FlexIOSPI *_pflexspi = nullptr;

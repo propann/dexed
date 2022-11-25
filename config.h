@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.5"
+#define VERSION "1.4.7.6"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -1023,6 +1023,10 @@ typedef struct sys_s {
   uint8_t load_at_startup_page;
   uint8_t display_rotation;
   uint8_t touch_rotation;
+  uint16_t calib_x_min;
+  uint16_t calib_y_min;
+  uint16_t calib_x_max;
+  uint16_t calib_y_max;
   uint8_t screen_saver_start;  // minutes
   uint16_t gamepad_speed;      // milliseconds
   bool ui_reverse;

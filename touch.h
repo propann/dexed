@@ -20,6 +20,7 @@ typedef struct dexed_live_mod_s {
 } dexed_live_mod_t;
 
 typedef struct ts_s {
+  bool finished_calibration=false;
   uint16_t temp_col_hue = 1;
   uint8_t temp_col_sat = 240, temp_col_bright = 240;
   int slowdown_UI_input;
