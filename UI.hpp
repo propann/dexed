@@ -2917,7 +2917,7 @@ FLASHMEM void lcdml_menu_control(void) {
       }
 
 
-      if ((LCDML.FUNC_getID() > 2 && LCDML.FUNC_getID() < 36) || (LCDML.FUNC_getID() > 44 && LCDML.FUNC_getID() < 52))  //"2-line menus", reverse y
+      if ((LCDML.FUNC_getID() > 2 && LCDML.FUNC_getID() < 25) || (LCDML.FUNC_getID() > 33 && LCDML.FUNC_getID() < 41))  //"2-line menus", reverse y
       {
         reverse_y = true;
       }
