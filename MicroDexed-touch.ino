@@ -2074,9 +2074,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       braids_slot = 0;
 
     if (braids_osc.filter_mode == 0)
-      braids_mixer_filter[braids_slot]->gain(3, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.5, 1.2)));
+      braids_mixer_filter[braids_slot]->gain(3, volume_transform(mapfloat(inVelocity, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.5, 1.2)));
     else
-      braids_mixer_filter[braids_slot]->gain(braids_osc.filter_mode - 1, volume_transform(mapfloat(inVelocity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.5, 1.2)));
+      braids_mixer_filter[braids_slot]->gain(braids_osc.filter_mode - 1, volume_transform(mapfloat(inVelocity, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.5, 1.2)));
 
     braids_filter_state[braids_slot] = braids_osc.filter_freq_from;
 
@@ -2207,11 +2207,11 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
               microsynth_noise[instance_id].amplitude((microsynth[instance_id].noise_vol / 127.0) * inVelocity / 127);
               microsynth_envelope_noise[instance_id].noteOn();
               microsynth_waveform[instance_id].amplitude(mapfloat(
-                ((microsynth[instance_id].sound_intensity / 127.0) * inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
+                ((microsynth[instance_id].sound_intensity / 127.0) * inVelocity + 0.5), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 0.25f));
             } else {
               microsynth_noise[instance_id].amplitude(0.0f);
               microsynth_waveform[instance_id].amplitude(mapfloat(
-                ((microsynth[instance_id].sound_intensity / 127.0) * inVelocity + 0.5), MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.25f));
+                ((microsynth[instance_id].sound_intensity / 127.0) * inVelocity + 0.5), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 0.25f));
             }
           }
           if (microsynth[instance_id].wave == 4 || microsynth[instance_id].wave == 7) {
@@ -3659,7 +3659,7 @@ FLASHMEM void check_configuration_fx(void) {
   configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_WAVEFORM_MAX);
   configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX);
   configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX);
-  configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX);
+  configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX);
 #endif
 }
 
@@ -3713,7 +3713,7 @@ FLASHMEM void check_configuration_epiano(void) {
   configuration.epiano.lowest_note = constrain(configuration.epiano.lowest_note, EP_LOWEST_NOTE_MIN, EP_LOWEST_NOTE_MAX);
   configuration.epiano.highest_note = constrain(configuration.epiano.highest_note, EP_HIGHEST_NOTE_MIN, EP_HIGHEST_NOTE_MAX);
   configuration.epiano.transpose = constrain(configuration.epiano.transpose, EP_TRANSPOSE_MIN, EP_TRANSPOSE_MAX);
-  configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX);
+  configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
   configuration.epiano.pan = constrain(configuration.epiano.pan, PANORAMA_MIN, PANORAMA_MAX);
   configuration.epiano.velocity_sense = constrain(configuration.epiano.velocity_sense, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX);
   configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel, EP_MIDI_CHANNEL_MIN, EP_MIDI_CHANNEL_MAX);
@@ -3746,7 +3746,7 @@ FLASHMEM void init_configuration(void) {
   configuration.fx.ep_chorus_waveform = EP_CHORUS_WAVEFORM_DEFAULT;
   configuration.fx.ep_chorus_depth = EP_CHORUS_DEPTH_DEFAULT;
   configuration.fx.ep_chorus_level = EP_CHORUS_LEVEL_DEFAULT;
-  configuration.fx.ep_reverb_send = EP_REVERB_SEND_DEFAULT;
+  configuration.fx.ep_reverb_send = REVERB_SEND_DEFAULT;
 #endif
 
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
@@ -3814,7 +3814,7 @@ FLASHMEM void init_configuration(void) {
   configuration.epiano.lowest_note = EP_LOWEST_NOTE_DEFAULT;
   configuration.epiano.highest_note = EP_HIGHEST_NOTE_DEFAULT;
   configuration.epiano.transpose = EP_TRANSPOSE_DEFAULT;
-  configuration.epiano.sound_intensity = EP_SOUND_INTENSITY_DEFAULT;
+  configuration.epiano.sound_intensity = SOUND_INTENSITY_DEFAULT;
   configuration.epiano.pan = PANORAMA_DEFAULT;
   configuration.epiano.velocity_sense = EP_VELOCITY_SENSE_DEFAULT;
   configuration.epiano.midi_channel = EP_MIDI_CHANNEL_DEFAULT;
@@ -3977,8 +3977,8 @@ FLASHMEM void set_fx_params(void) {
 #endif
 
 #if defined(USE_EPIANO)
-  reverb_mixer_r.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
-  reverb_mixer_l.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
+  reverb_mixer_r.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
+  reverb_mixer_l.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
 
   // EP_CHORUS
   switch (configuration.fx.ep_chorus_waveform) {
@@ -4075,7 +4075,7 @@ FLASHMEM void set_epiano_params(void) {
   ep.setTune(mapfloat(configuration.epiano.tune, EP_TUNE_MIN, EP_TUNE_MAX, 0.0, 1.0));
   ep.setDetune(mapfloat(configuration.epiano.detune, EP_DETUNE_MIN, EP_DETUNE_MAX, 0, 1.0));
   ep.setOverdrive(mapfloat(configuration.epiano.overdrive, EP_OVERDRIVE_MIN, EP_OVERDRIVE_MAX, 0, 1.0));
-  ep.setVolume(mapfloat(configuration.epiano.sound_intensity, EP_SOUND_INTENSITY_MIN, EP_SOUND_INTENSITY_MAX, 0, 1.0));
+  ep.setVolume(mapfloat(configuration.epiano.sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 1.0));
 #ifdef DEBUG
   Serial.println(F("done."));
 #endif

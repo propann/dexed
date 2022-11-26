@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.6"
+#define VERSION "1.4.7.7"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -712,10 +712,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_CHORUS_LEVEL_MAX 100
 #define EP_CHORUS_LEVEL_DEFAULT 0
 
-#define EP_REVERB_SEND_MIN 0
-#define EP_REVERB_SEND_MAX 100
-#define EP_REVERB_SEND_DEFAULT 0
-
 #define EP_DECAY_MIN 0
 #define EP_DECAY_MAX 100
 #define EP_DECAY_DEFAULT 50
@@ -769,10 +765,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_OVERDRIVE_MAX 100
 #define EP_OVERDRIVE_DEFAULT 0
 
-#define EP_REVERB_SEND_MIN 0
-#define EP_REVERB_SEND_MAX 100
-#define EP_REVERB_SEND_DEFAULT 0
-
 #define EP_LOWEST_NOTE_MIN 21
 #define EP_LOWEST_NOTE_MAX 108
 #define EP_LOWEST_NOTE_DEFAULT EP_LOWEST_NOTE_MIN
@@ -784,10 +776,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_TRANSPOSE_MIN 0
 #define EP_TRANSPOSE_MAX 48
 #define EP_TRANSPOSE_DEFAULT 24
-
-#define EP_SOUND_INTENSITY_MIN 0
-#define EP_SOUND_INTENSITY_MAX 100
-#define EP_SOUND_INTENSITY_DEFAULT 100
 
 #define EP_MONOPOLY_MIN 0
 #define EP_MONOPOLY_MAX 1
@@ -813,11 +801,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define STARTUP_NUM_DEFAULT 0
 
 #define VOLUME_MULTIPLIER 1.4
-
-//Microsynth
-#define MS_SOUND_INTENSITY_MIN 0
-#define MS_SOUND_INTENSITY_MAX 100
-#define MS_SOUND_INTENSITY_DEFAULT 50
 
 // Buffer-size define for load/save configuration as JSON
 #define JSON_BUFFER_SIZE 12000
