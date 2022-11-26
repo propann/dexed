@@ -753,8 +753,10 @@ elapsedMillis cpu_mem_millis;
 #endif
 uint32_t cpumax = 0;
 
+sdcard_t sdcard_infos;
+
 #ifdef COMPILE_FOR_FLASH
-flash_t flash_infos;
+  flash_t flash_infos;
 #endif
 
 // uint32_t peak_dexed = 0;
@@ -847,7 +849,6 @@ extern void handle_touchscreen_braids(void);
 extern void handle_touchscreen_sample_editor(void);
 extern void handle_touchscreen_test_touchscreen(void);
 extern void sequencer_part2(void);
-extern void flash_loadDirectory(void);
 
 /***********************************************************************
    SETUP
@@ -1311,10 +1312,6 @@ void setup() {
   gamepad_buttons_neutral = joysticks[0].getButtons();
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
-
-#ifdef COMPILE_FOR_FLASH
-  flash_loadDirectory();
-#endif
 }
 
 FLASHMEM void draw_volmeter(int x, int y, uint8_t arr, float value) {
@@ -4199,29 +4196,21 @@ FLASHMEM uint8_t check_sd_cards(void) {
 #endif
     switch (card.type()) {
       case SD_CARD_TYPE_SD1:
-        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("SD1"));
-#ifdef DEBUG
-        Serial.println(F("SD1"));
-#endif
+        strcpy(sdcard_infos.type, "SD1");
         break;
       case SD_CARD_TYPE_SD2:
-        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("SD2"));
-#ifdef DEBUG
-        Serial.println(F("SD2"));
-#endif
+        strcpy(sdcard_infos.type, "SD2");
         break;
       case SD_CARD_TYPE_SDHC:
-        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("SD2"));
-#ifdef DEBUG
-        Serial.println(F("SDHC"));
-#endif
+        strcpy(sdcard_infos.type, "SDHC");
         break;
       default:
-        snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), F("UKNW"));
-#ifdef DEBUG
-        Serial.println(F("Unknown"));
-#endif
+        strcpy(sdcard_infos.type, "UKNW");
     }
+    snprintf_P(sd_string, sizeof(sd_string), PSTR("%-5s"), sdcard_infos.type);
+#ifdef DEBUG
+    Serial.println(sdcard_infos.type);
+#endif
 
     if (!volume.init(card)) {
 #ifdef DEBUG
