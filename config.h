@@ -1032,11 +1032,24 @@ typedef struct sys_s {
   bool ui_reverse;
 } sys_t;
 
+typedef struct storage_file_s {
+  char name[26];
+  uint16_t size;
+  bool isDirectory;
+} storage_file_t;
+
+typedef struct sdcard_s {
+  char type[5];
+  storage_file_t* files;
+  uint32_t used;
+  uint32_t capacity;
+} sdcard_t;
+
 #ifdef COMPILE_FOR_FLASH
 typedef struct flash_s {
-  char filenames[MAX_FLASH_FILES][MAX_FLASH_FILENAME_LEN];
-  uint32_t sum_used;
-  unsigned long chipsize;
+  storage_file_t* files;
+  uint32_t used;
+  uint32_t capacity;
 } flash_t;
 #endif
 
@@ -1075,6 +1088,15 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_EPIANO,
   REVERB_MIX_CH_MICROSYNTH,
 };
+
+enum fm_modes { 
+  FM_BROWSE_FILES,
+  FM_DELETE_FILE,
+  FM_COPY_PRESETS,
+  FM_COPY_TO_FLASH,
+  FM_COPY_TO_PC,
+  FM_PLAY_SAMPLE
+} ;
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
