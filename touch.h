@@ -60,7 +60,6 @@ typedef struct fm_s {
   int sample_screen_position_x = 0;
   bool sample_preview_playing;
   uint8_t active_window = 0;  // 0 = left window (SDCARD) , 1 = FLASH
-  char temp_name[52];
 
   uint16_t sd_sum_files = 0;
   uint8_t sd_cap_rows;
@@ -73,6 +72,7 @@ typedef struct fm_s {
   char sd_new_name[52];
   char sd_full_name[52];
   char sd_prev_dir[52];
+  char sd_temp_name[52];
 
   uint16_t flash_sum_files = 0;
   uint16_t flash_cap_rows;
@@ -80,6 +80,7 @@ typedef struct fm_s {
   uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
+  char flash_temp_name[52];
 } fm_t;
 
 #endif

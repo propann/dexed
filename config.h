@@ -1023,14 +1023,14 @@ typedef struct storage_file_s {
 
 typedef struct sdcard_s {
   char type[5];
-  storage_file_t* files;
+  storage_file_t files[200];
   uint32_t used;
   uint32_t capacity;
 } sdcard_t;
 
 #ifdef COMPILE_FOR_FLASH
 typedef struct flash_s {
-  storage_file_t* files;
+  storage_file_t files[200];
   uint32_t used;
   uint32_t capacity;
 } flash_t;
