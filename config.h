@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.7"
+#define VERSION "1.4.8"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -395,7 +395,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define MICROSYNTH_CONTROL_RATE_MS 20
 #define BRAIDS_CONTROL_RATE_MS 20
 #define SAVE_SYS_MS 5000
-#define VOL_MAX_FLOAT 0.95
+#define VOL_MAX_FLOAT 0.98
 
 #define EEPROM_MARKER 0x4243
 
@@ -484,7 +484,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define DELAY_LEVEL_MIN 0
 #define DELAY_LEVEL_MAX 100
 #define DELAY_LEVEL_DEFAULT 0
-#define DELAY_LEVEL_GLOBAL_DEFAULT 0
+#define DELAY_LEVEL_GLOBAL_DEFAULT 100
 
 #define DELAY_SYNC_MIN 0
 #define DELAY_SYNC_MAX 9
@@ -1057,6 +1057,8 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_DRUMS,
   REVERB_MIX_CH_EPIANO,
   REVERB_MIX_CH_MICROSYNTH,
+  REVERB_MIX_CH_AUX_DELAY1,
+  REVERB_MIX_CH_AUX_DELAY2,
 };
 
 #ifndef _MAPFLOAT

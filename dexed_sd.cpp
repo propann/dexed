@@ -1136,7 +1136,6 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
           configuration.fx.delay_time[i] = data_json["delay_time"][i];
           configuration.fx.delay_feedback[i] = data_json["delay_feedback"][i];
           configuration.fx.delay_level[i] = data_json["delay_level"][i];
-          configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
           configuration.fx.delay_sync[i] = data_json["delay_sync"][i];
           configuration.fx.delay_pan[i] = data_json["delay_pan"][i];
           configuration.fx.reverb_send[i] = data_json["reverb_send"][i];
@@ -1144,6 +1143,8 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
           if (configuration.fx.delay_sync[i] > 0) {
             configuration.fx.delay_time[i] = 0;
           }
+          if (data_json["delay_level_global"][i] > 0)
+           configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
         }
         configuration.fx.reverb_roomsize = data_json["reverb_roomsize"];
         configuration.fx.reverb_damping = data_json["reverb_damping"];
