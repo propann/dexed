@@ -637,12 +637,12 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_mono2stereo[instance_id], 0, master_mixer_r, MASTER_MIX_CH_DELAY1 + instance_id);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_mono2stereo[instance_id], 1, master_mixer_l, MASTER_MIX_CH_DELAY1 + instance_id);
 
-if (instance_id==1){
-//delay1 to delay2
-  dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[0],0, *global_delay_in_mixer[1],7);
-  //delay2 to delay1
- dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[1],0, *global_delay_in_mixer[0],7);
-}
+  if (instance_id == 1) {
+    //delay1 to delay2
+    dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[0], 0, *global_delay_in_mixer[1], 7);
+    //delay2 to delay1
+    dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[1], 0, *global_delay_in_mixer[0], 7);
+  }
 #ifdef DEBUG
   Serial.print(F("Dexed-Instance: "));
   Serial.println(instance_id);
@@ -1256,9 +1256,9 @@ void setup() {
   finalized_mixer_l.gain(1, 0);
   finalized_mixer_r.gain(1, 0);
 
-global_delay_in_mixer[0]->gain(7, 0.0);
-global_delay_in_mixer[1]->gain(7, 0.0);
-          
+  global_delay_in_mixer[0]->gain(7, 0.0);
+  global_delay_in_mixer[1]->gain(7, 0.0);
+
 #ifdef DEBUG
   Serial.println(F("<setup end>"));
 #endif
@@ -3928,15 +3928,7 @@ FLASHMEM void set_fx_params(void) {
     delay_mono2stereo[instance_id]->panorama(mapfloat(configuration.fx.delay_pan[instance_id], PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
     delay_fb_mixer[instance_id]->gain(1, mapfloat(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0.0, 0.8));
 
-    reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-    reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-    reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-    reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
 
-    global_delay_in_mixer[0]->gain(5, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-    global_delay_in_mixer[0]->gain(6, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-    global_delay_in_mixer[1]->gain(5, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-    global_delay_in_mixer[1]->gain(6, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
 
     if (configuration.fx.delay_level[selected_instance_id] <= DELAY_LEVEL_MIN)
       delay_fx[instance_id]->disable(0);
@@ -3956,6 +3948,19 @@ FLASHMEM void set_fx_params(void) {
     MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.filter_cutoff[instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
     MicroDexed[instance_id]->doRefreshVoice();
   }
+
+  global_delay_in_mixer[0]->gain(5, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+  global_delay_in_mixer[0]->gain(6, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+  global_delay_in_mixer[1]->gain(5, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+  global_delay_in_mixer[1]->gain(6, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+
+  global_delay_in_mixer[1]->gain(7, mapfloat(configuration.fx.delay1_to_delay2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
+  global_delay_in_mixer[0]->gain(7, mapfloat(configuration.fx.delay2_to_delay1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
+
+  reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
 
   // REVERB
   reverb.size(mapfloat(configuration.fx.reverb_roomsize, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 0.0, 1.0));
