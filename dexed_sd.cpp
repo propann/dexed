@@ -1144,8 +1144,10 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
             configuration.fx.delay_time[i] = 0;
           }
           if (data_json["delay_level_global"][i] > 0)
-           configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
+            configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
         }
+        configuration.fx.delay1_to_delay2 = data_json["delay1_to_delay2"];
+        configuration.fx.delay2_to_delay1 = data_json["delay2_to_delay1"];
         configuration.fx.reverb_roomsize = data_json["reverb_roomsize"];
         configuration.fx.reverb_damping = data_json["reverb_damping"];
         configuration.fx.reverb_lowpass = data_json["reverb_lowpass"];
@@ -1223,6 +1225,8 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
         data_json["reverb_send"][i] = configuration.fx.reverb_send[i];
         data_json["delay_to_reverb"][i] = configuration.fx.delay_to_reverb[i];
       }
+      data_json["delay1_to_delay2"] = configuration.fx.delay1_to_delay2;
+      data_json["delay2_to_delay1"] = configuration.fx.delay2_to_delay1;
       data_json["reverb_roomsize"] = configuration.fx.reverb_roomsize;
       data_json["reverb_damping"] = configuration.fx.reverb_damping;
       data_json["reverb_lowpass"] = configuration.fx.reverb_lowpass;

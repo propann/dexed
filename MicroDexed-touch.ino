@@ -167,7 +167,7 @@ AudioSynthWaveform* chorus_modulator[NUM_DEXED];
 AudioFilterBiquad* dexed_chorus_filter[NUM_DEXED];
 #endif
 AudioEffectModulatedDelay* dexed_chorus[NUM_DEXED];
-AudioMixer<7>* global_delay_in_mixer[NUM_DEXED];
+AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 AudioEffectDelay* delay_fx[NUM_DEXED];
 AudioMixer<2>* delay_mixer[NUM_DEXED];
@@ -580,7 +580,7 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   dexed_chorus_filter[instance_id] = new AudioFilterBiquad();
 #endif
   dexed_chorus[instance_id] = new AudioEffectModulatedDelay();
-  global_delay_in_mixer[instance_id] = new AudioMixer<7>();
+  global_delay_in_mixer[instance_id] = new AudioMixer<8>();
   delay_fb_mixer[instance_id] = new AudioMixer<2>();
   delay_fx[instance_id] = new AudioEffectDelay();
   delay_mixer[instance_id] = new AudioMixer<2>();
@@ -637,6 +637,12 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_mono2stereo[instance_id], 0, master_mixer_r, MASTER_MIX_CH_DELAY1 + instance_id);
   dynamicConnections[nDynamic++] = new AudioConnection(*delay_mono2stereo[instance_id], 1, master_mixer_l, MASTER_MIX_CH_DELAY1 + instance_id);
 
+if (instance_id==1){
+//delay1 to delay2
+  dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[0],0, *global_delay_in_mixer[1],7);
+  //delay2 to delay1
+ dynamicConnections[nDynamic++] = new AudioConnection(*global_delay_in_mixer[1],0, *global_delay_in_mixer[0],7);
+}
 #ifdef DEBUG
   Serial.print(F("Dexed-Instance: "));
   Serial.println(instance_id);
@@ -1250,6 +1256,9 @@ void setup() {
   finalized_mixer_l.gain(1, 0);
   finalized_mixer_r.gain(1, 0);
 
+global_delay_in_mixer[0]->gain(7, 0.0);
+global_delay_in_mixer[1]->gain(7, 0.0);
+          
 #ifdef DEBUG
   Serial.println(F("<setup end>"));
 #endif

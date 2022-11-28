@@ -230,7 +230,7 @@ extern AudioControlSGTL5000 sgtl5000;
 
 #if defined(USE_FX)
 extern AudioSynthWaveform* chorus_modulator[NUM_DEXED];
-extern AudioMixer<7>* global_delay_in_mixer[NUM_DEXED];
+extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 extern AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 extern AudioEffectDelay* delay_fx[NUM_DEXED];
 extern AudioMixer<2>* delay_mixer[NUM_DEXED];
@@ -9956,7 +9956,9 @@ void UI_func_save_performance(uint8_t param) {
 FLASHMEM void set_delay_sync(uint8_t sync, uint8_t instance) {
 
   if (seq.running == false) {
-    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / midi_bpm + 0.5);
+    // uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / midi_bpm + 0.5);
+    uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
+    delay_fx[instance]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     if (midi_sync_delay_time > DELAY_MAX_TIME) {
 #ifdef DEBUG
       Serial.println(F("Calculated MIDI-Sync delay: "));
@@ -10113,6 +10115,8 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(1, 18);
   display.print(F("BRD"));
   setCursor_textGrid_small(1, 19);
+  display.print(F("DL2"));
+  setCursor_textGrid_small(1, 20);
   display.print(F("REV"));
 
   display.setTextColor(GREY1, GREY3);
@@ -10127,10 +10131,11 @@ void print_static_text_master_effects() {
   setCursor_textGrid_small(17, 18);
   display.print(F("BRD"));
   setCursor_textGrid_small(17, 19);
+  display.print(F("DL1"));
+  setCursor_textGrid_small(17, 20);
   display.print(F("REV"));
 
   display.setTextColor(GREY1, GREY4);
-
   setCursor_textGrid_small(33, 14);
   display.print(F("DX1"));
   setCursor_textGrid_small(33, 15);
@@ -10152,10 +10157,23 @@ void print_delay_time(uint8_t instance, uint8_t param) {
   else
     setCursor_textGrid_small(22, 5);
 
-  if (configuration.fx.delay_sync[instance] > 0)
-    display.print(F("---"));
-  else
+  if (configuration.fx.delay_sync[instance] > 0) {
+    uint16_t synced_delay_time = uint16_t(60000.0 * midi_ticks_factor[configuration.fx.delay_sync[instance]] / seq.bpm);
+    if (synced_delay_time <= DELAY_MAX_TIME) {
+      print_formatted_number(synced_delay_time, 3);
+      if (seq.edit_state == 1)
+        helptext_r("SCROLL > FOR TIME IN MS");
+    } else {
+      display.print(F("---"));
+      if (seq.edit_state == 1)
+        helptext_r("NOT ENOUGH MEMORY");
+    }
+
+  } else {
     print_formatted_number(configuration.fx.delay_time[instance] * 10, 3);
+    if (seq.edit_state == 1)
+      helptext_r("SCROLL < FOR SYNCED TIME");
+  }
 }
 
 void update_all_values_master_effects() {
@@ -10164,44 +10182,46 @@ void update_all_values_master_effects() {
   print_delay_sync_status(1);
 
   print_delay_time(0, 1);
-  print_delay_time(1, 11);
+  print_delay_time(1, 12);
 
   print_small_intbar(6, 8, configuration.fx.delay_feedback[0], 2, 1, 0);
-  print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 12, 1, 0);
+  print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 13, 1, 0);
 
   print_small_panbar(6, 9, configuration.fx.delay_pan[0], 3);
-  print_small_panbar(22, 9, configuration.fx.delay_pan[1], 13);
+  print_small_panbar(22, 9, configuration.fx.delay_pan[1], 14);
 
   print_small_intbar(6, 10, configuration.fx.delay_level_global[0], 4, 1, 0);
-  print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14, 1, 0);
+  print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 15, 1, 0);
 
-  print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 21, 1, 0);
-  print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 22, 1, 0);
-  print_small_intbar(43, 7, configuration.fx.reverb_lodamp, 23, 1, 0);
-  print_small_intbar(43, 8, configuration.fx.reverb_hidamp, 24, 1, 0);
-  print_small_intbar(43, 9, configuration.fx.reverb_diffusion, 25, 1, 0);
-  print_small_intbar(43, 10, configuration.fx.reverb_level, 26, 1, 0);
+  print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 23, 1, 0);
+  print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 24, 1, 0);
+  print_small_intbar(43, 7, configuration.fx.reverb_lodamp, 25, 1, 0);
+  print_small_intbar(43, 8, configuration.fx.reverb_hidamp, 26, 1, 0);
+  print_small_intbar(43, 9, configuration.fx.reverb_diffusion, 27, 1, 0);
+  print_small_intbar(43, 10, configuration.fx.reverb_level, 28, 1, 0);
 
   print_small_intbar(6, 14, configuration.fx.delay_level[0], 5, 1, 0);
   print_small_intbar(6, 15, configuration.epiano.delay_send_1, 6, 1, 0);
   print_small_intbar(6, 16, microsynth[0].delay_send[0], 7, 1, 0);
   print_small_intbar(6, 17, microsynth[1].delay_send[0], 8, 1, 0);
   print_small_intbar(6, 18, braids_osc.delay_send_1, 9, 1, 0);
-  print_small_intbar(6, 19, configuration.fx.delay_to_reverb[0], 10, 1, 0);
+  print_small_intbar(6, 19, configuration.fx.delay1_to_delay2, 10, 1, 0);
+  print_small_intbar(6, 20, configuration.fx.delay_to_reverb[0], 11, 1, 0);
 
-  print_small_intbar(22, 14, configuration.fx.delay_level[1], 15, 1, 0);
-  print_small_intbar(22, 15, configuration.epiano.delay_send_2, 16, 1, 0);
-  print_small_intbar(22, 16, microsynth[0].delay_send[1], 17, 1, 0);
-  print_small_intbar(22, 17, microsynth[1].delay_send[1], 18, 1, 0);
-  print_small_intbar(22, 18, braids_osc.delay_send_2, 19, 1, 0);
-  print_small_intbar(22, 19, configuration.fx.delay_to_reverb[1], 20, 1, 0);
+  print_small_intbar(22, 14, configuration.fx.delay_level[1], 16, 1, 0);
+  print_small_intbar(22, 15, configuration.epiano.delay_send_2, 17, 1, 0);
+  print_small_intbar(22, 16, microsynth[0].delay_send[1], 18, 1, 0);
+  print_small_intbar(22, 17, microsynth[1].delay_send[1], 19, 1, 0);
+  print_small_intbar(22, 18, braids_osc.delay_send_2, 20, 1, 0);
+  print_small_intbar(22, 19, configuration.fx.delay2_to_delay1, 21, 1, 0);
+  print_small_intbar(22, 20, configuration.fx.delay_to_reverb[1], 22, 1, 0);
 
-  print_small_intbar(43, 14, configuration.fx.reverb_send[0], 27, 1, 0);
-  print_small_intbar(43, 15, configuration.fx.reverb_send[1], 28, 1, 0);
-  print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 29, 1, 0);
-  print_small_intbar(43, 17, microsynth[0].rev_send, 30, 1, 0);
-  print_small_intbar(43, 18, microsynth[1].rev_send, 31, 1, 0);
-  print_small_intbar(43, 19, braids_osc.rev_send, 32, 1, 0);
+  print_small_intbar(43, 14, configuration.fx.reverb_send[0], 29, 1, 0);
+  print_small_intbar(43, 15, configuration.fx.reverb_send[1], 30, 1, 0);
+  print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 31, 1, 0);
+  print_small_intbar(43, 17, microsynth[0].rev_send, 32, 1, 0);
+  print_small_intbar(43, 18, microsynth[1].rev_send, 33, 1, 0);
+  print_small_intbar(43, 19, braids_osc.rev_send, 34, 1, 0);
 }
 
 void UI_func_master_effects(uint8_t param) {
@@ -10218,6 +10238,7 @@ void UI_func_master_effects(uint8_t param) {
     print_static_text_master_effects();
     update_all_values_master_effects();
     helptext_l("BACK");
+    helptext_r("SELECT PARAM.");
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -10225,7 +10246,7 @@ void UI_func_master_effects(uint8_t param) {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
 
       if (seq.edit_state == 0) {
-        if (LCDML.BT_checkDown() && generic_temp_select_menu < 32) {
+        if (LCDML.BT_checkDown() && generic_temp_select_menu < 34) {
           generic_temp_select_menu++;
         } else if (LCDML.BT_checkUp() && generic_temp_select_menu > 1) {
           generic_temp_select_menu--;
@@ -10234,6 +10255,10 @@ void UI_func_master_effects(uint8_t param) {
       }
       if (LCDML.BT_checkEnter()) {
         seq.edit_state = !seq.edit_state;
+        if (seq.edit_state == 0 && generic_temp_select_menu == 0)
+          helptext_r("SELECT PARAM");
+        else if (seq.edit_state == 1 && generic_temp_select_menu != 0)
+          helptext_r("EDIT VALUE");
       }
       if (seq.edit_state == 1) {
         if (generic_temp_select_menu == 1) {  //delay time
@@ -10293,8 +10318,15 @@ void UI_func_master_effects(uint8_t param) {
           }
           global_delay_in_mixer[0]->gain(4, mapfloat(braids_osc.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
           print_small_intbar(6, 18, braids_osc.delay_send_1, 9, 1, 0);
-
-        } else if (generic_temp_select_menu == 10) {  //delay1 to reverb send
+        } else if (generic_temp_select_menu == 10) {  //delay1 to delay2
+          if (LCDML.BT_checkDown()) {
+            configuration.fx.delay1_to_delay2 = constrain(configuration.fx.delay1_to_delay2 + ENCODER[ENC_R].speed(), 0, DELAY_LEVEL_MAX);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.fx.delay1_to_delay2 = constrain(configuration.fx.delay1_to_delay2 - ENCODER[ENC_R].speed(), 0, DELAY_LEVEL_MAX);
+          }
+          global_delay_in_mixer[1]->gain(7, mapfloat(configuration.fx.delay1_to_delay2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
+          print_small_intbar(6, 19, configuration.fx.delay1_to_delay2, 10, 1, 0);
+        } else if (generic_temp_select_menu == 11) {  //delay1 to reverb send
           if (LCDML.BT_checkDown()) {
             configuration.fx.delay_to_reverb[0] = constrain(configuration.fx.delay_to_reverb[0] + ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
           } else if (LCDML.BT_checkUp()) {
@@ -10302,22 +10334,22 @@ void UI_func_master_effects(uint8_t param) {
           }
           reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
           reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(6, 19, configuration.fx.delay_to_reverb[0], 10, 1, 0);
+          print_small_intbar(6, 20, configuration.fx.delay_to_reverb[0], 11, 1, 0);
         }
-        if (generic_temp_select_menu == 11) {  //delay time
+        if (generic_temp_select_menu == 12) {  //delay time
           master_effects_set_delay_time(1);
-          print_delay_time(1, 11);
+          print_delay_time(1, 12);
           print_delay_sync_status(1);
-        } else if (generic_temp_select_menu == 12) {
+        } else if (generic_temp_select_menu == 13) {
           master_effects_set_delay_feedback(1);  // feedback
-          print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 12, 1, 0);
-        } else if (generic_temp_select_menu == 13) {  //pan
+          print_small_intbar(22, 8, configuration.fx.delay_feedback[1], 13, 1, 0);
+        } else if (generic_temp_select_menu == 14) {  //pan
           master_effects_set_delay_panorama(1);
-          print_small_panbar(22, 9, configuration.fx.delay_pan[1], 13);
-        } else if (generic_temp_select_menu == 14) {  //level
+          print_small_panbar(22, 9, configuration.fx.delay_pan[1], 14);
+        } else if (generic_temp_select_menu == 15) {  //level
           master_effects_delay_level_global(1);
-          print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 14, 1, 0);
-        } else if (generic_temp_select_menu == 15) {  //dx2 delay send
+          print_small_intbar(22, 10, configuration.fx.delay_level_global[1], 15, 1, 0);
+        } else if (generic_temp_select_menu == 16) {  //dx2 delay send
           if (LCDML.BT_checkDown()) {
             configuration.fx.delay_level[1] = constrain(configuration.fx.delay_level[1] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
             MD_sendControlChange(configuration.dexed[1].midi_channel, 107, configuration.fx.delay_level[1]);
@@ -10326,8 +10358,8 @@ void UI_func_master_effects(uint8_t param) {
             MD_sendControlChange(configuration.dexed[1].midi_channel, 107, configuration.fx.delay_level[1]);
           }
           global_delay_in_mixer[1]->gain(0, mapfloat(configuration.fx.delay_level[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
-          print_small_intbar(22, 14, configuration.fx.delay_level[1], 15, 1, 0);
-        } else if (generic_temp_select_menu == 16) {  //ep send
+          print_small_intbar(22, 14, configuration.fx.delay_level[1], 16, 1, 0);
+        } else if (generic_temp_select_menu == 17) {  //ep send
           if (LCDML.BT_checkDown()) {
             configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
           } else if (LCDML.BT_checkUp()) {
@@ -10335,32 +10367,40 @@ void UI_func_master_effects(uint8_t param) {
           }
           global_delay_in_mixer[1]->gain(5, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
           global_delay_in_mixer[1]->gain(6, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(22, 15, configuration.epiano.delay_send_2, 16, 1, 0);
-        } else if (generic_temp_select_menu == 17) {  // microsynth 1 delay2 level
+          print_small_intbar(22, 15, configuration.epiano.delay_send_2, 17, 1, 0);
+        } else if (generic_temp_select_menu == 18) {  // microsynth 1 delay2 level
           if (LCDML.BT_checkDown()) {
             microsynth[0].delay_send[1] = constrain(microsynth[0].delay_send[1] + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_LEVEL_MAX);
           } else if (LCDML.BT_checkUp()) {
             microsynth[0].delay_send[1] = constrain(microsynth[0].delay_send[1] - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_LEVEL_MAX);
           }
           global_delay_in_mixer[1]->gain(2, mapfloat(microsynth[0].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(22, 16, microsynth[0].delay_send[1], 17, 1, 0);
-        } else if (generic_temp_select_menu == 18) {  // microsynth 2 delay2 level
+          print_small_intbar(22, 16, microsynth[0].delay_send[1], 18, 1, 0);
+        } else if (generic_temp_select_menu == 19) {  // microsynth 2 delay2 level
           if (LCDML.BT_checkDown()) {
             microsynth[1].delay_send[1] = constrain(microsynth[1].delay_send[1] + ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_LEVEL_MAX);
           } else if (LCDML.BT_checkUp()) {
             microsynth[1].delay_send[1] = constrain(microsynth[1].delay_send[1] - ENCODER[ENC_R].speed(), DELAY_TIME_MIN, DELAY_LEVEL_MAX);
           }
           global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(22, 17, microsynth[1].delay_send[1], 18, 1, 0);
-        } else if (generic_temp_select_menu == 19) {  //braids delay2 level
+          print_small_intbar(22, 17, microsynth[1].delay_send[1], 19, 1, 0);
+        } else if (generic_temp_select_menu == 20) {  //braids delay2 level
           if (LCDML.BT_checkDown()) {
             braids_osc.delay_send_2 = constrain(braids_osc.delay_send_2 + ENCODER[ENC_R].speed(), 0, DELAY_LEVEL_MAX);
           } else if (LCDML.BT_checkUp()) {
             braids_osc.delay_send_2 = constrain(braids_osc.delay_send_2 - ENCODER[ENC_R].speed(), 0, DELAY_LEVEL_MAX);
           }
           global_delay_in_mixer[1]->gain(4, mapfloat(braids_osc.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(22, 18, braids_osc.delay_send_2, 19, 1, 0);
-        } else if (generic_temp_select_menu == 20) {  //delay2 to reverb
+          print_small_intbar(22, 18, braids_osc.delay_send_2, 20, 1, 0);
+        } else if (generic_temp_select_menu == 21) {  //delay2 to delay1
+          if (LCDML.BT_checkDown()) {
+            configuration.fx.delay2_to_delay1 = constrain(configuration.fx.delay2_to_delay1 + ENCODER[ENC_R].speed(), 0, DELAY_LEVEL_MAX);
+          } else if (LCDML.BT_checkUp()) {
+            configuration.fx.delay2_to_delay1 = constrain(configuration.fx.delay2_to_delay1 - ENCODER[ENC_R].speed(), 0, DELAY_LEVEL_MAX);
+          }
+          global_delay_in_mixer[0]->gain(7, mapfloat(configuration.fx.delay2_to_delay1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
+          print_small_intbar(22, 19, configuration.fx.delay2_to_delay1, 21, 1, 0);
+        } else if (generic_temp_select_menu == 22) {  //delay2 to reverb
           if (LCDML.BT_checkDown()) {
             configuration.fx.delay_to_reverb[1] = constrain(configuration.fx.delay_to_reverb[1] + ENCODER[ENC_R].speed(), REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
           } else if (LCDML.BT_checkUp()) {
@@ -10368,34 +10408,34 @@ void UI_func_master_effects(uint8_t param) {
           }
           reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
           reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(22, 19, configuration.fx.delay_to_reverb[1], 20, 1, 0);
+          print_small_intbar(22, 20, configuration.fx.delay_to_reverb[1], 22, 1, 0);
         }
 
-        else if (generic_temp_select_menu == 21) {  //reverb room size
+        else if (generic_temp_select_menu == 23) {  //reverb room size
           reverb_roomsize();
-          print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 21, 1, 0);
-        } else if (generic_temp_select_menu == 22) {
-          reverb_lowpass();
-          print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 22, 1, 0);
-        } else if (generic_temp_select_menu == 23) {
-          reverb_lodamp();
-          print_small_intbar(43, 7, configuration.fx.reverb_lodamp, 23, 1, 0);
+          print_small_intbar(43, 5, configuration.fx.reverb_roomsize, 23, 1, 0);
         } else if (generic_temp_select_menu == 24) {
-          reverb_hidamp();
-          print_small_intbar(43, 8, configuration.fx.reverb_hidamp, 24, 1, 0);
+          reverb_lowpass();
+          print_small_intbar(43, 6, configuration.fx.reverb_lowpass, 24, 1, 0);
         } else if (generic_temp_select_menu == 25) {
-          reverb_diffusion();
-          print_small_intbar(43, 9, configuration.fx.reverb_diffusion, 25, 1, 0);
+          reverb_lodamp();
+          print_small_intbar(43, 7, configuration.fx.reverb_lodamp, 25, 1, 0);
         } else if (generic_temp_select_menu == 26) {
-          reverb_level();
-          print_small_intbar(43, 10, configuration.fx.reverb_level, 26, 1, 0);
+          reverb_hidamp();
+          print_small_intbar(43, 8, configuration.fx.reverb_hidamp, 26, 1, 0);
         } else if (generic_temp_select_menu == 27) {
-          master_effects_set_reverb_send(0);
-          print_small_intbar(43, 14, configuration.fx.reverb_send[0], 27, 1, 0);
+          reverb_diffusion();
+          print_small_intbar(43, 9, configuration.fx.reverb_diffusion, 27, 1, 0);
         } else if (generic_temp_select_menu == 28) {
+          reverb_level();
+          print_small_intbar(43, 10, configuration.fx.reverb_level, 28, 1, 0);
+        } else if (generic_temp_select_menu == 29) {
+          master_effects_set_reverb_send(0);
+          print_small_intbar(43, 14, configuration.fx.reverb_send[0], 29, 1, 0);
+        } else if (generic_temp_select_menu == 30) {
           master_effects_set_reverb_send(1);
-          print_small_intbar(43, 15, configuration.fx.reverb_send[1], 28, 1, 0);
-        } else if (generic_temp_select_menu == 29) {  //epiano reverb send
+          print_small_intbar(43, 15, configuration.fx.reverb_send[1], 30, 1, 0);
+        } else if (generic_temp_select_menu == 31) {  //epiano reverb send
           if (LCDML.BT_checkDown()) {
             configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send + ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
             MD_sendControlChange(configuration.epiano.midi_channel, 91, configuration.fx.ep_reverb_send);
@@ -10405,24 +10445,24 @@ void UI_func_master_effects(uint8_t param) {
           }
           reverb_mixer_r.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
           reverb_mixer_l.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
-          print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 29, 1, 0);
-        } else if (generic_temp_select_menu == 30) {
+          print_small_intbar(43, 16, configuration.fx.ep_reverb_send, 31, 1, 0);
+        } else if (generic_temp_select_menu == 32) {
           if (LCDML.BT_checkDown()) {
             microsynth[0].rev_send = constrain(microsynth[0].rev_send + ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
           } else if (LCDML.BT_checkUp()) {
             microsynth[0].rev_send = constrain(microsynth[0].rev_send - ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
           }
           microsynth_mixer_reverb.gain(0, volume_transform(mapfloat(microsynth[0].rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-          print_small_intbar(43, 17, microsynth[0].rev_send, 30, 1, 0);
-        } else if (generic_temp_select_menu == 31) {
+          print_small_intbar(43, 17, microsynth[0].rev_send, 32, 1, 0);
+        } else if (generic_temp_select_menu == 33) {
           if (LCDML.BT_checkDown()) {
             microsynth[1].rev_send = constrain(microsynth[1].rev_send + ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
           } else if (LCDML.BT_checkUp()) {
             microsynth[1].rev_send = constrain(microsynth[1].rev_send - ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
           }
           microsynth_mixer_reverb.gain(1, volume_transform(mapfloat(microsynth[1].rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-          print_small_intbar(43, 18, microsynth[1].rev_send, 31, 1, 0);
-        } else if (generic_temp_select_menu == 32) {
+          print_small_intbar(43, 18, microsynth[1].rev_send, 33, 1, 0);
+        } else if (generic_temp_select_menu == 34) {
           if (LCDML.BT_checkDown()) {
             braids_osc.rev_send = constrain(braids_osc.rev_send + ENCODER[ENC_R].speed(), REVERB_SEND_MIN, REVERB_SEND_MAX);
           } else if (LCDML.BT_checkUp()) {
@@ -10430,7 +10470,7 @@ void UI_func_master_effects(uint8_t param) {
           }
           braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
           braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-          print_small_intbar(43, 19, braids_osc.rev_send, 32, 1, 0);
+          print_small_intbar(43, 19, braids_osc.rev_send, 34, 1, 0);
         }
       }
     }
