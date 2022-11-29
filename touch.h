@@ -59,10 +59,9 @@ typedef struct fm_s {
 
   int sample_screen_position_x = 0;
   bool sample_preview_playing;
-  uint16_t sd_sum_files = 0;
-  File sd_currentDirectory;
-  File sd_entry;
   uint8_t active_window = 0;  // 0 = left window (SDCARD) , 1 = FLASH
+
+  uint16_t sd_sum_files = 0;
   uint8_t sd_cap_rows;
   uint8_t sd_folder_depth = 0;
   uint16_t sd_selected_file = 0;
@@ -70,15 +69,18 @@ typedef struct fm_s {
   uint8_t sd_mode = 0;
   bool sd_is_folder;
   bool sd_parent_folder = false;
-  char sd_temp_name[52];
   char sd_new_name[52];
   char sd_full_name[52];
+  char sd_prev_dir[52];
+  char sd_temp_name[52];
+
   uint16_t flash_sum_files = 0;
   uint16_t flash_cap_rows;
   uint16_t flash_selected_file = 0;
   uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
+  char flash_temp_name[52];
 } fm_t;
 
 #endif
