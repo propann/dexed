@@ -1122,6 +1122,12 @@ FLASHMEM void fill_up_with_spaces_left_window() {
   } while (display.getCursorX() < 36 * CHAR_width_small);
 }
 
+FLASHMEM void fill_up_with_spaces_left_window_filemanager() {
+  do {
+    display.print(" ");
+  } while (display.getCursorX() < 27 * CHAR_width_small);
+}
+
 FLASHMEM void smart_filter(uint8_t dir) {
 #if NUM_DRUMS > 0
   bool found = false;
@@ -11787,7 +11793,7 @@ FLASHMEM void flash_printDirectory()  //SPI FLASH
       if (f >= fm.flash_sum_files) {
         fm.flash_cap_rows = f - 1;
         display.console = true;
-        display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27, (10 - f) * 11, COLOR_BACKGROUND);
+        display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
         break;
       }
 
@@ -12618,11 +12624,10 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           //if (filename[0] != 46 && filename[1] != 95)
           if (filename[0] != 46) {
             display.print(filename);
-            print_empty_spaces(7);
+            fill_up_with_spaces_left_window_filemanager();
             screenline++;
           }
           unsigned long length = f.size();
-          //Serial.println(length);
           // check if this file is already on the Flash chip
           if (SerialFlash.exists(filename)) {
 #ifdef DEBUG
@@ -12680,7 +12685,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
                     display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, count / (f.size() / (14 * CHAR_width_small)), 8, RED);
                 }
                 ff.close();
-                display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, (14 * CHAR_width_small) + 2, 8, COLOR_BACKGROUND);
+                display.fillRect(CHAR_width_small * 38 - 2, CHAR_height_small * 7, (14 * CHAR_width_small) + 4, 8, COLOR_BACKGROUND);
                 flash_loadDirectory();
                 print_flash_stats();
                 flash_printDirectory();
@@ -12706,9 +12711,9 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
 #ifdef DEBUG
         Serial.println(F("Finished All Files"));
 #endif
-      } else 
+      } else
 #endif
-      if (fm.sd_is_folder) {
+        if (fm.sd_is_folder) {
         if (fm.sd_temp_name[0] == 0x2E && fm.sd_temp_name[1] == 0x2E)  // return to parent folder
         {
           if (fm.sd_folder_depth < 2) {
