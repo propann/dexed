@@ -11831,6 +11831,13 @@ FLASHMEM void sd_loadDirectory() {
   }
   sd_root.close();
 
+  // clear all the unused files in array
+  for (uint8_t i = fm.sd_sum_files; i < 200 ; i++) {
+    strcpy(sdcard_infos.files[i].name, "");
+    sdcard_infos.files[i].size = 0;
+    sdcard_infos.files[i].isDirectory = false;
+  }
+
   qsort(sdcard_infos.files, fm.sd_sum_files, sizeof(storage_file_t), compare_files_by_name);
 }
 
@@ -11860,7 +11867,7 @@ FLASHMEM void sd_printDirectory(bool forceReload) {
     display.print("/ ");
   }
   for (uint8_t f = 0; f < 10; f++) {
-    if (f >= fm.sd_sum_files) {
+    if (f >= fm.sd_sum_files || f >= (fm.sd_sum_files - fm.sd_skip_files)) {
       fm.sd_cap_rows = f - 1;
       display.console = true;
       display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 26, (10 - f) * 11, COLOR_BACKGROUND);
