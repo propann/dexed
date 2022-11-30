@@ -5057,55 +5057,67 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
   }
 }
 
-void create_drums_ui();
-
-// render the current selected drum sample slot name
-void drum_name_renderer(struct param_editor* editor, bool refresh) {
-  char number[] = "00:";
-  snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
-  display.setTextSize(2);
-  setModeColor(editor->select_id);
-  show(editor->y, editor->x, 10, number);
-  show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
-}
-
-// set the currently selected drum sample
-void activesample_setter(param_editor* editor, int16_t id) {
-  activesample = id;
-  create_drums_ui();
+// the drum parameter editors depend on the currently selected sample activesample.
+// So we need custom getters and setters respecting activesample.
+void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr) {
+  ui.addCustomEditor(
+    name, limit_min, limit_max, valuePtr,
+    [](param_editor* editor) -> int16_t {
+      // the parameter may be from either sample, which may be
+      // switched at any time. So recompute the value pointer in respect of to activesample !
+      float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      return *ptr * 100.f;
+    },
+    [](param_editor* editor, int16_t value) {
+      // the parameter may be from either sample, which may be
+      // switched at any time. So recompute the value pointer in respect of to activesample !
+      float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      *ptr = (value / 100.f);
+    },
+    NULL);
 }
 
 // Create drum UI.
-// The drum UI needs to be recreated frequently, if activesample changes.
-// TODO currently this is done in a not so nice redraw-all fashion, which results in a screen blank and slows things down.
-// however, the normal refresh way cant be used for now, as all editors point to certaing setting locations that changes
-// whith the sample selection too.
-// But we can fix this, see dexed controller setup as an example how custom getters/setters can be used to change values
-// depending on instance there, same could work for changes depending on current activsample.
-void create_drums_ui() {
-
-  ui.clear();  // just recreate UI without resetting selection / edit mode
-
-  ui.setCursor(1, 1);
-  ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample, NULL, &activesample_setter, &drum_name_renderer);
-
-  ui.setCursor(1, 4);
-  ui.addEditor((const char*)F("VOLUME"), 0, 99, &drum_config[activesample].vol_max);
-  ui.addEditor((const char*)F("PAN"), -99, 99, &drum_config[activesample].pan);
-  ui.addEditor((const char*)F("REVERB"), 0, 99, &drum_config[activesample].reverb_send);
-  ui.addEditor((const char*)F("PITCH"), 0, 200, &drum_config[activesample].pitch);
-  ui.addEditor((const char*)F("TUNE"), 0, 200, &drum_config[activesample].p_offset);
-
-  ui.setCursor(1, 10);
-  ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
-  ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
-}
-
+// The drum UI needs to be redrawn if activesample changes.
 void UI_func_drums(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
-    create_drums_ui();
+    ui.clear();  // just recreate UI without resetting selection / edit mode
+
+    ui.setCursor(1, 1);
+    // the drum sample slot selector.
+    // changes activesample and redraws all other editors as they depend on.
+    ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample,
+                 NULL,  // default getter does it.
+                 [](param_editor* editor, int16_t value) {
+                   // set the currently selected drum sample
+                   // and refresh all editors.
+                   activesample = value;
+                   ui.draw_editors(true);
+                 },
+                 [](param_editor* editor, bool refresh) {
+                   // render the current selected drum sample slot number and name
+                   char number[] = "00:";
+                   snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
+                   display.setTextSize(2);
+                   setModeColor(editor->select_id);
+                   show(editor->y, editor->x, 10, number);
+                   show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
+                 });
+
+    ui.setCursor(1, 4);
+    // the parameter editors depend on activesample. We define them by sample index 0,
+    // but they will act on current slot activesample later.
+    addDrumParameterEditor((const char*)F("VOLUME"), 0, 99, &drum_config[0].vol_max);
+    addDrumParameterEditor((const char*)F("PAN"), -99, 99, &drum_config[0].pan);
+    addDrumParameterEditor((const char*)F("REVERB"), 0, 99, &drum_config[0].reverb_send);
+    addDrumParameterEditor((const char*)F("PITCH"), 0, 200, &drum_config[0].pitch);
+    addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
+
+    ui.setCursor(1, 10);
+    ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
+    ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
