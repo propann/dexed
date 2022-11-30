@@ -5059,6 +5059,7 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
 
 void create_drums_ui();
 
+// render the current selected drum sample slot name
 void drum_name_renderer(struct param_editor* editor, bool refresh) {
   char number[] = "00:";
   snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
@@ -5068,12 +5069,19 @@ void drum_name_renderer(struct param_editor* editor, bool refresh) {
   show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
 }
 
+// set the currently selected drum sample
 void activesample_setter(param_editor* editor, int16_t id) {
   activesample = id;
   create_drums_ui();
 }
 
-// the drum UI needs to be recreated frequently, if activesample changes.
+// Create drum UI.
+// The drum UI needs to be recreated frequently, if activesample changes.
+// TODO currently this is done in a not so nice redraw-all fashion, which results in a screen blank and slows things down.
+// however, the normal refresh way cant be used for now, as all editors point to certaing setting locations that changes
+// whith the sample selection too.
+// But we can fix this, see dexed controller setup as an example how custom getters/setters can be used to change values
+// depending on instance there, same could work for changes depending on current activsample.
 void create_drums_ui() {
 
   ui.clear();  // just recreate UI without resetting selection / edit mode
