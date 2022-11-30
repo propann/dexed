@@ -5070,18 +5070,33 @@ void drum_name_renderer(struct param_editor* editor, bool refresh) {
 }
 
 // set the currently selected drum sample
+// and refresh all editors.
 void activesample_setter(param_editor* editor, int16_t id) {
   activesample = id;
-  create_drums_ui();
+  ui.draw_editors(true);
 }
 
+void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr) {
+  ui.addCustomEditor(
+    name, limit_min, limit_max, valuePtr,
+    [](param_editor* editor) -> int16_t {
+      // the parameter may be from either sample, which may be
+      // switched at any time. So recompute the value pointer in respect of to activesample !
+      float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      return *ptr * 100.f;
+    },
+    [](param_editor* editor, int16_t value) {
+      // the parameter may be from either sample, which may be
+      // switched at any time. So recompute the value pointer in respect of to activesample !
+      float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      *ptr = (value / 100.f);
+    },
+    NULL);
+}
+
+
 // Create drum UI.
-// The drum UI needs to be recreated frequently, if activesample changes.
-// TODO currently this is done in a not so nice redraw-all fashion, which results in a screen blank and slows things down.
-// however, the normal refresh way cant be used for now, as all editors point to certaing setting locations that changes
-// whith the sample selection too.
-// But we can fix this, see dexed controller setup as an example how custom getters/setters can be used to change values
-// depending on instance there, same could work for changes depending on current activsample.
+// The drum UI needs to be redrawn if activesample changes.
 void create_drums_ui() {
 
   ui.clear();  // just recreate UI without resetting selection / edit mode
@@ -5090,11 +5105,11 @@ void create_drums_ui() {
   ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample, NULL, &activesample_setter, &drum_name_renderer);
 
   ui.setCursor(1, 4);
-  ui.addEditor((const char*)F("VOLUME"), 0, 99, &drum_config[activesample].vol_max);
-  ui.addEditor((const char*)F("PAN"), -99, 99, &drum_config[activesample].pan);
-  ui.addEditor((const char*)F("REVERB"), 0, 99, &drum_config[activesample].reverb_send);
-  ui.addEditor((const char*)F("PITCH"), 0, 200, &drum_config[activesample].pitch);
-  ui.addEditor((const char*)F("TUNE"), 0, 200, &drum_config[activesample].p_offset);
+  addDrumParameterEditor((const char*)F("VOLUME"), 0, 99, &drum_config[0].vol_max);
+  addDrumParameterEditor((const char*)F("PAN"), -99, 99, &drum_config[0].pan);
+  addDrumParameterEditor((const char*)F("REVERB"), 0, 99, &drum_config[0].reverb_send);
+  addDrumParameterEditor((const char*)F("PITCH"), 0, 200, &drum_config[0].pitch);
+  addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
 
   ui.setCursor(1, 10);
   ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
