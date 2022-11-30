@@ -2525,45 +2525,28 @@ bool encoder_changed(uint8_t id) {
 class Editor {
   friend class UI;
 private:
-  bool fast;                                      // if the editor should accelerate. Automatically set for large min-max ranges.
-  int16_t (*getter)(Editor* param);               // pointer to a function to read the value from somewhere
-  void (*setter)(Editor* param, int16_t value);   // pointer to a function to save the altered value somewhere
-  void (*renderer)(Editor* param, bool refresh);  // pointer to a function to draw the editor on screen.
+  const bool fast;                                      // if the editor should accelerate. Automatically set for large min-max ranges.
+  int16_t (*const getter)(Editor* param);               // pointer to a function to read the value from somewhere
+  void (*const setter)(Editor* param, int16_t value);   // pointer to a function to save the altered value somewhere
+  void (*const renderer)(Editor* param, bool refresh);  // pointer to a function to draw the editor on screen.
                                                   // if refresh is true, it should redraw value-dependent parts.
 
-public:
-  // these members are never set, but still public, as they are
-  // used by custom getter, setter and render functions.
-  const char* name;                    // short name of parameter.
-  const uint8_t x, y;                  // position on screen in small-font grid
-  const uint8_t select_id;             // position in input selection order - automatically set on definiton of UI elements.
-  const int16_t limit_min, limit_max;  // int limits of the parameter, used to limit input and scale the bar
-  const void* value;                   // a pointer to the value to adjust. The value can be of any type (eg. uint8_t, int16_t, float32_t...)
-                                       // The getter and setter functions must correctly handle the type.
+  // constructor for creating empty array
   Editor()
-    : name(NULL), x(0), y(0), select_id(-1), limit_min(0), limit_max(0), value(NULL) {}
+    : fast(false), getter(NULL), setter(NULL), renderer(NULL), name(NULL), x(0), y(0), select_id(-1),
+     limit_min(0), limit_max(0), value(NULL) {}
 
-  Editor(const char* _name, int16_t _limit_min, int16_t _limit_max,
+  // only valid constructor used by friend class UI
+  Editor(const char* const _name, int16_t _limit_min, int16_t _limit_max,
          uint8_t _x, uint8_t _y, uint8_t _select_id,
-         void* _valuePtr,
-         int16_t (*_getter)(Editor* param),
-         void (*_setter)(Editor* param, int16_t value),
-         void (*_renderer)(Editor* param, bool refresh))
-    : getter(_getter), setter(_setter), renderer(_renderer),
+         void *const _valuePtr,
+         int16_t (*const _getter)(Editor* param),
+         void  (*const _setter)(Editor* param, int16_t value),
+         void (*const _renderer)(Editor* param, bool refresh))
+    : fast(limit_max - limit_min > 32), getter(_getter), setter(_setter), renderer(_renderer),
       name(_name), x(_x), y(_y), select_id(_select_id), limit_min(_limit_min), limit_max(_limit_max),
-      value(_valuePtr) {
-    fast = limit_max - limit_min > 32;
-  }
-
-  // get & set this editors value, propagating to the value storage or setter.
-  int16_t get() {
-    if (getter != NULL) return getter(this);
-    return 0;  // should never happen
-  };
-  void set(int16_t _value) {
-    // should always be !=NULL, just prevent crashes.
-    if (setter != NULL) setter(this, _value);
-  };
+      value(_valuePtr)
+  {}
 
   // draw this editor on screen. If refresh is set,
   // only parts that depend on changed value or selection are drawn.
@@ -2596,6 +2579,25 @@ public:
       set(constrain(get() + change, limit_min, limit_max));
       draw_editor(true);
     }
+  };
+
+public:
+  // these members are never set, but still public, as they are
+  // used by custom getter, setter and render functions.
+  const char* const name;                    // short name of parameter.
+  const uint8_t x, y;                  // position on screen in small-font grid
+  const uint8_t select_id;             // position in input selection order - automatically set on definiton of UI elements.
+  const int16_t limit_min, limit_max;  // int limits of the parameter, used to limit input and scale the bar
+  void * const value;                   // a pointer to the value to adjust. The value can be of any type (eg. uint8_t, int16_t, float32_t...)
+                                       // The getter and setter functions must correctly handle the type.
+  // get & set this editors value, propagating to the value storage or setter.
+  int16_t get() {
+    if (getter != NULL) return getter(this);
+    return 0;  // should never happen
+  };
+  void set(int16_t _value) {
+    // should always be !=NULL, just prevent crashes.
+    if (setter != NULL) setter(this, _value);
   };
 };
 
@@ -2666,11 +2668,11 @@ public:
   }
 
   // add a custom editor providing its own getter, setter and renderer function.
-  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max,
-                       void* valuePtr,
-                       int16_t (*getter)(Editor* param),
-                       void (*setter)(Editor* param, int16_t value),
-                       void (*renderer)(Editor* param, bool refresh)) {
+  void addCustomEditor(const char *const name, int16_t limit_min, int16_t limit_max,
+                       void* const valuePtr,
+                       int16_t (*const getter)(Editor* param),
+                       void (*const setter)(Editor* param, int16_t value),
+                       void (*const renderer)(Editor* param, bool refresh)) {
 
     // construct editor in-place in editors array
     // there is no corresponding delete, as editors are just overwritten after ui.reset() !
@@ -2684,10 +2686,10 @@ public:
   };
 
   // editor providing default float32_t getter + setters if missed out
-  void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
-                 int16_t (*getter)(Editor* param) = NULL,
-                 void (*setter)(Editor* param, int16_t value) = NULL,
-                 void (*renderer)(Editor* param, bool refresh) = NULL) {
+  void addEditor(const char*const name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
+                 int16_t (*const getter)(Editor* param) = NULL,
+                 void (*const setter)(Editor* param, int16_t value) = NULL,
+                 void (*const renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
       getter != NULL ? getter : [](Editor* editor) -> int16_t {
@@ -2700,10 +2702,10 @@ public:
   };
 
   // editor providing default uint8_t getter + setters if missed out
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-                 int16_t (*getter)(Editor* param) = NULL,
-                 void (*setter)(Editor* param, int16_t value) = NULL,
-                 void (*renderer)(Editor* param, bool refresh) = NULL) {
+  void addEditor(const char*const name, uint8_t limit_min, uint8_t limit_max, uint8_t*const valuePtr,
+                 int16_t (*const getter)(Editor* param) = NULL,
+                 void (*const setter)(Editor* param, int16_t value) = NULL,
+                 void (*const renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
       getter != NULL ? getter : [](Editor* editor) -> int16_t {
@@ -2716,10 +2718,10 @@ public:
   };
 
   // editor providing custom getter + setters not using the valuePtr feature
-  void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
-                 int16_t (*getter)(Editor* param),
-                 void (*setter)(Editor* param, int16_t value),
-                 void (*renderer)(Editor* param, bool refresh) = NULL) {
+  void addEditor(const char*const name, int16_t limit_min, int16_t limit_max,
+                 int16_t (*const getter)(Editor* param),
+                 void (*const setter)(Editor* param, int16_t value),
+                 void (*const renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, NULL,
       getter != NULL ? getter : [](Editor* editor) -> int16_t {
