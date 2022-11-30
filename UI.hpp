@@ -2491,6 +2491,7 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
   display.fillRect(CHAR_width_small * x + 1 + input_value / 2.30, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
 }
 
+// read right encoder change, with optional acceleration.
 FLASHMEM int16_t encoder_change(bool fast) {
   int16_t dir = 0;
   if (LCDML.BT_checkDown()) dir = 1;
@@ -2500,6 +2501,14 @@ FLASHMEM int16_t encoder_change(bool fast) {
   if (fast) return dir * (ENCODER[ENC_R].speed());
   else return dir;
 }
+
+// check if certain encoder changed.
+// as this resets internal state by the way, it should only be called once per menu loop cycle.
+// TODO get rid of the side-effects.
+bool encoder_changed(uint8_t id) {
+  return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
+}
+
 
 // Store a generic parameter editor.
 //
@@ -2513,26 +2522,46 @@ FLASHMEM int16_t encoder_change(bool fast) {
 // - a pointer to a getter function (can be set automatically for simple editors, using the value pointer)
 // - a pointer to a setter function (can be set automatically for simple editors, using the value pointer)
 // - a pointer to a renderer (can be null to provide the default small-scaled-bar-with-number editor)
-struct param_editor {
-  const char* name;              // short name of parameter.
-  int16_t limit_min, limit_max;  // int limits of the parameter, used to limit input and scale the bar
-  bool fast;                     // if the editor should accelerate. Automatically set for large min-max ranges.
-  uint8_t x, y;                  // position on screen in small-font grid
-  uint8_t select_id;             // position in input selection order - automatically set on definiton of UI elements.
+class Editor {
+  friend class UI;
+private:
+  bool fast;                                      // if the editor should accelerate. Automatically set for large min-max ranges.
+  int16_t (*getter)(Editor* param);               // pointer to a function to read the value from somewhere
+  void (*setter)(Editor* param, int16_t value);   // pointer to a function to save the altered value somewhere
+  void (*renderer)(Editor* param, bool refresh);  // pointer to a function to draw the editor on screen.
+                                                  // if refresh is true, it should redraw value-dependent parts.
 
-  void* value;                                                 // a pointer to the value to adjust. The value can be of any type (eg. uint8_t, int16_t, float32_t...)
-                                                               // The getter and setter functions must correctly handle the type.
-  int16_t (*getter)(struct param_editor* param);               // pointer to a function to read the value from somewhere
-  void (*setter)(struct param_editor* param, int16_t value);   // pointer to a function to save the altered value somewhere
-  void (*renderer)(struct param_editor* param, bool refresh);  // pointer to a function to draw the editor on screen.
-                                                               // if refresh is true, it should redraw value-dependent parts.
+public:
+  // these members are never set, but still public, as they are
+  // used by custom getter, setter and render functions.
+  const char* name;                    // short name of parameter.
+  const uint8_t x, y;                  // position on screen in small-font grid
+  const uint8_t select_id;             // position in input selection order - automatically set on definiton of UI elements.
+  const int16_t limit_min, limit_max;  // int limits of the parameter, used to limit input and scale the bar
+  const void* value;                   // a pointer to the value to adjust. The value can be of any type (eg. uint8_t, int16_t, float32_t...)
+                                       // The getter and setter functions must correctly handle the type.
+  Editor()
+    : name(NULL), x(0), y(0), select_id(-1), limit_min(0), limit_max(0), value(NULL) {}
 
-  // internal functions
+  Editor(const char* _name, int16_t _limit_min, int16_t _limit_max,
+         uint8_t _x, uint8_t _y, uint8_t _select_id,
+         void* _valuePtr,
+         int16_t (*_getter)(Editor* param),
+         void (*_setter)(Editor* param, int16_t value),
+         void (*_renderer)(Editor* param, bool refresh))
+    : getter(_getter), setter(_setter), renderer(_renderer),
+      name(_name), x(_x), y(_y), select_id(_select_id), limit_min(_limit_min), limit_max(_limit_max),
+      value(_valuePtr) {
+    fast = limit_max - limit_min > 32;
+  }
+
+  // get & set this editors value, propagating to the value storage or setter.
   int16_t get() {
     if (getter != NULL) return getter(this);
-    return 0;
+    return 0;  // should never happen
   };
   void set(int16_t _value) {
+    // should always be !=NULL, just prevent crashes.
     if (setter != NULL) setter(this, _value);
   };
 
@@ -2591,13 +2620,15 @@ struct param_editor {
 // -just call ui.handle_input().
 //
 #define UI_MAX_EDITORS 64
-struct UI {
-  uint8_t x, y;                                    // current cursor position, can be set and updates automatically
-  uint8_t num_editors;                             // the count of editors defined so far
-  struct param_editor editors[UI_MAX_EDITORS];     // the editors defined for the current page
-  struct param_editor* encoderLeftHandler = NULL;  // a special editor assigned to the left encoder
-  struct param_editor* buttonLongHandler = NULL;   // a special editor assigned to a long button press
+class UI {
+private:
+  uint8_t x, y;                       // current cursor position, can be set and updates automatically
+  uint8_t num_editors;                // the count of editors defined so far
+  Editor editors[UI_MAX_EDITORS];     // the editors defined for the current page
+  Editor* encoderLeftHandler = NULL;  // a special editor assigned to the left encoder
+  Editor* buttonLongHandler = NULL;   // a special editor assigned to a long button press
 
+public:
   // clear, but dont reset this UI.
   // this can be called for massive refreshs without loosing the current selection.
   // All UI elements must be defined again afterwards.
@@ -2635,14 +2666,18 @@ struct UI {
   }
 
   // add a custom editor providing its own getter, setter and renderer function.
-  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
-                       int16_t (*getter)(struct param_editor* param),
-                       void (*setter)(struct param_editor* param, int16_t value),
-                       void (*renderer)(struct param_editor* param, bool refresh)) {
-    editors[num_editors] = (struct param_editor){
-      name, limit_min, limit_max, limit_max - limit_min > 32, x, y, num_editors, valuePtr,
-      getter, setter, renderer
-    };
+  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max,
+                       void* valuePtr,
+                       int16_t (*getter)(Editor* param),
+                       void (*setter)(Editor* param, int16_t value),
+                       void (*renderer)(Editor* param, bool refresh)) {
+
+    // construct editor in-place in editors array
+    // there is no corresponding delete, as editors are just overwritten after ui.reset() !
+    new (&editors[num_editors]) Editor(
+      name, limit_min, limit_max, x, y, num_editors, valuePtr,
+      getter, setter, renderer);
+
     editors[num_editors].draw_editor(false);
     y++;
     num_editors++;
@@ -2650,15 +2685,15 @@ struct UI {
 
   // editor providing default float32_t getter + setters if missed out
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
-                 int16_t (*getter)(struct param_editor* param) = NULL,
-                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
+                 int16_t (*getter)(Editor* param) = NULL,
+                 void (*setter)(Editor* param, int16_t value) = NULL,
+                 void (*renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+      getter != NULL ? getter : [](Editor* editor) -> int16_t {
         return *((float32_t*)editor->value) * 100;
       },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+      setter != NULL ? setter : [](Editor* editor, int16_t value) -> void {
         *((float32_t*)editor->value) = value / 100.f;
       },
       renderer);
@@ -2666,15 +2701,15 @@ struct UI {
 
   // editor providing default uint8_t getter + setters if missed out
   void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-                 int16_t (*getter)(struct param_editor* param) = NULL,
-                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
+                 int16_t (*getter)(Editor* param) = NULL,
+                 void (*setter)(Editor* param, int16_t value) = NULL,
+                 void (*renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+      getter != NULL ? getter : [](Editor* editor) -> int16_t {
         return *((uint8_t*)editor->value);
       },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+      setter != NULL ? setter : [](Editor* editor, int16_t value) -> void {
         *((uint8_t*)editor->value) = value;
       },
       renderer);
@@ -2682,15 +2717,15 @@ struct UI {
 
   // editor providing custom getter + setters not using the valuePtr feature
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
-                 int16_t (*getter)(struct param_editor* param),
-                 void (*setter)(struct param_editor* param, int16_t value),
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
+                 int16_t (*getter)(Editor* param),
+                 void (*setter)(Editor* param, int16_t value),
+                 void (*renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, NULL,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+      getter != NULL ? getter : [](Editor* editor) -> int16_t {
         return *((uint8_t*)editor->value);
       },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+      setter != NULL ? setter : [](Editor* editor, int16_t value) -> void {
         *((uint8_t*)editor->value) = value;
       },
       renderer);
@@ -2701,36 +2736,26 @@ struct UI {
     buttonLongHandler = &editors[num_editors - 1];
   }
 
+  // check if the current UI snags on long button presses
+  bool handlesButtonLong() {
+    return buttonLongHandler != NULL;
+  }
+
   // assign the editor just added to the left encoder (always, no selection needed)
   void enableLeftEncoderEditor() {
     encoderLeftHandler = &editors[num_editors - 1];
   }
 
-  // internal, handle navigation between editors and toggling of the edit mode
-  void handle_parameter_navigation() {
-    if (seq.edit_state == 0) {
-      uint8_t last = generic_temp_select_menu;
-      generic_temp_select_menu = constrain(generic_temp_select_menu + encoder_change(false), 0, num_editors - 1);
-      editors[last].draw_editor(true);
-      editors[generic_temp_select_menu].draw_editor(true);
-    }
-  };
+  // check if the current UI snags on the left encoder
+  bool handlesLeftEncoder() {
+    return encoderLeftHandler != NULL;
+  }
 
   // (re-)draw all editors, omit static parts if refresh is set.
   void draw_editors(bool refresh) {
     for (uint8_t i = 0; i < num_editors; i++)
       editors[i].draw_editor(refresh);
   };
-
-  // handle input for the currently selected editor
-  void handle_current_editor() {
-    editors[generic_temp_select_menu].handle_parameter_editor();
-  };
-
-  // check if the given encoders has input.
-  bool encoder_changed(uint8_t id) {
-    return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
-  }
 
   // Handle all input, updating editors and engine parameters, if changed.
   //
@@ -2743,12 +2768,17 @@ struct UI {
       editors[generic_temp_select_menu].draw_editor(true);
     }
 
-    // set currently selected editor or the editor's value by right encoder
+    // handle right encoder
     if (encoder_changed(ENC_R)) {
-      if (seq.edit_state == 0)
-        handle_parameter_navigation();
-      else
-        handle_current_editor();
+      if (seq.edit_state == 0) {
+        // handle parameter selection
+        uint8_t last = generic_temp_select_menu;
+        generic_temp_select_menu = constrain(generic_temp_select_menu + encoder_change(false), 0, num_editors - 1);
+        editors[last].draw_editor(true);
+        editors[generic_temp_select_menu].draw_editor(true);
+      } else
+        // change currently selected editor's value by right encoder
+        editors[generic_temp_select_menu].handle_parameter_editor();
     }
 
     // optionally set a specific editor's value by left encoder
@@ -2761,7 +2791,6 @@ struct UI {
       buttonLongHandler->draw_editor(true);
     }
   };
-
 } ui;
 
 
@@ -3153,7 +3182,7 @@ FLASHMEM void lcdml_menu_control(void) {
     Serial.println(F("ENC-R long recognized"));
 #endif
     encoderDir[ENC_R].ButtonLong(true);
-    if (ui.buttonLongHandler != NULL || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
+    if (ui.handlesButtonLong() || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
       LCDML.BT_enter();
       LCDML.OTHER_updateFunc();
       LCDML.loop_menu();
@@ -3232,7 +3261,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]++;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (ui.encoderLeftHandler != NULL) {  //do nothing
+        } else if (ui.handlesLeftEncoder()) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -3294,7 +3323,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]--;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (ui.encoderLeftHandler != NULL) {  //do nothing
+        } else if (ui.handlesLeftEncoder()) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -3498,7 +3527,7 @@ FLASHMEM void lcdml_menu_display(void) {
   }
 }
 
-void draw_instance_editor(struct param_editor* editor, bool refresh) {
+void draw_instance_editor(Editor* editor, bool refresh) {
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
@@ -3522,10 +3551,10 @@ void draw_instance_editor(struct param_editor* editor, bool refresh) {
 }
 
 void addInstanceEditor(
-  void (*renderer)(struct param_editor* param, bool refresh) = &draw_instance_editor) {
+  void (*renderer)(Editor* param, bool refresh) = &draw_instance_editor) {
   ui.addEditor(
     "INSTANCE", 0, 1, &selected_instance_id, NULL,
-    [](struct param_editor* editor, int16_t value) -> void {
+    [](Editor* editor, int16_t value) -> void {
       selected_instance_id = value;
       ui.draw_editors(true);
     },
@@ -4394,13 +4423,13 @@ FLASHMEM void UI_func_stereo_mono(uint8_t param) {
 
 
 // get and set dexed configuration to our dexed configuration structure
-int16_t dexed_current_instance_getter(struct param_editor* editor) {
+int16_t dexed_current_instance_getter(Editor* editor) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
   uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
   return *ptr;
 }
-void dexed_current_instance_setter(struct param_editor* editor, int16_t value) {
+void dexed_current_instance_setter(Editor* editor, int16_t value) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
   uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
@@ -4408,7 +4437,7 @@ void dexed_current_instance_setter(struct param_editor* editor, int16_t value) {
 }
 
 // prepare rendering for an editor field providing multiple options to select between
-void prepare_multi_options(struct param_editor* editor, bool refresh) {
+void prepare_multi_options(Editor* editor, bool refresh) {
   display.setTextSize(1);
   if (!refresh) {
     setCursor_textGrid_small(editor->x + 10, editor->y);
@@ -4421,7 +4450,7 @@ void prepare_multi_options(struct param_editor* editor, bool refresh) {
 }
 
 // set portamento setup to dexed engine and send SysEx for it.
-void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
+void dexed_portamento_setter(Editor* editor, int16_t value) {
   dexed_current_instance_setter(editor, value);
   dexed_t& dexed = configuration.dexed[selected_instance_id];
   MicroDexed[selected_instance_id]->setPortamento(dexed.portamento_mode, dexed.portamento_glissando, dexed.portamento_time);
@@ -4432,7 +4461,7 @@ void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
 
 // display the voice name for the currently selected instance
 // used by mutliple UI pages.
-void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
+void dexed_voice_name_renderer(Editor* param, bool refresh) {
   draw_instance_editor(param, refresh);
   display.setTextSize(2);
   show(1, 1, 10, g_voice_name[selected_instance_id]);
@@ -4456,7 +4485,7 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
 
     ui.printLn("PORTAMENTO", GREY2);
     ui.addEditor("MODE", PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX, &configuration.dexed[0].portamento_mode,
-                 &dexed_current_instance_getter, &dexed_portamento_setter, [](struct param_editor* editor, bool refresh) {
+                 &dexed_current_instance_getter, &dexed_portamento_setter, [](Editor* editor, bool refresh) {
                    prepare_multi_options(editor, refresh);
                    uint8_t mode = editor->get();
                    uint8_t monopoly = configuration.dexed[selected_instance_id].monopoly;
@@ -4472,12 +4501,12 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.printLn("");
 
     ui.addEditor("POLYPHONY", POLYPHONY_MIN, POLYPHONY_MAX, &configuration.dexed[0].polyphony,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MicroDexed[selected_instance_id]->setMaxNotes(value);
                  });
     ui.addEditor("MONO/POLY", MONOPOLY_MIN, MONOPOLY_MAX, &configuration.dexed[0].monopoly,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MicroDexed[selected_instance_id]->setMonoMode(!value);
                  });
@@ -4485,14 +4514,14 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.printLn("");
 
     ui.addEditor("TRANSPOSE", TRANSPOSE_MIN, TRANSPOSE_MAX, &configuration.dexed[0].transpose,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MicroDexed[selected_instance_id]->setTranspose(value);
                    MicroDexed[selected_instance_id]->notesOff();
                    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, value, 0);
                  });
     ui.addEditor("FINE TUNE", TUNE_MIN, TUNE_MAX, &configuration.dexed[0].tune,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, value);
                  });
@@ -4500,7 +4529,7 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
 
     ui.printLn("INTERNALS", GREY2);
     ui.addEditor("NOTE REFRESH", NOTE_REFRESH_MIN, NOTE_REFRESH_MAX, &configuration.dexed[0].note_refresh,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MicroDexed[selected_instance_id]->setNoteRefreshMode(value);
                  }
@@ -5062,13 +5091,13 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
 void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr) {
   ui.addCustomEditor(
     name, limit_min, limit_max, valuePtr,
-    [](param_editor* editor) -> int16_t {
+    [](Editor* editor) -> int16_t {
       // the parameter may be from either sample, which may be
       // switched at any time. So recompute the value pointer in respect of to activesample !
       float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
       return *ptr * 100.f;
     },
-    [](param_editor* editor, int16_t value) {
+    [](Editor* editor, int16_t value) {
       // the parameter may be from either sample, which may be
       // switched at any time. So recompute the value pointer in respect of to activesample !
       float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
@@ -5090,13 +5119,13 @@ void UI_func_drums(uint8_t param) {
     // changes activesample and redraws all other editors as they depend on.
     ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample,
                  NULL,  // default getter does it.
-                 [](param_editor* editor, int16_t value) {
+                 [](Editor* editor, int16_t value) {
                    // set the currently selected drum sample
                    // and refresh all editors.
                    activesample = value;
                    ui.draw_editors(true);
                  },
-                 [](param_editor* editor, bool refresh) {
+                 [](Editor* editor, bool refresh) {
                    // render the current selected drum sample slot number and name
                    char number[] = "00:";
                    snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
@@ -14326,20 +14355,20 @@ uint8_t current_voice_op = 0;  // currently selected operator for edits
 // -Global voice parameters go after the operator values, starting with DEXED_VOICE_OFFSET.
 //  They are load and stored to the engine depending on the current selected_instance_id and current_voice_op operator.
 //
-int16_t dexed_getter(struct param_editor* param) {
+int16_t dexed_getter(Editor* param) {
   int8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
 };
-void dexed_setter(struct param_editor* param, int16_t value) {
+void dexed_setter(Editor* param, int16_t value) {
   uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
 };
 
 // allow switching the currently edited operator.
-int16_t dexed_op_getter(struct param_editor* param) {
+int16_t dexed_op_getter(Editor* param) {
   return current_voice_op;
 };
-void dexed_op_setter(struct param_editor* param, int16_t value) {
+void dexed_op_setter(Editor* param, int16_t value) {
   current_voice_op = value;
   ui.draw_editors(true);  // as half of the editors have changed when a different operator is selected.
 };
@@ -14412,7 +14441,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 // ======================
 
 // display modes a controller can interact
-void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
+void dexed_mode_renderer(Editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   display.print("          ");
   setCursor_textGrid_small(editor->x, editor->y);
@@ -14423,7 +14452,7 @@ void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
 }
 
 // display the targets a controller can be assigned to (multiple choice bit field)
-void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
+void dexed_assign_renderer(Editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   display.print("          ");
   setCursor_textGrid_small(editor->x, editor->y);
@@ -14442,7 +14471,7 @@ void send_sysex_if_changed(uint8_t id, uint8_t* valuePtr, uint8_t* changedValueP
 // apply changed controller values (all at once)
 // SysEx messages are only send for the actual chaged parameter.
 //
-void dexed_controller_setter(struct param_editor* editor, int16_t value) {
+void dexed_controller_setter(Editor* editor, int16_t value) {
 
   // call base setter to store editor value into our dexed parameter storage.
   dexed_current_instance_setter(editor, value);
