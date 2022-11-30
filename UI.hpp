@@ -4392,13 +4392,14 @@ FLASHMEM void UI_func_stereo_mono(uint8_t param) {
   }
 }
 
+
+// get and set dexed configuration to our dexed configuration structure
 int16_t dexed_current_instance_getter(struct param_editor* editor) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
   uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
   return *ptr;
 }
-
 void dexed_current_instance_setter(struct param_editor* editor, int16_t value) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
@@ -4406,6 +4407,7 @@ void dexed_current_instance_setter(struct param_editor* editor, int16_t value) {
   *ptr = (uint8_t)value;
 }
 
+// prepare rendering for an editor field providing multiple options to select between
 void prepare_multi_options(struct param_editor* editor, bool refresh) {
   display.setTextSize(1);
   if (!refresh) {
@@ -4418,6 +4420,7 @@ void prepare_multi_options(struct param_editor* editor, bool refresh) {
   setCursor_textGrid_small(editor->x, editor->y);
 }
 
+// set portamento setup to dexed engine and send SysEx for it.
 void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
   dexed_current_instance_setter(editor, value);
   dexed_t& dexed = configuration.dexed[selected_instance_id];
@@ -4427,18 +4430,24 @@ void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
   send_sysex_param(dexed.midi_channel, 69, dexed.portamento_time, 2);
 };
 
+// display the voice name for the currently selected instance
+// used by mutliple UI pages.
 void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
   draw_instance_editor(param, refresh);
   display.setTextSize(2);
   show(1, 1, 10, g_voice_name[selected_instance_id]);
 }
 
+// UI page to allow editing of all global dexed parameters
+// this somehow resebles the "Function" edit plane on an DX7 instrument.
+//
 FLASHMEM void UI_func_dexed_setup(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
     ui.setCursor(1, 1);
+    // allow switching the currently displayed instance
     addInstanceEditor(&dexed_voice_name_renderer);
 
     ui.setCursor(1, 4);
@@ -4500,8 +4509,6 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     );
     ui.addEditor("VELOCITY LEVEL", VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX, &configuration.dexed[0].velocity_level,
                  &dexed_current_instance_getter, &dexed_current_instance_setter);
-
-    // ui.setCursor(29, 5 + 4);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
