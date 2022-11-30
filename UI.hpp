@@ -2404,7 +2404,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons) {
 //####################################################################################################################################################################################################
 
 /***********************************************************************
-   MENU
+   GENERAL UI ELEMENTS
  ***********************************************************************/
 
 FLASHMEM void setModeColor(uint8_t selected_option) {
@@ -2417,6 +2417,8 @@ FLASHMEM void setModeColor(uint8_t selected_option) {
   }
 }
 
+// a small scaled bar, that can show an abitrary range in always the same space, given the expected min and max limit values.
+// also atomagically shows a pan bar (marker line insted of filled bar), if min is smaller than zero.
 FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
@@ -2499,18 +2501,33 @@ FLASHMEM int16_t encoder_change(bool fast) {
   else return dir;
 }
 
+// Store a generic parameter editor.
+//
+// The editor has
+// - a name, as shown on screen
+// - a position on screen (x,y),
+// - a select_id defining its position in the selection order (usually assigned automatically)
+// - limits for its value
+// - a fast flag, to enable accelerated changes of large values (also set automatically for large ranges)
+// - a pointer to the value to adjust, can be NULL if only custom setters / getters are used.
+// - a pointer to a getter function (can be set automatically for simple editors, using the value pointer)
+// - a pointer to a setter function (can be set automatically for simple editors, using the value pointer)
+// - a pointer to a renderer (can be null to provide the default small-scaled-bar-with-number editor)
 struct param_editor {
-  const char* name;
-  int16_t limit_min, limit_max;
-  bool fast;
-  uint8_t x, y;
-  uint8_t select_id;
+  const char* name;              // short name of parameter.
+  int16_t limit_min, limit_max;  // int limits of the parameter, used to limit input and scale the bar
+  bool fast;                     // if the editor should accelerate. Automatically set for large min-max ranges.
+  uint8_t x, y;                  // position on screen in small-font grid
+  uint8_t select_id;             // position in input selection order - automatically set on definiton of UI elements.
 
-  void* value;
-  int16_t (*getter)(struct param_editor* param);
-  void (*setter)(struct param_editor* param, int16_t value);
-  void (*renderer)(struct param_editor* param, bool refresh);
+  void* value;                                                 // a pointer to the value to adjust. The value can be of any type (eg. uint8_t, int16_t, float32_t...)
+                                                               // The getter and setter functions must correctly handle the type.
+  int16_t (*getter)(struct param_editor* param);               // pointer to a function to read the value from somewhere
+  void (*setter)(struct param_editor* param, int16_t value);   // pointer to a function to save the altered value somewhere
+  void (*renderer)(struct param_editor* param, bool refresh);  // pointer to a function to draw the editor on screen.
+                                                               // if refresh is true, it should redraw value-dependent parts.
 
+  // internal functions
   int16_t get() {
     if (getter != NULL) return getter(this);
     return 0;
@@ -2519,11 +2536,20 @@ struct param_editor {
     if (setter != NULL) setter(this, _value);
   };
 
+  // draw this editor on screen. If refresh is set,
+  // only parts that depend on changed value or selection are drawn.
+  // otherwise everything is drawn (label, borders, etc.)
+  //
+  // by default if renderer==NULL, print_small_scaled_bar is used.
+  // otherwise the definded renderer is used.
+  //
   void draw_editor(bool refresh) {
     if (renderer != NULL) {
+      // a custom renderer is defined. Draw using it and exit.
       renderer(this, refresh);
       return;
     }
+    // No custom rederer was defined, just draw label and small_scaled_bar.
     display.setTextSize(1);
     if (!refresh) {
       setCursor_textGrid_small(this->x + 10, this->y);
@@ -2533,6 +2559,8 @@ struct param_editor {
     print_small_scaled_bar(x, y, get(), limit_min, limit_max, select_id, 1, 1);
   };
 
+  // read encoders / other input sources and adjust the assigned value
+  // by using the getter and setter functions. And redraw afterwards.
   void handle_parameter_editor() {
     int16_t change = encoder_change(fast);
     if (change != 0) {
@@ -2542,14 +2570,37 @@ struct param_editor {
   };
 };
 
+
+// Global UI helper
+//
+// This helps conveniently build a single UI page,
+// and repeatedly update all UI elements with a calls to handle_input() later.
+//
+// a lot of addEditor and addCustomEditor functions are provided to define UI elements
+// for different value types, adding custom getters or setters to update the engines under control.
+// And provide custom renderers for some elements (eg. the instance selector, name fields etc.)
+//
+// The usual UI definition goes this way:
+//
+// on LCDML.func_setup():
+// -Remove the old UI by calling ui.reset(). This also clears the screen.
+// -Add one or more editors by addEditor and addCustom editor. Create sections by setCursor() and printLn().
+// -all coding work goes here, especially by providing custom getter, setter or renderer code to handle
+//  the different parameter types and how engine parameters are modified.
+// on LCDML.func_loop():
+// -just call ui.handle_input().
+//
 #define UI_MAX_EDITORS 64
 struct UI {
-  uint8_t x, y;
-  uint8_t num_editors;
-  struct param_editor editors[UI_MAX_EDITORS];
-  struct param_editor* encoderLeftHandler = NULL;
-  struct param_editor* buttonLongHandler = NULL;
+  uint8_t x, y;                                    // current cursor position, can be set and updates automatically
+  uint8_t num_editors;                             // the count of editors defined so far
+  struct param_editor editors[UI_MAX_EDITORS];     // the editors defined for the current page
+  struct param_editor* encoderLeftHandler = NULL;  // a special editor assigned to the left encoder
+  struct param_editor* buttonLongHandler = NULL;   // a special editor assigned to a long button press
 
+  // clear, but dont reset this UI.
+  // this can be called for massive refreshs without loosing the current selection.
+  // All UI elements must be defined again afterwards.
   void clear() {
     display.fillScreen(COLOR_BACKGROUND);
     border0();
@@ -2559,17 +2610,22 @@ struct UI {
     encoderLeftHandler = NULL;
   };
 
+  // reset. this must be called to start a new UI page.
+  // like clear(), but the selection is reset too.
   void reset() {
     clear();
     seq.edit_state = 0;
     generic_temp_select_menu = 0;
   };
 
+  // set the cursor before drawing the next UI element.
+  // if omitted, the next element is drawn just below the last one.
   void setCursor(uint8_t _x, uint8_t _y) {
     x = _x;
     y = _y;
   };
 
+  // print a static label that can't be selected.
   void printLn(const char* text, uint32_t color = COLOR_SYSTEXT) {
     display.setTextSize(1);
     setCursor_textGrid_small(x, y);
@@ -2578,6 +2634,7 @@ struct UI {
     y += 1;
   }
 
+  // add a custom editor providing its own getter, setter and renderer function.
   void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
                        int16_t (*getter)(struct param_editor* param),
                        void (*setter)(struct param_editor* param, int16_t value),
@@ -2623,7 +2680,7 @@ struct UI {
       renderer);
   };
 
-  // editor providing custom getter + setters dont using valuePtr
+  // editor providing custom getter + setters not using the valuePtr feature
   void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
                  int16_t (*getter)(struct param_editor* param),
                  void (*setter)(struct param_editor* param, int16_t value),
@@ -2639,14 +2696,17 @@ struct UI {
       renderer);
   };
 
+  // assign the editor just added to the long button press too (just a toggle action)
   void enableButtonLongEditor() {
     buttonLongHandler = &editors[num_editors - 1];
   }
 
+  // assign the editor just added to the left encoder (always, no selection needed)
   void enableLeftEncoderEditor() {
     encoderLeftHandler = &editors[num_editors - 1];
   }
 
+  // internal, handle navigation between editors and toggling of the edit mode
   void handle_parameter_navigation() {
     if (seq.edit_state == 0) {
       uint8_t last = generic_temp_select_menu;
@@ -2656,19 +2716,26 @@ struct UI {
     }
   };
 
+  // (re-)draw all editors, omit static parts if refresh is set.
   void draw_editors(bool refresh) {
     for (uint8_t i = 0; i < num_editors; i++)
       editors[i].draw_editor(refresh);
   };
 
+  // handle input for the currently selected editor
   void handle_current_editor() {
     editors[generic_temp_select_menu].handle_parameter_editor();
   };
 
+  // check if the given encoders has input.
   bool encoder_changed(uint8_t id) {
     return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
   }
 
+  // Handle all input, updating editors and engine parameters, if changed.
+  //
+  // This need to be repeatedly called in the menu loop, usually by LCDML.func_loop() sections
+  //
   void handle_input() {
     // toggle between navigate and value editing
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
