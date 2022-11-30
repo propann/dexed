@@ -14227,12 +14227,18 @@ FLASHMEM void UI_func_voice_select_loop() {
   }
 }
 
+// ==================
+// DEXED voice editor
+// ==================
+
+// a single dexed voice parameter definition
 struct voice_param {
   const char* name;
   uint8_t max;
 };
 
-
+// list of all dexed voice operator parameter definitions.
+// actual parameters are repeating this six times plus the global voice parameters.
 const struct voice_param voice_op_params[] = {
   { "R1", 99 },
   { "R2", 99 },
@@ -14258,6 +14264,7 @@ const struct voice_param voice_op_params[] = {
 };
 const uint8_t num_voice_op_params = 21;
 
+// list of all dexed global voice parameter definitions.
 const struct voice_param voice_params[] = {
   { "R1", 99 },
   { "R2", 99 },
@@ -14280,11 +14287,18 @@ const struct voice_param voice_params[] = {
   { "TRANSPOSE", 48 },
   { "NAME", 127 }
 };
-
 const uint8_t num_voice_params = 19;  // omit name for now
-uint8_t current_voice_op = 0;
 
+uint8_t current_voice_op = 0;  // currently selected operator for edits
 
+// the dexed engine global voice parameter getter and setters.
+// all parameter values are uint8_t values, starting with 0.
+// They are defined in the dexed VoiceData array:
+// -Operator parameters are stored six times repeated for all six operators.
+//  They are load and stored to the engine depending on the current selected_instance_id.
+// -Global voice parameters go after the operator values, starting with DEXED_VOICE_OFFSET.
+//  They are load and stored to the engine depending on the current selected_instance_id and current_voice_op operator.
+//
 int16_t dexed_getter(struct param_editor* param) {
   int8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
@@ -14293,14 +14307,19 @@ void dexed_setter(struct param_editor* param, int16_t value) {
   uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
 };
+
+// allow switching the currently edited operator.
 int16_t dexed_op_getter(struct param_editor* param) {
   return current_voice_op;
 };
 void dexed_op_setter(struct param_editor* param, int16_t value) {
   current_voice_op = value;
-  ui.draw_editors(true);
+  ui.draw_editors(true);  // as half of the editors have changed when a different operator is selected.
 };
 
+// the dexed voice edior, showing an UI for all 144 parameters of the current voice
+// as not all editors fit on screen, only the global parameters and one set of operator parameters is shown.
+// The current operator can be selected to access all parameters.
 FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -14309,14 +14328,16 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
     ui.setCursor(0, 1);
 
+    // allow switching between mutliple instances (also by long button press)
     addInstanceEditor(&dexed_voice_name_renderer);
 
     // voice global parameters
     display.setTextSize(1);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(0, 4);
-    display.print(F("PITCH EG"));
 
+    display.print(F("PITCH EG"));
+    // display PITCH EG editor in two columns to save space
     ui.setCursor(0, 5);
     for (uint8_t i = 0; i < 4; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
@@ -14324,16 +14345,18 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     for (uint8_t i = 4; i < 8; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(0, 9);
+    // display the remaining global editors
     for (uint8_t i = 8; i < num_voice_params; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
-    // operator parameters
+    // operator parameter set selector
     ui.setCursor(27, 3);
     ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
-    ui.enableLeftEncoderEditor();
+    ui.enableLeftEncoderEditor();  // also select operator by left encoder
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
+    // display OPERATOR EG editor in two columns to save space
     ui.setCursor(27, 5);
     for (uint8_t i = 0; i < 4; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
@@ -14341,6 +14364,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     for (uint8_t i = 4; i < 8; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(27, 9);
+    // display the remaining operator editors
     for (uint8_t i = 8; i < num_voice_op_params; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
   }
@@ -14356,6 +14380,11 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   }
 }
 
+// ======================
+// Dexed controller setup
+// ======================
+
+// display modes a controller can interact
 void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   display.print("          ");
@@ -14366,6 +14395,7 @@ void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
   if (mode == 2) display.print("DIRECT");
 }
 
+// display the targets a controller can be assigned to (multiple choice bit field)
 void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   display.print("          ");
@@ -14376,15 +14406,21 @@ void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
   if (mode & 4) display.print("EG");
 }
 
+// compare edited parameter location to a given one and send SysEx message if they match
 void send_sysex_if_changed(uint8_t id, uint8_t* valuePtr, uint8_t* changedValuePtr) {
   if (valuePtr == changedValuePtr)
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, id, *((uint8_t*)valuePtr), 2);
 }
 
+// apply changed controller values (all at once)
+// SysEx messages are only send for the actual chaged parameter.
+//
 void dexed_controller_setter(struct param_editor* editor, int16_t value) {
 
+  // call base setter to store editor value into our dexed parameter storage.
   dexed_current_instance_setter(editor, value);
 
+  // send all editor changes to dexed engine.
   MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
   MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
   MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
@@ -14392,6 +14428,8 @@ void dexed_controller_setter(struct param_editor* editor, int16_t value) {
   MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
   MicroDexed[selected_instance_id]->ControllersRefresh();
 
+  // send SysEx only for the value actually named by editor value pointer
+  // to make sure we don't spam around SysEx messages for unchanged values!
   send_sysex_if_changed(65, &configuration.dexed[selected_instance_id].pb_range, (uint8_t*)editor->value);
   send_sysex_if_changed(66, &configuration.dexed[selected_instance_id].pb_step, (uint8_t*)editor->value);
   send_sysex_if_changed(70, &configuration.dexed[selected_instance_id].mw_range, (uint8_t*)editor->value);
@@ -14404,12 +14442,19 @@ void dexed_controller_setter(struct param_editor* editor, int16_t value) {
   send_sysex_if_changed(77, &configuration.dexed[selected_instance_id].at_assign, (uint8_t*)editor->value);
 }
 
+// UI page to configure and assign the plentyful controllers a dexed engine can get input from:
+//   Pitch Bend wheel, Modulation wheel, Foot pedal controller, Breath Controller, After Touch Pressure.
+// Each of them (except pitch bend) can be assigned to zero or more of the controller channels:
+//   Pitch modulation, Amplitude modulation, EG bias (a static offset to the operator EG values)
+// The range and mapping can be altered for every controller.
+//
 FLASHMEM void UI_func_dexed_controllers(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
     ui.setCursor(1, 1);
+    // allow switching which dexed instance to edit
     addInstanceEditor(&dexed_voice_name_renderer);
 
     ui.setCursor(1, 5);
