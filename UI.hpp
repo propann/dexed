@@ -452,9 +452,6 @@ void UI_func_filter_cutoff(uint8_t param);
 void UI_func_filter_resonance(uint8_t param);
 void UI_func_drum_reverb_send(uint8_t param);
 
-void UI_func_midi_channel(uint8_t param);
-void UI_func_lowest_note(uint8_t param);
-void UI_func_highest_note(uint8_t param);
 void UI_func_sound_intensity(uint8_t param);
 void UI_func_panorama(uint8_t param);
 void UI_func_stereo_mono(uint8_t param);
@@ -3950,43 +3947,6 @@ FLASHMEM void UI_func_filter_resonance(uint8_t param) {
 }
 #endif
 
-FLASHMEM void UI_func_midi_channel(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("MIDI Channel"));
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (LCDML.BT_checkDown() && encoderDir[ENC_R].Down())
-      configuration.dexed[selected_instance_id].midi_channel = constrain(configuration.dexed[selected_instance_id].midi_channel + ENCODER[ENC_R].speed(), MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX);
-    else if (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())
-      configuration.dexed[selected_instance_id].midi_channel = constrain(configuration.dexed[selected_instance_id].midi_channel - ENCODER[ENC_R].speed(), MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX);
-#if NUM_DEXED > 1
-    else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
-      selected_instance_id = !selected_instance_id;
-
-      UI_update_instance_icons();
-    }
-#endif
-    setCursor_textGrid(1, 2);
-    if (configuration.dexed[selected_instance_id].midi_channel == 0) {
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.print(F("[OMNI]"));
-    } else {
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display_int(configuration.dexed[selected_instance_id].midi_channel, 4, false, true, false);
-    }
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
 FLASHMEM void getNoteName(char* noteName, uint8_t noteNumber) {
   char notes[12][3] = { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
   uint8_t oct_index = noteNumber - 12;
@@ -4000,98 +3960,6 @@ FLASHMEM void getNoteName(char* noteName, uint8_t noteNumber) {
       snprintf_P(noteName, sizeof(noteName), PSTR("%1s-%1d"), notes[noteNumber % 12], oct_index / 12);
     else
       snprintf_P(noteName, sizeof(noteName), PSTR("%2s%1d"), notes[noteNumber % 12], oct_index / 12);
-  }
-}
-
-FLASHMEM void UI_func_lowest_note(uint8_t param) {
-  char note_name[4];
-
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    getNoteName(note_name, configuration.dexed[selected_instance_id].lowest_note);
-    setCursor_textGrid(1, 1);
-    display.print(F("Lowest Note"));
-    setCursor_textGrid(1, 2);
-    display.print(F("["));
-    display.print(note_name);
-    display.print(F("]"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].lowest_note = constrain(configuration.dexed[selected_instance_id].lowest_note + ENCODER[ENC_R].speed(), INSTANCE_LOWEST_NOTE_MIN, INSTANCE_LOWEST_NOTE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].lowest_note = constrain(configuration.dexed[selected_instance_id].lowest_note - ENCODER[ENC_R].speed(), INSTANCE_LOWEST_NOTE_MIN, INSTANCE_LOWEST_NOTE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    getNoteName(note_name, configuration.dexed[selected_instance_id].lowest_note);
-    setCursor_textGrid(2, 2);
-    display.print(note_name);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
-FLASHMEM void UI_func_highest_note(uint8_t param) {
-  char note_name[4];
-
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    getNoteName(note_name, configuration.dexed[selected_instance_id].highest_note);
-    setCursor_textGrid(1, 1);
-    display.print(F("Highest Note"));
-    setCursor_textGrid(1, 2);
-    display.print(F("["));
-    display.print(note_name);
-    display.print(F("]"));
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown())
-        configuration.dexed[selected_instance_id].highest_note = constrain(configuration.dexed[selected_instance_id].highest_note + ENCODER[ENC_R].speed(), INSTANCE_HIGHEST_NOTE_MIN, INSTANCE_HIGHEST_NOTE_MAX);
-      else if (LCDML.BT_checkUp())
-        configuration.dexed[selected_instance_id].highest_note = constrain(configuration.dexed[selected_instance_id].highest_note - ENCODER[ENC_R].speed(), INSTANCE_HIGHEST_NOTE_MIN, INSTANCE_HIGHEST_NOTE_MAX);
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    getNoteName(note_name, configuration.dexed[selected_instance_id].highest_note);
-    setCursor_textGrid(2, 2);
-    display.print(note_name);
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
   }
 }
 
@@ -4366,6 +4234,15 @@ void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
   show(1, 1, 10, g_voice_name[selected_instance_id]);
 }
 
+void note_name_renderer(struct param_editor* editor, bool refresh) {
+  prepare_multi_options(editor, refresh);
+  char note_name[4];
+  getNoteName(note_name, editor->get());
+  display.print("[");
+  display.print(note_name);
+  display.print("]");
+}
+
 FLASHMEM void UI_func_dexed_setup(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -4378,6 +4255,49 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.printLn("DEXED INSTANCE SETUP");
     ui.printLn("");
 
+    ui.printLn("MIDI");
+    ui.addEditor("MIDI CHANNEL", MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX, &configuration.dexed[0].midi_channel, &dexed_current_instance_getter, dexed_current_instance_setter);
+    ui.addEditor("LOWEST NOTE", INSTANCE_LOWEST_NOTE_MIN, INSTANCE_LOWEST_NOTE_MAX, &configuration.dexed[0].lowest_note,
+                 &dexed_current_instance_getter, &dexed_current_instance_setter, &note_name_renderer);
+    ui.addEditor("HIGHEST NOTE", INSTANCE_HIGHEST_NOTE_MIN, INSTANCE_HIGHEST_NOTE_MAX, &configuration.dexed[0].highest_note,
+                 &dexed_current_instance_getter, &dexed_current_instance_setter, &note_name_renderer);
+    ui.printLn("");
+
+    ui.printLn("POLYPHONY");
+    ui.addEditor(
+      "MONO/POLY", MONOPOLY_MIN, MONOPOLY_MAX, &configuration.dexed[0].monopoly,
+      &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+        dexed_current_instance_setter(editor, value);
+        MicroDexed[selected_instance_id]->setMonoMode(!value);
+      },
+      [](struct param_editor* editor, bool refresh) {
+        prepare_multi_options(editor, refresh);
+        if (!editor->get()) display.print(F("[MONO]"));
+        else display.print(F("[POLY]"));
+      });
+    ui.addEditor("POLYPHONY", POLYPHONY_MIN, POLYPHONY_MAX, &configuration.dexed[0].polyphony,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MicroDexed[selected_instance_id]->setMaxNotes(value);
+                 });
+    ui.printLn("");
+
+    ui.printLn("TUNING");
+    ui.addEditor("TRANSPOSE", TRANSPOSE_MIN, TRANSPOSE_MAX, &configuration.dexed[0].transpose,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MicroDexed[selected_instance_id]->setTranspose(value);
+                   MicroDexed[selected_instance_id]->notesOff();
+                   send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, value, 0);
+                 });
+    ui.addEditor("FINE TUNE", TUNE_MIN, TUNE_MAX, &configuration.dexed[0].tune,
+                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, value);
+                 });
+    ui.printLn("");
+
+    ui.setCursor(27, 4);
     ui.printLn("PORTAMENTO", GREY2);
     ui.addEditor("MODE", PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX, &configuration.dexed[0].portamento_mode,
                  &dexed_current_instance_getter, &dexed_portamento_setter, [](struct param_editor* editor, bool refresh) {
@@ -4395,46 +4315,20 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
                  &dexed_current_instance_getter, &dexed_portamento_setter);
     ui.printLn("");
 
-    ui.addEditor("POLYPHONY", POLYPHONY_MIN, POLYPHONY_MAX, &configuration.dexed[0].polyphony,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
-                   dexed_current_instance_setter(editor, value);
-                   MicroDexed[selected_instance_id]->setMaxNotes(value);
-                 });
-    ui.addEditor("MONO/POLY", MONOPOLY_MIN, MONOPOLY_MAX, &configuration.dexed[0].monopoly,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
-                   dexed_current_instance_setter(editor, value);
-                   MicroDexed[selected_instance_id]->setMonoMode(!value);
-                 });
-
-    ui.printLn("");
-
-    ui.addEditor("TRANSPOSE", TRANSPOSE_MIN, TRANSPOSE_MAX, &configuration.dexed[0].transpose,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
-                   dexed_current_instance_setter(editor, value);
-                   MicroDexed[selected_instance_id]->setTranspose(value);
-                   MicroDexed[selected_instance_id]->notesOff();
-                   send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, value, 0);
-                 });
-    ui.addEditor("FINE TUNE", TUNE_MIN, TUNE_MAX, &configuration.dexed[0].tune,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
-                   dexed_current_instance_setter(editor, value);
-                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, value);
-                 });
-    ui.printLn("");
-
     ui.printLn("INTERNALS", GREY2);
-    ui.addEditor("NOTE REFRESH", NOTE_REFRESH_MIN, NOTE_REFRESH_MAX, &configuration.dexed[0].note_refresh,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
-                   dexed_current_instance_setter(editor, value);
-                   MicroDexed[selected_instance_id]->setNoteRefreshMode(value);
-                 }
-                 //   display.print(F("[NORMAL     ]"));
-                 //   display.print(F("[RETRIGGERED]"));
-    );
+    ui.addEditor(
+      "NOTE REFRESH", NOTE_REFRESH_MIN, NOTE_REFRESH_MAX, &configuration.dexed[0].note_refresh,
+      &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+        dexed_current_instance_setter(editor, value);
+        MicroDexed[selected_instance_id]->setNoteRefreshMode(value);
+      },
+      [](struct param_editor* editor, bool refresh) {
+        prepare_multi_options(editor, refresh);
+        if (!editor->get()) display.print(F("[NORMAL ]"));
+        else display.print(F("[RETRIG.]"));
+      });
     ui.addEditor("VELOCITY LEVEL", VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX, &configuration.dexed[0].velocity_level,
                  &dexed_current_instance_getter, &dexed_current_instance_setter);
-
-    // ui.setCursor(29, 5 + 4);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
