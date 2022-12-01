@@ -8612,6 +8612,7 @@ void UI_func_microsynth(uint8_t param) {
     if (generic_temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(1);
     print_small_intbar(9, 3, microsynth[microsynth_selected_instance].sound_intensity, 0, 1, 0);
     setModeColor(1);
     setCursor_textGrid_small(9, 4);
