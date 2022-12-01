@@ -163,6 +163,7 @@ extern void seq_print_step_numbers(int xpos, int ypos);
 extern void print_single_pattern_pianoroll_in_pattern_editor(int xpos, int ypos, uint8_t pattern, uint8_t actstep, bool fullredraw);
 extern void print_chord_name(uint8_t currentstep);
 extern void print_file_manager_buttons(void);
+extern void print_file_manager_active_border(void);
 extern uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b);
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint32_t ColorHSV2(uint16_t hue, uint8_t sat, uint8_t val);
@@ -11801,7 +11802,7 @@ FLASHMEM void sd_loadDirectory() {
   sd_root.close();
 
   // clear all the unused files in array
-  for (uint8_t i = fm.sd_sum_files; i < 200 ; i++) {
+  for (uint8_t i = fm.sd_sum_files; i < 200; i++) {
     strcpy(sdcard_infos.files[i].name, "");
     sdcard_infos.files[i].size = 0;
     sdcard_infos.files[i].isDirectory = false;
@@ -11891,12 +11892,13 @@ FLASHMEM void flash_printDirectory()  //SPI FLASH
     fm.flash_cap_rows = 9;
 
     for (uint8_t f = 0; f < 10; f++) {
-      if (f >= fm.flash_sum_files) {
-        fm.flash_cap_rows = f - 1;
-        display.console = true;
-        display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
-        break;
-      }
+
+      // if (f >= fm.flash_sum_files) {
+      //   fm.flash_cap_rows = f - 1;
+      //   display.console = true;
+      //   display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
+      //   break;
+      // }
 
       storage_file_t flash_entry = flash_infos.files[fm.flash_skip_files + f];
       if (f == fm.flash_selected_file && fm.active_window == 1)
@@ -12659,6 +12661,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     flash_printDirectory();
 #endif
     print_file_manager_buttons();
+    print_file_manager_active_border();
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
