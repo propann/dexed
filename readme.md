@@ -1,5 +1,8 @@
 # MicroDexed-touch
 
+This repo is a fork of the project MicroDexed-touch located at https://codeberg.org/positionhigh/MicroDexed-touch/
+As a contributor this repo only serves to test and push my code.
+
 <br><p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png" >
 <br>
