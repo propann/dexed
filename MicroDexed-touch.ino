@@ -861,8 +861,9 @@ extern void sequencer_part2(void);
    SETUP
  ***********************************************************************/
 void setup() {
+  Serial.begin(SERIAL_SPEED);
+
 #ifdef DEBUG
-Serial.begin(SERIAL_SPEED);
   LOG.begin(SERIAL_SPEED);
   LOG.println("LOG started");
 
