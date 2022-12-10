@@ -25,6 +25,279 @@ boolean show_levelmeters;
 int timer = millis();
 int num_meters;
 
+
+void setup()
+{
+  size(640, 480);
+  //size(640, 520);
+  String portName = Serial.list()[0];
+  myPort = new Serial(this, portName);
+  myPort.buffer(8192);
+  noSmooth();
+  strokeWeight(2);
+  strokeCap(PROJECT);
+  fill(0, 0, 0);
+  rect(0, 0, 640, 480);
+  myPort.write(127);
+}
+
+void draw()
+{
+  while (myPort.available() > 0)
+  {
+    val1 = myPort.read();
+
+    if (val1==99) // all commands start with 99
+    {
+      val2 = myPort.read();
+      if (val2==90) // draw pixel (draw commands are from 89 - 98)
+      {
+        debug_command=2;
+        readxy();
+        readcolor();
+        check= myPort.read();
+        if (check==88)
+          rect((xh*256+xl)*2, (yh*256+yl)*2, 2, 2  );
+        ;
+      } else if (val2==93)  // fill screen
+      {
+        debug_command=5;
+        readcolor();
+        check= myPort.read();
+        if (check==88)
+          rect(0, 0, 640, 480);
+      } else if (val2==94)  //fill rect
+      {
+        debug_command=6;
+        readxy();
+        wh = myPort.read();
+        wl = myPort.read();
+        hh = myPort.read();
+        hl = myPort.read();
+        readcolor();
+        check= myPort.read();
+        if (check==88)
+          rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2  );
+      }
+      //else if (val2==95) // draw char
+      //{
+      //  debug_command=7;
+      //  readxy();
+      //  readcolor();
+      //  readbgcolor();
+      //  readchar();
+      //  readsize();
+      //  check= myPort.read();
+      //  if (check==88)
+      //  {
+      //    drawChar((xh*256+xl), (yh*256+yl), ch, c, bgcolor, size);
+      //  }
+      //}
+      else if (val2==96)  //draw line
+      {
+        debug_command=8;
+        readxy();
+        wh = myPort.read();
+        wl = myPort.read();
+        hh = myPort.read();
+        hl = myPort.read();
+        read_and_set_line_color();
+        check= myPort.read();
+        if (check==88)
+        {
+          line((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2+1, (hh*256+hl) *2+1 );
+        }
+      } else if (val2==97)  //draw filled circle
+      {
+        debug_command=9;
+        readxy();
+        wh = myPort.read();
+        wl = myPort.read();
+        read_and_set_circle_color();
+        check= myPort.read();
+        if (check==88)
+          circle((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *4 );
+      } else if (val2==98)  //draw rect
+      {
+        debug_command=10;
+        readxy();
+        wh = myPort.read();
+        wl = myPort.read();
+        hh = myPort.read();
+        hl = myPort.read();
+        readcolor_rect();
+        check= myPort.read();
+        if (check==88)
+        {
+
+          rect((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2-2, (hh*256+hl) *2 -2);
+        }
+      } else if (val2==70)  //volume meter
+      {
+        debug_command=11;
+        readxy();
+        hh = myPort.read();
+        hl = myPort.read();
+        levelmeter = myPort.read();
+        check= myPort.read();
+        if (check==88)
+        {
+          update_volmeter((xh*256+xl)*2, (yh*256+yl)*2, (hh*256+hl) *2, levelmeter);
+          show_levelmeters=true;
+          draw_volmeters();
+        }
+      } else if (val2==71)  // update number of volume meters
+      {
+        debug_command=12;
+        hh=myPort.read();
+        if (check==88)
+          initMeters();
+        num_meters=hh;
+      } else if (val2==72)  // draw string
+      {
+        debug_command=13;
+        int sizeStr = myPort.read();
+        readxy();
+        readcolor();
+        readbgcolor();
+        readsize();
+
+        byte[] inBuffer = new byte[sizeStr];
+        myPort.readBytes(inBuffer);
+
+        check= myPort.read();
+        if (check==88)
+        {
+          for (int i=0; i<sizeStr; i++) {
+            drawChar((xh*256+xl)+i*6*size, (yh*256+yl), inBuffer[i], c, bgcolor, size);
+          }
+        }
+      }
+
+      //if (debug_command !=0) {
+      //  print (" ");
+      //  if (debug_command == 1)
+      //    print ("Ch");
+      //  if (debug_command == 2)
+      //    print ("px");
+      //  if (debug_command == 3)
+      //    print ("vl");
+      //  if (debug_command == 4)
+      //    print ("hl");
+      //  if (debug_command == 5)
+      //    print ("fs");
+      //  if (debug_command == 6)
+      //    print ("fr");
+      //  if (debug_command == 7)
+      //    print ("chr");
+      //  if (debug_command == 8)
+      //    print ("l");
+      //  if (debug_command == 9)
+      //    print ("c");
+      //  if (debug_command == 10)
+      //    print ("dr");
+      //  if (debug_command == 11)
+      //    print ("vm");
+      //  if (debug_command == 12)
+      //  { 
+      //    print ("meterchange=");
+      //    print (num_meters);
+      //  }
+      //  if (debug_command == 13)
+      //    print ("str");
+      //  debug_command =0;
+      //}
+
+      // if (debug_command !=11)
+      //  show_levelmeters=false;
+
+      if (show_levelmeters == true && timer >1110)
+      {
+        draw_volmeters();
+        timer=0;
+      }
+    }
+    //else if (val1 == 4) { //receive file
+    //  byte []filename_bytes= new byte[36];
+    //  String Filename = new String(filename_bytes);
+    //  int count=0;
+    //  int []filelen_bytes= new int[4];
+    //  Boolean filename_received=false;
+    //  Boolean filename_processed=false;
+    //  int file_size_byte_count=0;
+    //  Boolean file_transfer=false;
+    //  int filelength=0;
+    //  Boolean transfer_finished=false;
+
+    //  while (myPort.available() > 0 &&transfer_finished==false) {
+
+    //    if (filename_received==false )
+    //    {
+    //      val1 = myPort.read();
+    //      if (val1 != 5) {
+    //        filename_bytes[count]=(byte)val1;
+    //        count++;
+    //      } else  
+    //      filename_received=true;
+    //    }
+
+    //    if (filename_received && filename_processed == false )
+    //    {
+    //      Filename = new String(filename_bytes).trim();
+    //      print (Filename);
+    //      count=0;
+    //      filename_processed=true;
+    //    }
+    //    if (filename_received && filename_processed  && file_size_byte_count<4 && file_transfer==false )
+    //    {
+    //      val1 = myPort.read();
+    //      filelen_bytes[file_size_byte_count] = val1;
+    //      file_size_byte_count++;
+    //    }
+
+    //    if (filename_received && filename_processed  && file_size_byte_count==4 && file_transfer==false )
+    //    {
+    //      filelength = filelen_bytes[0];
+    //      filelength += filelen_bytes[1] << 8;
+    //      filelength +=filelen_bytes[2] << 16;
+    //      filelength +=filelen_bytes[3] << 24;
+
+    //      print (filelength);
+    //      print (" ");
+    //      file_size_byte_count=0;
+    //      count=0;
+    //      val1 = (byte)myPort.read();// filename detection end byte "6" 
+    //      if (val1==6) {
+    //        print ("OK ");
+    //        file_transfer=true;
+    //      }
+    //    }
+    //    if (file_transfer && count<filelength )
+    //    { 
+    //      println ("reading ");
+    //      if (filelength>40000000)
+    //        filelength=777;  // safety 40MB
+    //      byte []bytearray= new byte[filelength];      
+    //      while (myPort.available() > 0 && count<filelength) {
+    //        bytearray[count]=(byte)myPort.read();
+    //        print ( 100*(count+1) / filelength);
+    //        print ("% ");
+    //        count++;
+    //      }
+    //      println ("saving ");
+    //      saveBytes(Filename, bytearray);
+    //      println ("done ");
+    //      transfer_finished = true;
+    //    }
+    //  }
+    //}
+  }
+ // if (keyPressed)
+ //   saveFrame("microdexed-######.png");
+}
+
+//////////////////////////////////////////////////
+
 // 5x7 font
 int[] font = {
   0x00, 0x00, 0x00, 0x00, 0x00, //
@@ -381,21 +654,6 @@ void drawChar(int x, int y, int ch, int col, int bg, int size) {
   }
 }
 
-void setup()
-{
-  size(640, 480);
-  //size(640, 520);
-  String portName = Serial.list()[1];
-  myPort = new Serial(this, portName);
-  myPort.buffer(8192);
-  noSmooth();
-  strokeWeight(2);
-  strokeCap(PROJECT);
-  fill(0, 0, 0);
-  rect(0, 0, 640, 480);
-  myPort.write(127);
-}
-
 void readxy()
 {
   xh = myPort.read();
@@ -475,260 +733,6 @@ void readbgcolor()
   noStroke();
 }
 
-void draw()
-{
-  while (myPort.available() > 0)
-  {
-    val1 = myPort.read();
-
-    if (val1==99) // all commands start with 99
-    {
-      val2 = myPort.read();
-      if (val2==90) // draw pixel (draw commands are from 89 - 98)
-      {
-        debug_command=2;
-        readxy();
-        readcolor();
-        check= myPort.read();
-        if (check==88)
-          rect((xh*256+xl)*2, (yh*256+yl)*2, 2, 2  );
-        ;
-      } else if (val2==93)  // fill screen
-      {
-        debug_command=5;
-        readcolor();
-        check= myPort.read();
-        if (check==88)
-          rect(0, 0, 640, 480);
-      } else if (val2==94)  //fill rect
-      {
-        debug_command=6;
-        readxy();
-        wh = myPort.read();
-        wl = myPort.read();
-        hh = myPort.read();
-        hl = myPort.read();
-        readcolor();
-        check= myPort.read();
-        if (check==88)
-          rect((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *2, (hh*256+hl) *2  );
-      }
-      //else if (val2==95) // draw char
-      //{
-      //  debug_command=7;
-      //  readxy();
-      //  readcolor();
-      //  readbgcolor();
-      //  readchar();
-      //  readsize();
-      //  check= myPort.read();
-      //  if (check==88)
-      //  {
-      //    drawChar((xh*256+xl), (yh*256+yl), ch, c, bgcolor, size);
-      //  }
-      //}
-      else if (val2==96)  //draw line
-      {
-        debug_command=8;
-        readxy();
-        wh = myPort.read();
-        wl = myPort.read();
-        hh = myPort.read();
-        hl = myPort.read();
-        read_and_set_line_color();
-        check= myPort.read();
-        if (check==88)
-        {
-          line((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2+1, (hh*256+hl) *2+1 );
-        }
-      } else if (val2==97)  //draw filled circle
-      {
-        debug_command=9;
-        readxy();
-        wh = myPort.read();
-        wl = myPort.read();
-        read_and_set_circle_color();
-        check= myPort.read();
-        if (check==88)
-          circle((xh*256+xl)*2, (yh*256+yl)*2, (wh*256+wl) *4 );
-      } else if (val2==98)  //draw rect
-      {
-        debug_command=10;
-        readxy();
-        wh = myPort.read();
-        wl = myPort.read();
-        hh = myPort.read();
-        hl = myPort.read();
-        readcolor_rect();
-        check= myPort.read();
-        if (check==88)
-        {
-
-          rect((xh*256+xl)*2+1, (yh*256+yl)*2+1, (wh*256+wl) *2-2, (hh*256+hl) *2 -2);
-        }
-      } else if (val2==70)  //volume meter
-      {
-        debug_command=11;
-        readxy();
-        hh = myPort.read();
-        hl = myPort.read();
-        levelmeter = myPort.read();
-        check= myPort.read();
-        if (check==88)
-        {
-          update_volmeter((xh*256+xl)*2, (yh*256+yl)*2, (hh*256+hl) *2, levelmeter);
-          show_levelmeters=true;
-          draw_volmeters();
-        }
-      } else if (val2==71)  // update number of volume meters
-      {
-        debug_command=12;
-        hh=myPort.read();
-        if (check==88)
-          initMeters();
-        num_meters=hh;
-      } else if (val2==72)  // draw string
-      {
-        debug_command=13;
-        int sizeStr = myPort.read();
-        readxy();
-        readcolor();
-        readbgcolor();
-        readsize();
-
-        byte[] inBuffer = new byte[sizeStr];
-        myPort.readBytes(inBuffer);
-
-        check= myPort.read();
-        if (check==88)
-        {
-          for (int i=0; i<sizeStr; i++) {
-            drawChar((xh*256+xl)+i*6*size, (yh*256+yl), inBuffer[i], c, bgcolor, size);
-          }
-        }
-      }
-
-      //if (debug_command !=0) {
-      //  print (" ");
-      //  if (debug_command == 1)
-      //    print ("Ch");
-      //  if (debug_command == 2)
-      //    print ("px");
-      //  if (debug_command == 3)
-      //    print ("vl");
-      //  if (debug_command == 4)
-      //    print ("hl");
-      //  if (debug_command == 5)
-      //    print ("fs");
-      //  if (debug_command == 6)
-      //    print ("fr");
-      //  if (debug_command == 7)
-      //    print ("chr");
-      //  if (debug_command == 8)
-      //    print ("l");
-      //  if (debug_command == 9)
-      //    print ("c");
-      //  if (debug_command == 10)
-      //    print ("dr");
-      //  if (debug_command == 11)
-      //    print ("vm");
-      //  if (debug_command == 12)
-      //  { 
-      //    print ("meterchange=");
-      //    print (num_meters);
-      //  }
-      //  if (debug_command == 13)
-      //    print ("str");
-      //  debug_command =0;
-      //}
-
-      // if (debug_command !=11)
-      //  show_levelmeters=false;
-
-      if (show_levelmeters == true && timer >1110)
-      {
-        draw_volmeters();
-        timer=0;
-      }
-    }
-    //else if (val1 == 4) { //receive file
-    //  byte []filename_bytes= new byte[36];
-    //  String Filename = new String(filename_bytes);
-    //  int count=0;
-    //  int []filelen_bytes= new int[4];
-    //  Boolean filename_received=false;
-    //  Boolean filename_processed=false;
-    //  int file_size_byte_count=0;
-    //  Boolean file_transfer=false;
-    //  int filelength=0;
-    //  Boolean transfer_finished=false;
-
-    //  while (myPort.available() > 0 &&transfer_finished==false) {
-
-    //    if (filename_received==false )
-    //    {
-    //      val1 = myPort.read();
-    //      if (val1 != 5) {
-    //        filename_bytes[count]=(byte)val1;
-    //        count++;
-    //      } else  
-    //      filename_received=true;
-    //    }
-
-    //    if (filename_received && filename_processed == false )
-    //    {
-    //      Filename = new String(filename_bytes).trim();
-    //      print (Filename);
-    //      count=0;
-    //      filename_processed=true;
-    //    }
-    //    if (filename_received && filename_processed  && file_size_byte_count<4 && file_transfer==false )
-    //    {
-    //      val1 = myPort.read();
-    //      filelen_bytes[file_size_byte_count] = val1;
-    //      file_size_byte_count++;
-    //    }
-
-    //    if (filename_received && filename_processed  && file_size_byte_count==4 && file_transfer==false )
-    //    {
-    //      filelength = filelen_bytes[0];
-    //      filelength += filelen_bytes[1] << 8;
-    //      filelength +=filelen_bytes[2] << 16;
-    //      filelength +=filelen_bytes[3] << 24;
-
-    //      print (filelength);
-    //      print (" ");
-    //      file_size_byte_count=0;
-    //      count=0;
-    //      val1 = (byte)myPort.read();// filename detection end byte "6" 
-    //      if (val1==6) {
-    //        print ("OK ");
-    //        file_transfer=true;
-    //      }
-    //    }
-    //    if (file_transfer && count<filelength )
-    //    { 
-    //      println ("reading ");
-    //      if (filelength>40000000)
-    //        filelength=777;  // safety 40MB
-    //      byte []bytearray= new byte[filelength];      
-    //      while (myPort.available() > 0 && count<filelength) {
-    //        bytearray[count]=(byte)myPort.read();
-    //        print ( 100*(count+1) / filelength);
-    //        print ("% ");
-    //        count++;
-    //      }
-    //      println ("saving ");
-    //      saveBytes(Filename, bytearray);
-    //      println ("done ");
-    //      transfer_finished = true;
-    //    }
-    //  }
-    //}
-  }
- // if (keyPressed)
- //   saveFrame("microdexed-######.png");
-}
 
 void mousePressed() {
 

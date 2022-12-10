@@ -109,7 +109,7 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-//#define DEBUG 1
+// #define DEBUG 1    // 1 for normal Serial, 2 for dual serial (only for developers)
 //#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE  //enable USB Display + USB AUDIO - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
@@ -1090,4 +1090,11 @@ enum fm_modes {
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max) {
   return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+#endif
+
+// For developers only
+#if defined DEBUG && DEBUG == 2
+  #define LOG SerialUSB1 // dual serial : SerialUSB1 to separate logs
+#else
+  #define LOG Serial
 #endif

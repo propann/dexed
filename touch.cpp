@@ -137,11 +137,11 @@ FLASHMEM void helptext_c(const char *str) {
   ts.old_helptext_length[2] = l;
 }
 
-uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b) {
+FLASHMEM uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b) {
   return ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
 }
 
-uint16_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val) {
+FLASHMEM uint16_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val) {
   // hue: 0-359, sat: 0-255, val (lightness): 0-255
   int r = 0, g = 0, b = 0, base;
 
@@ -182,7 +182,7 @@ uint16_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val) {
   //  }
 }
 
-void print_current_chord() {
+FLASHMEM void print_current_chord() {
   for (uint8_t x = 0; x < 7; x++) {
     display.print(seq.chord_names[seq.arp_chord][x]);
   }
@@ -397,8 +397,7 @@ FLASHMEM void print_virtual_keyboard_octave() {
   //display.setTextSize(2);
 }
 
-bool check_button_on_grid(uint8_t x, uint8_t y) {
-
+FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y) {
   if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small)
     return true;
   else return false;
@@ -459,7 +458,7 @@ FLASHMEM void virtual_keyboard_update_all_key_states() {
   }
 }
 
-void get_scaled_touch_point() {
+FLASHMEM void get_scaled_touch_point() {
   LCDML.SCREEN_resetTimer();
   if (remote_touched == false) {
 
@@ -476,7 +475,7 @@ void get_scaled_touch_point() {
   }
 }
 
-void handle_touchscreen_voice_select() {
+FLASHMEM void handle_touchscreen_voice_select() {
   if (touch.touched()) {
     get_scaled_touch_point();
     if (check_button_on_grid(45, 1) && seq.generic_ui_delay > 1000) {

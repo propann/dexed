@@ -168,7 +168,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
       break;
   }
 #ifdef DEBUG
-  Serial.printf_P(PSTR("[%s] %s"), midi_device, text);
+  LOG.printf_P(PSTR("[%s] %s"), midi_device, text);
 #endif
 
   // MIDI THRU
@@ -201,7 +201,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
           break;
       }
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB"));
+      LOG.print(F(" THRU->MIDI_USB"));
 #endif
     }
 #endif
@@ -234,7 +234,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
           break;
       }
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_DIN"));
+      LOG.print(F(" THRU->MIDI_DIN"));
 #endif
     }
 #endif
@@ -267,21 +267,21 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
           break;
       }
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB_HOST"));
+      LOG.print(F(" THRU->MIDI_USB_HOST"));
 #endif
     }
 #endif
   }
 
 #ifdef DEBUG
-  Serial.println();
+  LOG.println();
 #endif
 }
 
 void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device) {
   handleSystemExclusive(data, len);
 #ifdef DEBUG
-  Serial.printf_P(PSTR("[%s] SysEx"), midi_device);
+  LOG.printf_P(PSTR("[%s] SysEx"), midi_device);
 #endif
 
   // MIDI THRU
@@ -290,7 +290,7 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
     if (strcmp(MIDI_BY_USB, midi_device)) {
       usbMIDI.sendSysEx(len, data);
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB"));
+      LOG.print(F(" THRU->MIDI_USB"));
 #endif
     }
 #endif
@@ -299,7 +299,7 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
     if (strcmp(MIDI_BY_DIN, midi_device)) {
       midi_serial.sendSysEx(len, data);
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_DIN"));
+      LOG.print(F(" THRU->MIDI_DIN"));
 #endif
     }
 #endif
@@ -308,14 +308,14 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
     if (strcmp(MIDI_BY_USB_HOST, midi_device)) {
       midi_usb.sendSysEx(len, data);
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB_HOST"));
+      LOG.print(F(" THRU->MIDI_USB_HOST"));
 #endif
     }
 #endif
   }
 
 #ifdef DEBUG
-  Serial.println();
+  LOG.println();
 #endif
 }
 
@@ -339,7 +339,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
       break;
   }
 #ifdef DEBUG
-  Serial.printf_P(PSTR("[%s] %s"), midi_device, text);
+  LOG.printf_P(PSTR("[%s] %s"), midi_device, text);
 #endif
 
   // MIDI THRU
@@ -360,7 +360,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
           break;
       }
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB"));
+      LOG.print(F(" THRU->MIDI_USB"));
 #endif
     }
 #endif
@@ -381,7 +381,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
           break;
       }
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_DIN"));
+      LOG.print(F(" THRU->MIDI_DIN"));
 #endif
     }
 #endif
@@ -402,14 +402,14 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
           break;
       }
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB_HOST"));
+      LOG.print(F(" THRU->MIDI_USB_HOST"));
 #endif
     }
 #endif
   }
 
 #ifdef DEBUG
-  Serial.println();
+  LOG.println();
 #endif
 }
 
@@ -445,7 +445,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
       break;
   }
 #ifdef DEBUG
-  Serial.printf_P(PSTR("[%s] %s"), midi_device, text);
+  LOG.printf_P(PSTR("[%s] %s"), midi_device, text);
 #endif
 
   // MIDI THRU
@@ -454,7 +454,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
     if (strcmp(MIDI_BY_USB, midi_device)) {
       usbMIDI.sendRealTime(event);
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB"));
+      LOG.print(F(" THRU->MIDI_USB"));
 #endif
     }
 #endif
@@ -463,7 +463,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
     if (strcmp(MIDI_BY_DIN, midi_device)) {
       midi_serial.sendRealTime(event);
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_DIN"));
+      LOG.print(F(" THRU->MIDI_DIN"));
 #endif
     }
 #endif
@@ -472,14 +472,14 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
     if (strcmp(MIDI_BY_USB_HOST, midi_device)) {
       midi_usb.sendRealTime(event);
 #ifdef DEBUG
-      Serial.print(F(" THRU->MIDI_USB_HOST"));
+      LOG.print(F(" THRU->MIDI_USB_HOST"));
 #endif
     }
 #endif
   }
 
 #ifdef DEBUG
-  Serial.println();
+  LOG.println();
 #endif
 }
 
@@ -490,13 +490,13 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
 // #ifdef DEBUG
 //   switch(midi_device) {
 //     case MIDI_DIN:
-//       Serial.print(F("[MIDI_DIN] RealTimeSystem"));
+//       LOG.print(F("[MIDI_DIN] RealTimeSystem"));
 //       break;
 //     case MIDI_USB_HOST:
-//       Serial.print(F("[MIDI_USB_HOST] RealTimeSystem"));
+//       LOG.print(F("[MIDI_USB_HOST] RealTimeSystem"));
 //       break;
 //     case USB_MIDI:
-//       Serial.print(F("[USB_MIDI] RealTimeSystem"));
+//       LOG.print(F("[USB_MIDI] RealTimeSystem"));
 //       break;
 //   }
 // #endif
@@ -506,7 +506,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
 //     if(midi_device != USB_MIDI) {
 //         usbMIDI.sendRealTime(inRealTime);
 //   #ifdef DEBUG
-//         Serial.print(F(" THRU->MIDI_USB"));
+//         LOG.print(F(" THRU->MIDI_USB"));
 //   #endif
 //     }
 // #endif
@@ -515,7 +515,7 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
 //     if(midi_device != MIDI_DIN) {
 //       midi_serial.sendRealTime((midi::MidiType)inRealTime);
 //   #ifdef DEBUG
-//         Serial.print(F(" THRU->MIDI_DIN"));
+//         LOG.print(F(" THRU->MIDI_DIN"));
 //   #endif
 //     }
 // #endif
@@ -524,14 +524,14 @@ void handleRealtime_generic(const char *midi_device, midi::MidiType event) {
 //     if(midi_device != MIDI_USB_HOST) {
 //         midi_usb.sendRealTime(inRealTime);
 //   #ifdef DEBUG
-//         Serial.print(F(" THRU->MIDI_USB_HOST"));
+//         LOG.print(F(" THRU->MIDI_USB_HOST"));
 //   #endif
 //     }
 // #endif
 //   }
 
 // #ifdef DEBUG
-//   Serial.println();
+//   LOG.println();
 // #endif
 // }
 
@@ -577,25 +577,25 @@ void handleSystemExclusive_MIDI_DEVICE_DIN(byte *data, uint len) {
   {
   handleSystemExclusiveChunk(data, len, last);
   #ifdef DEBUG
-  Serial.print(F("[MIDI_DIN] SysExChunk"));
+  LOG.print(F("[MIDI_DIN] SysExChunk"));
   #endif
     if (configuration.sys.soft_midi_thru == 1)
   {
   #ifdef MIDI_DEVICE_USB_HOST
   midi_usb.sendSysEx(len, data, last);
   #ifdef DEBUG
-  Serial.print(F(" THRU->MIDI_USB_HOST"));
+  LOG.print(F(" THRU->MIDI_USB_HOST"));
   #endif
   #endif
   #ifdef MIDI_DEVICE_USB
   usbMIDI.sendSysEx(len, data, last);
   #ifdef DEBUG
-  Serial.print(F(" THRU->MIDI_USB"));
+  LOG.print(F(" THRU->MIDI_USB"));
   #endif
   #endif
   }
   #ifdef DEBUG
-  Serial.println();
+  LOG.println();
   #endif
   } */
 
@@ -681,25 +681,25 @@ void handleSystemExclusive_MIDI_DEVICE_USB_HOST(byte *data, uint len) {
   {
   handleSystemExclusiveChunk(data, len, last);
   #ifdef DEBUG
-  Serial.print(F("[MIDI_USB_HOST] SysExChunk"));
+  LOG.print(F("[MIDI_USB_HOST] SysExChunk"));
   #endif
     if (configuration.sys.soft_midi_thru == 1)
   {
   #ifdef MIDI_DEVICE_DIN
   midi_serial.sendSysEx(len, data, last);
   #ifdef DEBUG
-  Serial.print(F(" THRU->MIDI_DIN"));
+  LOG.print(F(" THRU->MIDI_DIN"));
   #endif
   #endif
   #ifdef MIDI_DEVICE_USB
   usbMIDI.sendSysEx(len, data, last);
   #ifdef DEBUG
-  Serial.print(F(" THRU->MIDI_USB"));
+  LOG.print(F(" THRU->MIDI_USB"));
   #endif
   #endif
   }
   #ifdef DEBUG
-  Serial.println();
+  LOG.println();
   #endif
   } */
 
@@ -785,25 +785,25 @@ void handleSystemExclusive_MIDI_DEVICE_USB(byte *data, uint len) {
   {
   handleSystemExclusiveChunk(data, len, last);
   #ifdef DEBUG
-  Serial.print(F("[MIDI_USB] SysExChunk"));
+  LOG.print(F("[MIDI_USB] SysExChunk"));
   #endif
     if (configuration.sys.soft_midi_thru == 1)
   {
   #ifdef MIDI_DEVICE_DIN
   midi_serial.sendSysEx(len, data, last);
   #ifdef DEBUG
-  Serial.print(F(" THRU->MIDI_DIN"));
+  LOG.print(F(" THRU->MIDI_DIN"));
   #endif
   #endif
   #ifdef MIDI_DEVICE_USB_HOST
   midi_usb.sendSysEx(len, data, last);
   #ifdef DEBUG
-  Serial.print(F(" THRU->MIDI_USB_HOST"));
+  LOG.print(F(" THRU->MIDI_USB_HOST"));
   #endif
   #endif
   }
   #ifdef DEBUG
-  Serial.println();
+  LOG.println();
   #endif
   } */
 
@@ -851,33 +851,33 @@ void handleSystemReset_MIDI_DEVICE_USB(void) {
 
 FLASHMEM void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value) {
 #ifdef DEBUG
-  Serial.print(F("[MD] SendControlChange CH:"));
-  Serial.print(channel, DEC);
-  Serial.print(F(" CC:"));
-  Serial.print(cc);
-  Serial.print(F(" VAL:"));
-  Serial.print(value);
+  LOG.print(F("[MD] SendControlChange CH:"));
+  LOG.print(channel, DEC);
+  LOG.print(F(" CC:"));
+  LOG.print(cc);
+  LOG.print(F(" VAL:"));
+  LOG.print(value);
 #endif
 #ifdef MIDI_DEVICE_DIN
   midi_serial.sendControlChange(cc, value, channel);
 #ifdef DEBUG
-  Serial.print(F(" MIDI-DIN"));
+  LOG.print(F(" MIDI-DIN"));
 #endif
 #endif
 #ifdef MIDI_DEVICE_USB_HOST
   midi_usb.sendControlChange(cc, value, channel);
 #ifdef DEBUG
-  Serial.print(F(" MIDI-USB-HOST"));
+  LOG.print(F(" MIDI-USB-HOST"));
 #endif
 #endif
 #ifdef MIDI_DEVICE_USB
   usbMIDI.sendControlChange(cc, value, channel);
 #ifdef DEBUG
-  Serial.print(F(" MIDI-USB"));
+  LOG.print(F(" MIDI-USB"));
 #endif
 #endif
 #ifdef DEBUG
-  Serial.println();
+  LOG.println();
 #endif
 }
 
@@ -899,17 +899,17 @@ void OnHIDExtrasRelease(uint32_t top, uint16_t key) {
   }
 #endif
   //#ifdef SHOW_KEYBOARD_DATA
-  //  Serial.print(F("HID ("));
-  //  Serial.print(top, HEX);
-  //  Serial.print(F(") key release:"));
-  //  Serial.println(key, HEX);
+  //  LOG.print(F("HID ("));
+  //  LOG.print(top, HEX);
+  //  LOG.print(F(") key release:"));
+  //  LOG.println(key, HEX);
   //#endif
 }
 
 void OnRawPress(uint8_t keycode) {
 #ifdef KEYBOARD_INTERFACE
   if (keyboard_leds != keyboard_last_leds) {
-    //Serial.printf_P(PSTR("New LEDS: %x\n"), keyboard_leds);
+    //LOG.printf_P(PSTR("New LEDS: %x\n"), keyboard_leds);
     keyboard_last_leds = keyboard_leds;
     keyboard1.LEDS(keyboard_leds);
   }
@@ -922,7 +922,7 @@ void OnRawPress(uint8_t keycode) {
   } else {
     if (keyboard1.getModifiers() != keyboard_modifiers) {
 #ifdef SHOW_KEYBOARD_DATA
-      Serial.printf_P(PSTR("Mods mismatch: %x != %x\n"), keyboard_modifiers, keyboard1.getModifiers());
+      LOG.printf_P(PSTR("Mods mismatch: %x != %x\n"), keyboard_modifiers, keyboard1.getModifiers());
 #endif
       keyboard_modifiers = keyboard1.getModifiers();
       Keyboard.set_modifier(keyboard_modifiers);
@@ -931,10 +931,10 @@ void OnRawPress(uint8_t keycode) {
   }
 #endif
   //#ifdef SHOW_KEYBOARD_DATA
-  //  Serial.print(F("OnRawPress keycode: "));
-  //  Serial.print(keycode, HEX);
-  //  Serial.print(F(" Modifiers: "));
-  //  Serial.println(keyboard_modifiers, HEX);
+  //  LOG.print(F("OnRawPress keycode: "));
+  //  LOG.print(keycode, HEX);
+  //  LOG.print(F(" Modifiers: "));
+  //  LOG.println(keyboard_modifiers, HEX);
   //#endif
 }
 
@@ -954,10 +954,10 @@ void OnRawRelease(uint8_t keycode) {
   }
 #endif
   //#ifdef SHOW_KEYBOARD_DATA
-  //  Serial.print(F("OnRawRelease keycode: "));
-  //  Serial.print(keycode, HEX);
-  //  Serial.print(F(" Modifiers: "));
-  //  Serial.println(keyboard1.getModifiers(), HEX);
+  //  LOG.print(F("OnRawRelease keycode: "));
+  //  LOG.print(keycode, HEX);
+  //  LOG.print(F(" Modifiers: "));
+  //  LOG.println(keyboard1.getModifiers(), HEX);
   //#endif
 }
 #endif
@@ -986,7 +986,7 @@ FLASHMEM void setup_midi_devices(void) {
   midi_serial.setHandleSystemReset(handleSystemReset_MIDI_DEVICE_DIN);
   //midi_serial.setHandleRealTimeSystem(handleRealTimeSystem_MIDI_DEVICE_DIN);
 #ifdef DEBUG
-  Serial.println(F("MIDI_DEVICE_DIN enabled"));
+  LOG.println(F("MIDI_DEVICE_DIN enabled"));
 #endif
 #endif
 
@@ -1022,7 +1022,7 @@ FLASHMEM void setup_midi_devices(void) {
   midi_usb.setHandleSystemReset(handleSystemReset_MIDI_DEVICE_USB_HOST);
   //midi_usb.setHandleRealTimeSystem(handleRealTimeSystem_MIDI_DEVICE_USB_HOST);
 #ifdef DEBUG
-  Serial.println(F("MIDI_DEVICE_USB_HOST enabled."));
+  LOG.println(F("MIDI_DEVICE_USB_HOST enabled."));
 #endif
 #endif
 
@@ -1049,7 +1049,7 @@ FLASHMEM void setup_midi_devices(void) {
   usbMIDI.setHandleSystemReset(handleSystemReset_MIDI_DEVICE_USB);
   //usbMIDI.setHandleRealTimeSystem(handleRealTimeSystem_MIDI_DEVICE_USB);
 #ifdef DEBUG
-  Serial.println(F("MIDI_DEVICE_USB enabled."));
+  LOG.println(F("MIDI_DEVICE_USB enabled."));
 #endif
 #endif
 }

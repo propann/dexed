@@ -148,21 +148,21 @@ FLASHMEM void AudioControlSGTL5000Plus::commitFilter(uint8_t band) {
 
 FLASHMEM void AudioControlSGTL5000Plus::show_params(uint8_t band) {
   if (_enabled == false) {
-    Serial.print(F("Parametric-EQ not initialized!"));
+    LOG.print(F("Parametric-EQ not initialized!"));
   } else {
     band = constrain(band, 1, num_bands);
 
-    //    Serial.print(F("[SGTL5000 EQ] Band: "));
-    //    Serial.print(band, DEC);
-    //    Serial.print(F(" Type:"));
-    //    Serial.print(filter_type[band - 1], DEC);
-    //    Serial.print(F(" Fc:"));
-    //    Serial.print(Fc[band - 1], 1);
-    //    Serial.print(F(" Q:"));
-    //    Serial.print(Q[band - 1], 1);
-    //    Serial.print(F(" peakGainDB:"));
-    //    Serial.print(peakGainDB[band - 1], 1);
-    //    Serial.println();
+    //    LOG.print(F("[SGTL5000 EQ] Band: "));
+    //    LOG.print(band, DEC);
+    //    LOG.print(F(" Type:"));
+    //    LOG.print(filter_type[band - 1], DEC);
+    //    LOG.print(F(" Fc:"));
+    //    LOG.print(Fc[band - 1], 1);
+    //    LOG.print(F(" Q:"));
+    //    LOG.print(Q[band - 1], 1);
+    //    LOG.print(F(" peakGainDB:"));
+    //    LOG.print(peakGainDB[band - 1], 1);
+    //    LOG.println();
   }
 }
 #endif
