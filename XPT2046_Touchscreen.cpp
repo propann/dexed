@@ -19,15 +19,17 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#include "config.h"
+#ifdef GENERIC_DISPLAY
 
 #include "XPT2046_Touchscreen.h"
-#include "config.h"
 
 #define Z_THRESHOLD 400
 #define Z_THRESHOLD_INT 75
 #define MSEC_THRESHOLD 3
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
+elapsedMillis touch_control_rate;
 static XPT2046_Touchscreen *isrPinptr;
 void isrPin(void);
 
@@ -95,11 +97,15 @@ bool XPT2046_Touchscreen::tirqTouched() {
 }
 
 bool XPT2046_Touchscreen::touched() {
+  if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0) {
+     touch_control_rate = 0;
   if (remote_touched == false) {
     update();
     return (zraw >= Z_THRESHOLD);
   }
   return true;
+  }else
+  return false;
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
@@ -206,3 +212,4 @@ void XPT2046_Touchscreen::update() {
     }
   }
 }
+#endif

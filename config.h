@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.8.1"
+#define VERSION "1.4.8.2"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -123,6 +123,13 @@
 #define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
 //#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
+
+//*************************************************************************************************
+//* DISPLAY AND TOUCHSCREEN
+//*************************************************************************************************
+
+#define GENERIC_DISPLAY  // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
+//#define ADAFRUIT_DISPLAY  // Adafruit 2.8" TFT with Capacitive FT6206 Touchscreen, currently for testing purposes only
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -289,6 +296,22 @@
 #define CHAR_height_small 8
 #define button_size_x 7
 #define button_size_y 4
+
+#define TFT_DC 37
+#define TFT_CS 41
+#define TFT_RST 24
+#define TFT_SCK 27
+#define TFT_MISO 39
+#define TFT_MOSI 26
+
+//IRQ valid for both display types:
+#define TFT_TOUCH_IRQ 33
+
+#ifdef GENERIC_DISPLAY
+#define TFT_TOUCH_CS 38
+#endif
+
+#define TOUCH_CONTROL_RATE_MS 400
 
 #define VOICE_SELECTION_MS 60000
 #define BACK_FROM_VOLUME_MS 2000

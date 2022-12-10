@@ -25,7 +25,15 @@
 
 #ifndef _SEQUENCER_H
 #define _SEQUENCER_H
+
+#ifdef GENERIC_DISPLAY
 #include "XPT2046_Touchscreen.h"
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+#include "Adafruit_FT6206.h"
+#endif
+
 #include <avr/pgmspace.h>
 #include <SD.h>
 extern Sd2Card card;
@@ -119,7 +127,6 @@ typedef struct sequencer_s {
     0,
   };
   const uint8_t piano2[13] = { 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 };
-  int generic_ui_delay;
   bool midi_learn_active = false;
   bool help_text_needs_refresh = false;
   uint8_t tracktype_or_instrument_assign;

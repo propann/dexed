@@ -33,7 +33,14 @@
 #include <SPI.h>
 
 #include "ILI9341_t3n.h"
+
+#ifdef GENERIC_DISPLAY
 #include "XPT2046_Touchscreen.h"
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+#include "Adafruit_FT6206.h"
+#endif
 
 #ifdef COMPILE_FOR_PROGMEM
 #include <TeensyVariablePlayback.h>
@@ -92,17 +99,15 @@ void initial_values(bool init);
 bool checkMidiChannel(byte inChannel, uint8_t instance_id);
 bool bootup_performance_loading = true;
 
-#define TFT_DC 37
-#define TFT_CS 41
-#define TFT_RST 24
-#define TFT_SCK 27
-#define TFT_MISO 39
-#define TFT_MOSI 26
-#define TFT_TOUCH_CS 38
-#define TFT_TOUCH_IRQ 33
-
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
+
+#ifdef GENERIC_DISPLAY
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ);  // CS, Touch IRQ Pin - interrupt enabled polling
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+Adafruit_FT6206 touch = Adafruit_FT6206();
+#endif
 
 extern void handle_touchscreen_multiband();
 
@@ -856,9 +861,8 @@ extern void sequencer_part2(void);
    SETUP
  ***********************************************************************/
 void setup() {
-  Serial.begin(SERIAL_SPEED);
-  
 #ifdef DEBUG
+Serial.begin(SERIAL_SPEED);
   LOG.begin(SERIAL_SPEED);
   LOG.println("LOG started");
 
@@ -880,6 +884,10 @@ void setup() {
   Serial.flush();
 #endif
 
+#ifdef ADAFRUIT_DISPLAY
+  pinMode(TFT_TOUCH_IRQ, INPUT);
+#endif
+
   pinMode(BUT_R_PIN, INPUT_PULLUP);
   pinMode(BUT_L_PIN, INPUT_PULLUP);
 
@@ -897,7 +905,27 @@ void setup() {
   // Init display
   SPI.begin();
   display.begin();
+
+#ifdef GENERIC_DISPLAY
   touch.begin();
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+  if (!touch.begin(40)) {
+    ;
+#ifdef DEBUG
+    LOG.println("Unable to start touchscreen.");
+#endif
+  } else {
+    ;
+#ifdef DEBUG
+    LOG.println("Touchscreen started.");
+#endif
+  }
+#endif
+
+
+
 
   // Setup MIDI devices
   setup_midi_devices();
@@ -4088,11 +4116,13 @@ FLASHMEM void set_sys_params(void) {
   // set initial volume
   set_volume(configuration.sys.vol, configuration.sys.mono);
 
+#ifdef GENERIC_DISPLAY
   if (configuration.sys.calib_x_min != configuration.sys.calib_x_max) {
     TS_Calibration newCalibration = TS_Calibration(configuration.sys.calib_x_min, configuration.sys.calib_y_min, configuration.sys.calib_x_max, configuration.sys.calib_y_max);
     touch.setCalibration(newCalibration);
     ts.finished_calibration = true;
   }
+#endif
 }
 
 /******************************************************************************

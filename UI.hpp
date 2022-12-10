@@ -137,7 +137,15 @@ extern void clear_volmeter(int x, int y);
 
 extern PeriodicTimer sequencer_timer;
 extern ILI9341_t3n display;
+
+#ifdef GENERIC_DISPLAY
 extern XPT2046_Touchscreen touch;
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+extern Adafruit_FT6206 touch;
+#endif
+
 extern void sequencer(void);
 extern bool check_sd_performance_exists(uint8_t number);
 extern SdVolume volume;
@@ -13433,9 +13441,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     setModeColor(3);
     setCursor_textGrid_small(42, 10);
     display.print(configuration.sys.touch_rotation);
+#ifdef GENERIC_DISPLAY
     if (settings_modified == 4) {
       touch.setRotation(configuration.sys.touch_rotation);  // rotation 180°
     }
+#endif
 
     // UI reverse
     setModeColor(4);
@@ -13493,8 +13503,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
 
 FLASHMEM void _setup_rotation_and_encoders(bool init) {
   display.setRotation(configuration.sys.display_rotation);
+#ifdef GENERIC_DISPLAY
   touch.setRotation(configuration.sys.touch_rotation);
-
+#endif
   if (configuration.sys.ui_reverse == true) {
     MD_REncoder encoder_tmp = ENCODER[ENC_L];
     ENCODER[ENC_L] = ENCODER[ENC_R];
@@ -17773,6 +17784,7 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
 }
 #endif
 
+#ifdef GENERIC_DISPLAY
 FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
 #ifdef REMOTE_CONSOLE
   display.console = true;
@@ -17811,7 +17823,9 @@ FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16
   display.console = false;
 #endif
 }
+#endif
 
+#ifdef GENERIC_DISPLAY
 FLASHMEM void calibrate() {
   uint16_t x1, y1, x2, y2;
   uint16_t vi1, vj1, vi2, vj2;
@@ -17849,8 +17863,11 @@ FLASHMEM void calibrate() {
   save_sys_flag = true;
   save_sys = SAVE_SYS_MS / 2;
 }
+#endif
+
 
 FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
+  #ifdef GENERIC_DISPLAY
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ts.finished_calibration = false;
@@ -17876,4 +17893,5 @@ FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
   }
+  #endif
 }

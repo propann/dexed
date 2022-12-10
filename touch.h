@@ -1,8 +1,17 @@
 #ifndef _TOUCH_H
 #define _TOUCH_H
+
+#ifdef GENERIC_DISPLAY
 #include "XPT2046_Touchscreen.h"
-#include <SD.h>
 extern XPT2046_Touchscreen touch;
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+#include "Adafruit_FT6206.h"
+extern Adafruit_FT6206 touch;
+#endif
+
+#include <SD.h>
 
 typedef struct dexed_live_mod_s {
   uint8_t active_button = 0;

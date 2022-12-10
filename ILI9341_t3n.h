@@ -106,7 +106,13 @@
 // At all other speeds, _pspi->beginTransaction() will use the fastest available
 // clock
 
-#define ILI9341_SPICLOCK 60000000
+#ifdef GENERIC_DISPLAY
+#define ILI9341_SPICLOCK 50000000
+//#define ILI9341_SPICLOCK 60000000
+#else
+#define ILI9341_SPICLOCK 50000000
+#endif
+
 #define ILI9341_SPICLOCK_READ 2000000
 
 class ILI9341_t3n : public Print {
