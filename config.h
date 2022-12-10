@@ -109,7 +109,7 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-// #define DEBUG 1    // 1 for normal Serial, 2 for dual serial (only for developers)
+//#define DEBUG 1    // 1 for normal Serial, 2 for dual serial (only for developers)
 //#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE  //enable USB Display + USB AUDIO - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
