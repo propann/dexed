@@ -164,10 +164,10 @@ void XPT2046_Touchscreen::update() {
   else
     return;
 
-  //Serial.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
+  //LOG.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
   if (z < 0) z = 0;
   if (z < Z_THRESHOLD) {  //	if ( !touched ) {
-    // Serial.println();
+    // LOG.println();
     zraw = 0;
     if (z < Z_THRESHOLD_INT) {  //	if ( !touched ) {
       if (255 != tirqPin) isrWake = false;
@@ -177,14 +177,14 @@ void XPT2046_Touchscreen::update() {
   zraw = z;
 
   // Average pair with least distance between each measured x then y
-  //Serial.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
-  //Serial.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
+  //LOG.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
+  //LOG.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
   //data[0], data[1], data[2], data[3], data[4], data[5]);
   int16_t x = besttwoavg(data[0], data[2], data[4]);
   int16_t y = besttwoavg(data[1], data[3], data[5]);
 
-  //Serial.printf_P(PSTR("    %d,%d"), x, y);
-  //Serial.println();
+  //LOG.printf_P(PSTR("    %d,%d"), x, y);
+  //LOG.println();
   if (z >= Z_THRESHOLD) {
     msraw = now;  // good read completed, set wait
     switch (rotation) {

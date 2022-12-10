@@ -186,9 +186,9 @@ static const audio_block_t zeroblock = {
 
 boolean AudioEffectModulatedDelay::begin(short *delayline, uint16_t d_length) {
 #if 0
-  Serial.print(F("AudioEffectModulatedDelay.begin(modulated-delay line length = "));
-  Serial.print(d_length);
-  Serial.println(F(")"));
+  LOG.print(F("AudioEffectModulatedDelay.begin(modulated-delay line length = "));
+  LOG.print(d_length);
+  LOG.println(F(")"));
 #endif
 
   _cb_index = 0;
@@ -297,9 +297,9 @@ bool AudioEffectModulatedDelay::get_bypass(void) {
 
 boolean AudioEffectModulatedDelayStereo::begin(short *delayline_l, short *delayline_r, uint16_t d_length) {
 #if 0
-  Serial.print(F("AudioEffectModulatedDelayStereo.begin(modulated-delay line length = "));
-  Serial.print(d_length);
-  Serial.println(F(")"));
+  LOG.print(F("AudioEffectModulatedDelayStereo.begin(modulated-delay line length = "));
+  LOG.print(d_length);
+  LOG.println(F(")"));
 #endif
 
   _cb_index[0] = 0;

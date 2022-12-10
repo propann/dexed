@@ -39,6 +39,8 @@
 #include "drumset.h"
 #include "sequencer.h"
 #include "touch.h"
+#include "splash_image.h"
+
 #if defined(USE_EPIANO)
 #include "synth_mda_epiano.h"
 extern AudioSynthEPiano ep;
@@ -2167,11 +2169,6 @@ FLASHMEM boolean key_right() {
     return true;
 #endif
 
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'r')
-    return true;
-#endif
-
   if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1)
     return true;
 
@@ -2187,11 +2184,6 @@ FLASHMEM boolean key_left() {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_LEFT) == false)
-    return true;
-#endif
-
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'l')
     return true;
 #endif
 
@@ -2213,11 +2205,6 @@ FLASHMEM boolean key_up() {
     return true;
 #endif
 
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'u')
-    return true;
-#endif
-
   if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1)
     return true;
 
@@ -2233,11 +2220,6 @@ FLASHMEM boolean key_down() {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_DOWN) == false)
-    return true;
-#endif
-
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'd')
     return true;
 #endif
 
@@ -2932,43 +2914,43 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-  if (incomingSerialByte == '0' || remote_console_keystate_select) {
-    buttons = GAMEPAD_SELECT;
-    remote_console_keystate_select = true;
-  }
-  if (incomingSerialByte == '1') {
-    buttons = buttons + GAMEPAD_START;
-  }
-  if (incomingSerialByte == 'a' || remote_console_keystate_a) {
-    buttons = buttons + GAMEPAD_BUTTON_A;
-    remote_console_keystate_a = true;
-  }
-  if (incomingSerialByte == 'b' || remote_console_keystate_b) {
-    buttons = buttons + GAMEPAD_BUTTON_B;
-    remote_console_keystate_b = true;
-  }
-  if (incomingSerialByte == '!') {
-    remote_console_keystate_select = false;
-    buttons = 0;
-  }
-  if (incomingSerialByte == '$') {
-    remote_console_keystate_a = false;
-    buttons = 0;
-  }
-  if (incomingSerialByte == '#') {
-    remote_console_keystate_b = false;
-    buttons = 0;
-  }
-  if (incomingSerialByte == 127) {  // jump to current menu, when remote console start, currently hardwired to voice select
-    buttons = 0;
-    remote_console_keystate_select = false;
-    remote_console_keystate_a = false;
-    remote_console_keystate_b = false;
-    ts.touch_ui_drawn_in_menu = false;
-    ts.keyb_in_menu_activated = false;
-    draw_menu_ui_icons();
-    LCDML.MENU_goRoot();
-  }
+  // if (incomingSerialByte == '0' || remote_console_keystate_select) {
+  //   buttons = GAMEPAD_SELECT;
+  //   remote_console_keystate_select = true;
+  // }
+  // if (incomingSerialByte == '1') {
+  //   buttons = buttons + GAMEPAD_START;
+  // }
+  // if (incomingSerialByte == 'a' || remote_console_keystate_a) {
+  //   buttons = buttons + GAMEPAD_BUTTON_A;
+  //   remote_console_keystate_a = true;
+  // }
+  // if (incomingSerialByte == 'b' || remote_console_keystate_b) {
+  //   buttons = buttons + GAMEPAD_BUTTON_B;
+  //   remote_console_keystate_b = true;
+  // }
+  // if (incomingSerialByte == '!') {
+  //   remote_console_keystate_select = false;
+  //   buttons = 0;
+  // }
+  // if (incomingSerialByte == '$') {
+  //   remote_console_keystate_a = false;
+  //   buttons = 0;
+  // }
+  // if (incomingSerialByte == '#') {
+  //   remote_console_keystate_b = false;
+  //   buttons = 0;
+  // }
+  // if (incomingSerialByte == 127) {  // jump to current menu, when remote console start, currently hardwired to voice select
+  //   buttons = 0;
+  //   remote_console_keystate_select = false;
+  //   remote_console_keystate_a = false;
+  //   remote_console_keystate_b = false;
+  //   ts.touch_ui_drawn_in_menu = false;
+  //   ts.keyb_in_menu_activated = false;
+  //   draw_menu_ui_icons();
+  //   LCDML.MENU_goRoot();
+  // }
   //#endif
 
   if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed) {
@@ -3119,14 +3101,14 @@ FLASHMEM void lcdml_menu_control(void) {
     if (!button[ENC_R]) {
       LCDML.BT_left();
 #ifdef DEBUG
-      Serial.println(F("ENC-R left"));
+      LOG.println(F("ENC-R left"));
 #endif
       encoderDir[ENC_R].Left(true);
       g_LCDML_CONTROL_button_prev[ENC_R] = LOW;
       g_LCDML_CONTROL_button_press_time[ENC_R] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-R down"));
+      LOG.println(F("ENC-R down"));
 #endif
       encoderDir[ENC_R].Down(true);
       LCDML.BT_down();
@@ -3135,7 +3117,7 @@ FLASHMEM void lcdml_menu_control(void) {
   } else if (g_LCDML_CONTROL_Encoder_position[ENC_R] >= 3) {
     if (!button[ENC_R]) {
 #ifdef DEBUG
-      Serial.println(F("ENC-R right"));
+      LOG.println(F("ENC-R right"));
 #endif
       encoderDir[ENC_R].Right(true);
       LCDML.BT_right();
@@ -3143,7 +3125,7 @@ FLASHMEM void lcdml_menu_control(void) {
       g_LCDML_CONTROL_button_press_time[ENC_R] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-R up"));
+      LOG.println(F("ENC-R up"));
 #endif
       encoderDir[ENC_R].Up(true);
       LCDML.BT_up();
@@ -3165,13 +3147,13 @@ FLASHMEM void lcdml_menu_control(void) {
         //Reset for left right action
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-        Serial.println(F("ENC-R long released"));
+        LOG.println(F("ENC-R long released"));
 #endif
         //LCDML.BT_quit();
         encoderDir[ENC_R].ButtonLong(false);
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= BUT_DEBOUNCE_MS) {
 #ifdef DEBUG
-        Serial.println(F("ENC-R short"));
+        LOG.println(F("ENC-R short"));
 #endif
         encoderDir[ENC_R].ButtonShort(true);
 
@@ -3181,7 +3163,7 @@ FLASHMEM void lcdml_menu_control(void) {
   }
   if (encoderDir[ENC_R].ButtonPressed() == true && (millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-    Serial.println(F("ENC-R long recognized"));
+    LOG.println(F("ENC-R long recognized"));
 #endif
     encoderDir[ENC_R].ButtonLong(true);
     if (ui.handlesButtonLong() || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
@@ -3204,7 +3186,7 @@ FLASHMEM void lcdml_menu_control(void) {
   if (g_LCDML_CONTROL_Encoder_position[ENC_L] <= -3) {
     if (!button[ENC_L]) {
 #ifdef DEBUG
-      Serial.println(F("ENC-L left"));
+      LOG.println(F("ENC-L left"));
 #endif
       encoderDir[ENC_L].Left(true);
       LCDML.BT_left();
@@ -3212,7 +3194,7 @@ FLASHMEM void lcdml_menu_control(void) {
       g_LCDML_CONTROL_button_press_time[ENC_L] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-L down"));
+      LOG.println(F("ENC-L down"));
 #endif
       encoderDir[ENC_L].Down(true);
       LCDML.BT_down();
@@ -3273,7 +3255,7 @@ FLASHMEM void lcdml_menu_control(void) {
   } else if (g_LCDML_CONTROL_Encoder_position[ENC_L] >= 3) {
     if (!button[ENC_L]) {
 #ifdef DEBUG
-      Serial.println(F("ENC-L right"));
+      LOG.println(F("ENC-L right"));
 #endif
       encoderDir[ENC_L].Right(true);
       LCDML.BT_right();
@@ -3281,7 +3263,7 @@ FLASHMEM void lcdml_menu_control(void) {
       g_LCDML_CONTROL_button_press_time[ENC_L] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-L up"));
+      LOG.println(F("ENC-L up"));
 #endif
       encoderDir[ENC_L].Up(true);
       LCDML.BT_up();
@@ -3348,14 +3330,14 @@ FLASHMEM void lcdml_menu_control(void) {
         //Reset for left right action
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_L]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-        Serial.println(F("ENC-L long released"));
+        LOG.println(F("ENC-L long released"));
 #endif
         //encoderDir[ENC_L].ButtonLong(true);
         //LCDML.BT_quit();
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_L]) >= BUT_DEBOUNCE_MS) {
         //LCDML.BT_enter();
 #ifdef DEBUG
-        Serial.println(F("ENC-L short"));
+        LOG.println(F("ENC-L short"));
 #endif
         encoderDir[ENC_L].ButtonShort(true);
 
@@ -3378,7 +3360,7 @@ FLASHMEM void lcdml_menu_control(void) {
 
   if (encoderDir[ENC_L].ButtonPressed() == true && (millis() - g_LCDML_CONTROL_button_press_time[ENC_L]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-    Serial.println(F("ENC-L long recognized"));
+    LOG.println(F("ENC-L long recognized"));
 #endif
 
     //    // when in Voice select Menu, long left-press sets/unsets favorite
@@ -3529,7 +3511,7 @@ FLASHMEM void lcdml_menu_display(void) {
   }
 }
 
-void draw_instance_editor(Editor* editor, bool refresh) {
+FLASHMEM void draw_instance_editor(Editor* editor, bool refresh) {
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
@@ -3552,7 +3534,7 @@ void draw_instance_editor(Editor* editor, bool refresh) {
   UI_update_instance_icons();
 }
 
-void addInstanceEditor(
+FLASHMEM void addInstanceEditor(
   void (*renderer)(Editor* param, bool refresh) = &draw_instance_editor) {
   ui.addEditor(
     "INSTANCE", 0, 1, &selected_instance_id, NULL,
@@ -9622,7 +9604,7 @@ unsigned int euclid(int n, int k, int o) {  // inputs: n=total, k=beats, o = off
       }
 
       else {
-        //Serial.println(F("ERROR"));
+        //LOG.println(F("ERROR"));
       }
       iteration++;
     }
@@ -10093,12 +10075,12 @@ FLASHMEM void set_delay_sync(uint8_t sync, uint8_t instance) {
     delay_fx[instance]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     if (midi_sync_delay_time > DELAY_MAX_TIME) {
 #ifdef DEBUG
-      Serial.println(F("Calculated MIDI-Sync delay: "));
-      Serial.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
-      Serial.println(F("ms"));
-      Serial.println(F("MIDI-Sync delay: midi_sync_delay_time"));
-      Serial.print(midi_sync_delay_time, DEC);
-      Serial.println(F("ms"));
+      LOG.println(F("Calculated MIDI-Sync delay: "));
+      LOG.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
+      LOG.println(F("ms"));
+      LOG.println(F("MIDI-Sync delay: midi_sync_delay_time"));
+      LOG.print(midi_sync_delay_time, DEC);
+      LOG.println(F("ms"));
 #endif
     }
   } else {
@@ -11817,13 +11799,13 @@ FLASHMEM void sd_loadDirectory() {
       sdcard_infos.files[fm.sd_sum_files].size = sd_entry.size();
       sdcard_infos.files[fm.sd_sum_files].isDirectory = sd_entry.isDirectory();
 #ifdef DEBUG
-      Serial.print(fm.sd_sum_files);
-      Serial.print(F("  "));
-      Serial.print(sdcard_infos.files[fm.sd_sum_files].name);
-      Serial.print(F("  "));
-      Serial.print(sdcard_infos.files[fm.sd_sum_files].size);
-      Serial.print(F(" bytes"));
-      Serial.println();
+      LOG.print(fm.sd_sum_files);
+      LOG.print(F("  "));
+      LOG.print(sdcard_infos.files[fm.sd_sum_files].name);
+      LOG.print(F("  "));
+      LOG.print(sdcard_infos.files[fm.sd_sum_files].size);
+      LOG.print(F(" bytes"));
+      LOG.println();
 #endif
 
       fm.sd_sum_files++;
@@ -11987,13 +11969,13 @@ FLASHMEM void flash_loadDirectory()  //SPI FLASH
       flash_infos.used = flash_infos.used + filesize / 1024;
 
 #ifdef DEBUG
-      Serial.print(filepos);
-      Serial.print(F("  "));
-      Serial.print(flash_infos.files[filepos].name);
-      Serial.print(F("  "));
-      Serial.print(filesize);
-      Serial.print(F(" bytes"));
-      Serial.println();
+      LOG.print(filepos);
+      LOG.print(F("  "));
+      LOG.print(flash_infos.files[filepos].name);
+      LOG.print(F("  "));
+      LOG.print(filesize);
+      LOG.print(F(" bytes"));
+      LOG.println();
 #endif
       filepos++;
     } else {
@@ -12003,8 +11985,8 @@ FLASHMEM void flash_loadDirectory()  //SPI FLASH
 
   fm.flash_sum_files = filepos;
 #ifdef DEBUG
-  Serial.print(F("Total flash files: "));
-  Serial.println(fm.flash_sum_files);
+  LOG.print(F("Total flash files: "));
+  LOG.println(fm.flash_sum_files);
 #endif
 
   if (fm.flash_sum_files) {
@@ -12766,35 +12748,35 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           // check if this file is already on the Flash chip
           if (SerialFlash.exists(filename)) {
 #ifdef DEBUG
-            Serial.println(F("  already exists on the Flash chip"));
+            LOG.println(F("  already exists on the Flash chip"));
 #endif
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff && ff.size() == f.size()) {
 #ifdef DEBUG
-              Serial.println(F("  size is the same, comparing data..."));
+              LOG.println(F("  size is the same, comparing data..."));
 #endif
               if (compareFiles(f, ff) == true) {
 #ifdef DEBUG
-                Serial.println(F("  files are identical :)"));
+                LOG.println(F("  files are identical :)"));
 #endif
                 f.close();
                 ff.close();
                 continue;  // advance to next file
               } else {
 #ifdef DEBUG
-                Serial.println(F("  files are different"));
+                LOG.println(F("  files are different"));
 #endif
               }
             } else {
 #ifdef DEBUG
-              Serial.print(F("  size is different, "));
-              Serial.print(ff.size());
-              Serial.println(F(" bytes"));
+              LOG.print(F("  size is different, "));
+              LOG.print(ff.size());
+              LOG.println(F(" bytes"));
 #endif
             }
             // delete the copy on the Flash chip, if different
 #ifdef DEBUG
-            Serial.println(F("  delete file from Flash chip"));
+            LOG.println(F("  delete file from Flash chip"));
 #endif
             SerialFlash.remove(filename);
           }
@@ -12805,7 +12787,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
               SerialFlashFile ff = SerialFlash.open(filename);
               if (ff) {
 #ifdef DEBUG
-                Serial.print(F("  copying"));
+                LOG.print(F("  copying"));
 #endif
                 // copy data loop
                 unsigned long count = 0;
@@ -12826,12 +12808,12 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
                 flash_printDirectory();
               } else {
 #ifdef DEBUG
-                Serial.println(F("  error opening freshly created file!"));
+                LOG.println(F("  error opening freshly created file!"));
 #endif
               }
             } else {
 #ifdef DEBUG
-              Serial.println(F("  unable to create file"));
+              LOG.println(F("  unable to create file"));
 #endif
             }
           }
@@ -12844,7 +12826,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         print_flash_stats();
         flash_printDirectory();
 #ifdef DEBUG
-        Serial.println(F("Finished All Files"));
+        LOG.println(F("Finished All Files"));
 #endif
       } else
 #endif
@@ -12894,34 +12876,34 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           // check if this file is already on the Flash chip
           if (SerialFlash.exists(filename)) {
 #ifdef DEBUG
-            Serial.println(F("  already exists on the Flash chip"));
+            LOG.println(F("  already exists on the Flash chip"));
 #endif
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff && ff.size() == f.size()) {
 #ifdef DEBUG
-              Serial.println(F("  size is the same, comparing data..."));
+              LOG.println(F("  size is the same, comparing data..."));
 #endif
               if (compareFiles(f, ff) == true) {
 #ifdef DEBUG
-                Serial.println(F("  files are identical :)"));
+                LOG.println(F("  files are identical :)"));
 #endif
                 f.close();
                 ff.close();
               } else {
 #ifdef DEBUG
-                Serial.println(F("  files are different"));
+                LOG.println(F("  files are different"));
 #endif
               }
             } else {
 #ifdef DEBUG
-              Serial.print(F("  size is different, "));
-              Serial.print(ff.size());
-              Serial.println(F(" bytes"));
+              LOG.print(F("  size is different, "));
+              LOG.print(ff.size());
+              LOG.println(F(" bytes"));
 #endif
             }
             // delete the copy on the Flash chip, if different
 #ifdef DEBUG
-            Serial.println(F("  delete file from Flash chip"));
+            LOG.println(F("  delete file from Flash chip"));
 #endif
             SerialFlash.remove(filename);
           } else {
@@ -12930,7 +12912,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
               SerialFlashFile ff = SerialFlash.open(filename);
               if (ff) {
 #ifdef DEBUG
-                Serial.print(F("  copying"));
+                LOG.print(F("  copying"));
 #endif
                 // copy data loop
                 unsigned long count = 0;
@@ -12947,7 +12929,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
                 ff.close();
               } else {
 #ifdef DEBUG
-                Serial.println(F("  error opening freshly created file!"));
+                LOG.println(F("  error opening freshly created file!"));
 #endif
               }
               f.close();
@@ -15039,9 +15021,9 @@ FLASHMEM void UI_func_save_voice(uint8_t param) {
 #ifdef DEBUG
             bool ret = save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
             if (ret == true)
-              Serial.println(F("Saving voice OK."));
+              LOG.println(F("Saving voice OK."));
             else
-              Serial.println(F("Error while saving voice."));
+              LOG.println(F("Error while saving voice."));
 #else
             save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
 #endif
@@ -15160,19 +15142,19 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param) {
         if (ui_select_name_state == true) {
           if (yesno == true) {
 #ifdef DEBUG
-            Serial.print(F("Bank name: ["));
-            Serial.print(receive_bank_filename);
-            Serial.println(F("]"));
+            LOG.print(F("Bank name: ["));
+            LOG.print(receive_bank_filename);
+            LOG.println(F("]"));
 #endif
             char tmp[FILENAME_LEN];
             strcpy(tmp, receive_bank_filename);
             snprintf_P(receive_bank_filename, sizeof(receive_bank_filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp);
 #ifdef DEBUG
-            Serial.print(F("Receiving into bank "));
-            Serial.print(bank_number);
-            Serial.print(F(" as filename "));
-            Serial.print(receive_bank_filename);
-            Serial.println(F("."));
+            LOG.print(F("Receiving into bank "));
+            LOG.print(bank_number);
+            LOG.print(F(" as filename "));
+            LOG.print(receive_bank_filename);
+            LOG.println(F("."));
 #endif
             mode = 0xff;
             // fix_later   lcd.noBlink();
@@ -15182,7 +15164,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param) {
           }
         }
       } else if (mode >= 1 && yesno == false) {
-        Serial.println(mode, DEC);
+        LOG.println(mode, DEC);
         memset(receive_bank_filename, 0, sizeof(receive_bank_filename));
         mode = 0xff;
         // fix_later   lcd.noBlink();
@@ -15346,7 +15328,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param) {
 
       get_bank_name(bank_number, tmp_bank_name);
 #ifdef DEBUG
-      Serial.printf_P(PSTR("send bank sysex %d - bank:[%s]\n"), bank_number, tmp_bank_name);
+      LOG.printf_P(PSTR("send bank sysex %d - bank:[%s]\n"), bank_number, tmp_bank_name);
 #endif
       show(2, 1, 2, bank_number);
       show(2, 4, 10, tmp_bank_name);
@@ -15355,14 +15337,14 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param) {
         char filename[FILENAME_LEN];
         snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
 #ifdef DEBUG
-        Serial.print(F("Send bank "));
-        Serial.print(filename);
-        Serial.println(F(" from SD."));
+        LOG.print(F("Send bank "));
+        LOG.print(filename);
+        LOG.println(F(" from SD."));
 #endif
         File sysex = SD.open(filename);
         if (!sysex) {
 #ifdef DEBUG
-          Serial.println(F("Cannot read from SD."));
+          LOG.println(F("Cannot read from SD."));
 #endif
           show(2, 1, 16, "Read error.");
           bank_number = 0xff;
@@ -15474,16 +15456,16 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param) {
             char filename[FILENAME_LEN];
             snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
 #ifdef DEBUG
-            Serial.print(F("Send voice "));
-            Serial.print(voice_number);
-            Serial.print(F(" of "));
-            Serial.print(filename);
-            Serial.println(F(" from SD."));
+            LOG.print(F("Send voice "));
+            LOG.print(voice_number);
+            LOG.print(F(" of "));
+            LOG.print(filename);
+            LOG.println(F(" from SD."));
 #endif
             File sysex = SD.open(filename);
             if (!sysex) {
 #ifdef DEBUG
-              Serial.println(F("Connot read from SD."));
+              LOG.println(F("Connot read from SD."));
 #endif
               show(2, 1, 16, "Read error.");
               bank_number = 0xff;
@@ -16102,11 +16084,11 @@ FLASHMEM uint8_t search_accepted_char(uint8_t c) {
 
   for (uint8_t i = 0; i < sizeof(accepted_chars) - 1; i++) {
 #ifdef DEBUG
-    Serial.print(i, DEC);
-    Serial.print(F(":"));
-    Serial.print(c);
-    Serial.print(F("=="));
-    Serial.println(accepted_chars[i], DEC);
+    LOG.print(i, DEC);
+    LOG.print(F(":"));
+    LOG.print(c);
+    LOG.print(F("=="));
+    LOG.println(accepted_chars[i], DEC);
 #endif
     if (c == accepted_chars[i])
       return (i);
@@ -16526,19 +16508,19 @@ FLASHMEM bool check_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
 #ifdef DEBUG
-    Serial.print(F("check if Voice is a Favorite: "));
-    Serial.print(tmp);
-    Serial.println();
+    LOG.print(F("check if Voice is a Favorite: "));
+    LOG.print(tmp);
+    LOG.println();
 #endif
     if (SD.exists(tmp)) {  //is Favorite
 #ifdef DEBUG
-      Serial.println(F(" - It is in Favorites."));
+      LOG.println(F(" - It is in Favorites."));
 #endif
       return true;
     } else {  // it was not a favorite
 
 #ifdef DEBUG
-      Serial.println(F(" - It is not in Favorites."));
+      LOG.println(F(" - It is not in Favorites."));
 #endif
       return false;
     }
@@ -16992,19 +16974,19 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id) {
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
 #ifdef DEBUG
-    Serial.print(F("check if there is a Favorite in Bank: "));
-    Serial.print(tmp);
-    Serial.println();
+    LOG.print(F("check if there is a Favorite in Bank: "));
+    LOG.print(tmp);
+    LOG.println();
 #endif
     if (SD.exists(tmp)) {  // this bank HAS at least 1 favorite(s)
 #ifdef DEBUG
-      Serial.println(F("quickcheck found a FAV in bank!"));
+      LOG.println(F("quickcheck found a FAV in bank!"));
 #endif
       return (true);
     } else {  // no favorites in bank stored
       return (false);
 #ifdef DEBUG
-      Serial.println(F(" - It is no Favorite in current Bank."));
+      LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
     }
   } else
@@ -17013,7 +16995,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id) {
 
 FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
-  Serial.println(F("Starting saving Favorite."));
+  LOG.println(F("Starting saving Favorite."));
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
@@ -17025,8 +17007,8 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
     snprintf_P(tmpfolder, sizeof(tmpfolder), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
 #ifdef DEBUG
-    Serial.println(F("Save Favorite to SD card..."));
-    Serial.println(tmp);
+    LOG.println(F("Save Favorite to SD card..."));
+    LOG.println(tmp);
 #endif
     if (!SD.exists(tmp)) {  //create Favorite Semaphore
       if (!SD.exists(tmpfolder)) {
@@ -17035,7 +17017,7 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
       myFav = SD.open(tmp, FILE_WRITE);
       myFav.close();
 #ifdef DEBUG
-      Serial.println(F("Favorite saved..."));
+      LOG.println(F("Favorite saved..."));
 #endif
       //fav symbol
       display.setTextSize(1);
@@ -17046,12 +17028,12 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
 
 
 #ifdef DEBUG
-      Serial.println(F("Added to Favorites..."));
+      LOG.println(F("Added to Favorites..."));
 #endif
     } else {  // delete the file, is no longer a favorite
       SD.remove(tmp);
 #ifdef DEBUG
-      Serial.println(F("Removed from Favorites..."));
+      LOG.println(F("Removed from Favorites..."));
 #endif
       for (i = 0; i < 32; i++) {  //if no other favs exist in current bank, remove folder
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, i);
@@ -17061,9 +17043,9 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
         SD.rmdir(tmp);
 #ifdef DEBUG
-        Serial.println(F("Fav count in bank:"));
-        Serial.print(countfavs);
-        Serial.println(F("Removed folder since no voice in bank flagged as favorite any more"));
+        LOG.println(F("Fav count in bank:"));
+        LOG.print(countfavs);
+        LOG.println(F("Removed folder since no voice in bank flagged as favorite any more"));
 #endif
       }
 
@@ -17077,7 +17059,7 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
       // display.print(" "); //remove fav symbol
 
 #ifdef DEBUG
-      Serial.println(F("Removed from Favorites..."));
+      LOG.println(F("Removed from Favorites..."));
 #endif
     }
   }
@@ -17104,12 +17086,12 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
   if (result > 0) {
     memcpy(root_note, filename + ms.MatchStart + 1, ms.MatchLength - 1);
 #ifdef DEBUG
-    Serial.print(F("Found match at: "));
-    Serial.println(ms.MatchStart + 1);
-    Serial.print(F("Match length: "));
-    Serial.println(ms.MatchLength - 1);
-    Serial.print(F("Match root note: "));
-    Serial.println(root_note);
+    LOG.print(F("Found match at: "));
+    LOG.println(ms.MatchStart + 1);
+    LOG.print(F("Match length: "));
+    LOG.println(ms.MatchLength - 1);
+    LOG.print(F("Match root note: "));
+    LOG.println(root_note);
 #endif
 
     // get midi note from the root note string
@@ -17143,8 +17125,8 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     }
     uint8_t midi_root = (root_note[ms.MatchLength - 1 - 1] - '0' + 1) * 12 + offset;
 #ifdef DEBUG
-    Serial.printf_P(PSTR("root note found: %s\n"), root_note);
-    Serial.printf_P(PSTR("midi root note found: %d\n"), midi_root);
+    LOG.printf_P(PSTR("root note found: %s\n"), root_note);
+    LOG.printf_P(PSTR("midi root note found: %d\n"), midi_root);
 #endif
     msz[preset_number][zone_number].rootnote = midi_root;
 
@@ -17152,3058 +17134,22 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     calc_low_high(preset_number);
   } else {
 #ifdef DEBUG
-    Serial.println("No match.");
+    LOG.println("No match.");
 #endif
   }
 
 #ifdef DEBUG
-  Serial.print(F("MSZ preset #"));
-  Serial.print(preset_number);
-  Serial.print(F(" - zone #"));
-  Serial.print(zone_number);
-  Serial.print(F(": "));
-  Serial.print(msz[preset_number][zone_number].filename);
-  Serial.print(F(" root: "));
-  Serial.println(msz[preset_number][zone_number].rootnote);
+  LOG.print(F("MSZ preset #"));
+  LOG.print(preset_number);
+  LOG.print(F(" - zone #"));
+  LOG.print(zone_number);
+  LOG.print(F(": "));
+  LOG.print(msz[preset_number][zone_number].filename);
+  LOG.print(F(" root: "));
+  LOG.println(msz[preset_number][zone_number].rootnote);
 #endif
 }
 #endif
-
-PROGMEM static const uint8_t splash_image[3033] = {
-  20,
-  20,
-  38,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  7,
-  121,
-  138,
-  128,
-  128,
-  148,
-  94,
-  20,
-  130,
-  81,
-  0,
-  20,
-  34,
-  128,
-  148,
-  94,
-  0,
-  0,
-  7,
-  121,
-  138,
-  128,
-  128,
-  148,
-  94,
-  0,
-  0,
-  0,
-  64,
-  152,
-  20,
-  23,
-  128,
-  152,
-  64,
-  0,
-  0,
-  7,
-  121,
-  138,
-  20,
-  18,
-  128,
-  146,
-  98,
-  0,
-  0,
-  34,
-  142,
-  130,
-  20,
-  21,
-  128,
-  152,
-  64,
-  20,
-  128,
-  187,
-  0,
-  20,
-  35,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  20,
-  20,
-  255,
-  197,
-  0,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  35,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  20,
-  18,
-  255,
-  195,
-  0,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  35,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  20,
-  18,
-  255,
-  197,
-  0,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  237,
-  181,
-  187,
-  20,
-  5,
-  188,
-  187,
-  181,
-  237,
-  20,
-  3,
-  255,
-  237,
-  181,
-  187,
-  20,
-  5,
-  188,
-  187,
-  181,
-  237,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  206,
-  178,
-  20,
-  17,
-  188,
-  223,
-  94,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  223,
-  176,
-  20,
-  13,
-  188,
-  216,
-  143,
-  0,
-  0,
-  67,
-  20,
-  3,
-  255,
-  252,
-  192,
-  183,
-  20,
-  10,
-  188,
-  186,
-  183,
-  239,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  128,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  13,
-  20,
-  13,
-  0,
-  188,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  128,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  14,
-  20,
-  13,
-  0,
-  190,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  243,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  243,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  13,
-  20,
-  13,
-  0,
-  188,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  117,
-  38,
-  20,
-  17,
-  67,
-  80,
-  34,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  246,
-  78,
-  52,
-  20,
-  10,
-  67,
-  62,
-  51,
-  209,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  188,
-  188,
-  188,
-  217,
-  138,
-  20,
-  9,
-  0,
-  138,
-  217,
-  188,
-  188,
-  217,
-  138,
-  20,
-  9,
-  0,
-  138,
-  217,
-  188,
-  188,
-  217,
-  138,
-  0,
-  0,
-  10,
-  178,
-  203,
-  188,
-  188,
-  217,
-  138,
-  0,
-  0,
-  0,
-  94,
-  223,
-  20,
-  23,
-  188,
-  223,
-  94,
-  0,
-  0,
-  10,
-  178,
-  202,
-  187,
-  188,
-  223,
-  95,
-  20,
-  18,
-  0,
-  50,
-  209,
-  192,
-  20,
-  21,
-  188,
-  223,
-  94,
-  20,
-  133,
-  187,
-  0,
-  20,
-  62,
-  13,
-  15,
-  10,
-  20,
-  13,
-  0,
-  1,
-  12,
-  14,
-  20,
-  48,
-  13,
-  15,
-  7,
-  20,
-  110,
-  0,
-  3,
-  14,
-  20,
-  61,
-  13,
-  14,
-  3,
-  20,
-  9,
-  0,
-  20,
-  62,
-  242,
-  247,
-  236,
-  201,
-  167,
-  124,
-  95,
-  31,
-  20,
-  8,
-  0,
-  13,
-  229,
-  255,
-  20,
-  48,
-  242,
-  255,
-  231,
-  90,
-  20,
-  52,
-  0,
-  13,
-  47,
-  51,
-  20,
-  48,
-  48,
-  57,
-  24,
-  0,
-  0,
-  0,
-  64,
-  255,
-  247,
-  20,
-  59,
-  242,
-  243,
-  247,
-  220,
-  187,
-  144,
-  113,
-  69,
-  4,
-  20,
-  4,
-  0,
-  20,
-  69,
-  255,
-  200,
-  67,
-  20,
-  6,
-  0,
-  13,
-  242,
-  20,
-  52,
-  255,
-  185,
-  13,
-  20,
-  49,
-  0,
-  42,
-  110,
-  126,
-  123,
-  20,
-  48,
-  121,
-  144,
-  61,
-  0,
-  0,
-  0,
-  67,
-  20,
-  68,
-  255,
-  240,
-  138,
-  14,
-  0,
-  0,
-  0,
-  20,
-  71,
-  255,
-  177,
-  13,
-  20,
-  4,
-  0,
-  13,
-  242,
-  20,
-  54,
-  255,
-  112,
-  20,
-  48,
-  0,
-  36,
-  35,
-  23,
-  20,
-  49,
-  24,
-  29,
-  12,
-  0,
-  0,
-  0,
-  67,
-  20,
-  70,
-  255,
-  250,
-  86,
-  0,
-  0,
-  20,
-  72,
-  255,
-  242,
-  68,
-  20,
-  3,
-  0,
-  13,
-  242,
-  20,
-  55,
-  255,
-  178,
-  32,
-  20,
-  104,
-  0,
-  67,
-  20,
-  72,
-  255,
-  165,
-  1,
-  20,
-  73,
-  255,
-  254,
-  31,
-  0,
-  0,
-  0,
-  13,
-  242,
-  20,
-  57,
-  255,
-  137,
-  20,
-  40,
-  0,
-  14,
-  28,
-  20,
-  55,
-  24,
-  29,
-  12,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  165,
-  20,
-  74,
-  255,
-  103,
-  0,
-  0,
-  0,
-  13,
-  242,
-  20,
-  58,
-  255,
-  212,
-  27,
-  20,
-  36,
-  0,
-  4,
-  60,
-  112,
-  119,
-  20,
-  55,
-  114,
-  136,
-  57,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  241,
-  20,
-  60,
-  188,
-  187,
-  184,
-  212,
-  20,
-  10,
-  255,
-  145,
-  0,
-  0,
-  0,
-  7,
-  121,
-  138,
-  20,
-  45,
-  128,
-  123,
-  120,
-  215,
-  20,
-  10,
-  255,
-  119,
-  20,
-  35,
-  0,
-  61,
-  104,
-  85,
-  79,
-  20,
-  55,
-  81,
-  96,
-  40,
-  0,
-  0,
-  0,
-  50,
-  209,
-  192,
-  20,
-  56,
-  188,
-  186,
-  191,
-  196,
-  196,
-  236,
-  20,
-  10,
-  255,
-  20,
-  63,
-  0,
-  121,
-  20,
-  9,
-  255,
-  155,
-  20,
-  54,
-  0,
-  117,
-  20,
-  10,
-  255,
-  234,
-  61,
-  20,
-  32,
-  0,
-  6,
-  9,
-  20,
-  127,
-  0,
-  12,
-  232,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  84,
-  20,
-  9,
-  255,
-  151,
-  20,
-  55,
-  0,
-  28,
-  206,
-  20,
-  10,
-  255,
-  161,
-  1,
-  20,
-  128,
-  161,
-  0,
-  203,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  57,
-  0,
-  156,
-  20,
-  10,
-  255,
-  227,
-  33,
-  20,
-  24,
-  0,
-  8,
-  27,
-  25,
-  20,
-  6,
-  24,
-  22,
-  30,
-  44,
-  17,
-  20,
-  121,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  58,
-  0,
-  21,
-  163,
-  20,
-  10,
-  255,
-  180,
-  30,
-  20,
-  20,
-  0,
-  5,
-  60,
-  110,
-  123,
-  20,
-  6,
-  118,
-  117,
-  125,
-  114,
-  58,
-  8,
-  20,
-  121,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  60,
-  0,
-  105,
-  20,
-  11,
-  255,
-  78,
-  20,
-  19,
-  0,
-  51,
-  92,
-  78,
-  69,
-  20,
-  6,
-  70,
-  74,
-  71,
-  19,
-  20,
-  123,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  61,
-  0,
-  28,
-  205,
-  20,
-  10,
-  255,
-  161,
-  1,
-  20,
-  16,
-  0,
-  3,
-  3,
-  20,
-  128,
-  136,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  63,
-  0,
-  89,
-  234,
-  20,
-  9,
-  255,
-  241,
-  102,
-  20,
-  128,
-  154,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  64,
-  0,
-  1,
-  161,
-  20,
-  10,
-  255,
-  205,
-  28,
-  20,
-  8,
-  0,
-  5,
-  44,
-  50,
-  20,
-  6,
-  47,
-  45,
-  48,
-  67,
-  49,
-  20,
-  128,
-  129,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  66,
-  0,
-  89,
-  20,
-  11,
-  255,
-  153,
-  20,
-  6,
-  0,
-  46,
-  106,
-  134,
-  130,
-  20,
-  6,
-  128,
-  132,
-  128,
-  82,
-  23,
-  20,
-  128,
-  129,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  67,
-  0,
-  36,
-  128,
-  136,
-  20,
-  6,
-  129,
-  123,
-  156,
-  167,
-  50,
-  20,
-  4,
-  0,
-  15,
-  65,
-  60,
-  45,
-  20,
-  7,
-  47,
-  53,
-  28,
-  20,
-  128,
-  131,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  128,
-  232,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  8,
-  67,
-  71,
-  68,
-  9,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  1,
-  23,
-  26,
-  20,
-  46,
-  24,
-  29,
-  15,
-  20,
-  17,
-  0,
-  12,
-  13,
-  20,
-  18,
-  0,
-  3,
-  5,
-  20,
-  71,
-  0,
-  18,
-  74,
-  68,
-  20,
-  6,
-  67,
-  79,
-  40,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  37,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  98,
-  112,
-  20,
-  46,
-  104,
-  121,
-  64,
-  20,
-  17,
-  0,
-  6,
-  137,
-  243,
-  211,
-  187,
-  20,
-  5,
-  193,
-  194,
-  203,
-  161,
-  70,
-  55,
-  71,
-  71,
-  70,
-  70,
-  87,
-  64,
-  15,
-  20,
-  17,
-  0,
-  35,
-  84,
-  20,
-  46,
-  70,
-  84,
-  35,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  154,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  90,
-  103,
-  20,
-  46,
-  95,
-  112,
-  59,
-  20,
-  18,
-  0,
-  4,
-  162,
-  20,
-  10,
-  255,
-  248,
-  172,
-  114,
-  117,
-  120,
-  126,
-  85,
-  9,
-  20,
-  18,
-  0,
-  59,
-  140,
-  20,
-  46,
-  118,
-  140,
-  59,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  152,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  109,
-  58,
-  20,
-  20,
-  0,
-  36,
-  81,
-  20,
-  6,
-  70,
-  69,
-  66,
-  95,
-  86,
-  24,
-  23,
-  25,
-  24,
-  2,
-  20,
-  19,
-  0,
-  12,
-  29,
-  20,
-  46,
-  24,
-  29,
-  12,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  109,
-  58,
-  20,
-  112,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  109,
-  58,
-  20,
-  19,
-  0,
-  5,
-  5,
-  4,
-  4,
-  4,
-  3,
-  36,
-  35,
-  12,
-  15,
-  20,
-  4,
-  16,
-  17,
-  17,
-  17,
-  10,
-  20,
-  19,
-  0,
-  2,
-  6,
-  20,
-  46,
-  5,
-  6,
-  2,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  102,
-  116,
-  20,
-  46,
-  108,
-  127,
-  67,
-  20,
-  18,
-  0,
-  53,
-  103,
-  98,
-  96,
-  96,
-  95,
-  89,
-  136,
-  246,
-  255,
-  247,
-  240,
-  20,
-  5,
-  242,
-  254,
-  242,
-  78,
-  20,
-  18,
-  0,
-  48,
-  114,
-  20,
-  46,
-  96,
-  114,
-  48,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  3,
-  65,
-  74,
-  20,
-  46,
-  69,
-  81,
-  42,
-  20,
-  16,
-  0,
-  7,
-  65,
-  108,
-  99,
-  95,
-  20,
-  3,
-  96,
-  86,
-  109,
-  218,
-  20,
-  10,
-  255,
-  183,
-  26,
-  20,
-  16,
-  0,
-  48,
-  114,
-  20,
-  46,
-  96,
-  114,
-  48,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  71,
-  0,
-  11,
-  21,
-  5,
-  3,
-  20,
-  5,
-  5,
-  0,
-  0,
-  66,
-  237,
-  20,
-  10,
-  255,
-  120,
-  20,
-  15,
-  0,
-  2,
-  6,
-  20,
-  46,
-  5,
-  6,
-  2,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  84,
-  0,
-  1,
-  160,
-  20,
-  10,
-  255,
-  202,
-  35,
-  20,
-  67,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  66,
-  0,
-  2,
-  6,
-  20,
-  7,
-  5,
-  3,
-  10,
-  21,
-  4,
-  20,
-  5,
-  0,
-  85,
-  252,
-  20,
-  10,
-  255,
-  108,
-  20,
-  66,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  65,
-  0,
-  47,
-  96,
-  100,
-  20,
-  6,
-  96,
-  94,
-  107,
-  100,
-  40,
-  20,
-  8,
-  0,
-  117,
-  20,
-  10,
-  255,
-  225,
-  67,
-  20,
-  64,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  63,
-  0,
-  8,
-  74,
-  109,
-  101,
-  94,
-  20,
-  6,
-  96,
-  103,
-  85,
-  21,
-  20,
-  10,
-  0,
-  47,
-  239,
-  20,
-  10,
-  255,
-  145,
-  20,
-  63,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  63,
-  0,
-  11,
-  19,
-  4,
-  4,
-  20,
-  8,
-  5,
-  1,
-  20,
-  12,
-  0,
-  3,
-  146,
-  20,
-  10,
-  255,
-  223,
-  45,
-  20,
-  61,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  92,
-  0,
-  38,
-  205,
-  20,
-  10,
-  255,
-  162,
-  8,
-  20,
-  59,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  58,
-  0,
-  5,
-  44,
-  50,
-  20,
-  6,
-  47,
-  46,
-  48,
-  67,
-  42,
-  20,
-  21,
-  0,
-  112,
-  20,
-  10,
-  255,
-  241,
-  86,
-  20,
-  58,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  57,
-  0,
-  38,
-  105,
-  134,
-  130,
-  20,
-  6,
-  128,
-  132,
-  130,
-  82,
-  16,
-  20,
-  22,
-  0,
-  27,
-  216,
-  20,
-  10,
-  255,
-  179,
-  2,
-  20,
-  56,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  56,
-  0,
-  11,
-  60,
-  60,
-  45,
-  20,
-  7,
-  47,
-  52,
-  30,
-  20,
-  25,
-  0,
-  1,
-  95,
-  231,
-  20,
-  9,
-  255,
-  230,
-  95,
-  20,
-  55,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  84,
-  20,
-  9,
-  255,
-  151,
-  20,
-  99,
-  0,
-  181,
-  20,
-  10,
-  255,
-  202,
-  18,
-  20,
-  53,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  203,
-  20,
-  19,
-  255,
-  253,
-  29,
-  20,
-  51,
-  0,
-  112,
-  20,
-  9,
-  255,
-  153,
-  20,
-  3,
-  0,
-  20,
-  58,
-  5,
-  2,
-  14,
-  24,
-  3,
-  20,
-  33,
-  0,
-  96,
-  247,
-  20,
-  9,
-  255,
-  238,
-  67,
-  20,
-  52,
-  0,
-  67,
-  20,
-  9,
-  255,
-  144,
-  20,
-  51,
-  0,
-  4,
-  228,
-  20,
-  20,
-  255,
-  145,
-  114,
-  20,
-  48,
-  128,
-  116,
-  144,
-  247,
-  20,
-  9,
-  255,
-  150,
-  0,
-  0,
-  0,
-  4,
-  84,
-  95,
-  20,
-  54,
-  88,
-  87,
-  90,
-  109,
-  86,
-  35,
-  20,
-  35,
-  0,
-  11,
-  167,
-  20,
-  10,
-  255,
-  171,
-  108,
-  20,
-  45,
-  128,
-  152,
-  64,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  203,
-  108,
-  127,
-  20,
-  47,
-  128,
-  126,
-  115,
-  197,
-  20,
-  85,
-  255,
-  118,
-  0,
-  0,
-  0,
-  5,
-  95,
-  108,
-  20,
-  53,
-  100,
-  99,
-  112,
-  119,
-  77,
-  9,
-  20,
-  38,
-  0,
-  66,
-  236,
-  20,
-  57,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  249,
-  20,
-  74,
-  255,
-  43,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  51,
-  93,
-  92,
-  97,
-  115,
-  95,
-  27,
-  20,
-  42,
-  0,
-  144,
-  20,
-  56,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  184,
-  20,
-  73,
-  255,
-  114,
-  20,
-  3,
-  0,
-  5,
-  88,
-  100,
-  20,
-  51,
-  93,
-  111,
-  106,
-  64,
-  5,
-  20,
-  44,
-  0,
-  81,
-  226,
-  20,
-  54,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  72,
-  255,
-  214,
-  22,
-  20,
-  71,
-  255,
-  216,
-  40,
-  20,
-  4,
-  0,
-  5,
-  88,
-  100,
-  20,
-  48,
-  93,
-  92,
-  98,
-  113,
-  76,
-  13,
-  20,
-  48,
-  0,
-  95,
-  20,
-  53,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  71,
-  255,
-  127,
-  0,
-  0,
-  20,
-  69,
-  255,
-  238,
-  97,
-  20,
-  6,
-  0,
-  5,
-  88,
-  100,
-  20,
-  47,
-  93,
-  92,
-  109,
-  112,
-  49,
-  20,
-  51,
-  0,
-  57,
-  224,
-  20,
-  51,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  69,
-  255,
-  181,
-  32,
-  0,
-  0,
-  0,
-  20,
-  64,
-  255,
-  252,
-  227,
-  212,
-  154,
-  59,
-  20,
-  8,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  94,
-  99,
-  75,
-  19,
-  20,
-  54,
-  0,
-  132,
-  20,
-  50,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  64,
-  255,
-  240,
-  218,
-  193,
-  111,
-  18,
-  20,
-  4,
-  0,
-};
 
 /*************************************************************************
   RLE_Uncompress() - Uncompress a block of data using an RLE decoder.
@@ -20827,7 +17773,7 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
 }
 #endif
 
-static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
+FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
 #ifdef REMOTE_CONSOLE
   display.console = true;
 #endif
@@ -20866,7 +17812,7 @@ static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
 #endif
 }
 
-void calibrate() {
+FLASHMEM void calibrate() {
   uint16_t x1, y1, x2, y2;
   uint16_t vi1, vj1, vi2, vj2;
   touch.getCalibrationPoints(x1, y1, x2, y2);
