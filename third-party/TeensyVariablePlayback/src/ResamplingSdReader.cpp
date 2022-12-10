@@ -262,8 +262,8 @@ bool ResamplingSdReader::play(const char *filename, bool isWave, uint16_t numCha
 
     if (!file) {
 //        StopUsingSPI();
-        Serial.print(F("Not able to open file: "));
-        Serial.println(filename);
+        // Serial.print(F("Not able to open file: "));
+        // Serial.println(filename);
         return false;
     }
 
@@ -276,9 +276,9 @@ bool ResamplingSdReader::play(const char *filename, bool isWave, uint16_t numCha
     
     wavHeaderParser.readWaveHeader(wav_header, file);		
     if (wav_header.bit_depth != 16) {
-        Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
-        Serial.print(wav_header.bit_depth);
-        Serial.println(F(")"));
+        // Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
+        // Serial.print(wav_header.bit_depth);
+        // Serial.println(F(")"));
         __disable_irq();
         file.close();
         __enable_irq();
@@ -290,8 +290,8 @@ bool ResamplingSdReader::play(const char *filename, bool isWave, uint16_t numCha
     
     if (_file_size <= _header_offset * newdigate::IndexableFile<128, 2>::element_size) {
         _playing = false;
-        Serial.print(F("Wave file contains no samples: "));
-        Serial.println(filename);
+        // Serial.print(F("Wave file contains no samples: "));
+        // Serial.println(filename);
 //        StopUsingSPI();
         __disable_irq();
         file.close();
@@ -339,7 +339,7 @@ int ResamplingSdReader::available(void) {
 
 void ResamplingSdReader::close(void) {
 
-    Serial.printf("sdreader close\n");
+    // Serial.printf("sdreader close\n");
     if (_playing)
         stop();
 
