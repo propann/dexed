@@ -97,7 +97,8 @@ bool XPT2046_Touchscreen::tirqTouched() {
 }
 
 bool XPT2046_Touchscreen::touched() {
-  if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 1) {
+if ( (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+  || (touch_control_rate > TOUCH_CONTROL_RATE_MS/2 && remote_touched) ) {
     touch_control_rate = 0;
     if (remote_touched == false) {
       update();

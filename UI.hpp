@@ -2922,44 +2922,18 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-  // if (incomingSerialByte == '0' || remote_console_keystate_select) {
-  //   buttons = GAMEPAD_SELECT;
-  //   remote_console_keystate_select = true;
-  // }
-  // if (incomingSerialByte == '1') {
-  //   buttons = buttons + GAMEPAD_START;
-  // }
-  // if (incomingSerialByte == 'a' || remote_console_keystate_a) {
-  //   buttons = buttons + GAMEPAD_BUTTON_A;
-  //   remote_console_keystate_a = true;
-  // }
-  // if (incomingSerialByte == 'b' || remote_console_keystate_b) {
-  //   buttons = buttons + GAMEPAD_BUTTON_B;
-  //   remote_console_keystate_b = true;
-  // }
-  // if (incomingSerialByte == '!') {
-  //   remote_console_keystate_select = false;
-  //   buttons = 0;
-  // }
-  // if (incomingSerialByte == '$') {
-  //   remote_console_keystate_a = false;
-  //   buttons = 0;
-  // }
-  // if (incomingSerialByte == '#') {
-  //   remote_console_keystate_b = false;
-  //   buttons = 0;
-  // }
-  // if (incomingSerialByte == 127) {  // jump to current menu, when remote console start, currently hardwired to voice select
-  //   buttons = 0;
-  //   remote_console_keystate_select = false;
-  //   remote_console_keystate_a = false;
-  //   remote_console_keystate_b = false;
-  //   ts.touch_ui_drawn_in_menu = false;
-  //   ts.keyb_in_menu_activated = false;
-  //   draw_menu_ui_icons();
-  //   LCDML.MENU_goRoot();
-  // }
-  //#endif
+  if (remote_console_keystate_select) {
+    buttons = GAMEPAD_SELECT;
+    remote_console_keystate_select = true;
+  }
+  if (remote_console_keystate_a) {
+    buttons = buttons + GAMEPAD_BUTTON_A;
+    remote_console_keystate_a = true;
+  }
+  if (remote_console_keystate_b) {
+    buttons = buttons + GAMEPAD_BUTTON_B;
+    remote_console_keystate_b = true;
+  }
 
   if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed) {
 
@@ -2996,7 +2970,6 @@ FLASHMEM void lcdml_menu_control(void) {
         if (seq.active_function == 99)
           reverse_y = false;
       }
-
 
       if ((LCDML.FUNC_getID() > 2 && LCDML.FUNC_getID() < 22) || (LCDML.FUNC_getID() > 22 && LCDML.FUNC_getID() < 25) || (LCDML.FUNC_getID() > 33 && LCDML.FUNC_getID() < 41))  //"2-line menus", reverse y
       {
