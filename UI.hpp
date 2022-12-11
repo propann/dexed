@@ -2966,10 +2966,10 @@ FLASHMEM void lcdml_menu_control(void) {
           reverse_y = false;
       }
 
-      if ((LCDML.FUNC_getID() > 2 && LCDML.FUNC_getID() < 22) || (LCDML.FUNC_getID() > 22 && LCDML.FUNC_getID() < 25) || (LCDML.FUNC_getID() > 33 && LCDML.FUNC_getID() < 41))  //"2-line menus", reverse y
-      {
-        reverse_y = true;
-      }
+      // if ((LCDML.FUNC_getID() > 5 && LCDML.FUNC_getID() < 9) || (LCDML.FUNC_getID() > 17 && LCDML.FUNC_getID() < 25) || (LCDML.FUNC_getID() > 33 && LCDML.FUNC_getID() < 41))  //"2-line menus", reverse y
+      // {
+      //   reverse_y = true;
+      // }
 
       // some pages do x/y navigation using ENC[R]for y and ENC[L] for x movement - depending on that and the edit state of the field, this needs special handling for gamepad usage
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker)) {
