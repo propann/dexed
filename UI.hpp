@@ -448,24 +448,16 @@ void reverb_lodamp();
 void reverb_hidamp();
 void reverb_diffusion();
 void reverb_level();
-void UI_func_chorus_frequency(uint8_t param);
-void UI_func_chorus_waveform(uint8_t param);
-void UI_func_chorus_depth(uint8_t param);
-void UI_func_chorus_level(uint8_t param);
 void set_delay_sync(uint8_t sync, uint8_t instance);
 void UI_func_delay_level_global(uint8_t param);
-void UI_func_delay_level_dexed(uint8_t param);
 void master_effects_set_delay_time(uint8_t instance);
 void master_effects_set_delay_feedback(uint8_t instance);
 void master_effects_set_delay_panorama(uint8_t instance);
 void master_effects_set_reverb_send(uint8_t instance);
-void UI_func_filter_cutoff(uint8_t param);
-void UI_func_filter_resonance(uint8_t param);
 void UI_func_drum_reverb_send(uint8_t param);
 
-void UI_func_sound_intensity(uint8_t param);
-void UI_func_panorama(uint8_t param);
 void UI_func_stereo_mono(uint8_t param);
+void UI_func_dexed_audio(uint8_t param);
 void UI_func_dexed_controllers(uint8_t param);
 void UI_func_dexed_setup(uint8_t param);
 void UI_handle_OP(uint8_t param);
@@ -2648,11 +2640,16 @@ public:
 
   // print a static label that can't be selected.
   void printLn(const char* text, uint32_t color = COLOR_SYSTEXT) {
+    print(text, color);
+    y += 1;
+  }
+
+  // print some text on cursor location for use in renderers
+  void print(const char* text, uint32_t color = COLOR_SYSTEXT) {
     display.setTextSize(1);
     setCursor_textGrid_small(x, y);
     display.setTextColor(color);
     display.print(text);
-    y += 1;
   }
 
   // add a custom editor providing its own getter, setter and renderer function.
@@ -2690,7 +2687,7 @@ public:
   };
 
   // editor providing default uint8_t getter + setters if missed out
-  void addEditor(const char* const name, uint8_t limit_min, uint8_t limit_max, uint8_t* const valuePtr,
+  void addEditor(const char* const name, int16_t limit_min, int16_t limit_max, uint8_t* const valuePtr,
                  int16_t (*const getter)(Editor* param) = NULL,
                  void (*const setter)(Editor* param, int16_t value) = NULL,
                  void (*const renderer)(Editor* param, bool refresh) = NULL) {
@@ -3863,47 +3860,6 @@ FLASHMEM void master_effects_set_delay_feedback(uint8_t instance) {
   delay_fb_mixer[instance]->gain(1, mapfloat(configuration.fx.delay_feedback[instance], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0.0, 0.8));
 }
 
-FLASHMEM void UI_func_delay_level_dexed(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    display_bar_int("Delay Lvl.", configuration.fx.delay_level[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, true);
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.delay_level[selected_instance_id] = constrain(configuration.fx.delay_level[selected_instance_id] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.delay_level[selected_instance_id] = constrain(configuration.fx.delay_level[selected_instance_id] - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
-      }
-#if NUM_DEXED > 1
-      else if (LCDML.BT_checkEnter()) {
-        selected_instance_id = !selected_instance_id;
-
-        UI_update_instance_icons();
-      }
-#endif
-    }
-
-    display_bar_int("Dexed Delay Lvl.", configuration.fx.delay_level[selected_instance_id], 1.0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 3, false, false, false);
-
-    global_delay_in_mixer[selected_instance_id]->gain(0, mapfloat(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
 FLASHMEM void master_effects_delay_level_global(uint8_t instance) {
   if (LCDML.BT_checkDown()) {
     configuration.fx.delay_level_global[instance] = constrain(configuration.fx.delay_level_global[instance] + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
@@ -4077,53 +4033,6 @@ FLASHMEM void master_effects_set_delay_panorama(uint8_t instance) {
   delay_mono2stereo[instance]->panorama(mapfloat(configuration.fx.delay_pan[instance], PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 }
 
-FLASHMEM void UI_func_panorama(uint8_t param) {
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-
-    if (configuration.sys.mono > 0) {
-      setCursor_textGrid(1, 1);
-      display.print(F("Panorama"));
-      setCursor_textGrid(1, 2);
-      display.print(F("MONO-disabled"));
-      return;
-    }
-    display_meter_float("Panorama", configuration.dexed[selected_instance_id].pan, 0.05, -20.0, PANORAMA_MIN, PANORAMA_MAX, 1, 1, false, true, true);
-
-
-    UI_update_instance_icons();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if (LCDML.BT_checkDown() && encoderDir[ENC_R].Down() && configuration.sys.mono == 0) {
-      configuration.dexed[selected_instance_id].pan = constrain(configuration.dexed[selected_instance_id].pan + ENCODER[ENC_R].speed(), PANORAMA_MIN, PANORAMA_MAX);
-      MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, map(configuration.dexed[selected_instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, 0, 127));
-    } else if (LCDML.BT_checkUp() && encoderDir[ENC_R].Up() && configuration.sys.mono == 0) {
-      configuration.dexed[selected_instance_id].pan = constrain(configuration.dexed[selected_instance_id].pan - ENCODER[ENC_R].speed(), PANORAMA_MIN, PANORAMA_MAX);
-      MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, map(configuration.dexed[selected_instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, 0, 127));
-    }
-#if NUM_DEXED > 1
-    else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
-      selected_instance_id = !selected_instance_id;
-
-      UI_update_instance_icons();
-    }
-#endif
-
-    if (configuration.sys.mono == 0) {
-      display_meter_float("Panorama", configuration.dexed[selected_instance_id].pan, 0.05, -20.0, PANORAMA_MIN, PANORAMA_MAX, 1, 1, false, true, false);
-      dexed_dry_mono2stereo[selected_instance_id]->panorama(mapfloat(configuration.dexed[selected_instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-    }
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-}
-
 FLASHMEM void UI_func_favorites(uint8_t param) {
   static uint8_t old_favorites;
 
@@ -4281,6 +4190,7 @@ void prepare_multi_options(Editor* editor, bool refresh) {
 
   setModeColor(editor->select_id);
   setCursor_textGrid_small(editor->x, editor->y);
+  ui.setCursor(editor->x, editor->y);
 }
 
 // set portamento setup to dexed engine and send SysEx for it.
@@ -4299,6 +4209,126 @@ void dexed_voice_name_renderer(Editor* param, bool refresh) {
   draw_instance_editor(param, refresh);
   display.setTextSize(2);
   show(1, 1, 10, g_voice_name[selected_instance_id]);
+}
+
+int16_t fx_current_instance_getter(struct Editor* editor) {
+  // the parameter may be from either instance, which may be
+  // switched at any time. So recompute the value pointer in respect of the instance!
+  uint8_t* ptr = &((uint8_t*)editor->value)[selected_instance_id];
+  return *ptr;
+}
+
+void fx_current_instance_setter(struct Editor* editor, int16_t value) {
+  // the parameter may be from either instance, which may be
+  // switched at any time. So recompute the value pointer in respect of the instance!
+  uint8_t* ptr = &((uint8_t*)editor->value)[selected_instance_id];
+  *ptr = (uint8_t)value;
+}
+
+FLASHMEM void UI_func_dexed_audio(uint8_t param) {
+
+  if (LCDML.FUNC_setup())  // ****** SETUP *********
+  {
+    ui.reset();
+    ui.setCursor(1, 1);
+    addInstanceEditor(&dexed_voice_name_renderer);
+
+    ui.setCursor(1, 4);
+    ui.printLn("DEXED AUDIO SETUP");
+    ui.printLn("");
+    ui.addEditor("VOLUME", SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, &configuration.dexed[0].sound_intensity,
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
+                   dexed_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, value);
+                   MicroDexed[selected_instance_id]->setGain(midi_volume_transform(map(value, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
+                 });
+
+    // pan: custom getter and setter to center pan around 0 for a nice pan bar
+    const int16_t pan_center = (PANORAMA_MAX + PANORAMA_MIN) / 2;
+    ui.addEditor(
+      "PAN", (int16_t)(PANORAMA_MIN - pan_center), (int16_t)(PANORAMA_MAX - pan_center), &configuration.dexed[0].pan,
+      [](Editor* editor) -> int16_t {
+        return dexed_current_instance_getter(editor) - pan_center;  // center around 0
+      },
+      [](Editor* editor, int16_t value) {
+        dexed_current_instance_setter(editor, value + pan_center);
+        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, map(value + pan_center, PANORAMA_MIN, PANORAMA_MAX, 0, 127));
+        if (configuration.sys.mono == 0) {
+          dexed_dry_mono2stereo[selected_instance_id]->panorama(mapfloat(value + pan_center, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+        }
+      });
+
+    ui.printLn("");
+    ui.printLn("CHORUS", GREY2);
+    ui.addEditor("FREQUENCY", CHORUS_FREQUENCY_MIN, CHORUS_FREQUENCY_MAX, &configuration.fx.chorus_frequency[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   chorus_modulator[selected_instance_id]->frequency(value / 10.0);
+                 });
+    ui.addEditor(
+      "WAVEFORM", CHORUS_WAVEFORM_MIN, CHORUS_WAVEFORM_MAX, &configuration.fx.chorus_waveform[0],
+      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+        fx_current_instance_setter(editor, value);
+        chorus_modulator[selected_instance_id]->begin(value == 1 ? WAVEFORM_SINE : WAVEFORM_TRIANGLE);
+      },
+      [](Editor* editor, bool refresh) {
+        prepare_multi_options(editor, refresh);
+        ui.print(editor->get() ? "[SINE    ]" : "[TRIANGLE]");
+      });
+    ui.addEditor("DEPTH", CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, &configuration.fx.chorus_depth[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   chorus_modulator[selected_instance_id]->amplitude(value / 100.0);
+                 });
+    ui.addEditor("LEVEL", CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, &configuration.fx.chorus_level[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, value);
+                   global_delay_in_mixer[selected_instance_id]->gain(1, mapfloat(value, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9));
+                 });
+
+    ui.printLn("");
+    ui.printLn("EFFECTS", GREY2);
+    ui.addEditor("DELAY SEND", DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, &configuration.fx.delay_level[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, value);
+                   global_delay_in_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(value, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+                 });
+    ui.addEditor("REVERB SEND", REVERB_SEND_MIN, REVERB_SEND_MAX, &configuration.fx.reverb_send[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 91, value);
+                   reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(value, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+                   reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(value, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+                 });
+    ui.addEditor("DELAY TO REVERB", REVERB_SEND_MIN, REVERB_SEND_MAX, &configuration.fx.delay_to_reverb[0],
+                 &fx_current_instance_getter, &fx_current_instance_setter);
+
+    // filter
+    ui.printLn("");
+    ui.printLn("FILTER", GREY2);
+    ui.addEditor("CUTOFF", FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, &configuration.fx.filter_cutoff[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, value);
+                   MicroDexed[selected_instance_id]->setFilterCutoff(mapfloat(value, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
+                 });
+    ui.addEditor("RESONANCE", FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, &configuration.fx.filter_resonance[0],
+                 &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+                   fx_current_instance_setter(editor, value);
+                   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, value);
+                   MicroDexed[selected_instance_id]->setFilterResonance(mapfloat(value, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
+                 });
+  }
+  if (LCDML.FUNC_loop())  // ****** LOOP *********
+  {
+    ui.handle_input();
+  }
+  if (LCDML.FUNC_close())  // ****** STABLE END *********
+  {
+    ui.clear();
+  }
 }
 
 void note_name_renderer(struct Editor* editor, bool refresh) {
