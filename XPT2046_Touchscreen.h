@@ -20,6 +20,8 @@
  * THE SOFTWARE.
  */
 
+#ifdef GENERIC_DISPLAY
+
 #ifndef _XPT2046_Touchscreen_h_
 #define _XPT2046_Touchscreen_h_
 
@@ -102,6 +104,8 @@ private:
 #else
 #define ISR_PREFIX
 #endif
+#endif
+
 #endif
 
 #endif

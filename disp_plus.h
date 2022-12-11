@@ -73,12 +73,12 @@ private:
       this->print(tmp);
 
 #ifdef DEBUG
-      Serial.print(pos_y, DEC);
-      Serial.print(F("/"));
-      Serial.print(pos_x, DEC);
-      Serial.print(F(": ["));
-      Serial.print(tmp);
-      Serial.println(F("]"));
+      LOG.print(pos_y, DEC);
+      LOG.print(F("/"));
+      LOG.print(pos_x, DEC);
+      LOG.print(F(": ["));
+      LOG.print(tmp);
+      LOG.println(F("]"));
 #endif
     }
   }

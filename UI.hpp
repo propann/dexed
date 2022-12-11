@@ -39,6 +39,8 @@
 #include "drumset.h"
 #include "sequencer.h"
 #include "touch.h"
+#include "splash_image.h"
+
 #if defined(USE_EPIANO)
 #include "synth_mda_epiano.h"
 extern AudioSynthEPiano ep;
@@ -135,7 +137,15 @@ extern void clear_volmeter(int x, int y);
 
 extern PeriodicTimer sequencer_timer;
 extern ILI9341_t3n display;
+
+#ifdef GENERIC_DISPLAY
 extern XPT2046_Touchscreen touch;
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+extern Adafruit_FT6206 touch;
+#endif
+
 extern void sequencer(void);
 extern bool check_sd_performance_exists(uint8_t number);
 extern SdVolume volume;
@@ -163,6 +173,7 @@ extern void seq_print_step_numbers(int xpos, int ypos);
 extern void print_single_pattern_pianoroll_in_pattern_editor(int xpos, int ypos, uint8_t pattern, uint8_t actstep, bool fullredraw);
 extern void print_chord_name(uint8_t currentstep);
 extern void print_file_manager_buttons(void);
+extern void print_file_manager_active_border(void);
 extern uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b);
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint32_t ColorHSV2(uint16_t hue, uint8_t sat, uint8_t val);
@@ -2163,11 +2174,6 @@ FLASHMEM boolean key_right() {
     return true;
 #endif
 
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'r')
-    return true;
-#endif
-
   if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1)
     return true;
 
@@ -2183,11 +2189,6 @@ FLASHMEM boolean key_left() {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_LEFT) == false)
-    return true;
-#endif
-
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'l')
     return true;
 #endif
 
@@ -2209,11 +2210,6 @@ FLASHMEM boolean key_up() {
     return true;
 #endif
 
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'u')
-    return true;
-#endif
-
   if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1)
     return true;
 
@@ -2229,11 +2225,6 @@ FLASHMEM boolean key_down() {
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_DOWN) == false)
-    return true;
-#endif
-
-#ifdef REMOTE_CONSOLE
-  if (incomingSerialByte == 'd')
     return true;
 #endif
 
@@ -2401,7 +2392,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons) {
 //####################################################################################################################################################################################################
 
 /***********************************************************************
-   MENU
+   GENERAL UI ELEMENTS
  ***********************************************************************/
 
 FLASHMEM void setModeColor(uint8_t selected_option) {
@@ -2414,6 +2405,8 @@ FLASHMEM void setModeColor(uint8_t selected_option) {
   }
 }
 
+// a small scaled bar, that can show an abitrary range in always the same space, given the expected min and max limit values.
+// also atomagically shows a pan bar (marker line insted of filled bar), if min is smaller than zero.
 FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
@@ -2486,6 +2479,7 @@ FLASHMEM void print_small_panbar_mixer(uint8_t x, uint8_t y, uint8_t input_value
   display.fillRect(CHAR_width_small * x + 1 + input_value / 2.30, 10 * y + 1, 3, 5, COLOR_PITCHSMP);
 }
 
+// read right encoder change, with optional acceleration.
 FLASHMEM int16_t encoder_change(bool fast) {
   int16_t dir = 0;
   if (LCDML.BT_checkDown()) dir = 1;
@@ -2496,31 +2490,65 @@ FLASHMEM int16_t encoder_change(bool fast) {
   else return dir;
 }
 
-struct param_editor {
-  const char* name;
-  int16_t limit_min, limit_max;
-  bool fast;
-  uint8_t x, y;
-  uint8_t select_id;
+// check if certain encoder changed.
+// as this resets internal state by the way, it should only be called once per menu loop cycle.
+// TODO get rid of the side-effects.
+bool encoder_changed(uint8_t id) {
+  return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
+}
 
-  void* value;
-  int16_t (*getter)(struct param_editor* param);
-  void (*setter)(struct param_editor* param, int16_t value);
-  void (*renderer)(struct param_editor* param, bool refresh);
 
-  int16_t get() {
-    if (getter != NULL) return getter(this);
-    return 0;
-  };
-  void set(int16_t _value) {
-    if (setter != NULL) setter(this, _value);
-  };
+// Store a generic parameter editor.
+//
+// The editor has
+// - a name, as shown on screen
+// - a position on screen (x,y),
+// - a select_id defining its position in the selection order (usually assigned automatically)
+// - limits for its value
+// - a fast flag, to enable accelerated changes of large values (also set automatically for large ranges)
+// - a pointer to the value to adjust, can be NULL if only custom setters / getters are used.
+// - a pointer to a getter function (can be set automatically for simple editors, using the value pointer)
+// - a pointer to a setter function (can be set automatically for simple editors, using the value pointer)
+// - a pointer to a renderer (can be null to provide the default small-scaled-bar-with-number editor)
+class Editor {
+  friend class UI;
+private:
+  const bool fast;                                      // if the editor should accelerate. Automatically set for large min-max ranges.
+  int16_t (*const getter)(Editor* param);               // pointer to a function to read the value from somewhere
+  void (*const setter)(Editor* param, int16_t value);   // pointer to a function to save the altered value somewhere
+  void (*const renderer)(Editor* param, bool refresh);  // pointer to a function to draw the editor on screen.
+                                                        // if refresh is true, it should redraw value-dependent parts.
 
+  // constructor for creating empty array
+  Editor()
+    : fast(false), getter(NULL), setter(NULL), renderer(NULL), name(NULL), x(0), y(0), select_id(-1),
+      limit_min(0), limit_max(0), value(NULL) {}
+
+  // only valid constructor used by friend class UI
+  Editor(const char* const _name, int16_t _limit_min, int16_t _limit_max,
+         uint8_t _x, uint8_t _y, uint8_t _select_id,
+         void* const _valuePtr,
+         int16_t (*const _getter)(Editor* param),
+         void (*const _setter)(Editor* param, int16_t value),
+         void (*const _renderer)(Editor* param, bool refresh))
+    : fast(limit_max - limit_min > 32), getter(_getter), setter(_setter), renderer(_renderer),
+      name(_name), x(_x), y(_y), select_id(_select_id), limit_min(_limit_min), limit_max(_limit_max),
+      value(_valuePtr) {}
+
+  // draw this editor on screen. If refresh is set,
+  // only parts that depend on changed value or selection are drawn.
+  // otherwise everything is drawn (label, borders, etc.)
+  //
+  // by default if renderer==NULL, print_small_scaled_bar is used.
+  // otherwise the definded renderer is used.
+  //
   void draw_editor(bool refresh) {
     if (renderer != NULL) {
+      // a custom renderer is defined. Draw using it and exit.
       renderer(this, refresh);
       return;
     }
+    // No custom rederer was defined, just draw label and small_scaled_bar.
     display.setTextSize(1);
     if (!refresh) {
       setCursor_textGrid_small(this->x + 10, this->y);
@@ -2530,6 +2558,8 @@ struct param_editor {
     print_small_scaled_bar(x, y, get(), limit_min, limit_max, select_id, 1, 1);
   };
 
+  // read encoders / other input sources and adjust the assigned value
+  // by using the getter and setter functions. And redraw afterwards.
   void handle_parameter_editor() {
     int16_t change = encoder_change(fast);
     if (change != 0) {
@@ -2537,16 +2567,60 @@ struct param_editor {
       draw_editor(true);
     }
   };
+
+public:
+  // these members are never set, but still public, as they are
+  // used by custom getter, setter and render functions.
+  const char* const name;              // short name of parameter.
+  const uint8_t x, y;                  // position on screen in small-font grid
+  const uint8_t select_id;             // position in input selection order - automatically set on definiton of UI elements.
+  const int16_t limit_min, limit_max;  // int limits of the parameter, used to limit input and scale the bar
+  void* const value;                   // a pointer to the value to adjust. The value can be of any type (eg. uint8_t, int16_t, float32_t...)
+                                       // The getter and setter functions must correctly handle the type.
+  // get & set this editors value, propagating to the value storage or setter.
+  int16_t get() {
+    if (getter != NULL) return getter(this);
+    return 0;  // should never happen
+  };
+  void set(int16_t _value) {
+    // should always be !=NULL, just prevent crashes.
+    if (setter != NULL) setter(this, _value);
+  };
 };
 
-#define UI_MAX_EDITORS 64
-struct UI {
-  uint8_t x, y;
-  uint8_t num_editors;
-  struct param_editor editors[UI_MAX_EDITORS];
-  struct param_editor* encoderLeftHandler = NULL;
-  struct param_editor* buttonLongHandler = NULL;
 
+// Global UI helper
+//
+// This helps conveniently build a single UI page,
+// and repeatedly update all UI elements with a calls to handle_input() later.
+//
+// a lot of addEditor and addCustomEditor functions are provided to define UI elements
+// for different value types, adding custom getters or setters to update the engines under control.
+// And provide custom renderers for some elements (eg. the instance selector, name fields etc.)
+//
+// The usual UI definition goes this way:
+//
+// on LCDML.func_setup():
+// -Remove the old UI by calling ui.reset(). This also clears the screen.
+// -Add one or more editors by addEditor and addCustom editor. Create sections by setCursor() and printLn().
+// -all coding work goes here, especially by providing custom getter, setter or renderer code to handle
+//  the different parameter types and how engine parameters are modified.
+// on LCDML.func_loop():
+// -just call ui.handle_input().
+//
+#define UI_MAX_EDITORS 64
+class UI {
+private:
+  uint8_t x, y;                       // current cursor position, can be set and updates automatically
+  uint8_t num_editors;                // the count of editors defined so far
+  Editor editors[UI_MAX_EDITORS];     // the editors defined for the current page
+  Editor* encoderLeftHandler = NULL;  // a special editor assigned to the left encoder
+  Editor* buttonLongHandler = NULL;   // a special editor assigned to a long button press
+
+public:
+  // clear, but dont reset this UI.
+  // this can be called for massive refreshs without loosing the current selection.
+  // All UI elements must be defined again afterwards.
   void clear() {
     display.fillScreen(COLOR_BACKGROUND);
     border0();
@@ -2556,17 +2630,22 @@ struct UI {
     encoderLeftHandler = NULL;
   };
 
+  // reset. this must be called to start a new UI page.
+  // like clear(), but the selection is reset too.
   void reset() {
     clear();
     seq.edit_state = 0;
     generic_temp_select_menu = 0;
   };
 
+  // set the cursor before drawing the next UI element.
+  // if omitted, the next element is drawn just below the last one.
   void setCursor(uint8_t _x, uint8_t _y) {
     x = _x;
     y = _y;
   };
 
+  // print a static label that can't be selected.
   void printLn(const char* text, uint32_t color = COLOR_SYSTEXT) {
     display.setTextSize(1);
     setCursor_textGrid_small(x, y);
@@ -2575,97 +2654,102 @@ struct UI {
     y += 1;
   }
 
-  void addCustomEditor(const char* name, int16_t limit_min, int16_t limit_max, void* valuePtr,
-                       int16_t (*getter)(struct param_editor* param),
-                       void (*setter)(struct param_editor* param, int16_t value),
-                       void (*renderer)(struct param_editor* param, bool refresh)) {
-    editors[num_editors] = (struct param_editor){
-      name, limit_min, limit_max, limit_max - limit_min > 32, x, y, num_editors, valuePtr,
-      getter, setter, renderer
-    };
+  // add a custom editor providing its own getter, setter and renderer function.
+  void addCustomEditor(const char* const name, int16_t limit_min, int16_t limit_max,
+                       void* const valuePtr,
+                       int16_t (*const getter)(Editor* param),
+                       void (*const setter)(Editor* param, int16_t value),
+                       void (*const renderer)(Editor* param, bool refresh)) {
+
+    // construct editor in-place in editors array
+    // there is no corresponding delete, as editors are just overwritten after ui.reset() !
+    new (&editors[num_editors]) Editor(
+      name, limit_min, limit_max, x, y, num_editors, valuePtr,
+      getter, setter, renderer);
+
     editors[num_editors].draw_editor(false);
     y++;
     num_editors++;
   };
 
   // editor providing default float32_t getter + setters if missed out
-  void addEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
-                 int16_t (*getter)(struct param_editor* param) = NULL,
-                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
+  void addEditor(const char* const name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr,
+                 int16_t (*const getter)(Editor* param) = NULL,
+                 void (*const setter)(Editor* param, int16_t value) = NULL,
+                 void (*const renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+      getter != NULL ? getter : [](Editor* editor) -> int16_t {
         return *((float32_t*)editor->value) * 100;
       },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+      setter != NULL ? setter : [](Editor* editor, int16_t value) -> void {
         *((float32_t*)editor->value) = value / 100.f;
       },
       renderer);
   };
 
   // editor providing default uint8_t getter + setters if missed out
-  void addEditor(const char* name, uint8_t limit_min, uint8_t limit_max, uint8_t* valuePtr,
-                 int16_t (*getter)(struct param_editor* param) = NULL,
-                 void (*setter)(struct param_editor* param, int16_t value) = NULL,
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
+  void addEditor(const char* const name, uint8_t limit_min, uint8_t limit_max, uint8_t* const valuePtr,
+                 int16_t (*const getter)(Editor* param) = NULL,
+                 void (*const setter)(Editor* param, int16_t value) = NULL,
+                 void (*const renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, valuePtr,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+      getter != NULL ? getter : [](Editor* editor) -> int16_t {
         return *((uint8_t*)editor->value);
       },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+      setter != NULL ? setter : [](Editor* editor, int16_t value) -> void {
         *((uint8_t*)editor->value) = value;
       },
       renderer);
   };
 
-  // editor providing custom getter + setters dont using valuePtr
-  void addEditor(const char* name, int16_t limit_min, int16_t limit_max,
-                 int16_t (*getter)(struct param_editor* param),
-                 void (*setter)(struct param_editor* param, int16_t value),
-                 void (*renderer)(struct param_editor* param, bool refresh) = NULL) {
+  // editor providing custom getter + setters not using the valuePtr feature
+  void addEditor(const char* const name, int16_t limit_min, int16_t limit_max,
+                 int16_t (*const getter)(Editor* param),
+                 void (*const setter)(Editor* param, int16_t value),
+                 void (*const renderer)(Editor* param, bool refresh) = NULL) {
     addCustomEditor(
       name, limit_min, limit_max, NULL,
-      getter != NULL ? getter : [](struct param_editor* editor) -> int16_t {
+      getter != NULL ? getter : [](Editor* editor) -> int16_t {
         return *((uint8_t*)editor->value);
       },
-      setter != NULL ? setter : [](struct param_editor* editor, int16_t value) -> void {
+      setter != NULL ? setter : [](Editor* editor, int16_t value) -> void {
         *((uint8_t*)editor->value) = value;
       },
       renderer);
   };
 
+  // assign the editor just added to the long button press too (just a toggle action)
   void enableButtonLongEditor() {
     buttonLongHandler = &editors[num_editors - 1];
   }
 
+  // check if the current UI snags on long button presses
+  bool handlesButtonLong() {
+    return buttonLongHandler != NULL;
+  }
+
+  // assign the editor just added to the left encoder (always, no selection needed)
   void enableLeftEncoderEditor() {
     encoderLeftHandler = &editors[num_editors - 1];
   }
 
-  void handle_parameter_navigation() {
-    if (seq.edit_state == 0) {
-      uint8_t last = generic_temp_select_menu;
-      generic_temp_select_menu = constrain(generic_temp_select_menu + encoder_change(false), 0, num_editors - 1);
-      editors[last].draw_editor(true);
-      editors[generic_temp_select_menu].draw_editor(true);
-    }
-  };
+  // check if the current UI snags on the left encoder
+  bool handlesLeftEncoder() {
+    return encoderLeftHandler != NULL;
+  }
 
+  // (re-)draw all editors, omit static parts if refresh is set.
   void draw_editors(bool refresh) {
     for (uint8_t i = 0; i < num_editors; i++)
       editors[i].draw_editor(refresh);
   };
 
-  void handle_current_editor() {
-    editors[generic_temp_select_menu].handle_parameter_editor();
-  };
-
-  bool encoder_changed(uint8_t id) {
-    return (LCDML.BT_checkDown() && encoderDir[id].Down()) || (LCDML.BT_checkUp() && encoderDir[id].Up()) || LCDML.BT_checkEnter();
-  }
-
+  // Handle all input, updating editors and engine parameters, if changed.
+  //
+  // This need to be repeatedly called in the menu loop, usually by LCDML.func_loop() sections
+  //
   void handle_input() {
     // toggle between navigate and value editing
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
@@ -2673,12 +2757,17 @@ struct UI {
       editors[generic_temp_select_menu].draw_editor(true);
     }
 
-    // set currently selected editor or the editor's value by right encoder
+    // handle right encoder
     if (encoder_changed(ENC_R)) {
-      if (seq.edit_state == 0)
-        handle_parameter_navigation();
-      else
-        handle_current_editor();
+      if (seq.edit_state == 0) {
+        // handle parameter selection
+        uint8_t last = generic_temp_select_menu;
+        generic_temp_select_menu = constrain(generic_temp_select_menu + encoder_change(false), 0, num_editors - 1);
+        editors[last].draw_editor(true);
+        editors[generic_temp_select_menu].draw_editor(true);
+      } else
+        // change currently selected editor's value by right encoder
+        editors[generic_temp_select_menu].handle_parameter_editor();
     }
 
     // optionally set a specific editor's value by left encoder
@@ -2691,7 +2780,6 @@ struct UI {
       buttonLongHandler->draw_editor(true);
     }
   };
-
 } ui;
 
 
@@ -2831,44 +2919,18 @@ FLASHMEM void lcdml_menu_control(void) {
   }
 #endif
 
-  if (incomingSerialByte == '0' || remote_console_keystate_select) {
+  if (remote_console_keystate_select) {
     buttons = GAMEPAD_SELECT;
     remote_console_keystate_select = true;
   }
-  if (incomingSerialByte == '1') {
-    buttons = buttons + GAMEPAD_START;
-  }
-  if (incomingSerialByte == 'a' || remote_console_keystate_a) {
+  if (remote_console_keystate_a) {
     buttons = buttons + GAMEPAD_BUTTON_A;
     remote_console_keystate_a = true;
   }
-  if (incomingSerialByte == 'b' || remote_console_keystate_b) {
+  if (remote_console_keystate_b) {
     buttons = buttons + GAMEPAD_BUTTON_B;
     remote_console_keystate_b = true;
   }
-  if (incomingSerialByte == '!') {
-    remote_console_keystate_select = false;
-    buttons = 0;
-  }
-  if (incomingSerialByte == '$') {
-    remote_console_keystate_a = false;
-    buttons = 0;
-  }
-  if (incomingSerialByte == '#') {
-    remote_console_keystate_b = false;
-    buttons = 0;
-  }
-  if (incomingSerialByte == 127) {  // jump to current menu, when remote console start, currently hardwired to voice select
-    buttons = 0;
-    remote_console_keystate_select = false;
-    remote_console_keystate_a = false;
-    remote_console_keystate_b = false;
-    ts.touch_ui_drawn_in_menu = false;
-    ts.keyb_in_menu_activated = false;
-    draw_menu_ui_icons();
-    LCDML.MENU_goRoot();
-  }
-  //#endif
 
   if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed) {
 
@@ -2905,7 +2967,6 @@ FLASHMEM void lcdml_menu_control(void) {
         if (seq.active_function == 99)
           reverse_y = false;
       }
-
 
       if ((LCDML.FUNC_getID() > 2 && LCDML.FUNC_getID() < 22) || (LCDML.FUNC_getID() > 22 && LCDML.FUNC_getID() < 25) || (LCDML.FUNC_getID() > 33 && LCDML.FUNC_getID() < 41))  //"2-line menus", reverse y
       {
@@ -3018,14 +3079,14 @@ FLASHMEM void lcdml_menu_control(void) {
     if (!button[ENC_R]) {
       LCDML.BT_left();
 #ifdef DEBUG
-      Serial.println(F("ENC-R left"));
+      LOG.println(F("ENC-R left"));
 #endif
       encoderDir[ENC_R].Left(true);
       g_LCDML_CONTROL_button_prev[ENC_R] = LOW;
       g_LCDML_CONTROL_button_press_time[ENC_R] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-R down"));
+      LOG.println(F("ENC-R down"));
 #endif
       encoderDir[ENC_R].Down(true);
       LCDML.BT_down();
@@ -3034,7 +3095,7 @@ FLASHMEM void lcdml_menu_control(void) {
   } else if (g_LCDML_CONTROL_Encoder_position[ENC_R] >= 3) {
     if (!button[ENC_R]) {
 #ifdef DEBUG
-      Serial.println(F("ENC-R right"));
+      LOG.println(F("ENC-R right"));
 #endif
       encoderDir[ENC_R].Right(true);
       LCDML.BT_right();
@@ -3042,7 +3103,7 @@ FLASHMEM void lcdml_menu_control(void) {
       g_LCDML_CONTROL_button_press_time[ENC_R] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-R up"));
+      LOG.println(F("ENC-R up"));
 #endif
       encoderDir[ENC_R].Up(true);
       LCDML.BT_up();
@@ -3064,13 +3125,13 @@ FLASHMEM void lcdml_menu_control(void) {
         //Reset for left right action
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-        Serial.println(F("ENC-R long released"));
+        LOG.println(F("ENC-R long released"));
 #endif
         //LCDML.BT_quit();
         encoderDir[ENC_R].ButtonLong(false);
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= BUT_DEBOUNCE_MS) {
 #ifdef DEBUG
-        Serial.println(F("ENC-R short"));
+        LOG.println(F("ENC-R short"));
 #endif
         encoderDir[ENC_R].ButtonShort(true);
 
@@ -3080,10 +3141,10 @@ FLASHMEM void lcdml_menu_control(void) {
   }
   if (encoderDir[ENC_R].ButtonPressed() == true && (millis() - g_LCDML_CONTROL_button_press_time[ENC_R]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-    Serial.println(F("ENC-R long recognized"));
+    LOG.println(F("ENC-R long recognized"));
 #endif
     encoderDir[ENC_R].ButtonLong(true);
-    if (ui.buttonLongHandler != NULL || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
+    if (ui.handlesButtonLong() || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings) && generic_temp_select_menu == 1)) {  //handle long press ENC_R
       LCDML.BT_enter();
       LCDML.OTHER_updateFunc();
       LCDML.loop_menu();
@@ -3103,7 +3164,7 @@ FLASHMEM void lcdml_menu_control(void) {
   if (g_LCDML_CONTROL_Encoder_position[ENC_L] <= -3) {
     if (!button[ENC_L]) {
 #ifdef DEBUG
-      Serial.println(F("ENC-L left"));
+      LOG.println(F("ENC-L left"));
 #endif
       encoderDir[ENC_L].Left(true);
       LCDML.BT_left();
@@ -3111,7 +3172,7 @@ FLASHMEM void lcdml_menu_control(void) {
       g_LCDML_CONTROL_button_press_time[ENC_L] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-L down"));
+      LOG.println(F("ENC-L down"));
 #endif
       encoderDir[ENC_L].Down(true);
       LCDML.BT_down();
@@ -3162,7 +3223,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]++;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (ui.encoderLeftHandler != NULL) {  //do nothing
+        } else if (ui.handlesLeftEncoder()) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -3172,7 +3233,7 @@ FLASHMEM void lcdml_menu_control(void) {
   } else if (g_LCDML_CONTROL_Encoder_position[ENC_L] >= 3) {
     if (!button[ENC_L]) {
 #ifdef DEBUG
-      Serial.println(F("ENC-L right"));
+      LOG.println(F("ENC-L right"));
 #endif
       encoderDir[ENC_L].Right(true);
       LCDML.BT_right();
@@ -3180,7 +3241,7 @@ FLASHMEM void lcdml_menu_control(void) {
       g_LCDML_CONTROL_button_press_time[ENC_L] = -1;
     } else {
 #ifdef DEBUG
-      Serial.println(F("ENC-L up"));
+      LOG.println(F("ENC-L up"));
 #endif
       encoderDir[ENC_L].Up(true);
       LCDML.BT_up();
@@ -3224,7 +3285,7 @@ FLASHMEM void lcdml_menu_control(void) {
             seq.vel[seq.current_pattern[seq.selected_track]][seq.scrollpos]--;
         } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign != 0) {  //do nothing
           ;
-        } else if (ui.encoderLeftHandler != NULL) {  //do nothing
+        } else if (ui.handlesLeftEncoder()) {  //do nothing
           ;
         } else
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -3247,14 +3308,14 @@ FLASHMEM void lcdml_menu_control(void) {
         //Reset for left right action
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_L]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-        Serial.println(F("ENC-L long released"));
+        LOG.println(F("ENC-L long released"));
 #endif
         //encoderDir[ENC_L].ButtonLong(true);
         //LCDML.BT_quit();
       } else if ((millis() - g_LCDML_CONTROL_button_press_time[ENC_L]) >= BUT_DEBOUNCE_MS) {
         //LCDML.BT_enter();
 #ifdef DEBUG
-        Serial.println(F("ENC-L short"));
+        LOG.println(F("ENC-L short"));
 #endif
         encoderDir[ENC_L].ButtonShort(true);
 
@@ -3277,7 +3338,7 @@ FLASHMEM void lcdml_menu_control(void) {
 
   if (encoderDir[ENC_L].ButtonPressed() == true && (millis() - g_LCDML_CONTROL_button_press_time[ENC_L]) >= LONG_BUTTON_PRESS) {
 #ifdef DEBUG
-    Serial.println(F("ENC-L long recognized"));
+    LOG.println(F("ENC-L long recognized"));
 #endif
 
     //    // when in Voice select Menu, long left-press sets/unsets favorite
@@ -3428,7 +3489,7 @@ FLASHMEM void lcdml_menu_display(void) {
   }
 }
 
-void draw_instance_editor(struct param_editor* editor, bool refresh) {
+FLASHMEM void draw_instance_editor(Editor* editor, bool refresh) {
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
@@ -3451,11 +3512,11 @@ void draw_instance_editor(struct param_editor* editor, bool refresh) {
   UI_update_instance_icons();
 }
 
-void addInstanceEditor(
-  void (*renderer)(struct param_editor* param, bool refresh) = &draw_instance_editor) {
+FLASHMEM void addInstanceEditor(
+  void (*renderer)(Editor* param, bool refresh) = &draw_instance_editor) {
   ui.addEditor(
     "INSTANCE", 0, 1, &selected_instance_id, NULL,
-    [](struct param_editor* editor, int16_t value) -> void {
+    [](Editor* editor, int16_t value) -> void {
       selected_instance_id = value;
       ui.draw_editors(true);
     },
@@ -4193,21 +4254,23 @@ FLASHMEM void UI_func_stereo_mono(uint8_t param) {
   }
 }
 
-int16_t dexed_current_instance_getter(struct param_editor* editor) {
+
+// get and set dexed configuration to our dexed configuration structure
+int16_t dexed_current_instance_getter(Editor* editor) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
   uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
   return *ptr;
 }
-
-void dexed_current_instance_setter(struct param_editor* editor, int16_t value) {
+void dexed_current_instance_setter(Editor* editor, int16_t value) {
   // the controller parameter may be from either instance, which may be
   // switched at any time. So recompute the value pointer in respect of the instance!
   uint8_t* ptr = (uint8_t*)((char*)editor->value - (char*)&configuration.dexed[0] + (char*)&configuration.dexed[selected_instance_id]);
   *ptr = (uint8_t)value;
 }
 
-void prepare_multi_options(struct param_editor* editor, bool refresh) {
+// prepare rendering for an editor field providing multiple options to select between
+void prepare_multi_options(Editor* editor, bool refresh) {
   display.setTextSize(1);
   if (!refresh) {
     setCursor_textGrid_small(editor->x + 10, editor->y);
@@ -4219,7 +4282,8 @@ void prepare_multi_options(struct param_editor* editor, bool refresh) {
   setCursor_textGrid_small(editor->x, editor->y);
 }
 
-void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
+// set portamento setup to dexed engine and send SysEx for it.
+void dexed_portamento_setter(Editor* editor, int16_t value) {
   dexed_current_instance_setter(editor, value);
   dexed_t& dexed = configuration.dexed[selected_instance_id];
   MicroDexed[selected_instance_id]->setPortamento(dexed.portamento_mode, dexed.portamento_glissando, dexed.portamento_time);
@@ -4228,13 +4292,15 @@ void dexed_portamento_setter(struct param_editor* editor, int16_t value) {
   send_sysex_param(dexed.midi_channel, 69, dexed.portamento_time, 2);
 };
 
-void dexed_voice_name_renderer(struct param_editor* param, bool refresh) {
+// display the voice name for the currently selected instance
+// used by mutliple UI pages.
+void dexed_voice_name_renderer(Editor* param, bool refresh) {
   draw_instance_editor(param, refresh);
   display.setTextSize(2);
   show(1, 1, 10, g_voice_name[selected_instance_id]);
 }
 
-void note_name_renderer(struct param_editor* editor, bool refresh) {
+void note_name_renderer(struct Editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   char note_name[4];
   getNoteName(note_name, editor->get());
@@ -4243,12 +4309,16 @@ void note_name_renderer(struct param_editor* editor, bool refresh) {
   display.print("]");
 }
 
+// UI page to allow editing of all global dexed parameters
+// this somehow resebles the "Function" edit plane on an DX7 instrument.
+//
 FLASHMEM void UI_func_dexed_setup(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
     ui.setCursor(1, 1);
+    // allow switching the currently displayed instance
     addInstanceEditor(&dexed_voice_name_renderer);
 
     ui.setCursor(1, 4);
@@ -4266,17 +4336,17 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.printLn("POLYPHONY");
     ui.addEditor(
       "MONO/POLY", MONOPOLY_MIN, MONOPOLY_MAX, &configuration.dexed[0].monopoly,
-      &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+      &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
         dexed_current_instance_setter(editor, value);
         MicroDexed[selected_instance_id]->setMonoMode(!value);
       },
-      [](struct param_editor* editor, bool refresh) {
+      [](struct Editor* editor, bool refresh) {
         prepare_multi_options(editor, refresh);
         if (!editor->get()) display.print(F("[MONO]"));
         else display.print(F("[POLY]"));
       });
     ui.addEditor("POLYPHONY", POLYPHONY_MIN, POLYPHONY_MAX, &configuration.dexed[0].polyphony,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MicroDexed[selected_instance_id]->setMaxNotes(value);
                  });
@@ -4284,14 +4354,14 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
 
     ui.printLn("TUNING");
     ui.addEditor("TRANSPOSE", TRANSPOSE_MIN, TRANSPOSE_MAX, &configuration.dexed[0].transpose,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MicroDexed[selected_instance_id]->setTranspose(value);
                    MicroDexed[selected_instance_id]->notesOff();
                    send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, 144, value, 0);
                  });
     ui.addEditor("FINE TUNE", TUNE_MIN, TUNE_MAX, &configuration.dexed[0].tune,
-                 &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+                 &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
                    dexed_current_instance_setter(editor, value);
                    MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, value);
                  });
@@ -4300,7 +4370,7 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.setCursor(27, 4);
     ui.printLn("PORTAMENTO", GREY2);
     ui.addEditor("MODE", PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX, &configuration.dexed[0].portamento_mode,
-                 &dexed_current_instance_getter, &dexed_portamento_setter, [](struct param_editor* editor, bool refresh) {
+                 &dexed_current_instance_getter, &dexed_portamento_setter, [](struct Editor* editor, bool refresh) {
                    prepare_multi_options(editor, refresh);
                    uint8_t mode = editor->get();
                    uint8_t monopoly = configuration.dexed[selected_instance_id].monopoly;
@@ -4318,11 +4388,11 @@ FLASHMEM void UI_func_dexed_setup(uint8_t param) {
     ui.printLn("INTERNALS", GREY2);
     ui.addEditor(
       "NOTE REFRESH", NOTE_REFRESH_MIN, NOTE_REFRESH_MAX, &configuration.dexed[0].note_refresh,
-      &dexed_current_instance_getter, [](param_editor* editor, int16_t value) {
+      &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
         dexed_current_instance_setter(editor, value);
         MicroDexed[selected_instance_id]->setNoteRefreshMode(value);
       },
-      [](struct param_editor* editor, bool refresh) {
+      [](struct Editor* editor, bool refresh) {
         prepare_multi_options(editor, refresh);
         if (!editor->get()) display.print(F("[NORMAL ]"));
         else display.print(F("[RETRIG.]"));
@@ -4877,47 +4947,67 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
   }
 }
 
-void create_drums_ui();
-
-void drum_name_renderer(struct param_editor* editor, bool refresh) {
-  char number[] = "00:";
-  snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
-  display.setTextSize(2);
-  setModeColor(editor->select_id);
-  show(editor->y, editor->x, 10, number);
-  show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
+// the drum parameter editors depend on the currently selected sample activesample.
+// So we need custom getters and setters respecting activesample.
+void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr) {
+  ui.addCustomEditor(
+    name, limit_min, limit_max, valuePtr,
+    [](Editor* editor) -> int16_t {
+      // the parameter may be from either sample, which may be
+      // switched at any time. So recompute the value pointer in respect of to activesample !
+      float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      return *ptr * 100.f;
+    },
+    [](Editor* editor, int16_t value) {
+      // the parameter may be from either sample, which may be
+      // switched at any time. So recompute the value pointer in respect of to activesample !
+      float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      *ptr = (value / 100.f);
+    },
+    NULL);
 }
 
-void activesample_setter(param_editor* editor, int16_t id) {
-  activesample = id;
-  create_drums_ui();
-}
-
-// the drum UI needs to be recreated frequently, if activesample changes.
-void create_drums_ui() {
-
-  ui.clear();  // just recreate UI without resetting selection / edit mode
-
-  ui.setCursor(1, 1);
-  ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample, NULL, &activesample_setter, &drum_name_renderer);
-
-  ui.setCursor(1, 4);
-  ui.addEditor((const char*)F("VOLUME"), 0, 99, &drum_config[activesample].vol_max);
-  ui.addEditor((const char*)F("PAN"), -99, 99, &drum_config[activesample].pan);
-  ui.addEditor((const char*)F("REVERB"), 0, 99, &drum_config[activesample].reverb_send);
-  ui.addEditor((const char*)F("PITCH"), 0, 200, &drum_config[activesample].pitch);
-  ui.addEditor((const char*)F("TUNE"), 0, 200, &drum_config[activesample].p_offset);
-
-  ui.setCursor(1, 10);
-  ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
-  ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
-}
-
+// Create drum UI.
+// The drum UI needs to be redrawn if activesample changes.
 void UI_func_drums(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
-    create_drums_ui();
+    ui.clear();  // just recreate UI without resetting selection / edit mode
+
+    ui.setCursor(1, 1);
+    // the drum sample slot selector.
+    // changes activesample and redraws all other editors as they depend on.
+    ui.addEditor((const char*)F(""), 0, NUM_DRUMSET_CONFIG - 2, &activesample,
+                 NULL,  // default getter does it.
+                 [](Editor* editor, int16_t value) {
+                   // set the currently selected drum sample
+                   // and refresh all editors.
+                   activesample = value;
+                   ui.draw_editors(true);
+                 },
+                 [](Editor* editor, bool refresh) {
+                   // render the current selected drum sample slot number and name
+                   char number[] = "00:";
+                   snprintf_P(number, sizeof(number), PSTR("%02d:"), activesample);
+                   display.setTextSize(2);
+                   setModeColor(editor->select_id);
+                   show(editor->y, editor->x, 10, number);
+                   show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
+                 });
+
+    ui.setCursor(1, 4);
+    // the parameter editors depend on activesample. We define them by sample index 0,
+    // but they will act on current slot activesample later.
+    addDrumParameterEditor((const char*)F("VOLUME"), 0, 99, &drum_config[0].vol_max);
+    addDrumParameterEditor((const char*)F("PAN"), -99, 99, &drum_config[0].pan);
+    addDrumParameterEditor((const char*)F("REVERB"), 0, 99, &drum_config[0].reverb_send);
+    addDrumParameterEditor((const char*)F("PITCH"), 0, 200, &drum_config[0].pitch);
+    addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
+
+    ui.setCursor(1, 10);
+    ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
+    ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -8411,6 +8501,7 @@ void UI_func_microsynth(uint8_t param) {
     if (generic_temp_select_menu == 0)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     else display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(1);
     print_small_intbar(9, 3, microsynth[microsynth_selected_instance].sound_intensity, 0, 1, 0);
     setModeColor(1);
     setCursor_textGrid_small(9, 4);
@@ -9390,7 +9481,7 @@ unsigned int euclid(int n, int k, int o) {  // inputs: n=total, k=beats, o = off
       }
 
       else {
-        //Serial.println(F("ERROR"));
+        //LOG.println(F("ERROR"));
       }
       iteration++;
     }
@@ -9861,12 +9952,12 @@ FLASHMEM void set_delay_sync(uint8_t sync, uint8_t instance) {
     delay_fx[instance]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     if (midi_sync_delay_time > DELAY_MAX_TIME) {
 #ifdef DEBUG
-      Serial.println(F("Calculated MIDI-Sync delay: "));
-      Serial.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
-      Serial.println(F("ms"));
-      Serial.println(F("MIDI-Sync delay: midi_sync_delay_time"));
-      Serial.print(midi_sync_delay_time, DEC);
-      Serial.println(F("ms"));
+      LOG.println(F("Calculated MIDI-Sync delay: "));
+      LOG.print(round(60000.0 * midi_ticks_factor[sync] / midi_bpm), DEC);
+      LOG.println(F("ms"));
+      LOG.println(F("MIDI-Sync delay: midi_sync_delay_time"));
+      LOG.print(midi_sync_delay_time, DEC);
+      LOG.println(F("ms"));
 #endif
     }
   } else {
@@ -11585,13 +11676,13 @@ FLASHMEM void sd_loadDirectory() {
       sdcard_infos.files[fm.sd_sum_files].size = sd_entry.size();
       sdcard_infos.files[fm.sd_sum_files].isDirectory = sd_entry.isDirectory();
 #ifdef DEBUG
-      Serial.print(fm.sd_sum_files);
-      Serial.print(F("  "));
-      Serial.print(sdcard_infos.files[fm.sd_sum_files].name);
-      Serial.print(F("  "));
-      Serial.print(sdcard_infos.files[fm.sd_sum_files].size);
-      Serial.print(F(" bytes"));
-      Serial.println();
+      LOG.print(fm.sd_sum_files);
+      LOG.print(F("  "));
+      LOG.print(sdcard_infos.files[fm.sd_sum_files].name);
+      LOG.print(F("  "));
+      LOG.print(sdcard_infos.files[fm.sd_sum_files].size);
+      LOG.print(F(" bytes"));
+      LOG.println();
 #endif
 
       fm.sd_sum_files++;
@@ -11599,6 +11690,13 @@ FLASHMEM void sd_loadDirectory() {
     sd_entry.close();
   }
   sd_root.close();
+
+  // clear all the unused files in array
+  for (uint8_t i = fm.sd_sum_files; i < 200; i++) {
+    strcpy(sdcard_infos.files[i].name, "");
+    sdcard_infos.files[i].size = 0;
+    sdcard_infos.files[i].isDirectory = false;
+  }
 
   qsort(sdcard_infos.files, fm.sd_sum_files, sizeof(storage_file_t), compare_files_by_name);
 }
@@ -11629,7 +11727,7 @@ FLASHMEM void sd_printDirectory(bool forceReload) {
     display.print("/ ");
   }
   for (uint8_t f = 0; f < 10; f++) {
-    if (f >= fm.sd_sum_files) {
+    if (f >= fm.sd_sum_files || f >= (fm.sd_sum_files - fm.sd_skip_files)) {
       fm.sd_cap_rows = f - 1;
       display.console = true;
       display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 26, (10 - f) * 11, COLOR_BACKGROUND);
@@ -11684,12 +11782,13 @@ FLASHMEM void flash_printDirectory()  //SPI FLASH
     fm.flash_cap_rows = 9;
 
     for (uint8_t f = 0; f < 10; f++) {
-      if (f >= fm.flash_sum_files) {
-        fm.flash_cap_rows = f - 1;
-        display.console = true;
-        display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
-        break;
-      }
+
+      // if (f >= fm.flash_sum_files) {
+      //   fm.flash_cap_rows = f - 1;
+      //   display.console = true;
+      //   display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
+      //   break;
+      // }
 
       storage_file_t flash_entry = flash_infos.files[fm.flash_skip_files + f];
       if (f == fm.flash_selected_file && fm.active_window == 1)
@@ -11747,13 +11846,13 @@ FLASHMEM void flash_loadDirectory()  //SPI FLASH
       flash_infos.used = flash_infos.used + filesize / 1024;
 
 #ifdef DEBUG
-      Serial.print(filepos);
-      Serial.print(F("  "));
-      Serial.print(flash_infos.files[filepos].name);
-      Serial.print(F("  "));
-      Serial.print(filesize);
-      Serial.print(F(" bytes"));
-      Serial.println();
+      LOG.print(filepos);
+      LOG.print(F("  "));
+      LOG.print(flash_infos.files[filepos].name);
+      LOG.print(F("  "));
+      LOG.print(filesize);
+      LOG.print(F(" bytes"));
+      LOG.println();
 #endif
       filepos++;
     } else {
@@ -11763,8 +11862,8 @@ FLASHMEM void flash_loadDirectory()  //SPI FLASH
 
   fm.flash_sum_files = filepos;
 #ifdef DEBUG
-  Serial.print(F("Total flash files: "));
-  Serial.println(fm.flash_sum_files);
+  LOG.print(F("Total flash files: "));
+  LOG.println(fm.flash_sum_files);
 #endif
 
   if (fm.flash_sum_files) {
@@ -12452,6 +12551,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     flash_printDirectory();
 #endif
     print_file_manager_buttons();
+    print_file_manager_active_border();
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -12525,35 +12625,35 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           // check if this file is already on the Flash chip
           if (SerialFlash.exists(filename)) {
 #ifdef DEBUG
-            Serial.println(F("  already exists on the Flash chip"));
+            LOG.println(F("  already exists on the Flash chip"));
 #endif
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff && ff.size() == f.size()) {
 #ifdef DEBUG
-              Serial.println(F("  size is the same, comparing data..."));
+              LOG.println(F("  size is the same, comparing data..."));
 #endif
               if (compareFiles(f, ff) == true) {
 #ifdef DEBUG
-                Serial.println(F("  files are identical :)"));
+                LOG.println(F("  files are identical :)"));
 #endif
                 f.close();
                 ff.close();
                 continue;  // advance to next file
               } else {
 #ifdef DEBUG
-                Serial.println(F("  files are different"));
+                LOG.println(F("  files are different"));
 #endif
               }
             } else {
 #ifdef DEBUG
-              Serial.print(F("  size is different, "));
-              Serial.print(ff.size());
-              Serial.println(F(" bytes"));
+              LOG.print(F("  size is different, "));
+              LOG.print(ff.size());
+              LOG.println(F(" bytes"));
 #endif
             }
             // delete the copy on the Flash chip, if different
 #ifdef DEBUG
-            Serial.println(F("  delete file from Flash chip"));
+            LOG.println(F("  delete file from Flash chip"));
 #endif
             SerialFlash.remove(filename);
           }
@@ -12564,7 +12664,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
               SerialFlashFile ff = SerialFlash.open(filename);
               if (ff) {
 #ifdef DEBUG
-                Serial.print(F("  copying"));
+                LOG.print(F("  copying"));
 #endif
                 // copy data loop
                 unsigned long count = 0;
@@ -12585,12 +12685,12 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
                 flash_printDirectory();
               } else {
 #ifdef DEBUG
-                Serial.println(F("  error opening freshly created file!"));
+                LOG.println(F("  error opening freshly created file!"));
 #endif
               }
             } else {
 #ifdef DEBUG
-              Serial.println(F("  unable to create file"));
+              LOG.println(F("  unable to create file"));
 #endif
             }
           }
@@ -12603,7 +12703,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
         print_flash_stats();
         flash_printDirectory();
 #ifdef DEBUG
-        Serial.println(F("Finished All Files"));
+        LOG.println(F("Finished All Files"));
 #endif
       } else
 #endif
@@ -12653,34 +12753,34 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           // check if this file is already on the Flash chip
           if (SerialFlash.exists(filename)) {
 #ifdef DEBUG
-            Serial.println(F("  already exists on the Flash chip"));
+            LOG.println(F("  already exists on the Flash chip"));
 #endif
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff && ff.size() == f.size()) {
 #ifdef DEBUG
-              Serial.println(F("  size is the same, comparing data..."));
+              LOG.println(F("  size is the same, comparing data..."));
 #endif
               if (compareFiles(f, ff) == true) {
 #ifdef DEBUG
-                Serial.println(F("  files are identical :)"));
+                LOG.println(F("  files are identical :)"));
 #endif
                 f.close();
                 ff.close();
               } else {
 #ifdef DEBUG
-                Serial.println(F("  files are different"));
+                LOG.println(F("  files are different"));
 #endif
               }
             } else {
 #ifdef DEBUG
-              Serial.print(F("  size is different, "));
-              Serial.print(ff.size());
-              Serial.println(F(" bytes"));
+              LOG.print(F("  size is different, "));
+              LOG.print(ff.size());
+              LOG.println(F(" bytes"));
 #endif
             }
             // delete the copy on the Flash chip, if different
 #ifdef DEBUG
-            Serial.println(F("  delete file from Flash chip"));
+            LOG.println(F("  delete file from Flash chip"));
 #endif
             SerialFlash.remove(filename);
           } else {
@@ -12689,7 +12789,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
               SerialFlashFile ff = SerialFlash.open(filename);
               if (ff) {
 #ifdef DEBUG
-                Serial.print(F("  copying"));
+                LOG.print(F("  copying"));
 #endif
                 // copy data loop
                 unsigned long count = 0;
@@ -12706,7 +12806,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
                 ff.close();
               } else {
 #ifdef DEBUG
-                Serial.println(F("  error opening freshly created file!"));
+                LOG.println(F("  error opening freshly created file!"));
 #endif
               }
               f.close();
@@ -13210,9 +13310,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
     setModeColor(3);
     setCursor_textGrid_small(42, 10);
     display.print(configuration.sys.touch_rotation);
+#ifdef GENERIC_DISPLAY
     if (settings_modified == 4) {
       touch.setRotation(configuration.sys.touch_rotation);  // rotation 180°
     }
+#endif
 
     // UI reverse
     setModeColor(4);
@@ -13270,8 +13372,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param) {
 
 FLASHMEM void _setup_rotation_and_encoders(bool init) {
   display.setRotation(configuration.sys.display_rotation);
+#ifdef GENERIC_DISPLAY
   touch.setRotation(configuration.sys.touch_rotation);
-
+#endif
   if (configuration.sys.ui_reverse == true) {
     MD_REncoder encoder_tmp = ENCODER[ENC_L];
     ENCODER[ENC_L] = ENCODER[ENC_R];
@@ -14054,12 +14157,18 @@ FLASHMEM void UI_func_voice_select_loop() {
   }
 }
 
+// ==================
+// DEXED voice editor
+// ==================
+
+// a single dexed voice parameter definition
 struct voice_param {
   const char* name;
   uint8_t max;
 };
 
-
+// list of all dexed voice operator parameter definitions.
+// actual parameters are repeating this six times plus the global voice parameters.
 const struct voice_param voice_op_params[] = {
   { "R1", 99 },
   { "R2", 99 },
@@ -14085,6 +14194,7 @@ const struct voice_param voice_op_params[] = {
 };
 const uint8_t num_voice_op_params = 21;
 
+// list of all dexed global voice parameter definitions.
 const struct voice_param voice_params[] = {
   { "R1", 99 },
   { "R2", 99 },
@@ -14107,27 +14217,39 @@ const struct voice_param voice_params[] = {
   { "TRANSPOSE", 48 },
   { "NAME", 127 }
 };
-
 const uint8_t num_voice_params = 19;  // omit name for now
-uint8_t current_voice_op = 0;
 
+uint8_t current_voice_op = 0;  // currently selected operator for edits
 
-int16_t dexed_getter(struct param_editor* param) {
+// the dexed engine global voice parameter getter and setters.
+// all parameter values are uint8_t values, starting with 0.
+// They are defined in the dexed VoiceData array:
+// -Operator parameters are stored six times repeated for all six operators.
+//  They are load and stored to the engine depending on the current selected_instance_id.
+// -Global voice parameters go after the operator values, starting with DEXED_VOICE_OFFSET.
+//  They are load and stored to the engine depending on the current selected_instance_id and current_voice_op operator.
+//
+int16_t dexed_getter(Editor* param) {
   int8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   return MicroDexed[selected_instance_id]->getVoiceDataElement(addr);
 };
-void dexed_setter(struct param_editor* param, int16_t value) {
+void dexed_setter(Editor* param, int16_t value) {
   uint8_t addr = param->select_id - 1 < num_voice_params ? param->select_id - 1 + DEXED_VOICE_OFFSET : param->select_id - 2 - num_voice_params + current_voice_op * num_voice_op_params;
   MicroDexed[selected_instance_id]->setVoiceDataElement(addr, value);
 };
-int16_t dexed_op_getter(struct param_editor* param) {
+
+// allow switching the currently edited operator.
+int16_t dexed_op_getter(Editor* param) {
   return current_voice_op;
 };
-void dexed_op_setter(struct param_editor* param, int16_t value) {
+void dexed_op_setter(Editor* param, int16_t value) {
   current_voice_op = value;
-  ui.draw_editors(true);
+  ui.draw_editors(true);  // as half of the editors have changed when a different operator is selected.
 };
 
+// the dexed voice edior, showing an UI for all 144 parameters of the current voice
+// as not all editors fit on screen, only the global parameters and one set of operator parameters is shown.
+// The current operator can be selected to access all parameters.
 FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
@@ -14136,14 +14258,16 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
 
     ui.setCursor(0, 1);
 
+    // allow switching between mutliple instances (also by long button press)
     addInstanceEditor(&dexed_voice_name_renderer);
 
     // voice global parameters
     display.setTextSize(1);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(0, 4);
-    display.print(F("PITCH EG"));
 
+    display.print(F("PITCH EG"));
+    // display PITCH EG editor in two columns to save space
     ui.setCursor(0, 5);
     for (uint8_t i = 0; i < 4; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
@@ -14151,16 +14275,18 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     for (uint8_t i = 4; i < 8; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(0, 9);
+    // display the remaining global editors
     for (uint8_t i = 8; i < num_voice_params; i++)
       ui.addEditor(voice_params[i].name, 0, voice_params[i].max, &dexed_getter, &dexed_setter);
 
-    // operator parameters
+    // operator parameter set selector
     ui.setCursor(27, 3);
     ui.addEditor((const char*)F("EDIT OPERATOR"), 0, 5, dexed_op_getter, dexed_op_setter);
-    ui.enableLeftEncoderEditor();
+    ui.enableLeftEncoderEditor();  // also select operator by left encoder
 
     setCursor_textGrid_small(29, 4);
     display.print(F("OPERATOR EG"));
+    // display OPERATOR EG editor in two columns to save space
     ui.setCursor(27, 5);
     for (uint8_t i = 0; i < 4; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
@@ -14168,6 +14294,7 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
     for (uint8_t i = 4; i < 8; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
     ui.setCursor(27, 9);
+    // display the remaining operator editors
     for (uint8_t i = 8; i < num_voice_op_params; i++)
       ui.addEditor(voice_op_params[i].name, 0, voice_op_params[i].max, &dexed_getter, &dexed_setter);
   }
@@ -14183,7 +14310,12 @@ FLASHMEM void UI_func_voice_editor(uint8_t param) {
   }
 }
 
-void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
+// ======================
+// Dexed controller setup
+// ======================
+
+// display modes a controller can interact
+void dexed_mode_renderer(Editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   display.print("          ");
   setCursor_textGrid_small(editor->x, editor->y);
@@ -14193,7 +14325,8 @@ void dexed_mode_renderer(struct param_editor* editor, bool refresh) {
   if (mode == 2) display.print("DIRECT");
 }
 
-void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
+// display the targets a controller can be assigned to (multiple choice bit field)
+void dexed_assign_renderer(Editor* editor, bool refresh) {
   prepare_multi_options(editor, refresh);
   display.print("          ");
   setCursor_textGrid_small(editor->x, editor->y);
@@ -14203,15 +14336,21 @@ void dexed_assign_renderer(struct param_editor* editor, bool refresh) {
   if (mode & 4) display.print("EG");
 }
 
+// compare edited parameter location to a given one and send SysEx message if they match
 void send_sysex_if_changed(uint8_t id, uint8_t* valuePtr, uint8_t* changedValuePtr) {
   if (valuePtr == changedValuePtr)
     send_sysex_param(configuration.dexed[selected_instance_id].midi_channel, id, *((uint8_t*)valuePtr), 2);
 }
 
-void dexed_controller_setter(struct param_editor* editor, int16_t value) {
+// apply changed controller values (all at once)
+// SysEx messages are only send for the actual chaged parameter.
+//
+void dexed_controller_setter(Editor* editor, int16_t value) {
 
+  // call base setter to store editor value into our dexed parameter storage.
   dexed_current_instance_setter(editor, value);
 
+  // send all editor changes to dexed engine.
   MicroDexed[selected_instance_id]->setPBController(configuration.dexed[selected_instance_id].pb_range, configuration.dexed[selected_instance_id].pb_step);
   MicroDexed[selected_instance_id]->setMWController(configuration.dexed[selected_instance_id].mw_range, configuration.dexed[selected_instance_id].mw_assign, configuration.dexed[selected_instance_id].mw_mode);
   MicroDexed[selected_instance_id]->setFCController(configuration.dexed[selected_instance_id].fc_range, configuration.dexed[selected_instance_id].fc_assign, configuration.dexed[selected_instance_id].fc_mode);
@@ -14219,6 +14358,8 @@ void dexed_controller_setter(struct param_editor* editor, int16_t value) {
   MicroDexed[selected_instance_id]->setATController(configuration.dexed[selected_instance_id].at_range, configuration.dexed[selected_instance_id].at_assign, configuration.dexed[selected_instance_id].at_mode);
   MicroDexed[selected_instance_id]->ControllersRefresh();
 
+  // send SysEx only for the value actually named by editor value pointer
+  // to make sure we don't spam around SysEx messages for unchanged values!
   send_sysex_if_changed(65, &configuration.dexed[selected_instance_id].pb_range, (uint8_t*)editor->value);
   send_sysex_if_changed(66, &configuration.dexed[selected_instance_id].pb_step, (uint8_t*)editor->value);
   send_sysex_if_changed(70, &configuration.dexed[selected_instance_id].mw_range, (uint8_t*)editor->value);
@@ -14231,12 +14372,19 @@ void dexed_controller_setter(struct param_editor* editor, int16_t value) {
   send_sysex_if_changed(77, &configuration.dexed[selected_instance_id].at_assign, (uint8_t*)editor->value);
 }
 
+// UI page to configure and assign the plentyful controllers a dexed engine can get input from:
+//   Pitch Bend wheel, Modulation wheel, Foot pedal controller, Breath Controller, After Touch Pressure.
+// Each of them (except pitch bend) can be assigned to zero or more of the controller channels:
+//   Pitch modulation, Amplitude modulation, EG bias (a static offset to the operator EG values)
+// The range and mapping can be altered for every controller.
+//
 FLASHMEM void UI_func_dexed_controllers(uint8_t param) {
 
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ui.reset();
     ui.setCursor(1, 1);
+    // allow switching which dexed instance to edit
     addInstanceEditor(&dexed_voice_name_renderer);
 
     ui.setCursor(1, 5);
@@ -14753,9 +14901,9 @@ FLASHMEM void UI_func_save_voice(uint8_t param) {
 #ifdef DEBUG
             bool ret = save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
             if (ret == true)
-              Serial.println(F("Saving voice OK."));
+              LOG.println(F("Saving voice OK."));
             else
-              Serial.println(F("Error while saving voice."));
+              LOG.println(F("Error while saving voice."));
 #else
             save_sd_voice(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
 #endif
@@ -14874,19 +15022,19 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param) {
         if (ui_select_name_state == true) {
           if (yesno == true) {
 #ifdef DEBUG
-            Serial.print(F("Bank name: ["));
-            Serial.print(receive_bank_filename);
-            Serial.println(F("]"));
+            LOG.print(F("Bank name: ["));
+            LOG.print(receive_bank_filename);
+            LOG.println(F("]"));
 #endif
             char tmp[FILENAME_LEN];
             strcpy(tmp, receive_bank_filename);
             snprintf_P(receive_bank_filename, sizeof(receive_bank_filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp);
 #ifdef DEBUG
-            Serial.print(F("Receiving into bank "));
-            Serial.print(bank_number);
-            Serial.print(F(" as filename "));
-            Serial.print(receive_bank_filename);
-            Serial.println(F("."));
+            LOG.print(F("Receiving into bank "));
+            LOG.print(bank_number);
+            LOG.print(F(" as filename "));
+            LOG.print(receive_bank_filename);
+            LOG.println(F("."));
 #endif
             mode = 0xff;
             // fix_later   lcd.noBlink();
@@ -14896,7 +15044,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param) {
           }
         }
       } else if (mode >= 1 && yesno == false) {
-        Serial.println(mode, DEC);
+        LOG.println(mode, DEC);
         memset(receive_bank_filename, 0, sizeof(receive_bank_filename));
         mode = 0xff;
         // fix_later   lcd.noBlink();
@@ -15060,7 +15208,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param) {
 
       get_bank_name(bank_number, tmp_bank_name);
 #ifdef DEBUG
-      Serial.printf_P(PSTR("send bank sysex %d - bank:[%s]\n"), bank_number, tmp_bank_name);
+      LOG.printf_P(PSTR("send bank sysex %d - bank:[%s]\n"), bank_number, tmp_bank_name);
 #endif
       show(2, 1, 2, bank_number);
       show(2, 4, 10, tmp_bank_name);
@@ -15069,14 +15217,14 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param) {
         char filename[FILENAME_LEN];
         snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
 #ifdef DEBUG
-        Serial.print(F("Send bank "));
-        Serial.print(filename);
-        Serial.println(F(" from SD."));
+        LOG.print(F("Send bank "));
+        LOG.print(filename);
+        LOG.println(F(" from SD."));
 #endif
         File sysex = SD.open(filename);
         if (!sysex) {
 #ifdef DEBUG
-          Serial.println(F("Cannot read from SD."));
+          LOG.println(F("Cannot read from SD."));
 #endif
           show(2, 1, 16, "Read error.");
           bank_number = 0xff;
@@ -15188,16 +15336,16 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param) {
             char filename[FILENAME_LEN];
             snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
 #ifdef DEBUG
-            Serial.print(F("Send voice "));
-            Serial.print(voice_number);
-            Serial.print(F(" of "));
-            Serial.print(filename);
-            Serial.println(F(" from SD."));
+            LOG.print(F("Send voice "));
+            LOG.print(voice_number);
+            LOG.print(F(" of "));
+            LOG.print(filename);
+            LOG.println(F(" from SD."));
 #endif
             File sysex = SD.open(filename);
             if (!sysex) {
 #ifdef DEBUG
-              Serial.println(F("Connot read from SD."));
+              LOG.println(F("Connot read from SD."));
 #endif
               show(2, 1, 16, "Read error.");
               bank_number = 0xff;
@@ -15816,11 +15964,11 @@ FLASHMEM uint8_t search_accepted_char(uint8_t c) {
 
   for (uint8_t i = 0; i < sizeof(accepted_chars) - 1; i++) {
 #ifdef DEBUG
-    Serial.print(i, DEC);
-    Serial.print(F(":"));
-    Serial.print(c);
-    Serial.print(F("=="));
-    Serial.println(accepted_chars[i], DEC);
+    LOG.print(i, DEC);
+    LOG.print(F(":"));
+    LOG.print(c);
+    LOG.print(F("=="));
+    LOG.println(accepted_chars[i], DEC);
 #endif
     if (c == accepted_chars[i])
       return (i);
@@ -16240,19 +16388,19 @@ FLASHMEM bool check_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
 #ifdef DEBUG
-    Serial.print(F("check if Voice is a Favorite: "));
-    Serial.print(tmp);
-    Serial.println();
+    LOG.print(F("check if Voice is a Favorite: "));
+    LOG.print(tmp);
+    LOG.println();
 #endif
     if (SD.exists(tmp)) {  //is Favorite
 #ifdef DEBUG
-      Serial.println(F(" - It is in Favorites."));
+      LOG.println(F(" - It is in Favorites."));
 #endif
       return true;
     } else {  // it was not a favorite
 
 #ifdef DEBUG
-      Serial.println(F(" - It is not in Favorites."));
+      LOG.println(F(" - It is not in Favorites."));
 #endif
       return false;
     }
@@ -16706,19 +16854,19 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id) {
   if (sd_card > 0) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
 #ifdef DEBUG
-    Serial.print(F("check if there is a Favorite in Bank: "));
-    Serial.print(tmp);
-    Serial.println();
+    LOG.print(F("check if there is a Favorite in Bank: "));
+    LOG.print(tmp);
+    LOG.println();
 #endif
     if (SD.exists(tmp)) {  // this bank HAS at least 1 favorite(s)
 #ifdef DEBUG
-      Serial.println(F("quickcheck found a FAV in bank!"));
+      LOG.println(F("quickcheck found a FAV in bank!"));
 #endif
       return (true);
     } else {  // no favorites in bank stored
       return (false);
 #ifdef DEBUG
-      Serial.println(F(" - It is no Favorite in current Bank."));
+      LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
     }
   } else
@@ -16727,7 +16875,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t b, uint8_t instance_id) {
 
 FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
-  Serial.println(F("Starting saving Favorite."));
+  LOG.println(F("Starting saving Favorite."));
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
@@ -16739,8 +16887,8 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
     snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, v);
     snprintf_P(tmpfolder, sizeof(tmpfolder), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
 #ifdef DEBUG
-    Serial.println(F("Save Favorite to SD card..."));
-    Serial.println(tmp);
+    LOG.println(F("Save Favorite to SD card..."));
+    LOG.println(tmp);
 #endif
     if (!SD.exists(tmp)) {  //create Favorite Semaphore
       if (!SD.exists(tmpfolder)) {
@@ -16749,7 +16897,7 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
       myFav = SD.open(tmp, FILE_WRITE);
       myFav.close();
 #ifdef DEBUG
-      Serial.println(F("Favorite saved..."));
+      LOG.println(F("Favorite saved..."));
 #endif
       //fav symbol
       display.setTextSize(1);
@@ -16760,12 +16908,12 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
 
 
 #ifdef DEBUG
-      Serial.println(F("Added to Favorites..."));
+      LOG.println(F("Added to Favorites..."));
 #endif
     } else {  // delete the file, is no longer a favorite
       SD.remove(tmp);
 #ifdef DEBUG
-      Serial.println(F("Removed from Favorites..."));
+      LOG.println(F("Removed from Favorites..."));
 #endif
       for (i = 0; i < 32; i++) {  //if no other favs exist in current bank, remove folder
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%d.fav"), FAV_CONFIG_PATH, b, i);
@@ -16775,9 +16923,9 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d"), FAV_CONFIG_PATH, b);
         SD.rmdir(tmp);
 #ifdef DEBUG
-        Serial.println(F("Fav count in bank:"));
-        Serial.print(countfavs);
-        Serial.println(F("Removed folder since no voice in bank flagged as favorite any more"));
+        LOG.println(F("Fav count in bank:"));
+        LOG.print(countfavs);
+        LOG.println(F("Removed folder since no voice in bank flagged as favorite any more"));
 #endif
       }
 
@@ -16791,7 +16939,7 @@ FLASHMEM void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id) {
       // display.print(" "); //remove fav symbol
 
 #ifdef DEBUG
-      Serial.println(F("Removed from Favorites..."));
+      LOG.println(F("Removed from Favorites..."));
 #endif
     }
   }
@@ -16818,12 +16966,12 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
   if (result > 0) {
     memcpy(root_note, filename + ms.MatchStart + 1, ms.MatchLength - 1);
 #ifdef DEBUG
-    Serial.print(F("Found match at: "));
-    Serial.println(ms.MatchStart + 1);
-    Serial.print(F("Match length: "));
-    Serial.println(ms.MatchLength - 1);
-    Serial.print(F("Match root note: "));
-    Serial.println(root_note);
+    LOG.print(F("Found match at: "));
+    LOG.println(ms.MatchStart + 1);
+    LOG.print(F("Match length: "));
+    LOG.println(ms.MatchLength - 1);
+    LOG.print(F("Match root note: "));
+    LOG.println(root_note);
 #endif
 
     // get midi note from the root note string
@@ -16857,8 +17005,8 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     }
     uint8_t midi_root = (root_note[ms.MatchLength - 1 - 1] - '0' + 1) * 12 + offset;
 #ifdef DEBUG
-    Serial.printf_P(PSTR("root note found: %s\n"), root_note);
-    Serial.printf_P(PSTR("midi root note found: %d\n"), midi_root);
+    LOG.printf_P(PSTR("root note found: %s\n"), root_note);
+    LOG.printf_P(PSTR("midi root note found: %d\n"), midi_root);
 #endif
     msz[preset_number][zone_number].rootnote = midi_root;
 
@@ -16866,3058 +17014,22 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     calc_low_high(preset_number);
   } else {
 #ifdef DEBUG
-    Serial.println("No match.");
+    LOG.println("No match.");
 #endif
   }
 
 #ifdef DEBUG
-  Serial.print(F("MSZ preset #"));
-  Serial.print(preset_number);
-  Serial.print(F(" - zone #"));
-  Serial.print(zone_number);
-  Serial.print(F(": "));
-  Serial.print(msz[preset_number][zone_number].filename);
-  Serial.print(F(" root: "));
-  Serial.println(msz[preset_number][zone_number].rootnote);
+  LOG.print(F("MSZ preset #"));
+  LOG.print(preset_number);
+  LOG.print(F(" - zone #"));
+  LOG.print(zone_number);
+  LOG.print(F(": "));
+  LOG.print(msz[preset_number][zone_number].filename);
+  LOG.print(F(" root: "));
+  LOG.println(msz[preset_number][zone_number].rootnote);
 #endif
 }
 #endif
-
-PROGMEM static const uint8_t splash_image[3033] = {
-  20,
-  20,
-  38,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  20,
-  129,
-  56,
-  0,
-  7,
-  121,
-  138,
-  128,
-  128,
-  148,
-  94,
-  20,
-  130,
-  81,
-  0,
-  20,
-  34,
-  128,
-  148,
-  94,
-  0,
-  0,
-  7,
-  121,
-  138,
-  128,
-  128,
-  148,
-  94,
-  0,
-  0,
-  0,
-  64,
-  152,
-  20,
-  23,
-  128,
-  152,
-  64,
-  0,
-  0,
-  7,
-  121,
-  138,
-  20,
-  18,
-  128,
-  146,
-  98,
-  0,
-  0,
-  34,
-  142,
-  130,
-  20,
-  21,
-  128,
-  152,
-  64,
-  20,
-  128,
-  187,
-  0,
-  20,
-  35,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  20,
-  20,
-  255,
-  197,
-  0,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  35,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  20,
-  18,
-  255,
-  195,
-  0,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  35,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  20,
-  18,
-  255,
-  197,
-  0,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  237,
-  181,
-  187,
-  20,
-  5,
-  188,
-  187,
-  181,
-  237,
-  20,
-  3,
-  255,
-  237,
-  181,
-  187,
-  20,
-  5,
-  188,
-  187,
-  181,
-  237,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  206,
-  178,
-  20,
-  17,
-  188,
-  223,
-  94,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  223,
-  176,
-  20,
-  13,
-  188,
-  216,
-  143,
-  0,
-  0,
-  67,
-  20,
-  3,
-  255,
-  252,
-  192,
-  183,
-  20,
-  10,
-  188,
-  186,
-  183,
-  239,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  128,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  13,
-  20,
-  13,
-  0,
-  188,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  128,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  14,
-  20,
-  13,
-  0,
-  190,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  243,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  243,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  14,
-  20,
-  13,
-  0,
-  191,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  67,
-  20,
-  22,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  242,
-  13,
-  20,
-  13,
-  0,
-  188,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  4,
-  255,
-  117,
-  38,
-  20,
-  17,
-  67,
-  80,
-  34,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  3,
-  255,
-  246,
-  78,
-  52,
-  20,
-  10,
-  67,
-  62,
-  51,
-  209,
-  20,
-  3,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  255,
-  254,
-  255,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  20,
-  9,
-  0,
-  188,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  188,
-  0,
-  0,
-  0,
-  128,
-  20,
-  25,
-  255,
-  128,
-  0,
-  0,
-  13,
-  242,
-  20,
-  3,
-  255,
-  130,
-  20,
-  18,
-  0,
-  67,
-  20,
-  24,
-  255,
-  128,
-  20,
-  128,
-  187,
-  0,
-  188,
-  188,
-  188,
-  217,
-  138,
-  20,
-  9,
-  0,
-  138,
-  217,
-  188,
-  188,
-  217,
-  138,
-  20,
-  9,
-  0,
-  138,
-  217,
-  188,
-  188,
-  217,
-  138,
-  0,
-  0,
-  10,
-  178,
-  203,
-  188,
-  188,
-  217,
-  138,
-  0,
-  0,
-  0,
-  94,
-  223,
-  20,
-  23,
-  188,
-  223,
-  94,
-  0,
-  0,
-  10,
-  178,
-  202,
-  187,
-  188,
-  223,
-  95,
-  20,
-  18,
-  0,
-  50,
-  209,
-  192,
-  20,
-  21,
-  188,
-  223,
-  94,
-  20,
-  133,
-  187,
-  0,
-  20,
-  62,
-  13,
-  15,
-  10,
-  20,
-  13,
-  0,
-  1,
-  12,
-  14,
-  20,
-  48,
-  13,
-  15,
-  7,
-  20,
-  110,
-  0,
-  3,
-  14,
-  20,
-  61,
-  13,
-  14,
-  3,
-  20,
-  9,
-  0,
-  20,
-  62,
-  242,
-  247,
-  236,
-  201,
-  167,
-  124,
-  95,
-  31,
-  20,
-  8,
-  0,
-  13,
-  229,
-  255,
-  20,
-  48,
-  242,
-  255,
-  231,
-  90,
-  20,
-  52,
-  0,
-  13,
-  47,
-  51,
-  20,
-  48,
-  48,
-  57,
-  24,
-  0,
-  0,
-  0,
-  64,
-  255,
-  247,
-  20,
-  59,
-  242,
-  243,
-  247,
-  220,
-  187,
-  144,
-  113,
-  69,
-  4,
-  20,
-  4,
-  0,
-  20,
-  69,
-  255,
-  200,
-  67,
-  20,
-  6,
-  0,
-  13,
-  242,
-  20,
-  52,
-  255,
-  185,
-  13,
-  20,
-  49,
-  0,
-  42,
-  110,
-  126,
-  123,
-  20,
-  48,
-  121,
-  144,
-  61,
-  0,
-  0,
-  0,
-  67,
-  20,
-  68,
-  255,
-  240,
-  138,
-  14,
-  0,
-  0,
-  0,
-  20,
-  71,
-  255,
-  177,
-  13,
-  20,
-  4,
-  0,
-  13,
-  242,
-  20,
-  54,
-  255,
-  112,
-  20,
-  48,
-  0,
-  36,
-  35,
-  23,
-  20,
-  49,
-  24,
-  29,
-  12,
-  0,
-  0,
-  0,
-  67,
-  20,
-  70,
-  255,
-  250,
-  86,
-  0,
-  0,
-  20,
-  72,
-  255,
-  242,
-  68,
-  20,
-  3,
-  0,
-  13,
-  242,
-  20,
-  55,
-  255,
-  178,
-  32,
-  20,
-  104,
-  0,
-  67,
-  20,
-  72,
-  255,
-  165,
-  1,
-  20,
-  73,
-  255,
-  254,
-  31,
-  0,
-  0,
-  0,
-  13,
-  242,
-  20,
-  57,
-  255,
-  137,
-  20,
-  40,
-  0,
-  14,
-  28,
-  20,
-  55,
-  24,
-  29,
-  12,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  165,
-  20,
-  74,
-  255,
-  103,
-  0,
-  0,
-  0,
-  13,
-  242,
-  20,
-  58,
-  255,
-  212,
-  27,
-  20,
-  36,
-  0,
-  4,
-  60,
-  112,
-  119,
-  20,
-  55,
-  114,
-  136,
-  57,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  241,
-  20,
-  60,
-  188,
-  187,
-  184,
-  212,
-  20,
-  10,
-  255,
-  145,
-  0,
-  0,
-  0,
-  7,
-  121,
-  138,
-  20,
-  45,
-  128,
-  123,
-  120,
-  215,
-  20,
-  10,
-  255,
-  119,
-  20,
-  35,
-  0,
-  61,
-  104,
-  85,
-  79,
-  20,
-  55,
-  81,
-  96,
-  40,
-  0,
-  0,
-  0,
-  50,
-  209,
-  192,
-  20,
-  56,
-  188,
-  186,
-  191,
-  196,
-  196,
-  236,
-  20,
-  10,
-  255,
-  20,
-  63,
-  0,
-  121,
-  20,
-  9,
-  255,
-  155,
-  20,
-  54,
-  0,
-  117,
-  20,
-  10,
-  255,
-  234,
-  61,
-  20,
-  32,
-  0,
-  6,
-  9,
-  20,
-  127,
-  0,
-  12,
-  232,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  84,
-  20,
-  9,
-  255,
-  151,
-  20,
-  55,
-  0,
-  28,
-  206,
-  20,
-  10,
-  255,
-  161,
-  1,
-  20,
-  128,
-  161,
-  0,
-  203,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  57,
-  0,
-  156,
-  20,
-  10,
-  255,
-  227,
-  33,
-  20,
-  24,
-  0,
-  8,
-  27,
-  25,
-  20,
-  6,
-  24,
-  22,
-  30,
-  44,
-  17,
-  20,
-  121,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  58,
-  0,
-  21,
-  163,
-  20,
-  10,
-  255,
-  180,
-  30,
-  20,
-  20,
-  0,
-  5,
-  60,
-  110,
-  123,
-  20,
-  6,
-  118,
-  117,
-  125,
-  114,
-  58,
-  8,
-  20,
-  121,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  60,
-  0,
-  105,
-  20,
-  11,
-  255,
-  78,
-  20,
-  19,
-  0,
-  51,
-  92,
-  78,
-  69,
-  20,
-  6,
-  70,
-  74,
-  71,
-  19,
-  20,
-  123,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  61,
-  0,
-  28,
-  205,
-  20,
-  10,
-  255,
-  161,
-  1,
-  20,
-  16,
-  0,
-  3,
-  3,
-  20,
-  128,
-  136,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  63,
-  0,
-  89,
-  234,
-  20,
-  9,
-  255,
-  241,
-  102,
-  20,
-  128,
-  154,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  64,
-  0,
-  1,
-  161,
-  20,
-  10,
-  255,
-  205,
-  28,
-  20,
-  8,
-  0,
-  5,
-  44,
-  50,
-  20,
-  6,
-  47,
-  45,
-  48,
-  67,
-  49,
-  20,
-  128,
-  129,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  66,
-  0,
-  89,
-  20,
-  11,
-  255,
-  153,
-  20,
-  6,
-  0,
-  46,
-  106,
-  134,
-  130,
-  20,
-  6,
-  128,
-  132,
-  128,
-  82,
-  23,
-  20,
-  128,
-  129,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  67,
-  0,
-  36,
-  128,
-  136,
-  20,
-  6,
-  129,
-  123,
-  156,
-  167,
-  50,
-  20,
-  4,
-  0,
-  15,
-  65,
-  60,
-  45,
-  20,
-  7,
-  47,
-  53,
-  28,
-  20,
-  128,
-  131,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  63,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  128,
-  232,
-  0,
-  209,
-  20,
-  9,
-  255,
-  20,
-  8,
-  67,
-  71,
-  68,
-  9,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  1,
-  23,
-  26,
-  20,
-  46,
-  24,
-  29,
-  15,
-  20,
-  17,
-  0,
-  12,
-  13,
-  20,
-  18,
-  0,
-  3,
-  5,
-  20,
-  71,
-  0,
-  18,
-  74,
-  68,
-  20,
-  6,
-  67,
-  79,
-  40,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  37,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  98,
-  112,
-  20,
-  46,
-  104,
-  121,
-  64,
-  20,
-  17,
-  0,
-  6,
-  137,
-  243,
-  211,
-  187,
-  20,
-  5,
-  193,
-  194,
-  203,
-  161,
-  70,
-  55,
-  71,
-  71,
-  70,
-  70,
-  87,
-  64,
-  15,
-  20,
-  17,
-  0,
-  35,
-  84,
-  20,
-  46,
-  70,
-  84,
-  35,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  154,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  90,
-  103,
-  20,
-  46,
-  95,
-  112,
-  59,
-  20,
-  18,
-  0,
-  4,
-  162,
-  20,
-  10,
-  255,
-  248,
-  172,
-  114,
-  117,
-  120,
-  126,
-  85,
-  9,
-  20,
-  18,
-  0,
-  59,
-  140,
-  20,
-  46,
-  118,
-  140,
-  59,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  152,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  109,
-  58,
-  20,
-  20,
-  0,
-  36,
-  81,
-  20,
-  6,
-  70,
-  69,
-  66,
-  95,
-  86,
-  24,
-  23,
-  25,
-  24,
-  2,
-  20,
-  19,
-  0,
-  12,
-  29,
-  20,
-  46,
-  24,
-  29,
-  12,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  109,
-  58,
-  20,
-  112,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  109,
-  58,
-  20,
-  19,
-  0,
-  5,
-  5,
-  4,
-  4,
-  4,
-  3,
-  36,
-  35,
-  12,
-  15,
-  20,
-  4,
-  16,
-  17,
-  17,
-  17,
-  10,
-  20,
-  19,
-  0,
-  2,
-  6,
-  20,
-  46,
-  5,
-  6,
-  2,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  5,
-  102,
-  116,
-  20,
-  46,
-  108,
-  127,
-  67,
-  20,
-  18,
-  0,
-  53,
-  103,
-  98,
-  96,
-  96,
-  95,
-  89,
-  136,
-  246,
-  255,
-  247,
-  240,
-  20,
-  5,
-  242,
-  254,
-  242,
-  78,
-  20,
-  18,
-  0,
-  48,
-  114,
-  20,
-  46,
-  96,
-  114,
-  48,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  0,
-  0,
-  0,
-  3,
-  65,
-  74,
-  20,
-  46,
-  69,
-  81,
-  42,
-  20,
-  16,
-  0,
-  7,
-  65,
-  108,
-  99,
-  95,
-  20,
-  3,
-  96,
-  86,
-  109,
-  218,
-  20,
-  10,
-  255,
-  183,
-  26,
-  20,
-  16,
-  0,
-  48,
-  114,
-  20,
-  46,
-  96,
-  114,
-  48,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  71,
-  0,
-  11,
-  21,
-  5,
-  3,
-  20,
-  5,
-  5,
-  0,
-  0,
-  66,
-  237,
-  20,
-  10,
-  255,
-  120,
-  20,
-  15,
-  0,
-  2,
-  6,
-  20,
-  46,
-  5,
-  6,
-  2,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  84,
-  0,
-  1,
-  160,
-  20,
-  10,
-  255,
-  202,
-  35,
-  20,
-  67,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  66,
-  0,
-  2,
-  6,
-  20,
-  7,
-  5,
-  3,
-  10,
-  21,
-  4,
-  20,
-  5,
-  0,
-  85,
-  252,
-  20,
-  10,
-  255,
-  108,
-  20,
-  66,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  65,
-  0,
-  47,
-  96,
-  100,
-  20,
-  6,
-  96,
-  94,
-  107,
-  100,
-  40,
-  20,
-  8,
-  0,
-  117,
-  20,
-  10,
-  255,
-  225,
-  67,
-  20,
-  64,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  63,
-  0,
-  8,
-  74,
-  109,
-  101,
-  94,
-  20,
-  6,
-  96,
-  103,
-  85,
-  21,
-  20,
-  10,
-  0,
-  47,
-  239,
-  20,
-  10,
-  255,
-  145,
-  20,
-  63,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  63,
-  0,
-  11,
-  19,
-  4,
-  4,
-  20,
-  8,
-  5,
-  1,
-  20,
-  12,
-  0,
-  3,
-  146,
-  20,
-  10,
-  255,
-  223,
-  45,
-  20,
-  61,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  92,
-  0,
-  38,
-  205,
-  20,
-  10,
-  255,
-  162,
-  8,
-  20,
-  59,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  58,
-  0,
-  5,
-  44,
-  50,
-  20,
-  6,
-  47,
-  46,
-  48,
-  67,
-  42,
-  20,
-  21,
-  0,
-  112,
-  20,
-  10,
-  255,
-  241,
-  86,
-  20,
-  58,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  57,
-  0,
-  38,
-  105,
-  134,
-  130,
-  20,
-  6,
-  128,
-  132,
-  130,
-  82,
-  16,
-  20,
-  22,
-  0,
-  27,
-  216,
-  20,
-  10,
-  255,
-  179,
-  2,
-  20,
-  56,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  91,
-  20,
-  9,
-  255,
-  151,
-  20,
-  56,
-  0,
-  11,
-  60,
-  60,
-  45,
-  20,
-  7,
-  47,
-  52,
-  30,
-  20,
-  25,
-  0,
-  1,
-  95,
-  231,
-  20,
-  9,
-  255,
-  230,
-  95,
-  20,
-  55,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  209,
-  20,
-  20,
-  255,
-  35,
-  20,
-  51,
-  0,
-  84,
-  20,
-  9,
-  255,
-  151,
-  20,
-  99,
-  0,
-  181,
-  20,
-  10,
-  255,
-  202,
-  18,
-  20,
-  53,
-  0,
-  67,
-  20,
-  9,
-  255,
-  151,
-  20,
-  52,
-  0,
-  203,
-  20,
-  19,
-  255,
-  253,
-  29,
-  20,
-  51,
-  0,
-  112,
-  20,
-  9,
-  255,
-  153,
-  20,
-  3,
-  0,
-  20,
-  58,
-  5,
-  2,
-  14,
-  24,
-  3,
-  20,
-  33,
-  0,
-  96,
-  247,
-  20,
-  9,
-  255,
-  238,
-  67,
-  20,
-  52,
-  0,
-  67,
-  20,
-  9,
-  255,
-  144,
-  20,
-  51,
-  0,
-  4,
-  228,
-  20,
-  20,
-  255,
-  145,
-  114,
-  20,
-  48,
-  128,
-  116,
-  144,
-  247,
-  20,
-  9,
-  255,
-  150,
-  0,
-  0,
-  0,
-  4,
-  84,
-  95,
-  20,
-  54,
-  88,
-  87,
-  90,
-  109,
-  86,
-  35,
-  20,
-  35,
-  0,
-  11,
-  167,
-  20,
-  10,
-  255,
-  171,
-  108,
-  20,
-  45,
-  128,
-  152,
-  64,
-  0,
-  0,
-  0,
-  67,
-  20,
-  9,
-  255,
-  203,
-  108,
-  127,
-  20,
-  47,
-  128,
-  126,
-  115,
-  197,
-  20,
-  85,
-  255,
-  118,
-  0,
-  0,
-  0,
-  5,
-  95,
-  108,
-  20,
-  53,
-  100,
-  99,
-  112,
-  119,
-  77,
-  9,
-  20,
-  38,
-  0,
-  66,
-  236,
-  20,
-  57,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  249,
-  20,
-  74,
-  255,
-  43,
-  0,
-  0,
-  0,
-  5,
-  88,
-  100,
-  20,
-  51,
-  93,
-  92,
-  97,
-  115,
-  95,
-  27,
-  20,
-  42,
-  0,
-  144,
-  20,
-  56,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  73,
-  255,
-  184,
-  20,
-  73,
-  255,
-  114,
-  20,
-  3,
-  0,
-  5,
-  88,
-  100,
-  20,
-  51,
-  93,
-  111,
-  106,
-  64,
-  5,
-  20,
-  44,
-  0,
-  81,
-  226,
-  20,
-  54,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  72,
-  255,
-  214,
-  22,
-  20,
-  71,
-  255,
-  216,
-  40,
-  20,
-  4,
-  0,
-  5,
-  88,
-  100,
-  20,
-  48,
-  93,
-  92,
-  98,
-  113,
-  76,
-  13,
-  20,
-  48,
-  0,
-  95,
-  20,
-  53,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  71,
-  255,
-  127,
-  0,
-  0,
-  20,
-  69,
-  255,
-  238,
-  97,
-  20,
-  6,
-  0,
-  5,
-  88,
-  100,
-  20,
-  47,
-  93,
-  92,
-  109,
-  112,
-  49,
-  20,
-  51,
-  0,
-  57,
-  224,
-  20,
-  51,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  69,
-  255,
-  181,
-  32,
-  0,
-  0,
-  0,
-  20,
-  64,
-  255,
-  252,
-  227,
-  212,
-  154,
-  59,
-  20,
-  8,
-  0,
-  5,
-  88,
-  100,
-  20,
-  46,
-  93,
-  94,
-  99,
-  75,
-  19,
-  20,
-  54,
-  0,
-  132,
-  20,
-  50,
-  255,
-  128,
-  0,
-  0,
-  0,
-  67,
-  20,
-  64,
-  255,
-  240,
-  218,
-  193,
-  111,
-  18,
-  20,
-  4,
-  0,
-};
 
 /*************************************************************************
   RLE_Uncompress() - Uncompress a block of data using an RLE decoder.
@@ -20541,7 +17653,8 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
 }
 #endif
 
-static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
+#ifdef GENERIC_DISPLAY
+FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
 #ifdef REMOTE_CONSOLE
   display.console = true;
 #endif
@@ -20579,8 +17692,10 @@ static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
   display.console = false;
 #endif
 }
+#endif
 
-void calibrate() {
+#ifdef GENERIC_DISPLAY
+FLASHMEM void calibrate() {
   uint16_t x1, y1, x2, y2;
   uint16_t vi1, vj1, vi2, vj2;
   touch.getCalibrationPoints(x1, y1, x2, y2);
@@ -20617,8 +17732,11 @@ void calibrate() {
   save_sys_flag = true;
   save_sys = SAVE_SYS_MS / 2;
 }
+#endif
+
 
 FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
+  #ifdef GENERIC_DISPLAY
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ts.finished_calibration = false;
@@ -20644,4 +17762,5 @@ FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
   }
+  #endif
 }

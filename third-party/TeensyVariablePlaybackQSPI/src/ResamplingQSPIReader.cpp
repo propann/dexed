@@ -261,8 +261,8 @@ bool ResamplingQSPIReader::play(const char *filename)
 
     if (!file) {
         // StopUsingSPI();
-        Serial.print(F("Not able to open file: "));
-        Serial.println(filename);
+        // Serial.print(F("Not able to open file: "));
+        // Serial.println(filename);
         return false;
     }
 
@@ -275,9 +275,9 @@ bool ResamplingQSPIReader::play(const char *filename)
         wavHeaderParser.readWaveHeader(wav_header, file);
         if (wav_header.bit_depth != 16) {
             // StopUsingSPI();
-            Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
-            Serial.print(wav_header.bit_depth);
-            Serial.println(F(")"));
+            // Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
+            // Serial.print(wav_header.bit_depth);
+            // Serial.println(F(")"));
             __disable_irq();
             file.close();
             __enable_irq();
@@ -295,8 +295,8 @@ bool ResamplingQSPIReader::play(const char *filename)
         _playing = false;
         // if (filename) delete [] _filename;
         // _filename =  nullptr;
-        Serial.print(F("Wave file contains no samples: "));
-        Serial.println(filename);
+        // Serial.print(F("Wave file contains no samples: "));
+        // Serial.println(filename);
         // StopUsingSPI();
         __disable_irq();
         file.close();

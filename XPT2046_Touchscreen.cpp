@@ -19,15 +19,17 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#include "config.h"
+#ifdef GENERIC_DISPLAY
 
 #include "XPT2046_Touchscreen.h"
-#include "config.h"
 
 #define Z_THRESHOLD 400
 #define Z_THRESHOLD_INT 75
 #define MSEC_THRESHOLD 3
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
+elapsedMillis touch_control_rate;
 static XPT2046_Touchscreen *isrPinptr;
 void isrPin(void);
 
@@ -95,11 +97,16 @@ bool XPT2046_Touchscreen::tirqTouched() {
 }
 
 bool XPT2046_Touchscreen::touched() {
-  if (remote_touched == false) {
-    update();
-    return (zraw >= Z_THRESHOLD);
-  }
-  return true;
+if ( (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+  || (touch_control_rate > TOUCH_CONTROL_RATE_MS/2 && remote_touched) ) {
+    touch_control_rate = 0;
+    if (remote_touched == false) {
+      update();
+      return (zraw >= Z_THRESHOLD);
+    }
+    return true;
+  } else
+    return false;
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
@@ -164,10 +171,10 @@ void XPT2046_Touchscreen::update() {
   else
     return;
 
-  //Serial.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
+  //LOG.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
   if (z < 0) z = 0;
   if (z < Z_THRESHOLD) {  //	if ( !touched ) {
-    // Serial.println();
+    // LOG.println();
     zraw = 0;
     if (z < Z_THRESHOLD_INT) {  //	if ( !touched ) {
       if (255 != tirqPin) isrWake = false;
@@ -177,14 +184,14 @@ void XPT2046_Touchscreen::update() {
   zraw = z;
 
   // Average pair with least distance between each measured x then y
-  //Serial.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
-  //Serial.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
+  //LOG.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
+  //LOG.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
   //data[0], data[1], data[2], data[3], data[4], data[5]);
   int16_t x = besttwoavg(data[0], data[2], data[4]);
   int16_t y = besttwoavg(data[1], data[3], data[5]);
 
-  //Serial.printf_P(PSTR("    %d,%d"), x, y);
-  //Serial.println();
+  //LOG.printf_P(PSTR("    %d,%d"), x, y);
+  //LOG.println();
   if (z >= Z_THRESHOLD) {
     msraw = now;  // good read completed, set wait
     switch (rotation) {
@@ -206,3 +213,4 @@ void XPT2046_Touchscreen::update() {
     }
   }
 }
+#endif

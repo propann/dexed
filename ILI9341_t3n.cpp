@@ -657,7 +657,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
   _SPI_CLOCK = spi_clock;            // #define ILI9341_SPICLOCK 30000000
   _SPI_CLOCK_READ = spi_clock_read;  //#define ILI9341_SPICLOCK_READ 2000000
 
-  // Serial.printf_P(PSTR("_t3n::begin mosi:%d miso:%d SCLK:%d CS:%d DC:%d SPI clocks: %lu %lu\n"), _mosi, _miso, _sclk, _cs, _dc, _SPI_CLOCK, _SPI_CLOCK_READ);
+  // LOG.printf_P(PSTR("_t3n::begin mosi:%d miso:%d SCLK:%d CS:%d DC:%d SPI clocks: %lu %lu\n"), _mosi, _miso, _sclk, _cs, _dc, _SPI_CLOCK, _SPI_CLOCK_READ);
   // Serial.flush();
 
   if (SPI.pinIsMOSI(_mosi) && ((_miso == 0xff) || SPI.pinIsMISO(_miso)) && SPI.pinIsSCK(_sclk)) {
@@ -704,10 +704,10 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
 #endif
   } else {
 #ifdef DEBUG
-    Serial.println(
+    LOG.println(
       "ILI9341_t3n: The IO pins on the constructor are not valid SPI pins");
 
-    Serial.printf_P(PSTR("    mosi:%d miso:%d SCLK:%d CS:%d DC:%d\n"), _mosi, _miso,
+    LOG.printf_P(PSTR("    mosi:%d miso:%d SCLK:%d CS:%d DC:%d\n"), _mosi, _miso,
                     _sclk, _cs, _dc);
     Serial.flush();
 #endif
@@ -725,7 +725,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
 
   _pspi->begin();
 
-  // Serial.println(F("   T4 setup CS/DC")); Serial.flush();
+  // LOG.println(F("   T4 setup CS/DC")); Serial.flush();
   pending_rx_count = 0;  // Make sure it is zero if we we do a second begin...
   _csport = portOutputRegister(_cs);
   _cspinmask = digitalPinToBitMask(_cs);
@@ -736,7 +736,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
   // TODO:  Need to setup DC to actually work.
   if (_pspi->pinIsChipSelect(_dc)) {
     uint8_t dc_cs_index = _pspi->setCS(_dc);
-    // Serial.printf_P(PSTR("    T4 hardware DC: %x\n"), dc_cs_index);
+    // LOG.printf_P(PSTR("    T4 hardware DC: %x\n"), dc_cs_index);
     _dcport = 0;
     _dcpinmask = 0;
     // will depend on which PCS but first get this to work...
@@ -744,7 +744,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
     _tcr_dc_assert = LPSPI_TCR_PCS(dc_cs_index);
     _tcr_dc_not_assert = LPSPI_TCR_PCS(3);
   } else {
-    // Serial.println(F("ILI9341_t3n: DC is not valid hardware CS pin"));
+    // LOG.println(F("ILI9341_t3n: DC is not valid hardware CS pin"));
     _dcport = portOutputRegister(_dc);
     _dcpinmask = digitalPinToBitMask(_dc);
     pinMode(_dc, OUTPUT);
