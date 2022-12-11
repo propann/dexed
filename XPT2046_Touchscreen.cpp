@@ -19,6 +19,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#include "config.h"
+#ifdef GENERIC_DISPLAY
 
 #include "XPT2046_Touchscreen.h"
 
@@ -27,6 +29,7 @@
 #define MSEC_THRESHOLD 3
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
+elapsedMillis touch_control_rate;
 static XPT2046_Touchscreen *isrPinptr;
 void isrPin(void);
 
@@ -56,16 +59,54 @@ TS_Point XPT2046_Touchscreen::getPoint() {
   return TS_Point(xraw, yraw, zraw);
 }
 
+TS_Point XPT2046_Touchscreen::getPixel() {
+  update();
+
+// #if defined(SWAP_AXES) && SWAP_AXES
+//   uint16_t xPixel = (uint16_t)(_cal_dx * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
+//   uint16_t yPixel = (uint16_t)(_cal_dy * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
+// #else
+  uint16_t xPixel = (uint16_t)(_cal_dx * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
+  uint16_t yPixel = (uint16_t)(_cal_dy * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
+//#endif
+
+ // this->rotateCal(xPixel, yPixel);
+
+  return TS_Point(xPixel, yPixel, zraw);
+}
+
+void XPT2046_Touchscreen::getCalibrationPoints(uint16_t &x1, uint16_t &y1, uint16_t &x2, uint16_t &y2) {
+  x1 = y1 = CAL_OFFSET;
+  x2 = DISPLAY_WIDTH - CAL_OFFSET;
+  y2 = DISPLAY_HEIGHT - CAL_OFFSET;
+}
+
+void XPT2046_Touchscreen::setCalibration (TS_Calibration cal) {
+  _cal_dx = DISPLAY_WIDTH - 2 * CAL_OFFSET;
+  _cal_dy = DISPLAY_HEIGHT - 2 * CAL_OFFSET;
+
+  _cal_vi1 = cal.vi1;
+  _cal_vj1 = cal.vj1;
+  _cal_dvi = (int32_t)cal.vi2 - cal.vi1;
+  _cal_dvj = (int32_t)cal.vj2 - cal.vj1;
+
+}
+
 bool XPT2046_Touchscreen::tirqTouched() {
   return (isrWake);
 }
 
 bool XPT2046_Touchscreen::touched() {
-  if (remote_touched == false) {
-    update();
-    return (zraw >= Z_THRESHOLD);
-  }
-  return true;
+if ( (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+  || (touch_control_rate > TOUCH_CONTROL_RATE_MS/2 && remote_touched) ) {
+    touch_control_rate = 0;
+    if (remote_touched == false) {
+      update();
+      return (zraw >= Z_THRESHOLD);
+    }
+    return true;
+  } else
+    return false;
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
@@ -130,10 +171,10 @@ void XPT2046_Touchscreen::update() {
   else
     return;
 
-  //Serial.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
+  //LOG.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
   if (z < 0) z = 0;
   if (z < Z_THRESHOLD) {  //	if ( !touched ) {
-    // Serial.println();
+    // LOG.println();
     zraw = 0;
     if (z < Z_THRESHOLD_INT) {  //	if ( !touched ) {
       if (255 != tirqPin) isrWake = false;
@@ -143,14 +184,14 @@ void XPT2046_Touchscreen::update() {
   zraw = z;
 
   // Average pair with least distance between each measured x then y
-  //Serial.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
-  //Serial.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
+  //LOG.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
+  //LOG.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
   //data[0], data[1], data[2], data[3], data[4], data[5]);
   int16_t x = besttwoavg(data[0], data[2], data[4]);
   int16_t y = besttwoavg(data[1], data[3], data[5]);
 
-  //Serial.printf_P(PSTR("    %d,%d"), x, y);
-  //Serial.println();
+  //LOG.printf_P(PSTR("    %d,%d"), x, y);
+  //LOG.println();
   if (z >= Z_THRESHOLD) {
     msraw = now;  // good read completed, set wait
     switch (rotation) {
@@ -172,3 +213,4 @@ void XPT2046_Touchscreen::update() {
     }
   }
 }
+#endif

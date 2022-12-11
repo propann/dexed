@@ -1,8 +1,17 @@
 #ifndef _TOUCH_H
 #define _TOUCH_H
+
+#ifdef GENERIC_DISPLAY
 #include "XPT2046_Touchscreen.h"
-#include <SD.h>
 extern XPT2046_Touchscreen touch;
+#endif
+
+#ifdef ADAFRUIT_DISPLAY
+#include "Adafruit_FT6206.h"
+extern Adafruit_FT6206 touch;
+#endif
+
+#include <SD.h>
 
 typedef struct dexed_live_mod_s {
   uint8_t active_button = 0;
@@ -20,6 +29,7 @@ typedef struct dexed_live_mod_s {
 } dexed_live_mod_t;
 
 typedef struct ts_s {
+  bool finished_calibration=false;
   uint16_t temp_col_hue = 1;
   uint8_t temp_col_sat = 240, temp_col_bright = 240;
   int slowdown_UI_input;
@@ -58,10 +68,9 @@ typedef struct fm_s {
 
   int sample_screen_position_x = 0;
   bool sample_preview_playing;
-  uint16_t sd_sum_files = 0;
-  File sd_currentDirectory;
-  File sd_entry;
   uint8_t active_window = 0;  // 0 = left window (SDCARD) , 1 = FLASH
+
+  uint16_t sd_sum_files = 0;
   uint8_t sd_cap_rows;
   uint8_t sd_folder_depth = 0;
   uint16_t sd_selected_file = 0;
@@ -69,15 +78,18 @@ typedef struct fm_s {
   uint8_t sd_mode = 0;
   bool sd_is_folder;
   bool sd_parent_folder = false;
-  char sd_temp_name[52];
   char sd_new_name[52];
   char sd_full_name[52];
+  char sd_prev_dir[52];
+  char sd_temp_name[52];
+
   uint16_t flash_sum_files = 0;
   uint16_t flash_cap_rows;
   uint16_t flash_selected_file = 0;
   uint16_t flash_skip_files = 0;
   uint8_t flash_mode = 4;
   uint8_t flash_preview_slot;
+  char flash_temp_name[52];
 } fm_t;
 
 #endif

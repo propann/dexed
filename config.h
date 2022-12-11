@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.7.5"
+#define VERSION "1.4.8.2"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -109,7 +109,7 @@
 //*************************************************************************************************
 //* DEBUG OUTPUT SETTINGS
 //*************************************************************************************************
-//#define DEBUG 1
+//#define DEBUG 1    // 1 for normal Serial, 2 for dual serial (only for developers)
 //#define DEBUG_SHOW_JSON 1
 //#define REMOTE_CONSOLE  //enable USB Display + USB AUDIO - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
 #define SERIAL_SPEED 230400
@@ -123,6 +123,13 @@
 #define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
 //#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
+
+//*************************************************************************************************
+//* DISPLAY AND TOUCHSCREEN
+//*************************************************************************************************
+
+#define GENERIC_DISPLAY  // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
+//#define ADAFRUIT_DISPLAY  // Adafruit 2.8" TFT with Capacitive FT6206 Touchscreen, currently for testing purposes only
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -290,6 +297,22 @@
 #define button_size_x 7
 #define button_size_y 4
 
+#define TFT_DC 37
+#define TFT_CS 41
+#define TFT_RST 24
+#define TFT_SCK 27
+#define TFT_MISO 39
+#define TFT_MOSI 26
+
+//IRQ valid for both display types:
+#define TFT_TOUCH_IRQ 33
+
+#ifdef GENERIC_DISPLAY
+#define TFT_TOUCH_CS 38
+#endif
+
+#define TOUCH_CONTROL_RATE_MS 400
+
 #define VOICE_SELECTION_MS 60000
 #define BACK_FROM_VOLUME_MS 2000
 #define MESSAGE_WAIT_TIME 1000
@@ -395,7 +418,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define MICROSYNTH_CONTROL_RATE_MS 20
 #define BRAIDS_CONTROL_RATE_MS 20
 #define SAVE_SYS_MS 5000
-#define VOL_MAX_FLOAT 0.95
+#define VOL_MAX_FLOAT 0.98
 
 #define EEPROM_MARKER 0x4243
 
@@ -484,7 +507,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define DELAY_LEVEL_MIN 0
 #define DELAY_LEVEL_MAX 100
 #define DELAY_LEVEL_DEFAULT 0
-#define DELAY_LEVEL_GLOBAL_DEFAULT 0
+#define DELAY_LEVEL_GLOBAL_DEFAULT 100
 
 #define DELAY_SYNC_MIN 0
 #define DELAY_SYNC_MAX 9
@@ -712,10 +735,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_CHORUS_LEVEL_MAX 100
 #define EP_CHORUS_LEVEL_DEFAULT 0
 
-#define EP_REVERB_SEND_MIN 0
-#define EP_REVERB_SEND_MAX 100
-#define EP_REVERB_SEND_DEFAULT 0
-
 #define EP_DECAY_MIN 0
 #define EP_DECAY_MAX 100
 #define EP_DECAY_DEFAULT 50
@@ -769,10 +788,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_OVERDRIVE_MAX 100
 #define EP_OVERDRIVE_DEFAULT 0
 
-#define EP_REVERB_SEND_MIN 0
-#define EP_REVERB_SEND_MAX 100
-#define EP_REVERB_SEND_DEFAULT 0
-
 #define EP_LOWEST_NOTE_MIN 21
 #define EP_LOWEST_NOTE_MAX 108
 #define EP_LOWEST_NOTE_DEFAULT EP_LOWEST_NOTE_MIN
@@ -784,10 +799,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_TRANSPOSE_MIN 0
 #define EP_TRANSPOSE_MAX 48
 #define EP_TRANSPOSE_DEFAULT 24
-
-#define EP_SOUND_INTENSITY_MIN 0
-#define EP_SOUND_INTENSITY_MAX 100
-#define EP_SOUND_INTENSITY_DEFAULT 100
 
 #define EP_MONOPOLY_MIN 0
 #define EP_MONOPOLY_MAX 1
@@ -813,11 +824,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define STARTUP_NUM_DEFAULT 0
 
 #define VOLUME_MULTIPLIER 1.4
-
-//Microsynth
-#define MS_SOUND_INTENSITY_MIN 0
-#define MS_SOUND_INTENSITY_MAX 100
-#define MS_SOUND_INTENSITY_DEFAULT 50
 
 // Buffer-size define for load/save configuration as JSON
 #define JSON_BUFFER_SIZE 12000
@@ -872,6 +878,8 @@ typedef struct fx_s {
   uint8_t delay_pan[MAX_DEXED];
   uint8_t reverb_send[MAX_DEXED];
   uint8_t delay_to_reverb[MAX_DEXED];
+  uint8_t delay1_to_delay2;
+  uint8_t delay2_to_delay1;
   uint8_t reverb_roomsize;
   uint8_t reverb_damping;
   uint8_t reverb_lowpass;
@@ -1023,16 +1031,33 @@ typedef struct sys_s {
   uint8_t load_at_startup_page;
   uint8_t display_rotation;
   uint8_t touch_rotation;
+  uint16_t calib_x_min;
+  uint16_t calib_y_min;
+  uint16_t calib_x_max;
+  uint16_t calib_y_max;
   uint8_t screen_saver_start;  // minutes
   uint16_t gamepad_speed;      // milliseconds
   bool ui_reverse;
 } sys_t;
 
+typedef struct storage_file_s {
+  char name[26];
+  uint16_t size;
+  bool isDirectory;
+} storage_file_t;
+
+typedef struct sdcard_s {
+  char type[5];
+  storage_file_t files[200];
+  uint32_t used;
+  uint32_t capacity;
+} sdcard_t;
+
 #ifdef COMPILE_FOR_FLASH
 typedef struct flash_s {
-  char filenames[MAX_FLASH_FILES][MAX_FLASH_FILENAME_LEN];
-  uint32_t sum_used;
-  unsigned long chipsize;
+  storage_file_t files[200];
+  uint32_t used;
+  uint32_t capacity;
 } flash_t;
 #endif
 
@@ -1070,11 +1095,29 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_DRUMS,
   REVERB_MIX_CH_EPIANO,
   REVERB_MIX_CH_MICROSYNTH,
+  REVERB_MIX_CH_AUX_DELAY1,
+  REVERB_MIX_CH_AUX_DELAY2,
 };
+
+enum fm_modes { 
+  FM_BROWSE_FILES,
+  FM_DELETE_FILE,
+  FM_COPY_PRESETS,
+  FM_COPY_TO_FLASH,
+  FM_COPY_TO_PC,
+  FM_PLAY_SAMPLE
+} ;
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max) {
   return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+#endif
+
+// For developers only
+#if defined DEBUG && DEBUG == 2
+  #define LOG SerialUSB1 // dual serial : SerialUSB1 to separate logs
+#else
+  #define LOG Serial
 #endif

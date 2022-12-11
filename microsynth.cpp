@@ -26,7 +26,7 @@ extern AudioAnalyzePeak microsynth_peak_noise_1;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern uint8_t microsynth_selected_instance;
 extern short wave_type[9];
-extern AudioMixer<6>* global_delay_in_mixer[NUM_DEXED];
+extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 #endif
 
 #ifdef USE_BRAIDS
@@ -88,7 +88,7 @@ FLASHMEM void microsynth_update_all_settings(uint8_t instance_id) {
   microsynth_envelope_osc[instance_id].decay(microsynth[instance_id].env_decay * 4);
   microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain / 50.1);
   microsynth_envelope_osc[instance_id].release(microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release);
-  microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+  microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
   microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
   microsynth_filter_noise[instance_id].resonance(microsynth[instance_id].filter_noise_resonance / 20);
@@ -99,7 +99,7 @@ FLASHMEM void microsynth_update_all_settings(uint8_t instance_id) {
   microsynth_waveform[instance_id].pulseWidth(microsynth[instance_id].pwm_from / 2000.1);
   microsynth[instance_id].pwm_current = microsynth[instance_id].pwm_from;
   microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
-  microsynth_waveform[instance_id].amplitude(mapfloat(microsynth[instance_id].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
+  microsynth_waveform[instance_id].amplitude(mapfloat(microsynth[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 0.15f));
   microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
   microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
   microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
@@ -308,7 +308,7 @@ FLASHMEM void microsynth_update_single_setting(uint8_t instance_id) {
     microsynth_envelope_osc[instance_id].sustain(microsynth[instance_id].env_sustain / 50.1);
   if (generic_temp_select_menu == 7)
     microsynth_envelope_osc[instance_id].release(microsynth[microsynth_selected_instance].env_release * microsynth[microsynth_selected_instance].env_release);
-  microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+  microsynth_mixer_reverb.gain(instance_id, volume_transform(mapfloat(microsynth[instance_id].rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   if (generic_temp_select_menu == 20)
     microsynth_filter_noise[instance_id].frequency(microsynth[instance_id].filter_noise_freq_from);
   microsynth_filter_osc[instance_id].frequency(microsynth[instance_id].filter_osc_freq_from);
@@ -325,7 +325,7 @@ FLASHMEM void microsynth_update_single_setting(uint8_t instance_id) {
   if (generic_temp_select_menu == 16)
     microsynth_noise[instance_id].amplitude(microsynth[instance_id].noise_vol / 100.1);
   if (generic_temp_select_menu == 0)
-    microsynth_waveform[instance_id].amplitude(mapfloat(microsynth[instance_id].sound_intensity, MS_SOUND_INTENSITY_MIN, MS_SOUND_INTENSITY_MAX, 0, 0.15f));
+    microsynth_waveform[instance_id].amplitude(mapfloat(microsynth[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 0.15f));
   if (generic_temp_select_menu == 1)
     microsynth_waveform[instance_id].begin(wave_type[microsynth[instance_id].wave]);
   microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
@@ -350,15 +350,15 @@ FLASHMEM void braids_update_all_settings() {
     braids_flanger_l.voices(FLANGE_DELAY_PASSTHRU, 0, 0);
   }
 
-  braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-  braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+  braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+  braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   braids_stereo_panorama.panorama(mapfloat(braids_osc.pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 
   global_delay_in_mixer[0]->gain(4, mapfloat(braids_osc.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-  global_delay_in_mixer[1]->gain(5, mapfloat(braids_osc.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+  global_delay_in_mixer[1]->gain(4, mapfloat(braids_osc.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
 
   for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++) {
-    braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 0.7)));
+    braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 0.7)));
     synthBraids[instance_id]->set_braids_shape(braids_osc.algo);
     synthBraids[instance_id]->set_braids_color(braids_osc.color << 6);
     synthBraids[instance_id]->set_braids_timbre((braids_osc.timbre * 2) << 6);
@@ -390,7 +390,7 @@ FLASHMEM void braids_update_single_setting() {
 
   if ((generic_temp_select_menu == 19 && generic_active_function) || (generic_temp_select_menu == 20 && generic_active_function)) {
     global_delay_in_mixer[0]->gain(4, mapfloat(braids_osc.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-    global_delay_in_mixer[1]->gain(5, mapfloat(braids_osc.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+    global_delay_in_mixer[1]->gain(4, mapfloat(braids_osc.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
   }
   if ((generic_temp_select_menu == 17 && generic_active_function) || (generic_temp_select_menu == 18 && generic_active_function)) {
     if (braids_osc.flanger > 0) {
@@ -402,15 +402,15 @@ FLASHMEM void braids_update_single_setting() {
     }
   }
   if (generic_temp_select_menu == 16 && generic_active_function) {
-    braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-    braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+    braids_mixer_reverb.gain(0, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+    braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
   }
   if (generic_temp_select_menu == 21 && generic_active_function) {
     braids_stereo_panorama.panorama(mapfloat(braids_osc.pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
   }
   for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++) {
     if (generic_temp_select_menu == 0 && generic_active_function)
-      braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, EP_REVERB_SEND_MIN, EP_REVERB_SEND_MAX, 0.0, 0.7)));
+      braids_mixer.gain(instance_id, volume_transform(mapfloat(braids_osc.sound_intensity, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 0.7)));
     if (generic_temp_select_menu == 1 && generic_active_function)
       synthBraids[instance_id]->set_braids_shape(braids_osc.algo);
     if (generic_temp_select_menu == 2 && generic_active_function)

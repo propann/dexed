@@ -146,7 +146,7 @@ const char* sError = "*ERROR*";
 
 FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR("load voice, bank [%d] - voice [%d]\n"), b, v + 1);
+  LOG.printf_P(PSTR("load voice, bank [%d] - voice [%d]\n"), b, v + 1);
 #endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
@@ -168,9 +168,9 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
       strcpy(g_voice_name[instance_id], sError);
 
 #ifdef DEBUG
-      Serial.print(F("E : Cannot open "));
-      Serial.print(bankdir);
-      Serial.println(F(" on SD."));
+      LOG.print(F("E : Cannot open "));
+      LOG.print(bankdir);
+      LOG.println(F(" on SD."));
 #endif
       return (false);
     }
@@ -196,11 +196,11 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
     char filename[FILENAME_LEN];
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, b, bank_name);
-    Serial.print(F("Loading voice from "));
-    Serial.print(filename);
-    Serial.print(F(" bank:["));
-    Serial.print(g_bank_name[instance_id]);
-    Serial.println(F("]"));
+    LOG.print(F("Loading voice from "));
+    LOG.print(filename);
+    LOG.print(F(" bank:["));
+    LOG.print(g_bank_name[instance_id]);
+    LOG.println(F("]"));
 #endif
     // search voice name
     memset(voice_name, '\0', VOICE_NAME_LEN);
@@ -211,9 +211,9 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 
     if (get_sd_voice(entry, v, data)) {
 #ifdef DEBUG
-      Serial.print(F("get_sd_voice:["));
-      Serial.print(g_voice_name[instance_id]);
-      Serial.println(F("]"));
+      LOG.print(F("get_sd_voice:["));
+      LOG.print(g_voice_name[instance_id]);
+      LOG.println(F("]"));
 #endif
       uint8_t tmp_data[156];
       bool ret = MicroDexed[instance_id]->decodeVoice(tmp_data, data);
@@ -238,7 +238,7 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
     } else {
       strcpy(g_voice_name[instance_id], sError);
 #ifdef DEBUG
-      Serial.println(F("E : Cannot load voice data"));
+      LOG.println(F("E : Cannot load voice data"));
 #endif
     }
     AudioNoInterrupts();
@@ -256,7 +256,7 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 
 FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR("save_sd_voice, b:%d - d:%d\n"), b, v);
+  LOG.printf_P(PSTR("save_sd_voice, b:%d - d:%d\n"), b, v);
 #endif
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
@@ -273,9 +273,9 @@ FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
     AudioInterrupts();
     if (!sysex) {
 #ifdef DEBUG
-      Serial.print(F("E : Cannot open "));
-      Serial.print(filename);
-      Serial.println(F(" on SD."));
+      LOG.print(F("E : Cannot open "));
+      LOG.print(filename);
+      LOG.println(F(" on SD."));
 #endif
       return (false);
     }
@@ -284,11 +284,11 @@ FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
 
     if (put_sd_voice(sysex, v, data)) {
 #ifdef DEBUG
-      Serial.print(F("Saving voice to "));
-      Serial.print(filename);
-      Serial.print(F(" ["));
-      Serial.print(g_voice_name[instance_id]);
-      Serial.println(F("]"));
+      LOG.print(F("Saving voice to "));
+      LOG.print(filename);
+      LOG.print(F(" ["));
+      LOG.print(g_voice_name[instance_id]);
+      LOG.println(F("]"));
 #endif
       AudioNoInterrupts();
       sysex.close();
@@ -298,7 +298,7 @@ FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id) {
     }
 #ifdef DEBUG
     else
-      Serial.println(F("E : Cannot load voice data"));
+      LOG.println(F("E : Cannot load voice data"));
 #endif
     AudioNoInterrupts();
     sysex.close();
@@ -317,7 +317,7 @@ FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.size() != 4104)  // check sysex size
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx file size wrong."));
+    LOG.println(F("E : SysEx file size wrong."));
 #endif
     return (false);
   }
@@ -326,14 +326,14 @@ FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.read() != 0xf0)  // check sysex start-byte
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx start byte not found."));
+    LOG.println(F("E : SysEx start byte not found."));
 #endif
     return (false);
   }
   if (sysex.read() != 0x43)  // check sysex vendor is Yamaha
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx vendor not Yamaha."));
+    LOG.println(F("E : SysEx vendor not Yamaha."));
 #endif
     return (false);
   }
@@ -341,7 +341,7 @@ FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.read() != 0xf7)  // check sysex end-byte
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx end byte not found."));
+    LOG.println(F("E : SysEx end byte not found."));
 #endif
     return (false);
   }
@@ -349,7 +349,7 @@ FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.read() != 0x09)  // check for sysex type (0x09=32 voices)
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx type not 32 voices."));
+    LOG.println(F("E : SysEx type not 32 voices."));
 #endif
     return (false);
   }
@@ -367,20 +367,20 @@ FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   AudioInterrupts();
 
 #ifdef DEBUG
-  Serial.print(F("Bulk checksum : 0x"));
-  Serial.print(bulk_checksum_calc, HEX);
-  Serial.print(F(" [0x"));
-  Serial.print(bulk_checksum, HEX);
-  Serial.println(F("]"));
+  LOG.print(F("Bulk checksum : 0x"));
+  LOG.print(bulk_checksum_calc, HEX);
+  LOG.print(F(" [0x"));
+  LOG.print(bulk_checksum, HEX);
+  LOG.println(F("]"));
 #endif
 
   if (bulk_checksum_calc != bulk_checksum) {
 #ifdef DEBUG
-    Serial.print(F("E : Bulk checksum mismatch : 0x"));
+    LOG.print(F("E : Bulk checksum mismatch : 0x"));
 
-    Serial.print(bulk_checksum_calc, HEX);
-    Serial.print(F(" != 0x"));
-    Serial.println(bulk_checksum, HEX);
+    LOG.print(bulk_checksum_calc, HEX);
+    LOG.print(F(" != 0x"));
+    LOG.println(bulk_checksum, HEX);
 #endif
     return (false);
   }
@@ -400,21 +400,21 @@ FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.size() != 4104)  // check sysex size
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx file size wrong."));
+    LOG.println(F("E : SysEx file size wrong."));
 #endif
     return (false);
   }
   if (sysex.read() != 0xf0)  // check sysex start-byte
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx start byte not found."));
+    LOG.println(F("E : SysEx start byte not found."));
 #endif
     return (false);
   }
   if (sysex.read() != 0x43)  // check sysex vendor is Yamaha
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx vendor not Yamaha."));
+    LOG.println(F("E : SysEx vendor not Yamaha."));
 #endif
     return (false);
   }
@@ -422,7 +422,7 @@ FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.read() != 0xf7)  // check sysex end-byte
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx end byte not found."));
+    LOG.println(F("E : SysEx end byte not found."));
 #endif
     return (false);
   }
@@ -430,7 +430,7 @@ FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   if (sysex.read() != 0x09)  // check for sysex type (0x09=32 voices)
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx type not 32 voices."));
+    LOG.println(F("E : SysEx type not 32 voices."));
 #endif
     return (false);
   }
@@ -449,8 +449,8 @@ FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data) {
   AudioInterrupts();
 
 #ifdef DEBUG
-  Serial.print(F("Bulk checksum : 0x"));
-  Serial.println(bulk_checksum_calc & 0x7f, HEX);
+  LOG.print(F("Bulk checksum : 0x"));
+  LOG.println(bulk_checksum_calc & 0x7f, HEX);
 #endif
 
   return (true);
@@ -464,9 +464,9 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data) {
 
   if (sd_card > 0) {
 #ifdef DEBUG
-    Serial.print(F("Trying so store "));
-    Serial.print(bank_filename);
-    Serial.println(F("."));
+    LOG.print(F("Trying so store "));
+    LOG.print(bank_filename);
+    LOG.println(F("."));
 #endif
 
     // first remove old bank => find the bank number
@@ -479,21 +479,21 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data) {
       if (entry) {
         if (!entry.isDirectory()) {
 #ifdef DEBUG
-          Serial.print(F("Removing "));
-          Serial.print(tmp);
-          Serial.print(F("/"));
-          Serial.println(entry.name());
+          LOG.print(F("Removing "));
+          LOG.print(tmp);
+          LOG.print(F("/"));
+          LOG.println(entry.name());
 #endif
           snprintf_P(tmp2, sizeof(tmp2), PSTR("/%s/%s/%s"), DEXED_CONFIG_PATH, tmp, entry.name());
           entry.close();
 #ifdef DEBUG
-          Serial.printf("Remove file %s\n", tmp2);
+          LOG.printf("Remove file %s\n", tmp2);
 #else
           bool r = SD.remove(tmp2);
           if (r == false) {
-            Serial.print(F("E: cannot remove "));
-            Serial.print(tmp2);
-            Serial.println(F("."));
+            LOG.print(F("E: cannot remove "));
+            LOG.print(tmp2);
+            LOG.println(F("."));
           }
 #endif
           break;
@@ -506,16 +506,16 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data) {
 
     // store new bank at /DEXED/<b>/<bank_name>.syx
 #ifdef DEBUG
-    Serial.print(F("Storing bank as "));
-    Serial.print(bank_filename);
-    Serial.print(F("..."));
+    LOG.print(F("Storing bank as "));
+    LOG.print(bank_filename);
+    LOG.print(F("..."));
 #endif
     root = SD.open(bank_filename, FILE_WRITE);
     root.write(data, 4104);
     root.close();
     AudioInterrupts();
 #ifdef DEBUG
-    Serial.println(F(" done."));
+    LOG.println(F(" done."));
 #endif
   } else
     return (false);
@@ -541,9 +541,9 @@ FLASHMEM bool load_sd_drummappings_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found drum mapping ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found drum mapping ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -552,9 +552,9 @@ FLASHMEM bool load_sd_drummappings_json(uint8_t number) {
         json.close();
         AudioInterrupts();
 #ifdef DEBUG
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
 
         for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS; i++) {
@@ -567,14 +567,14 @@ FLASHMEM bool load_sd_drummappings_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -590,15 +590,15 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number) {
       snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
 
 #ifdef DEBUG
-      Serial.print(F("Saving drum mapping "));
-      Serial.print(number);
-      Serial.print(F(" to "));
-      Serial.println(filename);
+      LOG.print(F("Saving drum mapping "));
+      LOG.print(number);
+      LOG.print(F(" to "));
+      LOG.println(filename);
 #endif
       AudioNoInterrupts();
       if (SD.exists(filename)) {
 #ifdef DEBUG
-        Serial.println(F("remove old drum mapping file"));
+        LOG.println(F("remove old drum mapping file"));
 #endif
         SD.remove(filename);
       }
@@ -612,9 +612,9 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number) {
           data_json["channel"][i] = custom_midi_map[i].channel;
         }
 #ifdef DEBUG
-        Serial.println(F("Write JSON data:"));
+        LOG.println(F("Write JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         serializeJsonPretty(data_json, json);
         json.close();
@@ -622,9 +622,9 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number) {
         return (true);
       } else {
 #ifdef DEBUG
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
 #endif
         AudioInterrupts();
         return (false);
@@ -636,7 +636,7 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number) {
   }
 #ifdef DEBUG
   else {
-    Serial.println(F("E: SD card not available"));
+    LOG.println(F("E: SD card not available"));
   }
 #endif
 #endif
@@ -661,9 +661,9 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found drums configuration ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found drums configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -672,9 +672,9 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number) {
         json.close();
         AudioInterrupts();
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         seq.drums_volume = data_json["drums_volume"];
         set_drums_volume(seq.drums_volume);
@@ -694,14 +694,14 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -717,15 +717,15 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number) {
       snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
 
 #ifdef DEBUG
-      Serial.print(F("Saving drums config "));
-      Serial.print(number);
-      Serial.print(F(" to "));
-      Serial.println(filename);
+      LOG.print(F("Saving drums config "));
+      LOG.print(number);
+      LOG.print(F(" to "));
+      LOG.println(filename);
 #endif
       AudioNoInterrupts();
       if (SD.exists(filename)) {
 #ifdef DEBUG
-        Serial.println(F("remove old drumsettings file"));
+        LOG.println(F("remove old drumsettings file"));
 #endif
         SD.remove(filename);
       }
@@ -743,9 +743,9 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number) {
           data_json["reverb_send"][i] = get_sample_reverb_send(i);
         }
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Write JSON data:"));
+        LOG.println(F("Write JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         serializeJsonPretty(data_json, json);
         json.close();
@@ -753,9 +753,9 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number) {
         return (true);
       } else {
 #ifdef DEBUG
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
 #endif
         AudioInterrupts();
         return (false);
@@ -767,7 +767,7 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number) {
   }
 #ifdef DEBUG
   else {
-    Serial.println(F("E: SD card not available"));
+    LOG.println(F("E: SD card not available"));
   }
 #endif
 #endif
@@ -787,9 +787,9 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found voice configuration ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found voice configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -800,9 +800,9 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         configuration.dexed[instance_id].bank = data_json["bank"];
         configuration.dexed[instance_id].voice = data_json["voice"];
@@ -843,14 +843,14 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -864,13 +864,13 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
 
 #ifdef DEBUG
-    Serial.print(F("Saving voice config "));
-    Serial.print(vc);
-    Serial.print(F("["));
-    Serial.print(instance_id);
-    Serial.print(F("]"));
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving voice config "));
+    LOG.print(vc);
+    LOG.print(F("["));
+    LOG.print(instance_id);
+    LOG.print(F("]"));
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
     SD.remove(filename);
@@ -911,9 +911,9 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
       data_json["midi_channel"] = configuration.dexed[instance_id].midi_channel;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -924,9 +924,9 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
 
@@ -947,9 +947,9 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found micro synth configuration ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found micro synth configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -960,9 +960,9 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         microsynth[instance_id].sound_intensity = data_json["sound_intensity"];
         microsynth[instance_id].wave = data_json["wave"];
@@ -1002,14 +1002,14 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1024,13 +1024,13 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
 
 #ifdef DEBUG
-    Serial.print(F("Saving microsynth config "));
-    Serial.print(ms);
-    Serial.print(F("["));
-    Serial.print(instance_id);
-    Serial.print(F("]"));
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving microsynth config "));
+    LOG.print(ms);
+    LOG.print(F("["));
+    LOG.print(instance_id);
+    LOG.print(F("]"));
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
     AudioNoInterrupts();
@@ -1071,9 +1071,9 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
       data_json["vel_mod_filter_noise"] = microsynth[instance_id].vel_mod_filter_noise;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -1084,9 +1084,9 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
 #endif
@@ -1109,9 +1109,9 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found fx configuration ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found fx configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -1122,9 +1122,9 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         for (uint8_t i = 0; i < MAX_DEXED; i++) {
           configuration.fx.filter_cutoff[i] = data_json["filter_cutoff"][i];
@@ -1136,7 +1136,6 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
           configuration.fx.delay_time[i] = data_json["delay_time"][i];
           configuration.fx.delay_feedback[i] = data_json["delay_feedback"][i];
           configuration.fx.delay_level[i] = data_json["delay_level"][i];
-          configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
           configuration.fx.delay_sync[i] = data_json["delay_sync"][i];
           configuration.fx.delay_pan[i] = data_json["delay_pan"][i];
           configuration.fx.reverb_send[i] = data_json["reverb_send"][i];
@@ -1144,7 +1143,11 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
           if (configuration.fx.delay_sync[i] > 0) {
             configuration.fx.delay_time[i] = 0;
           }
+          if (data_json["delay_level_global"][i] > 0)
+            configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
         }
+        configuration.fx.delay1_to_delay2 = data_json["delay1_to_delay2"];
+        configuration.fx.delay2_to_delay1 = data_json["delay2_to_delay1"];
         configuration.fx.reverb_roomsize = data_json["reverb_roomsize"];
         configuration.fx.reverb_damping = data_json["reverb_damping"];
         configuration.fx.reverb_lowpass = data_json["reverb_lowpass"];
@@ -1172,14 +1175,14 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1195,10 +1198,10 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
 
 #ifdef DEBUG
-    Serial.print(F("Saving fx config "));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving fx config "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
     AudioNoInterrupts();
@@ -1222,6 +1225,8 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
         data_json["reverb_send"][i] = configuration.fx.reverb_send[i];
         data_json["delay_to_reverb"][i] = configuration.fx.delay_to_reverb[i];
       }
+      data_json["delay1_to_delay2"] = configuration.fx.delay1_to_delay2;
+      data_json["delay2_to_delay1"] = configuration.fx.delay2_to_delay1;
       data_json["reverb_roomsize"] = configuration.fx.reverb_roomsize;
       data_json["reverb_damping"] = configuration.fx.reverb_damping;
       data_json["reverb_lowpass"] = configuration.fx.reverb_lowpass;
@@ -1243,9 +1248,9 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
       data_json["ep_reverb_send"] = configuration.fx.ep_reverb_send;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -1255,9 +1260,9 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
   return (false);
@@ -1276,9 +1281,9 @@ FLASHMEM bool load_sd_epiano_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found epiano configuration ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found epiano configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -1289,9 +1294,9 @@ FLASHMEM bool load_sd_epiano_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         configuration.epiano.decay = data_json["decay"];
         configuration.epiano.release = data_json["release"];
@@ -1319,14 +1324,14 @@ FLASHMEM bool load_sd_epiano_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1339,10 +1344,10 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
 
 #ifdef DEBUG
-    Serial.print(F("Saving epiano config "));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving epiano config "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
     AudioNoInterrupts();
@@ -1370,9 +1375,9 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number) {
       data_json["midi_channel"] = configuration.epiano.midi_channel;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -1382,9 +1387,9 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
 
@@ -1404,7 +1409,7 @@ FLASHMEM bool load_sd_sys_json(void) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.println(F("Found sys configuration"));
+      LOG.println(F("Found sys configuration"));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -1415,9 +1420,9 @@ FLASHMEM bool load_sd_sys_json(void) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
 
         configuration.sys.vol = data_json["vol"];
@@ -1449,6 +1454,13 @@ FLASHMEM bool load_sd_sys_json(void) {
           GAMEPAD_BUTTON_A = data_json["gp_a"];
           GAMEPAD_BUTTON_B = data_json["gp_b"];
         }
+        if (data_json["calib_x_min"] != data_json["calib_x_max"]) {
+          configuration.sys.calib_x_min = data_json["calib_x_min"];
+          configuration.sys.calib_y_min = data_json["calib_y_min"];
+          configuration.sys.calib_x_max = data_json["calib_x_max"];
+          configuration.sys.calib_y_max = data_json["calib_y_max"];
+        }
+
         check_configuration_sys();
         set_sys_params();
 
@@ -1456,14 +1468,14 @@ FLASHMEM bool load_sd_sys_json(void) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1477,8 +1489,8 @@ FLASHMEM bool save_sd_sys_json(void) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
 
 #ifdef DEBUG
-    Serial.print(F("Saving sys config to "));
-    Serial.println(filename);
+    LOG.print(F("Saving sys config to "));
+    LOG.println(filename);
 #endif
 
     SD.remove(filename);
@@ -1511,10 +1523,18 @@ FLASHMEM bool save_sd_sys_json(void) {
         data_json["gp_a"] = GAMEPAD_BUTTON_A;
         data_json["gp_b"] = GAMEPAD_BUTTON_B;
       }
+
+      if (configuration.sys.calib_x_min != configuration.sys.calib_x_max) {
+        data_json["calib_x_min"] = configuration.sys.calib_x_min;
+        data_json["calib_y_min"] = configuration.sys.calib_y_min;
+        data_json["calib_x_max"] = configuration.sys.calib_x_max;
+        data_json["calib_y_max"] = configuration.sys.calib_y_max;
+      }
+
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -1524,9 +1544,9 @@ FLASHMEM bool save_sd_sys_json(void) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
 
@@ -1552,7 +1572,7 @@ FLASHMEM bool load_sd_braids_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found braids configuration"));
+      LOG.print(F("Found braids configuration"));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -1563,9 +1583,9 @@ FLASHMEM bool load_sd_braids_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         //serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
 
         braids_osc.sound_intensity = data_json["vol"];
@@ -1595,14 +1615,14 @@ FLASHMEM bool load_sd_braids_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1615,10 +1635,10 @@ FLASHMEM bool save_sd_braids_json(uint8_t number) {
   if (sd_card > 0) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving braids"));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving braids"));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
     AudioNoInterrupts();
@@ -1648,9 +1668,9 @@ FLASHMEM bool save_sd_braids_json(uint8_t number) {
       data_json["midi"] = braids_osc.midi_channel;
       data_json["pan"] = braids_osc.pan;
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -1660,9 +1680,9 @@ FLASHMEM bool save_sd_braids_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
 
@@ -1688,7 +1708,7 @@ FLASHMEM bool load_sd_multiband_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found multiband configuration"));
+      LOG.print(F("Found multiband configuration"));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -1699,9 +1719,9 @@ FLASHMEM bool load_sd_multiband_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         //serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
 
         mb_cross_freq_low = data_json["f_low"];
@@ -1732,14 +1752,14 @@ FLASHMEM bool load_sd_multiband_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1752,10 +1772,10 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number) {
   if (sd_card > 0) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, MULTIBAND_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving multiband"));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving multiband"));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
     AudioNoInterrupts();
@@ -1788,9 +1808,9 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number) {
       data_json["g_ratio"] = mb_global_ratio;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -1800,9 +1820,9 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
 
@@ -1845,14 +1865,14 @@ FLASHMEM bool load_sd_chain_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E: Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E: Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1888,9 +1908,9 @@ FLASHMEM bool save_sd_chain_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
   return (false);
@@ -1927,14 +1947,14 @@ FLASHMEM bool load_sd_transpose_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E: Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E: Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -1970,9 +1990,9 @@ FLASHMEM bool save_sd_transpose_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
   return (false);
@@ -2013,14 +2033,14 @@ FLASHMEM bool load_sd_song_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E: Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E: Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -2056,9 +2076,9 @@ FLASHMEM bool save_sd_song_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
   return (false);
@@ -2069,10 +2089,10 @@ FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number) {
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving sequencer velocity "));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving sequencer velocity "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
     int count = 0;
     int total = sizeof(seq.vel);
@@ -2091,9 +2111,9 @@ FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number) {
       }
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -2103,9 +2123,9 @@ FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
   return (false);
@@ -2116,10 +2136,10 @@ FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number) {
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving sequencer patterns "));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving sequencer patterns "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
     int count = 0;
     int total = sizeof(seq.note_data);
@@ -2138,9 +2158,9 @@ FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number) {
       }
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -2150,9 +2170,9 @@ FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number) {
     json.close();
   } else {
 #ifdef DEBUG
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
 #endif
   }
   return (false);
@@ -2173,8 +2193,8 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   check_performance_directory(number);
 
 #ifdef DEBUG
-  Serial.print(F("Write performance config "));
-  Serial.println(number);
+  LOG.print(F("Write performance config "));
+  LOG.println(number);
 #endif
 
   save_sd_seq_sub_vel_json(number);
@@ -2195,8 +2215,8 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   for (uint8_t i = 0; i < MAX_DEXED; i++) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, number, VOICE_CONFIG_NAME, i);
 #ifdef DEBUG
-    Serial.print(F("Write Voice-Config for sequencer"));
-    Serial.println(filename);
+    LOG.print(F("Write Voice-Config for sequencer"));
+    LOG.println(filename);
 #endif
     save_sd_microsynth_json(number, i);
     save_sd_voiceconfig_json(number, i);
@@ -2204,13 +2224,13 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   if (sd_card > 0) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving sequencer config "));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving sequencer config "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
 
-    Serial.print(F("  "));
+    LOG.print(F("  "));
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     if (json) {
@@ -2247,9 +2267,9 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
       }
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -2264,9 +2284,9 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   }
 #ifdef DEBUG
   else {
-    Serial.print(F("E : Cannot open "));
-    Serial.print(filename);
-    Serial.println(F(" on SD."));
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
     AudioInterrupts();
   }
 #endif
@@ -2284,11 +2304,11 @@ FLASHMEM bool check_performance_directory(uint8_t number) {
     if (!SD.exists(dir)) {
 #ifdef DEBUG
       if (SD.mkdir(dir)) {
-        Serial.print(F("Creating directory "));
-        Serial.println(dir);
+        LOG.print(F("Creating directory "));
+        LOG.println(dir);
       } else {
-        Serial.print(F("E: Cannot create "));
-        Serial.println(dir);
+        LOG.print(F("E: Cannot create "));
+        LOG.println(dir);
         AudioInterrupts();
         return (false);
       }
@@ -2301,7 +2321,7 @@ FLASHMEM bool check_performance_directory(uint8_t number) {
   }
 #ifdef DEBUG
   else {
-    Serial.println(F("E: SD card not available"));
+    LOG.println(F("E: SD card not available"));
   }
 #endif
   return (false);
@@ -2330,18 +2350,18 @@ FLASHMEM void get_sd_performance_name_json(uint8_t number) {
           seq.name_temp[i] = data_json["seq_name"][i];
         }
 #ifdef DEBUG
-        Serial.print(F("Get performance name for "));
-        Serial.print(number);
-        Serial.print(F(": "));
-        Serial.print(seq.name_temp);
-        Serial.println();
+        LOG.print(F("Get performance name for "));
+        LOG.print(number);
+        LOG.print(F(": "));
+        LOG.print(seq.name_temp);
+        LOG.println();
 #endif
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("Cannot get performance name for "));
-        Serial.print(number);
-        Serial.println();
+        LOG.print(F("Cannot get performance name for "));
+        LOG.print(number);
+        LOG.println();
       }
 #endif
     }
@@ -2361,10 +2381,10 @@ FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found velocity data ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
-      Serial.println(F(" "));
+      LOG.print(F("Found velocity data ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
+      LOG.println(F(" "));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -2374,9 +2394,9 @@ FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         int total = sizeof(seq.vel);
         int columns = sizeof(seq.vel[0]);
@@ -2392,14 +2412,14 @@ FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E: Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E: Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -2419,10 +2439,10 @@ FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found pattern data ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
-      Serial.println(F(" "));
+      LOG.print(F("Found pattern data ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
+      LOG.println(F(" "));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -2433,9 +2453,9 @@ FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         int total = sizeof(seq.note_data);
         int columns = sizeof(seq.note_data[0]);
@@ -2452,14 +2472,14 @@ FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -2497,9 +2517,9 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
     if (SD.exists(filename)) {
       // ... and if: load
 #ifdef DEBUG
-      Serial.print(F("Found Performance configuration ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
+      LOG.print(F("Found Performance configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
 #endif
       json = SD.open(filename);
       if (json) {
@@ -2509,9 +2529,9 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
 
         for (uint8_t i = 0; i < sizeof(seq.track_type); i++) {
@@ -2558,9 +2578,9 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
         AudioNoInterrupts();
         for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
 #ifdef DEBUG
-          Serial.print(F("Load Voice-Config "));
-          Serial.print(instance_id + 1);
-          Serial.print(F(" for sequencer"));
+          LOG.print(F("Load Voice-Config "));
+          LOG.print(instance_id + 1);
+          LOG.print(F(" for sequencer"));
 #endif
           load_sd_microsynth_json(number, instance_id);
           load_sd_voiceconfig_json(number, instance_id);
@@ -2586,15 +2606,15 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
 #ifdef DEBUG
       else {
         AudioInterrupts();
-        Serial.print(F("E : Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
       AudioInterrupts();
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }
@@ -2635,30 +2655,30 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf) {
   int8_t bulk_checksum;
 
 #ifdef DEBUG
-  Serial.print(F("Reading "));
-  Serial.print(sysex.size());
-  Serial.println(F(" bytes."));
+  LOG.print(F("Reading "));
+  LOG.print(sysex.size());
+  LOG.println(F(" bytes."));
 #endif
 
   AudioNoInterrupts();
   if (sysex.read() != 0xf0)  // check sysex start-byte
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx start byte not found."));
+    LOG.println(F("E : SysEx start byte not found."));
 #endif
     return (false);
   }
   if (sysex.read() != 0x67)  // check sysex vendor is unofficial SYSEX-ID for MicroDexed
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx vendor not unofficial SYSEX-ID for MicroDexed."));
+    LOG.println(F("E : SysEx vendor not unofficial SYSEX-ID for MicroDexed."));
 #endif
     return (false);
   }
   if (sysex.read() != format)  // check for sysex type
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx type not found."));
+    LOG.println(F("E : SysEx type not found."));
 #endif
     return (false);
   }
@@ -2666,7 +2686,7 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf) {
   if (sysex.read() != 0xf7)  // check sysex end-byte
   {
 #ifdef DEBUG
-    Serial.println(F("E : SysEx end byte not found."));
+    LOG.println(F("E : SysEx end byte not found."));
 #endif
     return (false);
   }
@@ -2679,28 +2699,28 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf) {
     uint8_t d = sysex.read();
     bulk_checksum_calc -= d;
 #ifdef DEBUG
-    Serial.print(F("SYSEX data read: 0x"));
-    Serial.println(d, HEX);
+    LOG.print(F("SYSEX data read: 0x"));
+    LOG.println(d, HEX);
 #endif
   }
   bulk_checksum_calc &= 0x7f;
 
   if (int8_t(bulk_checksum_calc) != bulk_checksum) {
 #ifdef DEBUG
-    Serial.print(F("E : Bulk checksum mismatch : 0x"));
-    Serial.print(int8_t(bulk_checksum_calc), HEX);
-    Serial.print(F(" != 0x"));
-    Serial.println(bulk_checksum, HEX);
+    LOG.print(F("E : Bulk checksum mismatch : 0x"));
+    LOG.print(int8_t(bulk_checksum_calc), HEX);
+    LOG.print(F(" != 0x"));
+    LOG.println(bulk_checksum, HEX);
 #endif
     return (false);
   }
 #ifdef DEBUG
   else {
-    Serial.print(F("Bulk checksum : 0x"));
-    Serial.print(int8_t(bulk_checksum_calc), HEX);
-    Serial.print(F(" [0x"));
-    Serial.print(bulk_checksum, HEX);
-    Serial.println(F("]"));
+    LOG.print(F("Bulk checksum : 0x"));
+    LOG.print(int8_t(bulk_checksum_calc), HEX);
+    LOG.print(F(" [0x"));
+    LOG.print(bulk_checksum, HEX);
+    LOG.println(F("]"));
   }
 #endif
 
@@ -2712,7 +2732,7 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf) {
   AudioInterrupts();
 
 #ifdef DEBUG
-  Serial.println(F("SD data loaded."));
+  LOG.println(F("SD data loaded."));
 #endif
 
   return (true);
@@ -2720,36 +2740,36 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf) {
 
 FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len) {
 #ifdef DEBUG
-  Serial.print(F("Storing SYSEX format 0x"));
-  Serial.print(format, HEX);
-  Serial.print(F(" with length of "));
-  Serial.print(len, DEC);
-  Serial.println(F(" bytes."));
+  LOG.print(F("Storing SYSEX format 0x"));
+  LOG.print(format, HEX);
+  LOG.print(F(" with length of "));
+  LOG.print(len, DEC);
+  LOG.println(F(" bytes."));
 #endif
 
   // write sysex start
   AudioNoInterrupts();
   sysex.write(0xf0);
 #ifdef DEBUG
-  Serial.println(F("Write SYSEX start:    0xf0"));
+  LOG.println(F("Write SYSEX start:    0xf0"));
 #endif
   // write sysex vendor is unofficial SYSEX-ID for MicroDexed
   sysex.write(0x67);
 #ifdef DEBUG
-  Serial.println(F("Write SYSEX vendor:   0x67"));
+  LOG.println(F("Write SYSEX vendor:   0x67"));
 #endif
   // write sysex format number
   sysex.write(format);
 #ifdef DEBUG
-  Serial.print(F("Write SYSEX format:   0x"));
-  Serial.println(format, HEX);
+  LOG.print(F("Write SYSEX format:   0x"));
+  LOG.println(format, HEX);
 #endif
   // write data
   sysex.write(data, len);
 #ifdef DEBUG
   for (uint16_t i = 0; i < len; i++) {
-    Serial.print(F("Write SYSEX data:     0x"));
-    Serial.println(data[i], HEX);
+    LOG.print(F("Write SYSEX data:     0x"));
+    LOG.println(data[i], HEX);
   }
 #endif
   // write checksum
@@ -2757,15 +2777,15 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
 #ifdef DEBUG
   uint8_t checksum = calc_checksum(data, len);
   sysex.write(checksum);
-  Serial.print(F("Write SYSEX checksum: 0x"));
-  Serial.println(checksum, HEX);
+  LOG.print(F("Write SYSEX checksum: 0x"));
+  LOG.println(checksum, HEX);
 #endif
   // write sysex end
   sysex.write(0xf7);
   AudioInterrupts();
 
 #ifdef DEBUG
-  Serial.println(F("Write SYSEX end:      0xf7"));
+  LOG.println(F("Write SYSEX end:      0xf7"));
 #endif
 
   return (true);
@@ -2773,7 +2793,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
 
 FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR("get bank name for bank [%d]\n"), b);
+  LOG.printf_P(PSTR("get bank name for bank [%d]\n"), b);
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -2790,9 +2810,9 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
       strcpy(bank_name, sError);
 
 #ifdef DEBUG
-      Serial.print(F("E : Cannot open "));
-      Serial.print(bankdir);
-      Serial.println(F(" on SD."));
+      LOG.print(F("E : Cannot open "));
+      LOG.print(bankdir);
+      LOG.println(F(" on SD."));
 #endif
       return false;
     }
@@ -2828,7 +2848,7 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name) {
 
 FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
 #ifdef DEBUG
-  Serial.printf_P(PSTR("get voice name for voice [%d]\n"), v + 1);
+  LOG.printf_P(PSTR("get voice name for voice [%d]\n"), v + 1);
 #endif
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -2845,9 +2865,9 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
       strcpy(voice_name, sError);
 
 #ifdef DEBUG
-      Serial.print(F("E : Cannot open "));
-      Serial.print(bankdir);
-      Serial.println(F(" on SD."));
+      LOG.print(F("E : Cannot open "));
+      LOG.print(bankdir);
+      LOG.println(F(" on SD."));
 #endif
       return false;
     }
@@ -2871,7 +2891,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     char bank_name[BANK_NAME_LEN];
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    Serial.printf_P(PSTR("Get voice name from [/%s/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b, bank_name);
+    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b, bank_name);
 #endif
     memset(voice_name, 0, VOICE_NAME_LEN);
     entry.seek(124 + (v * 128));
@@ -2879,7 +2899,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
     string_toupper(voice_name);
 
 #ifdef DEBUG
-    Serial.printf_P(PSTR("Found voice-name [%s] for bank [%d] and voice [%d]\n"), voice_name, b, v + 1);
+    LOG.printf_P(PSTR("Found voice-name [%s] for bank [%d] and voice [%d]\n"), voice_name, b, v + 1);
 #endif
 
     AudioNoInterrupts();
@@ -2894,7 +2914,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name) {
   return false;
 }
 
-uint8_t calc_checksum(uint8_t* data, uint16_t len) {
+FLASHMEM uint8_t calc_checksum(uint8_t* data, uint16_t len) {
   int32_t bulk_checksum_calc = 0;
 
   for (uint16_t n = 0; n < len; n++)
@@ -2932,15 +2952,15 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
 #ifdef DEBUG
-    Serial.print(F("Saving multisample slot "));
-    Serial.print(number);
-    Serial.print(F(" to "));
-    Serial.println(filename);
+    LOG.print(F("Saving multisample slot "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
 #endif
     AudioNoInterrupts();
     if (SD.exists(filename)) {
 #ifdef DEBUG
-      Serial.println(F("remove old multisample file"));
+      LOG.println(F("remove old multisample file"));
 #endif
       SD.remove(filename);
     }
@@ -2971,9 +2991,9 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
       }
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      Serial.println(F("Write JSON data:"));
+      LOG.println(F("Write JSON data:"));
       serializeJsonPretty(data_json, Serial);
-      Serial.println();
+      LOG.println();
 #endif
       serializeJsonPretty(data_json, json);
       json.close();
@@ -2981,9 +3001,9 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number) {
       return (true);
     } else {
 #ifdef DEBUG
-      Serial.print(F("E : Cannot open "));
-      Serial.print(filename);
-      Serial.println(F(" on SD."));
+      LOG.print(F("E : Cannot open "));
+      LOG.print(filename);
+      LOG.println(F(" on SD."));
 #endif
     }
     AudioInterrupts();
@@ -3004,10 +3024,10 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
     AudioNoInterrupts();
     if (SD.exists(filename)) {
 #ifdef DEBUG
-      Serial.print(F("Found msp presets data ["));
-      Serial.print(filename);
-      Serial.println(F("]... loading..."));
-      Serial.println(F(" "));
+      LOG.print(F("Found msp presets data ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
+      LOG.println(F(" "));
 #endif
 
       json = SD.open(filename);
@@ -3019,9 +3039,9 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
         AudioInterrupts();
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        Serial.println(F("Read JSON data:"));
+        LOG.println(F("Read JSON data:"));
         serializeJsonPretty(data_json, Serial);
-        Serial.println();
+        LOG.println();
 #endif
         for (uint8_t i = 0; i < NUM_MULTISAMPLES; i++) {
           strcpy(msp[i].name, data_json[i]["name"]);
@@ -3044,14 +3064,14 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
       }
 #ifdef DEBUG
       else {
-        Serial.print(F("E: Cannot open "));
-        Serial.print(filename);
-        Serial.println(F(" on SD."));
+        LOG.print(F("E: Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
       }
     } else {
-      Serial.print(F("No "));
-      Serial.print(filename);
-      Serial.println(F(" available."));
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
 #endif
     }
   }

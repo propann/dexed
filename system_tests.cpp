@@ -4,7 +4,7 @@ extern ILI9341_t3n display;
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 uint8_t psram_test_dline = 7;
 
-void fill_up_with_spaces_psram() {
+FLASHMEM void fill_up_with_spaces_psram() {
   do {
     display.print(F(" "));
   } while (display.getCursorX() < 52 * CHAR_width_small);
@@ -167,7 +167,7 @@ FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed) {
   for (p = memory_begin; p < memory_end; p++) {
     uint32_t actual = *p;
     if (actual != reg) return psram_fail_message(p, actual, reg);
-    //Serial.printf_P(PSTR(" reg=%08X\n"), reg);
+    //LOG.printf_P(PSTR(" reg=%08X\n"), reg);
     for (int i = 0; i < 3; i++) {
       if (reg & 1) {
         reg >>= 1;

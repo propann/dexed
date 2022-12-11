@@ -41,7 +41,7 @@ public:
         SerialFlashFile wavFile = SerialFlash.open(filename);
         __enable_irq();
         if (!wavFile) {
-            Serial.printf("Not able to open wave file... %s\n", filename);
+            // Serial.printf("Not able to open wave file... %s\n", filename);
             return false;
         }
         bool result = readWaveHeader(header, wavFile);
@@ -55,7 +55,7 @@ public:
         int bytesRead = wavFile.read(buffer, 44);
         __enable_irq();
         if (bytesRead != 44) {
-            Serial.printf("expected 44 bytes (was %d)\n", bytesRead);
+            // Serial.printf("expected 44 bytes (was %d)\n", bytesRead);
             return false;
         }
         return readWaveHeaderFromBuffer(buffer, header);
@@ -63,7 +63,7 @@ public:
 
     bool readWaveHeaderFromBuffer(const char *buffer, wav_header &header) {
         if (buffer[0] != 'R' || buffer[1] != 'I' || buffer[2] != 'F' || buffer[3] != 'F') {
-            Serial.printf("expected RIFF (was %s)\n", buffer);
+            // Serial.printf("expected RIFF (was %s)\n", buffer);
             return false;
         }
         for (int i=0; i < 4; i++)
@@ -77,21 +77,21 @@ public:
         for (int i=0; i < 4; i++)
             header.wave_header[i] = buffer[i+8];
         if (buffer[8] != 'W' || buffer[9] != 'A' || buffer[10] != 'V' || buffer[11] != 'E') {
-            Serial.printf("expected WAVE (was %s)\n", buffer[8]);
+            // Serial.printf("expected WAVE (was %s)\n", buffer[8]);
             return false;
         }
 
         for (int i=0; i < 4; i++)
             header.fmt_header[i] = buffer[i+12];
         if (buffer[12] != 'f' || buffer[13] != 'm' || buffer[14] != 't' || buffer[15] != ' ') {
-            Serial.printf("expected 'fmt ' (was %s)\n",  buffer[12]);
+            // Serial.printf("expected 'fmt ' (was %s)\n",  buffer[12]);
             return false;
         }
 
         auto fmt_chunk_size = static_cast<unsigned long>(b[19] << 24 | b[18] << 16 | b[17] << 8 | b[16]);
         header.fmt_chunk_size = fmt_chunk_size;
         if (fmt_chunk_size != 16) {
-            Serial.printf("chunk size should be 16 for PCM wave data... (was %d)\n", fmt_chunk_size);
+            // Serial.printf("chunk size should be 16 for PCM wave data... (was %d)\n", fmt_chunk_size);
             return false;
         }
 
@@ -116,7 +116,7 @@ public:
         for (int i=0; i < 4; i++)
             header.data_header[i] = buffer[i+36];
         if (buffer[36] != 'd' || buffer[37] != 'a' || buffer[38] != 't' || buffer[39] != 'a') {
-            Serial.printf("expected data... (was %d)\n", buffer);
+            // Serial.printf("expected data... (was %d)\n", buffer);
             return false;
         }
 

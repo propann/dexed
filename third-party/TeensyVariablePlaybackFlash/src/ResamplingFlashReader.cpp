@@ -256,8 +256,8 @@ bool ResamplingFlashReader::play(const char *filename)
     __enable_irq();
 
     if (!file) {
-        Serial.print(F("Not able to open file: "));
-        Serial.println(filename);
+        // Serial.print(F("Not able to open file: "));
+        // Serial.println(filename);
         return false;
     }
 
@@ -270,9 +270,9 @@ bool ResamplingFlashReader::play(const char *filename)
 
     wavHeaderParser.readWaveHeader(wav_header, file);
     if (wav_header.bit_depth != 16) {
-        Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
-        Serial.print(wav_header.bit_depth);
-        Serial.println(F(")"));
+        // Serial.print(F("Needs 16 bit audio! Aborting.... (got "));
+        // Serial.print(wav_header.bit_depth);
+        // Serial.println(F(")"));
         __disable_irq();
         file.close();
         __enable_irq();
@@ -284,8 +284,8 @@ bool ResamplingFlashReader::play(const char *filename)
 
     if (_file_size <= _header_offset * newdigate::IndexableFile<128, 2>::element_size) {
         _playing = false;
-        Serial.print(F("Wave file contains no samples: "));
-        Serial.println(filename);
+        // Serial.print(F("Wave file contains no samples: "));
+        // Serial.println(filename);
         __disable_irq();
         file.close();
         __enable_irq();

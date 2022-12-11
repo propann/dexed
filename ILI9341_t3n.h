@@ -106,7 +106,13 @@
 // At all other speeds, _pspi->beginTransaction() will use the fastest available
 // clock
 
-#define ILI9341_SPICLOCK 60000000
+#ifdef GENERIC_DISPLAY
+#define ILI9341_SPICLOCK 50000000
+//#define ILI9341_SPICLOCK 60000000
+#else
+#define ILI9341_SPICLOCK 50000000
+#endif
+
 #define ILI9341_SPICLOCK_READ 2000000
 
 class ILI9341_t3n : public Print {
@@ -205,7 +211,7 @@ public:
   void setOrigin(int16_t x = 0, int16_t y = 0) {
     _originx = x;
     _originy = y;
-    // if (Serial) Serial.printf_P(PSTR("Set Origin %d %d\n"), x, y);
+    // if (Serial) LOG.printf_P(PSTR("Set Origin %d %d\n"), x, y);
     updateDisplayClip();
   }
   void getOrigin(int16_t *x, int16_t *y) {
@@ -222,7 +228,7 @@ public:
     _clipy1 = y1;
     _clipx2 = x1 + w;
     _clipy2 = y1 + h;
-    // if (Serial) Serial.printf_P(PSTR("Set clip Rect %d %d %d %d\n"), x1, y1, w, h);
+    // if (Serial) LOG.printf_P(PSTR("Set clip Rect %d %d %d %d\n"), x1, y1, w, h);
     updateDisplayClip();
   }
   void setClipRect() {
@@ -230,7 +236,7 @@ public:
     _clipy1 = 0;
     _clipx2 = _width;
     _clipy2 = _height;
-    // if (Serial) Serial.printf_P(PSTR("clear clip Rect\n"));
+    // if (Serial) LOG.printf_P(PSTR("clear clip Rect\n"));
     updateDisplayClip();
   }
 
