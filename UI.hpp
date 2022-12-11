@@ -2642,11 +2642,16 @@ public:
 
   // print a static label that can't be selected.
   void printLn(const char* text, uint32_t color = COLOR_SYSTEXT) {
+    print(text, color);
+    y += 1;
+  }
+
+  // print some text on cursor location for use in renderers
+  void print(const char* text, uint32_t color = COLOR_SYSTEXT) {
     display.setTextSize(1);
     setCursor_textGrid_small(x, y);
     display.setTextColor(color);
     display.print(text);
-    y += 1;
   }
 
   // add a custom editor providing its own getter, setter and renderer function.
@@ -2684,7 +2689,7 @@ public:
   };
 
   // editor providing default uint8_t getter + setters if missed out
-  void addEditor(const char* const name, uint8_t limit_min, uint8_t limit_max, uint8_t* const valuePtr,
+  void addEditor(const char* const name, int16_t limit_min, int16_t limit_max, uint8_t* const valuePtr,
                  int16_t (*const getter)(Editor* param) = NULL,
                  void (*const setter)(Editor* param, int16_t value) = NULL,
                  void (*const renderer)(Editor* param, bool refresh) = NULL) {
@@ -4365,15 +4370,21 @@ FLASHMEM void UI_func_dexed_audio(uint8_t param) {
     ui.addEditor("VOLUME", SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, &configuration.dexed[0].sound_intensity,
      &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
        dexed_current_instance_setter(editor, value);
-       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, configuration.dexed[selected_instance_id].sound_intensity);
-       MicroDexed[selected_instance_id]->setGain(midi_volume_transform(map(configuration.dexed[selected_instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
+       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, value);
+       MicroDexed[selected_instance_id]->setGain(midi_volume_transform(map(value, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
      });
-    ui.addEditor("PAN", PANORAMA_MIN, PANORAMA_MAX, &configuration.dexed[0].pan,
-     &dexed_current_instance_getter, [](Editor* editor, int16_t value) {
-       dexed_current_instance_setter(editor, value);
-       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, map(configuration.dexed[selected_instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, 0, 127));
+
+    // pan: custom getter and setter to center pan around 0 for a nice pan bar
+    const int16_t pan_center = (PANORAMA_MAX + PANORAMA_MIN) / 2;
+    ui.addEditor("PAN", (int16_t)(PANORAMA_MIN-pan_center), (int16_t)(PANORAMA_MAX-pan_center), &configuration.dexed[0].pan,
+     [](Editor* editor) -> int16_t {
+         return dexed_current_instance_getter(editor) - pan_center; // center around 0
+       },
+     [](Editor* editor, int16_t value) {
+       dexed_current_instance_setter(editor, value+pan_center); 
+       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, map(value+pan_center, PANORAMA_MIN, PANORAMA_MAX, 0, 127));
        if (configuration.sys.mono == 0) {
-         dexed_dry_mono2stereo[selected_instance_id]->panorama(mapfloat(configuration.dexed[selected_instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+         dexed_dry_mono2stereo[selected_instance_id]->panorama(mapfloat(value+pan_center, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
        }
      });
 
@@ -4382,7 +4393,7 @@ FLASHMEM void UI_func_dexed_audio(uint8_t param) {
     ui.addEditor("FREQUENCY", CHORUS_FREQUENCY_MIN, CHORUS_FREQUENCY_MAX, &configuration.fx.chorus_frequency[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
        fx_current_instance_setter(editor, value);
-       chorus_modulator[selected_instance_id]->frequency(configuration.fx.chorus_frequency[selected_instance_id] / 10.0);
+       chorus_modulator[selected_instance_id]->frequency(value / 10.0);
      });
     ui.addEditor("WAVEFORM", CHORUS_WAVEFORM_MIN, CHORUS_WAVEFORM_MAX, &configuration.fx.chorus_waveform[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
@@ -4391,43 +4402,50 @@ FLASHMEM void UI_func_dexed_audio(uint8_t param) {
      },
      [](Editor* editor, bool refresh) {
        prepare_multi_options(editor,refresh);
-       ui.printLn(editor->get() ? "[SINE    ]" : "[TRIANGLE]");
+       ui.print(editor->get() ? "[SINE    ]" : "[TRIANGLE]");
      });
     ui.addEditor("DEPTH", CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, &configuration.fx.chorus_depth[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
        fx_current_instance_setter(editor, value);
-       chorus_modulator[selected_instance_id]->amplitude(configuration.fx.chorus_depth[selected_instance_id] / 100.0);
+       chorus_modulator[selected_instance_id]->amplitude(value / 100.0);
      });
     ui.addEditor("LEVEL", CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, &configuration.fx.chorus_level[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
        fx_current_instance_setter(editor, value);
-       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.chorus_level[selected_instance_id]);
-       global_delay_in_mixer[selected_instance_id]->gain(1, mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9));
+       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, value);
+       global_delay_in_mixer[selected_instance_id]->gain(1, mapfloat(value, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9));
      });
      
     ui.printLn("");
-    ui.printLn("DELAY", GREY2);
-    ui.addEditor("LEVEL", DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, &configuration.fx.delay_level[0],
+    ui.printLn("EFFECTS", GREY2);
+    ui.addEditor("DELAY SEND", DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, &configuration.fx.delay_level[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
        fx_current_instance_setter(editor, value);
-        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
-        global_delay_in_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+        MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, value);
+        global_delay_in_mixer[selected_instance_id]->gain(0, midi_volume_transform(map(value, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 127)));
+     });
+    ui.addEditor("REVERB SEND", REVERB_SEND_MIN, REVERB_SEND_MAX, &configuration.fx.reverb_send[0],
+     &fx_current_instance_getter, [](Editor* editor, int16_t value) {
+       fx_current_instance_setter(editor, value);
+       MD_sendControlChange(configuration.dexed[instance].midi_channel, 91, value);
+       reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(value, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+       reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(value, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
      });
 
     // filter  
     ui.printLn("");
     ui.printLn("FILTER", GREY2);
-    ui.addEditor("CUTOFF", FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, &configuration.fx.delay_level[0],
+    ui.addEditor("CUTOFF", FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, &configuration.fx.filter_cutoff[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
        fx_current_instance_setter(editor, value);
-       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, configuration.fx.filter_cutoff[selected_instance_id]);
-       MicroDexed[selected_instance_id]->setFilterCutoff(mapfloat(configuration.fx.filter_cutoff[selected_instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
+       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, value);
+       MicroDexed[selected_instance_id]->setFilterCutoff(mapfloat(value, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
      });
-    ui.addEditor("RESONANCE", FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, &configuration.fx.delay_level[0],
+    ui.addEditor("RESONANCE", FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, &configuration.fx.filter_resonance[0],
      &fx_current_instance_getter, [](Editor* editor, int16_t value) {
        fx_current_instance_setter(editor, value);
-       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, configuration.fx.filter_resonance[selected_instance_id]);
-       MicroDexed[selected_instance_id]->setFilterResonance(mapfloat(configuration.fx.filter_resonance[selected_instance_id], FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
+       MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, value);
+       MicroDexed[selected_instance_id]->setFilterResonance(mapfloat(value, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
      });
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
