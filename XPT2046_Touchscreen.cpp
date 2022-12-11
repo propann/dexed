@@ -97,16 +97,19 @@ bool XPT2046_Touchscreen::tirqTouched() {
 }
 
 bool XPT2046_Touchscreen::touched() {
-if ( (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
-  || (touch_control_rate > TOUCH_CONTROL_RATE_MS/2 && remote_touched) ) {
-    touch_control_rate = 0;
-    if (remote_touched == false) {
-      update();
-      return (zraw >= Z_THRESHOLD);
+  if(touch_control_rate > ( remote_touched ? TOUCH_CONTROL_RATE_MS/2 : TOUCH_CONTROL_RATE_MS )) {
+    if (remote_touched) {
+      touch_control_rate = 0;
+      return true;
     }
-    return true;
-  } else
-    return false;
+    // no remote touch, so update to check for real touch
+    update();
+    if(zraw >= Z_THRESHOLD) {
+      touch_control_rate = 0;
+      return true;
+    }
+  }
+  return false;
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
