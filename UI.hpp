@@ -4301,6 +4301,8 @@ FLASHMEM void UI_func_dexed_audio(uint8_t param) {
                    reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(value, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
                    reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(value, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
                  });
+    ui.addEditor("DELAY TO REVERB", REVERB_SEND_MIN, REVERB_SEND_MAX, &configuration.fx.delay_to_reverb[0],
+                 &fx_current_instance_getter, &fx_current_instance_setter);
 
     // filter
     ui.printLn("");

@@ -39,7 +39,7 @@ boolean COND_hide()  // hide a menu element
 LCDML_add(0, LCDML_0, 1, "Dexed", NULL);
 LCDML_add(1, LCDML_0_1, 1, "Select Voice", UI_func_voice_select);
 LCDML_add(2, LCDML_0_1, 2, "Edit Voice", UI_func_voice_editor);
-LCDML_add(3, LCDML_0_1, 3, "Audio", NULL);
+LCDML_add(3, LCDML_0_1, 3, "Audio", UI_func_dexed_audio);
 LCDML_add(4, LCDML_0_1, 4, "Controller", UI_func_dexed_controllers);
 LCDML_add(5, LCDML_0_1, 5, "Setup", UI_func_dexed_setup);
 LCDML_add(6, LCDML_0_1, 6, "Operator", UI_handle_OP);
