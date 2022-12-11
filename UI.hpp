@@ -5110,7 +5110,15 @@ void UI_func_drums(uint8_t param) {
     addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
 
     ui.setCursor(1, 10);
-    ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100, &seq.drums_volume);
+    ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100,
+                 [](Editor* editor) -> int16_t {
+                   return round(mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0., 100.));
+                 },
+                 [](Editor* editor, int16_t value) {
+                   seq.drums_volume = mapfloat(value, 0., 100., 0.0, VOL_MAX_FLOAT);
+                   master_mixer_r.gain(MASTER_MIX_CH_DRUMS, volume_transform(seq.drums_volume));
+                   master_mixer_l.gain(MASTER_MIX_CH_DRUMS, volume_transform(seq.drums_volume));
+                 });
     ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
@@ -17840,7 +17848,7 @@ FLASHMEM void calibrate() {
 
 
 FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
-  #ifdef GENERIC_DISPLAY
+#ifdef GENERIC_DISPLAY
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     ts.finished_calibration = false;
@@ -17866,5 +17874,5 @@ FLASHMEM void UI_func_calibrate_touch(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
   }
-  #endif
+#endif
 }
