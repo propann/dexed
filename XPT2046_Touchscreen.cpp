@@ -97,15 +97,16 @@ bool XPT2046_Touchscreen::tirqTouched() {
 }
 
 bool XPT2046_Touchscreen::touched() {
-  if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0) {
-     touch_control_rate = 0;
-  if (remote_touched == false) {
-    update();
-    return (zraw >= Z_THRESHOLD);
-  }
-  return true;
-  }else
-  return false;
+if ( (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+  || (touch_control_rate > TOUCH_CONTROL_RATE_MS/2 && remote_touched) ) {
+    touch_control_rate = 0;
+    if (remote_touched == false) {
+      update();
+      return (zraw >= Z_THRESHOLD);
+    }
+    return true;
+  } else
+    return false;
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z) {
