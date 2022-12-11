@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.8.2"
+#define VERSION "1.4.8.3"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -311,7 +311,7 @@
 #define TFT_TOUCH_CS 38
 #endif
 
-#define TOUCH_CONTROL_RATE_MS 400
+#define TOUCH_CONTROL_RATE_MS 200
 
 #define VOICE_SELECTION_MS 60000
 #define BACK_FROM_VOLUME_MS 2000
@@ -861,6 +861,7 @@ typedef struct dexed_s {
   uint8_t portamento_time;
   uint8_t op_enabled;
   uint8_t midi_channel;
+  uint8_t sidechain_time;
 } dexed_t;
 
 typedef struct fx_s {
@@ -899,6 +900,7 @@ typedef struct fx_s {
   uint8_t ep_chorus_depth;
   uint8_t ep_chorus_level;
   uint8_t ep_reverb_send;
+  uint8_t reverb_sidechain_time;
 } fx_t;
 
 typedef struct epiano_s {
@@ -922,6 +924,7 @@ typedef struct epiano_s {
   uint8_t midi_channel;
   uint8_t delay_send_1;
   uint8_t delay_send_2;
+  uint8_t sidechain_time;
 } epiano_t;
 
 #ifdef USE_MICROSYNTH
@@ -971,6 +974,7 @@ typedef struct microsynth_s {
   uint8_t delay_send[NUM_MICROSYNTH];
   uint8_t vel_mod_filter_osc = 0;
   uint8_t vel_mod_filter_noise = 0;
+  uint8_t sidechain_time;
 } microsynth_t;
 #endif
 
@@ -1000,6 +1004,7 @@ typedef struct braids_s {
   uint8_t midi_channel;
   uint8_t pan;
   uint8_t note_buffer[NUM_BRAIDS];
+  uint8_t sidechain_time;
 } braids_t;
 #endif
 
@@ -1007,6 +1012,7 @@ typedef struct multisample_s {
   char name[18];
   uint8_t sound_intensity;
   uint8_t midi_channel;
+  uint8_t sidechain_time;
 } multisample_t;
 
 typedef struct multisample_zone_s {

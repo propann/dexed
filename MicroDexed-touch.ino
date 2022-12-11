@@ -759,6 +759,7 @@ uint8_t midi_voices[NUM_DEXED];
 elapsedMillis cpu_mem_millis;
 #endif
 uint32_t cpumax = 0;
+bool sidechain_trigger;
 
 sdcard_t sdcard_infos;
 
@@ -924,9 +925,6 @@ void setup() {
 #endif
   }
 #endif
-
-
-
 
   // Setup MIDI devices
   setup_midi_devices();
@@ -1555,6 +1553,40 @@ FLASHMEM void sub_step_recording() {
 uint8_t incomingSerialByte;
 //#endif
 
+float sc_dexed0 = 0.0;
+float sc_reverb = 0.0;
+
+void update_sidechain() {
+
+   if (sidechain_trigger) {
+     
+      sc_dexed0 = 0.04;
+      sc_reverb=0.04;
+      sidechain_trigger=false;
+      master_mixer_r.gain(0, sc_dexed0);
+      master_mixer_l.gain(0, sc_dexed0);
+
+      master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+      master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+
+  }
+
+  if ( sidechain_trigger==false) {
+
+    if (sc_dexed0 < VOL_MAX_FLOAT) {
+      sc_dexed0 =  sc_dexed0 +  sc_dexed0*((float)configuration.dexed[0].sidechain_time/10000);
+      master_mixer_r.gain(0, sc_dexed0);
+      master_mixer_l.gain(0, sc_dexed0);
+    }
+ if (sc_reverb < VOL_MAX_FLOAT) {
+      sc_reverb = sc_reverb + sc_reverb*((float)configuration.fx.reverb_sidechain_time/10000);
+      master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+      master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+    }
+
+  }
+}
+
 void loop() {
 
   //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
@@ -1710,9 +1742,12 @@ void loop() {
   }
 #endif
 
+  // if (seq.running) {
+  //   update_sidechain();
+  // }
+
   if (control_rate > CONTROL_RATE_MS) {
     control_rate = 0;
-
     if (seq.running && seq.step != seq.UI_last_seq_step) {
       update_display_functions_while_seq_running();
     }
@@ -2307,6 +2342,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
               drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
               drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
 #endif
+              if (drum_config[d].drum_class == DRUM_BASS)
+                sidechain_trigger = true;
 
 #ifdef COMPILE_FOR_PROGMEM
               if (drum_config[d].drum_data != NULL && drum_config[d].len > 0) {
@@ -2315,6 +2352,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                   Drum[slot]->enableInterpolation(true);
                   Drum[slot]->setPlaybackRate(drum_config[d].pitch);
                 }
+                if (drum_config[d].drum_class == DRUM_BASS)
+                sidechain_trigger = true;
 
 #ifdef COMPILE_FOR_PROGMEM
                 Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
@@ -2324,6 +2363,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                 snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
+                if (drum_config[d].drum_class == DRUM_BASS)
+                sidechain_trigger = true;
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -3962,7 +4003,6 @@ FLASHMEM void set_fx_params(void) {
     delay_fb_mixer[instance_id]->gain(1, mapfloat(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0.0, 0.8));
 
 
-
     if (configuration.fx.delay_level[selected_instance_id] <= DELAY_LEVEL_MIN)
       delay_fx[instance_id]->disable(0);
     else if (configuration.fx.delay_sync[instance_id] == 0)
@@ -3971,6 +4011,7 @@ FLASHMEM void set_fx_params(void) {
       uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[configuration.fx.delay_sync[instance_id]] / seq.bpm);
       delay_fx[instance_id]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     }
+    global_delay_in_mixer[selected_instance_id]->gain(0, mapfloat(configuration.fx.delay_level[selected_instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
 
     // REVERB SEND
     reverb_mixer_r.gain(instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));

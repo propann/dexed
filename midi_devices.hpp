@@ -69,11 +69,7 @@ MIDIDevice midi_usb(usb_host);
 #endif
 
 #ifdef USB_KEYPAD
-//USBHost usb_host;
-//USBHub hub1(usb_host);
 KeyboardController keyboard1(usb_host);
-//USBHIDParser hid1(usb_host);
-//USBHIDParser hid2(usb_host);
 #endif
 
 USBHub hub1(usb_host);
