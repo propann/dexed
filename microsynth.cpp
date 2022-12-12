@@ -4,7 +4,6 @@
 #include "template_mixer.hpp"
 #include "effect_stereo_panorama.h"
 
-#ifdef USE_MICROSYNTH
 elapsedMillis microsynth_delay_timer[2];
 extern AudioSynthWaveform microsynth_waveform[NUM_MICROSYNTH];
 extern AudioSynthNoisePink microsynth_noise[NUM_MICROSYNTH];
@@ -27,9 +26,7 @@ extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern uint8_t microsynth_selected_instance;
 extern short wave_type[9];
 extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
-#endif
 
-#ifdef USE_BRAIDS
 #include <synth_braids.h>
 elapsedMillis braids_control_rate;
 uint16_t braids_filter_lfo_count[NUM_BRAIDS];
@@ -51,7 +48,6 @@ extern int braids_flanger_idx;
 extern int braids_flanger_depth;
 extern double braids_flanger_freq;
 extern uint8_t generic_temp_select_menu;
-#endif
 
 extern float volume_transform(float amp);
 
@@ -59,7 +55,6 @@ extern float volume_transform(float amp);
 extern sequencer_t seq;
 
 FLASHMEM void microsynth_update_all_settings(uint8_t instance_id) {
-#ifdef USE_MICROSYNTH
   microsynth_mixer_filter_osc[instance_id].gain(0, 0.0);
   microsynth_mixer_filter_osc[instance_id].gain(1, 0.0);
   microsynth_mixer_filter_osc[instance_id].gain(2, 0.0);
@@ -110,11 +105,9 @@ FLASHMEM void microsynth_update_all_settings(uint8_t instance_id) {
   global_delay_in_mixer[0]->gain(3, mapfloat(microsynth[1].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
   global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
 
-#endif
 }
 
 void update_microsynth_params() {
-#ifdef USE_MICROSYNTH
   for (uint8_t d = 0; d < NUM_MICROSYNTH; d++) {
     if (microsynth_envelope_osc[d].isActive())  //pwm down
     {
@@ -214,7 +207,6 @@ void update_microsynth_params() {
         microsynth[d].lfo_fade = microsynth[d].lfo_fade - 1;
     }
   }
-#endif
 }
 
 void update_braids_filter(uint8_t d) {
@@ -229,7 +221,6 @@ void update_braids_filter(uint8_t d) {
 }
 
 void update_braids_params() {
-#ifdef USE_BRAIDS
 
   for (uint8_t d = 0; d < NUM_BRAIDS; d++) {
 
@@ -270,7 +261,6 @@ void update_braids_params() {
     }
     update_braids_filter(d);
   }
-#endif
 }
 
 FLASHMEM void microsynth_update_single_setting(uint8_t instance_id) {
@@ -340,7 +330,6 @@ FLASHMEM void microsynth_update_single_setting(uint8_t instance_id) {
 }
 
 FLASHMEM void braids_update_all_settings() {
-#ifdef USE_BRAIDS
 
   if (braids_osc.flanger > 0) {
     braids_flanger_r.voices(braids_flanger_idx, braids_flanger_depth, (float)braids_osc.flanger * 0.003);
@@ -381,12 +370,9 @@ FLASHMEM void braids_update_all_settings() {
       braids_filter_state[instance_id] = braids_osc.filter_freq_from;
     }
   }
-
-#endif
 }
 
 FLASHMEM void braids_update_single_setting() {
-#ifdef USE_BRAIDS
 
   if ((generic_temp_select_menu == 19 && generic_active_function) || (generic_temp_select_menu == 20 && generic_active_function)) {
     global_delay_in_mixer[0]->gain(4, mapfloat(braids_osc.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
@@ -444,6 +430,4 @@ FLASHMEM void braids_update_single_setting() {
       }
     }
   }
-
-#endif
 }

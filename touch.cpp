@@ -57,13 +57,9 @@ extern void UI_func_voice_select(uint8_t param);
 extern void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id);
 extern uint8_t activesample;
 
-#ifdef USE_MICROSYNTH
 extern microsynth_t microsynth[NUM_MICROSYNTH];
-#endif
 
-#ifdef USE_BRAIDS
 extern braids_t braids_osc;
-#endif
 
 extern void mb_set_mutes();
 extern bool mb_solo_low;
@@ -213,14 +209,10 @@ FLASHMEM void virtual_keyboard_print_current_instrument() {
     ts.virtual_keyboard_midi_channel = configuration.dexed[1].midi_channel;
   } else if (ts.virtual_keyboard_instrument == 3) {
     display.print(F("MSYNTH1 "));
-#ifdef USE_MICROSYNTH
     ts.virtual_keyboard_midi_channel = microsynth[0].midi_channel;
-#endif
   } else if (ts.virtual_keyboard_instrument == 4) {
     display.print(F("MSYNTH2 "));
-#ifdef USE_MICROSYNTH
     ts.virtual_keyboard_midi_channel = microsynth[1].midi_channel;
-#endif
   } else if (ts.virtual_keyboard_instrument == 5) {
     display.print(F("EPIANO  "));
     ts.virtual_keyboard_midi_channel = configuration.epiano.midi_channel;
@@ -229,9 +221,7 @@ FLASHMEM void virtual_keyboard_print_current_instrument() {
     ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
   } else if (ts.virtual_keyboard_instrument == 7) {
     display.print(F("BRAIDS   "));
-#ifdef USE_BRAIDS
     ts.virtual_keyboard_midi_channel = braids_osc.midi_channel;
-#endif
   } else if (ts.virtual_keyboard_instrument > 7) {
     display.print(ts.virtual_keyboard_instrument - 7);
     display.print(" ");

@@ -54,7 +54,6 @@
 #include "TeensyVariablePlaybackFlash.h"
 #endif
 
-#ifdef USE_BRAIDS
 #include <synth_braids.h>
 // Allocate the delay lines for left and right channels
 short braids_l_delayline[BRAIDS_FLANGE_DELAY_LENGTH];
@@ -62,14 +61,11 @@ short braids_r_delayline[BRAIDS_FLANGE_DELAY_LENGTH];
 int braids_flanger_idx = BRAIDS_FLANGE_DELAY_LENGTH / 4;
 int braids_flanger_depth = BRAIDS_FLANGE_DELAY_LENGTH / 4;
 double braids_flanger_freq = .5;
-#endif
 
 #include <TeensyTimerTool.h>
 using namespace TeensyTimerTool;
 
-#ifdef USE_MICROSYNTH
 #include "microsynth.h"
-#endif
 
 #include "effect_dynamics.h"
 
@@ -84,10 +80,8 @@ using namespace TeensyTimerTool;
 #include "UI.hpp"
 #include "drums.h"
 #include "drumset.h"
-#if defined(USE_EPIANO)
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
-#endif
 
 uint8_t check_sd_cards(void);
 void check_and_create_directories(void);
@@ -112,13 +106,10 @@ Realtime_Scope scope;
 
 // Audio engines
 AudioSynthDexed* MicroDexed[NUM_DEXED];
-#if defined(USE_EPIANO)
 AudioSynthEPiano ep(NUM_EPIANO_VOICES);
 AudioAnalyzePeak ep_peak_r;
 AudioAnalyzePeak ep_peak_l;
-#endif
 
-#ifdef USE_BRAIDS
 AudioSynthBraids* synthBraids[NUM_BRAIDS];
 AudioMixer<NUM_BRAIDS> braids_mixer;
 AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
@@ -138,9 +129,7 @@ uint16_t braids_filter_state_last_displayed[NUM_BRAIDS];
 extern uint16_t braids_filter_lfo_count[NUM_BRAIDS];
 extern bool braids_lfo_direction[NUM_BRAIDS];
 extern elapsedMillis braids_control_rate;
-#endif
 
-#if defined(USE_MICROSYNTH)
 AudioSynthWaveform microsynth_waveform[NUM_MICROSYNTH];
 AudioSynthNoisePink microsynth_noise[NUM_MICROSYNTH];
 AudioEffectEnvelope microsynth_envelope_osc[NUM_MICROSYNTH];
@@ -161,13 +150,9 @@ AudioAnalyzePeak microsynth_peak_osc_1;
 AudioAnalyzePeak microsynth_peak_noise_0;
 AudioAnalyzePeak microsynth_peak_noise_1;
 extern elapsedMillis microsynth_delay_timer[2];
-#endif
 
-#if defined(USE_FX)
 AudioSynthWaveform* chorus_modulator[NUM_DEXED];
-#if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioFilterBiquad* dexed_chorus_filter[NUM_DEXED];
-#endif
 AudioEffectModulatedDelay* dexed_chorus[NUM_DEXED];
 AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
@@ -176,18 +161,13 @@ AudioMixer<2>* delay_mixer[NUM_DEXED];
 AudioEffectMonoStereo* dexed_mono2stereo[NUM_DEXED];
 AudioEffectMonoStereo* dexed_dry_mono2stereo[NUM_DEXED];
 AudioEffectMonoStereo* delay_mono2stereo[NUM_DEXED];
-#endif
 
-#if defined(USE_FX) && defined(USE_EPIANO)
 AudioEffectStereoPanorama ep_stereo_panorama;
 AudioSynthWaveform ep_chorus_modulator;
-#if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 AudioFilterBiquad ep_modchorus_filter;
-#endif
 AudioEffectModulatedDelayStereo ep_modchorus;
 AudioMixer<2> ep_chorus_mixer_r;
 AudioMixer<2> ep_chorus_mixer_l;
-#endif
 
 AudioAnalyzePeak microdexed_peak_0;
 AudioAnalyzePeak microdexed_peak_1;
@@ -329,12 +309,10 @@ File frec;
 //
 AudioConnection patchCord[] = {
 // Audio chain tail
-#if defined(USE_FX)
   { reverb_mixer_r, 0, reverb, 0 },
   { reverb_mixer_l, 0, reverb, 1 },
   { reverb, 0, master_mixer_r, MASTER_MIX_CH_REVERB },
   { reverb, 1, master_mixer_l, MASTER_MIX_CH_REVERB },
-#endif
   { master_mixer_l, volume_l },
   { master_mixer_r, volume_r },
   { volume_l, 0, stereo2mono, 1 },
@@ -445,34 +423,22 @@ AudioConnection patchCord[] = {
   { reverb, 0, reverb_return_peak_r, 0 },
   { reverb, 1, reverb_return_peak_l, 0 },
 
-#if defined(USE_EPIANO)
   { ep, 0, ep_stereo_panorama, 0 },
   { ep, 1, ep_stereo_panorama, 1 },
   { ep_stereo_panorama, 0, ep_peak_r, 0 },
   { ep_stereo_panorama, 1, ep_peak_l, 0 },
-#if defined(USE_FX)
   { ep_stereo_panorama, 0, ep_chorus_mixer_r, 0 },
   { ep_stereo_panorama, 1, ep_chorus_mixer_l, 0 },
   { ep_stereo_panorama, 0, ep_modchorus, 0 },
   { ep_stereo_panorama, 1, ep_modchorus, 1 },
-#if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
   { ep_chorus_modulator, 0, ep_modchorus_filter, 0 },
   { ep_modchorus_filter, 0, ep_modchorus, 2 },
-#else
-  { ep_chorus_modulator, 0, ep_modchorus, 2 },
-#endif
   { ep_modchorus, 0, ep_chorus_mixer_r, 1 },
   { ep_modchorus, 1, ep_chorus_mixer_l, 1 },
   { ep_chorus_mixer_r, 0, reverb_mixer_r, REVERB_MIX_CH_EPIANO },
   { ep_chorus_mixer_l, 0, reverb_mixer_l, REVERB_MIX_CH_EPIANO },
   { ep_chorus_mixer_r, 0, master_mixer_r, MASTER_MIX_CH_EPIANO },
   { ep_chorus_mixer_l, 0, master_mixer_l, MASTER_MIX_CH_EPIANO },
-#else
-  { ep_stereo_panorama, 0, master_mixer_r, MASTER_MIX_CH_EPIANO },
-  { ep_stereo_panorama, 1, master_mixer_l, MASTER_MIX_CH_EPIANO },
-
-#endif
-#endif
 
   { microsynth_noise[0], 0, microsynth_envelope_noise[0], 0 },  //noise generator to envelope
   { microsynth_noise[1], 0, microsynth_envelope_noise[1], 0 },
@@ -557,15 +523,7 @@ AudioConnection patchCord[] = {
 // Dynamic patching of MicroDexed objects
 //
 uint8_t nDynamic = 0;
-#if defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT && defined(USE_BRAIDS)
 AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4 + NUM_BRAIDS * 11 + 14 + 16];
-#elif defined(USE_FX) && MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
-AudioConnection* dynamicConnections[NUM_DEXED * 16 + NUM_DRUMS * 4];
-#elif defined(USE_FX) && MOD_FILTER_OUTPUT == MOD_NO_FILTER_OUTPUT
-AudioConnection* dynamicConnections[NUM_DEXED * 15 + NUM_DRUMS * 4];
-#else
-AudioConnection* dynamicConnections[NUM_DEXED * 4 + NUM_DRUMS * 2 8];
-#endif
 
 FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
   MicroDexed[instance_id] = new AudioSynthDexed(MAX_NOTES / NUM_DEXED, SAMPLE_RATE);
@@ -647,7 +605,6 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id) {
 #endif
 }
 
-#ifdef USE_BRAIDS
 FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
   synthBraids[instance_id] = new AudioSynthBraids();
   braids_envelope[instance_id] = new AudioEffectEnvelope();
@@ -682,12 +639,10 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
     dynamicConnections[nDynamic++] = new AudioConnection(braids_mixer, 0, *global_delay_in_mixer[1], 4);
   }
 }
-#endif
 
 //
 // Dynamic patching of Drum objects
 //
-#if NUM_DRUMS > 0
 FLASHMEM void create_audio_drum_chain(uint8_t instance_id) {
   //Drum[instance_id] = new AudioPlayMemory();
   //Drum[instance_id] = new AudioPlaySdWav();
@@ -710,10 +665,8 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id) {
 
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
-#ifdef USE_FX
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
-#endif
 
 #ifdef DEBUG
   LOG.print(F("Drum-Instance: "));
@@ -722,7 +675,6 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id) {
   LOG.println(nDynamic);
 #endif
 }
-#endif
 
 FLASHMEM void create_audio_wav_preview_chain() {
   dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_SD, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_SD);
@@ -783,41 +735,24 @@ char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", 
 uint8_t remote_MIDI_CC = 0;
 uint8_t remote_MIDI_CC_value;
 
-#if NUM_DEXED > 1
 int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1 };
-#else
-int8_t midi_decay_dexed[NUM_DEXED] = { -1 };
-#endif
-#ifdef USE_MICROSYNTH
 int8_t midi_decay_microsynth[NUM_MICROSYNTH];
 elapsedMillis midi_decay_timer_microsynth;
 extern void update_microsynth_params(void);
 elapsedMillis microsynth_control_rate;
-#endif
 elapsedMillis midi_decay_timer_dexed;
 
-#if NUM_DEXED > 1
 int perform_attack_mod[NUM_DEXED] = { 0, 0 };
 int perform_release_mod[NUM_DEXED] = { 0, 0 };
-#else
-int perform_attack_mod[NUM_DEXED] = { 0 };
-int perform_release_mod[NUM_DEXED] = { 0 };
-#endif
-#if defined(USE_FX)
 // Allocate the delay lines for chorus
 int16_t* delayline[NUM_DEXED];
-#ifdef USE_EPIANO
 int16_t* ep_delayline_r;
 int16_t* ep_delayline_l;
-#endif
-#endif
 
-#if NUM_DRUMS > 0
 extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 uint8_t drum_counter;
 uint8_t drum_type[NUM_DRUMS];
 uint8_t drum_midi_channel = DRUM_MIDI_CHANNEL;
-#endif
 
 extern sequencer_t seq;
 extern void sequencer(void);
@@ -825,11 +760,9 @@ extern uint8_t seq_prev_note[NUM_SEQ_TRACKS];
 extern void print_arp_start_stop_button(void);
 PeriodicTimer sequencer_timer;
 
-#ifdef USE_MULTISAMPLES
 multisample_s msp[NUM_MULTISAMPLES];
 multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 uint8_t note_buffer_msp[NUM_DRUMS];
-#endif
 
 extern LCDMenuLib2 LCDML;
 
@@ -997,7 +930,6 @@ void setup() {
   }
 #endif
 
-#ifdef USE_BRAIDS
   // create dynamic Braids instances
   for (uint8_t instance_id = 0; instance_id < NUM_BRAIDS; instance_id++) {
     create_audio_braids_chain(instance_id);
@@ -1022,10 +954,8 @@ void setup() {
   braids_flanger_r.voices(FLANGE_DELAY_PASSTHRU, 0, 0);
   braids_flanger_l.voices(FLANGE_DELAY_PASSTHRU, 0, 0);
 
-#endif
 
   // Setup (PROGMEM) sample drums
-#if NUM_DRUMS > 0
   // create dynamic Drum instances
   for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++) {
 #ifdef DEBUG
@@ -1036,16 +966,11 @@ void setup() {
 
     drum_mixer_r.gain(instance_id, 1.0);
     drum_mixer_l.gain(instance_id, 1.0);
-#ifdef USE_FX
     drum_reverb_send_mixer_r.gain(instance_id, 0.0);
     drum_reverb_send_mixer_l.gain(instance_id, 0.0);
-#endif
   }
-#endif
 
   // Setup EPiano
-#if defined(USE_FX)
-#if defined(USE_EPIANO)
   // EP_CHORUS
   ep_delayline_r = (int16_t*)malloc(MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
   if (ep_delayline_r == NULL) {
@@ -1087,20 +1012,13 @@ void setup() {
   ep_chorus_mixer_r.gain(1, mapfloat(EP_CHORUS_LEVEL_DEFAULT, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
   ep_chorus_mixer_l.gain(1, mapfloat(EP_CHORUS_LEVEL_DEFAULT, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
   ep_stereo_panorama.panorama(mapfloat(PANORAMA_DEFAULT, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-#endif
-#endif
 
-#if defined(USE_MICROSYNTH)
   microsynth_update_all_settings(0);
   microsynth_update_all_settings(1);
-#endif
 
-#if defined(USE_BRAIDS)
   braids_update_all_settings();
-#endif
 
   // Setup effects
-#if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
     delayline[instance_id] = (int16_t*)malloc(MOD_DELAY_SAMPLE_BUFFER * sizeof(int16_t));
     if (delayline[instance_id] != NULL) {
@@ -1128,7 +1046,6 @@ void setup() {
   LOG.print(F("MOD_DELAY_SAMPLE_BUFFER="));
   LOG.print(MOD_DELAY_SAMPLE_BUFFER, DEC);
   LOG.println(F(" samples"));
-#endif
 #endif
 
   //Setup SD WAV play
@@ -1388,7 +1305,6 @@ FLASHMEM void handle_touchscreen_mixer() {
     else
       draw_volmeter(CHAR_width_small * 8, 170, 2, 0);
 
-#ifdef USE_MICROSYNTH
     if (microsynth_peak_osc_0.available())
       draw_volmeter(CHAR_width_small * 12, 170, 3, microsynth_peak_osc_0.read());
     else
@@ -1397,14 +1313,11 @@ FLASHMEM void handle_touchscreen_mixer() {
       draw_volmeter(CHAR_width_small * 16, 170, 4, microsynth_peak_osc_1.read());
     else
       draw_volmeter(CHAR_width_small * 16, 170, 4, 0);
-#endif
 
-#ifdef USE_BRAIDS
     if (braids_peak_l.available() && braids_peak_r.available())
       draw_volmeter(CHAR_width_small * 20, 170, 5, (braids_peak_l.read() + braids_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 20, 170, 5, 0);
-#endif
 
     //msp
     draw_volmeter(CHAR_width_small * 24, 170, 6, ts.msp_peak[0]);
@@ -1412,7 +1325,6 @@ FLASHMEM void handle_touchscreen_mixer() {
     draw_volmeter(CHAR_width_small * 28, 170, 7, ts.msp_peak[1]);
     ts.msp_peak[1] = ts.msp_peak[1] / 1.05;
 
-#if NUM_DRUMS > 0
     // if (drum_mixer_peak_l.available())
     //   draw_volmeter(CHAR_width_small * 28, 170, 7, drum_mixer_peak_l.read());
     // else
@@ -1421,7 +1333,6 @@ FLASHMEM void handle_touchscreen_mixer() {
       draw_volmeter(CHAR_width_small * 32, 170, 8, (drum_mixer_peak_l.read() + drum_mixer_peak_r.read()) / 2);
     else
       draw_volmeter(CHAR_width_small * 32, 170, 8, 0);
-#endif
 
     draw_volmeter(CHAR_width_small * 38, 170, 9, reverb_return_peak_l.read());
     draw_volmeter(CHAR_width_small * 42, 170, 10, reverb_return_peak_r.read());
@@ -1668,7 +1579,6 @@ void loop() {
   }
 #endif
 
-#ifdef USE_MICROSYNTH
   if (microsynth_control_rate > MICROSYNTH_CONTROL_RATE_MS)  //update lfos, filters etc. when played live or by seq.
   {
     microsynth_control_rate = 0;
@@ -1700,9 +1610,7 @@ void loop() {
       print_formatted_number(microsynth[0].lfo_fade, 4);
     }
   }
-#endif
 
-#ifdef USE_BRAIDS
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids)) {
     display.console = true;
     handle_touchscreen_braids();
@@ -1728,7 +1636,6 @@ void loop() {
       }
     }
   }
-#endif
 
   // if (seq.running) {
   //   update_sidechain();
@@ -1772,7 +1679,6 @@ void loop() {
       }
       display.console = false;
     }
-#ifdef USE_MICROSYNTH
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  // draw MIDI in activity bars on microsynth page
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
@@ -1793,7 +1699,6 @@ void loop() {
       }
       display.console = false;
     }
-#endif
   } else
     yield();
 
@@ -1914,7 +1819,6 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
   // find the MSP preset slot for this midi channel
   byte presetslot = instance_id;
 
-#if NUM_DRUMS > 0
   if (drum_counter >= NUM_DRUMS)
     drum_counter = 0;
   uint8_t slot = drum_get_slot(DRUM_POLY);
@@ -1930,10 +1834,8 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
         drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
         drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 7000 * 127, 0.0, 0.7)));
         ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity) / 900000;
-#ifdef USE_FX
         drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
         drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 1.0)));
-#endif
 
         msp_playmode_sample_slot[slot] = msz[presetslot][y].playmode;
         note_buffer_msp[slot] = inNumber;
@@ -1963,7 +1865,6 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id) {
       }
     }
   }
-#endif
 }
 #endif
 
@@ -2095,16 +1996,12 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
         inChannel = configuration.dexed[1].midi_channel;
       else if (trk == 2)
         inChannel = configuration.epiano.midi_channel;
-#ifdef USE_MICROSYNTH
       else if (trk == 3)
         inChannel = microsynth[0].midi_channel;
       else if (trk == 4)
         inChannel = microsynth[1].midi_channel;
-#endif
-#ifdef USE_BRAIDS
       else if (trk == 5)
         inChannel = braids_osc.midi_channel;
-#endif
       else if (trk == 6)
         inChannel = msp[0].midi_channel;
       else if (trk == 7)
@@ -2112,7 +2009,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
     }
   }
 
-#ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
   if ((device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) && inNumber < 119) {
     braids_slot++;
@@ -2135,7 +2031,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
     braids_envelope[braids_slot]->noteOn();
     braids_osc.note_buffer[braids_slot] = inNumber;
   }
-#endif
 
 #ifdef MIDI_DEVICE_USB_HOST
   if (device == 1)
@@ -2185,7 +2080,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
     if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
       learn_key(inChannel, inNumber);
 
-#if NUM_DRUMS > 0
     if (activesample < 6 && seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))  // live play pitched sample
     {
       if (drum_counter >= NUM_DRUMS)
@@ -2194,10 +2088,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       float pan = mapfloat(drum_config[activesample].pan, -1.0, 1.0, 0.0, 1.0);
       drum_mixer_r.gain(slot, (1.0 - pan) * drum_config[activesample].vol_max);
       drum_mixer_l.gain(slot, pan * drum_config[activesample].vol_max);
-#ifdef USE_FX
       drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[activesample].reverb_send));
       drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[activesample].reverb_send));
-#endif
       // if (drum_config[activesample].drum_data != NULL && drum_config[activesample].len > 0)
       // {
       //        Drum[slot]->enableInterpolation(true);
@@ -2205,7 +2097,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
       //        Drum[slot]->playRaw((int16_t*)drum_config[activesample].drum_data, drum_config[activesample].len, 1);
       // }
     }
-#endif
+
     //Ignore the note when playing & recording the same note into the sequencer
     if (seq.recording == false || (seq.recording && inNumber != seq.note_in)) {
       // Check for MicroDexed
@@ -2237,7 +2129,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
           }
         }
       }
-#ifdef USE_MICROSYNTH
+
       // Check for MicroSynth
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
         // if (microsynth[instance_id].midi_channel == MIDI_CHANNEL_OMNI || microsynth[instance_id].midi_channel == inChannel) {
@@ -2293,9 +2185,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
           }
         }
       }
-#endif
 
-#if NUM_DRUMS > 0
+
       // Check for Drum
       if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI) {
         if (drum_counter >= NUM_DRUMS)
@@ -2326,10 +2217,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
 
               drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
               drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-#ifdef USE_FX
               drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
               drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-#endif
               if (drum_config[d].drum_class == DRUM_BASS)
                 sidechain_trigger = true;
 
@@ -2395,11 +2284,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
           }
         }
       }
-#endif
+
       //
       // E-Piano
       //
-#if defined(USE_EPIANO)
       if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel) {
         if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note) {
           ep.noteOn(inNumber + configuration.epiano.transpose - 24, inVelocity);
@@ -2415,13 +2303,11 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
           //#endif
         }
       }
-#endif
     }
   }
 }
 
 void stop_all_drum_slots() {
-#if NUM_DRUMS > 0
   for (uint8_t i = 0; i < NUM_DRUMS; i++) {
     if (Drum[i]->isPlaying()) {
       Drum[i]->close();
@@ -2430,11 +2316,9 @@ void stop_all_drum_slots() {
       Drum[i]->setPlaybackRate(1.0);
     }
   }
-#endif
 }
 
 uint8_t drum_get_slot(uint8_t dt) {
-#if NUM_DRUMS > 0
   bool found = false;
 
   for (uint8_t i = 0; i < NUM_DRUMS; i++) {
@@ -2470,7 +2354,6 @@ uint8_t drum_get_slot(uint8_t dt) {
   //  #endif
 
   // do not play the sample
-#endif
   return (99);
 }
 
@@ -2513,12 +2396,10 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
         inChannel = configuration.dexed[1].midi_channel;
       else if (trk == 2)
         inChannel = configuration.epiano.midi_channel;
-#ifdef USE_MICROSYNTH
       else if (trk == 3)
         inChannel = microsynth[0].midi_channel;
       else if (trk == 4)
         inChannel = microsynth[1].midi_channel;
-#endif
       else if (trk == 5)
         inChannel = msp[0].midi_channel;
       else if (trk == 6)
@@ -2526,7 +2407,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
     }
   }
 
-#ifdef USE_BRAIDS
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
   if (device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) {
     for (uint8_t i = 0; i < NUM_BRAIDS; i++) {
@@ -2534,9 +2414,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
         braids_envelope[i]->noteOff();
     }
   }
-#endif
 
-#ifdef USE_MULTISAMPLES
 
   for (uint8_t j = 0; j < NUM_MULTISAMPLES; j++) {
     if (device == 5 || msp[j].midi_channel == MIDI_CHANNEL_OMNI || msp[j].midi_channel == inChannel) {
@@ -2552,7 +2430,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
       }
     }
   }
-#endif
 
 
 #ifdef MIDI_DEVICE_USB_HOST
@@ -2565,7 +2442,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
 #endif
 
   if (device == 0) {
-#if defined(USE_MICROSYNTH)
     for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
       // if (inChannel == microsynth[instance_id].midi_channel || (inChannel == MIDI_CHANNEL_OMNI && microsynth[instance_id].midi_channel==0)) {
       if (inChannel == microsynth[instance_id].midi_channel) {
@@ -2574,7 +2450,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
           microsynth_envelope_noise[instance_id].noteOff();
       }
     }
-#endif
 
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
       if (checkMidiChannel(inChannel, instance_id)) {
@@ -2597,7 +2472,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
       }
     }
 
-#if defined(USE_EPIANO)
     if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel) {
       if (inNumber >= configuration.epiano.lowest_note && inNumber <= configuration.epiano.highest_note) {
         ep.noteOff(inNumber + configuration.epiano.transpose - 24);
@@ -2613,7 +2487,6 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device) 
 #endif
       }
     }
-#endif
   }
 }
 
@@ -2870,19 +2743,15 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
             break;
           case 203:  // CC 203: dexed panic
             MicroDexed[0]->panic();
-#if NUM_DEXED > 1
             MicroDexed[1]->panic();
-#endif
             break;
         }
       }
     }
   }
 
-#if defined(USE_EPIANO)
   if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel)
     ep.processMidiController(inCtrl, inValue);
-#endif
 }
 
 void handleAfterTouch(byte inChannel, byte inPressure) {
@@ -3304,7 +3173,6 @@ void handleClock(void) {
       LOG.println(F("ms per quarter)"));
 #endif
 
-#ifdef USE_FX
       /*
         1   1/16  =  6 ticks / 0.0625
         2   1/16T =  9 ticks / 0.09375
@@ -3329,7 +3197,6 @@ void handleClock(void) {
 #endif
         }
       }
-#endif
     }
 
     _midi_bpm = midi_bpm;
@@ -3451,12 +3318,10 @@ void handleStop(void) {
   else
     seq.current_song_step = seq.loop_start;
 
-#if defined(USE_MICROSYNTH)
   microsynth_envelope_osc[0].noteOff();
   microsynth_envelope_osc[1].noteOff();
   microsynth_envelope_noise[0].noteOff();
   microsynth_envelope_noise[1].noteOff();
-#endif
 
 #ifdef MIDI_DEVICE_USB_HOST
   midi_usb.sendRealTime(midi::Stop);
@@ -3708,13 +3573,11 @@ FLASHMEM void check_configuration_fx(void) {
   configuration.fx.eq_6 = constrain(configuration.fx.eq_6, EQ_6_MIN, EQ_6_MAX);
   configuration.fx.eq_7 = constrain(configuration.fx.eq_7, EQ_7_MIN, EQ_7_MAX);
 
-#if defined(USE_EPIANO)
   configuration.fx.ep_chorus_frequency = constrain(configuration.fx.ep_chorus_frequency, EP_CHORUS_FREQUENCY_MIN, EP_CHORUS_FREQUENCY_MAX);
   configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_WAVEFORM_MAX);
   configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX);
   configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX);
   configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX);
-#endif
 }
 
 FLASHMEM void check_configuration_dexed(uint8_t instance_id) {
@@ -3795,13 +3658,11 @@ FLASHMEM void init_configuration(void) {
   configuration.fx.reverb_roomsize = REVERB_ROOMSIZE_DEFAULT;
   configuration.fx.reverb_level = REVERB_LEVEL_DEFAULT;
 
-#if defined(USE_EPIANO)
   configuration.fx.ep_chorus_frequency = EP_CHORUS_FREQUENCY_DEFAULT;
   configuration.fx.ep_chorus_waveform = EP_CHORUS_WAVEFORM_DEFAULT;
   configuration.fx.ep_chorus_depth = EP_CHORUS_DEPTH_DEFAULT;
   configuration.fx.ep_chorus_level = EP_CHORUS_LEVEL_DEFAULT;
   configuration.fx.ep_reverb_send = REVERB_SEND_DEFAULT;
-#endif
 
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
     configuration.dexed[instance_id].bank = SYSEXBANK_DEFAULT;
@@ -3852,7 +3713,6 @@ FLASHMEM void init_configuration(void) {
     MicroDexed[instance_id]->ControllersRefresh();
   }
 
-#if defined(USE_EPIANO)
   configuration.epiano.decay = EP_DECAY_DEFAULT;
   configuration.epiano.release = EP_RELEASE_DEFAULT;
   configuration.epiano.hardness = EP_HARDNESS_DEFAULT;
@@ -3872,7 +3732,6 @@ FLASHMEM void init_configuration(void) {
   configuration.epiano.pan = PANORAMA_DEFAULT;
   configuration.epiano.velocity_sense = EP_VELOCITY_SENSE_DEFAULT;
   configuration.epiano.midi_channel = EP_MIDI_CHANNEL_DEFAULT;
-#endif
 
   set_volume(configuration.sys.vol, configuration.sys.mono);
 
@@ -3951,7 +3810,6 @@ FLASHMEM uint8_t find_drum_number_from_note(uint8_t note) {
 }
 
 FLASHMEM void set_fx_params(void) {
-#if defined(USE_FX)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
     // CHORUS
     switch (configuration.fx.chorus_waveform[instance_id]) {
@@ -4034,7 +3892,6 @@ FLASHMEM void set_fx_params(void) {
   reverb_mixer_r.gain(REVERB_MIX_CH_DRUMS, 1.0);  // Drums Reverb-Send
   reverb_mixer_l.gain(REVERB_MIX_CH_DRUMS, 1.0);  // Drums Reverb-Send
 
-#if defined(USE_EPIANO)
   reverb_mixer_r.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
   reverb_mixer_l.gain(REVERB_MIX_CH_EPIANO, mapfloat(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, 1.0));  // EPiano Reverb-Send
 
@@ -4068,12 +3925,9 @@ FLASHMEM void set_fx_params(void) {
   ep_chorus_mixer_l.gain(0, 1.0);
   ep_chorus_mixer_r.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
   ep_chorus_mixer_l.gain(1, mapfloat(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX, 0.0, 0.5));
-#endif
 
   master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
   master_mixer_l.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
-
-#endif
 
   init_MIDI_send_CC();
 }
@@ -4102,7 +3956,6 @@ FLASHMEM void set_voiceconfig_params(uint8_t instance_id) {
 }
 
 FLASHMEM void set_epiano_params(void) {
-#if defined(USE_EPIANO)
 #ifdef DEBUG
   LOG.print(F("Setting EPiano parameters... "));
 #endif
@@ -4121,9 +3974,6 @@ FLASHMEM void set_epiano_params(void) {
   ep.setVolume(mapfloat(configuration.epiano.sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 1.0));
 #ifdef DEBUG
   LOG.println(F("done."));
-#endif
-#else
-  ;
 #endif
 }
 
@@ -4195,9 +4045,7 @@ FLASHMEM void generate_version_string(char* buffer, uint8_t len) {
 #elif defined(TEENSY4_1)
   strncat(buffer, " - 4.1", 6);
 #endif
-#if defined(USE_FX)
   strncat(buffer, " - FX", 5);
-#endif
 #if defined(MAX_NOTES)
   strncat(buffer, " - MAX ", 7);
   itoa(MAX_NOTES, tmp, 10);

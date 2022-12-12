@@ -50,7 +50,6 @@ extern void helptext_r(const char* str);
 extern AudioSynthDexed* MicroDexed[NUM_DEXED];
 extern void UI_func_microsynth(uint8_t param);
 
-#ifdef USE_MICROSYNTH
 extern AudioSynthWaveform microsynth_waveform[NUM_MICROSYNTH];
 extern AudioEffectEnvelope microsynth_envelope_osc[NUM_MICROSYNTH];
 extern AudioSynthNoisePink microsynth_noise[NUM_MICROSYNTH];
@@ -58,23 +57,18 @@ extern AudioEffectEnvelope microsynth_envelope_noise[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern elapsedMillis microsynth_delay_timer[2];
-#endif
 
 extern uint8_t find_first_song_step_with_pattern(uint8_t pattern);
 extern uint8_t find_first_chain_step_with_pattern(uint8_t pattern);
 sequencer_t seq;
 
-#ifdef USE_MICROSYNTH
 microsynth_t microsynth[2];
-#endif
 
-#ifdef USE_BRAIDS
 extern braids_t braids_osc;
 extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern boolean braids_lfo_direction[NUM_BRAIDS];
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
 extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
-#endif
 
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
@@ -277,7 +271,6 @@ void sequencer_part1(void) {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(configuration.epiano.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
               }
-#ifdef USE_MICROSYNTH
               else if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned for Microsynth
               {
                 if (seq.note_data[seq.current_pattern[d]][seq.step] == MIDI_C8)  // is noise only, do not transpose note
@@ -290,7 +283,6 @@ void sequencer_part1(void) {
                     handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 0);
                 }
               }
-#endif
 
               if (seq.note_data[seq.current_pattern[d]][seq.step] == MIDI_C8)  // is noise only, do not transpose note
                 seq.prev_note[d] = seq.note_data[seq.current_pattern[d]][seq.step];
@@ -313,13 +305,11 @@ void sequencer_part1(void) {
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(configuration.epiano.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
                 }
-#ifdef USE_BRAIDS
                 else if (seq.instrument[d] == 5)  //Chords: Braids
                 {
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(braids_osc.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
-#endif
 #ifdef MIDI_DEVICE_USB_HOST
                 else if (seq.instrument[d] > 15 && seq.instrument[d] < 32)  // track is for external USB MIDI
                 {
@@ -343,12 +333,10 @@ void sequencer_part1(void) {
             seq.arp_step = 0;
             seq.arp_num_notes_count = 0;
             seq.arp_counter = 0;
-#ifdef USE_MICROSYNTH
             if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned to Microsynth
             {
               seq.arp_volume_base = microsynth[seq.instrument[d] - 3].sound_intensity;
             }
-#endif
             seq.arp_note = seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12);
             seq.arp_chord = seq.vel[seq.current_pattern[d]][seq.step] - 200;
           }
@@ -360,7 +348,6 @@ void sequencer_part1(void) {
 
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned to Microsynth
               {
-#ifdef USE_MICROSYNTH
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0);
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
@@ -369,7 +356,6 @@ void sequencer_part1(void) {
                   if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
-#endif
               } else if (seq.instrument[d] < 2)  // track is assigned to dexed
               {
                 if (check_probability(seq.current_pattern[d]))
@@ -394,18 +380,15 @@ void sequencer_part1(void) {
 
               }
 #endif
-#ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5)  //Arp up: Braids
               {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
-#endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift];
             } else if (seq.arp_style == 1) {                         //arp down
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned to Microsynth
               {
-#ifdef USE_MICROSYNTH
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], seq.arp_volume_base - (seq.arp_num_notes_count * (seq.arp_volume_base / seq.arp_num_notes_max)), 0);
 
@@ -414,7 +397,6 @@ void sequencer_part1(void) {
                   if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
-#endif
               } else if (seq.instrument[d] < 2)  // track is assigned to dexed
               {
                 if (check_probability(seq.current_pattern[d]))
@@ -438,20 +420,17 @@ void sequencer_part1(void) {
                   handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
               }
 #endif
-#ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5)  //Arp down : Braids
               {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
-#endif
               seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift];
             } else if (seq.arp_style == 2) {  //arp up & down
 
               if (seq.arp_step <= seq.arp_length) {
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned to Microsynth
                 {
-#ifdef USE_MICROSYNTH
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], 90), 0);
 
@@ -460,7 +439,6 @@ void sequencer_part1(void) {
                     if (seq.arp_step >= seq.arp_length)
                       seq.arp_step = 0;
                   }
-#endif
                 } else if (seq.instrument[d] < 2)  // track is assigned to dexed
                 {
                   if (check_probability(seq.current_pattern[d]))
@@ -484,18 +462,15 @@ void sequencer_part1(void) {
                     handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
                 }
 #endif
-#ifdef USE_BRAIDS
                 else if (seq.instrument[d] == 5)  //Arp up-down: Braids
                 {
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
-#endif
                 seq.arp_note_prev = seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step];
               } else {
                 if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned to Microsynth
                 {
-#ifdef USE_MICROSYNTH
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step], check_vel_variation(seq.current_pattern[d], 90), 0);
 
@@ -504,7 +479,6 @@ void sequencer_part1(void) {
                     if (seq.arp_step >= seq.arp_length)
                       seq.arp_step = 0;
                   }
-#endif
                 } else if (seq.instrument[d] < 2)  // track is assigned to dexed
                 {
                   if (check_probability(seq.current_pattern[d]))
@@ -535,7 +509,6 @@ void sequencer_part1(void) {
               uint8_t rnd1 = random(seq.arp_length);
               if (seq.instrument[d] == 3 || seq.instrument[d] == 4)  // track is assigned to Microsynth
               {
-#ifdef USE_MICROSYNTH
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], 90), 0);
 
@@ -544,15 +517,12 @@ void sequencer_part1(void) {
                   if (seq.arp_step >= seq.arp_length)
                     seq.arp_step = 0;
                 }
-#endif
               }
-#ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5)  //Arp random: Braids
               {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(braids_osc.midi_channel, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
               }
-#endif
               else if (seq.instrument[d] < 2)  // track is assigned to dexed
               {
                 if (check_probability(seq.current_pattern[d]))
@@ -689,14 +659,10 @@ void sequencer_part2(void) {
             handleNoteOff(configuration.dexed[seq.instrument[d]].midi_channel, seq.prev_note[d], 0, 0);
           else if (seq.instrument[d] == 2 && seq.ticks == 7)  //epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d], 0, 0);
-#ifdef USE_MICROSYNTH
           else if (seq.instrument[d] > 2 && seq.instrument[d] < 5)
             handleNoteOff(microsynth[seq.instrument[d] - 3].midi_channel, seq.prev_note[d], 0, 0);
-#endif
-#ifdef USE_BRAIDS
           else if (seq.instrument[d] == 5 && seq.ticks == 7)
             handleNoteOff(braids_osc.midi_channel, seq.prev_note[d], 0, 4);
-#endif
           else if (seq.instrument[d] > 5 && seq.instrument[d] < 16)  // MultiSampler
             handleNoteOff(msp[seq.instrument[d] - 6].midi_channel, seq.prev_note[d], 0, 0);
 #ifdef MIDI_DEVICE_USB_HOST
@@ -736,10 +702,8 @@ void sequencer_part2(void) {
               }
 #endif
 
-#ifdef USE_BRAIDS
               else if (seq.instrument[d] == 5 && seq.ticks == 7)
                 handleNoteOff(braids_osc.midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 4);
-#endif
               seq.noteoffsent[d] = true;
             }
           }
@@ -761,14 +725,10 @@ void sequencer_part2(void) {
             handleNoteOff(seq.instrument[d] - 31, seq.arp_note_prev, 0, 2);
           }
 #endif
-#ifdef USE_MICROSYNTH
           else if (seq.instrument[d] > 2)  // track is assigned to Microsynth
             handleNoteOff(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note_prev, 0, 0);
-#endif
-#ifdef USE_BRAIDS
           else if (seq.instrument[d] == 5 && seq.ticks == 7)
             handleNoteOff(braids_osc.midi_channel, seq.arp_note_prev, 0, 4);
-#endif
           seq.noteoffsent[d] = true;
         }
       }
