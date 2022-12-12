@@ -862,8 +862,11 @@ extern void sequencer_part2(void);
    SETUP
  ***********************************************************************/
 void setup() {
+  
+#ifdef REMOTE_CONSOLE
   Serial.begin(SERIAL_SPEED);
-  delay(1000); // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
+  delay(1000);  // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
+#endif
 
 #ifdef DEBUG
   LOG.begin(SERIAL_SPEED);
