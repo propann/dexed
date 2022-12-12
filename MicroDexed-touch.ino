@@ -84,9 +84,6 @@ using namespace TeensyTimerTool;
 #include "UI.hpp"
 #include "drums.h"
 #include "drumset.h"
-#ifdef SGTL5000_AUDIO_ENHANCE
-#include "control_sgtl5000plus.h"
-#endif
 #if defined(USE_EPIANO)
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
@@ -254,11 +251,7 @@ AudioAnalyzePeak reverb_return_peak_l;
 // Outputs
 #if defined(TEENSY_AUDIO_BOARD)
 AudioOutputI2S i2s1;
-#ifdef SGTL5000_AUDIO_ENHANCE
-AudioControlSGTL5000Plus sgtl5000;
-#else
 AudioControlSGTL5000 sgtl5000;
-#endif
 #elif defined(I2S_AUDIO_ONLY)
 AudioOutputI2S i2s1;
 #elif defined(TGA_AUDIO_BOARD)
@@ -950,15 +943,10 @@ void setup() {
   //sgtl5000.adcHighPassFilterEnable();
   //sgtl5000.adcHighPassFilterDisable();
 #endif
-#ifdef SGTL5000_AUDIO_ENHANCE
-  sgtl5000.audioPostProcessorEnable();
-  sgtl5000.init_parametric_eq(7);
-#else
   sgtl5000.audioProcessorDisable();
   sgtl5000.autoVolumeDisable();
   sgtl5000.surroundSoundDisable();
   sgtl5000.enhanceBassDisable();
-#endif
 
 #ifdef DEBUG
   LOG.println(F("Teensy-Audio-Board enabled."));
@@ -4085,21 +4073,6 @@ FLASHMEM void set_fx_params(void) {
   master_mixer_r.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
   master_mixer_l.gain(MASTER_MIX_CH_REVERB, volume_transform(mapfloat(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, VOL_MAX_FLOAT)));
 
-#endif
-#ifdef SGTL5000_AUDIO_ENHANCE
-  sgtl5000.setEQFc(1, float(configuration.fx.eq_1));
-  sgtl5000.setEQGain(2, mapfloat(configuration.fx.eq_2, EQ_2_MIN, EQ_2_MAX, -9.9, 9.9));
-  sgtl5000.setEQGain(3, mapfloat(configuration.fx.eq_3, EQ_3_MIN, EQ_3_MAX, -9.9, 9.9));
-  sgtl5000.setEQGain(4, mapfloat(configuration.fx.eq_4, EQ_4_MIN, EQ_4_MAX, -9.9, 9.9));
-  sgtl5000.setEQGain(5, mapfloat(configuration.fx.eq_5, EQ_5_MIN, EQ_5_MAX, -9.9, 9.9));
-  sgtl5000.setEQGain(6, mapfloat(configuration.fx.eq_6, EQ_6_MIN, EQ_6_MAX, -9.9, 9.9));
-  sgtl5000.setEQFc(7, float(configuration.fx.eq_7));
-  for (uint8_t band = 1; band <= 7; band++) {
-    sgtl5000.commitFilter(band);
-#ifdef DEBUG
-    sgtl5000.show_params(band);
-#endif
-  }
 #endif
 
   init_MIDI_send_CC();
