@@ -1768,9 +1768,9 @@ void loop() {
   }
 #endif
 
-  if (seq.running) {
-    update_sidechain();
-  }
+  //if (seq.running) {
+   // update_sidechain();
+  //}
 
   if (control_rate > CONTROL_RATE_MS) {
     control_rate = 0;
