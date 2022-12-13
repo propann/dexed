@@ -1752,8 +1752,8 @@ FLASHMEM void print_track_steps_detailed_only_current_playing_note(int xpos, int
         }
       }
     } else if (seq.content_type[seq.active_pattern] > 0) {  //Inst Track or Chord or Arp
-     if (seq.cycle_touch_element != 1)
-      print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, currentstep, false);
+      if (seq.cycle_touch_element != 1)
+        print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, currentstep, false);
     }
     // {
     //   display.setCursor(x + CHAR_width_small * 17, y);

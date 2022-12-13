@@ -1105,14 +1105,14 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_AUX_DELAY2,
 };
 
-enum fm_modes { 
+enum fm_modes {
   FM_BROWSE_FILES,
   FM_DELETE_FILE,
   FM_COPY_PRESETS,
   FM_COPY_TO_FLASH,
   FM_COPY_TO_PC,
   FM_PLAY_SAMPLE
-} ;
+};
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
@@ -1123,7 +1123,7 @@ inline float mapfloat(float val, float in_min, float in_max, float out_min, floa
 
 // For developers only
 #if defined DEBUG && DEBUG == 2
-  #define LOG SerialUSB1 // dual serial : SerialUSB1 to separate logs
+#define LOG SerialUSB1  // dual serial : SerialUSB1 to separate logs
 #else
-  #define LOG Serial
+#define LOG Serial
 #endif
