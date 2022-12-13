@@ -709,7 +709,7 @@ bool sidechain_trigger;
 sdcard_t sdcard_infos;
 
 #ifdef COMPILE_FOR_FLASH
-  flash_t flash_infos;
+flash_t flash_infos;
 #endif
 
 // uint32_t peak_dexed = 0;
@@ -788,7 +788,11 @@ extern void sequencer_part2(void);
    SETUP
  ***********************************************************************/
 void setup() {
+  
+#ifdef REMOTE_CONSOLE
   Serial.begin(SERIAL_SPEED);
+  delay(1000);  // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
+#endif
 
 #ifdef DEBUG
   LOG.begin(SERIAL_SPEED);
@@ -1392,7 +1396,7 @@ FLASHMEM void handle_touchscreen_midi_channel_page() {
 
 FLASHMEM void sub_step_recording() {
   if (seq.running == false) {
-    if (seq.step_recording && seq.recording == false && seq.note_in > 0) {
+    if (seq.step_recording && seq.recording == false && seq.note_in > 0 && seq.note_in_velocity > 0) {
       uint8_t cur_step = 0;
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
         cur_step = seq.menu - 3;
@@ -1401,13 +1405,13 @@ FLASHMEM void sub_step_recording() {
 
       if (cur_step < 16) {
         seq.note_data[seq.active_pattern][cur_step] = seq.note_in;
-#if NUM_DRUMS > 0
+
         if (seq.content_type[seq.active_pattern] == 0 && get_sample_note(activesample) > 209)  // pitched sample
         {
           seq.vel[seq.active_pattern][cur_step] = get_sample_note(activesample);
         } else
-#endif
           seq.vel[seq.active_pattern][cur_step] = seq.note_in_velocity;
+
         setCursor_textGrid(cur_step, 1);
         display.setTextSize(2);
         if (seq.vel[seq.active_pattern][cur_step] > 209)
@@ -1416,9 +1420,9 @@ FLASHMEM void sub_step_recording() {
           set_pattern_content_type_color(seq.active_pattern);
         display.print(seq_find_shortname(cur_step)[0]);
         seq_printVelGraphBar_single_step(cur_step, GREY1);
+
         print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step);
-        seq.note_in = 0;
-        seq.note_in_velocity = 0;
+
         display.setTextSize(2);
         display.setTextColor(GREEN, GREY2);
         if (seq.auto_advance_step > 0) {
@@ -1444,6 +1448,8 @@ FLASHMEM void sub_step_recording() {
           }
         }
       }
+      seq.note_in = 0;
+      seq.note_in_velocity = 0;
     }
   }
 }
@@ -1452,37 +1458,57 @@ FLASHMEM void sub_step_recording() {
 uint8_t incomingSerialByte;
 //#endif
 
+float pseudo_log_curve(float value) {
+  // return (mapfloat(_pseudo_log * arm_sin_f32(value), 0.0, _pseudo_log * arm_sin_f32(1.0), 0.0, 1.0));
+  //return (1 - sqrt(1 - value * value));
+  //return (pow(2, value) - 1);
+  return (pow(value, 2.2));
+}
+
 float sc_dexed0 = 0.0;
 float sc_reverb = 0.0;
 
+
 void update_sidechain() {
 
-   if (sidechain_trigger) {
-     
-      sc_dexed0 = 0.04;
-      sc_reverb=0.04;
-      sidechain_trigger=false;
-      master_mixer_r.gain(0, sc_dexed0);
-      master_mixer_l.gain(0, sc_dexed0);
-
-      master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-      master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sidechain)) {
+    display.setTextSize(2);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    setCursor_textGrid(24, 1);
+    if (sidechain_trigger) {
+      display.print(F("T"));
+    }
+    if (control_rate > CONTROL_RATE_MS && sidechain_trigger == false) {
+      display.print(F(" "));
+    }
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
 
-  if ( sidechain_trigger==false) {
+  if (sidechain_trigger) {
 
-    if (sc_dexed0 < VOL_MAX_FLOAT) {
-      sc_dexed0 =  sc_dexed0 +  sc_dexed0*((float)configuration.dexed[0].sidechain_time/10000);
-      master_mixer_r.gain(0, sc_dexed0);
-      master_mixer_l.gain(0, sc_dexed0);
-    }
- if (sc_reverb < VOL_MAX_FLOAT) {
-      sc_reverb = sc_reverb + sc_reverb*((float)configuration.fx.reverb_sidechain_time/10000);
-      master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-      master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-    }
+    sc_dexed0 = 0.0;
+    sc_reverb = 0.0;
 
+    master_mixer_r.gain(0, sc_dexed0);
+    master_mixer_l.gain(0, sc_dexed0);
+
+    master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+    master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+    sidechain_trigger = false;
+  }
+
+  if (sc_dexed0 < VOL_MAX_FLOAT) {
+
+    // sc_dexed0 = sc_dexed0 + sc_dexed0 * ((float)configuration.dexed[0].sidechain_time / 15000);
+    sc_dexed0 = sc_dexed0 + pseudo_log_curve((float)0.0005 * configuration.dexed[0].sidechain_time);
+    master_mixer_r.gain(0, sc_dexed0);
+    master_mixer_l.gain(0, sc_dexed0);
+  }
+  if (sc_reverb < VOL_MAX_FLOAT) {
+    // sc_reverb = sc_reverb + sc_reverb * ((float)configuration.fx.reverb_sidechain_time / 15000);
+    sc_reverb = sc_reverb + pseudo_log_curve((float)0.0005 * configuration.fx.reverb_sidechain_time);
+    master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+    master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
   }
 }
 
@@ -1637,9 +1663,9 @@ void loop() {
     }
   }
 
-  // if (seq.running) {
-  //   update_sidechain();
-  // }
+  if (seq.running) {
+    update_sidechain();
+  }
 
   if (control_rate > CONTROL_RATE_MS) {
     control_rate = 0;
@@ -2230,7 +2256,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                   Drum[slot]->setPlaybackRate(drum_config[d].pitch);
                 }
                 if (drum_config[d].drum_class == DRUM_BASS)
-                sidechain_trigger = true;
+                  sidechain_trigger = true;
 
 #ifdef COMPILE_FOR_PROGMEM
                 Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
@@ -2241,7 +2267,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
                 if (drum_config[d].drum_class == DRUM_BASS)
-                sidechain_trigger = true;
+                  sidechain_trigger = true;
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -4340,8 +4366,7 @@ FLASHMEM void show_cpu_and_mem_usage(void) {
   if (AudioProcessorUsageMax() > 99.9) {
     cpumax++;
     LOG.print(F("*"));
-  }
-  else
+  } else
     LOG.print(F(" "));
   LOG.print(F("CPU : "));
   LOG.print(AudioProcessorUsage(), 2);
