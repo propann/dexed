@@ -7456,7 +7456,8 @@ void UI_func_seq_pattern_editor(uint8_t param) {
     }
     if (seq.menu == 2) {
       //seq_pattern_editor_update_disp_instr();
-      display.fillRect(0, 3 * CHAR_height + 17, 212, 8, COLOR_BACKGROUND);
+      if (seq.cycle_touch_element != 1)
+        display.fillRect(0, 3 * CHAR_height + 17, 212, 8, COLOR_BACKGROUND);
       if (seq.active_function != 99)
         display.setTextColor(RED, COLOR_BACKGROUND);
       else
@@ -7487,9 +7488,12 @@ void UI_func_seq_pattern_editor(uint8_t param) {
         if (seq.note_editor_view != 0) {
           seq.note_editor_view = 0;
           border3_clear();
-          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
-        } else
-          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+          if (seq.cycle_touch_element != 1)
+            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+        } else {
+          if (seq.cycle_touch_element != 1)
+            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+        }
       } else {
         if (seq.cycle_touch_element == 0) {
           // Print note buffer when switching track and track is an instrument track
