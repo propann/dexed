@@ -3596,14 +3596,6 @@ FLASHMEM void check_configuration_fx(void) {
     configuration.fx.reverb_send[instance_id] = constrain(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX);
   }
 
-  configuration.fx.eq_1 = constrain(configuration.fx.eq_1, EQ_1_MIN, EQ_1_MAX);
-  configuration.fx.eq_2 = constrain(configuration.fx.eq_2, EQ_2_MIN, EQ_2_MAX);
-  configuration.fx.eq_3 = constrain(configuration.fx.eq_3, EQ_3_MIN, EQ_3_MAX);
-  configuration.fx.eq_4 = constrain(configuration.fx.eq_4, EQ_4_MIN, EQ_4_MAX);
-  configuration.fx.eq_5 = constrain(configuration.fx.eq_5, EQ_5_MIN, EQ_5_MAX);
-  configuration.fx.eq_6 = constrain(configuration.fx.eq_6, EQ_6_MIN, EQ_6_MAX);
-  configuration.fx.eq_7 = constrain(configuration.fx.eq_7, EQ_7_MIN, EQ_7_MAX);
-
   configuration.fx.ep_chorus_frequency = constrain(configuration.fx.ep_chorus_frequency, EP_CHORUS_FREQUENCY_MIN, EP_CHORUS_FREQUENCY_MAX);
   configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_WAVEFORM_MAX);
   configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX);

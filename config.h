@@ -665,34 +665,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define GAMEPAD_SPEED_MAX 300
 #define GAMEPAD_SPEED_DEFAULT 180
 
-#define EQ_1_MIN 15
-#define EQ_1_MAX 250
-#define EQ_1_DEFAULT 50
-
-#define EQ_2_MIN -99
-#define EQ_2_MAX 99
-#define EQ_2_DEFAULT 0
-
-#define EQ_3_MIN -99
-#define EQ_3_MAX 99
-#define EQ_3_DEFAULT 0
-
-#define EQ_4_MIN -99
-#define EQ_4_MAX 99
-#define EQ_4_DEFAULT 0
-
-#define EQ_5_MIN -99
-#define EQ_5_MAX 99
-#define EQ_5_DEFAULT 0
-
-#define EQ_6_MIN -99
-#define EQ_6_MAX 99
-#define EQ_6_DEFAULT 0
-
-#define EQ_7_MIN 8
-#define EQ_7_MAX 18
-#define EQ_7_DEFAULT 15
-
 #define EP_CHORUS_FREQUENCY_MIN 0
 #define EP_CHORUS_FREQUENCY_MAX 100
 #define EP_CHORUS_FREQUENCY_DEFAULT 0
