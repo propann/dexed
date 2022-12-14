@@ -253,10 +253,10 @@ FLASHMEM void virtual_keyboard_key_on() {
           {
             set_sample_pitch(ts.virtual_keyboard_instrument - 8, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x + halftones - 72) / 12.00) * get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
             handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
-            touch_control_rate = TOUCH_CONTROL_RATE_MS-50;
+            touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
           } else {
             handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
-            touch_control_rate = TOUCH_CONTROL_RATE_MS-50;
+            touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
             display.console = true;
             display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, RED);  // white key
             display.console = false;
@@ -275,10 +275,10 @@ FLASHMEM void virtual_keyboard_key_on() {
             {
               set_sample_pitch(ts.virtual_keyboard_instrument - 8, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x - 72) / 12.00) * get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
-              touch_control_rate = TOUCH_CONTROL_RATE_MS-50;
+              touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
             } else {
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, 120);
-              touch_control_rate = TOUCH_CONTROL_RATE_MS-50;
+              touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
               display.console = true;
               display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, RED);  // BLACK key
               display.console = false;
@@ -304,7 +304,8 @@ FLASHMEM void virtual_keyboard_key_off_white(uint8_t note) {
 
   for (uint8_t x = 0; x < 10; x++) {
     if (x == note) {
-      handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
+      // handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
+      handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 0);
       display.console = true;
       display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, COLOR_SYSTEXT);  // white key
       display.console = false;
@@ -330,7 +331,8 @@ FLASHMEM void virtual_keyboard_key_off_black(uint8_t note) {
 
   for (uint8_t x = 0; x < 16; x++) {
     if (x == note) {
-      handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
+      //  handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
+      handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 0);
       display.console = true;
       display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, COLOR_BACKGROUND);  // BLACK key
       display.console = false;
@@ -454,35 +456,35 @@ FLASHMEM void virtual_keyboard_update_all_key_states() {
 }
 
 FLASHMEM void get_scaled_touch_point() {
-    LCDML.SCREEN_resetTimer();
-    if (remote_touched == false) {
+  LCDML.SCREEN_resetTimer();
+  if (remote_touched == false) {
 #ifdef GENERIC_DISPLAY
-      if (ts.finished_calibration) {
-        ts.p = touch.getPixel();
-        // ts.p.x = map(ts.p.x, ts.calib_x_min, ts.calib_x_max, 0, TFT_HEIGHT);
-        // ts.p.y = map(ts.p.y, ts.calib_y_min, ts.calib_y_max, 0, TFT_WIDTH);
-      } else {
-        // Scale from ~0->4000 to tft
-        ts.p = touch.getPoint();
-        ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-        ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
-      }
+    if (ts.finished_calibration) {
+      ts.p = touch.getPixel();
+      // ts.p.x = map(ts.p.x, ts.calib_x_min, ts.calib_x_max, 0, TFT_HEIGHT);
+      // ts.p.y = map(ts.p.y, ts.calib_y_min, ts.calib_y_max, 0, TFT_WIDTH);
+    } else {
+      // Scale from ~0->4000 to tft
+      ts.p = touch.getPoint();
+      ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+      ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
+    }
 #endif
 
 #ifdef ADAFRUIT_DISPLAY
 
-      // Retrieve a point
-      ts.p = touch.getPoint();
-      // rotate coordinate system
-      // flip it around to match the screen.
-      // ts.p.x = map(ts.p.x, 0, 240, 240, 0);
-      // ts.p.y = map(ts.p.y, 0, 320, 320, 0);
-      int y = DISPLAY_HEIGHT - ts.p.x;
-      int x = ts.p.y;
-      ts.p.x = x;
-      ts.p.y = y;
+    // Retrieve a point
+    ts.p = touch.getPoint();
+    // rotate coordinate system
+    // flip it around to match the screen.
+    // ts.p.x = map(ts.p.x, 0, 240, 240, 0);
+    // ts.p.y = map(ts.p.y, 0, 320, 320, 0);
+    int y = DISPLAY_HEIGHT - ts.p.x;
+    int x = ts.p.y;
+    ts.p.x = x;
+    ts.p.y = y;
 #endif
-    }
+  }
 }
 
 FLASHMEM void handle_touchscreen_voice_select() {
@@ -606,7 +608,7 @@ FLASHMEM void handle_touchscreen_pattern_editor() {
         virtual_keyboard_print_buttons();
         virtual_keyboard_print_current_instrument();
       }
-    } else if (check_button_on_grid(36, 16))  // toggle seq. playmode song/pattern only
+    } else if (check_button_on_grid(36, 16) && seq.cycle_touch_element != 1)  // toggle seq. playmode song/pattern only
     {
       if (seq.play_mode)
         seq.play_mode = false;
@@ -620,7 +622,7 @@ FLASHMEM void handle_touchscreen_pattern_editor() {
         draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
       } else  // play only current pattern
         draw_button_on_grid(36, 16, "LOOP", "PATT", 2);
-    } else if (check_button_on_grid(45, 22))  // hunt pattern
+    } else if (check_button_on_grid(45, 22) && seq.cycle_touch_element != 1)  // hunt pattern
     {
       if (seq.hunt_pattern)
         seq.hunt_pattern = false;
@@ -631,10 +633,10 @@ FLASHMEM void handle_touchscreen_pattern_editor() {
         draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
       else  // play only current pattern
         draw_button_on_grid(45, 22, "HUNT", "PATT", 2);
-    } else if (check_button_on_grid(36, 22))  // jump song editor
+    } else if (check_button_on_grid(36, 22) && seq.cycle_touch_element != 1)  // jump song editor
     {
       LCDML.OTHER_jumpToFunc(UI_func_song);
-    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element != 1)
       if (check_button_on_grid(45, 16))  // jump pattern editor functions
       {
 

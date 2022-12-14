@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.8.5"
+#define VERSION "1.4.8.6"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -1066,14 +1066,14 @@ enum reverb_mixer_ports {
   REVERB_MIX_CH_AUX_DELAY2,
 };
 
-enum fm_modes { 
+enum fm_modes {
   FM_BROWSE_FILES,
   FM_DELETE_FILE,
   FM_COPY_PRESETS,
   FM_COPY_TO_FLASH,
   FM_COPY_TO_PC,
   FM_PLAY_SAMPLE
-} ;
+};
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
@@ -1084,7 +1084,7 @@ inline float mapfloat(float val, float in_min, float in_max, float out_min, floa
 
 // For developers only
 #if defined DEBUG && DEBUG == 2
-  #define LOG SerialUSB1 // dual serial : SerialUSB1 to separate logs
+#define LOG SerialUSB1  // dual serial : SerialUSB1 to separate logs
 #else
-  #define LOG Serial
+#define LOG Serial
 #endif

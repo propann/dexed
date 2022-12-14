@@ -308,7 +308,7 @@ File frec;
 // Static patching of audio objects
 //
 AudioConnection patchCord[] = {
-// Audio chain tail
+  // Audio chain tail
   { reverb_mixer_r, 0, reverb, 0 },
   { reverb_mixer_l, 0, reverb, 1 },
   { reverb, 0, master_mixer_r, MASTER_MIX_CH_REVERB },
@@ -788,7 +788,7 @@ extern void sequencer_part2(void);
    SETUP
  ***********************************************************************/
 void setup() {
-  
+
 #ifdef REMOTE_CONSOLE
   Serial.begin(SERIAL_SPEED);
   delay(1000);  // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
@@ -1053,11 +1053,6 @@ void setup() {
 #endif
 
   //Setup SD WAV play
-
-#ifdef DEBUG
-  LOG.print(F("Creating WAV preview instance "));
-  //  LOG.println(instance_id, DEC);
-#endif
 
   create_audio_wav_preview_chain();
   master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_SD, 0.4);
@@ -1420,8 +1415,8 @@ FLASHMEM void sub_step_recording() {
           set_pattern_content_type_color(seq.active_pattern);
         display.print(seq_find_shortname(cur_step)[0]);
         seq_printVelGraphBar_single_step(cur_step, GREY1);
-
-        print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step);
+        if (seq.cycle_touch_element != 1)
+          print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step);
 
         display.setTextSize(2);
         display.setTextColor(GREEN, GREY2);
@@ -1430,14 +1425,16 @@ FLASHMEM void sub_step_recording() {
             seq.menu = seq.menu + 1;
             setCursor_textGrid(cur_step + 1, 1);
             display.print(seq_find_shortname(cur_step + 1)[0]);
-            print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step + 1);
+            if (seq.cycle_touch_element != 1)
+              print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step + 1);
           } else {
             if (seq.auto_advance_step == 1)  // continue auto advance after last step on first step
             {
               seq.menu = seq.menu - 15;
               setCursor_textGrid(cur_step - 15, 1);
               display.print(seq_find_shortname(cur_step - 15)[0]);
-              print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step - 15);
+              if (seq.cycle_touch_element != 1)
+                print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step - 15);
             } else  //stop at last step
             {
               // disable step record
@@ -1448,6 +1445,7 @@ FLASHMEM void sub_step_recording() {
           }
         }
       }
+
       seq.note_in = 0;
       seq.note_in_velocity = 0;
     }
@@ -1663,9 +1661,9 @@ void loop() {
     }
   }
 
-  if (seq.running) {
-    update_sidechain();
-  }
+  //if (seq.running) {
+  // update_sidechain();
+  //}
 
   if (control_rate > CONTROL_RATE_MS) {
     control_rate = 0;
@@ -1704,8 +1702,7 @@ void loop() {
         midi_decay_timer_dexed = 0;
       }
       display.console = false;
-    }
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  // draw MIDI in activity bars on microsynth page
+    } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))  // draw MIDI in activity bars on microsynth page
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++) {
         display.console = true;
@@ -2007,33 +2004,41 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber) {
 }
 
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
-  if ((seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) || (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
-    // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
-    // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
 
-    if (seq.current_track_type_of_active_pattern == 0)  // drums
-      inChannel = DRUM_MIDI_CHANNEL;
-    else {
-      uint8_t trk = 0;
-      trk = seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)];
-      if (trk == 0)
-        inChannel = configuration.dexed[0].midi_channel;
-      else if (trk == 1)
-        inChannel = configuration.dexed[1].midi_channel;
-      else if (trk == 2)
-        inChannel = configuration.epiano.midi_channel;
-      else if (trk == 3)
-        inChannel = microsynth[0].midi_channel;
-      else if (trk == 4)
-        inChannel = microsynth[1].midi_channel;
-      else if (trk == 5)
-        inChannel = braids_osc.midi_channel;
-      else if (trk == 6)
-        inChannel = msp[0].midi_channel;
-      else if (trk == 7)
-        inChannel = msp[1].midi_channel;
-    }
-  }
+  // clash with virtual keyboard - comment out for now:
+
+  //   if ((seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) ||
+  //   (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
+  //     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
+  //     // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
+
+  //     if (seq.current_track_type_of_active_pattern == 0)  // drums
+  //       inChannel = DRUM_MIDI_CHANNEL;
+  //     else {
+  //       uint8_t trk = 0;
+  //       trk = seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)];
+  //       if (trk == 0)
+  //         inChannel = configuration.dexed[0].midi_channel;
+  //       else if (trk == 1)
+  //         inChannel = configuration.dexed[1].midi_channel;
+  //       else if (trk == 2)
+  //         inChannel = configuration.epiano.midi_channel;
+  // #ifdef USE_MICROSYNTH
+  //       else if (trk == 3)
+  //         inChannel = microsynth[0].midi_channel;
+  //       else if (trk == 4)
+  //         inChannel = microsynth[1].midi_channel;
+  // #endif
+  // #ifdef USE_BRAIDS
+  //       else if (trk == 5)
+  //         inChannel = braids_osc.midi_channel;
+  // #endif
+  //       else if (trk == 6)
+  //         inChannel = msp[0].midi_channel;
+  //       else if (trk == 7)
+  //         inChannel = msp[1].midi_channel;
+  //     }
+  //   }
 
   //if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
   if ((device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) && inNumber < 119) {

@@ -543,45 +543,47 @@ FLASHMEM void print_empty_spaces(uint8_t spaces) {
 }
 
 FLASHMEM void print_shortcut_navigator() {
-  display.setTextSize(1);
-  display.setCursor(CHAR_width_small * 36, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element < 6)
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  else
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("S");
-  display.setCursor(CHAR_width_small * 37, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 7)
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  else
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("C");
-  display.setCursor(CHAR_width_small * 38, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 7)
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  else
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("T");
+  if (seq.cycle_touch_element != 1) {
+    display.setTextSize(1);
+    display.setCursor(CHAR_width_small * 36, 28 * (CHAR_height_small));
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element < 6)
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("S");
+    display.setCursor(CHAR_width_small * 37, 28 * (CHAR_height_small));
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 5 && seq.cycle_touch_element < 7)
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("C");
+    display.setCursor(CHAR_width_small * 38, 28 * (CHAR_height_small));
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.cycle_touch_element > 7)
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("T");
 
 
-  display.setCursor(CHAR_width_small * 39, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  else
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("P");
-  display.setCursor(CHAR_width_small * 40, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  else
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("V");
-  display.setCursor(CHAR_width_small * 41, 28 * (CHAR_height_small));
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay))
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  else
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
-  display.print("I");
+    display.setCursor(CHAR_width_small * 39, 28 * (CHAR_height_small));
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("P");
+    display.setCursor(CHAR_width_small * 40, 28 * (CHAR_height_small));
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("V");
+    display.setCursor(CHAR_width_small * 41, 28 * (CHAR_height_small));
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_epiano) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay))
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    else
+      display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print("I");
+  }
 }
 
 FLASHMEM void print_song_mode_help() {
@@ -1715,7 +1717,8 @@ FLASHMEM void print_track_steps_detailed_only_current_playing_note(int xpos, int
         }
       }
     } else if (seq.content_type[seq.active_pattern] > 0) {  //Inst Track or Chord or Arp
-      print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, currentstep, false);
+      if (seq.cycle_touch_element != 1)
+        print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, currentstep, false);
     }
     // {
     //   display.setCursor(x + CHAR_width_small * 17, y);
@@ -5967,7 +5970,8 @@ void UI_func_seq_vel_editor(uint8_t param) {
   if (LCDML.FUNC_setup())    // ****** SETUP *********
   {
     // setup function
-    draw_button_on_grid(45, 16, "", "", 0);  // clear button
+    if (seq.cycle_touch_element != 1)
+      draw_button_on_grid(45, 16, "", "", 0);  // clear button
     if (seq.menu_status != 1) {
       display.fillScreen(COLOR_BACKGROUND);
       seq_pattern_editor_update_dynamic_elements();
@@ -6125,9 +6129,12 @@ void UI_func_seq_vel_editor(uint8_t param) {
         if (seq.note_editor_view != 1) {
           seq.note_editor_view = 1;
           border3_clear();
-          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
-        } else if (seq.active_function == 99)
-          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
+          if (seq.cycle_touch_element != 1)
+            print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
+        } else if (seq.active_function == 99) {
+          if (seq.cycle_touch_element != 1)
+            print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
+        }
       }
     } else if (seq.menu == 1) {
       display.setTextSize(2);
@@ -6184,8 +6191,10 @@ void UI_func_seq_vel_editor(uint8_t param) {
           print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 1, false, true);
         else
           print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 1, false, false);
-      } else if (seq.active_function == 99)
-        print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, false);
+      } else if (seq.active_function == 99) {
+        if (seq.cycle_touch_element != 1)
+          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, false);
+      }
       setCursor_textGrid(3, 0);
       if (seq.note_data[seq.active_pattern][seq.menu - 1] > 0) {
         if (seq.content_type[seq.active_pattern] == 0)  //is Drumtrack
@@ -6326,8 +6335,10 @@ void UI_func_seq_vel_editor(uint8_t param) {
       if (seq.content_type[seq.active_pattern] == 0)  //Drum Mode
       {
         print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 1, true, true);
-      } else
-        print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
+      } else {
+        if (seq.cycle_touch_element != 1)
+          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 1, true);
+      }
       prev_option = 99;
     }
 
@@ -7391,7 +7402,8 @@ void UI_func_seq_pattern_editor(uint8_t param) {
     }
     if (seq.menu == 2) {
       //seq_pattern_editor_update_disp_instr();
-      display.fillRect(0, 3 * CHAR_height + 17, 212, 8, COLOR_BACKGROUND);
+      if (seq.cycle_touch_element != 1)
+        display.fillRect(0, 3 * CHAR_height + 17, 212, 8, COLOR_BACKGROUND);
       if (seq.active_function != 99)
         display.setTextColor(RED, COLOR_BACKGROUND);
       else
@@ -7422,9 +7434,12 @@ void UI_func_seq_pattern_editor(uint8_t param) {
         if (seq.note_editor_view != 0) {
           seq.note_editor_view = 0;
           border3_clear();
-          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
-        } else
-          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+          if (seq.cycle_touch_element != 1)
+            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+        } else {
+          if (seq.cycle_touch_element != 1)
+            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, false, true);
+        }
       } else {
         if (seq.cycle_touch_element == 0) {
           // Print note buffer when switching track and track is an instrument track
@@ -7442,15 +7457,19 @@ void UI_func_seq_pattern_editor(uint8_t param) {
           if (seq.note_editor_view != 1) {
             seq.note_editor_view = 1;
             border3_clear();
-            print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
-          } else
-            print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
+            if (seq.cycle_touch_element != 1)
+              print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
+          } else {
+            if (seq.cycle_touch_element != 1)
+              print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
+          }
         }
       }
       display.setTextSize(2);
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
-      print_current_sample_and_pitch_buffer();
+      if (seq.cycle_touch_element != 1)
+        print_current_sample_and_pitch_buffer();
       //seq_sub_print_track_assignments(CHAR_width * 12, CHAR_height * 2, false);
     }
     if (seq.menu == 3) {
@@ -7466,9 +7485,11 @@ void UI_func_seq_pattern_editor(uint8_t param) {
     if (seq.menu > 2 && seq.menu < 19 && seq.active_function != 40) {
       if (seq.content_type[seq.active_pattern] == 0)  //Drum Mode
       {
-        print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 3, false, false);
+        if (seq.cycle_touch_element != 1)
+          print_track_steps_detailed(0, CHAR_height * 4 + 3, seq.menu - 3, false, false);
       } else {
-        print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
+        if (seq.cycle_touch_element != 1)
+          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
       }
       if (seq.menu == 3)
         setCursor_textGrid(0, 1);
