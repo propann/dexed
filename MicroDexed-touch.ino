@@ -1541,7 +1541,7 @@ FLASHMEM void sub_step_recording() {
               // disable step record
               seq.step_recording = false;
               //handleStop
-              draw_button_on_grid(36, 1, "STEP", "RECORD", 2);  //print step recorder icon
+              draw_button_on_grid(36, 1, "STEP", "RECORD", 1);  //print step recorder icon
             }
           }
         }
@@ -1645,7 +1645,8 @@ void loop() {
     handle_touchscreen_voice_select();
     display.console = true;
     scope.draw_scope(217, 30, 102);
-  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ||
+   LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
     handle_touchscreen_pattern_editor();
     display.console = true;
     if (seq.running)
@@ -3458,7 +3459,7 @@ void handleStop(void) {
       //      scope.clear();
       //       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))  // clear screen space on right side from scope in pattern editor
       //      display.fillRect(36 * CHAR_width_small + button_size_x * CHAR_width_small , 1 * CHAR_height_small, 10, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
-      draw_button_on_grid(36, 1, "STEP", "RECORD", 2);  //print step recorder icon
+      draw_button_on_grid(36, 1, "STEP", "RECORD", 1);  //print step recorder icon
     }
     MicroDexed[0]->panic();
 #if NUM_DEXED > 1

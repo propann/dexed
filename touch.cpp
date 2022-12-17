@@ -189,6 +189,30 @@ FLASHMEM void print_current_chord() {
   }
 }
 
+FLASHMEM void virtual_keyboard_print_velocity_bar() {
+  //velocity bar disabled
+  if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.step_recording == false && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.step_recording == false && seq.cycle_touch_element == 1)) {
+    display.console = 1;
+    display.fillRect(1, 10 * CHAR_height_small, DISPLAY_WIDTH, 32, COLOR_BACKGROUND);
+    display.console = 0;
+  } else if (seq.cycle_touch_element == 1) {
+    //velocity bar enabled
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setTextSize(1);
+    display.setCursor(1 * CHAR_width_small, 11 * CHAR_height_small + 1);
+    display.print(F("VELOCITY"));
+    display.setCursor(1 * CHAR_width_small, 12 * CHAR_height_small + 3);
+    print_formatted_number(ts.virtual_keyboard_velocity, 3);
+    display.console = 1;
+    display.drawRect(CHAR_width_small * 10, 11 * CHAR_height_small, CHAR_width * 17 - CHAR_width_small * 10, 20, GREY1);
+    display.console = 1;
+    display.fillRect(CHAR_width_small * 10 + 1, 11 * CHAR_height_small + 2, ts.virtual_keyboard_velocity * 1.12, 16, COLOR_PITCHSMP);
+    display.console = 1;
+    display.fillRect(CHAR_width_small * 10 + 2 + ts.virtual_keyboard_velocity * 1.13, 11 * CHAR_height_small + 2, CHAR_width * 17 - CHAR_width_small * 10 - 3 - ts.virtual_keyboard_velocity * 1.13, 16, COLOR_BACKGROUND);
+    display.console = 0;
+  }
+}
+
 FLASHMEM void virtual_keyboard_print_current_instrument() {
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.setTextSize(2);
@@ -262,10 +286,17 @@ FLASHMEM void virtual_keyboard_key_on() {
           if (ts.virtual_keyboard_instrument > 7)  //pitched samples
           {
             set_sample_pitch(ts.virtual_keyboard_instrument - 8, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x + halftones - 72) / 12.00) * get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
-            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
+            if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, ts.virtual_keyboard_velocity);
+            else
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
             touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
           } else {
-            handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
+            if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1)
+                || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, ts.virtual_keyboard_velocity);
+            else
+              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
             touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
             display.console = true;
             display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, RED);  // white key
@@ -284,10 +315,18 @@ FLASHMEM void virtual_keyboard_key_on() {
             if (ts.virtual_keyboard_instrument > 7)  //pitched samples
             {
               set_sample_pitch(ts.virtual_keyboard_instrument - 8, (float)pow(2, (ts.virtual_keyboard_octave * 12 + x - 72) / 12.00) * get_sample_p_offset(ts.virtual_keyboard_instrument - 7));
-              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
+              if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1)
+                  || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
+                handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, ts.virtual_keyboard_velocity);
+              else
+                handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
               touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
             } else {
-              handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, 120);
+              if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1)
+                  || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
+                handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, ts.virtual_keyboard_velocity);
+              else
+                handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, 120);
               touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
               display.console = true;
               display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, RED);  // BLACK key
@@ -362,6 +401,9 @@ FLASHMEM void virtual_keyboard() {
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
     display.fillRect(0, DISPLAY_HEIGHT - 18, 1, 18, GREY3);  //clear 1 column of pixels from previous displayed help text
 
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1 && seq.step_recording)
+    virtual_keyboard_print_velocity_bar();
+
   //draw white keys
   for (uint8_t x = 0; x < 10; x++) {
     display.console = true;
@@ -369,6 +411,7 @@ FLASHMEM void virtual_keyboard() {
     display.console = false;
     if (x == 0 || x == 7 || x == 14) {
       display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
       display.print("C");
       display.print(ts.virtual_keyboard_octave + oct_count);
       oct_count++;
@@ -590,17 +633,53 @@ FLASHMEM void handle_touchscreen_voice_select() {
   virtual_keyboard_update_all_key_states();
 }
 
+FLASHMEM void update_step_rec_buttons() {
+  //if (seq.step_recording && seq.cycle_touch_element == 1) {
+  if (seq.cycle_touch_element == 1 && seq.step_recording) {
+    if (seq.auto_advance_step == 1)
+      draw_button_on_grid(45, 10, "AUTO", "ADV.", 1);  //print step recorder icon
+    else if (seq.auto_advance_step == 2)
+      draw_button_on_grid(45, 10, "AUTO", "AD+ST", 1);  //print step recorder icon
+    else
+      draw_button_on_grid(45, 10, "KEEP", "STEP", 1);  //print step recorder icon
+  }
+  if (seq.step_recording) {
+    draw_button_on_grid(36, 1, "RECORD", "ACTIVE", 2);  //print step recorder icon
+  } else {
+    draw_button_on_grid(36, 1, "STEP", "RECORD", 1);  //print step recorder icon
+  }
+}
+
 FLASHMEM void handle_touchscreen_pattern_editor() {
   if (touch.touched()) {
     get_scaled_touch_point();
+    if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1)) {
+      if (ts.p.y > 6 * CHAR_height_small && ts.p.y < 12 * CHAR_height_small + 20 && ts.p.x < 230) {
+        ts.p.x = ts.p.x / 1.4;
+        if (ts.p.x - 22 < 22)
+          ts.p.x = 22;
+        if (ts.p.x > 127 + 22)
+          ts.p.x = 127 + 22;
+        ts.virtual_keyboard_velocity = ts.p.x - 22;
+        virtual_keyboard_print_velocity_bar();
+        update_step_rec_buttons();
+      }
+    }
+    if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1)) {
 
+      if (check_button_on_grid(45, 10) && seq.step_recording) {
+        seq.auto_advance_step++;
+        if (seq.auto_advance_step > 2)
+          seq.auto_advance_step = 0;
+      }
+      update_step_rec_buttons();
+    }
     if (check_button_on_grid(36, 1) && seq.running == false) {
       seq.note_in = 0;
       seq.step_recording = !seq.step_recording;
-      if (seq.step_recording)
-        draw_button_on_grid(36, 1, "RECORD", "ACTIVE", 1);  //print step recorder icon
-      else
-        draw_button_on_grid(36, 1, "STEP", "RECORD", 2);  //print step recorder icon
+      update_step_rec_buttons();
+      virtual_keyboard_print_velocity_bar();
+
     } else if (check_button_on_grid(45, 1)) {
       border3_large();
       border3_large_clear();
