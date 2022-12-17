@@ -658,7 +658,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
   _SPI_CLOCK_READ = spi_clock_read;  //#define ILI9341_SPICLOCK_READ 2000000
 
   // LOG.printf_P(PSTR("_t3n::begin mosi:%d miso:%d SCLK:%d CS:%d DC:%d SPI clocks: %lu %lu\n"), _mosi, _miso, _sclk, _cs, _dc, _SPI_CLOCK, _SPI_CLOCK_READ);
-  // Serial.flush();
+  // LOG.flush();
 
   if (SPI.pinIsMOSI(_mosi) && ((_miso == 0xff) || SPI.pinIsMISO(_miso)) && SPI.pinIsSCK(_sclk)) {
     _pspi = &SPI;
@@ -709,7 +709,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
 
     LOG.printf_P(PSTR("    mosi:%d miso:%d SCLK:%d CS:%d DC:%d\n"), _mosi, _miso,
                     _sclk, _cs, _dc);
-    Serial.flush();
+    LOG.flush();
 #endif
     return;  // most likely will go bomb
   }

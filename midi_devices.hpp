@@ -126,6 +126,7 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 
 void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event) {
   char text[10];
+  bool _internal = false;
 
   switch (event) {
     case midi::NoteOn:
@@ -141,6 +142,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
       strcpy(text, "NoteOff");
       break;
     case midi::ControlChange:
+      if (inData1 >= 20 && inData1 <= 31) _internal = true;
       handleControlChange(inChannel, inData1, inData2);
       strcpy(text, "CC");
       break;
@@ -164,11 +166,11 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
       break;
   }
 #ifdef DEBUG
-  LOG.printf_P(PSTR("[%s] %s"), midi_device, text);
+  LOG.printf_P(PSTR("handle_generic [%s] %s"), midi_device, text);
 #endif
 
-  // MIDI THRU
-  if (configuration.sys.soft_midi_thru == 1) {
+  // MIDI THRU (only for non _internal MDT)
+  if (configuration.sys.soft_midi_thru == 1 && !_internal) {
 #ifdef MIDI_DEVICE_USB
     if (strcmp(MIDI_BY_USB, midi_device)) {
       switch (event) {
