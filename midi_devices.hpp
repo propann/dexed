@@ -125,7 +125,9 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #define MIDI_BY_USB "USB_MIDI"
 
 void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event) {
+#ifdef DEBUG
   char text[10];
+#endif
   bool _internal = false;
 
   switch (event) {
@@ -133,40 +135,56 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
       seq.note_in = inData1;
       seq.note_in_velocity = inData2;
       handleNoteOn(inChannel, inData1, inData2, 0);
+#ifdef DEBUG
       strcpy(text, "NoteOn");
+#endif
       break;
     case midi::NoteOff:
       seq.note_in = inData1;
       seq.note_in_velocity = inData2;
       handleNoteOff(inChannel, inData1, inData2, 0);
+#ifdef DEBUG
       strcpy(text, "NoteOff");
+#endif
       break;
     case midi::ControlChange:
+      // Internal CC ?
       if (inData1 >= 20 && inData1 <= 31) _internal = true;
+
       handleControlChange(inChannel, inData1, inData2);
+#ifdef DEBUG
       strcpy(text, "CC");
+#endif
       break;
     case midi::AfterTouchChannel:
       handleAfterTouch(inChannel, inData1);
+#ifdef DEBUG
       strcpy(text, "Mono AT");
+#endif
       break;
     case midi::PitchBend:
       handlePitchBend(inChannel, inData1);
+#ifdef DEBUG
       strcpy(text, "PB");
+#endif
       break;
     case midi::ProgramChange:
       handleProgramChange(inChannel, inData1);
+#ifdef DEBUG
       strcpy(text, "PC");
+#endif
       break;
     case midi::AfterTouchPoly:
       handleAfterTouchPoly(inChannel, inData1, inData2);
+#ifdef DEBUG
       strcpy(text, "Poly AT");
+#endif
       break;
     default:
       break;
   }
 #ifdef DEBUG
-  LOG.printf_P(PSTR("handle_generic [%s] %s"), midi_device, text);
+  LOG.printf_P(PSTR("MIDI handle_generic [%s] by [%], ch:%d d1:%d d2:%d"), test, midi_device, inChannel, inData1, inData2);
 #endif
 
   // MIDI THRU (only for non _internal MDT)

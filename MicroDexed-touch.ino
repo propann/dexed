@@ -864,13 +864,12 @@ extern void sequencer_part2(void);
 void setup() {
 
 #ifdef REMOTE_CONSOLE
-  Serial.begin(SERIAL_SPEED);
-  delay(1000);  // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
+  while(!Serial && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
+  // delay(1000);  // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
 #endif
 
 #ifdef DEBUG
-  LOG.begin(SERIAL_SPEED);
-  LOG.println("LOG started");
+  while(!LOG && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
 
   LOG.println(CrashReport);
   //setup_debug_message();
@@ -887,7 +886,7 @@ void setup() {
   LOG.print(F_CPU / 1000000.0, 1);
   LOG.println(F(" MHz"));
   LOG.println(F("<setup start>"));
-  Serial.flush();
+  LOG.flush();
 #endif
 
 #ifdef ADAFRUIT_DISPLAY
@@ -2677,6 +2676,26 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
       }
     }
 
+    // MDT internal CC
+    if (inCtrl >= 20 && inCtrl <= 31) {
+      // case 20:  // RIGHT
+      // case 21:  // LEFT
+      // case 22:  // UP
+      // case 23:  // DOWN
+      // case 24:  // SELECT
+      // // case 25: // START
+      // case 26:  // BUTTON B
+      // case 27:  // BUTTON A
+      // case 28:  // init display at remote connection
+      // case 29:  // remote touch pressed X
+      // case 30:  // remote touch pressed Y
+      // case 31:  // remote touch released
+      remote_MIDI_CC = inCtrl;
+      remote_MIDI_CC_value = inValue;
+      return;
+    }
+    // end MDT internal CC
+
     for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
       if (checkMidiChannel(inChannel, instance_id)) {
 #ifdef DEBUG
@@ -2750,24 +2769,6 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue) {
               LCDML.loop_menu();
             }
             break;
-
-          // MDT internal CC
-          case 20:  // RIGHT
-          case 21:  // LEFT
-          case 22:  // UP
-          case 23:  // DOWN
-          case 24:  // SELECT
-          // case 25: // START
-          case 26:  // BUTTON B
-          case 27:  // BUTTON A
-          case 28:  // init display at remote connection
-          case 29:  // remote touch pressed X
-          case 30:  // remote touch pressed Y
-          case 31:  // remote touch released
-            remote_MIDI_CC = inCtrl;
-            remote_MIDI_CC_value = inValue;
-            break;
-            // end MDT internal CC
 
           case 32:  // BankSelect LSB
 #ifdef DEBUG
@@ -4726,11 +4727,11 @@ FLASHMEM void show_configuration(void) {
     LOG.println(configuration.dexed[instance_id].portamento_time, DEC);
     LOG.print(F("  OP Enabled           "));
     LOG.println(configuration.dexed[instance_id].op_enabled, DEC);
-    Serial.flush();
+    LOG.flush();
   }
 
   LOG.println();
-  Serial.flush();
+  LOG.flush();
 }
 
 FLASHMEM void show_patch(uint8_t instance_id) {

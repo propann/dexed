@@ -725,7 +725,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
 
   _pspi->begin();
 
-  // LOG.println(F("   T4 setup CS/DC")); Serial.flush();
+  // LOG.println(F("   T4 setup CS/DC")); LOG.flush();
   pending_rx_count = 0;  // Make sure it is zero if we we do a second begin...
   _csport = portOutputRegister(_cs);
   _cspinmask = digitalPinToBitMask(_cs);
