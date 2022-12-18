@@ -6441,6 +6441,7 @@ void print_sample_type() {
       display.print(F("POLY/SYNTH"));
     else
       display.print(F("other     "));
+    print_empty_spaces(6);
   }
 }
 
@@ -6968,9 +6969,9 @@ void virtual_keyboard_print_buttons() {
 void seq_pattern_editor_update_dynamic_elements() {
   if (seq.running == false) {
     if (seq.step_recording)
-      draw_button_on_grid(36, 1, "RECORD", "ACTIVE", 1);  //print step recorder icon
+      draw_button_on_grid(36, 1, "RECORD", "ACTIVE", 2);  //print step recorder icon
     else
-      draw_button_on_grid(36, 1, "STEP", "RECORD", 2);  //print step recorder icon
+      draw_button_on_grid(36, 1, "STEP", "RECORD", 1);  //print step recorder icon
   }
   if (seq.cycle_touch_element == 0) {
     draw_button_on_grid(45, 1, "", "", 99);  //print keyboard icon
@@ -7193,6 +7194,7 @@ void UI_func_seq_pattern_editor(uint8_t param) {
       seq_printAllSeqSteps();
       seq_printVelGraphBar();
     }
+
     //    display.setTextSize(1);
     //    display.setTextColor(GREY2, COLOR_BACKGROUND);
     //    display.setCursor(48 * CHAR_width_small,  9 * (CHAR_height_small + 2) + 10  );
@@ -7264,7 +7266,7 @@ void UI_func_seq_pattern_editor(uint8_t param) {
     if (LCDML.BT_checkEnter())  //handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
 
-      if (seq.menu == 0 && seq.active_function == 0) {
+      if (seq.menu == 0 && seq.active_function == 0 && seq.cycle_touch_element != 1) {
         if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
           draw_button_on_grid(45, 16, "JUMP", "TOOLS", 0);
         display.setTextSize(2);
