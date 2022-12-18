@@ -858,19 +858,30 @@ extern void handle_touchscreen_sample_editor(void);
 extern void handle_touchscreen_test_touchscreen(void);
 extern void sequencer_part2(void);
 
+
+// Hook (https://www.pjrc.com/teensy/td_startup.html)
+extern "C" void startup_late_hook(void);
+extern "C" volatile uint32_t systick_millis_count;
+
+void startup_late_hook(void) {
+  // force millis() to be 300 to skip startup delays
+  systick_millis_count = 300;
+
+#ifdef REMOTE_CONSOLE
+  while(!Serial && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
+#endif
+
+#if defined(DEBUG) && !defined(REMOTE_CONSOLE)
+  while(!LOG && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
+#endif
+}
+
 /***********************************************************************
    SETUP
  ***********************************************************************/
 void setup() {
 
-#ifdef REMOTE_CONSOLE
-  while(!Serial && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
-  // delay(1000);  // seems to be required for some Teensy when not connected to a pc but powering from external power supply // 900 working for my external USB power bank
-#endif
-
 #ifdef DEBUG
-  while(!LOG && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
-
   LOG.println(CrashReport);
   //setup_debug_message();
 
