@@ -184,7 +184,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
       break;
   }
 #ifdef DEBUG
-  LOG.printf_P(PSTR("MIDI handle_generic [%s] by [%], ch:%d d1:%d d2:%d"), test, midi_device, inChannel, inData1, inData2);
+  LOG.printf_P(PSTR("MIDI handle_generic [%s] by [%s], ch:%d d1:%d d2:%d"), text, midi_device, inChannel, inData1, inData2);
 #endif
 
   // MIDI THRU (only for non _internal MDT)
