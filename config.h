@@ -139,9 +139,6 @@
 #define DEFAULT_DEXED_MIDI_CHANNEL_INST0 1
 #define DEFAULT_DEXED_MIDI_CHANNEL_INST1 2
 
-// FX-CHAIN ENABLE/DISABLE
-#define USE_FX 1
-
 // NUMBER OF PARALLEL SAMPLEDRUMS
 #define NUM_DRUMS 8  // set 0 to disable Drums
 
@@ -159,33 +156,23 @@
 #define NUM_CHAINS 32
 
 // SAMPLER
-#define USE_MULTISAMPLES
 #define NUM_MULTISAMPLES 2
 #define NUM_MULTISAMPLE_ZONES 8
 #define DEFAULT_MSP_MIDI_CHANNEL_INST0 7
 #define DEFAULT_MSP_MIDI_CHANNEL_INST1 8
 
 // EPIANO
-#define USE_EPIANO
-#ifdef USE_EPIANO
 #define NUM_EPIANO_VOICES 16
 #define DEFAULT_EP_MIDI_CHANNEL 3
-#endif
 
 // MICROSYNTH
-#define USE_MICROSYNTH
-#ifdef USE_MICROSYNTH
 #define NUM_MICROSYNTH 2
 #define DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST0 4
 #define DEFAULT_MICROSYNTH_MIDI_CHANNEL_INST1 5
-#endif
 
 // BRAIDS
-#define USE_BRAIDS
-#ifdef USE_BRAIDS
 #define NUM_BRAIDS 8
 #define DEFAULT_BRAIDS_MIDI_CHANNEL 6
-#endif
 
 #define VIRT_KEYB_YPOS 166
 
@@ -197,7 +184,6 @@
 
 // SGTL5000
 #ifdef TEENSY_AUDIO_BOARD
-#define SGTL5000_AUDIO_ENHANCE 1
 //#define SGTL5000_AUDIO_THRU 1
 #define SGTL5000_HEADPHONE_VOLUME 0.8
 #endif
@@ -210,19 +196,7 @@
 //*************************************************************************************************
 #define SAMPLE_RATE 44100
 
-#ifdef USE_FX
-#if defined(USE_EPIANO)
 #define AUDIO_MEM SAMPLE_RATE* NUM_DEXED* DELAY_MAX_TIME / 128000 + 36 + 14
-#else
-#define AUDIO_MEM SAMPLE_RATE* NUM_DEXED* DELAY_MAX_TIME / 128000 + 36
-#endif
-#else
-#if defined(USE_EPIANO)
-#define AUDIO_MEM NUM_DEXED * 15 + 14
-#else
-#define AUDIO_MEM NUM_DEXED * 15
-#endif
-#endif
 
 #ifdef TEENSY_AUDIO_BOARD
 /*
@@ -691,34 +665,6 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define GAMEPAD_SPEED_MAX 300
 #define GAMEPAD_SPEED_DEFAULT 180
 
-#define EQ_1_MIN 15
-#define EQ_1_MAX 250
-#define EQ_1_DEFAULT 50
-
-#define EQ_2_MIN -99
-#define EQ_2_MAX 99
-#define EQ_2_DEFAULT 0
-
-#define EQ_3_MIN -99
-#define EQ_3_MAX 99
-#define EQ_3_DEFAULT 0
-
-#define EQ_4_MIN -99
-#define EQ_4_MAX 99
-#define EQ_4_DEFAULT 0
-
-#define EQ_5_MIN -99
-#define EQ_5_MAX 99
-#define EQ_5_DEFAULT 0
-
-#define EQ_6_MIN -99
-#define EQ_6_MAX 99
-#define EQ_6_DEFAULT 0
-
-#define EQ_7_MIN 8
-#define EQ_7_MAX 18
-#define EQ_7_DEFAULT 15
-
 #define EP_CHORUS_FREQUENCY_MIN 0
 #define EP_CHORUS_FREQUENCY_MAX 100
 #define EP_CHORUS_FREQUENCY_DEFAULT 0
@@ -768,13 +714,8 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define EP_STEREO_DEFAULT 50
 
 #define EP_POLYPHONY_MIN 0
-#if defined(USE_EPIANO)
 #define EP_POLYPHONY_MAX NUM_EPIANO_VOICES
 #define EP_POLYPHONY_DEFAULT NUM_EPIANO_VOICES
-#else
-#define EP_POLYPHONY_MAX 16
-#define EP_POLYPHONY_DEFAULT 16
-#endif
 
 #define EP_TUNE_MIN 1
 #define EP_TUNE_MAX 199
@@ -806,11 +747,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 
 #define EP_MIDI_CHANNEL_MIN MIDI_CHANNEL_OMNI
 #define EP_MIDI_CHANNEL_MAX 16
-#if defined(USE_EPIANO)
 #define EP_MIDI_CHANNEL_DEFAULT DEFAULT_EP_MIDI_CHANNEL
-#else
-#define EP_MIDI_CHANNEL_DEFAULT 3
-#endif
 
 // Number of samples in each delay line
 #define BRAIDS_FLANGE_DELAY_LENGTH (6 * AUDIO_BLOCK_SAMPLES)
@@ -927,7 +864,6 @@ typedef struct epiano_s {
   uint8_t sidechain_time;
 } epiano_t;
 
-#ifdef USE_MICROSYNTH
 typedef struct microsynth_s {
   int coarse;
   int detune;
@@ -976,9 +912,7 @@ typedef struct microsynth_s {
   uint8_t vel_mod_filter_noise = 0;
   uint8_t sidechain_time;
 } microsynth_t;
-#endif
 
-#ifdef USE_BRAIDS
 typedef struct braids_s {
   uint8_t sound_intensity;
   uint8_t algo;
@@ -1006,7 +940,6 @@ typedef struct braids_s {
   uint8_t note_buffer[NUM_BRAIDS];
   uint8_t sidechain_time;
 } braids_t;
-#endif
 
 typedef struct multisample_s {
   char name[18];

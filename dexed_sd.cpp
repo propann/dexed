@@ -49,15 +49,11 @@ extern void check_configuration_fx(void);
 extern void check_configuration_epiano(void);
 extern void update_euclidean(void);
 
-#ifdef USE_MICROSYNTH
 extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern void microsynth_update_all_settings(uint8_t instance_id);
-#endif
 
-#ifdef USE_BRAIDS
 extern braids_t braids_osc;
 extern void braids_update_all_settings();
-#endif
 
 extern uint8_t GAMEPAD_UP_0;
 extern uint8_t GAMEPAD_UP_1;
@@ -937,7 +933,6 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id) {
    SD MICROSYNTH
  ******************************************************************************/
 FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
-#ifdef USE_MICROSYNTH
   if (sd_card > 0) {
     ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
@@ -1013,12 +1008,10 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
 #endif
     }
   }
-#endif
   return (false);
 }
 
 FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
-#ifdef USE_MICROSYNTH
   if (sd_card > 0) {
     ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
@@ -1089,7 +1082,6 @@ FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id) {
     LOG.println(F(" on SD."));
 #endif
   }
-#endif
   return (false);
 }
 
@@ -1155,13 +1147,6 @@ FLASHMEM bool load_sd_fx_json(uint8_t number) {
         configuration.fx.reverb_hidamp = data_json["reverb_hidamp"];
         configuration.fx.reverb_diffusion = data_json["reverb_diffusion"];
         configuration.fx.reverb_level = data_json["reverb_level"];
-        configuration.fx.eq_1 = data_json["eq_1"];
-        configuration.fx.eq_2 = data_json["eq_2"];
-        configuration.fx.eq_3 = data_json["eq_3"];
-        configuration.fx.eq_4 = data_json["eq_4"];
-        configuration.fx.eq_5 = data_json["eq_5"];
-        configuration.fx.eq_6 = data_json["eq_6"];
-        configuration.fx.eq_7 = data_json["eq_7"];
         configuration.fx.ep_chorus_frequency = data_json["ep_chorus_frequency"];
         configuration.fx.ep_chorus_waveform = data_json["ep_chorus_waveform"];
         configuration.fx.ep_chorus_depth = data_json["ep_chorus_depth"];
@@ -1234,13 +1219,6 @@ FLASHMEM bool save_sd_fx_json(uint8_t number) {
       data_json["reverb_hidamp"] = configuration.fx.reverb_hidamp;
       data_json["reverb_diffusion"] = configuration.fx.reverb_diffusion;
       data_json["reverb_level"] = configuration.fx.reverb_level;
-      data_json["eq_1"] = configuration.fx.eq_1;
-      data_json["eq_2"] = configuration.fx.eq_2;
-      data_json["eq_3"] = configuration.fx.eq_3;
-      data_json["eq_4"] = configuration.fx.eq_4;
-      data_json["eq_5"] = configuration.fx.eq_5;
-      data_json["eq_6"] = configuration.fx.eq_6;
-      data_json["eq_7"] = configuration.fx.eq_7;
       data_json["ep_chorus_frequency"] = configuration.fx.ep_chorus_frequency;
       data_json["ep_chorus_waveform"] = configuration.fx.ep_chorus_waveform;
       data_json["ep_chorus_depth"] = configuration.fx.ep_chorus_depth;
@@ -1558,7 +1536,7 @@ FLASHMEM bool save_sd_sys_json(void) {
 /******************************************************************************
    SD BRAIDS
  ******************************************************************************/
-#ifdef USE_BRAIDS
+
 FLASHMEM bool load_sd_braids_json(uint8_t number) {
   if (number < 0)
     return (false);
@@ -1689,7 +1667,6 @@ FLASHMEM bool save_sd_braids_json(uint8_t number) {
   AudioInterrupts();
   return (false);
 }
-#endif
 
 /******************************************************************************
    SD MULTIBAND
@@ -2206,9 +2183,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   save_sd_fx_json(number);
   save_sd_epiano_json(number);
   save_sd_multisample_presets_json(number);
-#ifdef USE_BRAIDS
   save_sd_braids_json(number);
-#endif
   save_sd_multiband_json(number);
 
 
@@ -2505,9 +2480,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
   load_sd_transpose_json(number);
   load_sd_chain_json(number);
   load_sd_multisample_presets_json(number);
-#ifdef USE_BRAIDS
   load_sd_braids_json(number);
-#endif
   load_sd_multiband_json(number);
   configuration.sys.performance_number = number;
 

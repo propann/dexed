@@ -41,19 +41,13 @@
 #include "touch.h"
 #include "splash_image.h"
 
-#if defined(USE_EPIANO)
 #include "synth_mda_epiano.h"
 extern AudioSynthEPiano ep;
-#endif
-#if defined(USE_EPIANO) || defined(USE_MICROSYNTH) || defined(USE_BRAIDS)
 #include "effect_stereo_panorama.h"
-#endif
 
-#ifdef USE_BRAIDS
 #include <synth_braids.h>
 extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 extern void braids_update_single_setting();
-#endif
 
 elapsedMillis gamepad_millis;
 int gamepad_accelerate;
@@ -221,23 +215,14 @@ extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 
 extern sequencer_t seq;
 
-#ifdef USE_MULTISAMPLES
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-#endif
 
 uint8_t generic_active_function = 99;
 uint8_t generic_temp_select_menu;
 uint8_t generic_menu;
 
-#ifdef SGTL5000_AUDIO_ENHANCE
-#include "control_sgtl5000plus.h"
-extern AudioControlSGTL5000Plus sgtl5000;
-#else
-extern AudioControlSGTL5000 sgtl5000;
-#endif
-
-#if defined(USE_FX)
+// FX
 extern AudioSynthWaveform* chorus_modulator[NUM_DEXED];
 extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 extern AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
@@ -246,7 +231,6 @@ extern AudioMixer<2>* delay_mixer[NUM_DEXED];
 extern AudioEffectMonoStereo* dexed_mono2stereo[NUM_DEXED];
 extern AudioEffectMonoStereo* dexed_dry_mono2stereo[NUM_DEXED];
 extern AudioEffectMonoStereo* delay_mono2stereo[NUM_DEXED];
-#endif
 
 extern AudioAnalyzePeak microdexed_peak_0;
 extern AudioAnalyzePeak microdexed_peak_1;
@@ -254,12 +238,8 @@ extern AudioAnalyzePeak microdexed_peak_1;
 extern AudioMixer<7> reverb_mixer_r;
 extern AudioMixer<7> reverb_mixer_l;
 
-#if defined(USE_MICROSYNTH)
 extern AudioMixer<4> microsynth_mixer_filter_osc[NUM_MICROSYNTH];
 extern AudioMixer<4> microsynth_mixer_filter_noise[NUM_MICROSYNTH];
-#endif
-
-#ifdef USE_MICROSYNTH
 extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern AudioSynthWaveform microsynth_waveform[NUM_MICROSYNTH];
 extern AudioEffectEnvelope microsynth_envelope_osc[NUM_MICROSYNTH];
@@ -267,9 +247,7 @@ extern AudioFilterStateVariable microsynth_filter_osc[NUM_MICROSYNTH];
 extern AudioFilterStateVariable microsynth_filter_noise[NUM_MICROSYNTH];
 extern AudioSynthNoisePink microsynth_noise[NUM_MICROSYNTH];
 extern AudioEffectEnvelope microsynth_envelope_noise[NUM_MICROSYNTH];
-#endif
 
-#ifdef USE_BRAIDS
 extern braids_t braids_osc;
 extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 extern AudioMixer<NUM_BRAIDS> braids_mixer;
@@ -286,16 +264,12 @@ extern AudioEffectFlange braids_flanger_l;
 extern int braids_flanger_idx;
 extern int braids_flanger_depth;
 extern double braids_flanger_freq;
-#endif
 
 extern AudioEffectPlateReverb reverb;
 
-#if defined(USE_FX) && defined(USE_EPIANO)
 extern AudioEffectStereoPanorama ep_stereo_panorama;
 extern AudioSynthWaveform ep_chorus_modulator;
-#if MOD_FILTER_OUTPUT != MOD_NO_FILTER_OUTPUT
 extern AudioFilterBiquad ep_modchorus_filter;
-#endif
 extern AudioEffectModulatedDelayStereo ep_modchorus;
 extern AudioMixer<2> ep_chorus_mixer_r;
 extern AudioMixer<2> ep_chorus_mixer_l;
@@ -305,7 +279,6 @@ extern AudioEffectDelay ep_delay_fx_r;
 extern AudioEffectDelay ep_delay_fx_l;
 extern AudioMixer<2> ep_delay_mixer_r;
 extern AudioMixer<2> ep_delay_mixer_l;
-#endif
 
 
 extern AudioMixer<11> master_mixer_r;
@@ -455,7 +428,6 @@ void master_effects_set_delay_feedback(uint8_t instance);
 void master_effects_set_delay_panorama(uint8_t instance);
 void master_effects_set_reverb_send(uint8_t instance);
 void UI_func_drum_reverb_send(uint8_t param);
-
 void UI_func_stereo_mono(uint8_t param);
 void UI_func_dexed_audio(uint8_t param);
 void UI_func_dexed_controllers(uint8_t param);
@@ -503,13 +475,6 @@ void UI_func_voice_editor(uint8_t param);
 void UI_func_sysex_send_voice(uint8_t param);
 void UI_func_sysex_receive_bank(uint8_t param);
 void UI_func_sysex_send_bank(uint8_t param);
-void UI_func_eq_1(uint8_t param);
-void UI_func_eq_2(uint8_t param);
-void UI_func_eq_3(uint8_t param);
-void UI_func_eq_4(uint8_t param);
-void UI_func_eq_5(uint8_t param);
-void UI_func_eq_6(uint8_t param);
-void UI_func_eq_7(uint8_t param);
 void UI_func_startup_performance(uint8_t param);
 void UI_func_startup_page(uint8_t param);
 void UI_func_map_gamepad(uint8_t param);
@@ -3601,7 +3566,6 @@ FLASHMEM void UI_func_map_gamepad(uint8_t param) {
   }
 }
 
-#ifdef USE_FX
 FLASHMEM void reverb_roomsize() {
   if (LCDML.BT_checkDown())
     configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize + ENCODER[ENC_R].speed(), REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
@@ -3673,12 +3637,10 @@ FLASHMEM void UI_func_chorus_frequency(uint8_t param) {
         configuration.fx.chorus_frequency[selected_instance_id] = constrain(configuration.fx.chorus_frequency[selected_instance_id] + ENCODER[ENC_R].speed(), CHORUS_FREQUENCY_MIN, CHORUS_FREQUENCY_MAX);
       else if (LCDML.BT_checkUp())
         configuration.fx.chorus_frequency[selected_instance_id] = constrain(configuration.fx.chorus_frequency[selected_instance_id] - ENCODER[ENC_R].speed(), CHORUS_FREQUENCY_MIN, CHORUS_FREQUENCY_MAX);
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
         UI_update_instance_icons();
       }
-#endif
     }
     display_bar_float("Chorus Frq.", configuration.fx.chorus_frequency[selected_instance_id], 0.1, CHORUS_FREQUENCY_MIN, CHORUS_FREQUENCY_MAX, 2, 1, false, false, false);
 
@@ -3707,12 +3669,10 @@ FLASHMEM void UI_func_chorus_waveform(uint8_t param) {
       configuration.fx.chorus_waveform[selected_instance_id] = constrain(configuration.fx.chorus_waveform[selected_instance_id] + 1, CHORUS_WAVEFORM_MIN, CHORUS_WAVEFORM_MAX);
     else if (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())
       configuration.fx.chorus_waveform[selected_instance_id] = constrain(configuration.fx.chorus_waveform[selected_instance_id] - 1, CHORUS_WAVEFORM_MIN, CHORUS_WAVEFORM_MAX);
-#if NUM_DEXED > 1
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
       selected_instance_id = !selected_instance_id;
       UI_update_instance_icons();
     }
-#endif
 
     setCursor_textGrid(1, 2);
     switch (configuration.fx.chorus_waveform[selected_instance_id]) {
@@ -3753,13 +3713,11 @@ FLASHMEM void UI_func_chorus_depth(uint8_t param) {
         configuration.fx.chorus_depth[selected_instance_id] = constrain(configuration.fx.chorus_depth[selected_instance_id] + ENCODER[ENC_R].speed(), CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX);
       else if (LCDML.BT_checkUp())
         configuration.fx.chorus_depth[selected_instance_id] = constrain(configuration.fx.chorus_depth[selected_instance_id] - ENCODER[ENC_R].speed(), CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX);
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
       }
-#endif
     }
 
     display_bar_int("Chorus Dpt.", configuration.fx.chorus_depth[selected_instance_id], 1.0, CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 3, false, false, false);
@@ -3794,13 +3752,11 @@ FLASHMEM void UI_func_chorus_level(uint8_t param) {
         configuration.fx.chorus_level[selected_instance_id] = constrain(configuration.fx.chorus_level[selected_instance_id] - ENCODER[ENC_R].speed(), CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.chorus_level[selected_instance_id]);
       }
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
       }
-#endif
     }
 
     display_bar_int("Chorus Lvl.", configuration.fx.chorus_level[selected_instance_id], 1.0, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 3, false, false, false);
@@ -3905,13 +3861,11 @@ FLASHMEM void UI_func_filter_cutoff(uint8_t param) {
         configuration.fx.filter_cutoff[selected_instance_id] = constrain(configuration.fx.filter_cutoff[selected_instance_id] - ENCODER[ENC_R].speed(), FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, configuration.fx.filter_cutoff[selected_instance_id]);
       }
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
       }
-#endif
     }
 
     display_bar_int("Filter Cutoff", configuration.fx.filter_cutoff[selected_instance_id], 1.0, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 3, false, false, false);
@@ -3946,13 +3900,11 @@ FLASHMEM void UI_func_filter_resonance(uint8_t param) {
         configuration.fx.filter_resonance[selected_instance_id] = constrain(configuration.fx.filter_resonance[selected_instance_id] - ENCODER[ENC_R].speed(), FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, configuration.fx.filter_resonance[selected_instance_id]);
       }
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
       }
-#endif
     }
 
     display_bar_int("Filter Reso.", configuration.fx.filter_resonance[selected_instance_id], 1.0, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 3, false, false, false);
@@ -4007,13 +3959,11 @@ FLASHMEM void UI_func_sound_intensity(uint8_t param) {
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, configuration.dexed[selected_instance_id].sound_intensity);
       }
 
-#if NUM_DEXED > 1
       else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
       }
-#endif
     }
 
     display_bar_int("Voice Level", configuration.dexed[selected_instance_id].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
@@ -4467,22 +4417,18 @@ FLASHMEM void UI_handle_OP(uint8_t param) {
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
     if (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) {
-#if NUM_DEXED > 1
       if (op_selected == 0) {
         selected_instance_id = !selected_instance_id;
         op_selected = 5;
         display_OP_active_instance_number(selected_instance_id, configuration.dexed[selected_instance_id].op_enabled);
       } else
-#endif
         op_selected = constrain(op_selected - 1, 0, 5);
     } else if (LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) {
-#if NUM_DEXED > 1
       if (op_selected == 5) {
         selected_instance_id = !selected_instance_id;
         op_selected = 0;
         display_OP_active_instance_number(selected_instance_id, configuration.dexed[selected_instance_id].op_enabled);
       } else
-#endif
         op_selected = constrain(op_selected + 1, 0, 5);
     } else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {
       if (bitRead(configuration.dexed[selected_instance_id].op_enabled, op_selected))
@@ -7814,7 +7760,6 @@ void update_microsynth_instance_icons() {
 }
 
 void update_pwm_text() {
-#ifdef USE_MICROSYNTH
   if (seq.cycle_touch_element != 1) {
     if (microsynth[microsynth_selected_instance].wave == 4 || microsynth[microsynth_selected_instance].wave == 7)
       display.setTextColor(GREY1);
@@ -7827,7 +7772,6 @@ void update_pwm_text() {
     display.print(F("SPEED"));
     display.setTextColor(GREY1);
   }
-#endif
 }
 
 void microsynth_refresh_lower_screen_static_text() {
@@ -7866,7 +7810,6 @@ void microsynth_refresh_lower_screen_static_text() {
 }
 
 void microsynth_refresh_lower_screen_dynamic_text() {
-#ifdef USE_MICROSYNTH
   setModeColor(8);
   setCursor_textGrid_small(9, 13);
   if (microsynth[microsynth_selected_instance].filter_osc_mode == 0)
@@ -7920,11 +7863,9 @@ void microsynth_refresh_lower_screen_dynamic_text() {
   print_formatted_number(microsynth[microsynth_selected_instance].vel_mod_filter_noise, 3);
 
   update_pwm_text();
-#endif
 }
 
 void UI_func_epiano(uint8_t param) {
-#ifdef USE_EPIANO
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     // setup function
@@ -8298,11 +8239,9 @@ void UI_func_epiano(uint8_t param) {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-#endif
 }
 
 void UI_func_microsynth(uint8_t param) {
-#ifdef USE_MICROSYNTH
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
     // setup function
@@ -8666,7 +8605,6 @@ void UI_func_microsynth(uint8_t param) {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-#endif
 }
 
 
@@ -11407,7 +11345,6 @@ FLASHMEM void UI_func_recorder(uint8_t param) {
   }
 }
 
-#ifdef USE_BRAIDS
 FLASHMEM void UI_func_braids(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
@@ -11683,16 +11620,6 @@ FLASHMEM void UI_func_braids(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
-#else
-FLASHMEM void UI_func_braids(uint8_t param) {
-  if (LCDML.FUNC_setup())
-    not_available_message();
-  if (LCDML.FUNC_close()) {
-    display.fillScreen(COLOR_BACKGROUND);
-    encoderDir[ENC_R].reset();
-  }
-}
-#endif
 
 //void UI_func_speedtest(uint8_t param)
 //{ // ILI9341 478 msecs
@@ -13578,19 +13505,17 @@ FLASHMEM void print_mixer_text() {
   setCursor_textGrid_small(8, 19);
   print_formatted_number(configuration.epiano.sound_intensity, 3);
 
-#ifdef USE_MICROSYNTH
   // print_small_panbar_mixer(12, 17, microsynth[0].pan, 31);
   setCursor_textGrid_small(12, 19);
   print_formatted_number(microsynth[0].sound_intensity, 3);
   // print_small_panbar_mixer(16, 17, microsynth[1].pan, 31);
   setCursor_textGrid_small(16, 19);
   print_formatted_number(microsynth[1].sound_intensity, 3);
-#endif
-#ifdef USE_BRAIDS
+
   // print_small_panbar_mixer(20, 17, braids_osc.pan, 31);
   setCursor_textGrid_small(20, 19);
   print_formatted_number(braids_osc.sound_intensity, 3);
-#endif
+
   // msp
   //  print_small_panbar_mixer(20, 17, braids_osc.pan, 31); // pan of the msp #1 zone played
   setCursor_textGrid_small(24, 19);
@@ -13674,15 +13599,12 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
 
         } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5)  //microsynth
         {
-#ifdef USE_MICROSYNTH
           if (LCDML.BT_checkDown())
             microsynth[seq.temp_active_menu - 3].sound_intensity = constrain(microsynth[seq.temp_active_menu - 3].sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
             microsynth[seq.temp_active_menu - 3].sound_intensity = constrain(microsynth[seq.temp_active_menu - 3].sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-#endif
         } else if (seq.temp_active_menu == 5)  // braids
         {
-#ifdef USE_BRAIDS
           if (LCDML.BT_checkDown()) {
             braids_osc.sound_intensity = constrain(braids_osc.sound_intensity + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
             update_braids_volume();
@@ -13690,7 +13612,6 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
             braids_osc.sound_intensity = constrain(braids_osc.sound_intensity - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
             update_braids_volume();
           }
-#endif
         } else if (seq.temp_active_menu == 6)  // msp1
         {
           if (LCDML.BT_checkDown())
@@ -13757,20 +13678,16 @@ FLASHMEM void UI_func_mixer(uint8_t param) {
     } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5 && seq.edit_state)  //microsynth
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-#ifdef USE_MICROSYNTH
       display_bar_int("", microsynth[seq.temp_active_menu - 3].sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
-#endif
       setCursor_textGrid(1, 1);
       display.print("MICROSYNTH #");
       display.print(seq.temp_active_menu - 2);
     } else if (seq.temp_active_menu == 5 && seq.edit_state)  // braids
     {
-#ifdef USE_BRAIDS
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display_bar_int("", braids_osc.sound_intensity, 1.0, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 3, false, false, false);
       setCursor_textGrid(1, 1);
       display.print("BRAIDS");
-#endif
     } else if (seq.temp_active_menu == 6 && seq.edit_state)  // msp0
     {
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -13868,15 +13785,12 @@ FLASHMEM void UI_func_sidechain(uint8_t param) {
 
         } else if (seq.temp_active_menu > 2 && seq.temp_active_menu < 5)  //microsynth
         {
-#ifdef USE_MICROSYNTH
           if (LCDML.BT_checkDown())
             microsynth[seq.temp_active_menu - 3].sidechain_time = constrain(microsynth[seq.temp_active_menu - 3].sidechain_time + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
           else if (LCDML.BT_checkUp())
             microsynth[seq.temp_active_menu - 3].sidechain_time = constrain(microsynth[seq.temp_active_menu - 3].sidechain_time - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-#endif
         } else if (seq.temp_active_menu == 5)  // braids
         {
-#ifdef USE_BRAIDS
           if (LCDML.BT_checkDown()) {
             braids_osc.sidechain_time = constrain(braids_osc.sidechain_time + ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
             // update_braids_volume();
@@ -13884,7 +13798,6 @@ FLASHMEM void UI_func_sidechain(uint8_t param) {
             braids_osc.sidechain_time = constrain(braids_osc.sidechain_time - ENCODER[ENC_R].speed(), SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
             // update_braids_volume();
           }
-#endif
         } else if (seq.temp_active_menu == 6)  // msp1
         {
           if (LCDML.BT_checkDown())
@@ -14049,13 +13962,11 @@ FLASHMEM void UI_func_velocity_level(uint8_t param) {
       else if (LCDML.BT_checkUp())
         configuration.dexed[selected_instance_id].velocity_level = constrain(configuration.dexed[selected_instance_id].velocity_level - ENCODER[ENC_R].speed(), VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX);
     }
-#if NUM_DEXED > 1
     else if (LCDML.BT_checkEnter()) {
       selected_instance_id = !selected_instance_id;
 
       UI_update_instance_icons();
     }
-#endif
     display_bar_int("Velocity Lvl", configuration.dexed[selected_instance_id].velocity_level, 1.0, VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX, 3, false, false, false);
   }
   if (LCDML.FUNC_close())  // ****** STABLE END *********
@@ -14405,12 +14316,10 @@ FLASHMEM void UI_func_voice_select_loop() {
       else
         generic_active_function = 0;
     }
-#if NUM_DEXED > 1
     else if (LCDML.BT_checkEnter() && dexed_live_mod.active_button != 99) {
       //          selected_instance_id = !selected_instance_id;
       //          UI_update_instance_icons();
     }
-#endif
   }
 }
 
@@ -15036,20 +14945,8 @@ FLASHMEM void UI_func_save_voice(uint8_t param) {
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     yesno = false;
-#if NUM_DEXED == 1
-    mode = 1;
-#else
     mode = 0;
-#endif
 
-#if NUM_DEXED == 1
-    setCursor_textGrid(1, 1);
-    display.print(F("Save to Bank"));
-    show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
-    show(2, 5, 10, g_bank_name[selected_instance_id]);
-    show(2, 3, 2, " [");
-    show(2, 15, 1, "]");
-#else
     setCursor_textGrid(1, 1);
     display.print(F("Save Instance"));
     if (selected_instance_id == 0)
@@ -15068,7 +14965,6 @@ FLASHMEM void UI_func_save_voice(uint8_t param) {
     helptext_r("< > SELECT INSTANCE");
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-#endif
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -15649,281 +15545,6 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param) {
     }
     encoderDir[ENC_R].reset();
   }
-}
-
-FLASHMEM void UI_func_eq_1(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ Low-Cut"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_1 = constrain(configuration.fx.eq_1 + ENCODER[ENC_R].speed(), EQ_1_MIN, EQ_1_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_1 = constrain(configuration.fx.eq_1 - ENCODER[ENC_R].speed(), EQ_1_MIN, EQ_1_MAX);
-      }
-    }
-    display_meter_int("EQ Low-Cut [Hz]", configuration.fx.eq_1, 1.0, 0.0, EQ_1_MIN, EQ_1_MAX, 3, false, false, true);
-    sgtl5000.setEQFc(1, float(configuration.fx.eq_1));
-    sgtl5000.setEQGain(1, 6.0);
-    sgtl5000.commitFilter(1);
-#ifdef DEBUG
-    sgtl5000.show_params(1);
-#endif
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_eq_2(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ 120Hz"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_2 = constrain(configuration.fx.eq_2 + ENCODER[ENC_R].speed(), EQ_2_MIN, EQ_2_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_2 = constrain(configuration.fx.eq_2 - ENCODER[ENC_R].speed(), EQ_2_MIN, EQ_2_MAX);
-      }
-    }
-    display_meter_float("EQ 120Hz [dB]", configuration.fx.eq_2, 0.1, 0.0, EQ_2_MIN, EQ_2_MAX, 1, 1, false, true, true);
-    sgtl5000.setEQGain(2, mapfloat(configuration.fx.eq_2, EQ_2_MIN, EQ_2_MAX, -9.9, 9.9));
-    sgtl5000.commitFilter(2);
-#ifdef DEBUG
-    sgtl5000.show_params(2);
-#endif
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_eq_3(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ 220Hz"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_3 = constrain(configuration.fx.eq_3 + ENCODER[ENC_R].speed(), EQ_3_MIN, EQ_3_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_3 = constrain(configuration.fx.eq_3 - ENCODER[ENC_R].speed(), EQ_3_MIN, EQ_3_MAX);
-      }
-    }
-    display_meter_float("EQ 220Hz [dB]", configuration.fx.eq_3, 0.1, 0.0, EQ_3_MIN, EQ_3_MAX, 1, 1, false, true, true);
-    sgtl5000.setEQGain(3, mapfloat(configuration.fx.eq_3, EQ_3_MIN, EQ_3_MAX, -9.9, 9.9));
-    sgtl5000.commitFilter(3);
-#ifdef DEBUG
-    sgtl5000.show_params(3);
-#endif
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_eq_4(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ 1000Hz"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_4 = constrain(configuration.fx.eq_4 + ENCODER[ENC_R].speed(), EQ_4_MIN, EQ_4_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_4 = constrain(configuration.fx.eq_4 - ENCODER[ENC_R].speed(), EQ_4_MIN, EQ_4_MAX);
-      }
-    }
-    display_meter_float("EQ 1000Hz [dB]", configuration.fx.eq_4, 0.1, 0.0, EQ_4_MIN, EQ_4_MAX, 1, 1, false, true, true);
-    sgtl5000.setEQGain(4, mapfloat(configuration.fx.eq_4, EQ_4_MIN, EQ_4_MAX, -9.9, 9.9));
-    sgtl5000.commitFilter(4);
-#ifdef DEBUG
-    sgtl5000.show_params(4);
-#endif
-  }
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_eq_5(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ 2000Hz"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_5 = constrain(configuration.fx.eq_5 + ENCODER[ENC_R].speed(), EQ_5_MIN, EQ_5_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_5 = constrain(configuration.fx.eq_5 - ENCODER[ENC_R].speed(), EQ_5_MIN, EQ_5_MAX);
-      }
-    }
-    display_meter_float("EQ 2000Hz [dB]", configuration.fx.eq_5, 0.1, 0.0, EQ_5_MIN, EQ_5_MAX, 1, 1, false, true, true);
-    sgtl5000.setEQGain(5, mapfloat(configuration.fx.eq_5, EQ_5_MIN, EQ_5_MAX, -9.9, 9.9));
-    sgtl5000.commitFilter(5);
-#ifdef DEBUG
-    sgtl5000.show_params(5);
-#endif
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_eq_6(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ 7000Hz"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_6 = constrain(configuration.fx.eq_6 + ENCODER[ENC_R].speed(), EQ_6_MIN, EQ_6_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_6 = constrain(configuration.fx.eq_6 - ENCODER[ENC_R].speed(), EQ_6_MIN, EQ_6_MAX);
-      }
-    }
-    display_meter_float("EQ 7000Hz [dB]", configuration.fx.eq_6, 0.1, 0.0, EQ_6_MIN, EQ_6_MAX, 1, 1, false, true, true);
-    sgtl5000.setEQGain(6, mapfloat(configuration.fx.eq_6, EQ_6_MIN, EQ_6_MAX, -9.9, 9.9));
-    sgtl5000.commitFilter(6);
-#ifdef DEBUG
-    sgtl5000.show_params(6);
-#endif
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-#endif
-}
-
-FLASHMEM void UI_func_eq_7(uint8_t param) {
-#ifndef SGTL5000_AUDIO_ENHANCE
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-    setCursor_textGrid(1, 1);
-    display.print(F("EQ High-Cut"));
-    setCursor_textGrid(1, 2);
-    display.print(F("Not implemented."));
-  }
-#else
-  if (LCDML.FUNC_setup())  // ****** SETUP *********
-  {
-    encoderDir[ENC_R].reset();
-  }
-
-  if (LCDML.FUNC_loop())  // ****** LOOP *********
-  {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
-      if (LCDML.BT_checkDown()) {
-        configuration.fx.eq_7 = constrain(configuration.fx.eq_7 + ENCODER[ENC_R].speed(), EQ_7_MIN, EQ_7_MAX);
-      } else if (LCDML.BT_checkUp()) {
-        configuration.fx.eq_7 = constrain(configuration.fx.eq_7 - ENCODER[ENC_R].speed(), EQ_7_MIN, EQ_7_MAX);
-      }
-    }
-    display_meter_float("EQ High-Cut[kHz]", configuration.fx.eq_7, 1.0, 0.0, EQ_7_MIN, EQ_7_MAX, 3, 1, false, false, true);
-    sgtl5000.setEQFc(7, float(configuration.fx.eq_7) * 1000.0);
-    sgtl5000.commitFilter(7);
-#ifdef DEBUG
-    sgtl5000.show_params(7);
-#endif
-  }
-
-  if (LCDML.FUNC_close())  // ****** STABLE END *********
-  {
-
-    encoderDir[ENC_R].reset();
-  }
-#endif
 }
 
 FLASHMEM void UI_func_startup_performance(uint8_t param) {
@@ -17908,7 +17529,6 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y) {
       break;
   }
 }
-#endif
 
 #ifdef GENERIC_DISPLAY
 FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj) {
