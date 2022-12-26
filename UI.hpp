@@ -2367,14 +2367,16 @@ FLASHMEM void setModeColor(uint8_t selected_option) {
 
 // a small scaled bar, that can show an abitrary range in always the same space, given the expected min and max limit values.
 // also atomagically shows a pan bar (marker line insted of filled bar), if min is smaller than zero.
-FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, boolean show_zero) {
+FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, int16_t limit_min, int16_t limit_max, int16_t selected_option, boolean show_bar, const char* zero_name = NULL) {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
+  display.print(F("    "));  // make sure long numbers don't stuck vs. short zero-names
+  setCursor_textGrid_small(x, y);
 
   if (limit_min == 0 && limit_max == 1)
     display.print(input_value ? F("ON ") : F("OFF"));
-  else if (show_zero == false && input_value == 0)
-    display.print(F("OFF"));
+  else if (zero_name != NULL && input_value == 0)
+    display.print(zero_name);
   else if (limit_min < 0)
     print_formatted_number_signed(input_value, 2);
   else if (limit_max <= 99) {
@@ -2407,7 +2409,7 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
 }
 
 FLASHMEM void print_small_intbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option, boolean show_bar, boolean show_zero) {
-  print_small_scaled_bar(x, y, input_value, 0, 100, selected_option, show_bar, show_zero);
+  print_small_scaled_bar(x, y, input_value, 0, 100, selected_option, show_bar, show_zero ? NULL : (const char*)F("OFF"));
 }
 
 FLASHMEM void print_small_panbar(uint8_t x, uint8_t y, uint8_t input_value, uint8_t selected_option) {
@@ -2515,7 +2517,7 @@ private:
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       display.print(this->name);
     }
-    print_small_scaled_bar(x, y, get(), limit_min, limit_max, select_id, 1, 1);
+    print_small_scaled_bar(x, y, get(), limit_min, limit_max, select_id, 1, NULL);
   };
 
   // read encoders / other input sources and adjust the assigned value
@@ -3751,8 +3753,7 @@ FLASHMEM void UI_func_chorus_level(uint8_t param) {
       } else if (LCDML.BT_checkUp()) {
         configuration.fx.chorus_level[selected_instance_id] = constrain(configuration.fx.chorus_level[selected_instance_id] - ENCODER[ENC_R].speed(), CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.chorus_level[selected_instance_id]);
-      }
-      else if (LCDML.BT_checkEnter()) {
+      } else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
@@ -3860,8 +3861,7 @@ FLASHMEM void UI_func_filter_cutoff(uint8_t param) {
       } else if (LCDML.BT_checkUp()) {
         configuration.fx.filter_cutoff[selected_instance_id] = constrain(configuration.fx.filter_cutoff[selected_instance_id] - ENCODER[ENC_R].speed(), FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, configuration.fx.filter_cutoff[selected_instance_id]);
-      }
-      else if (LCDML.BT_checkEnter()) {
+      } else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
@@ -3899,8 +3899,7 @@ FLASHMEM void UI_func_filter_resonance(uint8_t param) {
       } else if (LCDML.BT_checkUp()) {
         configuration.fx.filter_resonance[selected_instance_id] = constrain(configuration.fx.filter_resonance[selected_instance_id] - ENCODER[ENC_R].speed(), FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
         MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, configuration.fx.filter_resonance[selected_instance_id]);
-      }
-      else if (LCDML.BT_checkEnter()) {
+      } else if (LCDML.BT_checkEnter()) {
         selected_instance_id = !selected_instance_id;
 
         UI_update_instance_icons();
@@ -4926,6 +4925,18 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param) {
   }
 }
 
+// MIDI channel renderer
+// just a "small bar" but showing "OMN" for zero value.
+void midi_channel_renderer(Editor* editor, bool refresh) {
+  display.setTextSize(1);
+  if (!refresh) {
+    setCursor_textGrid_small(editor->x + 10, editor->y);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(editor->name);
+  }
+  print_small_scaled_bar(editor->x, editor->y, editor->get(), 0, 16, editor->select_id, 1, (const char*)F("OMN"));
+}
+
 // the drum parameter editors depend on the currently selected sample activesample.
 // So we need custom getters and setters respecting activesample.
 void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr) {
@@ -4935,13 +4946,13 @@ void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_m
       // the parameter may be from either sample, which may be
       // switched at any time. So recompute the value pointer in respect of to activesample !
       float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
-      return *ptr * 100.f;
+      return round(*ptr * 100.f);
     },
     [](Editor* editor, int16_t value) {
       // the parameter may be from either sample, which may be
       // switched at any time. So recompute the value pointer in respect of to activesample !
       float32_t* ptr = (float32_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
-      *ptr = (value / 100.f);
+      *ptr = value / 100.f;
     },
     NULL);
 }
@@ -4978,9 +4989,9 @@ void UI_func_drums(uint8_t param) {
     ui.setCursor(1, 4);
     // the parameter editors depend on activesample. We define them by sample index 0,
     // but they will act on current slot activesample later.
-    addDrumParameterEditor((const char*)F("VOLUME"), 0, 99, &drum_config[0].vol_max);
+    addDrumParameterEditor((const char*)F("VOLUME"), 0, 100, &drum_config[0].vol_max);
     addDrumParameterEditor((const char*)F("PAN"), -99, 99, &drum_config[0].pan);
-    addDrumParameterEditor((const char*)F("REVERB"), 0, 99, &drum_config[0].reverb_send);
+    addDrumParameterEditor((const char*)F("REVERB"), 0, 100, &drum_config[0].reverb_send);
     addDrumParameterEditor((const char*)F("PITCH"), 0, 200, &drum_config[0].pitch);
     addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
 
@@ -4994,7 +5005,7 @@ void UI_func_drums(uint8_t param) {
                    master_mixer_r.gain(MASTER_MIX_CH_DRUMS, volume_transform(seq.drums_volume));
                    master_mixer_l.gain(MASTER_MIX_CH_DRUMS, volume_transform(seq.drums_volume));
                  });
-    ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 32, &drum_midi_channel);
+    ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 16, &drum_midi_channel, NULL, NULL, midi_channel_renderer);
   }
   if (LCDML.FUNC_loop())  // ****** LOOP *********
   {
@@ -13961,8 +13972,7 @@ FLASHMEM void UI_func_velocity_level(uint8_t param) {
         configuration.dexed[selected_instance_id].velocity_level = constrain(configuration.dexed[selected_instance_id].velocity_level + ENCODER[ENC_R].speed(), VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX);
       else if (LCDML.BT_checkUp())
         configuration.dexed[selected_instance_id].velocity_level = constrain(configuration.dexed[selected_instance_id].velocity_level - ENCODER[ENC_R].speed(), VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX);
-    }
-    else if (LCDML.BT_checkEnter()) {
+    } else if (LCDML.BT_checkEnter()) {
       selected_instance_id = !selected_instance_id;
 
       UI_update_instance_icons();
@@ -14315,8 +14325,7 @@ FLASHMEM void UI_func_voice_select_loop() {
         generic_active_function = 1;
       else
         generic_active_function = 0;
-    }
-    else if (LCDML.BT_checkEnter() && dexed_live_mod.active_button != 99) {
+    } else if (LCDML.BT_checkEnter() && dexed_live_mod.active_button != 99) {
       //          selected_instance_id = !selected_instance_id;
       //          UI_update_instance_icons();
     }
