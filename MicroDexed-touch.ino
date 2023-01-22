@@ -733,11 +733,11 @@ uint8_t microsynth_selected_instance = 0;
 bool ui_save_notification_icon;
 char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
+uint8_t remote_MIDI_CC = 0;
+uint8_t remote_MIDI_CC_value;
 #ifdef REMOTE_CONSOLE
 #include "filemanager.h"
 uint8_t incomingSerialByte;
-uint8_t remote_MIDI_CC = 0;
-uint8_t remote_MIDI_CC_value;
 #endif
 
 int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1 };
@@ -1529,7 +1529,8 @@ void loop() {
   if (Serial.available() > 0) {
     incomingSerialByte = Serial.read();
 
-    if (incomingSerialByte == '%') {  // SD file management from remote console
+    if (incomingSerialByte == '%') {  
+      // SD file management from remote console
       sd_filemanager();
     }
   }

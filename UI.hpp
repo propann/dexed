@@ -298,7 +298,6 @@ extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
 
-extern uint8_t incomingSerialByte;
 bool remote_console_keystate_select;
 bool remote_console_keystate_a;
 bool remote_console_keystate_b;
@@ -2124,10 +2123,12 @@ FLASHMEM void toggle_sequencer_play_status() {
 
 FLASHMEM boolean key_right() {
 
+#ifdef REMOTE_CONSOLE
   if (remote_MIDI_CC == 20) {
     remote_MIDI_CC = 0;
     return true;
   }
+#endif
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_RIGHT) == false)
@@ -2142,10 +2143,12 @@ FLASHMEM boolean key_right() {
 
 FLASHMEM boolean key_left() {
 
+#ifdef REMOTE_CONSOLE
   if (remote_MIDI_CC == 21) {
     remote_MIDI_CC = 0;
     return true;
   }
+#endif
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_LEFT) == false)
@@ -2160,10 +2163,12 @@ FLASHMEM boolean key_left() {
 
 FLASHMEM boolean key_up() {
 
+#ifdef REMOTE_CONSOLE
   if (remote_MIDI_CC == 22) {
     remote_MIDI_CC = 0;
     return true;
   }
+#endif
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_UP) == false)
@@ -2178,10 +2183,12 @@ FLASHMEM boolean key_up() {
 
 FLASHMEM boolean key_down() {
 
+#ifdef REMOTE_CONSOLE
   if (remote_MIDI_CC == 23) {
     remote_MIDI_CC = 0;
     return true;
   }
+#endif
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (digitalRead(BI_DOWN) == false)
@@ -2808,6 +2815,7 @@ FLASHMEM void lcdml_menu_control(void) {
   uint32_t buttons = joysticks[0].getButtons();
 
   // MIDI remote
+#ifdef REMOTE_CONSOLE
   if (remote_MIDI_CC > 0) {
     switch (remote_MIDI_CC) {
       case 24:  // SELECT
@@ -2864,6 +2872,7 @@ FLASHMEM void lcdml_menu_control(void) {
         break;
     }
   }
+#endif
 
 #ifdef ONBOARD_BUTTON_INTERFACE
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad)) {
