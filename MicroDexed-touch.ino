@@ -732,8 +732,13 @@ uint8_t selected_instance_id = 0;
 uint8_t microsynth_selected_instance = 0;
 bool ui_save_notification_icon;
 char noteNames[12][3] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
 uint8_t remote_MIDI_CC = 0;
 uint8_t remote_MIDI_CC_value;
+#ifdef REMOTE_CONSOLE
+#include "filemanager.h"
+uint8_t incomingSerialByte;
+#endif
 
 int8_t midi_decay_dexed[NUM_DEXED] = { -1, -1 };
 int8_t midi_decay_microsynth[NUM_MICROSYNTH];
@@ -1462,10 +1467,6 @@ FLASHMEM void sub_step_recording() {
   }
 }
 
-//#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
-uint8_t incomingSerialByte;
-//#endif
-
 float pseudo_log_curve(float value) {
   // return (mapfloat(_pseudo_log * arm_sin_f32(value), 0.0, _pseudo_log * arm_sin_f32(1.0), 0.0, 1.0));
   //return (1 - sqrt(1 - value * value));
@@ -1522,13 +1523,18 @@ void update_sidechain() {
 
 void loop() {
 
-  //#if defined(REMOTE_CONSOLE) || defined(USB_GAMEPAD)
+#ifdef REMOTE_CONSOLE
   // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0) {
     incomingSerialByte = Serial.read();
+
+    if (incomingSerialByte == '%') {  
+      // SD file management from remote console
+      sd_filemanager();
+    }
   }
-  //#endif
+#endif
 
   // MIDI input handling
   check_midi_devices();
