@@ -132,6 +132,19 @@ extern uint8_t find_drum_number_from_note(uint8_t note);
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
+extern bool sidechain_a_active;
+extern bool sidechain_b_active;
+extern int8_t sidechain_a_sample_number;
+extern uint8_t sidechain_b_sample_number;
+extern uint8_t sidechain_a_speed;
+extern uint8_t sidechain_b_speed;
+extern uint8_t sc_dexed1_target_a;
+extern uint8_t sc_dexed2_target_a;
+extern uint8_t sc_dexed1_target_b;
+extern uint8_t sc_dexed2_target_b;
+extern uint8_t sc_reverb_target_a;
+extern uint8_t sc_reverb_target_b;
+
 File json;
 char filename[CONFIG_FILENAME_LEN];
 const char* sError = "*ERROR*";
@@ -1807,6 +1820,124 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number) {
   return (false);
 }
 
+
+/******************************************************************************
+   SD SIDECHAIN
+ ******************************************************************************/
+
+FLASHMEM bool load_sd_sidechain_json(uint8_t number) {
+  if (number < 0)
+    return (false);
+
+  if (sd_card > 0) {
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SIDECHAIN_CONFIG_NAME);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename)) {
+      // ... and if: load
+#ifdef DEBUG
+      LOG.print(F("Found sidechain configuration"));
+#endif
+      json = SD.open(filename);
+      if (json) {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+        deserializeJson(data_json, json);
+
+        json.close();
+        AudioInterrupts();
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+        LOG.println(F("Read JSON data:"));
+        //serializeJsonPretty(data_json, Serial);
+        LOG.println();
+#endif
+
+        sidechain_a_active = data_json["a_active"];
+        sidechain_b_active = data_json["b_active"];
+        sidechain_a_sample_number = data_json["a_sample_number"];
+        sidechain_b_sample_number = data_json["b_sample_number"];
+        sidechain_a_speed = data_json["a_speed"];
+        sidechain_b_speed = data_json["b_speed"];
+        sc_dexed1_target_a = data_json["dexed1_target_a"];
+        sc_dexed2_target_a = data_json["dexed2_target_a"];
+        sc_dexed1_target_b = data_json["dexed1_target_b"];
+        sc_dexed2_target_b = data_json["dexed2_target_b"];
+        sc_reverb_target_a = data_json["reverb_target_a"];
+        sc_reverb_target_b = data_json["reverb_target_b"];
+        return (true);
+      }
+#ifdef DEBUG
+      else {
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
+      }
+    } else {
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
+#endif
+    }
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+FLASHMEM bool save_sd_sidechain_json(uint8_t number) {
+  if (sd_card > 0) {
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SIDECHAIN_CONFIG_NAME);
+#ifdef DEBUG
+    LOG.print(F("Saving sidechain"));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
+#endif
+
+    AudioNoInterrupts();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json) {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+
+      data_json["a_active"] = sidechain_a_active;
+      data_json["b_active"] = sidechain_b_active;
+      data_json["a_sample_number"] = sidechain_a_sample_number;
+      data_json["b_sample_number"] = sidechain_b_sample_number;
+      data_json["a_speed"] = sidechain_a_speed;
+      data_json["b_speed"] = sidechain_b_speed;
+      data_json["dexed1_target_a"] = sc_dexed1_target_a;
+      data_json["dexed2_target_a"] = sc_dexed2_target_a;
+      data_json["dexed1_target_b"] = sc_dexed1_target_b;
+      data_json["dexed2_target_b"] = sc_dexed2_target_b;
+      data_json["reverb_target_a"] = sc_reverb_target_a;
+      data_json["reverb_target_b"] = sc_reverb_target_b;
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+      LOG.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      LOG.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  } else {
+#ifdef DEBUG
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
+#endif
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
 /******************************************************************************
    SD SEQUENCER
  ******************************************************************************/
@@ -2185,7 +2316,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number) {
   save_sd_multisample_presets_json(number);
   save_sd_braids_json(number);
   save_sd_multiband_json(number);
-
+  save_sd_sidechain_json(number);
 
   for (uint8_t i = 0; i < MAX_DEXED; i++) {
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, number, VOICE_CONFIG_NAME, i);
@@ -2482,6 +2613,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number) {
   load_sd_multisample_presets_json(number);
   load_sd_braids_json(number);
   load_sd_multiband_json(number);
+  load_sd_sidechain_json(number);
   configuration.sys.performance_number = number;
 
   if (sd_card > 0) {

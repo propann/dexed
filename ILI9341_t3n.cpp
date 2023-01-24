@@ -708,7 +708,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read) {
       "ILI9341_t3n: The IO pins on the constructor are not valid SPI pins");
 
     LOG.printf_P(PSTR("    mosi:%d miso:%d SCLK:%d CS:%d DC:%d\n"), _mosi, _miso,
-                    _sclk, _cs, _dc);
+                 _sclk, _cs, _dc);
     LOG.flush();
 #endif
     return;  // most likely will go bomb
@@ -1171,9 +1171,9 @@ size_t ILI9341_t3n::write(const uint8_t *buffer, size_t size) {
     // } else if (c == '\r') {
     //   // skip em
     // } else {
-      drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
-               textsize_y);
-      cursor_x += textsize_x * 6;
+    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
+             textsize_y);
+    cursor_x += textsize_x * 6;
     // }
   }
   return size;
@@ -1189,24 +1189,24 @@ void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
       ((y + 8 * size_y - 1) < 0))    // Clip top   TODO: is this correct?
     return;
 
-// #ifdef REMOTE_CONSOLE
-//   //remote console
-//   Serial.write(99);
-//   Serial.write(95);
-//   Serial.write(highByte(x));
-//   Serial.write(lowByte(x));
-//   Serial.write(highByte(y));
-//   Serial.write(lowByte(y));
-//   Serial.write(highByte(fgcolor));
-//   Serial.write(lowByte(fgcolor));
-//   Serial.write(highByte(bgcolor));
-//   Serial.write(lowByte(bgcolor));
-//   Serial.write(c);
-//   Serial.write(size_x);
-//   Serial.write(88);
-//   // delayMicroseconds(60); //necessary to avoid random pixels in remote console
-//   console = false;
-// #endif
+  // #ifdef REMOTE_CONSOLE
+  //   //remote console
+  //   Serial.write(99);
+  //   Serial.write(95);
+  //   Serial.write(highByte(x));
+  //   Serial.write(lowByte(x));
+  //   Serial.write(highByte(y));
+  //   Serial.write(lowByte(y));
+  //   Serial.write(highByte(fgcolor));
+  //   Serial.write(lowByte(fgcolor));
+  //   Serial.write(highByte(bgcolor));
+  //   Serial.write(lowByte(bgcolor));
+  //   Serial.write(c);
+  //   Serial.write(size_x);
+  //   Serial.write(88);
+  //   // delayMicroseconds(60); //necessary to avoid random pixels in remote console
+  //   console = false;
+  // #endif
 
   if (c == 32) {
     if (fgcolor == bgcolor) {

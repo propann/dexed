@@ -172,8 +172,8 @@ AudioMixer<2> ep_chorus_mixer_l;
 AudioAnalyzePeak microdexed_peak_0;
 AudioAnalyzePeak microdexed_peak_1;
 
-AudioMixer<7> reverb_mixer_r;
-AudioMixer<7> reverb_mixer_l;
+AudioMixer<8> reverb_mixer_r;
+AudioMixer<8> reverb_mixer_l;
 
 AudioEffectPlateReverb reverb;
 
@@ -628,8 +628,8 @@ FLASHMEM void create_audio_braids_chain(uint8_t instance_id) {
 
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_mixer_reverb, 0 };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer, 0, braids_mixer_reverb, 1 };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 0, reverb_mixer_r, MASTER_MIX_CH_BRAIDS };
-    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, MASTER_MIX_CH_BRAIDS };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 0, reverb_mixer_r, REVERB_MIX_CH_BRAIDS };
+    dynamicConnections[nDynamic++] = new AudioConnection{ braids_mixer_reverb, 1, reverb_mixer_l, REVERB_MIX_CH_BRAIDS };
 
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 0, braids_peak_r, 0 };
     dynamicConnections[nDynamic++] = new AudioConnection{ braids_stereo_panorama, 1, braids_peak_l, 0 };
@@ -704,7 +704,21 @@ uint8_t midi_voices[NUM_DEXED];
 elapsedMillis cpu_mem_millis;
 #endif
 uint32_t cpumax = 0;
-bool sidechain_trigger;
+
+elapsedMillis sidechain_a_millis;
+elapsedMillis sidechain_b_millis;
+
+bool sidechain_a_active = false;
+bool sidechain_b_active = false;
+
+bool sidechain_trigger_a;
+bool sidechain_trigger_b;
+
+uint8_t sidechain_a_sample_number = NUM_DRUMSET_CONFIG - 1;
+uint8_t sidechain_b_sample_number = NUM_DRUMSET_CONFIG - 1;
+
+uint8_t sidechain_a_speed = 0;
+uint8_t sidechain_b_speed = 0;
 
 sdcard_t sdcard_infos;
 
@@ -799,11 +813,11 @@ void startup_late_hook(void) {
   systick_millis_count = 300;
 
 #ifdef REMOTE_CONSOLE
-  while(!Serial && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
+  while (!Serial && millis() < 1000) {}  //wait (at most 1000 ms) until the connection to the PC is established
 #endif
 
 #if defined(DEBUG) && !defined(REMOTE_CONSOLE)
-  while(!LOG && millis() < 1000){}  //wait (at most 1000 ms) until the connection to the PC is established
+  while (!LOG && millis() < 1000) {}  //wait (at most 1000 ms) until the connection to the PC is established
 #endif
 }
 
@@ -1474,50 +1488,189 @@ float pseudo_log_curve(float value) {
   return (pow(value, 2.2));
 }
 
-float sc_dexed0 = 0.0;
-float sc_reverb = 0.0;
+float sc_dexed1_current = 1.0;
+float sc_dexed2_current = 1.0;
 
+uint8_t sc_dexed1_target_a = 0;
+uint8_t sc_dexed2_target_a = 0;
+
+uint8_t sc_dexed1_target_b = 0;
+uint8_t sc_dexed2_target_b = 0;
+
+float sc_braids_current = 1.0;
+
+uint8_t sc_braids_target_a = 0;
+uint8_t sc_braids_target_b = 0;
+
+float sc_delay_a_current = 1.0;
+float sc_delay_b_current = 1.0;
+
+uint8_t sc_delay_a_target_a = 0;
+uint8_t sc_delay_a_target_b = 0;
+uint8_t sc_delay_b_target_a = 0;
+uint8_t sc_delay_b_target_b = 0;
+
+float sc_reverb_current = 1.0;
+
+uint8_t sc_reverb_target_a = 0;
+uint8_t sc_reverb_target_b = 0;
+
+uint8_t sc_seq_step_displayed;
 
 void update_sidechain() {
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sidechain)) {
-    display.setTextSize(2);
+    display.setTextSize(1);
     display.setTextColor(RED, COLOR_BACKGROUND);
-    setCursor_textGrid(24, 1);
-    if (sidechain_trigger) {
+    setCursor_textGrid_small(28, 4);
+    if (sidechain_trigger_a) {
       display.print(F("T"));
-    }
-    if (control_rate > CONTROL_RATE_MS && sidechain_trigger == false) {
+      sc_seq_step_displayed = seq.step;
+      sidechain_a_millis = 0;
+    } else if (sc_seq_step_displayed != seq.step) {
       display.print(F(" "));
+      sc_seq_step_displayed = seq.step;
     }
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
 
-  if (sidechain_trigger) {
+  if (sidechain_trigger_a) {
 
-    sc_dexed0 = 0.0;
-    sc_reverb = 0.0;
+    if (sc_dexed1_target_a != 0) {
+      sc_dexed1_current = VOL_MAX_FLOAT - (float)sc_dexed1_target_a / 100;
+      if (sc_dexed1_current < 0.0)
+        sc_dexed1_current = 0.0;
+      master_mixer_r.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
+    }
 
-    master_mixer_r.gain(0, sc_dexed0);
-    master_mixer_l.gain(0, sc_dexed0);
+    if (sc_dexed2_target_a != 0) {
+      sc_dexed2_current = VOL_MAX_FLOAT - (float)sc_dexed2_target_a / 100;
+      if (sc_dexed2_current < 0.0)
+        sc_dexed2_current = 0.0;
+      master_mixer_r.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
+    }
 
-    master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-    master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-    sidechain_trigger = false;
+    if (sc_braids_target_a != 0) {
+      sc_braids_current = VOL_MAX_FLOAT - (float)sc_braids_target_a / 100;
+      if (sc_braids_current < 0.0)
+        sc_braids_current = 0.0;
+      master_mixer_r.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
+      master_mixer_l.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
+    }
+
+    if (sc_delay_a_target_a != 0) {
+
+      sc_delay_a_current = VOL_MAX_FLOAT - (float)sc_delay_a_target_a / 100;
+      if (sc_delay_a_current < 0.0)
+        sc_delay_a_current = 0.0;
+      master_mixer_r.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
+    }
+
+    if (sc_delay_b_target_a != 0) {
+
+      sc_delay_b_current = VOL_MAX_FLOAT - (float)sc_delay_b_target_a / 100;
+      if (sc_delay_b_current < 0.0)
+        sc_delay_b_current = 0.0;
+      master_mixer_r.gain(MASTER_MIX_CH_DELAY1, sc_delay_b_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DELAY1, sc_delay_b_current);
+    }
+
+
+    if (sc_reverb_target_a != 0) {
+
+      sc_reverb_current = VOL_MAX_FLOAT - (float)sc_reverb_target_a / 100;
+      if (sc_reverb_current < 0.0)
+        sc_reverb_current = 0.0;
+      master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+      master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+    }
+
+    sidechain_trigger_a = false;
   }
 
-  if (sc_dexed0 < VOL_MAX_FLOAT) {
 
-    // sc_dexed0 = sc_dexed0 + sc_dexed0 * ((float)configuration.dexed[0].sidechain_time / 15000);
-    sc_dexed0 = sc_dexed0 + pseudo_log_curve((float)0.0005 * configuration.dexed[0].sidechain_time);
-    master_mixer_r.gain(0, sc_dexed0);
-    master_mixer_l.gain(0, sc_dexed0);
+  if (seq.running && sc_dexed1_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_dexed1_target_a != 0) {
+
+    sc_dexed1_current = sc_dexed1_current + (float)0.002 * sidechain_a_speed;
+
+    if (sc_dexed1_current >= VOL_MAX_FLOAT)
+      sc_dexed1_current = VOL_MAX_FLOAT;
+
+    master_mixer_r.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
+    master_mixer_l.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
   }
-  if (sc_reverb < VOL_MAX_FLOAT) {
-    // sc_reverb = sc_reverb + sc_reverb * ((float)configuration.fx.reverb_sidechain_time / 15000);
-    sc_reverb = sc_reverb + pseudo_log_curve((float)0.0005 * configuration.fx.reverb_sidechain_time);
-    master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb);
-    master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb);
+
+  if (seq.running && sc_dexed2_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_dexed2_target_a != 0) {
+
+    sc_dexed2_current = sc_dexed2_current + (float)0.002 * sidechain_a_speed;
+
+    if (sc_dexed2_current >= VOL_MAX_FLOAT)
+      sc_dexed2_current = VOL_MAX_FLOAT;
+
+    master_mixer_r.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
+    master_mixer_l.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
+  }
+
+  if (seq.running && sc_braids_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_braids_target_a != 0) {
+
+    sc_braids_current = sc_braids_current + (float)0.002 * sidechain_a_speed;
+
+    if (sc_braids_current >= VOL_MAX_FLOAT)
+      sc_braids_current = VOL_MAX_FLOAT;
+
+    master_mixer_r.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
+    master_mixer_l.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
+  }
+
+
+
+  if (seq.running && sc_delay_a_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_delay_a_target_a != 0) {
+
+    sc_delay_a_current = sc_delay_a_current + (float)0.002 * sidechain_a_speed;
+
+    if (sc_delay_a_current >= VOL_MAX_FLOAT)
+      sc_delay_a_current = VOL_MAX_FLOAT;
+
+    master_mixer_r.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
+    master_mixer_l.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
+  }
+
+  if (seq.running && sc_delay_b_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_delay_b_target_a != 0) {
+
+    sc_delay_b_current = sc_delay_b_current + (float)0.002 * sidechain_b_speed;
+
+    if (sc_delay_b_current >= VOL_MAX_FLOAT)
+      sc_delay_b_current = VOL_MAX_FLOAT;
+
+    master_mixer_r.gain(MASTER_MIX_CH_DELAY2, sc_delay_b_current);
+    master_mixer_l.gain(MASTER_MIX_CH_DELAY2, sc_delay_b_current);
+  }
+
+  if (seq.running && sc_reverb_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_reverb_target_a != 0) {
+
+    sc_reverb_current = sc_reverb_current + (float)0.002 * sidechain_a_speed;
+
+    if (sc_reverb_current >= VOL_MAX_FLOAT)
+      sc_reverb_current = VOL_MAX_FLOAT;
+
+    master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+    master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+  }
+
+
+
+  if (control_rate > CONTROL_RATE_MS && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sidechain)) {
+    print_sidechain_level_indicators();
+
+    // setCursor_textGrid_small(38, 2);
+    // display.print(sidechain_a_millis);
+    // display.print(F("   "));
+    // setCursor_textGrid_small(38, 3);
+    // display.print(sc_dexed1_current);
+    // display.print(F("   "));
   }
 }
 
@@ -1560,8 +1713,7 @@ void loop() {
     handle_touchscreen_voice_select();
     display.console = true;
     scope.draw_scope(217, 30, 102);
-  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) ||
-   LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
+  } else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)) {
     handle_touchscreen_pattern_editor();
     display.console = true;
     if (seq.running)
@@ -1678,9 +1830,11 @@ void loop() {
     }
   }
 
-  //if (seq.running) {
-  // update_sidechain();
-  //}
+  if (seq.running) {
+    if (sidechain_a_active || sidechain_b_active)
+      ;
+    //update_sidechain();  //work in progress
+  }
 
   if (control_rate > CONTROL_RATE_MS) {
     control_rate = 0;
@@ -2267,8 +2421,11 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
               drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
               drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
               drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-              if (drum_config[d].drum_class == DRUM_BASS)
-                sidechain_trigger = true;
+              if (sidechain_a_active && d == sidechain_a_sample_number)
+                sidechain_trigger_a = true;
+              if (sidechain_b_active && d == sidechain_b_sample_number)
+                sidechain_trigger_b = true;
+
 
 #ifdef COMPILE_FOR_PROGMEM
               if (drum_config[d].drum_data != NULL && drum_config[d].len > 0) {
@@ -2277,8 +2434,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                   Drum[slot]->enableInterpolation(true);
                   Drum[slot]->setPlaybackRate(drum_config[d].pitch);
                 }
-                if (drum_config[d].drum_class == DRUM_BASS)
-                  sidechain_trigger = true;
+                if (sidechain_a_active && d == sidechain_a_sample_number)
+                  sidechain_trigger_a = true;
+                if (sidechain_b_active && d == sidechain_b_sample_number)
+                  sidechain_trigger_b = true;
 
 #ifdef COMPILE_FOR_PROGMEM
                 Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
@@ -2288,8 +2447,10 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device) {
                 snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 //Drum[slot]->playWav("DMpop.wav");  //Test
-                if (drum_config[d].drum_class == DRUM_BASS)
-                  sidechain_trigger = true;
+                if (sidechain_a_active && d == sidechain_a_sample_number)
+                  sidechain_trigger_a = true;
+                if (sidechain_b_active && d == sidechain_b_sample_number)
+                  sidechain_trigger_b = true;
 #endif
 
 #ifdef COMPILE_FOR_SDCARD

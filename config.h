@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.8.6"
+#define VERSION "1.4.8.8"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -355,6 +355,7 @@ const int FlashChipSelect = 6;  // digital pin for flash chip CS pin (on Audio S
 #define MULTISAMPLE_PRESETS_CONFIG_NAME "msp_presets"
 #define BRAIDS_CONFIG_NAME "braids"
 #define MULTIBAND_CONFIG_NAME "multiband"
+#define SIDECHAIN_CONFIG_NAME "sc"
 
 #define MAX_PERF_MOD 30
 
@@ -798,7 +799,6 @@ typedef struct dexed_s {
   uint8_t portamento_time;
   uint8_t op_enabled;
   uint8_t midi_channel;
-  uint8_t sidechain_time;
 } dexed_t;
 
 typedef struct fx_s {
@@ -837,7 +837,6 @@ typedef struct fx_s {
   uint8_t ep_chorus_depth;
   uint8_t ep_chorus_level;
   uint8_t ep_reverb_send;
-  uint8_t reverb_sidechain_time;
 } fx_t;
 
 typedef struct epiano_s {
@@ -861,7 +860,6 @@ typedef struct epiano_s {
   uint8_t midi_channel;
   uint8_t delay_send_1;
   uint8_t delay_send_2;
-  uint8_t sidechain_time;
 } epiano_t;
 
 typedef struct microsynth_s {
@@ -910,7 +908,6 @@ typedef struct microsynth_s {
   uint8_t delay_send[NUM_MICROSYNTH];
   uint8_t vel_mod_filter_osc = 0;
   uint8_t vel_mod_filter_noise = 0;
-  uint8_t sidechain_time;
 } microsynth_t;
 
 typedef struct braids_s {
@@ -938,14 +935,12 @@ typedef struct braids_s {
   uint8_t midi_channel;
   uint8_t pan;
   uint8_t note_buffer[NUM_BRAIDS];
-  uint8_t sidechain_time;
 } braids_t;
 
 typedef struct multisample_s {
   char name[18];
   uint8_t sound_intensity;
   uint8_t midi_channel;
-  uint8_t sidechain_time;
 } multisample_t;
 
 typedef struct multisample_zone_s {
@@ -1015,8 +1010,8 @@ typedef struct custom_midi_map_s {
 } custom_midi_map_t;
 
 enum master_mixer_ports {
-  MASTER_MIX_CH_DEXED2,
   MASTER_MIX_CH_DEXED1,
+  MASTER_MIX_CH_DEXED2,
   MASTER_MIX_CH_REVERB,
   MASTER_MIX_CH_DRUMS,
   MASTER_MIX_CH_EPIANO,
@@ -1029,11 +1024,12 @@ enum master_mixer_ports {
 };
 
 enum reverb_mixer_ports {
-  REVERB_MIX_CH_DEXED2,
   REVERB_MIX_CH_DEXED1,
+  REVERB_MIX_CH_DEXED2,
   REVERB_MIX_CH_DRUMS,
   REVERB_MIX_CH_EPIANO,
   REVERB_MIX_CH_MICROSYNTH,
+  REVERB_MIX_CH_BRAIDS,
   REVERB_MIX_CH_AUX_DELAY1,
   REVERB_MIX_CH_AUX_DELAY2,
 };
