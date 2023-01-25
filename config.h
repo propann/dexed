@@ -1039,7 +1039,6 @@ enum fm_modes {
   FM_DELETE_FILE,
   FM_COPY_PRESETS,
   FM_COPY_TO_FLASH,
-  FM_COPY_TO_PC,
   FM_PLAY_SAMPLE
 };
 

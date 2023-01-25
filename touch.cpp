@@ -794,7 +794,6 @@ FLASHMEM void print_file_manager_buttons() {
   draw_button_on_grid(19, 25, "COPY", "PRESET", fm.sd_mode == FM_COPY_PRESETS ? 1 : 0);
   draw_button_on_grid(28, 25, "COPY >", "FLASH", fm.sd_mode == FM_COPY_TO_FLASH ? 1 : 0);
 #endif
-  draw_button_on_grid(37, 25, "COPY >", "TO PC", fm.sd_mode == FM_COPY_TO_PC ? 1 : 0);
   draw_button_on_grid(46, 25, "PLAY", "SAMPLE", fm.sd_mode == FM_PLAY_SAMPLE ? 1 : 0);
 }
 
@@ -830,9 +829,6 @@ FLASHMEM void handle_touchscreen_file_manager() {
         print_file_manager_buttons();
       } else if (check_button_on_grid(28, 25)) {
         fm.sd_mode = FM_COPY_TO_FLASH;
-        print_file_manager_buttons();
-      } else if (check_button_on_grid(37, 25)) {
-        fm.sd_mode = FM_COPY_TO_PC;
         print_file_manager_buttons();
       } else if (check_button_on_grid(46, 25)) {
         fm.sd_mode = FM_PLAY_SAMPLE;

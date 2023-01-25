@@ -12884,59 +12884,6 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           }
         }
 #endif
-        else if (fm.sd_mode == FM_COPY_TO_PC)  // copy to pc
-        {
-          display.console = false;
-          strcpy(fm.sd_full_name, fm.sd_new_name);
-          strcat(fm.sd_full_name, "/");
-          strcat(fm.sd_full_name, fm.sd_temp_name);
-          File f = SD.open(fm.sd_full_name);
-          unsigned long length = f.size();
-
-          // copy data loop
-          unsigned long count = 0;
-          uint8_t num_chars = 0;
-          for (uint8_t i = 0; i < sizeof(fm.sd_temp_name); i++) {
-            if (fm.sd_temp_name[i] != '\0')
-              num_chars++;
-            else
-              break;
-          }
-          // write start byte to usb port
-          Serial.write(4);  //start send filename
-          //write filename
-          for (uint8_t i = 0; i < num_chars; i++) {
-            Serial.write(fm.sd_temp_name[i]);
-          }
-
-          Serial.write(5);  //write filename end
-
-          Serial.write(length);
-          Serial.write(length >> 8);
-          Serial.write(length >> 16);
-          Serial.write(length >> 24);
-
-          Serial.write(6);  //write file start
-
-          while (count < length) {
-            char buf[256];
-            unsigned int n;
-            n = f.read(buf, 256);
-            Serial.write(buf, n);  // write complete buffer to port
-            count = count + n;
-            if (count % 128 == 0)
-              display.console = false;
-            display.fillRect(181, 52, count / (f.size() / 132), 8, RED);
-          }
-
-          f.close();
-
-          display.console = false;
-          display.fillRect(180, 52, 134, 8, COLOR_BACKGROUND);
-
-          //display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);
-          // display.console = true;
-        }
       }
     }
     if (LCDML.BT_checkEnter() && fm.sd_mode == FM_PLAY_SAMPLE)  //preview - compiled for flash
