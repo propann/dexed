@@ -1,32 +1,35 @@
 #include "filemanager.h"
 
 FLASHMEM void sd_filemanager() {
-  char path[50];
+  char command[10];
+  char path[128];
 
-  char cmd = Serial.read();
-  size_t read = Serial.readBytesUntil('!', path, 255);
+  size_t read = Serial.readBytesUntil('!', command, 10);
+  command[read] = '\0';
+
+  read = Serial.readBytesUntil('!', path, 128);
   path[read] = '\0';
 
-  if (Serial.read() == '%') {  // check cmd correct
-    switch (cmd) {
-      case 'd':  // list SD content for path
-        sd_sendDirectory(path);
-        break;
-
-      case 's':  // send file asked by remote
-        sd_sendFile(path);
-        break;
-
-      case 'r':  // receive file sent from remote
-        sd_receiveFile(path);
-        break;
-
-      case 'x':  // delete file on SD
-        sd_deleteFile(path);
-        break;
-
-      default:
-        break;
+  if (Serial.read() == '%') {  // check command correct
+    if(!strcmp("dir", command)) {
+      // list SD content for path
+      sd_sendDirectory(path);
+    }
+    else if(!strcmp("get", command)) {
+      // send file asked by remote
+      sd_sendFile(path);
+    }
+    else if(!strcmp("put", command)) {
+      // write file received from remote
+      sd_receiveFile(path);
+    }
+    else if(!strcmp("delete", command)) {
+      // delete file on SD
+      sd_deleteFile(path);
+    }
+    else if(!strcmp("rename", command)) {
+      // rename file on SD
+      sd_renameFile(path); // path will be splitted
     }
   }
 }
@@ -251,13 +254,47 @@ FLASHMEM void sd_receiveFile(const char *path) {
 
 FLASHMEM void sd_deleteFile(const char *path) {
 #ifdef DEBUG
-  LOG.printf("DEL file: [%s]\n", path);
+  LOG.printf("DELETE file: [%s]\n", path);
 #endif
   if (SD.exists(path)) {
     SD.remove(path);
 
 #ifdef DEBUG
-    LOG.println("DEL done.");
+    LOG.println("DELETE done.");
 #endif
   }
+}
+
+FLASHMEM void sd_renameFile(const char *pathToSplit) {
+  char arr[2][50];
+  char *ptr = strtok(pathToSplit, "|");
+  strcpy(arr[0], ptr);
+  ptr = strtok(NULL, "|");
+  strcpy(arr[1], ptr);
+
+#ifdef DEBUG
+  LOG.printf("RENAME file: [%s]\n", arr[0]);
+  LOG.printf("RENAME dest file: [%s]\n", arr[1]);
+#endif
+
+  if (!SD.exists(arr[0]))
+    return;
+
+  size_t n;  
+  uint8_t buf[64];
+
+  File myOrigFile = SD.open(arr[0], FILE_READ);
+  File myDestFile = SD.open(arr[1], FILE_WRITE);
+
+  while ((n = myOrigFile.read(buf, sizeof(buf))) > 0) {
+    myDestFile.write(buf, n);
+  }
+  myOrigFile.close();
+  myDestFile.close();
+
+  sd_deleteFile(arr[0]);
+
+#ifdef DEBUG
+  LOG.println("RENAME done.");
+#endif
 }

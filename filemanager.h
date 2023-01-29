@@ -12,5 +12,6 @@ void sd_sendDirectory(const char *path);
 void sd_sendFile(const char *path);
 void sd_receiveFile(const char *path);
 void sd_deleteFile(const char *path);
+void sd_renameFile(const char *path);
 
 #endif
