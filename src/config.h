@@ -55,8 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-// #define VERSION "1.4.8.8"
-#include "Version.h"
+#include "version.h"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -1056,6 +1055,3 @@ inline float mapfloat(float val, float in_min, float in_max, float out_min, floa
 #else
 #define LOG Serial
 #endif
-
-#define STRINGIFY(s) STRINGIFY1(s)
-#define STRINGIFY1(s) #s

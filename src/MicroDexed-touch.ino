@@ -735,7 +735,7 @@ config_t configuration;
 const uint8_t cs_pins[] = { SDCARD_TEENSY_CS_PIN, SDCARD_AUDIO_CS_PIN };
 const uint8_t mosi_pins[] = { SDCARD_TEENSY_MOSI_PIN, SDCARD_AUDIO_MOSI_PIN };
 const uint8_t sck_pins[] = { SDCARD_TEENSY_SCK_PIN, SDCARD_AUDIO_SCK_PIN };
-char version_string[display_cols + 1];
+char version_string[display_cols + 10 + 1];
 char sd_string[display_cols + 1];
 char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
 char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
@@ -4242,7 +4242,7 @@ FLASHMEM void generate_version_string(char* buffer, uint8_t len) {
   char tmp[3];
 
   memset(buffer, 0, len);
-  strncat(buffer, STRINGIFY(VERSION), len);
+  strncat(buffer, VERSION, len);
 #if defined(TEENSY4_0)
   strncat(buffer, " - 4.0", 6);
 #elif defined(TEENSY4_1)
