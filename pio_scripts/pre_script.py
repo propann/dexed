@@ -1,7 +1,7 @@
 Import("env")
 import sys, re, datetime
 
-PATH_VERSION = './src/version.h'
+PATH_VERSION = './MicroDexed-touch/version.h'
 MAJOR, MINOR, PATCH, BUILD = 0, 1, 2, 3
 
 # Read
