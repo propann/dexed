@@ -265,7 +265,7 @@ FLASHMEM void sd_deleteFile(const char *path) {
   }
 }
 
-FLASHMEM void sd_renameFile(const char *pathToSplit) {
+FLASHMEM void sd_renameFile(char *pathToSplit) {
   char arr[2][50];
   char *ptr = strtok(pathToSplit, "|");
   strcpy(arr[0], ptr);

@@ -735,7 +735,7 @@ config_t configuration;
 const uint8_t cs_pins[] = { SDCARD_TEENSY_CS_PIN, SDCARD_AUDIO_CS_PIN };
 const uint8_t mosi_pins[] = { SDCARD_TEENSY_MOSI_PIN, SDCARD_AUDIO_MOSI_PIN };
 const uint8_t sck_pins[] = { SDCARD_TEENSY_SCK_PIN, SDCARD_AUDIO_SCK_PIN };
-char version_string[display_cols + 1];
+char version_string[display_cols + 10 + 1];
 char sd_string[display_cols + 1];
 char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
 char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
@@ -804,22 +804,22 @@ extern void handle_touchscreen_test_touchscreen(void);
 extern void sequencer_part2(void);
 
 
-// Hook (https://www.pjrc.com/teensy/td_startup.html)
-extern "C" void startup_late_hook(void);
-extern "C" volatile uint32_t systick_millis_count;
+// // Hook (https://www.pjrc.com/teensy/td_startup.html)
+// extern "C" void startup_late_hook(void);
+// extern "C" volatile uint32_t systick_millis_count;
 
-void startup_late_hook(void) {
-  // force millis() to be 300 to skip startup delays
-  systick_millis_count = 300;
+// void startup_late_hook(void) {
+//   // force millis() to be 300 to skip startup delays
+//   systick_millis_count = 300;
 
-#ifdef REMOTE_CONSOLE
-  while (!Serial && millis() < 1000) {}  //wait (at most 1000 ms) until the connection to the PC is established
-#endif
+// #ifdef REMOTE_CONSOLE
+//   while (!Serial && millis() < 1000) {}  //wait (at most 1000 ms) until the connection to the PC is established
+// #endif
 
-#if defined(DEBUG) && !defined(REMOTE_CONSOLE)
-  while (!LOG && millis() < 1000) {}  //wait (at most 1000 ms) until the connection to the PC is established
-#endif
-}
+// #if defined(DEBUG) && !defined(REMOTE_CONSOLE)
+//   while (!LOG && millis() < 1000) {}  //wait (at most 1000 ms) until the connection to the PC is established
+// #endif
+// }
 
 /***********************************************************************
    SETUP
@@ -2996,7 +2996,7 @@ void handleProgramChange(byte inChannel, byte inProgram) {
   }
 }
 
-void handleSystemExclusive(byte* sysex, uint len) {
+void handleSystemExclusive(byte* sysex, unsigned len) {
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++) {
     if (!checkMidiChannel((sysex[2] & 0x0f) + 1, instance_id)) {
 #ifdef DEBUG

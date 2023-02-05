@@ -10553,7 +10553,7 @@ void UI_func_master_effects(uint8_t param) {
 void UI_func_information(uint8_t param) {
   if (LCDML.FUNC_setup())  // ****** SETUP *********
   {
-    char version_string[display_cols + 1];
+    char version_string[display_cols + 10 + 1];
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     generate_version_string(version_string, sizeof(version_string));

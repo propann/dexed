@@ -55,7 +55,7 @@
 // sed -i.orig 's/^#define USB_MIDI_SYSEX_MAX 290/#define USB_MIDI_SYSEX_MAX 4104/' /usr/local/arduino-teensy/hardware/teensy/avr/cores/teensy4/usb_midi.h
 //#define USB_MIDI_SYSEX_MAX 4104
 
-#define VERSION "1.4.8.8"
+#include "version.h"
 
 //*************************************************************************************************
 //* DEVICE SETTINGS
@@ -120,9 +120,13 @@
 //* PROGMEM AND FLASH COMPILE MODES
 //*************************************************************************************************
 
-#define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
+// #define COMPILE_FOR_PROGMEM  // enable this if you do not have a SPI FLASH chip
 //#define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 //#define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
+
+#if !defined(COMPILE_FOR_PROGMEM) && !defined(COMPILE_FOR_FLASH) && !defined(COMPILE_FOR_SDCARD)
+  #define COMPILE_FOR_PROGMEM  // default
+#endif
 
 //*************************************************************************************************
 //* DISPLAY AND TOUCHSCREEN

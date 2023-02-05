@@ -106,7 +106,7 @@ void handleAfterTouch(byte inChannel, byte inPressure);
 void handlePitchBend(byte inChannel, int inPitch);
 void handleProgramChange(byte inChannel, byte inProgram);
 void handleAfterTouchPoly(byte inChannel, byte inNumber, byte inVelocity);
-void handleSystemExclusive(byte *data, uint len);
+void handleSystemExclusive(byte *data, unsigned len);
 //void handleSystemExclusiveChunk(const byte *data, uint len, bool last);
 void handleTimeCodeQuarterFrame(byte data);
 void handleSongSelect(byte inSong);
