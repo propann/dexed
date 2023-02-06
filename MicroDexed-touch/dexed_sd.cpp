@@ -33,12 +33,19 @@
 using namespace TeensyTimerTool;
 #include "dexed_sd.h"
 #include "synth_dexed.h"
+#include "microsynth.h"
+#include "braids.h"
+#include "touch.h"
+
 #if NUM_DRUMS > 0
 #include "drums.h"
 extern void set_drums_volume(float vol);
 extern drum_config_t drum_config[];
 extern custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 #endif
+
+extern sdcard_t sdcard_infos;
+extern fm_t fm;
 
 extern char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 extern char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
@@ -50,10 +57,8 @@ extern void check_configuration_epiano(void);
 extern void update_euclidean(void);
 
 extern microsynth_t microsynth[NUM_MICROSYNTH];
-extern void microsynth_update_all_settings(uint8_t instance_id);
 
 extern braids_t braids_osc;
-extern void braids_update_all_settings();
 
 extern uint8_t GAMEPAD_UP_0;
 extern uint8_t GAMEPAD_UP_1;
@@ -134,7 +139,7 @@ extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
 extern bool sidechain_a_active;
 extern bool sidechain_b_active;
-extern int8_t sidechain_a_sample_number;
+extern uint8_t sidechain_a_sample_number;
 extern uint8_t sidechain_b_sample_number;
 extern uint8_t sidechain_a_speed;
 extern uint8_t sidechain_b_speed;
@@ -3181,4 +3186,59 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number) {
     }
   }
   return (false);
+}
+
+int compare_files_by_name(const void* a, const void* b) {
+  storage_file_t* fileA = (storage_file_t*)a;
+  storage_file_t* fileB = (storage_file_t*)b;
+
+  String strA = ((String)fileA->name).toLowerCase();
+  String strB = ((String)fileB->name).toLowerCase();
+
+  if (strA.length() == 1) {
+    strA = "0" + strA;
+  }
+  if (strB.length() == 1) {
+    strB = "0" + strB;
+  }
+
+  return strA < strB ? -1 : strA > strB ? 1
+                                        : 0;
+}
+
+FLASHMEM void load_sd_directory() {
+  strcpy(fm.sd_prev_dir, fm.sd_new_name);
+  File sd_root = SD.open(fm.sd_new_name);
+  fm.sd_sum_files = 0;
+  while (true) {
+    File sd_entry = sd_root.openNextFile();
+    if (!sd_entry) break;
+    if (strcmp(sd_entry.name(), "System Volume Information")) {
+      strcpy(sdcard_infos.files[fm.sd_sum_files].name, sd_entry.name());
+      sdcard_infos.files[fm.sd_sum_files].size = sd_entry.size();
+      sdcard_infos.files[fm.sd_sum_files].isDirectory = sd_entry.isDirectory();
+#ifdef DEBUG
+      LOG.print(fm.sd_sum_files);
+      LOG.print(F("  "));
+      LOG.print(sdcard_infos.files[fm.sd_sum_files].name);
+      LOG.print(F("  "));
+      LOG.print(sdcard_infos.files[fm.sd_sum_files].size);
+      LOG.print(F(" bytes"));
+      LOG.println();
+#endif
+
+      fm.sd_sum_files++;
+    }
+    sd_entry.close();
+  }
+  sd_root.close();
+
+  // clear all the unused files in array
+  for (uint8_t i = fm.sd_sum_files; i < 200; i++) {
+    strcpy(sdcard_infos.files[i].name, "");
+    sdcard_infos.files[i].size = 0;
+    sdcard_infos.files[i].isDirectory = false;
+  }
+
+  qsort(sdcard_infos.files, fm.sd_sum_files, sizeof(storage_file_t), compare_files_by_name);
 }

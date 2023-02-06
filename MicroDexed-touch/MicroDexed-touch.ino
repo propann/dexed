@@ -66,6 +66,7 @@ double braids_flanger_freq = .5;
 using namespace TeensyTimerTool;
 
 #include "microsynth.h"
+#include "braids.h"
 
 #include "effect_dynamics.h"
 
@@ -122,7 +123,6 @@ AudioEffectStereoPanorama braids_stereo_panorama;
 AudioAnalyzePeak braids_peak_r;
 AudioAnalyzePeak braids_peak_l;
 uint8_t braids_slot;
-extern void update_braids_params(void);
 braids_t braids_osc;
 uint16_t braids_filter_state[NUM_BRAIDS];
 uint16_t braids_filter_state_last_displayed[NUM_BRAIDS];

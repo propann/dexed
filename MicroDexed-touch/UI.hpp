@@ -40,14 +40,15 @@
 #include "sequencer.h"
 #include "touch.h"
 #include "splash_image.h"
+#include "dexed_sd.h"
 
 #include "synth_mda_epiano.h"
 extern AudioSynthEPiano ep;
 #include "effect_stereo_panorama.h"
 
 #include <synth_braids.h>
+#include "braids.h"
 extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
-extern void braids_update_single_setting();
 
 //sidechains
 extern uint8_t sidechain_a_sample_number;
@@ -553,7 +554,6 @@ void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_n
 void _setup_rotation_and_encoders(bool init);
 void sd_go_parent_folder();
 void sd_update_display();
-int compare_files_by_name(const void* a, const void* b);
 void sd_card_count_files_from_directory(const char* path);
 void print_voice_select_default_help();
 char* basename(const char* filename);
@@ -11730,47 +11730,10 @@ FLASHMEM void UI_func_braids(uint8_t param) {
 //  }
 //}
 
-FLASHMEM void sd_loadDirectory() {
-  strcpy(fm.sd_prev_dir, fm.sd_new_name);
-  File sd_root = SD.open(fm.sd_new_name);
-  fm.sd_sum_files = 0;
-  while (true) {
-    File sd_entry = sd_root.openNextFile();
-    if (!sd_entry) break;
-    if (strcmp(sd_entry.name(), "System Volume Information")) {
-      strcpy(sdcard_infos.files[fm.sd_sum_files].name, sd_entry.name());
-      sdcard_infos.files[fm.sd_sum_files].size = sd_entry.size();
-      sdcard_infos.files[fm.sd_sum_files].isDirectory = sd_entry.isDirectory();
-#ifdef DEBUG
-      LOG.print(fm.sd_sum_files);
-      LOG.print(F("  "));
-      LOG.print(sdcard_infos.files[fm.sd_sum_files].name);
-      LOG.print(F("  "));
-      LOG.print(sdcard_infos.files[fm.sd_sum_files].size);
-      LOG.print(F(" bytes"));
-      LOG.println();
-#endif
-
-      fm.sd_sum_files++;
-    }
-    sd_entry.close();
-  }
-  sd_root.close();
-
-  // clear all the unused files in array
-  for (uint8_t i = fm.sd_sum_files; i < 200; i++) {
-    strcpy(sdcard_infos.files[i].name, "");
-    sdcard_infos.files[i].size = 0;
-    sdcard_infos.files[i].isDirectory = false;
-  }
-
-  qsort(sdcard_infos.files, fm.sd_sum_files, sizeof(storage_file_t), compare_files_by_name);
-}
-
 FLASHMEM void sd_printDirectory(bool forceReload) {
 
   if (forceReload || strcmp(fm.sd_new_name, fm.sd_prev_dir)) {
-    sd_loadDirectory();
+    load_sd_directory();
   }
 
   char tmp[6];
@@ -12806,7 +12769,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
           strcat(fm.sd_full_name, "/");
           strcat(fm.sd_full_name, fm.sd_temp_name);
           SD.remove(fm.sd_full_name);
-          sd_loadDirectory();
+          load_sd_directory();
         }
 #ifdef COMPILE_FOR_FLASH
         else if (fm.sd_mode == FM_COPY_TO_FLASH) {
@@ -12932,24 +12895,6 @@ FLASHMEM void UI_func_file_manager(uint8_t param) {
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
-}
-
-int compare_files_by_name(const void* a, const void* b) {
-  storage_file_t* fileA = (storage_file_t*)a;
-  storage_file_t* fileB = (storage_file_t*)b;
-
-  String strA = ((String)fileA->name).toLowerCase();
-  String strB = ((String)fileB->name).toLowerCase();
-
-  if (strA.length() == 1) {
-    strA = "0" + strA;
-  }
-  if (strB.length() == 1) {
-    strB = "0" + strB;
-  }
-
-  return strA < strB ? -1 : strA > strB ? 1
-                                        : 0;
 }
 
 FLASHMEM void UI_func_midi_soft_thru(uint8_t param) {

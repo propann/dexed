@@ -83,4 +83,8 @@ uint8_t calc_checksum(uint8_t* data, uint16_t len);
 void strip_extension(const char* s, char* target, uint8_t len);
 
 void string_toupper(char* s);
+
+void load_sd_directory();
+int compare_files_by_name(const void* a, const void* b);
+
 #endif
