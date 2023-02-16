@@ -1,4 +1,4 @@
-## Installation Instructions
+Installation Instructions
 
 Several binary, HEX Files are provided in the /release folder. For starting, we suggest to flash mdt_default_(latest version number you see).hex
 
