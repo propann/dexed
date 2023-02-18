@@ -13,30 +13,32 @@ extern Adafruit_FT6206 touch;
 
 #include <SD.h>
 
-typedef struct dexed_live_mod_s {
+typedef struct dexed_live_mod_s
+{
   uint8_t active_button = 0;
   uint8_t orig_attack_values[2][7];
   uint8_t orig_release_values[2][7];
 
 #if NUM_DEXED > 1
-  int attack_mod[NUM_DEXED] = { 0, 0 };
-  int release_mod[NUM_DEXED] = { 0, 0 };
+  int attack_mod[NUM_DEXED] = {0, 0};
+  int release_mod[NUM_DEXED] = {0, 0};
 #else
-  int attack_mod[NUM_DEXED] = { 0 };
-  int release_mod[NUM_DEXED] = { 0 };
+  int attack_mod[NUM_DEXED] = {0};
+  int release_mod[NUM_DEXED] = {0};
 #endif
 
 } dexed_live_mod_t;
 
-typedef struct ts_s {
-  bool finished_calibration=false;
+typedef struct ts_s
+{
+  bool finished_calibration = false;
   uint16_t temp_col_hue = 1;
   uint8_t temp_col_sat = 240, temp_col_bright = 240;
   int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
-  uint8_t virtual_keyboard_instrument = 1;  // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums 7=braids, 8- pitched samples
+  uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums 7=braids, 8- pitched samples
   uint8_t virtual_keyboard_midi_channel = 1;
-  uint8_t virtual_keyboard_velocity=120;
+  uint8_t virtual_keyboard_velocity = 120;
   uint8_t msp_peak[NUM_MULTISAMPLES];
 
   TS_Point p;
@@ -44,7 +46,7 @@ typedef struct ts_s {
   uint8_t virtual_keyboard_state_black[17];
   bool update_virtual_keyboard_octave;
   bool block_screen_update;
-  uint8_t displayed_peak[20];  //volmeter peak levels, currently displayed level
+  uint8_t displayed_peak[20]; // volmeter peak levels, currently displayed level
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu = false;
   bool keyb_in_menu_activated = false;
@@ -52,24 +54,25 @@ typedef struct ts_s {
 
 // (Touch)File Manager
 
-typedef struct fm_s {
+typedef struct fm_s
+{
   uint8_t wav_recorder_mode = 0;
 
 #ifdef COMPILE_FOR_SDCARD
-  uint8_t sample_source = 0;  // 0 = SD, 1 = FLASH
+  uint8_t sample_source = 0; // 0 = SD, 1 = FLASH
 #endif
 
 #ifdef COMPILE_FOR_PROGMEM
-  uint8_t sample_source = 0;  // 0 = SD, 1 = FLASH
+  uint8_t sample_source = 0; // 0 = SD, 1 = FLASH
 #endif
 
 #ifdef COMPILE_FOR_FLASH
-  uint8_t sample_source = 1;  // 0 = SD, 1 = FLASH
+  uint8_t sample_source = 1; // 0 = SD, 1 = FLASH
 #endif
 
   int sample_screen_position_x = 0;
   bool sample_preview_playing;
-  uint8_t active_window = 0;  // 0 = left window (SDCARD) , 1 = FLASH
+  uint8_t active_window = 0; // 0 = left window (SDCARD) , 1 = FLASH
 
   uint16_t sd_sum_files = 0;
   uint8_t sd_cap_rows;

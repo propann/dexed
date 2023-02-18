@@ -30,153 +30,153 @@
 // 20191205 - initial version
 
 PROGMEM static const audio_block_t zeroblock = {
-  0, 0, 0, {
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+    0, 0, 0, {
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #if AUDIO_BLOCK_SAMPLES > 16
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 32
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 48
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 64
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 80
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 96
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 112
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
-           }
-};
+             }};
 
-void AudioEffectAutoPan::update(void) {
+void AudioEffectAutoPan::update(void)
+{
   audio_block_t *in;
   audio_block_t *mod;
   audio_block_t *out[2];
@@ -191,11 +191,12 @@ void AudioEffectAutoPan::update(void) {
   out[0] = allocate();
   out[1] = allocate();
 
-  if (in && mod && out[0] && out[1]) {
+  if (in && mod && out[0] && out[1])
+  {
     arm_q15_to_float(in->data, in_f, AUDIO_BLOCK_SAMPLES);
     arm_q15_to_float(mod->data, pan_f, AUDIO_BLOCK_SAMPLES);
     arm_offset_f32(pan_f, 1.0, pan_f, AUDIO_BLOCK_SAMPLES);
-    arm_scale_f32(pan_f, PI / 4.0, pan_f, AUDIO_BLOCK_SAMPLES);  // PI/4
+    arm_scale_f32(pan_f, PI / 4.0, pan_f, AUDIO_BLOCK_SAMPLES); // PI/4
 
     // right
     for (uint8_t n = 0; n < AUDIO_BLOCK_SAMPLES; n++)
@@ -206,18 +207,23 @@ void AudioEffectAutoPan::update(void) {
       out_f[1][n] = in_f[n] * _pseudo_log * arm_cos_f32(pan_f[n]);
     arm_float_to_q15(out_f[1], out[1]->data, AUDIO_BLOCK_SAMPLES);
 
-    if (in) {
+    if (in)
+    {
       release(in);
     }
-    if (in != (audio_block_t *)&zeroblock) {
+    if (in != (audio_block_t *)&zeroblock)
+    {
       release(in);
     }
-    if (mod != (audio_block_t *)&zeroblock) {
+    if (mod != (audio_block_t *)&zeroblock)
+    {
       release(mod);
     }
 
-    for (uint8_t i = 0; i < 2; i++) {
-      if (out[i]) {
+    for (uint8_t i = 0; i < 2; i++)
+    {
+      if (out[i])
+      {
         transmit(out[i], i);
         release(out[i]);
       }

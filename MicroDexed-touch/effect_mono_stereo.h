@@ -31,10 +31,12 @@
 // Written by Holger Wirtz
 // 20191122 - inital version
 
-class AudioEffectMonoStereo : public AudioStream {
+class AudioEffectMonoStereo : public AudioStream
+{
 public:
   AudioEffectMonoStereo(void)
-    : AudioStream(1, inputQueueArray) {
+      : AudioStream(1, inputQueueArray)
+  {
     pan = 0.5;
   }
 

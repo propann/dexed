@@ -31,7 +31,7 @@
 #include "utility/dspinst.h"
 #include "utility/sqrt_integer.h"
 
-//static float analyse_rms(int16_t *data) {
+// static float analyse_rms(int16_t *data) {
 //
 //	uint32_t *p = (uint32_t *)data;
 //	const uint32_t *end = p + AUDIO_BLOCK_SAMPLES / 2;
@@ -50,9 +50,9 @@
 //	if (sum == 0) return 0;
 //	int32_t meansq = sum / AUDIO_BLOCK_SAMPLES;
 //	return sqrt_uint32(meansq) / 32767.0f;
-//}
+// }
 
-//static void applyGain(int16_t *data, int32_t mult1, int32_t mult2) {
+// static void applyGain(int16_t *data, int32_t mult1, int32_t mult2) {
 //
 //	uint32_t *p = (uint32_t *)data;
 //	const uint32_t *end = p + AUDIO_BLOCK_SAMPLES / 2;
@@ -68,7 +68,7 @@
 //		val2 = signed_saturate_rshift(val2, 16, 0);
 //		*p++ = pack_16b_16b(val2, val1);
 //	} while (p < end);
-//}
+// }
 
 /* ----------------------------------------------------------------------
   https://community.arm.com/tools/f/discussions/4292/cmsis-dsp-new-functionality-proposal/22621#22621
@@ -80,9 +80,10 @@
   when computing db20() is accurate to 7.984884e-003 dB.
 ** ------------------------------------------------------------------- */
 
-float log2f_approx_coeff[4] = { 1.23149591368684f, -4.11852516267426f, 6.02197014179219f, -3.13396450166353f };
+float log2f_approx_coeff[4] = {1.23149591368684f, -4.11852516267426f, 6.02197014179219f, -3.13396450166353f};
 
-float log2f_approx(float X) {
+float log2f_approx(float X)
+{
   float *C = &log2f_approx_coeff[0];
   float Y;
   float F;
@@ -104,7 +105,8 @@ float log2f_approx(float X) {
 }
 
 // https://codingforspeed.com/using-faster-exponential-approximation/
-inline float expf_approx(float x) {
+inline float expf_approx(float x)
+{
   x = 1.0f + x / 1024;
   x *= x;
   x *= x;
@@ -119,30 +121,36 @@ inline float expf_approx(float x) {
   return x;
 }
 
-inline float unitToDb(float unit) {
+inline float unitToDb(float unit)
+{
   return 6.02f * log2f_approx(unit);
 }
 
-inline float dbToUnit(float db) {
+inline float dbToUnit(float db)
+{
   return expf_approx(db * 2.302585092994046f * 0.05f);
 }
 
-void AudioEffectDynamics::update(void) {
+void AudioEffectDynamics::update(void)
+{
 
   audio_block_t *block;
 
   block = receiveWritable(0);
 
-  if (!block) return;
+  if (!block)
+    return;
 
-  if (!compEnabled && !limiterEnabled) {
-    //Transmit & release
+  if (!compEnabled && !limiterEnabled)
+  {
+    // Transmit & release
     transmit(block);
     release(block);
     return;
   }
 
-  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+  {
 
     //        unsigned int sampleIndexPlus1 = (sampleIndex + 1) % sampleBufferSize;
     //
@@ -159,44 +167,58 @@ void AudioEffectDynamics::update(void) {
     //
     //        float rms = sqrt(sumOfSamplesSquared / float(sampleBufferSize)) / 32768.0;
 
-    //Compute block RMS level in Db
+    // Compute block RMS level in Db
     float inputdb = MIN_DB;
     // if (rms > 0) inputdb = unitToDb(rms);
 
-    //Compressor
-    if (compEnabled) {
-      float attdb = MAX_DB;  //Below knee
-      if (inputdb >= aLowKnee) {
-        if (inputdb <= aHighKnee) {
-          //Knee transition
+    // Compressor
+    if (compEnabled)
+    {
+      float attdb = MAX_DB; // Below knee
+      if (inputdb >= aLowKnee)
+      {
+        if (inputdb <= aHighKnee)
+        {
+          // Knee transition
           float knee = inputdb - aLowKnee;
           attdb = aKneeRatio * knee * knee * aTwoKneeWidth;
-        } else {
-          //Above knee
+        }
+        else
+        {
+          // Above knee
           attdb = compThreshold + ((inputdb - compThreshold) * compRatio) - inputdb;
         }
       }
-      if (attdb <= compdb) compdb = (aCompAttack * compdb) + (aOneMinusCompAttack * attdb);
-      else compdb = (aCompRelease * compdb) + (aOneMinusCompRelease * attdb);
-    } else compdb = MAX_DB;
+      if (attdb <= compdb)
+        compdb = (aCompAttack * compdb) + (aOneMinusCompAttack * attdb);
+      else
+        compdb = (aCompRelease * compdb) + (aOneMinusCompRelease * attdb);
+    }
+    else
+      compdb = MAX_DB;
 
-    //Brickwall Limiter
-    if (limiterEnabled) {
+    // Brickwall Limiter
+    if (limiterEnabled)
+    {
       float outdb = inputdb + compdb + makeupdb;
-      if (outdb >= limitThreshold) limitdb = (aLimitAttack * limitdb) + (aOneMinusLimitAttack * (limitThreshold - outdb));
-      else limitdb *= aLimitRelease;
-    } else limitdb = MAX_DB;
+      if (outdb >= limitThreshold)
+        limitdb = (aLimitAttack * limitdb) + (aOneMinusLimitAttack * (limitThreshold - outdb));
+      else
+        limitdb *= aLimitRelease;
+    }
+    else
+      limitdb = MAX_DB;
 
-    //Compute linear gain
+    // Compute linear gain
     float totalGain = compdb + makeupdb + limitdb + phingain;
 
     float multiplier = dbToUnit(totalGain);
     int16_t result = sample * multiplier;
     block->data[i] = result;
-    //Apply gain to block
+    // Apply gain to block
   }
 
-  //Transmit & release
+  // Transmit & release
   transmit(block);
   release(block);
 }

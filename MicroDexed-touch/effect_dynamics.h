@@ -37,16 +37,18 @@
 #define MIN_DB -110.0f
 #define MAX_DB 0.0f
 
-#define MIN_T 0.03f  //Roughly 1 block
+#define MIN_T 0.03f // Roughly 1 block
 #define MAX_T 4.00f
 
 #define RATIO_OFF 1.0f
 #define RATIO_INFINITY 60.0f
 
-class AudioEffectDynamics : public AudioStream {
+class AudioEffectDynamics : public AudioStream
+{
 public:
   AudioEffectDynamics(void)
-    : AudioStream(1, inputQueueArray) {
+      : AudioStream(1, inputQueueArray)
+  {
 
     compression();
     limit();
@@ -55,12 +57,13 @@ public:
     limitdb = MIN_DB;
   }
 
-  //Sets the compression parameters.
-  //threshold & kneeWidth are in db(FS)
-  //attack and release are in seconds
-  //ratio is expressed as x:1 i.e. 1 for no compression, 60 for brickwall limiting
-  //Set kneeWidth to 0 for hard knee
-  void compression(float threshold = -4.0f, float attack = MIN_T, float release = 0.2f, float ratio = 2.0f, float kneeWidth = 0.0f, float ingain = 0.0f) {
+  // Sets the compression parameters.
+  // threshold & kneeWidth are in db(FS)
+  // attack and release are in seconds
+  // ratio is expressed as x:1 i.e. 1 for no compression, 60 for brickwall limiting
+  // Set kneeWidth to 0 for hard knee
+  void compression(float threshold = -4.0f, float attack = MIN_T, float release = 0.2f, float ratio = 2.0f, float kneeWidth = 0.0f, float ingain = 0.0f)
+  {
     phingain = ingain;
     compEnabled = threshold < MAX_DB;
 
@@ -82,10 +85,11 @@ public:
     aHighKnee = compThreshold + aHalfKneeWidth;
   }
 
-  //Sets the hard limiter parameters
-  //threshold is in dbFS
-  //attack & release are in seconds
-  void limit(float threshold = -6.0f, float attack = MIN_T, float release = MIN_T) {
+  // Sets the hard limiter parameters
+  // threshold is in dbFS
+  // attack & release are in seconds
+  void limit(float threshold = -6.0f, float attack = MIN_T, float release = MIN_T)
+  {
 
     limiterEnabled = threshold < MAX_DB;
 
@@ -100,17 +104,19 @@ public:
     aLimitRelease = timeToAlpha(limitReleaseTime);
   }
 
-  //Enables automatic makeup gain setting
-  //headroom is in dbFS
-  void autoMakeupGain(float headroom = 1.0f) {
+  // Enables automatic makeup gain setting
+  // headroom is in dbFS
+  void autoMakeupGain(float headroom = 1.0f)
+  {
     mgAutoEnabled = true;
     mgHeadroom = constrain(headroom, 0.0f, 60.0f);
     computeMakeupGain();
   }
 
-  //Sets a fixed makeup gain value.
-  //gain is in dbFS
-  void makeupGain(float gain = 0.0f) {
+  // Sets a fixed makeup gain value.
+  // gain is in dbFS
+  void makeupGain(float gain = 0.0f)
+  {
     mgAutoEnabled = false;
     makeupdb = constrain(gain, -12.0f, 24.0f);
   }
@@ -145,19 +151,22 @@ private:
   float aLimitAttack;
   float aOneMinusLimitAttack;
   float aLimitRelease;
-  //const static unsigned int sampleBufferSize = AUDIO_SAMPLE_RATE / 10; // number of samples to use for running RMS calulation = 1/10th of a second
-  //u_int64_t sumOfSamplesSquared = 0;
-  //uint32_t samplesSquared[sampleBufferSize] = {0};
+  // const static unsigned int sampleBufferSize = AUDIO_SAMPLE_RATE / 10; // number of samples to use for running RMS calulation = 1/10th of a second
+  // u_int64_t sumOfSamplesSquared = 0;
+  // uint32_t samplesSquared[sampleBufferSize] = {0};
   uint16_t sampleIndex = 0;
 
-  void computeMakeupGain() {
-    if (mgAutoEnabled) {
+  void computeMakeupGain()
+  {
+    if (mgAutoEnabled)
+    {
       makeupdb = -compThreshold + (compThreshold * compRatio) + limitThreshold - mgHeadroom;
     }
   }
 
-  //Computes smoothing time constants for a 10% to 90% change
-  float timeToAlpha(float time) {
+  // Computes smoothing time constants for a 10% to 90% change
+  float timeToAlpha(float time)
+  {
     return expf(-0.9542f / (((float)AUDIO_SAMPLE_RATE_EXACT / (float)AUDIO_BLOCK_SAMPLES) * time));
   }
 

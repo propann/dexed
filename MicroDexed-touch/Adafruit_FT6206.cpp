@@ -44,7 +44,8 @@ elapsedMillis touch_control_rate;
 */
 /**************************************************************************/
 // I2C, no address adjustments or pins
-Adafruit_FT6206::Adafruit_FT6206() {
+Adafruit_FT6206::Adafruit_FT6206()
+{
   touches = 0;
 }
 
@@ -57,17 +58,20 @@ Adafruit_FT6206::Adafruit_FT6206() {
     @returns True if an FT6206 is found, false on any failure
 */
 /**************************************************************************/
-boolean Adafruit_FT6206::begin(uint8_t thresh) {
+boolean Adafruit_FT6206::begin(uint8_t thresh)
+{
   Wire.begin();
 
   // change threshhold to be higher/lower
   writeRegister8(FT62XX_REG_THRESHHOLD, thresh);
 
-  if (readRegister8(FT62XX_REG_VENDID) != FT62XX_VENDID) {
+  if (readRegister8(FT62XX_REG_VENDID) != FT62XX_VENDID)
+  {
     return false;
   }
   uint8_t id = readRegister8(FT62XX_REG_CHIPID);
-  if ((id != FT6206_CHIPID) && (id != FT6236_CHIPID) && (id != FT6236U_CHIPID)) {
+  if ((id != FT6206_CHIPID) && (id != FT6236_CHIPID) && (id != FT6236U_CHIPID))
+  {
     return false;
   }
 
@@ -81,15 +85,19 @@ boolean Adafruit_FT6206::begin(uint8_t thresh) {
 */
 /**************************************************************************/
 
-uint8_t Adafruit_FT6206::touched(void) {
-  if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0) {
+uint8_t Adafruit_FT6206::touched(void)
+{
+  if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+  {
     uint8_t n = readRegister8(FT62XX_REG_NUMTOUCHES);
     touch_control_rate = 0;
-    if (n > 2) {
+    if (n > 2)
+    {
       n = 0;
     }
     return n;
-  } else
+  }
+  else
     return 0;
 }
 
@@ -104,11 +112,15 @@ uint8_t Adafruit_FT6206::touched(void) {
    currently touched.
 */
 /**************************************************************************/
-TS_Point Adafruit_FT6206::getPoint(uint8_t n) {
+TS_Point Adafruit_FT6206::getPoint(uint8_t n)
+{
   readData();
-  if ((touches == 0) || (n > 1)) {
+  if ((touches == 0) || (n > 1))
+  {
     return TS_Point(0, 0, 0);
-  } else {
+  }
+  else
+  {
     return TS_Point(touchX[n], touchY[n], 1);
   }
 }
@@ -121,7 +133,8 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n) {
    {@link touchX}, {@link touchY} and {@link touchID} with results
 */
 /**************************************************************************/
-void Adafruit_FT6206::readData(void) {
+void Adafruit_FT6206::readData(void)
+{
 
   uint8_t i2cdat[16];
   Wire.beginTransmission(FT62XX_ADDR);
@@ -133,11 +146,13 @@ void Adafruit_FT6206::readData(void) {
     i2cdat[i] = Wire.read();
 
   touches = i2cdat[0x02];
-  if ((touches > 2) || (touches == 0)) {
+  if ((touches > 2) || (touches == 0))
+  {
     touches = 0;
   }
 
-  for (uint8_t i = 0; i < 2; i++) {
+  for (uint8_t i = 0; i < 2; i++)
+  {
     touchX[i] = i2cdat[0x03 + i * 6] & 0x0F;
     touchX[i] <<= 8;
     touchX[i] |= i2cdat[0x04 + i * 6];
@@ -148,7 +163,8 @@ void Adafruit_FT6206::readData(void) {
   }
 }
 
-uint8_t Adafruit_FT6206::readRegister8(uint8_t reg) {
+uint8_t Adafruit_FT6206::readRegister8(uint8_t reg)
+{
   uint8_t x;
   // use i2c
   Wire.beginTransmission(FT62XX_ADDR);
@@ -161,7 +177,8 @@ uint8_t Adafruit_FT6206::readRegister8(uint8_t reg) {
   return x;
 }
 
-void Adafruit_FT6206::writeRegister8(uint8_t reg, uint8_t val) {
+void Adafruit_FT6206::writeRegister8(uint8_t reg, uint8_t val)
+{
   // use i2c
   Wire.beginTransmission(FT62XX_ADDR);
   Wire.write((byte)reg);
@@ -176,7 +193,8 @@ void Adafruit_FT6206::writeRegister8(uint8_t reg, uint8_t val) {
     @brief  Instantiates a new FT6206 class with x, y and z set to 0 by default
 */
 /**************************************************************************/
-TS_Point::TS_Point(void) {
+TS_Point::TS_Point(void)
+{
   x = y = z = 0;
 }
 
@@ -189,7 +207,8 @@ TS_Point::TS_Point(void) {
 */
 /**************************************************************************/
 
-TS_Point::TS_Point(int16_t _x, int16_t _y, int16_t _z) {
+TS_Point::TS_Point(int16_t _x, int16_t _y, int16_t _z)
+{
   x = _x;
   y = _y;
   z = _z;
@@ -201,7 +220,8 @@ TS_Point::TS_Point(int16_t _x, int16_t _y, int16_t _z) {
     @returns True if x, y and z are the same for both points, False otherwise.
 */
 /**************************************************************************/
-bool TS_Point::operator==(TS_Point p1) {
+bool TS_Point::operator==(TS_Point p1)
+{
   return ((p1.x == x) && (p1.y == y) && (p1.z == z));
 }
 
@@ -211,7 +231,8 @@ bool TS_Point::operator==(TS_Point p1) {
     @returns False if x, y and z are the same for both points, True otherwise.
 */
 /**************************************************************************/
-bool TS_Point::operator!=(TS_Point p1) {
+bool TS_Point::operator!=(TS_Point p1)
+{
   return ((p1.x != x) || (p1.y != y) || (p1.z != z));
 }
 

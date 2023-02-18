@@ -25,7 +25,7 @@
 #ifndef _UI_H_
 #define _UI_H_
 
-boolean COND_hide()  // hide a menu element
+boolean COND_hide() // hide a menu element
 {
   return false;
 }

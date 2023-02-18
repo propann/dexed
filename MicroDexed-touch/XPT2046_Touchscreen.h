@@ -28,36 +28,41 @@
 #include "Arduino.h"
 #include <SPI.h>
 
-class TS_Point {
+class TS_Point
+{
 public:
   TS_Point(void)
-    : x(0), y(0), z(0) {}
+      : x(0), y(0), z(0) {}
   TS_Point(int16_t x, int16_t y, int16_t z)
-    : x(x), y(y), z(z) {}
-  bool operator==(TS_Point p) {
+      : x(x), y(y), z(z) {}
+  bool operator==(TS_Point p)
+  {
     return ((p.x == x) && (p.y == y) && (p.z == z));
   }
-  bool operator!=(TS_Point p) {
+  bool operator!=(TS_Point p)
+  {
     return ((p.x != x) || (p.y != y) || (p.z != z));
   }
   int16_t x, y, z;
 };
 
-class TS_Calibration {
+class TS_Calibration
+{
 public:
   TS_Calibration(void)
-    : vi1(0), vj1(0), vi2(0), vj2(0) {}
+      : vi1(0), vj1(0), vi2(0), vj2(0) {}
 
   TS_Calibration(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
-    : vi1(x1), vj1(y1), vi2(x2), vj2(y2) {}
+      : vi1(x1), vj1(y1), vi2(x2), vj2(y2) {}
 
   uint16_t vi1, vj1, vi2, vj2;
 };
 
-class XPT2046_Touchscreen {
+class XPT2046_Touchscreen
+{
 public:
   constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255)
-    : csPin(cspin), tirqPin(tirq) {}
+      : csPin(cspin), tirqPin(tirq) {}
   bool begin(SPIClass &wspi = SPI1);
 
   TS_Point getPoint();
@@ -67,16 +72,19 @@ public:
   void readData(uint16_t *x, uint16_t *y, uint8_t *z);
   bool bufferEmpty();
   uint16_t CAL_OFFSET = 20;
-  uint8_t bufferSize() {
+  uint8_t bufferSize()
+  {
     return 1;
   }
   void getCalibrationPoints(uint16_t &x1, uint16_t &y1, uint16_t &x2, uint16_t &y2);
   void setCalibration(TS_Calibration cal);
-  TS_Calibration getCalibrationObject(uint16_t vi1, uint16_t vj1, uint16_t vi2, uint16_t vj2) {
+  TS_Calibration getCalibrationObject(uint16_t vi1, uint16_t vj1, uint16_t vi2, uint16_t vj2)
+  {
     return TS_Calibration(vi1, vj1, vi2, vj2);
   }
 
-  void setRotation(uint8_t n) {
+  void setRotation(uint8_t n)
+  {
     rotation = n % 4;
   }
   // protected:

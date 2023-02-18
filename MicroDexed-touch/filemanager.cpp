@@ -1,6 +1,7 @@
 #include "filemanager.h"
 
-FLASHMEM void sd_filemanager() {
+FLASHMEM void sd_filemanager()
+{
   char command[10];
   char path[128];
 
@@ -10,31 +11,38 @@ FLASHMEM void sd_filemanager() {
   read = Serial.readBytesUntil('!', path, 128);
   path[read] = '\0';
 
-  if (Serial.read() == '%') {  // check command correct
-    if(!strcmp("dir", command)) {
+  if (Serial.read() == '%')
+  { // check command correct
+    if (!strcmp("dir", command))
+    {
       // list SD content for path
       sd_sendDirectory(path);
     }
-    else if(!strcmp("get", command)) {
+    else if (!strcmp("get", command))
+    {
       // send file asked by remote
       sd_sendFile(path);
     }
-    else if(!strcmp("put", command)) {
+    else if (!strcmp("put", command))
+    {
       // write file received from remote
       sd_receiveFile(path);
     }
-    else if(!strcmp("delete", command)) {
+    else if (!strcmp("delete", command))
+    {
       // delete file on SD
       sd_deleteFile(path);
     }
-    else if(!strcmp("rename", command)) {
+    else if (!strcmp("rename", command))
+    {
       // rename file on SD
       sd_renameFile(path); // path will be splitted
     }
   }
 }
 
-FLASHMEM void sd_sendDirectory(const char *path) {
+FLASHMEM void sd_sendDirectory(const char *path)
+{
 #ifdef DEBUG
   LOG.printf("SENDDIR [%s]\n", path);
 #endif
@@ -46,19 +54,23 @@ FLASHMEM void sd_sendDirectory(const char *path) {
   Serial.write(FM_START);
   Serial.write(88);
 
-  while (true) {
+  while (true)
+  {
     File entry = dir.openNextFile();
-    if (!entry) {
+    if (!entry)
+    {
       break;
     }
-    if (strcmp("System Volume Information", entry.name()) == 0) {
+    if (strcmp("System Volume Information", entry.name()) == 0)
+    {
       continue;
     }
     Serial.write(99);
     Serial.write(FM_DIR);
 
     strcpy(filename, entry.name());
-    if (entry.isDirectory()) {
+    if (entry.isDirectory())
+    {
       // sd_sendDirectory(entry);
       strcat(filename, "§§");
     }
@@ -82,7 +94,8 @@ FLASHMEM void sd_sendDirectory(const char *path) {
 }
 
 // send file on SD card to PC by Serial
-FLASHMEM void sd_sendFile(const char *path) {
+FLASHMEM void sd_sendFile(const char *path)
+{
 #ifdef DEBUG
   LOG.printf("SENDFILE [%s]\n", path);
 #endif
@@ -92,7 +105,8 @@ FLASHMEM void sd_sendFile(const char *path) {
   Serial.write(88);
 
   File myFile = SD.open(path);
-  if (myFile) {
+  if (myFile)
+  {
     Serial.write(99);
     Serial.write(FM_SEND);
     unsigned long filesize = myFile.size();
@@ -107,7 +121,8 @@ FLASHMEM void sd_sendFile(const char *path) {
     char buf[256];
     unsigned int n;
 
-    while (myFile.available()) {
+    while (myFile.available())
+    {
       Serial.write(99);
       Serial.write(FM_SEND_CHUNK);
       n = myFile.read(buf, 256);
@@ -120,7 +135,9 @@ FLASHMEM void sd_sendFile(const char *path) {
 
     // close the file:
     myFile.close();
-  } else {
+  }
+  else
+  {
     // if the file didn't open, print an error:
 #ifdef DEBUG
     LOG.printf("error opening [%s]\n", path);
@@ -136,26 +153,30 @@ FLASHMEM void sd_sendFile(const char *path) {
 #endif
 }
 
-
 // receive file from PC by Serial and write it to SD card
 #define RX_BUFFER_SIZE 512
 
-FLASHMEM void sd_receiveFile(const char *path) {
+FLASHMEM void sd_receiveFile(const char *path)
+{
 
 #ifdef DEBUG
   LOG.printf("RECV file, dest: [%s]\n", path);
 #endif
-  if (SD.exists(path)) {
+  if (SD.exists(path))
+  {
     SD.remove(path);
   }
 
   File myFile = SD.open(path, FILE_WRITE);
 
-  if (!myFile) {
+  if (!myFile)
+  {
 #ifdef DEBUG
     LOG.printf("error opening %s\n", path);
 #endif
-  } else {
+  }
+  else
+  {
 
 #ifdef DEBUG
     LOG.printf("Writing to %s\n", path);
@@ -178,15 +199,18 @@ FLASHMEM void sd_receiveFile(const char *path) {
     LOG.printf("number of chunks : [%d]\n", totalChunks);
 #endif
 
-    while (currentChunk < totalChunks) {
-      if (Serial.available()) {
-        if (currentChunk == totalChunks - 1) {
+    while (currentChunk < totalChunks)
+    {
+      if (Serial.available())
+      {
+        if (currentChunk == totalChunks - 1)
+        {
           // read last chunk
           uint16_t lastChunkSize = fileSize - (totalChunks - 1) * RX_BUFFER_SIZE;
 #ifdef DEBUG
           LOG.printf("last chunk #%d: %d bytes\n", currentChunk, lastChunkSize);
 #endif
-          char* lastBuffer = (char*) malloc(lastChunkSize * sizeof(char));
+          char *lastBuffer = (char *)malloc(lastChunkSize * sizeof(char));
           Serial.readBytes(lastBuffer, lastChunkSize);
 
           myFile.seek(EOF);
@@ -194,7 +218,9 @@ FLASHMEM void sd_receiveFile(const char *path) {
 
           free(lastBuffer);
           countTotal += lastChunkSize;
-        } else {
+        }
+        else
+        {
           // read full size chunk
 #ifdef DEBUG
           LOG.printf("chunk #%d: %d bytes\n", currentChunk, RX_BUFFER_SIZE);
@@ -236,9 +262,12 @@ FLASHMEM void sd_receiveFile(const char *path) {
     // }
 
 #ifdef DEBUG
-    if (countTotal == fileSize) {
+    if (countTotal == fileSize)
+    {
       LOG.printf("RECV OK nb bytes: [%d]\n", countTotal);
-    } else {
+    }
+    else
+    {
       LOG.printf("RECV KO !!! nb bytes: [%d]\n", countTotal);
     }
 #endif
@@ -252,11 +281,13 @@ FLASHMEM void sd_receiveFile(const char *path) {
   }
 }
 
-FLASHMEM void sd_deleteFile(const char *path) {
+FLASHMEM void sd_deleteFile(const char *path)
+{
 #ifdef DEBUG
   LOG.printf("DELETE file: [%s]\n", path);
 #endif
-  if (SD.exists(path)) {
+  if (SD.exists(path))
+  {
     SD.remove(path);
 
 #ifdef DEBUG
@@ -265,7 +296,8 @@ FLASHMEM void sd_deleteFile(const char *path) {
   }
 }
 
-FLASHMEM void sd_renameFile(char *pathToSplit) {
+FLASHMEM void sd_renameFile(char *pathToSplit)
+{
   char arr[2][50];
   char *ptr = strtok(pathToSplit, "|");
   strcpy(arr[0], ptr);
@@ -280,13 +312,14 @@ FLASHMEM void sd_renameFile(char *pathToSplit) {
   if (!SD.exists(arr[0]))
     return;
 
-  size_t n;  
+  size_t n;
   uint8_t buf[64];
 
   File myOrigFile = SD.open(arr[0], FILE_READ);
   File myDestFile = SD.open(arr[1], FILE_WRITE);
 
-  while ((n = myOrigFile.read(buf, sizeof(buf))) > 0) {
+  while ((n = myOrigFile.read(buf, sizeof(buf))) > 0)
+  {
     myDestFile.write(buf, n);
   }
   myOrigFile.close();

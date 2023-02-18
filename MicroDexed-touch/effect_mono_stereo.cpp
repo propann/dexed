@@ -31,164 +31,166 @@
 // 20191122 - initial version
 
 static const audio_block_t zeroblock = {
-  0, 0, 0, {
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+    0, 0, 0, {
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #if AUDIO_BLOCK_SAMPLES > 16
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 32
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 48
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 64
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 80
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 96
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
 #if AUDIO_BLOCK_SAMPLES > 112
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
-             0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
+                 0,
 #endif
-           }
-};
+             }};
 
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
-inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max) {
+inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)
+{
   return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 #endif
 
-void AudioEffectMonoStereo::panorama(float p) {
+void AudioEffectMonoStereo::panorama(float p)
+{
   pan = mapfloat(p, -1.0, 1.0, 1.0, 0.0);
 }
 
-void AudioEffectMonoStereo::update(void) {
+void AudioEffectMonoStereo::update(void)
+{
   audio_block_t *in;
   audio_block_t *out[2];
 
@@ -199,26 +201,31 @@ void AudioEffectMonoStereo::update(void) {
   out[0] = allocate();
   out[1] = allocate();
 
-  if (in && out[0] && out[1]) {
+  if (in && out[0] && out[1])
+  {
     arm_q15_to_float(in->data, in_f, AUDIO_BLOCK_SAMPLES);
 
     float fsin = arm_sin_f32(pan * PI / 2.0);
     float fcos = arm_cos_f32(pan * PI / 2.0);
-    int16_t *out_p[2] = { &out[0]->data[0], &out[1]->data[0] };
-    for (uint8_t n = 0; n < AUDIO_BLOCK_SAMPLES; n++) {
+    int16_t *out_p[2] = {&out[0]->data[0], &out[1]->data[0]};
+    for (uint8_t n = 0; n < AUDIO_BLOCK_SAMPLES; n++)
+    {
       *out_p[0]++ = int16_t(in_f[n] * _pseudo_log * fsin * SHRT_MAX);
       *out_p[1]++ = int16_t(in_f[n] * _pseudo_log * fcos * SHRT_MAX);
     }
   }
 
-  if (in != (audio_block_t *)&zeroblock) {
+  if (in != (audio_block_t *)&zeroblock)
+  {
     release(in);
   }
-  if (out[0]) {
+  if (out[0])
+  {
     transmit(out[0], 0);
     release(out[0]);
   }
-  if (out[1]) {
+  if (out[1])
+  {
     transmit(out[1], 1);
     release(out[1]);
   }

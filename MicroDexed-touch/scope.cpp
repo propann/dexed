@@ -4,10 +4,12 @@
 extern ILI9341_t3n display;
 extern sequencer_t seq;
 
-FLASHMEM void Realtime_Scope::FillArray() {
+FLASHMEM void Realtime_Scope::FillArray()
+{
   __disable_irq();
   uint16_t i = 0;
-  do {
+  do
+  {
     int16_t wave_data = buffer[i];
     int8_t y = map(wave_data, 32767, -32768, 20, -20) + 32;
     scopebuffer[i] = y;
@@ -16,14 +18,17 @@ FLASHMEM void Realtime_Scope::FillArray() {
   __enable_irq();
 }
 
-FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio) {
+FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio)
+{
   const int16_t *end = audio + AUDIO_BLOCK_SAMPLES;
   __disable_irq();
-  do {
+  do
+  {
     buffer[count++] = *audio;
     audio++;
   } while (audio < end);
-  if (count > (AUDIO_BLOCK_SAMPLES)-1) {
+  if (count > (AUDIO_BLOCK_SAMPLES)-1)
+  {
     count = 0;
   }
   __enable_irq();
@@ -31,28 +36,36 @@ FLASHMEM void Realtime_Scope::AddtoBuffer(int16_t *audio) {
     FillArray();
 }
 
-FLASHMEM void Realtime_Scope::update(void) {
+FLASHMEM void Realtime_Scope::update(void)
+{
   audio_block_t *block;
   block = receiveReadOnly(0);
-  if (block) {
+  if (block)
+  {
     AddtoBuffer(block->data);
     release(block);
   }
 }
 
-FLASHMEM void Realtime_Scope::clear(void) {
-  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+FLASHMEM void Realtime_Scope::clear(void)
+{
+  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+  {
     scopebuffer_old[i] = 32;
   }
 }
 
-FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w) {
-  if (scope_delay > 84) {
+FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w)
+{
+  if (scope_delay > 84)
+  {
     uint16_t i = 0;
     scope_is_drawing = true;
-    display.console=false;
-    do {
-      if (scopebuffer_old[i] != scopebuffer[i]) {
+    display.console = false;
+    do
+    {
+      if (scopebuffer_old[i] != scopebuffer[i])
+      {
         display.drawPixel(x + i, scopebuffer_old[i] + y, COLOR_BACKGROUND);
         display.drawPixel(x + i, scopebuffer[i] + y, COLOR_SYSTEXT);
       }

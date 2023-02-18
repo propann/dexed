@@ -31,10 +31,12 @@
 // Written by Holger Wirtz
 // 20191023 - inital version
 
-class AudioEffectStereoMono : public AudioStream {
+class AudioEffectStereoMono : public AudioStream
+{
 public:
   AudioEffectStereoMono(void)
-    : AudioStream(2, inputQueueArray) {
+      : AudioStream(2, inputQueueArray)
+  {
     _enabled = true;
   }
 

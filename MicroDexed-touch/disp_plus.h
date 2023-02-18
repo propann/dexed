@@ -31,24 +31,27 @@
 
 #define STRING_BUFFER_SIZE display_cols + 1
 
-template<class T>
-class Disp_Plus : public T {
+template <class T>
+class Disp_Plus : public T
+{
 public:
-
   using T::T;
 
-  void show(uint8_t y, uint8_t x, uint8_t fs, const char *str) {
+  void show(uint8_t y, uint8_t x, uint8_t fs, const char *str)
+  {
     _show(y, x, fs, str, false, false);
   }
 
-  void show(uint8_t y, uint8_t x, uint8_t fs, long num) {
+  void show(uint8_t y, uint8_t x, uint8_t fs, long num)
+  {
     char _buf10[STRING_BUFFER_SIZE];
 
     _show(y, x, fs, itoa(num, _buf10, 10), true, true);
   }
 
 private:
-  void _show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str, bool justify_right, bool fill_zero) {
+  void _show(uint8_t pos_y, uint8_t pos_x, uint8_t field_size, const char *str, bool justify_right, bool fill_zero)
+  {
     {
       char tmp[STRING_BUFFER_SIZE];
       char *s = tmp;
@@ -58,7 +61,7 @@ private:
       if (fill_zero == true)
         memset(tmp, '0', field_size);
       else
-        memset(tmp, 0x20, field_size);  // blank
+        memset(tmp, 0x20, field_size); // blank
 
       if (l > field_size)
         l = field_size;
@@ -68,7 +71,7 @@ private:
 
       strncpy(s, str, l);
 
-      //setCursor(pos_x * getMaxCharWidth(), pos_y * getMaxCharHeight());
+      // setCursor(pos_x * getMaxCharWidth(), pos_y * getMaxCharHeight());
       this->setCursor(pos_x, pos_y);
       this->print(tmp);
 

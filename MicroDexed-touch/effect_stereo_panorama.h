@@ -29,10 +29,12 @@
 // Written by Holger Wirtz
 // 20211124 - inital version
 
-class AudioEffectStereoPanorama : public AudioStream {
+class AudioEffectStereoPanorama : public AudioStream
+{
 public:
   AudioEffectStereoPanorama(void)
-    : AudioStream(2, inputQueueArray) {
+      : AudioStream(2, inputQueueArray)
+  {
     pan = 0.0;
   }
 

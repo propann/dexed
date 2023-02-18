@@ -1,8 +1,1 @@
-#define VERSION "1.4.8b9"
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 4
-#define VERSION_PATCH 8
-#define VERSION_BUILD 9
-#define VERSION_DATE "2023-02-04"
-#define VERSION_TIME "18:40"
-#define VERSION_FULL "1.4.8b9 2023-02-04 18:40"
+#define VERSION "1.4.9b1"

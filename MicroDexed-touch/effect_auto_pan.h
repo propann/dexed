@@ -31,10 +31,12 @@
 // Written by Holger Wirtz
 // 20191205 - inital version
 
-class AudioEffectAutoPan : public AudioStream {
+class AudioEffectAutoPan : public AudioStream
+{
 public:
   AudioEffectAutoPan(void)
-    : AudioStream(2, inputQueueArray) {
+      : AudioStream(2, inputQueueArray)
+  {
     ;
   }
 

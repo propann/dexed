@@ -26,7 +26,6 @@
 #ifndef TEENSY_BOARD_DETECTION_H_INCLUDED
 #define TEENSY_BOARD_DETECTION_H_INCLUDED
 
-
 // Teensy-4.x
 #if defined(__IMXRT1062__) || defined(ARDUINO_TEENSY40) || defined(ARDUINO_TEENSY41)
 #define TEENSY4
