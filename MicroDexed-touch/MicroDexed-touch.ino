@@ -84,6 +84,11 @@ using namespace TeensyTimerTool;
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
 
+elapsedMillis sysinfo_millis;
+uint8_t sysinfo_sound_state = 0;
+uint8_t sysinfo_logo_version = 0;
+uint8_t sysinfo_logo_delay = 0;
+
 uint8_t check_sd_cards(void);
 void check_and_create_directories(void);
 void show_cpu_and_mem_usage(void);
@@ -844,7 +849,7 @@ extern void sequencer_part2(void);
 void setup()
 {
 
-  delay(1000);
+  delay(200);
 
 #ifdef DEBUG
   LOG.println(CrashReport);
@@ -1838,11 +1843,25 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
-    if (seq.running)
+
+    display.console = true;
+    scope.draw_scope(203, 138, 108);
+
+    if (sysinfo_sound_state > 9 && sysinfo_millis >= 600 && seq.running == false)
     {
-      display.console = true;
-      scope.draw_scope(203, 138, 108);
+      MicroDexed[0]->keyup(MIDI_C2);
+      MicroDexed[0]->keyup(MIDI_C4);
+      MicroDexed[0]->keyup(MIDI_G4);
+      MicroDexed[0]->keyup(MIDI_C5);
+      MicroDexed[0]->keyup(MIDI_E5);
     }
+    if (sysinfo_sound_state > 9 && sysinfo_millis >= 3000 && seq.running == false)
+    {
+      helptext_l("BACK");
+      sysinfo_reload_prev_voice();
+    }
+    else
+      helptext_l("BACK");
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings))
   {
@@ -1951,6 +1970,28 @@ void loop()
   if (control_rate > CONTROL_RATE_MS)
   {
     control_rate = 0;
+
+    if (sysinfo_logo_version == 1 && sysinfo_sound_state > 9 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
+    {
+      if (sysinfo_millis < 2000 && sysinfo_logo_delay > 1)
+      {
+        if (sysinfo_sound_state % 2 == 0)
+          splash_draw_X(0);
+        else
+          splash_draw_X(1);
+
+        sysinfo_sound_state++;
+        sysinfo_logo_delay = 0;
+      }
+      sysinfo_logo_delay++;
+    }
+
+    if (sysinfo_sound_state > 9 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information) && sysinfo_logo_version == 2)
+    {
+      splash_screen2_anim();
+      sysinfo_sound_state++;
+    }
+
     if (seq.running && seq.step != seq.UI_last_seq_step)
     {
       update_display_functions_while_seq_running();
@@ -3769,45 +3810,48 @@ void handleStart(void)
   {
     display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
   }
-  midi_bpm_timer = 0;
-  midi_bpm_counter = 0;
-  _midi_bpm = -1;
+  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_information))
+  {
+    midi_bpm_timer = 0;
+    midi_bpm_counter = 0;
+    _midi_bpm = -1;
 
-  seq.step = 0;
-  seq.current_song_step = 0;
-  seq.arp_note = 0;
-  seq.arp_chord = 0;
-
-  mb_set_mutes();
-  mb_set_compressor();
-  mb_set_master();
-
-  if (seq.loop_start == 99) // no loop start set, start at step 0
+    seq.step = 0;
     seq.current_song_step = 0;
-  else
-    seq.current_song_step = seq.loop_start;
+    seq.arp_note = 0;
+    seq.arp_chord = 0;
 
-  sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
-  seq.running = true;
+    mb_set_mutes();
+    mb_set_compressor();
+    mb_set_master();
+
+    if (seq.loop_start == 99) // no loop start set, start at step 0
+      seq.current_song_step = 0;
+    else
+      seq.current_song_step = seq.loop_start;
+
+    sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+    seq.running = true;
 
 #ifdef MIDI_DEVICE_USB_HOST
-  midi_usb.sendRealTime(midi::Start);
+    midi_usb.sendRealTime(midi::Start);
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-  midi_serial.sendRealTime(midi::Start);
+    midi_serial.sendRealTime(midi::Start);
 #endif
 
 #ifdef MIDI_DEVICE_USB
-  usbMIDI.sendRealTime(midi::Start);
+    usbMIDI.sendRealTime(midi::Start);
 #endif
 
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
-  {
-    print_arp_start_stop_button();
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
+    {
+      print_arp_start_stop_button();
+    }
+    else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
+      draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
   }
-  else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
-    draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
 }
 
 void handleContinue(void)
@@ -3817,76 +3861,79 @@ void handleContinue(void)
 
 void handleStop(void)
 {
-  if (seq.running)
+  if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
-    sequencer_part2();
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+    if (seq.running)
     {
-      draw_button_on_grid(36, 1, "STEP", "RECORD", 1); // print step recorder icon
-    }
-    MicroDexed[0]->panic();
+      sequencer_part2();
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+      {
+        draw_button_on_grid(36, 1, "STEP", "RECORD", 1); // print step recorder icon
+      }
+      MicroDexed[0]->panic();
 #if NUM_DEXED > 1
-    MicroDexed[1]->panic();
+      MicroDexed[1]->panic();
 #endif
 
-    sequencer_timer.stop();
+      sequencer_timer.stop();
 
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
-    {
-      display.setTextColor(GREEN, COLOR_BACKGROUND); // play indicator song view
-
-      if (CHAR_height_small * 8 + 10 * (seq.current_song_step - 1 - seq.scrollpos) > CHAR_height_small * 7)
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
       {
-        display.setCursor(CHAR_width_small * 4, CHAR_height_small * 8 + 10 * (seq.current_song_step - seq.scrollpos));
-        display.print(" ");
+        display.setTextColor(GREEN, COLOR_BACKGROUND); // play indicator song view
+
+        if (CHAR_height_small * 8 + 10 * (seq.current_song_step - 1 - seq.scrollpos) > CHAR_height_small * 7)
+        {
+          display.setCursor(CHAR_width_small * 4, CHAR_height_small * 8 + 10 * (seq.current_song_step - seq.scrollpos));
+          display.print(" ");
+        }
+        sub_song_print_tracknumbers();
       }
-      sub_song_print_tracknumbers();
     }
-  }
-  seq.running = false;
-  seq.recording = false;
-  seq.note_in = 0;
-  seq.step = 0;
+    seq.running = false;
+    seq.recording = false;
+    seq.note_in = 0;
+    seq.step = 0;
 
-  for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
-  {
-    seq.chain_counter[d] = 0;
-    seq.current_pattern[d] = 99;
-  }
-  if (seq.loop_start == 99) // no loop start set, start at step 0
-    seq.current_song_step = 0;
-  else
-    seq.current_song_step = seq.loop_start;
+    for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
+    {
+      seq.chain_counter[d] = 0;
+      seq.current_pattern[d] = 99;
+    }
+    if (seq.loop_start == 99) // no loop start set, start at step 0
+      seq.current_song_step = 0;
+    else
+      seq.current_song_step = seq.loop_start;
 
-  microsynth_envelope_osc[0].noteOff();
-  microsynth_envelope_osc[1].noteOff();
-  microsynth_envelope_noise[0].noteOff();
-  microsynth_envelope_noise[1].noteOff();
+    microsynth_envelope_osc[0].noteOff();
+    microsynth_envelope_osc[1].noteOff();
+    microsynth_envelope_noise[0].noteOff();
+    microsynth_envelope_noise[1].noteOff();
 
-  for (uint8_t i = 0; i < NUM_BRAIDS; i++)
-  {
-    if (braids_envelope[i]->isActive())
-      braids_envelope[i]->noteOff();
-  }
+    for (uint8_t i = 0; i < NUM_BRAIDS; i++)
+    {
+      if (braids_envelope[i]->isActive())
+        braids_envelope[i]->noteOff();
+    }
 
 #ifdef MIDI_DEVICE_USB_HOST
-  midi_usb.sendRealTime(midi::Stop);
+    midi_usb.sendRealTime(midi::Stop);
 #endif
 
 #ifdef MIDI_DEVICE_DIN
-  midi_serial.sendRealTime(midi::Stop);
+    midi_serial.sendRealTime(midi::Stop);
 #endif
 
 #ifdef MIDI_DEVICE_USB
-  usbMIDI.sendRealTime(midi::Stop);
+    usbMIDI.sendRealTime(midi::Stop);
 #endif
 
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
-  {
-    print_arp_start_stop_button();
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
+    {
+      print_arp_start_stop_button();
+    }
+    else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
+      draw_button_on_grid(45, 18, "SEQ.", "START", 1);
   }
-  else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
-    draw_button_on_grid(45, 18, "SEQ.", "START", 1);
 }
 
 void handleActiveSensing(void)

@@ -53,6 +53,13 @@ extern AudioSynthEPiano ep;
 #include "braids.h"
 extern AudioSynthBraids *synthBraids[NUM_BRAIDS];
 
+extern elapsedMillis sysinfo_millis;
+extern uint8_t sysinfo_sound_state;
+extern uint8_t sysinfo_logo_version;
+uint8_t sysinfo_old_voice;
+uint8_t sysinfo_old_bank;
+uint8_t sysinfo_old_transpose;
+
 // sidechains
 extern uint8_t sidechain_a_sample_number;
 extern uint8_t sidechain_b_sample_number;
@@ -12086,9 +12093,9 @@ void update_selective_values_master_effects()
     print_small_intbar(43, 19, braids_osc.rev_send, 40, 1, 0);
 }
 
-#ifdef PSRAM
-extern "C" uint8_t external_psram_size;
-#endif
+//#ifdef PSRAM 
+extern "C" uint8_t external_psram_size;  
+//#endif
 
 void UI_func_master_effects(uint8_t param)
 {
@@ -12101,6 +12108,7 @@ void UI_func_master_effects(uint8_t param)
     char text1[30];
     uint8_t size = external_psram_size;
 #endif
+
     setCursor_textGrid_small(1, 22);
     display.setTextColor(GREY2);
     display.setTextSize(1);
@@ -12583,8 +12591,29 @@ void UI_func_master_effects(uint8_t param)
   }
 }
 
+void sysinfo_reload_prev_voice()
+{
+  if (sysinfo_sound_state > 0  )
+  {
+    if (seq.running==false){
+    MicroDexed[0]->keyup(MIDI_C2);
+    MicroDexed[0]->keyup(MIDI_C4);
+    MicroDexed[0]->keyup(MIDI_G4);
+    MicroDexed[0]->keyup(MIDI_C5);
+    MicroDexed[0]->keyup(MIDI_E5);
+    // reload current(previous active) dexed0 patch
+    MicroDexed[0]->setGain(midi_volume_transform(map(configuration.dexed[0].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
+    load_sd_voice(sysinfo_old_bank, sysinfo_old_voice, 0);
+    configuration.dexed[0].transpose = sysinfo_old_transpose;
+    MicroDexed[0]->setTranspose(configuration.dexed[0].transpose);
+    }
+    sysinfo_sound_state = 0;
+  }
+}
+
 void UI_func_information(uint8_t param)
 {
+
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     char version_string[display_cols + 10 + 1];
@@ -12680,12 +12709,38 @@ void UI_func_information(uint8_t param)
     display.print(F(" "));
     display.setTextColor(COLOR_BACKGROUND, GREY2);
 
-    helptext_l("BACK");
-    randomSeed(analogRead(0));
-    if (random(2) == 0)
-      splash_screen2();
-    else
-      splash_screen1();
+    if (sysinfo_sound_state == 0)
+    {
+      if (seq.running==false){
+      sysinfo_old_voice = configuration.dexed[0].voice;
+      sysinfo_old_bank = configuration.dexed[0].bank;
+      sysinfo_old_transpose = configuration.dexed[0].transpose;
+      load_sd_voice(1, 21, 0);
+      // MD_sendControlChange(configuration.dexed[0].midi_channel, 7, 100);
+      MicroDexed[0]->setGain(0.9);
+      MicroDexed[0]->keydown(MIDI_C2, 40);
+      MicroDexed[0]->keydown(MIDI_C4, 50);
+      MicroDexed[0]->keydown(MIDI_G4, 60);
+      MicroDexed[0]->keydown(MIDI_C5, 50);
+      MicroDexed[0]->keydown(MIDI_E5, 50);
+      }
+      randomSeed(analogRead(0));
+      if (random(2) == 0)
+      {
+        sysinfo_logo_version = 2;
+        sysinfo_sound_state = 10;
+        splash_screen2();
+      }
+      else
+      {
+        sysinfo_logo_version = 1;
+        sysinfo_sound_state = 10;
+        splash_screen1();
+      }
+
+      sysinfo_millis = 0;
+      // sysinfo_sound_state=1;
+    }
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
@@ -12696,7 +12751,7 @@ void UI_func_information(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
-
+    sysinfo_reload_prev_voice();
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -19825,7 +19880,11 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
   {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
+#ifdef PSRAM
+    ;
+#else
     helptext_r("START");
+#endif
     helptext_l("BACK");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.setTextSize(2);
@@ -19833,6 +19892,25 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.print(F("TEST PSRAM CHIP"));
     setCursor_textGrid_small(2, 4);
     display.setTextSize(1);
+#ifdef PSRAM
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("PSRAM TEST NOT POSSIBLE WHILE IT IS IN USE"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setCursor_textGrid_small(2, 6);
+     display.print(F("FLASH A GENERIC MDT VERSION OR WHEN COMPILING"));
+    setCursor_textGrid_small(2, 7);
+     display.print(F("FROM SOURCE, DO NOT INCLUDE PSRAM OPTION"));
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    setCursor_textGrid_small(2, 10);
+    display.print(F("FAQ AND OTHER HELP IS AVAILABLE AT:"));
+    setCursor_textGrid_small(2, 12);
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F("https://"));
+    setCursor_textGrid_small(2, 13);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(F("codeberg.org/positionhigh/MicroDexed-touch/wiki"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+#else
     display.setTextColor(GREY1, COLOR_BACKGROUND);
     display.print(F("TEST SHOULD RUN AROUND 52 SECONDS FOR 8 MB CHIP"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -19840,13 +19918,18 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.print(F("PUSH ENC_R TO START"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+#endif
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
     if (LCDML.BT_checkEnter())
     {
+#ifdef PSRAM
+      ;
+#else
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       psram_test();
+#endif
     }
     // setCursor_textGrid(1, 2);
   }
@@ -20460,53 +20543,47 @@ FLASHMEM void splash_draw_D()
 #endif
 }
 
-FLASHMEM void splash_draw_X()
+FLASHMEM void splash_draw_X(uint8_t c)
 {
   uint16_t colors[2] = {COLOR_PITCHSMP, COLOR_SYSTEXT};
 
-  for (uint8_t i = 0; i < 5; i++)
-  {
-    for (uint8_t c = 0; c < 2; c++)
-    {
 #ifdef REMOTE_CONSOLE
-      display.console = true;
+  display.console = true;
 #endif
-      display.fillRect(107, 34, 27, 2, colors[c]);
-      display.fillRect(186, 34, 27, 2, colors[c]);
-      display.fillRect(112, 39, 27, 2, colors[c]);
-      display.fillRect(181, 39, 27, 2, colors[c]);
-      display.fillRect(117, 44, 27, 2, colors[c]);
-      display.fillRect(176, 44, 27, 2, colors[c]);
-      display.fillRect(122, 49, 27, 2, colors[c]);
-      display.fillRect(172, 49, 27, 2, colors[c]);
-      display.fillRect(127, 54, 27, 2, colors[c]);
-      display.fillRect(167, 54, 27, 2, colors[c]);
-      display.fillRect(132, 59, 27, 2, colors[c]);
-      display.fillRect(162, 59, 27, 2, colors[c]);
-      display.fillRect(137, 64, 46, 2, colors[c]);
-      display.fillRect(142, 69, 36, 2, colors[c]);
-      display.fillRect(147, 74, 26, 2, colors[c]);
-      display.fillRect(142, 79, 36, 2, colors[c]);
-      display.fillRect(137, 84, 46, 2, colors[c]);
-      display.fillRect(132, 89, 27, 2, colors[c]);
-      display.fillRect(162, 89, 28, 2, colors[c]);
-      display.fillRect(127, 94, 27, 2, colors[c]);
-      display.fillRect(167, 94, 28, 2, colors[c]);
-      display.fillRect(122, 99, 27, 2, colors[c]);
-      display.fillRect(172, 99, 27, 2, colors[c]);
-      display.fillRect(117, 104, 27, 2, colors[c]);
-      display.fillRect(176, 104, 27, 2, colors[c]);
-      display.fillRect(112, 109, 27, 2, colors[c]);
-      display.fillRect(181, 109, 28, 2, colors[c]);
-      display.fillRect(107, 114, 27, 2, colors[c]);
-      display.fillRect(186, 114, 27, 2, colors[c]);
+  display.fillRect(107, 34, 27, 2, colors[c]);
+  display.fillRect(186, 34, 27, 2, colors[c]);
+  display.fillRect(112, 39, 27, 2, colors[c]);
+  display.fillRect(181, 39, 27, 2, colors[c]);
+  display.fillRect(117, 44, 27, 2, colors[c]);
+  display.fillRect(176, 44, 27, 2, colors[c]);
+  display.fillRect(122, 49, 27, 2, colors[c]);
+  display.fillRect(172, 49, 27, 2, colors[c]);
+  display.fillRect(127, 54, 27, 2, colors[c]);
+  display.fillRect(167, 54, 27, 2, colors[c]);
+  display.fillRect(132, 59, 27, 2, colors[c]);
+  display.fillRect(162, 59, 27, 2, colors[c]);
+  display.fillRect(137, 64, 46, 2, colors[c]);
+  display.fillRect(142, 69, 36, 2, colors[c]);
+  display.fillRect(147, 74, 26, 2, colors[c]);
+  display.fillRect(142, 79, 36, 2, colors[c]);
+  display.fillRect(137, 84, 46, 2, colors[c]);
+  display.fillRect(132, 89, 27, 2, colors[c]);
+  display.fillRect(162, 89, 28, 2, colors[c]);
+  display.fillRect(127, 94, 27, 2, colors[c]);
+  display.fillRect(167, 94, 28, 2, colors[c]);
+  display.fillRect(122, 99, 27, 2, colors[c]);
+  display.fillRect(172, 99, 27, 2, colors[c]);
+  display.fillRect(117, 104, 27, 2, colors[c]);
+  display.fillRect(176, 104, 27, 2, colors[c]);
+  display.fillRect(112, 109, 27, 2, colors[c]);
+  display.fillRect(181, 109, 28, 2, colors[c]);
+  display.fillRect(107, 114, 27, 2, colors[c]);
+  display.fillRect(186, 114, 27, 2, colors[c]);
 #ifdef REMOTE_CONSOLE
-      display.console = false;
+  display.console = false;
 #endif
-      delay(80);
-    }
-  }
 }
+
 FLASHMEM void splash_draw_reverseD()
 {
 #ifdef REMOTE_CONSOLE
@@ -20556,37 +20633,34 @@ FLASHMEM void splash_screen1()
   display.print(F("(c) 2018-2021 H. WIRTZ"));
   display.setCursor(3, 139);
   display.print(F("(c) 2021-2022 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
-  splash_draw_X();
+  // splash_draw_X();
 }
 
-FLASHMEM void splash_screen2()
+FLASHMEM void splash_screen2_anim()
 {
-  unsigned char splash[23360];
-  RLE_Uncompress(splash_image, splash, 3033);
-  uint16_t c;
-  uint16_t color;
-  display.setTextColor(COLOR_SYSTEXT);
-  display.setTextSize(1);
-  display.setCursor(1, 100);
-  display.print(F("(c) 2018-2021 H. WIRTZ"));
-  display.setCursor(1, 110);
-  display.print(F("(c) 2021-2022 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
-  display.setCursor(1 + CHAR_width_small * 4, 130);
-  display.setTextColor(GREY2);
-  display.print(F("https://codeberg.org/positionhigh/"));
-#ifdef REMOTE_CONSOLE
-  display.console = true;
-#endif
-  for (uint8_t r = 0; r < 8; r++)
+
+  if (sysinfo_sound_state - 10 < 8)
   {
-    for (uint8_t y = 0 + r; y < 73; y = y + 8)
+    unsigned char splash[23360];
+    RLE_Uncompress(splash_image, splash, 3033);
+    uint16_t c;
+    uint16_t color;
+
+#ifdef REMOTE_CONSOLE
+    display.console = true;
+#endif
+
+    for (uint8_t y = 0 + sysinfo_sound_state - 10; y < 73; y = y + 8)
     {
       for (uint16_t x = 0; x < DISPLAY_WIDTH; x++)
       {
         if (splash[x + y * DISPLAY_WIDTH] != 0)
         {
           if (splash[x + y * DISPLAY_WIDTH] > 130 || y < 26 || (x < 163 && y < 46) || x > 241 || x < 80 || (x > 189 && y > 64))
+          {
+
             color = RGB24toRGB565(splash[x + y * DISPLAY_WIDTH], splash[x + y * DISPLAY_WIDTH], splash[x + y * DISPLAY_WIDTH]);
+          }
           else
             color = RGB24toRGB565(0, splash[x + y * DISPLAY_WIDTH] * 1.5, splash[x + y * DISPLAY_WIDTH]);
           for (uint16_t s = 3; s < 200; s++)
@@ -20598,18 +20672,20 @@ FLASHMEM void splash_screen2()
           }
           if (c > 0)
           {
+
             display.fillRect(x, y, c + 1, 1, color);
-#ifdef REMOTE_CONSOLE
-            delayMicroseconds(60);
-#endif
+            // #ifdef REMOTE_CONSOLE
+            //             delayMicroseconds(60);
+            // #endif
             x = x + c;
           }
           else
           {
+
             display.drawPixel(x, y, color);
-#ifdef REMOTE_CONSOLE
-            delayMicroseconds(60);
-#endif
+            // #ifdef REMOTE_CONSOLE
+            //             delayMicroseconds(60);
+            // #endif
           }
         }
         c = 0;
@@ -20617,11 +20693,24 @@ FLASHMEM void splash_screen2()
           break;
       }
     }
-    delay(30);
   }
+
 #ifdef REMOTE_CONSOLE
   display.console = false;
 #endif
+}
+
+FLASHMEM void splash_screen2()
+{
+  display.setTextColor(COLOR_SYSTEXT);
+  display.setTextSize(1);
+  display.setCursor(1, 100);
+  display.print(F("(c) 2018-2021 H. WIRTZ"));
+  display.setCursor(1, 110);
+  display.print(F("(c) 2021-2022 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
+  display.setCursor(1 + CHAR_width_small * 4, 130);
+  display.setTextColor(GREY2);
+  display.print(F("https://codeberg.org/positionhigh/"));
 }
 
 float scalex = 1;
