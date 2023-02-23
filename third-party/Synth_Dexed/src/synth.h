@@ -39,7 +39,7 @@ typedef __int16 SInt16;
 #define _N_ (1 << LG_N)
 
 #if defined(__APPLE__)
-#include <libkern/OSAtomic.h>
+//#include <libkern/OSAtomic.h>
 #define SynthMemoryBarrier() OSMemoryBarrier()
 #elif defined(__GNUC__)
 #if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
