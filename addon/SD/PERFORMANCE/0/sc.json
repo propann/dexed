@@ -1,0 +1,14 @@
+{
+  "a_active": false,
+  "b_active": false,
+  "a_sample_number": 70,
+  "b_sample_number": 70,
+  "a_speed": 0,
+  "b_speed": 0,
+  "dexed1_target_a": 0,
+  "dexed2_target_a": 0,
+  "dexed1_target_b": 0,
+  "dexed2_target_b": 0,
+  "reverb_target_a": 0,
+  "reverb_target_b": 0
+}
