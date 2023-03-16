@@ -1,0 +1,23 @@
+{
+  "vol": 67,
+  "algo": 14,
+  "color": 0,
+  "timbre": 99,
+  "coarse": 0,
+  "attack": 1,
+  "decay": 28,
+  "sustain": 15,
+  "release": 31,
+  "filter_mode": 0,
+  "freq_from": 0,
+  "freq_to": 0,
+  "res": 0,
+  "filter_speed": 0,
+  "rev": 86,
+  "flanger": 0,
+  "flanger_spread": 0,
+  "delay_1": 97,
+  "delay_2": 96,
+  "midi": 6,
+  "pan": 20
+}
