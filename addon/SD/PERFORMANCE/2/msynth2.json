@@ -17,17 +17,13 @@
   "noise_decay": 0,
   "filter_noise_freq_from": 0,
   "filter_noise_freq_to": 0,
-  "filter_noise_mode": 0,
   "filter_noise_speed": 0,
   "pwm_from": 0,
   "pwm_to": 0,
   "pwm_speed": 0,
   "rev_send": 0,
   "chorus_send": 0,
-  "delay_send_1": 0,
-  "delay_send_2": 0,
-  "midi_channel": 5,
-  "pan": 0,
-  "vel_mod_filter_osc": 0,
-  "vel_mod_filter_noise": 0
+  "delay_send": 0,
+  "midi_channel": 0,
+  "pan": 0
 }
