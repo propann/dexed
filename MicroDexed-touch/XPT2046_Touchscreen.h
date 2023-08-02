@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-#ifdef GENERIC_DISPLAY
+#if defined GENERIC_DISPLAY
 
 #ifndef _XPT2046_Touchscreen_h_
 #define _XPT2046_Touchscreen_h_
@@ -76,6 +76,7 @@ public:
   {
     return 1;
   }
+  
   void getCalibrationPoints(uint16_t &x1, uint16_t &y1, uint16_t &x2, uint16_t &y2);
   void setCalibration(TS_Calibration cal);
   TS_Calibration getCalibrationObject(uint16_t vi1, uint16_t vj1, uint16_t vi2, uint16_t vj2)
@@ -101,6 +102,7 @@ private:
 #if defined(_FLEXIO_SPI_H_)
   FlexIOSPI *_pflexspi = nullptr;
 #endif
+
 };
 
 #ifndef ISR_PREFIX

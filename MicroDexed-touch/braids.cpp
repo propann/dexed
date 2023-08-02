@@ -9,15 +9,15 @@ elapsedMillis braids_control_rate;
 uint16_t braids_filter_lfo_count[NUM_BRAIDS];
 boolean braids_lfo_direction[NUM_BRAIDS];
 
-extern AudioSynthBraids *synthBraids[NUM_BRAIDS];
+extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 extern braids_t braids_osc;
 extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern AudioMixer<NUM_BRAIDS> braids_mixer;
-extern AudioMixer<4> *braids_mixer_filter[NUM_BRAIDS];
+extern AudioMixer<4>* braids_mixer_filter[NUM_BRAIDS];
 extern AudioMixer<2> braids_mixer_reverb;
-extern AudioEffectEnvelope *braids_envelope[NUM_BRAIDS];
+extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
 // extern AudioFilterStateVariable* braids_filter[NUM_BRAIDS];
-extern AudioFilterBiquad *braids_filter[NUM_BRAIDS];
+extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 extern AudioEffectStereoPanorama braids_stereo_panorama;
 extern AudioEffectFlange braids_flanger_r;
 extern AudioEffectFlange braids_flanger_l;
@@ -25,7 +25,7 @@ extern int braids_flanger_idx;
 extern int braids_flanger_depth;
 extern double braids_flanger_freq;
 extern uint8_t generic_temp_select_menu;
-extern AudioMixer<8> *global_delay_in_mixer[NUM_DEXED];
+extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 
 extern float volume_transform(float amp);
 
@@ -50,7 +50,6 @@ FLASHMEM void update_braids_params()
 
   for (uint8_t d = 0; d < NUM_BRAIDS; d++)
   {
-
     if (braids_envelope[d]->isActive())
     {
 
@@ -142,10 +141,17 @@ FLASHMEM void braids_update_all_settings()
 
     if (seq.running == false)
     {
-      braids_filter[instance_id]->setLowpass(0, braids_osc.filter_freq_from, braids_osc.filter_resonance / 10);
+      if (braids_osc.filter_mode == 1)
+        braids_filter[instance_id]->setLowpass(0, braids_osc.filter_freq_from, 0.1 + braids_osc.filter_resonance / 10);
+      if (braids_osc.filter_mode == 2)
+        braids_filter[instance_id]->setBandpass(0, braids_osc.filter_freq_from, 0.1 + braids_osc.filter_resonance / 10);
+      if (braids_osc.filter_mode == 3)
+        braids_filter[instance_id]->setHighpass(0, braids_osc.filter_freq_from, 0.1 + braids_osc.filter_resonance / 10);
+
       braids_filter_state[instance_id] = braids_osc.filter_freq_from;
     }
   }
+
 }
 
 FLASHMEM void braids_update_single_setting()

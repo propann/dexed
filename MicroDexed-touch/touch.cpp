@@ -12,7 +12,7 @@ extern config_t configuration;
 extern uint8_t selected_instance_id;
 extern void handleNoteOn_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity);
 extern void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte inVelocity);
-extern void print_voice_settings(bool fullrefresh);
+extern void print_voice_settings_in_dexed_voice_select(bool text, bool values);
 extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
 extern LCDMenuLib2 LCDML;
@@ -31,19 +31,18 @@ extern void sd_printDirectory(bool forceReload);
 extern uint8_t find_longest_chain();
 extern void print_formatted_number(uint16_t v, uint8_t l);
 extern void virtual_keyboard_print_buttons();
-extern void draw_button_on_grid(uint8_t x, uint8_t y, const char *t1, const char *t2, uint8_t color);
+extern void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, uint8_t color);
 extern void seq_pattern_editor_update_dynamic_elements();
 extern void microsynth_refresh_lower_screen_static_text();
 extern void microsynth_refresh_lower_screen_dynamic_text();
 extern float get_sample_p_offset(uint8_t sample);
 extern void set_sample_pitch(uint8_t sample, float playbackspeed);
-extern void show_small_font(int pos_y, int pos_x, uint8_t field_size, const char *str);
-extern const char *find_long_drum_name_from_note(uint8_t note);
+extern void show_no_grid(int pos_y, int pos_x, uint8_t field_size, const char* str);
+extern const char* find_long_drum_name_from_note(uint8_t note);
 extern void print_perfmod_buttons();
 extern void print_perfmod_lables();
 extern void print_empty_spaces(uint8_t spaces);
 extern void print_voice_select_default_help();
-extern void playWAVFile(const char *filename);
 extern void handleStop(void);
 extern void handleStart(void);
 extern void UI_func_load_performance(uint8_t param);
@@ -53,12 +52,18 @@ extern void UI_func_seq_vel_editor(uint8_t param);
 extern void UI_func_mixer(uint8_t param);
 extern void UI_func_song(uint8_t param);
 extern void UI_func_voice_select(uint8_t param);
-extern void save_favorite(uint8_t b, uint8_t v, uint8_t instance_id);
-extern uint8_t activesample;
+extern void UI_func_voice_editor(uint8_t param);
+extern void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id);
+extern void preview_sample(void);
+extern void draw_volmeters_mixer();
+extern void draw_volmeters_multiband_compressor();
 
+
+extern uint8_t activesample;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
 
 extern braids_t braids_osc;
+extern bool generic_full_draw_required;
 
 extern void mb_set_mutes();
 extern bool mb_solo_low;
@@ -79,6 +84,7 @@ extern uint8_t generic_temp_select_menu;
 extern void mb_set_mutes();
 extern void mb_set_master();
 extern void mb_set_compressor();
+extern uint8_t last_menu_depth;
 
 ts_t ts;                         // touch screen
 fm_t fm;                         // file manager
@@ -86,7 +92,7 @@ dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and re
 extern int temp_int;
 extern elapsedMillis touch_control_rate;
 
-FLASHMEM void helptext_l(const char *str)
+FLASHMEM void helptext_l(const char* str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
@@ -105,7 +111,7 @@ FLASHMEM void helptext_l(const char *str)
   ts.old_helptext_length[0] = l;
 }
 
-FLASHMEM void helptext_r(const char *str)
+FLASHMEM void helptext_r(const char* str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
@@ -122,7 +128,7 @@ FLASHMEM void helptext_r(const char *str)
   ts.old_helptext_length[1] = l;
 }
 
-FLASHMEM void helptext_c(const char *str)
+FLASHMEM void helptext_c(const char* str)
 {
   display.setTextSize(1);
   uint8_t l = strlen(str);
@@ -281,7 +287,7 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
     display.print(ts.virtual_keyboard_instrument - 7);
     display.print(" ");
 
-    show_small_font(18 * CHAR_height_small + 1, 20 * CHAR_width_small, 7, find_long_drum_name_from_note(ts.virtual_keyboard_instrument - 8 + 210));
+    show_no_grid(18 * CHAR_height_small + 1, 20 * CHAR_width_small, 7, find_long_drum_name_from_note(ts.virtual_keyboard_instrument - 8 + 210));
 
     ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
   }
@@ -583,7 +589,7 @@ FLASHMEM void get_scaled_touch_point()
   LCDML.SCREEN_resetTimer();
   if (remote_touched == false)
   {
-#ifdef GENERIC_DISPLAY
+#if defined GENERIC_DISPLAY
     if (ts.finished_calibration)
     {
       ts.p = touch.getPixel();
@@ -615,6 +621,8 @@ FLASHMEM void get_scaled_touch_point()
   }
 }
 
+extern uint8_t dexed_onscreen_algo;
+
 FLASHMEM void handle_touchscreen_voice_select()
 {
 
@@ -629,10 +637,8 @@ FLASHMEM void handle_touchscreen_voice_select()
         seq.cycle_touch_element = 0;
         // display.drawRect(DISPLAY_WIDTH / 2, CHAR_height * 6 - 4 , DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 1,  GREY4);
         draw_button_on_grid(45, 1, "", "", 99); // print keyboard icon
-        uint8_t t = generic_temp_select_menu;
-        generic_temp_select_menu = 199;
-        print_voice_settings(true);
-        generic_temp_select_menu = t;
+        dexed_onscreen_algo = 88; //dummy value to force draw on screen init
+        print_voice_settings_in_dexed_voice_select(true, true);
         print_perfmod_buttons();
         print_perfmod_lables();
         print_voice_select_default_help();
@@ -652,7 +658,7 @@ FLASHMEM void handle_touchscreen_voice_select()
     {
       if (check_button_on_grid(37, 1))
       {
-        save_favorite(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+        save_favorite(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
       }
       else if (selected_instance_id == 0)
       {
@@ -670,6 +676,8 @@ FLASHMEM void handle_touchscreen_voice_select()
           else
             dexed_live_mod.active_button = 0;
         }
+        else if (check_button_on_grid(45, 23))
+          LCDML.OTHER_jumpToFunc(UI_func_voice_editor);
       }
       else if (selected_instance_id == 1)
       {
@@ -687,6 +695,8 @@ FLASHMEM void handle_touchscreen_voice_select()
           else
             dexed_live_mod.active_button = 0;
         }
+        else if (check_button_on_grid(45, 23))
+          LCDML.OTHER_jumpToFunc(UI_func_voice_editor);
       }
       else
         dexed_live_mod.active_button = 0;
@@ -705,10 +715,9 @@ FLASHMEM void handle_touchscreen_voice_select()
       {
         print_voice_select_default_help();
       }
-      uint8_t t = generic_temp_select_menu;
-      generic_temp_select_menu = 199;
-      print_voice_settings(false);
-      generic_temp_select_menu = t;
+
+      print_voice_settings_in_dexed_voice_select(false, true);
+
       print_perfmod_buttons();
       print_perfmod_lables();
     }
@@ -730,11 +739,7 @@ FLASHMEM void handle_touchscreen_voice_select()
       print_virtual_keyboard_octave();
       ts.update_virtual_keyboard_octave = false;
     }
-    //    if ( ts.switch_active_instance && seq.cycle_touch_element != 1)
-    //    {
-    //      UI_update_instance_icons();
-    //      print_voice_settings(CHAR_width_small, 104, selected_instance_id, 0);
-    //    }
+
   }
   virtual_keyboard_update_all_key_states();
 }
@@ -812,7 +817,7 @@ FLASHMEM void handle_touchscreen_pattern_editor()
       else
       {
         seq.cycle_touch_element = 1;
-        draw_button_on_grid(45, 1, "BACK", "TO SEQ", 0);
+        draw_button_on_grid(45, 1, back_text, "TO SEQ", 0);
         display.fillRect(216, CHAR_height_small * 6, 95, CHAR_height_small * 6 + 1, COLOR_BACKGROUND);
         display.fillRect(0, CHAR_height_small * 10 + 1, 195, CHAR_height_small * 2 + 1, COLOR_BACKGROUND);
         virtual_keyboard();
@@ -902,13 +907,17 @@ FLASHMEM void handle_touchscreen_microsynth()
 
     if (check_button_on_grid(45, 1))
     {
-      display.fillRect(0, VIRT_KEYB_YPOS - 6 * CHAR_height_small, DISPLAY_WIDTH, DISPLAY_HEIGHT, COLOR_BACKGROUND);
+      display.console = true;
+      display.fillRect(0, VIRT_KEYB_YPOS - 6 * CHAR_height_small, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - VIRT_KEYB_YPOS + 6 * CHAR_height_small, COLOR_BACKGROUND);
+      display.console = false;
       if (seq.cycle_touch_element == 1)
       {
         seq.cycle_touch_element = 0;
         draw_button_on_grid(45, 1, "", "", 99); // print keyboard icon
+        generic_full_draw_required = true;
         microsynth_refresh_lower_screen_static_text();
         microsynth_refresh_lower_screen_dynamic_text();
+        generic_full_draw_required = false;
       }
       else
       {
@@ -1003,6 +1012,7 @@ FLASHMEM void handle_touchscreen_file_manager()
       else if (check_button_on_grid(46, 25))
       {
         fm.sd_mode = FM_PLAY_SAMPLE;
+        preview_sample();
         print_file_manager_buttons();
       }
     }
@@ -1014,14 +1024,12 @@ FLASHMEM void handle_touchscreen_file_manager()
     }
     else if (ts.p.x > CHAR_width_small * 29)
     {
+#ifdef COMPILE_FOR_FLASH
       fm.active_window = 1;
+#endif
       print_file_manager_active_border();
     }
-    // sd_printDirectory(true);
-    // #ifdef COMPILE_FOR_FLASH
-    //     flash_loadDirectory();
-    //     flash_printDirectory();
-    // #endif
+
     ts.block_screen_update = true;
     ts.slowdown_UI_input = 0;
   }
@@ -1242,6 +1250,13 @@ FLASHMEM void handle_touchscreen_menu()
       else
       {
         draw_menu_ui_icons();
+        if (LCDML.MENU_getLayer() > last_menu_depth)
+        {
+          if (ts.keyb_in_menu_activated == false)
+          {
+            helptext_l(back_text);
+          }
+        }
       }
     }
     if (ts.keyb_in_menu_activated == false)
@@ -1332,6 +1347,12 @@ FLASHMEM void toggle_generic_active_function()
     generic_active_function = 0;
 }
 
+FLASHMEM void handle_touchscreen_mixer()
+{
+  if (scope.scope_delay % 60 == 0)
+    draw_volmeters_mixer();
+}
+
 FLASHMEM void handle_touchscreen_multiband()
 {
   if (touch.touched())
@@ -1419,69 +1440,35 @@ FLASHMEM void handle_touchscreen_multiband()
   {
     ;
   }
-  display.setTextSize(1);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (scope.scope_delay % 60 == 0)
   {
-
-    float l, r;
-    l = mb_before_l.read();
-    r = mb_before_r.read();
-    draw_volmeter(CHAR_width_small * 1, 228, 0, l);
-    draw_volmeter(CHAR_width_small * 5, 228, 1, r);
-
-    if (multiband_active)
-    {
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 2, mb_after_l.read());
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 3, mb_after_r.read());
-    }
-    else
-    {
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 8 + 2, 228, 2, l);
-      draw_volmeter(DISPLAY_WIDTH - CHAR_width_small * 4 + 2, 228, 3, r);
-    }
+    draw_volmeters_multiband_compressor();
   }
-  display.setTextSize(2);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
 extern int temp_int;
 
 FLASHMEM void handle_touchscreen_sample_editor()
 {
-  if (touch.touched())
+  if (touch.touched() && ts.block_screen_update == false)
   {
     get_scaled_touch_point();
 
-    if (check_button_on_grid(45, 23) && fm.sample_preview_playing == false)
+    if (check_button_on_grid(45, 23))
     {
-      draw_button_on_grid(45, 23, "PLAY", "SAMPLE", 2);
-
-      if (fm.sample_source == 1) // FLASH
-      {
-        char filename[26];
-        uint32_t filesize;
-        SerialFlash.opendir();
-        if (temp_int > 0)
-        {
-          for (int f = 0; f < temp_int; f++)
-          {
-            if (SerialFlash.readdir(filename, sizeof(filename), filesize))
-              ;
-            else
-              break;
-          }
-        }
-
-        fm.sample_screen_position_x = 0;
-        fm.sample_preview_playing = true;
-        playWAVFile(filename);
-      }
+      preview_sample();
     }
+    ts.block_screen_update = true;
+    ts.slowdown_UI_input = 0;
   }
   if (touch.touched() == false)
   {
     ;
+  }
+  ts.slowdown_UI_input++;
+  if (ts.slowdown_UI_input > 500)
+  {
+    ts.block_screen_update = false;
   }
 }
 

@@ -76,9 +76,6 @@
 // USB_KEYBOARD is for a PC-Numeric Keypad, connected via USB
 // ONBOARD_BUTTON_Interface is for directly attached buttons to the teensy.
 
-// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION,
-// JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE
-
 // #define USB_KEYPAD 1
 // #define ONBOARD_BUTTON_INTERFACE 1
 
@@ -88,15 +85,12 @@
 // If nothing is defined Teensy internal DAC is used as audio output device!
 // Left and right channel audio signal is presented on pins A21 and A22.
 
-// IF YOU WANT TO USE REMOTE CONSOLE ON PC WITH PC KEYBOARD + AUDIO ETC. DON'T CHANGE ANYTHING IN THIS SECTION,
-// JUST ENABLE REMOTE_CONSOLE AND IT WILL TAKE CARE FOR EVERYTHING ELSE REQUIRED.
-
 #define I2S_AUDIO_ONLY // for PCM5102 or other I2S DACs
 
 // #define AUDIO_DEVICE_USB
 // #define TEENSY_AUDIO_BOARD // for legacy reasons, only
-// #define PT8211_AUDIO
-// #define TGA_AUDIO_BOARD
+
+// #define PSRAM  // opt. 8MB PSRAM Chip soldered to Teensy 4.1
 
 //*************************************************************************************************
 //* MIDI SOFTWARE SETTINGS
@@ -111,9 +105,8 @@
 //*************************************************************************************************
 // #define DEBUG 1    // 1 for normal Serial, 2 for dual serial (only for developers)
 // #define DEBUG_SHOW_JSON 1
-// #define REMOTE_CONSOLE  //enable USB Display + USB AUDIO - This is NOT for serial monitor from Teensyduino! For that, please use #define DEBUG 1
+
 #define SERIAL_SPEED 230400
-#define SHOW_XRUN 1
 #define SHOW_CPU_LOAD_MSEC 5000
 
 //*************************************************************************************************
@@ -133,7 +126,7 @@
 //*************************************************************************************************
 
 #define GENERIC_DISPLAY // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
-// #define ADAFRUIT_DISPLAY  // Adafruit 2.8" TFT with Capacitive FT6206 Touchscreen, currently for testing purposes only
+//#define ADAFRUIT_DISPLAY  // Adafruit 2.8" TFT with Capacitive FT6206 Touchscreen, currently for testing purposes only
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -211,27 +204,6 @@
 #endif
 
 #ifdef TEENSY_AUDIO_BOARD
-/*
-  13: 3.16 Volts p-p
-  14: 2.98 Volts p-p
-  15: 2.83 Volts p-p
-  16: 2.67 Volts p-p
-  17: 2.53 Volts p-p
-  18: 2.39 Volts p-p
-  19: 2.26 Volts p-p
-  20: 2.14 Volts p-p
-  21: 2.02 Volts p-p
-  22: 1.91 Volts p-p
-  23: 1.80 Volts p-p
-  24: 1.71 Volts p-p
-  25: 1.62 Volts p-p
-  26: 1.53 Volts p-p
-  27: 1.44 Volts p-p
-  28: 1.37 Volts p-p
-  29: 1.29 Volts p-p  (default)
-  30: 1.22 Volts p-p
-  31: 1.16 Volts p-p
-*/
 #define SGTL5000_LINEOUT_LEVEL 29
 #endif
 
@@ -244,14 +216,13 @@
 
 #define COLOR_BACKGROUND 0x0000
 #define COLOR_SYSTEXT 0xFFFF
-#define COLOR_SYSTEXT_ACCENT 0x159A
 #define COLOR_INSTR 0x7BBD
 #define COLOR_CHORDS 0xE2FA
 #define COLOR_ARP 0xFC80
 #define COLOR_DRUMS 0xFE4F
 #define COLOR_PITCHSMP 0x159A
 
-#define RED 0xF000
+#define RED 0xD000
 #define PINK 0xF81F
 #define YELLOW 0xFFEB
 
@@ -264,9 +235,12 @@
 #define GREY3 0x2104
 #define GREY4 0x10A2
 // #define GREY4 0xC638 //only for UI test
-#define DX_DARKCYAN 0x03EF
+#define DX_DARKCYAN 0x030D
 
 // Display
+
+const char back_text[5] = { 'B', 'A', 'C', 'K' };
+const char back_clear[5] = { ' ', ' ', ' ', ' ' };
 
 #define TFT_WIDTH 240
 #define TFT_HEIGHT 320
@@ -293,7 +267,7 @@
 // IRQ valid for both display types:
 #define TFT_TOUCH_IRQ 33
 
-#ifdef GENERIC_DISPLAY
+#if defined GENERIC_DISPLAY
 #define TFT_TOUCH_CS 38
 #endif
 
@@ -308,16 +282,7 @@
 //* HARDWARE SETTINGS
 //*************************************************************************************************
 
-// Teensy Audio Shield
-#define SDCARD_AUDIO_CS_PIN 10
-#define SDCARD_AUDIO_MOSI_PIN 7
-#define SDCARD_AUDIO_SCK_PIN 14
-
-#define SDCARD_TEENSY_CS_PIN BUILTIN_SDCARD
-#define SDCARD_TEENSY_MOSI_PIN 11
-#define SDCARD_TEENSY_SCK_PIN 13
-
-const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Shield)
+const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 
 // Encoders with push button
 // #define ENCODER_USE_INTERRUPTS
@@ -336,10 +301,11 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 // Internal timer
 #define AUTOSTORE_MS 5000
 
-// EEPROM address
-#define EEPROM_START_ADDRESS 0xFF
+#define DEXED_POOLS 100
 
 #define DEXED_CONFIG_PATH "DEXED"
+#define FAV_CONFIG_PATH "FAVCFG"
+
 #define MAX_BANKS 100
 #define MAX_VOICES 32     // voices per bank
 #define BANK_NAME_LEN 11  // 10 (plus '\0')
@@ -347,8 +313,6 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define FILENAME_LEN BANK_NAME_LEN + VOICE_NAME_LEN
 #define CONFIG_FILENAME_LEN 50
 #define DRUM_NAME_LEN 21
-
-#define FAV_CONFIG_PATH "DEXED/FAVCFG"
 
 #define PERFORMANCE_CONFIG_PATH "PERFORMANCE"
 #define SEQUENCER_CONFIG_NAME "sequencer"
@@ -371,8 +335,10 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define MAX_PERF_MOD 30
 
+// SerialFlash & SD CARD
+#define MAX_FILES 150
+
 // SerialFlash
-#define MAX_FLASH_FILES 255
 #define MAX_FLASH_FILENAME_LEN 64
 
 //*************************************************************************************************
@@ -385,9 +351,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define PCM5102_MUTE_PIN 34 // hardware pin for PCM5102 XSMT soft mute function
 #endif
 
-#ifdef REMOTE_CONSOLE
 #define AUDIO_DEVICE_USB
-#endif
 
 #ifdef ONBOARD_BUTTON_INTERFACE
 #define BI_UP 2
@@ -402,12 +366,10 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 
 #define MAX_DEXED 2 // No! - even don't think about increasing this number! IT _WILL_ PRODUCE MASSIVE PROBLEMS!
 #define CONTROL_RATE_MS 50
-#define MICROSYNTH_CONTROL_RATE_MS 20
-#define BRAIDS_CONTROL_RATE_MS 20
+#define MICROSYNTH_CONTROL_RATE_MS 30
+#define BRAIDS_CONTROL_RATE_MS 30
 #define SAVE_SYS_MS 5000
 #define VOL_MAX_FLOAT 0.98
-
-#define EEPROM_MARKER 0x4243
 
 #ifndef NUM_DRUMS
 #define NUM_DRUMS 0
@@ -416,7 +378,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 // MAX_NOTES SETTINGS
 // Teensy-4.x settings
 #ifdef TEENSY4
-#define MAX_NOTES 32
+#define MAX_NOTES 32   
 #define MIDI_DECAY_LEVEL_TIME 500
 #endif
 
@@ -449,7 +411,6 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define VOLUME_MIN 0
 #define VOLUME_MAX 100
 #define VOLUME_DEFAULT 80
-// #define VOLUME_ENC_STEPS 5
 
 #define PANORAMA_MIN 0
 #define PANORAMA_MAX 40
@@ -673,6 +634,10 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 #define SCREEN_SAVER_START_MIN 1
 #define SCREEN_SAVER_START_MAX 59
 #define SCREEN_SAVER_START_DEFAULT 4
+#define SCREEN_SAVER_MODE_DEFAULT 0 //random mode
+#define SCREEN_SAVER_MODE_MIN 0
+#define SCREEN_SAVER_MODE_MAX 5
+//#define SCREEN_SAVER_MODE_MAX 4
 
 #define GAMEPAD_SPEED_MIN 60
 #define GAMEPAD_SPEED_MAX 300
@@ -781,6 +746,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin (on Audio Sh
 // Internal configuration structure
 typedef struct dexed_s
 {
+  uint8_t pool;
   uint8_t bank;
   uint8_t voice;
   uint8_t lowest_note;
@@ -971,10 +937,15 @@ typedef struct multisample_zone_s
   uint8_t rootnote; // sample root note
   uint8_t low;      // lowest note in range
   uint8_t high;     // highest note in range
-  bool playmode;    // Trigger/Hold Mode
+  uint8_t playmode;    // Trigger/Hold Mode, seq play length (4 steps)
   uint8_t vol;      // volume
   uint8_t pan;      // panorama
   uint8_t rev;      // reverb send
+  uint8_t tune;     // tune/pitch offset
+  uint8_t loop_type;
+  uint32_t loop_start;
+  uint32_t loop_end;
+  unsigned long filelength; // runtime value, do not store
 } multisample_zone_t;
 
 typedef struct sys_s
@@ -993,6 +964,7 @@ typedef struct sys_s
   uint16_t calib_x_max;
   uint16_t calib_y_max;
   uint8_t screen_saver_start; // minutes
+  uint8_t screen_saver_mode; // 0 = random, modes 1...4 , 99 = off
   uint16_t gamepad_speed;     // milliseconds
   bool ui_reverse;
 } sys_t;
@@ -1007,7 +979,7 @@ typedef struct storage_file_s
 typedef struct sdcard_s
 {
   char type[5];
-  storage_file_t files[200];
+  storage_file_t files[MAX_FILES];
   uint32_t used;
   uint32_t capacity;
 } sdcard_t;
@@ -1015,7 +987,7 @@ typedef struct sdcard_s
 #ifdef COMPILE_FOR_FLASH
 typedef struct flash_s
 {
-  storage_file_t files[200];
+  storage_file_t files[MAX_FILES];
   uint32_t used;
   uint32_t capacity;
 } flash_t;

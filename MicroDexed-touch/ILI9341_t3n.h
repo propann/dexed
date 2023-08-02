@@ -23,24 +23,22 @@
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 
-/* ILI9341_t3DMA library code is placed under the MIT license
-   Copyright (c) 2016 Frank Bösing
-*/
+ /* ILI9341_t3DMA library code is placed under the MIT license
+    Copyright (c) 2016 Frank Bösing
+ */
+#include "config.h"
 
 #ifndef _ILI9341_t3NH_
 #define _ILI9341_t3NH_
 
-#define ILI9341_USE_DMAMEM
+ #define ILI9341_USE_DMAMEM
 
-// Allow way to override using SPI
+ // Allow way to override using SPI
 
 #ifdef __cplusplus
 #include "Arduino.h"
 #include <DMAChannel.h>
 #include <SPI.h>
-#include "config.h"
-
-#endif
 #include <stdint.h>
 
 #define ILI9341_NOP 0x00
@@ -98,6 +96,7 @@
 #define ILI9341_GMCTRP1 0xE0
 #define ILI9341_GMCTRN1 0xE1
 
+
 #define CL(_r, _g, _b) ((((_r)&0xF8) << 8) | (((_g)&0xFC) << 3) | ((_b) >> 3))
 
 #define sint16_t int16_t
@@ -106,23 +105,26 @@
 // At all other speeds, _pspi->beginTransaction() will use the fastest available
 // clock
 
-#ifdef GENERIC_DISPLAY
+ #ifdef GENERIC_DISPLAY
+ #define ILI9341_SPICLOCK 50000000
+ #define ILI9341_SPICLOCK_READ 2000000
+ #endif
+
+
+#ifdef ADAFRUIT_DISPLAY
 #define ILI9341_SPICLOCK 50000000
-// #define ILI9341_SPICLOCK 60000000
-#else
-#define ILI9341_SPICLOCK 50000000
+#define ILI9341_SPICLOCK_READ 2000000
 #endif
 
-#define ILI9341_SPICLOCK_READ 2000000
-
-class ILI9341_t3n : public Print
+class ILI9341_t3n: public Print
 {
 public:
+
   ILI9341_t3n(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI = 11,
-              uint8_t _SCLK = 13, uint8_t _MISO = 12);
+    uint8_t _SCLK = 13, uint8_t _MISO = 12);
   void begin(uint32_t spi_clock = ILI9341_SPICLOCK,
-             uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
-  void sleep(bool enable);
+    uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
+
   void pushColor(uint16_t color);
   void fillScreen(uint16_t color);
   inline void fillWindow(uint16_t color)
@@ -148,14 +150,14 @@ public:
   void setFrameRateControl(uint8_t mode);
 
   void writeRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                 const uint16_t *pcolors);
+    const uint16_t* pcolors);
 
   void writeSubImageRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                         int16_t image_offset_x, int16_t image_offset_y, int16_t image_width, int16_t image_height,
-                         const uint16_t *pcolors);
+    int16_t image_offset_x, int16_t image_offset_y, int16_t image_width, int16_t image_height,
+    const uint16_t* pcolors);
   void writeSubImageRectBytesReversed(int16_t x, int16_t y, int16_t w, int16_t h,
-                                      int16_t image_offset_x, int16_t image_offset_y, int16_t image_width, int16_t image_height,
-                                      const uint16_t *pcolors);
+    int16_t image_offset_x, int16_t image_offset_y, int16_t image_width, int16_t image_height,
+    const uint16_t* pcolors);
 
   // writeRect1BPP - 	write 1 bit per pixel paletted bitmap
   //					bitmap data in array at pixels, 4 bits per
@@ -163,7 +165,7 @@ public:
   //					color palette data in array at palette
   //					width must be at least 8 pixels
   void writeRect1BPP(int16_t x, int16_t y, int16_t w, int16_t h,
-                     const uint8_t *pixels, const uint16_t *palette);
+    const uint8_t* pixels, const uint16_t* palette);
 
   // writeRectNBPP - 	write N(1, 2, 4, 8) bit per pixel paletted bitmap
   //					bitmap data in array at pixels
@@ -171,29 +173,29 @@ public:
   //  of the work.
   //
   void writeRectNBPP(int16_t x, int16_t y, int16_t w, int16_t h,
-                     uint8_t bits_per_pixel, const uint8_t *pixels,
-                     const uint16_t *palette);
+    uint8_t bits_per_pixel, const uint8_t* pixels,
+    const uint16_t* palette);
 
   // from Adafruit_GFX.h
 
   void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
   void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
-                        uint16_t color);
+    uint16_t color);
   void fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
   void fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
-                        int16_t delta, uint16_t color);
-  void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w,
-                  int16_t h, uint16_t color);
+    int16_t delta, uint16_t color);
+  void drawBitmap(int16_t x, int16_t y, const uint8_t* bitmap, int16_t w,
+    int16_t h, uint16_t color);
   void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
-                uint16_t bg, uint8_t size_x, uint8_t size_y);
+    uint16_t bg, uint8_t size_x, uint8_t size_y);
   void inline drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
-                       uint16_t bg, uint8_t size)
+    uint16_t bg, uint8_t size)
   {
     drawChar(x, y, c, color, bg, size);
   }
   static const int16_t CENTER = 9998;
   void setCursor(int16_t x, int16_t y, bool autoCenter = false);
-  void getCursor(int16_t *x, int16_t *y);
+  void getCursor(int16_t* x, int16_t* y);
   void setTextColor(uint16_t c);
   void setTextColor(uint16_t c, uint16_t bg);
   void setTextSize(uint8_t sx, uint8_t sy);
@@ -218,7 +220,7 @@ public:
     // if (Serial) LOG.printf_P(PSTR("Set Origin %d %d\n"), x, y);
     updateDisplayClip();
   }
-  void getOrigin(int16_t *x, int16_t *y)
+  void getOrigin(int16_t* x, int16_t* y)
   {
     *x = _originx;
     *y = _originy;
@@ -249,7 +251,9 @@ public:
 
   // overwrite print functions:
   virtual size_t write(uint8_t);
-  virtual size_t write(const uint8_t *buffer, size_t size);
+  virtual size_t write(const uint8_t* buffer, size_t size);
+
+  void repeatWrite(const uint8_t* buffer, size_t size, uint8_t nbRepeat);
 
   int16_t width(void)
   {
@@ -285,18 +289,18 @@ public:
   // modified from tft_ili9341_ESP github library
 
   // Handle char arrays
-  int16_t drawString(const String &string, int poX, int poY);
+  int16_t drawString(const String& string, int poX, int poY);
   int16_t drawString(const char string[], int16_t len, int poX, int poY);
 
 protected:
-  SPIClass *_pspi = nullptr;
-  SPIClass::SPI_Hardware_t *_spi_hardware;
+  SPIClass* _pspi = nullptr;
+  SPIClass::SPI_Hardware_t* _spi_hardware;
 
   uint8_t _spi_num;         // Which buss is this spi on?
   uint32_t _SPI_CLOCK;      // #define ILI9341_SPICLOCK 30000000
   uint32_t _SPI_CLOCK_READ; // #define ILI9341_SPICLOCK_READ 2000000
 
-  IMXRT_LPSPI_t *_pimxrt_spi;
+  IMXRT_LPSPI_t* _pimxrt_spi;
 
   int16_t _width, _height; // Display w/h as modified by current rotation
   int16_t cursor_x, cursor_y;
@@ -316,7 +320,7 @@ protected:
     _displayclipy1 = max(0, min(_clipy1 + _originy, height()));
     _displayclipy2 = max(0, min(_clipy2 + _originy, height()));
     _invisible =
-        (_displayclipx1 == _displayclipx2 || _displayclipy1 == _displayclipy2);
+      (_displayclipx1 == _displayclipx2 || _displayclipy1 == _displayclipy2);
     _standard = (_displayclipx1 == 0) && (_displayclipx2 == _width) && (_displayclipy1 == 0) && (_displayclipy2 == _height);
   }
 
@@ -347,20 +351,19 @@ protected:
   // add support to allow only one hardware CS (used for dc)
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__) // Teensy 4.x
   uint32_t _cspinmask;
-  volatile uint32_t *_csport;
+  volatile uint32_t* _csport;
   uint32_t _spi_tcr_current;
   uint32_t _dcpinmask;
   uint32_t _tcr_dc_assert;
   uint32_t _tcr_dc_not_assert;
-  volatile uint32_t *_dcport;
-
+  volatile uint32_t* _dcport;
 #endif
 
-  void charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny,
-                  int16_t *maxx, int16_t *maxy);
+  void charBounds(char c, int16_t* x, int16_t* y, int16_t* minx, int16_t* miny,
+    int16_t* maxx, int16_t* maxy);
 
   void setAddr(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
-      __attribute__((always_inline))
+    __attribute__((always_inline))
   {
     writecommand_cont(ILI9341_CASET); // Column addr set
     writedata16_cont(x0);             // XSTART
@@ -372,13 +375,13 @@ protected:
   //. From Onewire utility files
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__) // Teensy 4.x
 
-  void DIRECT_WRITE_LOW(volatile uint32_t *base, uint32_t mask)
-      __attribute__((always_inline))
+  void DIRECT_WRITE_LOW(volatile uint32_t* base, uint32_t mask)
+    __attribute__((always_inline))
   {
     *(base + 34) = mask;
   }
-  void DIRECT_WRITE_HIGH(volatile uint32_t *base, uint32_t mask)
-      __attribute__((always_inline))
+  void DIRECT_WRITE_HIGH(volatile uint32_t* base, uint32_t mask)
+    __attribute__((always_inline))
   {
     *(base + 33) = mask;
   }
@@ -396,7 +399,7 @@ protected:
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__) // Teensy 4.x
       DIRECT_WRITE_LOW(_csport, _cspinmask);
 #else
-      *_csport &= ~_cspinmask;
+      * _csport &= ~_cspinmask;
 #endif
     }
   }
@@ -407,7 +410,7 @@ protected:
 #if defined(__IMXRT1052__) || defined(__IMXRT1062__) // Teensy 4.x
       DIRECT_WRITE_HIGH(_csport, _cspinmask);
 #else
-      *_csport |= _cspinmask;
+      * _csport |= _cspinmask;
 #endif
     }
     _pspi->endTransaction();
@@ -417,7 +420,7 @@ protected:
 #define TCR_MASK \
   (LPSPI_TCR_PCS(3) | LPSPI_TCR_FRAMESZ(31) | LPSPI_TCR_CONT | LPSPI_TCR_RXMSK)
   void maybeUpdateTCR(
-      uint32_t requested_tcr_state)
+    uint32_t requested_tcr_state)
   { /*__attribute__((always_inline)) */
     if ((_spi_tcr_current & TCR_MASK) != requested_tcr_state)
     {
@@ -492,6 +495,8 @@ protected:
 #endif
 };
 
+#endif
+
 #ifndef ILI9341_swap
 #define ILI9341_swap(a, b) \
   {                        \
@@ -502,3 +507,5 @@ protected:
 #endif
 #endif // __cplusplus
 #endif
+
+

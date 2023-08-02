@@ -28,8 +28,11 @@
 #include "synth_dexed.h"
 #include "ILI9341_t3n.h"
 
+#include <MIDI.h>
+
 extern ILI9341_t3n display;
 extern LCDMenuLib2 LCDML;
+extern bool remote_active;
 
 extern config_t configuration;
 extern uint8_t drum_midi_channel;
@@ -39,15 +42,15 @@ extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
 extern void UI_func_seq_pattern_editor(uint8_t);
 extern void UI_func_arpeggio(uint8_t);
-extern const char *seq_find_shortname(uint8_t);
-extern const char *seq_find_shortname_in_track(uint8_t sstep, uint8_t track);
+extern const char* seq_find_shortname(uint8_t);
+extern const char* seq_find_shortname_in_track(uint8_t sstep, uint8_t track);
 extern void set_sample_pitch(uint8_t, float); // float32_t not working
 extern float get_sample_vol_max(uint8_t);
 extern float get_sample_p_offset(uint8_t);
 boolean interrupt_swapper = false;
-extern void helptext_l(const char *str);
-extern void helptext_r(const char *str);
-extern AudioSynthDexed *MicroDexed[NUM_DEXED];
+extern void helptext_l(const char* str);
+extern void helptext_r(const char* str);
+extern AudioSynthDexed* MicroDexed[NUM_DEXED];
 extern void UI_func_microsynth(uint8_t param);
 
 extern AudioSynthWaveform microsynth_waveform[NUM_MICROSYNTH];
@@ -67,8 +70,8 @@ microsynth_t microsynth[2];
 extern braids_t braids_osc;
 extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern boolean braids_lfo_direction[NUM_BRAIDS];
-extern AudioEffectEnvelope *braids_envelope[NUM_BRAIDS];
-extern AudioFilterBiquad *braids_filter[NUM_BRAIDS];
+extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
+extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
 
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
@@ -199,7 +202,7 @@ void sequencer_part1(void)
   seq_live_recording();
   for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
   {
-    int tr[NUM_SEQ_TRACKS] = {0, 0, 0, 0, 0, 0};
+    int tr[NUM_SEQ_TRACKS] = { 0, 0, 0, 0, 0, 0 };
     if (seq.play_mode == false) // play mode: full song
     {
       // seq.track_mute[d] = false;
@@ -241,6 +244,10 @@ void sequencer_part1(void)
     if (seq.current_pattern[d] < NUM_SEQ_PATTERN && seq.current_chain[d] != 99 && !seq.track_mute[d]) // sequence not empty or muted
     {
       if (seq.track_type[d] == 0 && seq.ticks == 0)
+
+        //  && seq.shuffle==0 || 
+        // seq.track_type[d] == 0 && (seq.step+1) % 2 == 0  && seq.ticks == seq.shuffle || 
+        // seq.track_type[d] == 0 &&  (seq.step+1) % 2 != 0  && seq.ticks == 0) //shuffle test for drums
       { // drum track (drum samples and pitched one-shot samples)
 #if NUM_DRUMS > 0
         if (seq.note_data[seq.current_pattern[d]][seq.step] > 0)
@@ -657,10 +664,11 @@ void sequencer_part1(void)
         seq.arp_step = 0;
       }
     }
-    if (seq.step > 15)
+    //if (seq.step > 15)  // change to vari length
+    if (seq.step > 15 - seq.pattern_len_dec)  // change to vari length
     {
       seq.step = 0;
-
+      //seq.total_played_patterns++;//MIDI SLAVE SYNC TEST
       if (seq.play_mode == false) // play mode = full song
       {
         bool songstep_increased = false;
@@ -843,6 +851,7 @@ void sequencer(void)
     if (seq.ticks > 7)
       seq.ticks = 0;
   }
+
 }
 
 void set_pattern_content_type_color(uint8_t pattern)
@@ -874,76 +883,32 @@ int get_pattern_content_type_color(uint8_t pattern)
 
 void print_formatted_number(uint16_t number, uint8_t length)
 {
+  char nb[5];
   if (length == 4)
   {
-    if (number < 10)
-      display.print("0");
-    if (number < 100)
-      display.print("0");
-    if (number < 1000)
-      display.print("0");
-    display.print(number);
+    sprintf(nb, "%04d", number);
   }
   else if (length == 3)
   {
-    if (number < 10)
-      display.print("0");
-    if (number < 100)
-      display.print("0");
-    display.print(number);
+    sprintf(nb, "%03d", number);
   }
   else
-  // if not 3 then length defaults to 2
+    // if not 3 then length defaults to 2
   {
-    if (number < 10)
-      display.print("0");
-    display.print(number);
+    sprintf(nb, "%02d", number);
   }
+  display.print(nb);
 }
 
 void print_formatted_number_signed(int number, uint8_t length)
 {
+  char nb[5];
 
   if (number > -1)
-  {
-    display.print("+");
-
-    if (length == 3)
-    {
-      if (number < 10)
-        display.print("0");
-      if (number < 100)
-        display.print("0");
-      display.print(number);
-    }
-    else
-    // if not 3 then length defaults to 2
-    {
-      if (number < 10)
-        display.print("0");
-      display.print(number);
-    }
-  }
-
+    sprintf(nb, "+%02d", number);
   else
-  {
-    if (length == 3)
-    {
-      display.print("-");
-      if (number > -10)
-        display.print("0");
-      if (number > -100)
-        display.print("0");
-      display.print(abs(number));
-    }
-    else if (length == 2)
-    {
-      display.print("-");
-      if (number > -10)
-        display.print("0");
-      display.print(abs(number));
-    }
-  }
+    sprintf(nb, "%03d", number); // minus sign comes automatically
+  display.print(nb);
 }
 
 void print_chord_name(uint8_t currentstep)
@@ -956,24 +921,6 @@ void print_chord_name(uint8_t currentstep)
       display.print(seq.chord_names[6][i]);
   }
 }
-
-// void seq_print_step_numbers(int xpos, int ypos)
-//{
-//   uint8_t buffer[35] = {10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-//   uint8_t step = seq.step;
-//   uint8_t yspacer = CHAR_height_small+2;
-//   uint8_t count = 0;
-//   while ( count < 16 )
-//   {
-//     display.setCursor(xpos, ypos + count * yspacer);
-//     if (count == 6 )
-//       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-//     else
-//       display.setTextColor(GREEN, COLOR_BACKGROUND);
-//     //print_formatted_number (buffer[step + count] , 2);
-//     count++;
-//   }
-// }
 
 void update_keyboard_current_step(int ypos, uint8_t octave, uint8_t current_step)
 {
@@ -1000,7 +947,7 @@ void update_keyboard_current_step(int ypos, uint8_t octave, uint8_t current_step
 
 void print_keyboard(int ypos, uint8_t octave)
 {
-  uint8_t offset[5] = {12, 12, 14, 12, 11}; //+ is up
+  uint8_t offset[5] = { 12, 12, 14, 12, 11 }; //+ is up
   int offcount = 0;
   uint8_t oct_count = 0;
   uint8_t patternspacer = 0;
@@ -1059,7 +1006,7 @@ void update_pianoroll()
   uint8_t patternspacer = 0;
   uint8_t barspacer = 0;
   int8_t current_chain = 99;
-  int8_t pattern[4] = {99, 99, 99, 99};
+  int8_t pattern[4] = { 99, 99, 99, 99 };
 
   current_chain = seq.song[seq.active_track][0]; // so far only step 0 of chain is displayed
 
@@ -1123,10 +1070,8 @@ void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
   uint8_t patternspacer = 0;
   uint8_t barspacer = 0;
 
-  // int8_t current_song_step=0;
-  //  int8_t chain_counter[NUM_SEQ_TRACKS] =  { 0,0,0,0,0,0 };
   int8_t current_chain = 99;
-  int8_t pattern[4] = {99, 99, 99, 99};
+  int8_t pattern[4] = { 99, 99, 99, 99 };
 
   current_chain = seq.song[track_number][0]; // so far only step 0 of chain is displayed
 
@@ -1158,11 +1103,11 @@ void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
   display.print(F("  "));
 
   print_formatted_number(pattern[0], 2);
-  display.write(0xf8);
+  display.write(25);
   print_formatted_number(pattern[1], 2);
-  display.write(0xf8);
+  display.write(25);
   print_formatted_number(pattern[2], 2);
-  display.write(0xf8);
+  display.write(25);
   print_formatted_number(pattern[3], 2);
   display.print(" ");
 
@@ -1241,7 +1186,7 @@ void seq_print_current_note_from_step(uint8_t step)
 
 void print_keyboard_small(int xpos, int ypos, uint8_t octave, uint8_t actstep, bool fullredraw)
 {
-  uint8_t offset[5] = {12, 12, 14, 12, 11}; //+ is up
+  uint8_t offset[5] = { 12, 12, 14, 12, 11 }; //+ is up
   int offcount = 0;
   uint8_t oct_count = 0;
   uint8_t to_step = 16;
@@ -1252,6 +1197,8 @@ void print_keyboard_small(int xpos, int ypos, uint8_t octave, uint8_t actstep, b
     // draw white keys
     for (uint8_t y = 0; y < 11; y++)
     {
+      if (remote_active)
+        display.console = true;
       display.fillRect(xpos, ypos - CHAR_height - (y * 14), 30, 13, COLOR_SYSTEXT); // pianoroll white key
       if (y == 0 || y == 7 || y == 14)
       {
@@ -1265,6 +1212,9 @@ void print_keyboard_small(int xpos, int ypos, uint8_t octave, uint8_t actstep, b
     {
       if (seq.piano[y] == 1)
       {
+        if (remote_active)
+          display.console = true;
+
         display.fillRect(xpos, ypos - (y * 8.15) - offset[offcount], 12, 8, COLOR_BACKGROUND); // BLACK key
         offcount++;
         if (offcount == 5)
@@ -1282,7 +1232,12 @@ void print_keyboard_small(int xpos, int ypos, uint8_t octave, uint8_t actstep, b
   {
     for (uint8_t x = 0; x < to_step; x++)
     {
-      if (seq.piano[y] == 0)                                                                    // is a white key
+      if (remote_active)
+        display.console = true;
+
+      if (x > 15 - seq.pattern_len_dec)
+        display.fillRect(xpos + 36 + x * 10, ypos + 6 - CHAR_height - (y * 8.15), 5, 6, GREY4); // disabled
+      else if (seq.piano[y] == 0)                                                                    // is a white key
         display.fillRect(xpos + 36 + x * 10, ypos + 6 - CHAR_height - (y * 8.15), 5, 6, GREY3); // GRID white key
       else
         display.fillRect(xpos + 36 + x * 10, ypos + 6 - CHAR_height - (y * 8.15), 5, 6, GREY4); // GRID black key
@@ -1312,8 +1267,11 @@ void print_single_pattern_pianoroll_in_pattern_editor(int xpos, int ypos, uint8_
     lowest_note = 24;
   print_keyboard_small(xpos, ypos, lowest_note / 12, actstep, fullredraw);
   display.setTextColor(COLOR_SYSTEXT);
+
   for (from_step = 0; from_step < to_step; from_step++)
   {
+    if (remote_active)
+      display.console = true;
     if ((ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (seq.note_data[pattern][from_step] - lowest_note))) > 4 * CHAR_height + 8)
     {
       if (seq.note_data[pattern][from_step] != 0 && seq.note_data[pattern][from_step] != 130)
@@ -1334,16 +1292,22 @@ void print_single_pattern_pianoroll_in_pattern_editor(int xpos, int ypos, uint8_
       else if (from_step == actstep)
       {
         // if (last_valid_note != 0)
-        display.fillRect(xpos + 36 + from_step * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, COLOR_SYSTEXT);
+        if (from_step > 15 - seq.pattern_len_dec)
+          display.fillRect(xpos + 36 + from_step * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, GREY2);
+        else
+          display.fillRect(xpos + 36 + from_step * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, COLOR_SYSTEXT);
       }
       if (from_step < 15)
       {
         if (seq.note_data[pattern][from_step + 1] == 0)
         {
-          if (seq.piano[last_valid_note % 12 - lowest_note] == 0)                                                                                                 // is a white key
-            display.fillRect(xpos + 36 + (from_step + 1) * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, GREY3); // GRID white key
+          if (from_step >= 15 - seq.pattern_len_dec)
+            display.fillRect(xpos + 36 + (from_step + 1) * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, GREY4);
           else
-            display.fillRect(xpos + 36 + (from_step + 1) * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, GREY4); // GRID black key
+            if (seq.piano[last_valid_note % 12 - lowest_note] == 0)                                                                                                 // is a white key
+              display.fillRect(xpos + 36 + (from_step + 1) * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, GREY3); // GRID white key
+            else
+              display.fillRect(xpos + 36 + (from_step + 1) * 10, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 5, 5, GREY4); // GRID black key
         }
       }
     }

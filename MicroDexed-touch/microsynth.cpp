@@ -25,7 +25,7 @@ extern AudioAnalyzePeak microsynth_peak_noise_1;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern uint8_t microsynth_selected_instance;
 extern short wave_type[9];
-extern AudioMixer<8> *global_delay_in_mixer[NUM_DEXED];
+extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
 extern uint8_t generic_temp_select_menu;
 
 extern float volume_transform(float amp);

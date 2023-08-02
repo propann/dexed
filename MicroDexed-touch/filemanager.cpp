@@ -41,7 +41,7 @@ FLASHMEM void sd_filemanager()
   }
 }
 
-FLASHMEM void sd_sendDirectory(const char *path)
+FLASHMEM void sd_sendDirectory(const char* path)
 {
 #ifdef DEBUG
   LOG.printf("SENDDIR [%s]\n", path);
@@ -61,7 +61,7 @@ FLASHMEM void sd_sendDirectory(const char *path)
     {
       break;
     }
-    if (strcmp("System Volume Information", entry.name()) == 0)
+    if (strcmp("System Volume Information", entry.name()) == 0 || strstr(entry.name(), "._") != NULL)
     {
       continue;
     }
@@ -94,7 +94,7 @@ FLASHMEM void sd_sendDirectory(const char *path)
 }
 
 // send file on SD card to PC by Serial
-FLASHMEM void sd_sendFile(const char *path)
+FLASHMEM void sd_sendFile(const char* path)
 {
 #ifdef DEBUG
   LOG.printf("SENDFILE [%s]\n", path);
@@ -185,7 +185,7 @@ FLASHMEM void sd_receiveFile(const char *path)
     uint32_t fileSize = 0;
 
     // read file size on 4 bytes
-    Serial.readBytes((char *)&fileSize, 4);
+    Serial.readBytes((char*)&fileSize, 4);
 #ifdef DEBUG
     LOG.printf("RECV file size : %d\n", fileSize);
 #endif
@@ -210,7 +210,7 @@ FLASHMEM void sd_receiveFile(const char *path)
 #ifdef DEBUG
           LOG.printf("last chunk #%d: %d bytes\n", currentChunk, lastChunkSize);
 #endif
-          char *lastBuffer = (char *)malloc(lastChunkSize * sizeof(char));
+          char* lastBuffer = (char*)malloc(lastChunkSize * sizeof(char));
           Serial.readBytes(lastBuffer, lastChunkSize);
 
           myFile.seek(EOF);
@@ -281,7 +281,7 @@ FLASHMEM void sd_receiveFile(const char *path)
   }
 }
 
-FLASHMEM void sd_deleteFile(const char *path)
+FLASHMEM void sd_deleteFile(const char* path)
 {
 #ifdef DEBUG
   LOG.printf("DELETE file: [%s]\n", path);
@@ -296,10 +296,10 @@ FLASHMEM void sd_deleteFile(const char *path)
   }
 }
 
-FLASHMEM void sd_renameFile(char *pathToSplit)
+FLASHMEM void sd_renameFile(char* pathToSplit)
 {
   char arr[2][50];
-  char *ptr = strtok(pathToSplit, "|");
+  char* ptr = strtok(pathToSplit, "|");
   strcpy(arr[0], ptr);
   ptr = strtok(NULL, "|");
   strcpy(arr[1], ptr);

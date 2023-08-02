@@ -112,6 +112,7 @@ extern bool mb_solo_mid;
 extern bool mb_solo_upper_mid;
 extern bool mb_solo_high;
 extern uint8_t mb_global_ratio;
+extern uint8_t drum_midi_channel;
 
 extern float midi_volume_transform(uint8_t midi_amp);
 extern void set_sample_note(uint8_t sample, uint8_t note);
@@ -152,17 +153,18 @@ extern uint8_t sc_reverb_target_b;
 
 File json;
 char filename[CONFIG_FILENAME_LEN];
-const char *sError = "*ERROR*";
+const char* sError = "*ERROR*";
 
 /******************************************************************************
    SD BANK/VOICE LOADING
  ******************************************************************************/
 
-FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
+FLASHMEM bool load_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("load voice, bank [%d] - voice [%d]\n"), b, v + 1);
 #endif
+  p = constrain(p, 0, DEXED_POOLS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -174,7 +176,7 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     char voice_name[VOICE_NAME_LEN];
     uint8_t data[128];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -247,6 +249,7 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
       sysex_dir.close();
       AudioInterrupts();
       configuration.dexed[instance_id].transpose = MicroDexed[instance_id]->getTranspose();
+      configuration.dexed[instance_id].pool = p;
       configuration.dexed[instance_id].bank = b;
       configuration.dexed[instance_id].voice = v;
 
@@ -276,11 +279,12 @@ FLASHMEM bool load_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
   return false;
 }
 
-FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
+FLASHMEM bool save_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("save_sd_voice, b:%d - d:%d\n"), b, v);
 #endif
+  p = constrain(p, 0, DEXED_POOLS - 1);
   v = constrain(v, 0, MAX_VOICES - 1);
   b = constrain(b, 0, MAX_BANKS - 1);
 
@@ -290,7 +294,7 @@ FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
     char filename[FILENAME_LEN];
     uint8_t data[128];
 
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, b, g_bank_name[instance_id]);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, p, b, g_bank_name[instance_id]);
 
     AudioNoInterrupts();
     sysex = SD.open(filename, FILE_WRITE);
@@ -334,7 +338,7 @@ FLASHMEM bool save_sd_voice(uint8_t b, uint8_t v, uint8_t instance_id)
   return (false);
 }
 
-FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t *data)
+FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
 {
   uint16_t n;
   int32_t bulk_checksum_calc = 0;
@@ -419,7 +423,7 @@ FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t *data)
   return (true);
 }
 
-FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t *data)
+FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
 {
   uint16_t n;
   int32_t bulk_checksum_calc = 0;
@@ -487,7 +491,7 @@ FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t *data)
   return (true);
 }
 
-FLASHMEM bool save_sd_bank(const char *bank_filename, uint8_t *data)
+FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data)
 {
   char tmp[FILENAME_LEN];
   char tmp2[FILENAME_LEN];
@@ -886,6 +890,7 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
         serializeJsonPretty(data_json, Serial);
         LOG.println();
 #endif
+        configuration.dexed[instance_id].pool = data_json["pool"];
         configuration.dexed[instance_id].bank = data_json["bank"];
         configuration.dexed[instance_id].voice = data_json["voice"];
         configuration.dexed[instance_id].lowest_note = data_json["lowest_note"];
@@ -965,6 +970,7 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
     if (json)
     {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+      data_json["pool"] = configuration.dexed[instance_id].pool;
       data_json["bank"] = configuration.dexed[instance_id].bank;
       data_json["voice"] = configuration.dexed[instance_id].voice;
       data_json["lowest_note"] = configuration.dexed[instance_id].lowest_note;
@@ -1249,11 +1255,8 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
           configuration.fx.delay_filter_freq[i] = data_json["delay_filter_freq"][i];
 
           if (configuration.fx.delay_sync[i] > 0)
-          {
             configuration.fx.delay_time[i] = 0;
-          }
-          if (data_json["delay_level_global"][i] > 0)
-            configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
+          configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
         }
         configuration.fx.delay1_to_delay2 = data_json["delay1_to_delay2"];
         configuration.fx.delay2_to_delay1 = data_json["delay2_to_delay1"];
@@ -1556,12 +1559,13 @@ FLASHMEM bool load_sd_sys_json(void)
         configuration.sys.favorites = data_json["favorites"];
         configuration.sys.load_at_startup_performance = data_json["load_at_startup_performance"];
         configuration.sys.load_at_startup_page = data_json["load_at_startup_page"];
+        configuration.sys.screen_saver_start = data_json["screen_saver_start"];
+        configuration.sys.screen_saver_mode = data_json["screen_saver_mode"];
         if (data_json.containsKey("display_rotation"))
         {
           configuration.sys.display_rotation = data_json["display_rotation"];
           configuration.sys.touch_rotation = data_json["touch_rotation"];
           configuration.sys.ui_reverse = data_json["ui_reverse"];
-          configuration.sys.screen_saver_start = data_json["screen_saver_start"];
         }
         if (data_json.containsKey("gp_speed"))
           configuration.sys.gamepad_speed = data_json["gp_speed"];
@@ -1641,6 +1645,7 @@ FLASHMEM bool save_sd_sys_json(void)
       data_json["touch_rotation"] = configuration.sys.touch_rotation;
       data_json["ui_reverse"] = configuration.sys.ui_reverse;
       data_json["screen_saver_start"] = configuration.sys.screen_saver_start;
+      data_json["screen_saver_mode"] = configuration.sys.screen_saver_mode;
       data_json["gp_speed"] = configuration.sys.gamepad_speed;
       if (GAMEPAD_BUTTON_A != GAMEPAD_BUTTON_B)
       {
@@ -2585,6 +2590,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
     {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["seq_tempo_ms"] = seq.tempo_ms;
+      data_json["pattern_len_dec"] = seq.pattern_len_dec;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_speed"] = seq.arp_speed;
       data_json["arp_length"] = seq.arp_length;
@@ -2619,6 +2625,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
         data_json["chance"][pat] = seq.pat_chance[pat];
         data_json["vel_variation"][pat] = seq.pat_vel_variation[pat];
       }
+      data_json["drum_midi_channel"] = drum_midi_channel;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       LOG.println(F("Write JSON data:"));
@@ -2887,7 +2894,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
   AudioNoInterrupts();
   load_sd_seq_sub_patterns_json(number);
   load_sd_seq_sub_vel_json(number);
-  load_sd_fx_json(number);
   load_sd_epiano_json(number);
   load_sd_drummappings_json(number);
   load_sd_song_json(number);
@@ -2962,6 +2968,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
 
         seq.tempo_ms = data_json["seq_tempo_ms"];
         seq.bpm = data_json["seq_bpm"];
+        seq.pattern_len_dec = data_json["pattern_len_dec"];
         seq.arp_speed = data_json["arp_speed"];
         seq.arp_length = data_json["arp_length"];
         seq.arp_volume_fade = data_json["arp_volume_fade"];
@@ -2973,6 +2980,8 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.element_shift = data_json["seq_element_shift"];
         seq.euclidean_active = data_json["euclidean_active"];
         seq.euclidean_offset = data_json["euclidean_offset"];
+        if (data_json["drum_midi_channel"] > 0) //do not set to onmi when it was never saved before. Better to use the default channel in this case.
+          drum_midi_channel = data_json["drum_midi_channel"];
 
         AudioNoInterrupts();
         for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
@@ -2984,10 +2993,12 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
 #endif
           load_sd_microsynth_json(number, instance_id);
           load_sd_voiceconfig_json(number, instance_id);
-          load_sd_voice(configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
+          load_sd_voice(configuration.dexed[instance_id].pool, configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
           MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
           MicroDexed[instance_id]->panic();
         }
+
+        load_sd_fx_json(configuration.sys.performance_number); //loaded here since bpm must be loaded first
         AudioInterrupts();
         dac_unmute();
         if (seq.euclidean_active)
@@ -3062,7 +3073,7 @@ FLASHMEM bool check_sd_performance_exists(uint8_t number)
 /******************************************************************************
    HELPER FUNCTIONS
  ******************************************************************************/
-FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t *conf)
+FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
 {
   uint16_t n;
   int32_t bulk_checksum_calc = 0;
@@ -3156,7 +3167,7 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t *conf)
   return (true);
 }
 
-FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t *data, uint16_t len)
+FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t len)
 {
 #ifdef DEBUG
   LOG.print(F("Storing SYSEX format 0x"));
@@ -3211,7 +3222,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t *data, uint16_t 
   return (true);
 }
 
-FLASHMEM bool get_bank_name(uint8_t b, char *bank_name)
+FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("get bank name for bank [%d]\n"), b);
@@ -3271,7 +3282,7 @@ FLASHMEM bool get_bank_name(uint8_t b, char *bank_name)
   return false;
 }
 
-FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char *voice_name)
+FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("get voice name for voice [%d]\n"), v + 1);
@@ -3344,7 +3355,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char *voice_name)
   return false;
 }
 
-FLASHMEM uint8_t calc_checksum(uint8_t *data, uint16_t len)
+FLASHMEM uint8_t calc_checksum(uint8_t* data, uint16_t len)
 {
   int32_t bulk_checksum_calc = 0;
 
@@ -3354,10 +3365,10 @@ FLASHMEM uint8_t calc_checksum(uint8_t *data, uint16_t len)
   return (bulk_checksum_calc & 0x7f);
 }
 
-FLASHMEM void strip_extension(const char *s, char *target, uint8_t len)
+FLASHMEM void strip_extension(const char* s, char* target, uint8_t len)
 {
   char tmp[CONFIG_FILENAME_LEN];
-  char *token;
+  char* token;
 
   strcpy(tmp, s);
   token = strtok(tmp, ".");
@@ -3369,7 +3380,7 @@ FLASHMEM void strip_extension(const char *s, char *target, uint8_t len)
   target[len] = '\0';
 }
 
-FLASHMEM void string_toupper(char *s)
+FLASHMEM void string_toupper(char* s)
 {
   while (*s)
   {
@@ -3428,6 +3439,10 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
           data_json[i]["zones"]["vol"][j] = msz[i][j].vol;
           data_json[i]["zones"]["pan"][j] = msz[i][j].pan;
           data_json[i]["zones"]["rev"][j] = msz[i][j].rev;
+          data_json[i]["zones"]["tune"][j] = msz[i][j].tune;
+          data_json[i]["zones"]["loop_type"][j] = msz[i][j].loop_type;
+          data_json[i]["zones"]["loop_start"][j] = msz[i][j].loop_start;
+          data_json[i]["zones"]["loop_end"][j] = msz[i][j].loop_end;
         }
       }
 
@@ -3508,6 +3523,13 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
             msz[i][j].vol = data_json[i]["zones"]["vol"][j];
             msz[i][j].pan = data_json[i]["zones"]["pan"][j];
             msz[i][j].rev = data_json[i]["zones"]["rev"][j];
+            msz[i][j].tune = data_json[i]["zones"]["tune"][j];
+            msz[i][j].loop_type = data_json[i]["zones"]["loop_type"][j];
+            msz[i][j].loop_start = data_json[i]["zones"]["loop_start"][j];
+            msz[i][j].loop_end = data_json[i]["zones"]["loop_end"][j];
+
+            if (msz[i][j].tune == 0)
+              msz[i][j].tune = 100;
           }
         }
         return (true);
@@ -3531,10 +3553,10 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
   return (false);
 }
 
-int compare_files_by_name(const void *a, const void *b)
+int compare_files_by_name(const void* a, const void* b)
 {
-  storage_file_t *fileA = (storage_file_t *)a;
-  storage_file_t *fileB = (storage_file_t *)b;
+  storage_file_t* fileA = (storage_file_t*)a;
+  storage_file_t* fileB = (storage_file_t*)b;
 
   String strA = ((String)fileA->name).toLowerCase();
   String strB = ((String)fileB->name).toLowerCase();
@@ -3549,7 +3571,7 @@ int compare_files_by_name(const void *a, const void *b)
   }
 
   return strA < strB ? -1 : strA > strB ? 1
-                                        : 0;
+    : 0;
 }
 
 FLASHMEM void load_sd_directory()
@@ -3562,7 +3584,9 @@ FLASHMEM void load_sd_directory()
     File sd_entry = sd_root.openNextFile();
     if (!sd_entry)
       break;
-    if (strcmp(sd_entry.name(), "System Volume Information"))
+
+    // skip special files
+    if (strcmp(sd_entry.name(), "System Volume Information") && strstr(sd_entry.name(), "._") == NULL)
     {
       strcpy(sdcard_infos.files[fm.sd_sum_files].name, sd_entry.name());
       sdcard_infos.files[fm.sd_sum_files].size = sd_entry.size();
@@ -3584,7 +3608,7 @@ FLASHMEM void load_sd_directory()
   sd_root.close();
 
   // clear all the unused files in array
-  for (uint8_t i = fm.sd_sum_files; i < 200; i++)
+  for (uint8_t i = fm.sd_sum_files; i < MAX_FILES; i++)
   {
     strcpy(sdcard_infos.files[i].name, "");
     sdcard_infos.files[i].size = 0;

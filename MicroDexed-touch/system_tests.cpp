@@ -24,13 +24,13 @@ FLASHMEM void psram_test()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if (size == 0)
     return;
-  const float clocks[4] = {396.0f, 720.0f, 664.62f, 528.0f};
+  const float clocks[4] = { 396.0f, 720.0f, 664.62f, 528.0f };
   const float frequency = clocks[(CCM_CBCMR >> 8) & 3] / (float)(((CCM_CBCMR >> 29) & 7) + 1);
   sprintf(text1, " (%03d MHz)", (int)frequency);
   display.print(text1);
   fill_up_with_spaces_psram();
-  memory_begin = (uint32_t *)(0x70000000);
-  memory_end = (uint32_t *)(0x70000000 + size * 1048576);
+  memory_begin = (uint32_t*)(0x70000000);
+  memory_end = (uint32_t*)(0x70000000 + size * 1048576);
   elapsedMillis msec = 0;
   if (!psram_check_fixed_pattern(0x5A698421))
     return;
@@ -166,7 +166,7 @@ FLASHMEM void psram_test()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-FLASHMEM bool psram_fail_message(volatile uint32_t *location, uint32_t actual, uint32_t expected)
+FLASHMEM bool psram_fail_message(volatile uint32_t* location, uint32_t actual, uint32_t expected)
 {
   char text1[40];
   psram_test_dline++;
@@ -186,7 +186,7 @@ FLASHMEM bool psram_check_fixed_pattern(uint32_t pattern)
 {
   char text1[40];
   setCursor_textGrid_small(2, psram_test_dline);
-  volatile uint32_t *p;
+  volatile uint32_t* p;
   sprintf(text1, "testing with fixed pattern %lu", pattern);
   display.print(text1);
   fill_up_with_spaces_psram();
@@ -194,7 +194,7 @@ FLASHMEM bool psram_check_fixed_pattern(uint32_t pattern)
   {
     *p = pattern;
   }
-  arm_dcache_flush_delete((void *)memory_begin, (uint32_t)memory_end - (uint32_t)memory_begin);
+  arm_dcache_flush_delete((void*)memory_begin, (uint32_t)memory_end - (uint32_t)memory_begin);
   for (p = memory_begin; p < memory_end; p++)
   {
     uint32_t actual = *p;
@@ -212,7 +212,7 @@ FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed)
 {
   char text1[40];
   setCursor_textGrid_small(2, psram_test_dline);
-  volatile uint32_t *p;
+  volatile uint32_t* p;
   uint32_t reg;
   sprintf(text1, "Testing pseudo-random sequence, seed=%lu", seed);
   display.print(text1);
@@ -234,7 +234,7 @@ FLASHMEM bool psram_check_lfsr_pattern(uint32_t seed)
       }
     }
   }
-  arm_dcache_flush_delete((void *)memory_begin, (uint32_t)memory_end - (uint32_t)memory_begin);
+  arm_dcache_flush_delete((void*)memory_begin, (uint32_t)memory_end - (uint32_t)memory_begin);
   reg = seed;
   for (p = memory_begin; p < memory_end; p++)
   {

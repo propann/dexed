@@ -1,7 +1,7 @@
 #ifndef _TOUCH_H
 #define _TOUCH_H
 
-#ifdef GENERIC_DISPLAY
+#if defined GENERIC_DISPLAY
 #include "XPT2046_Touchscreen.h"
 extern XPT2046_Touchscreen touch;
 #endif
@@ -20,11 +20,11 @@ typedef struct dexed_live_mod_s
   uint8_t orig_release_values[2][7];
 
 #if NUM_DEXED > 1
-  int attack_mod[NUM_DEXED] = {0, 0};
-  int release_mod[NUM_DEXED] = {0, 0};
+  int attack_mod[NUM_DEXED] = { 0, 0 };
+  int release_mod[NUM_DEXED] = { 0, 0 };
 #else
-  int attack_mod[NUM_DEXED] = {0};
-  int release_mod[NUM_DEXED] = {0};
+  int attack_mod[NUM_DEXED] = { 0 };
+  int release_mod[NUM_DEXED] = { 0 };
 #endif
 
 } dexed_live_mod_t;
@@ -50,6 +50,7 @@ typedef struct ts_s
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu = false;
   bool keyb_in_menu_activated = false;
+  uint8_t fav_buttton_state;
 } ts_t;
 
 // (Touch)File Manager
@@ -71,9 +72,7 @@ typedef struct fm_s
 #endif
 
   int sample_screen_position_x = 0;
-  bool sample_preview_playing;
   uint8_t active_window = 0; // 0 = left window (SDCARD) , 1 = FLASH
-
   uint16_t sd_sum_files = 0;
   uint8_t sd_cap_rows;
   uint8_t sd_folder_depth = 0;
