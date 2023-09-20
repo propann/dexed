@@ -34,5 +34,5 @@ Lid-Changes
 
 STL - CASE LID (capacitive touch): 
 <br>   
-https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/LID-capacitive_touch.png   
+https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/LID-capacitive_touch.stl   
 <p><br> 
