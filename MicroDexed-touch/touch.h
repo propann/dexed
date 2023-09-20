@@ -6,7 +6,7 @@
 extern XPT2046_Touchscreen touch;
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 #include "Adafruit_FT6206.h"
 extern Adafruit_FT6206 touch;
 #endif

@@ -37,7 +37,7 @@
 #include "XPT2046_Touchscreen.h"
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 #include "Adafruit_FT6206.h"
 #endif
 
@@ -126,7 +126,7 @@ ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TF
 XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ); // CS, Touch IRQ Pin - interrupt enabled polling
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 Adafruit_FT6206 touch = Adafruit_FT6206();
 #endif
 
@@ -914,7 +914,7 @@ void setup()
   LOG.flush();
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
   pinMode(TFT_TOUCH_IRQ, INPUT);
 #endif
 
@@ -937,11 +937,16 @@ void setup()
 
   display.begin();
 
+//test invert display
+#ifdef CAPACITIVE_TOUCH_DISPLAY
+display.invertDisplay(true);
+#endif
+
 #if defined GENERIC_DISPLAY
   touch.begin();
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
   if (!touch.begin(40))
   {
     ;
@@ -4204,7 +4209,8 @@ void handleStop(void)
     seq.step = 0;
     midi_bpm_counter = 0;
     midi_bpm_timer = 0;
-
+ seq.arp_step = 0;
+ seq.ticks=0;
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
     {
       seq.chain_counter[d] = 0;

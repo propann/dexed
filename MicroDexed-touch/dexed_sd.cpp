@@ -2591,6 +2591,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["seq_tempo_ms"] = seq.tempo_ms;
       data_json["pattern_len_dec"] = seq.pattern_len_dec;
+      data_json["swing_steps"] = seq.swing_steps;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_speed"] = seq.arp_speed;
       data_json["arp_length"] = seq.arp_length;
@@ -2969,6 +2970,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.tempo_ms = data_json["seq_tempo_ms"];
         seq.bpm = data_json["seq_bpm"];
         seq.pattern_len_dec = data_json["pattern_len_dec"];
+        seq.swing_steps = data_json["swing_steps"];
         seq.arp_speed = data_json["arp_speed"];
         seq.arp_length = data_json["arp_length"];
         seq.arp_volume_fade = data_json["arp_volume_fade"];

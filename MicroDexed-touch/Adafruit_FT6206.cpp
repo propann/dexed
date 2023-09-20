@@ -30,7 +30,7 @@
 #include <Wire.h>
 #include "config.h"
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 
 #if defined(__SAM3X8E__)
 #define Wire Wire1
@@ -87,7 +87,8 @@ boolean Adafruit_FT6206::begin(uint8_t thresh)
 
 uint8_t Adafruit_FT6206::touched(void)
 {
-  if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+  //if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
+    if (touch_control_rate >= TOUCH_CONTROL_RATE_MS )
   {
     uint8_t n = readRegister8(FT62XX_REG_NUMTOUCHES);
     touch_control_rate = 0;
@@ -121,7 +122,9 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n)
   }
   else
   {
-    return TS_Point(touchX[n], touchY[n], 1);
+    //test rotated
+         return TS_Point(240-touchX[n], 320-touchY[n], 1);
+    //return TS_Point(touchX[n], touchY[n], 1);
   }
 }
 

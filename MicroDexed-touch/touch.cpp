@@ -605,7 +605,7 @@ FLASHMEM void get_scaled_touch_point()
     }
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 
     // Retrieve a point
     ts.p = touch.getPoint();
@@ -1155,7 +1155,7 @@ FLASHMEM void handle_touchscreen_arpeggio()
   if (touch.touched())
   {
     get_scaled_touch_point();
-    if (check_button_on_grid(2, 16))
+    if (check_button_on_grid(2, 23))
     {
       if (seq.running)
         handleStop();

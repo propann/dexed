@@ -30,7 +30,7 @@
 #include "XPT2046_Touchscreen.h"
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 #include "Adafruit_FT6206.h"
 #endif
 
@@ -87,6 +87,7 @@ typedef struct sequencer_s
     uint8_t loop_end = 99;
     uint8_t ticks;
     uint8_t pattern_len_dec;
+    uint8_t swing_steps;
     uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
     uint8_t scrollpos;
     int cursor_scroll;

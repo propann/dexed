@@ -126,7 +126,7 @@
 //*************************************************************************************************
 
 #define GENERIC_DISPLAY // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
-//#define ADAFRUIT_DISPLAY  // Adafruit 2.8" TFT with Capacitive FT6206 Touchscreen, currently for testing purposes only
+//#define CAPACITIVE_TOUCH_DISPLAY  // TFT with Capacitive Touchscreen, currently for testing purposes only
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -271,7 +271,8 @@ const char back_clear[5] = { ' ', ' ', ' ', ' ' };
 #define TFT_TOUCH_CS 38
 #endif
 
-#define TOUCH_CONTROL_RATE_MS 200
+//#define TOUCH_CONTROL_RATE_MS 200
+#define TOUCH_CONTROL_RATE_MS 40
 
 #define VOICE_SELECTION_MS 60000
 #define BACK_FROM_VOLUME_MS 2000

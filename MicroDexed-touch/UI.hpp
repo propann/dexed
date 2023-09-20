@@ -184,7 +184,7 @@ extern ILI9341_t3n display;
 extern XPT2046_Touchscreen touch;
 #endif
 
-#ifdef ADAFRUIT_DISPLAY
+#ifdef CAPACITIVE_TOUCH_DISPLAY
 extern Adafruit_FT6206 touch;
 #endif
 
@@ -2525,7 +2525,7 @@ FLASHMEM void update_display_functions_while_seq_running()
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) // is in UI of Arpeggiator
   {
     display.setTextSize(1);
-    setCursor_textGrid_small(12, 11);
+    setCursor_textGrid_small(12, 17);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     print_current_chord();
     draw_euclidean_circle();
@@ -2887,8 +2887,8 @@ FLASHMEM void setup_screensaver(void)
   else
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
-   // LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-    LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick test time
+    LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
+   // LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick test time
   }
 }
 
@@ -6467,6 +6467,8 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     setCursor_textGrid_small(1, 19);
     display.print(F("PATTERN LENGTH"));
     setCursor_textGrid_small(1, 20);
+    display.print(F("SWING/SHUFFLE"));
+    setCursor_textGrid_small(1, 21);
     display.print(F("STEP RECORDING:"));
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
@@ -6506,9 +6508,9 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + 1, 1, 32);
+          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + 1, 1, 64);
         else if (LCDML.BT_checkUp())
-          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max - 1, 1, 32);
+          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max - 1, 1, 64);
       }
     }
     else if (generic_temp_select_menu == 4 && generic_active_function == 1) // Chord Velocity
@@ -6557,6 +6559,16 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
+          seq.swing_steps = constrain(seq.swing_steps + 1, 0, 2);
+        else if (LCDML.BT_checkUp())
+          seq.swing_steps = constrain(seq.swing_steps - 1, 0, 2);
+      }
+    }
+    else if (generic_temp_select_menu == 9 && generic_active_function == 1)
+    {
+      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
+      {
+        if (LCDML.BT_checkDown())
           seq.auto_advance_step = constrain(seq.auto_advance_step + 1, 0, 2);
         else if (LCDML.BT_checkUp())
           seq.auto_advance_step = constrain(seq.auto_advance_step - 1, 0, 2);
@@ -6568,9 +6580,9 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 8);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 9);
         else if (LCDML.BT_checkUp())
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 8);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 9);
       }
     }
     if (LCDML.BT_checkEnter())
@@ -6628,10 +6640,23 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
 
     setModeColor(7);
     setCursor_textGrid_small(23, 19);
-    //display.print(16-seq.pattern_len_dec);
     print_formatted_number(16 - seq.pattern_len_dec, 2);
+
     setModeColor(8);
+    // setCursor_textGrid_small(23, 20);
+    //print_formatted_number( seq.swing_steps, 1);
     setCursor_textGrid_small(23, 20);
+    if (seq.swing_steps == 0)
+      display.print(F("NONE    "));
+    else if (seq.swing_steps == 1)
+      display.print(F("SHUFFLE "));
+    else if (seq.swing_steps == 2)
+      display.print(F("TRIPLETS"));
+    //  else   
+    //   display.print(F("OTHER   "));
+
+    setModeColor(9);
+    setCursor_textGrid_small(23, 21);
     if (seq.auto_advance_step == 1)
       display.print(F("AUTO ADVANCE STEP"));
     else if (seq.auto_advance_step == 2)
@@ -11628,21 +11653,21 @@ void arp_refresh_display_play_status()
   if (seq.running == false)
   {
     // play symbol
-    drawBitmap(4 * CHAR_width - 4, CHAR_height * 8 - 2, special_chars[19], 8, 8, GREEN);
+    drawBitmap(4 * CHAR_width - 4, CHAR_height * 11 + 3, special_chars[19], 8, 8, GREEN);
   }
   else if (seq.running == true)
   {
     // stop symbol
-    drawBitmap(4 * CHAR_width - 4, CHAR_height * 8 - 2, special_chars[21], 8, 8, COLOR_SYSTEXT);
+    drawBitmap(4 * CHAR_width - 4, CHAR_height * 11 + 3, special_chars[21], 8, 8, COLOR_SYSTEXT);
   }
 }
 
 void print_arp_start_stop_button()
 {
   if (seq.running)
-    draw_button_on_grid(2, 16, "SEQ.", "STOP", 1);
+    draw_button_on_grid(2, 23, "SEQ.", "STOP", 1);
   else
-    draw_button_on_grid(2, 16, "SEQ.", "START", 0);
+    draw_button_on_grid(2, 23, "SEQ.", "START", 0);
   arp_refresh_display_play_status();
 }
 
@@ -11895,10 +11920,12 @@ void show_euclidean()
 
 void UI_func_arpeggio(uint8_t param)
 {
+  char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+
     encoderDir[ENC_R].reset();
-    seq.temp_select_menu = 0;
+    generic_temp_select_menu = 0;
     seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextSize(1);
@@ -11915,18 +11942,50 @@ void UI_func_arpeggio(uint8_t param)
     display.print(F("STYLE"));
     setCursor_textGrid_small(2, 6);
     display.print(F("SPEED"));
+    setCursor_textGrid_small(17, 6);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(F("32/64 MICROSYNTH ONLY [SID STYLE]"));
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     setCursor_textGrid_small(2, 7);
     display.print(F("OFFSET"));
     setCursor_textGrid_small(2, 8);
     display.print(F("MODE"));
-    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(2, 9);
+    display.print(F("MX NOTES"));
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+setCursor_textGrid_small(14, 9);
+    display.print(F("[SID STYLE]"));
+    
     setCursor_textGrid_small(2, 11);
+    display.print(F("FROM ADV. SETTINGS:"));
+
+    setCursor_textGrid_small(2, 13);
+    display.print(F("VELOCITY"));
+
+    setCursor_textGrid_small(17, 13);
+    print_formatted_number(seq.chord_vel, 3);
+
+    setCursor_textGrid_small(2, 14);
+    display.print(F("OCTAVE SHIFT"));
+
+    setCursor_textGrid_small(17, 14);
+    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), seq.oct_shift);
+    display.print(displayname);
+
+    setCursor_textGrid_small(2, 15);
+    display.print(F("NOTE SHIFT"));
+
+    setCursor_textGrid_small(17, 15);
+    display.print(seq.element_shift);
+
+    setCursor_textGrid_small(2, 17);
     display.print(F("PLAYING:"));
-    setCursor_textGrid_small(11, 11);
+    setCursor_textGrid_small(11, 17);
     display.print(F("["));
-    setCursor_textGrid_small(19, 11);
+    setCursor_textGrid_small(19, 17);
     display.print(F("]"));
     print_arp_start_stop_button();
+
     helptext_l(back_text);
     display.setTextSize(2);
     show_euclidean();
@@ -11938,32 +11997,38 @@ void UI_func_arpeggio(uint8_t param)
       if (LCDML.BT_checkDown())
       {
         if (seq.edit_state == false)
-          seq.temp_select_menu = constrain(seq.temp_select_menu + 1, 0, 4);
-        else if (seq.temp_select_menu == 0)
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 5);
+        else if (generic_temp_select_menu == 0)
           seq.arp_length = constrain(seq.arp_length + ENCODER[ENC_R].speed(), 0, 16);
-        else if (seq.temp_select_menu == 1)
+        else if (generic_temp_select_menu == 1)
           seq.arp_style = constrain(seq.arp_style + ENCODER[ENC_R].speed(), 0, 3);
-        else if (seq.temp_select_menu == 2)
+        else if (generic_temp_select_menu == 2)
           seq.arp_speed = constrain(seq.arp_speed + ENCODER[ENC_R].speed(), 0, 3);
-        else if (seq.temp_select_menu == 3)
+        else if (generic_temp_select_menu == 3)
           seq.euclidean_offset = constrain(seq.euclidean_offset + ENCODER[ENC_R].speed(), 0, 15);
-        else if (seq.temp_select_menu == 4)
+        else if (generic_temp_select_menu == 4)
           seq.euclidean_active = !seq.euclidean_active;
+        else if (generic_temp_select_menu == 5)
+          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + 1, 1, 64);
+
       }
       else if (LCDML.BT_checkUp())
       {
         if (seq.edit_state == false)
-          seq.temp_select_menu = constrain(seq.temp_select_menu - 1, 0, 4);
-        else if (seq.temp_select_menu == 0)
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 5);
+        else if (generic_temp_select_menu == 0)
           seq.arp_length = constrain(seq.arp_length - ENCODER[ENC_R].speed(), 0, 16);
-        else if (seq.temp_select_menu == 1)
+        else if (generic_temp_select_menu == 1)
           seq.arp_style = constrain(seq.arp_style - ENCODER[ENC_R].speed(), 0, 3);
-        else if (seq.temp_select_menu == 2)
+        else if (generic_temp_select_menu == 2)
           seq.arp_speed = constrain(seq.arp_speed - ENCODER[ENC_R].speed(), 0, 3);
-        else if (seq.temp_select_menu == 3)
+        else if (generic_temp_select_menu == 3)
           seq.euclidean_offset = constrain(seq.euclidean_offset - ENCODER[ENC_R].speed(), 0, 15);
-        else if (seq.temp_select_menu == 4)
+        else if (generic_temp_select_menu == 4)
           seq.euclidean_active = !seq.euclidean_active;
+        else if (generic_temp_select_menu == 5)
+          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max - 1, 1, 64);
+
       }
     }
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -11975,28 +12040,29 @@ void UI_func_arpeggio(uint8_t param)
     }
     // button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     show_euclidean();
+
     if (seq.edit_state == false)
       helptext_r("< > SELECT OPTION TO EDIT");
     else
       helptext_r("< > EDIT VALUE");
     display.setTextSize(1);
-    if (seq.temp_select_menu == 0)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+    setModeColor(0);
     setCursor_textGrid_small(11, 4);
     if (seq.arp_length == 0)
       display.print("ALL");
     else
       print_formatted_number(seq.arp_length, 3); // play all elements or from 1-xx elements
+
+    setModeColor(1);
     setCursor_textGrid_small(11, 5);
     for (uint8_t i = 0; i < 4; i++)
     {
-      if (i == seq.arp_style && seq.temp_select_menu == 1)
+      if (i == seq.arp_style && generic_temp_select_menu == 1)
         display.setTextColor(COLOR_SYSTEXT, GREY3);
       else if (i == seq.arp_style)
         display.setTextColor(RED, GREY3);
-      else if (seq.temp_select_menu == 1)
+      else if (generic_temp_select_menu == 1)
         display.setTextColor(COLOR_BACKGROUND, GREY3);
       else
         display.setTextColor(GREY2, GREY3);
@@ -12006,10 +12072,7 @@ void UI_func_arpeggio(uint8_t param)
       display.setTextColor(GREY1, COLOR_BACKGROUND);
       display.print(" ");
     }
-    if (seq.temp_select_menu == 2)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setModeColor(2);
     setCursor_textGrid_small(11, 6);
     if (seq.arp_speed == 0)
       display.print("1/16 ");
@@ -12020,14 +12083,11 @@ void UI_func_arpeggio(uint8_t param)
     else if (seq.arp_speed == 3)
       display.print("1/64 ");
 
-    if (seq.temp_select_menu == 3)
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-    else
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    setModeColor(3);
     setCursor_textGrid_small(11, 7);
     print_formatted_number(seq.euclidean_offset, 2);
 
-    if (seq.temp_select_menu != 4)
+    if (generic_temp_select_menu != 4)
     {
       setCursor_textGrid_small(11, 8);
       if (seq.euclidean_active)
@@ -12057,6 +12117,13 @@ void UI_func_arpeggio(uint8_t param)
         display.setTextColor(GREY2, GREY3);
       display.print("EUCLIDEAN");
     }
+
+    setModeColor(5);
+
+    setCursor_textGrid_small(11, 9);
+    snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), seq.arp_num_notes_max);
+    display.print(displayname);
+
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
