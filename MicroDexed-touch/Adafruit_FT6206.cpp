@@ -124,6 +124,7 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n)
   {
     //test rotated
          return TS_Point(240-touchX[n], 320-touchY[n], 1);
+       //  touch_control_rate = 0;
     //return TS_Point(touchX[n], touchY[n], 1);
   }
 }

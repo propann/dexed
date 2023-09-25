@@ -168,7 +168,6 @@ speed = ClickCount * (1000 / period)
  */
 #define DEFAULT_PERIOD    500
 
-
 //  Direction values returned by read() method 
 /**
  \def DIR_NONE

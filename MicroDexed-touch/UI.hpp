@@ -925,6 +925,16 @@ FLASHMEM void sub_song_print_instruments(uint16_t front, uint16_t back)
         display.print(F("#"));
         print_formatted_number(seq.instrument[x] - 31, 2);
       }
+ else if (seq.instrument[x] > 47 && seq.instrument[x] < 64)
+      {
+        // if (seq.tracktype_or_instrument_assign == 2) {
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 5);
+        display.print(F("INT"));
+        // }
+        display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 6);
+        display.print(F("#"));
+        print_formatted_number(seq.instrument[x] - 47, 2);
+      }
       else
         display.print(F("???"));
     }
@@ -11209,7 +11219,7 @@ FLASHMEM void UI_func_song(uint8_t param)
           }
           else if (seq.tracktype_or_instrument_assign == 2 && seq.loop_edit_step == 0) // select instruments for track
           {
-            if (seq.instrument[seq.selected_track] < 47)
+            if (seq.instrument[seq.selected_track] < 63)
               seq.instrument[seq.selected_track]++;
 
             if (seq.instrument[seq.selected_track] > 5 && seq.instrument[seq.selected_track] < 16) // skip currently unused msp slots
@@ -11305,8 +11315,11 @@ FLASHMEM void UI_func_song(uint8_t param)
           else if (seq.tracktype_or_instrument_assign == 2 && seq.loop_edit_step == 0) // select instruments for track
           {
             if (seq.instrument[seq.selected_track] > 0)
+            {
               seq.instrument[seq.selected_track]--;
-
+               if (seq.instrument[seq.selected_track] == 5)
+              sub_song_print_tracktypes();
+}
             if (seq.instrument[seq.selected_track] > 5 && seq.instrument[seq.selected_track] < 16) // skip currently unused msp slots
             {
               if (seq.instrument[seq.selected_track] > 5 + NUM_MULTISAMPLES)

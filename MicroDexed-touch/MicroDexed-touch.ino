@@ -937,9 +937,9 @@ void setup()
 
   display.begin();
 
-//test invert display
+  //test invert display
 #ifdef CAPACITIVE_TOUCH_DISPLAY
-display.invertDisplay(true);
+  display.invertDisplay(true);
 #endif
 
 #if defined GENERIC_DISPLAY
@@ -2695,6 +2695,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   }
 #endif
 
+  if (device == 3) //internal Micro USB
+    usbMIDI.sendNoteOn(inNumber, inVelocity, inChannel);
+
   if (device == 0)
   {
 
@@ -3173,6 +3176,9 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)
   if (device == 2)
     midi_serial.sendNoteOff(inNumber, inVelocity, inChannel);
 #endif
+
+  if (device == 3) //internal Micro USB
+    usbMIDI.sendNoteOff(inNumber, inVelocity, inChannel);
 
   if (device == 0)
   {
@@ -4209,8 +4215,8 @@ void handleStop(void)
     seq.step = 0;
     midi_bpm_counter = 0;
     midi_bpm_timer = 0;
- seq.arp_step = 0;
- seq.ticks=0;
+    seq.arp_step = 0;
+    seq.ticks = 0;
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
     {
       seq.chain_counter[d] = 0;
