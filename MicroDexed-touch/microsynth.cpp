@@ -83,11 +83,11 @@ FLASHMEM void microsynth_update_all_settings(uint8_t instance_id)
   microsynth_stereo_panorama_osc[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
   microsynth_stereo_panorama_noise[instance_id].panorama(mapfloat(microsynth[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
 
-  global_delay_in_mixer[0]->gain(2, mapfloat(microsynth[0].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-  global_delay_in_mixer[1]->gain(2, mapfloat(microsynth[0].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+  global_delay_in_mixer[0]->gain(2, mapfloat(microsynth[0].delay_send_0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+  global_delay_in_mixer[1]->gain(2, mapfloat(microsynth[0].delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
 
-  global_delay_in_mixer[0]->gain(3, mapfloat(microsynth[1].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-  global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+  global_delay_in_mixer[0]->gain(3, mapfloat(microsynth[1].delay_send_0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+  global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
 }
 
 FLASHMEM void update_microsynth_params()
@@ -280,9 +280,9 @@ FLASHMEM void microsynth_update_single_setting(uint8_t instance_id)
 
   if (generic_temp_select_menu == 30 || generic_temp_select_menu == 31)
   {
-    global_delay_in_mixer[0]->gain(2, mapfloat(microsynth[0].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-    global_delay_in_mixer[1]->gain(2, mapfloat(microsynth[0].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-    global_delay_in_mixer[0]->gain(3, mapfloat(microsynth[1].delay_send[0], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
-    global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send[1], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+    global_delay_in_mixer[0]->gain(2, mapfloat(microsynth[0].delay_send_0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+    global_delay_in_mixer[1]->gain(2, mapfloat(microsynth[0].delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+    global_delay_in_mixer[0]->gain(3, mapfloat(microsynth[1].delay_send_0, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
+    global_delay_in_mixer[1]->gain(3, mapfloat(microsynth[1].delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.80));
   }
 }

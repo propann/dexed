@@ -859,20 +859,17 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
 /******************************************************************************
    SD VOICECONFIG
  ******************************************************************************/
-FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
+FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 {
   if (sd_card > 0)
   {
-    vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
-
     // first check if file exists...
     AudioNoInterrupts();
     if (SD.exists(filename))
     {
       // ... and if: load
 #ifdef DEBUG
-      LOG.print(F("Found voice configuration ["));
+      LOG.print(F("Found configuration ["));
       LOG.print(filename);
       LOG.println(F("]... loading..."));
 #endif
@@ -890,41 +887,13 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
         serializeJsonPretty(data_json, Serial);
         LOG.println();
 #endif
-        configuration.dexed[instance_id].pool = data_json["pool"];
-        configuration.dexed[instance_id].bank = data_json["bank"];
-        configuration.dexed[instance_id].voice = data_json["voice"];
-        configuration.dexed[instance_id].lowest_note = data_json["lowest_note"];
-        configuration.dexed[instance_id].highest_note = data_json["highest_note"];
-        configuration.dexed[instance_id].transpose = data_json["transpose"];
-        configuration.dexed[instance_id].tune = data_json["tune"];
-        configuration.dexed[instance_id].sound_intensity = data_json["sound_intensity"];
-        configuration.dexed[instance_id].pan = data_json["pan"];
-        configuration.dexed[instance_id].polyphony = data_json["polyphony"];
-        configuration.dexed[instance_id].velocity_level = data_json["velocity_level"];
-        configuration.dexed[instance_id].monopoly = data_json["monopoly"];
-        configuration.dexed[instance_id].note_refresh = data_json["note_refresh"];
-        configuration.dexed[instance_id].pb_range = data_json["pb_range"];
-        configuration.dexed[instance_id].pb_step = data_json["pb_step"];
-        configuration.dexed[instance_id].mw_range = data_json["mw_range"];
-        configuration.dexed[instance_id].mw_assign = data_json["mw_assign"];
-        configuration.dexed[instance_id].mw_mode = data_json["mw_mode"];
-        configuration.dexed[instance_id].fc_range = data_json["fc_range"];
-        configuration.dexed[instance_id].fc_assign = data_json["fc_assign"];
-        configuration.dexed[instance_id].fc_mode = data_json["fc_mode"];
-        configuration.dexed[instance_id].bc_range = data_json["bc_range"];
-        configuration.dexed[instance_id].bc_assign = data_json["bc_assign"];
-        configuration.dexed[instance_id].bc_mode = data_json["bc_mode"];
-        configuration.dexed[instance_id].at_range = data_json["at_range"];
-        configuration.dexed[instance_id].at_assign = data_json["at_assign"];
-        configuration.dexed[instance_id].at_mode = data_json["at_mode"];
-        configuration.dexed[instance_id].portamento_mode = data_json["portamento_mode"];
-        configuration.dexed[instance_id].portamento_glissando = data_json["portamento_glissando"];
-        configuration.dexed[instance_id].portamento_time = data_json["portamento_time"];
-        configuration.dexed[instance_id].op_enabled = data_json["op_enabled"];
-        configuration.dexed[instance_id].midi_channel = data_json["midi_channel"];
 
-        check_configuration_dexed(instance_id);
-        set_voiceconfig_params(instance_id);
+        Param* prm = params->getParams();
+        do{
+          prm->set(data_json[prm->name]);
+          LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          prm = prm->next();
+        }while (prm != NULL);
 
         return (true);
       }
@@ -948,13 +917,10 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
   return (false);
 }
 
-FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
+FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
 {
   if (sd_card > 0)
   {
-    vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
-
 #ifdef DEBUG
     LOG.print(F("Saving voice config "));
     LOG.print(vc);
@@ -970,39 +936,12 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
     if (json)
     {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-      data_json["pool"] = configuration.dexed[instance_id].pool;
-      data_json["bank"] = configuration.dexed[instance_id].bank;
-      data_json["voice"] = configuration.dexed[instance_id].voice;
-      data_json["lowest_note"] = configuration.dexed[instance_id].lowest_note;
-      data_json["highest_note"] = configuration.dexed[instance_id].highest_note;
-      data_json["transpose"] = configuration.dexed[instance_id].transpose;
-      data_json["tune"] = configuration.dexed[instance_id].tune;
-      data_json["sound_intensity"] = configuration.dexed[instance_id].sound_intensity;
-      data_json["pan"] = configuration.dexed[instance_id].pan;
-      data_json["polyphony"] = configuration.dexed[instance_id].polyphony;
-      data_json["velocity_level"] = configuration.dexed[instance_id].velocity_level;
-      data_json["monopoly"] = configuration.dexed[instance_id].monopoly;
-      data_json["monopoly"] = configuration.dexed[instance_id].monopoly;
-      data_json["note_refresh"] = configuration.dexed[instance_id].note_refresh;
-      data_json["pb_range"] = configuration.dexed[instance_id].pb_range;
-      data_json["pb_step"] = configuration.dexed[instance_id].pb_step;
-      data_json["mw_range"] = configuration.dexed[instance_id].mw_range;
-      data_json["mw_assign"] = configuration.dexed[instance_id].mw_assign;
-      data_json["mw_mode"] = configuration.dexed[instance_id].mw_mode;
-      data_json["fc_range"] = configuration.dexed[instance_id].fc_range;
-      data_json["fc_assign"] = configuration.dexed[instance_id].fc_assign;
-      data_json["fc_mode"] = configuration.dexed[instance_id].fc_mode;
-      data_json["bc_range"] = configuration.dexed[instance_id].bc_range;
-      data_json["bc_assign"] = configuration.dexed[instance_id].bc_assign;
-      data_json["bc_mode"] = configuration.dexed[instance_id].bc_mode;
-      data_json["at_range"] = configuration.dexed[instance_id].at_range;
-      data_json["at_assign"] = configuration.dexed[instance_id].at_assign;
-      data_json["at_mode"] = configuration.dexed[instance_id].at_mode;
-      data_json["portamento_mode"] = configuration.dexed[instance_id].portamento_mode;
-      data_json["portamento_glissando"] = configuration.dexed[instance_id].portamento_glissando;
-      data_json["portamento_time"] = configuration.dexed[instance_id].portamento_time;
-      data_json["op_enabled"] = configuration.dexed[instance_id].op_enabled;
-      data_json["midi_channel"] = configuration.dexed[instance_id].midi_channel;
+      Param* prm = params->getParams();
+      do{
+        data_json[prm->name] = prm->get();
+        LOG.print("Save param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+        prm = prm->next();
+      }while (prm != NULL);
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       LOG.println(F("Write JSON data:"));
@@ -1027,6 +966,22 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
   }
 
   return (false);
+}
+
+FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
+{
+  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
+  load_sd_config_json(filename, &configuration.dexed[instance_id]);
+  check_configuration_dexed(instance_id);
+  set_voiceconfig_params(instance_id);
+}
+
+FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
+{
+  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
+  save_sd_config_json(filename, &configuration.dexed[instance_id]);
 }
 
 /******************************************************************************
@@ -1034,167 +989,17 @@ FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
  ******************************************************************************/
 FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
-  if (sd_card > 0)
-  {
-    ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
-
-    // first check if file exists...
-    AudioNoInterrupts();
-    if (SD.exists(filename))
-    {
-      // ... and if: load
-#ifdef DEBUG
-      LOG.print(F("Found micro synth configuration ["));
-      LOG.print(filename);
-      LOG.println(F("]... loading..."));
-#endif
-      json = SD.open(filename);
-      if (json)
-      {
-        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-        deserializeJson(data_json, json);
-
-        json.close();
-        AudioInterrupts();
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        LOG.println(F("Read JSON data:"));
-        serializeJsonPretty(data_json, Serial);
-        LOG.println();
-#endif
-        microsynth[instance_id].sound_intensity = data_json["sound_intensity"];
-        microsynth[instance_id].wave = data_json["wave"];
-        microsynth[instance_id].coarse = data_json["coarse"];
-        microsynth[instance_id].detune = data_json["detune"];
-        microsynth[instance_id].trigger_noise_with_osc = data_json["trigger_noise_with_osc"];
-        microsynth[instance_id].env_attack = data_json["env_attack"];
-        microsynth[instance_id].env_decay = data_json["env_decay"];
-        microsynth[instance_id].env_sustain = data_json["env_sustain"];
-        microsynth[instance_id].env_release = data_json["env_release"];
-        microsynth[instance_id].filter_osc_mode = data_json["filter_osc_mode"];
-        microsynth[instance_id].filter_osc_freq_from = data_json["filter_osc_freq_from"];
-        microsynth[instance_id].filter_osc_freq_to = data_json["filter_osc_freq_to"];
-        microsynth[instance_id].filter_osc_speed = data_json["filter_osc_speed"];
-        microsynth[instance_id].filter_osc_resonance = data_json["filter_osc_resonance"];
-        microsynth[instance_id].noise_vol = data_json["noise_vol"];
-        microsynth[instance_id].noise_decay = data_json["noise_decay"];
-        microsynth[instance_id].filter_noise_freq_from = data_json["filter_noise_freq_from"];
-        microsynth[instance_id].filter_noise_freq_to = data_json["filter_noise_freq_to"];
-        microsynth[instance_id].filter_noise_speed = data_json["filter_noise_speed"];
-        microsynth[instance_id].filter_noise_mode = data_json["filter_noise_mode"];
-        microsynth[instance_id].pwm_from = data_json["pwm_from"];
-        microsynth[instance_id].pwm_to = data_json["pwm_to"];
-        microsynth[instance_id].pwm_speed = data_json["pwm_speed"];
-        microsynth[instance_id].rev_send = data_json["rev_send"];
-        microsynth[instance_id].chorus_send = data_json["chorus_send"];
-        microsynth[instance_id].delay_send[0] = data_json["delay_send_1"];
-        microsynth[instance_id].delay_send[1] = data_json["delay_send_2"];
-        microsynth[instance_id].midi_channel = data_json["midi_channel"];
-        microsynth[instance_id].pan = data_json["pan"];
-        microsynth[instance_id].vel_mod_filter_osc = data_json["vel_mod_filter_osc"];
-        microsynth[instance_id].vel_mod_filter_noise = data_json["vel_mod_filter_noise"];
-
-        microsynth_update_all_settings(instance_id);
-
-        return (true);
-      }
-#ifdef DEBUG
-      else
-      {
-        LOG.print(F("E : Cannot open "));
-        LOG.print(filename);
-        LOG.println(F(" on SD."));
-      }
-    }
-    else
-    {
-      LOG.print(F("No "));
-      LOG.print(filename);
-      LOG.println(F(" available."));
-#endif
-    }
-  }
-  return (false);
+  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
+  load_sd_config_json(filename, &microsynth[instance_id]);
+  microsynth_update_all_settings(instance_id);
 }
 
 FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
-  if (sd_card > 0)
-  {
-    ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
-
-#ifdef DEBUG
-    LOG.print(F("Saving microsynth config "));
-    LOG.print(ms);
-    LOG.print(F("["));
-    LOG.print(instance_id);
-    LOG.print(F("]"));
-    LOG.print(F(" to "));
-    LOG.println(filename);
-#endif
-
-    AudioNoInterrupts();
-    SD.remove(filename);
-    json = SD.open(filename, FILE_WRITE);
-    if (json)
-    {
-      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-      data_json["sound_intensity"] = microsynth[instance_id].sound_intensity;
-      data_json["wave"] = microsynth[instance_id].wave;
-      data_json["coarse"] = microsynth[instance_id].coarse;
-      data_json["detune"] = microsynth[instance_id].detune;
-      data_json["trigger_noise_with_osc"] = microsynth[instance_id].trigger_noise_with_osc;
-      data_json["env_attack"] = microsynth[instance_id].env_attack;
-      data_json["env_decay"] = microsynth[instance_id].env_decay;
-      data_json["env_sustain"] = microsynth[instance_id].env_sustain;
-      data_json["env_release"] = microsynth[instance_id].env_release;
-      data_json["filter_osc_mode"] = microsynth[instance_id].filter_osc_mode;
-      data_json["filter_osc_freq_from"] = microsynth[instance_id].filter_osc_freq_from;
-      data_json["filter_osc_freq_to"] = microsynth[instance_id].filter_osc_freq_to;
-      data_json["filter_osc_speed"] = microsynth[instance_id].filter_osc_speed;
-      data_json["filter_osc_resonance"] = microsynth[instance_id].filter_osc_resonance;
-      data_json["noise_vol"] = microsynth[instance_id].noise_vol;
-      data_json["noise_decay"] = microsynth[instance_id].noise_decay;
-      data_json["filter_noise_freq_from"] = microsynth[instance_id].filter_noise_freq_from;
-      data_json["filter_noise_freq_to"] = microsynth[instance_id].filter_noise_freq_to;
-      data_json["filter_noise_mode"] = microsynth[instance_id].filter_noise_mode;
-      data_json["filter_noise_speed"] = microsynth[instance_id].filter_noise_speed;
-      data_json["pwm_from"] = microsynth[instance_id].pwm_from;
-      data_json["pwm_to"] = microsynth[instance_id].pwm_to;
-      data_json["pwm_speed"] = microsynth[instance_id].pwm_speed;
-      data_json["rev_send"] = microsynth[instance_id].rev_send;
-      data_json["chorus_send"] = microsynth[instance_id].chorus_send;
-      data_json["delay_send_1"] = microsynth[instance_id].delay_send[0];
-      data_json["delay_send_2"] = microsynth[instance_id].delay_send[1];
-      data_json["midi_channel"] = microsynth[instance_id].midi_channel;
-      data_json["pan"] = microsynth[instance_id].pan;
-      data_json["vel_mod_filter_osc"] = microsynth[instance_id].vel_mod_filter_osc;
-      data_json["vel_mod_filter_noise"] = microsynth[instance_id].vel_mod_filter_noise;
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      LOG.println(F("Write JSON data:"));
-      serializeJsonPretty(data_json, Serial);
-      LOG.println();
-#endif
-      serializeJsonPretty(data_json, json);
-      json.close();
-      AudioInterrupts();
-
-      return (true);
-    }
-    json.close();
-  }
-  else
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open "));
-    LOG.print(filename);
-    LOG.println(F(" on SD."));
-#endif
-  }
-  return (false);
+  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
+  save_sd_config_json(filename, &microsynth[instance_id]);
 }
 
 /******************************************************************************
@@ -1384,140 +1189,18 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
  ******************************************************************************/
 FLASHMEM bool load_sd_epiano_json(uint8_t number)
 {
-  if (sd_card > 0)
-  {
-    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
-
-    // first check if file exists...
-    AudioNoInterrupts();
-    if (SD.exists(filename))
-    {
-      // ... and if: load
-#ifdef DEBUG
-      LOG.print(F("Found epiano configuration ["));
-      LOG.print(filename);
-      LOG.println(F("]... loading..."));
-#endif
-      json = SD.open(filename);
-      if (json)
-      {
-        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-        deserializeJson(data_json, json);
-
-        json.close();
-        AudioInterrupts();
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        LOG.println(F("Read JSON data:"));
-        serializeJsonPretty(data_json, Serial);
-        LOG.println();
-#endif
-        configuration.epiano.decay = data_json["decay"];
-        configuration.epiano.release = data_json["release"];
-        configuration.epiano.hardness = data_json["hardness"];
-        configuration.epiano.treble = data_json["treble"];
-        configuration.epiano.pan_tremolo = data_json["pan_tremolo"];
-        configuration.epiano.pan_lfo = data_json["pan_lf"];
-        configuration.epiano.velocity_sense = data_json["velocity"];
-        configuration.epiano.stereo = data_json["stereo"];
-        configuration.epiano.polyphony = data_json["polyphony"];
-        configuration.epiano.tune = data_json["tune"];
-        configuration.epiano.detune = data_json["detune"];
-        configuration.epiano.overdrive = data_json["overdrive"];
-        configuration.epiano.lowest_note = data_json["lowest_note"];
-        configuration.epiano.highest_note = data_json["highest_note"];
-        configuration.epiano.transpose = data_json["transpose"];
-        configuration.epiano.sound_intensity = data_json["sound_intensity"];
-        configuration.epiano.pan = data_json["pan"];
-        configuration.epiano.midi_channel = data_json["midi_channel"];
-
-        check_configuration_epiano();
-        set_epiano_params();
-
-        return (true);
-      }
-#ifdef DEBUG
-      else
-      {
-        LOG.print(F("E : Cannot open "));
-        LOG.print(filename);
-        LOG.println(F(" on SD."));
-      }
-    }
-    else
-    {
-      LOG.print(F("No "));
-      LOG.print(filename);
-      LOG.println(F(" available."));
-#endif
-    }
-  }
-  return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
+  load_sd_config_json(filename, &configuration.epiano);
+  check_configuration_epiano();
+  set_epiano_params();
 }
 
 FLASHMEM bool save_sd_epiano_json(uint8_t number)
 {
-  if (sd_card > 0)
-  {
-    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
-
-#ifdef DEBUG
-    LOG.print(F("Saving epiano config "));
-    LOG.print(number);
-    LOG.print(F(" to "));
-    LOG.println(filename);
-#endif
-
-    AudioNoInterrupts();
-    SD.remove(filename);
-    json = SD.open(filename, FILE_WRITE);
-    if (json)
-    {
-      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-      data_json["decay"] = configuration.epiano.decay;
-      data_json["release"] = configuration.epiano.release;
-      data_json["hardness"] = configuration.epiano.hardness;
-      data_json["treble"] = configuration.epiano.treble;
-      data_json["pan_tremolo"] = configuration.epiano.pan_tremolo;
-      data_json["pan_lfo"] = configuration.epiano.pan_lfo;
-      data_json["velocity_sense"] = configuration.epiano.velocity_sense;
-      data_json["stereo"] = configuration.epiano.stereo;
-      data_json["polyphony"] = configuration.epiano.polyphony;
-      data_json["tune"] = configuration.epiano.tune;
-      data_json["detune"] = configuration.epiano.detune;
-      data_json["overdrive"] = configuration.epiano.overdrive;
-      data_json["lowest_note"] = configuration.epiano.lowest_note;
-      data_json["highest_note"] = configuration.epiano.highest_note;
-      data_json["transpose"] = configuration.epiano.transpose;
-      data_json["sound_intensity"] = configuration.epiano.sound_intensity;
-      data_json["pan"] = configuration.epiano.pan;
-      data_json["midi_channel"] = configuration.epiano.midi_channel;
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      LOG.println(F("Write JSON data:"));
-      serializeJsonPretty(data_json, Serial);
-      LOG.println();
-#endif
-      serializeJsonPretty(data_json, json);
-      json.close();
-      AudioInterrupts();
-      return (true);
-    }
-    json.close();
-  }
-  else
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open "));
-    LOG.print(filename);
-    LOG.println(F(" on SD."));
-#endif
-  }
-
-  AudioInterrupts();
-  return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
+  save_sd_config_json(filename, &configuration.epiano);
 }
 
 /******************************************************************************

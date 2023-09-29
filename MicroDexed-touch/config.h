@@ -29,6 +29,7 @@
 #include <Arduino.h>
 #include "midinotes.h"
 #include "teensy_board_detection.h"
+#include "param.h"
 
 // If you want to test the system with Linux and without any keyboard and/or audio equipment, you can do the following:
 // 1. In Arduino-IDE enable "Tools->USB-Type->Serial + MIDI + Audio"
@@ -745,41 +746,42 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define JSON_BUFFER_SIZE 12000
 
 // Internal configuration structure
-typedef struct dexed_s
+typedef struct dexed_s : public Params
 {
-  uint8_t pool;
-  uint8_t bank;
-  uint8_t voice;
-  uint8_t lowest_note;
-  uint8_t highest_note;
-  uint8_t transpose;
-  uint8_t tune;
-  uint8_t sound_intensity;
-  uint8_t pan;
-  uint8_t polyphony;
-  uint8_t velocity_level;
-  uint8_t monopoly;
-  uint8_t note_refresh;
-  uint8_t pb_range;
-  uint8_t pb_step;
-  uint8_t mw_range;
-  uint8_t mw_assign;
-  uint8_t mw_mode;
-  uint8_t fc_range;
-  uint8_t fc_assign;
-  uint8_t fc_mode;
-  uint8_t bc_range;
-  uint8_t bc_assign;
-  uint8_t bc_mode;
-  uint8_t at_range;
-  uint8_t at_assign;
-  uint8_t at_mode;
-  uint8_t portamento_mode;
-  uint8_t portamento_glissando;
-  uint8_t portamento_time;
-  uint8_t op_enabled;
-  uint8_t midi_channel;
-} dexed_t;
+  P_uint8_t(pool);
+  P_uint8_t(bank);
+  P_uint8_t(voice);
+  P_uint8_t(lowest_note);
+  P_uint8_t(highest_note);
+  P_uint8_t(transpose);
+  P_uint8_t(tune);
+  P_uint8_t(sound_intensity);
+  P_uint8_t(pan);
+  P_uint8_t(polyphony);
+  P_uint8_t(velocity_level);
+  P_uint8_t(monopoly);
+  P_uint8_t(note_refresh);
+  P_uint8_t(pb_range);
+  P_uint8_t(pb_step);
+  P_uint8_t(mw_range);
+  P_uint8_t(mw_assign);
+  P_uint8_t(mw_mode);
+  P_uint8_t(fc_range);
+  P_uint8_t(fc_assign);
+  P_uint8_t(fc_mode);
+  P_uint8_t(bc_range);
+  P_uint8_t(bc_assign);
+  P_uint8_t(bc_mode);
+  P_uint8_t(at_range);
+  P_uint8_t(at_assign);
+  P_uint8_t(at_mode);
+  P_uint8_t(portamento_mode);
+  P_uint8_t(portamento_glissando);
+  P_uint8_t(portamento_time);
+  P_uint8_t(op_enabled);
+  P_uint8_t(midi_channel);
+  P_end;
+} __attribute__((packed)) dexed_t;
 
 typedef struct fx_s
 {
@@ -823,77 +825,80 @@ typedef struct fx_s
   uint8_t ep_reverb_send;
 } fx_t;
 
-typedef struct epiano_s
+typedef struct epiano_s : public Params
 {
-  uint8_t decay;
-  uint8_t release;
-  uint8_t hardness;
-  uint8_t treble;
-  uint8_t pan_tremolo;
-  uint8_t pan_lfo;
-  uint8_t velocity_sense;
-  uint8_t stereo;
-  uint8_t polyphony;
-  uint8_t tune;
-  uint8_t detune;
-  uint8_t overdrive;
-  uint8_t lowest_note;
-  uint8_t highest_note;
-  uint8_t transpose;
-  uint8_t sound_intensity;
-  uint8_t pan;
-  uint8_t midi_channel;
-  uint8_t delay_send_1;
-  uint8_t delay_send_2;
+  P_uint8_t(decay);
+  P_uint8_t(release);
+  P_uint8_t(hardness);
+  P_uint8_t(treble);
+  P_uint8_t(pan_tremolo);
+  P_uint8_t(pan_lfo);
+  P_uint8_t(velocity_sense);
+  P_uint8_t(stereo);
+  P_uint8_t(polyphony);
+  P_uint8_t(tune);
+  P_uint8_t(detune);
+  P_uint8_t(overdrive);
+  P_uint8_t(lowest_note);
+  P_uint8_t(highest_note);
+  P_uint8_t(transpose);
+  P_uint8_t(sound_intensity);
+  P_uint8_t(pan);
+  P_uint8_t(midi_channel);
+  P_uint8_t(delay_send_1);
+  P_uint8_t(delay_send_2);
+  P_end;
 } epiano_t;
 
-typedef struct microsynth_s
+typedef struct microsynth_s : public Params
 {
-  int coarse;
-  int detune;
-  int lfo_intensity;
-  int lfo_delay;
-  uint8_t lfo_mode;
-  uint8_t lfo_speed;
+  P_int32_t(coarse);
+  P_int32_t(detune);
+  P_int32_t(lfo_intensity);
+  P_int32_t(lfo_delay);
+  P_uint8_t(lfo_mode);
+  P_uint8_t(lfo_speed);
   // internal lfo values
-  boolean lfo_direction;
-  int lfo_value;
-  int lfo_fade;
-  bool trigger_noise_with_osc;
-  uint8_t pan;
-  uint8_t wave;
-  uint8_t midi_channel;
-  uint8_t sound_intensity;
-  uint8_t env_attack;
-  uint8_t env_decay;
-  uint8_t env_sustain;
-  uint8_t env_release;
-  uint8_t filter_osc_mode;
-  uint16_t osc_freq_current;
-  uint16_t filter_osc_freq_from;
-  uint16_t filter_osc_freq_to;
-  uint16_t filter_osc_freq_current;
-  uint16_t filter_osc_freq_last_displayed = 99;
-  uint16_t filter_osc_speed;
-  uint8_t filter_osc_resonance;
-  uint8_t noise_vol;
-  uint8_t noise_decay;
-  uint8_t filter_noise_mode;
-  uint16_t filter_noise_freq_from;
-  uint16_t filter_noise_freq_to;
-  uint16_t filter_noise_freq_current;
-  uint16_t filter_noise_speed;
-  uint8_t filter_noise_resonance;
-  uint16_t pwm_from;
-  uint16_t pwm_to;
-  uint8_t pwm_speed;
-  uint16_t pwm_current;
-  uint16_t pwm_last_displayed;
-  uint8_t rev_send;
-  uint8_t chorus_send;
-  uint8_t delay_send[NUM_MICROSYNTH];
-  uint8_t vel_mod_filter_osc = 0;
-  uint8_t vel_mod_filter_noise = 0;
+  P_uint8_t(lfo_direction);
+  P_int32_t(lfo_value);
+  P_int32_t(lfo_fade);
+  P_uint8_t(trigger_noise_with_osc);
+  P_uint8_t(pan);
+  P_uint8_t(wave);
+  P_uint8_t(midi_channel);
+  P_uint8_t(sound_intensity);
+  P_uint8_t(env_attack);
+  P_uint8_t(env_decay);
+  P_uint8_t(env_sustain);
+  P_uint8_t(env_release);
+  P_uint8_t(filter_osc_mode);
+  P_uint16_t(osc_freq_current);
+  P_uint16_t(filter_osc_freq_from);
+  P_uint16_t(filter_osc_freq_to);
+  P_uint16_t(filter_osc_freq_current);
+  P_uint16_t(filter_osc_freq_last_displayed);
+  P_uint16_t(filter_osc_speed);
+  P_uint8_t(filter_osc_resonance);
+  P_uint8_t(noise_vol);
+  P_uint8_t(noise_decay);
+  P_uint8_t(filter_noise_mode);
+  P_uint16_t(filter_noise_freq_from);
+  P_uint16_t(filter_noise_freq_to);
+  P_uint16_t(filter_noise_freq_current);
+  P_uint16_t(filter_noise_speed);
+  P_uint8_t(filter_noise_resonance);
+  P_uint16_t(pwm_from);
+  P_uint16_t(pwm_to);
+  P_uint8_t(pwm_speed);
+  P_uint16_t(pwm_current);
+  P_uint16_t(pwm_last_displayed);
+  P_uint8_t(rev_send);
+  P_uint8_t(chorus_send);
+  P_uint8_t(delay_send_0);
+  P_uint8_t(delay_send_1);
+  P_uint8_t(vel_mod_filter_osc);
+  P_uint8_t(vel_mod_filter_noise);
+  P_end;
 } microsynth_t;
 
 typedef struct braids_s
