@@ -4518,60 +4518,12 @@ FLASHMEM void check_configuration_fx(void)
 
 FLASHMEM void check_configuration_dexed(uint8_t instance_id)
 {
-  configuration.dexed[instance_id].bank = constrain(configuration.dexed[instance_id].bank, 0, MAX_BANKS - 1);
-  configuration.dexed[instance_id].voice = constrain(configuration.dexed[instance_id].voice, 0, MAX_VOICES - 1);
-  configuration.dexed[instance_id].midi_channel = constrain(configuration.dexed[instance_id].midi_channel, MIDI_CHANNEL_MIN, MIDI_CHANNEL_MAX);
-  configuration.dexed[instance_id].lowest_note = constrain(configuration.dexed[instance_id].lowest_note, INSTANCE_LOWEST_NOTE_MIN, INSTANCE_LOWEST_NOTE_MAX);
-  configuration.dexed[instance_id].highest_note = constrain(configuration.dexed[instance_id].highest_note, INSTANCE_HIGHEST_NOTE_MIN, INSTANCE_HIGHEST_NOTE_MAX);
-  configuration.dexed[instance_id].sound_intensity = constrain(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-  configuration.dexed[instance_id].pan = constrain(configuration.dexed[instance_id].pan, PANORAMA_MIN, PANORAMA_MAX);
-  configuration.dexed[instance_id].transpose = constrain(configuration.dexed[instance_id].transpose, TRANSPOSE_MIN, TRANSPOSE_MAX);
-  configuration.dexed[instance_id].tune = constrain(configuration.dexed[instance_id].tune, TUNE_MIN, TUNE_MAX);
-  configuration.dexed[instance_id].polyphony = constrain(configuration.dexed[instance_id].polyphony, POLYPHONY_MIN, POLYPHONY_MAX);
-  configuration.dexed[instance_id].velocity_level = constrain(configuration.dexed[instance_id].velocity_level, VELOCITY_LEVEL_MIN, VELOCITY_LEVEL_MAX);
-  configuration.dexed[instance_id].monopoly = constrain(configuration.dexed[instance_id].monopoly, MONOPOLY_MIN, MONOPOLY_MAX);
-  configuration.dexed[instance_id].note_refresh = constrain(configuration.dexed[instance_id].note_refresh, NOTE_REFRESH_MIN, NOTE_REFRESH_MAX);
-  configuration.dexed[instance_id].pb_range = constrain(configuration.dexed[instance_id].pb_range, PB_RANGE_MIN, PB_RANGE_MAX);
-  configuration.dexed[instance_id].pb_step = constrain(configuration.dexed[instance_id].pb_step, PB_STEP_MIN, PB_STEP_MAX);
-  configuration.dexed[instance_id].mw_range = constrain(configuration.dexed[instance_id].mw_range, MW_RANGE_MIN, MW_RANGE_MAX);
-  configuration.dexed[instance_id].mw_assign = constrain(configuration.dexed[instance_id].mw_assign, MW_ASSIGN_MIN, MW_ASSIGN_MAX);
-  configuration.dexed[instance_id].mw_mode = constrain(configuration.dexed[instance_id].mw_mode, MW_MODE_MIN, MW_MODE_MAX);
-  configuration.dexed[instance_id].fc_range = constrain(configuration.dexed[instance_id].fc_range, FC_RANGE_MIN, FC_RANGE_MAX);
-  configuration.dexed[instance_id].fc_assign = constrain(configuration.dexed[instance_id].fc_assign, FC_ASSIGN_MIN, FC_ASSIGN_MAX);
-  configuration.dexed[instance_id].fc_mode = constrain(configuration.dexed[instance_id].fc_mode, FC_MODE_MIN, FC_MODE_MAX);
-  configuration.dexed[instance_id].bc_range = constrain(configuration.dexed[instance_id].bc_range, BC_RANGE_MIN, BC_RANGE_MAX);
-  configuration.dexed[instance_id].bc_assign = constrain(configuration.dexed[instance_id].bc_assign, BC_ASSIGN_MIN, BC_ASSIGN_MAX);
-  configuration.dexed[instance_id].bc_mode = constrain(configuration.dexed[instance_id].bc_mode, BC_MODE_MIN, BC_MODE_MAX);
-  configuration.dexed[instance_id].at_range = constrain(configuration.dexed[instance_id].at_range, AT_RANGE_MIN, AT_RANGE_MAX);
-  configuration.dexed[instance_id].at_assign = constrain(configuration.dexed[instance_id].at_assign, AT_ASSIGN_MIN, AT_ASSIGN_MAX);
-  configuration.dexed[instance_id].at_mode = constrain(configuration.dexed[instance_id].at_mode, AT_MODE_MIN, AT_MODE_MAX);
-  configuration.dexed[instance_id].portamento_mode = constrain(configuration.dexed[instance_id].portamento_mode, PORTAMENTO_MODE_MIN, PORTAMENTO_MODE_MAX);
-  configuration.dexed[instance_id].portamento_glissando = constrain(configuration.dexed[instance_id].portamento_glissando, PORTAMENTO_GLISSANDO_MIN, PORTAMENTO_GLISSANDO_MAX);
-  configuration.dexed[instance_id].portamento_time = constrain(configuration.dexed[instance_id].portamento_time, PORTAMENTO_TIME_MIN, PORTAMENTO_TIME_MAX);
-  configuration.dexed[instance_id].op_enabled = constrain(configuration.dexed[instance_id].op_enabled, OP_ENABLED_MIN, OP_ENABLED_MAX);
+  configuration.dexed[instance_id].check();
 }
 
 FLASHMEM void check_configuration_epiano(void)
 {
-  configuration.epiano.decay = constrain(configuration.epiano.decay, EP_DECAY_MIN, EP_DECAY_MAX);
-  configuration.epiano.release = constrain(configuration.epiano.release, EP_RELEASE_MIN, EP_RELEASE_MAX);
-  configuration.epiano.hardness = constrain(configuration.epiano.hardness, EP_HARDNESS_MIN, EP_HARDNESS_MAX);
-  configuration.epiano.treble = constrain(configuration.epiano.treble, EP_TREBLE_MIN, EP_TREBLE_MAX);
-  configuration.epiano.pan_tremolo = constrain(configuration.epiano.pan_tremolo, EP_PAN_TREMOLO_MIN, EP_PAN_TREMOLO_MAX);
-  configuration.epiano.pan_lfo = constrain(configuration.epiano.pan_lfo, EP_PAN_LFO_MIN, EP_PAN_LFO_MAX);
-  configuration.epiano.velocity_sense = constrain(configuration.epiano.velocity_sense, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX);
-  configuration.epiano.stereo = constrain(configuration.epiano.stereo, EP_STEREO_MIN, EP_STEREO_MAX);
-  configuration.epiano.polyphony = constrain(configuration.epiano.polyphony, EP_POLYPHONY_MIN, EP_POLYPHONY_MAX);
-  configuration.epiano.tune = constrain(configuration.epiano.tune, EP_TUNE_MIN, EP_TUNE_MAX);
-  configuration.epiano.detune = constrain(configuration.epiano.detune, EP_DETUNE_MIN, EP_DETUNE_MAX);
-  configuration.epiano.overdrive = constrain(configuration.epiano.overdrive, EP_OVERDRIVE_MIN, EP_OVERDRIVE_MAX);
-  configuration.epiano.lowest_note = constrain(configuration.epiano.lowest_note, EP_LOWEST_NOTE_MIN, EP_LOWEST_NOTE_MAX);
-  configuration.epiano.highest_note = constrain(configuration.epiano.highest_note, EP_HIGHEST_NOTE_MIN, EP_HIGHEST_NOTE_MAX);
-  configuration.epiano.transpose = constrain(configuration.epiano.transpose, EP_TRANSPOSE_MIN, EP_TRANSPOSE_MAX);
-  configuration.epiano.sound_intensity = constrain(configuration.epiano.sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX);
-  configuration.epiano.pan = constrain(configuration.epiano.pan, PANORAMA_MIN, PANORAMA_MAX);
-  configuration.epiano.velocity_sense = constrain(configuration.epiano.velocity_sense, EP_VELOCITY_SENSE_MIN, EP_VELOCITY_SENSE_MAX);
-  configuration.epiano.midi_channel = constrain(configuration.epiano.midi_channel, EP_MIDI_CHANNEL_MIN, EP_MIDI_CHANNEL_MAX);
+  configuration.epiano.check();
 }
 
 FLASHMEM void init_configuration(void)
@@ -4606,38 +4558,8 @@ FLASHMEM void init_configuration(void)
 
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
-    configuration.dexed[instance_id].bank = SYSEXBANK_DEFAULT;
-    configuration.dexed[instance_id].voice = SYSEXSOUND_DEFAULT;
-    configuration.dexed[instance_id].midi_channel = DEFAULT_MIDI_CHANNEL;
-    configuration.dexed[instance_id].lowest_note = INSTANCE_LOWEST_NOTE_MIN;
-    configuration.dexed[instance_id].highest_note = INSTANCE_HIGHEST_NOTE_MAX;
-    configuration.dexed[instance_id].sound_intensity = SOUND_INTENSITY_DEFAULT;
-    configuration.dexed[instance_id].pan = PANORAMA_DEFAULT;
-    configuration.dexed[instance_id].transpose = TRANSPOSE_DEFAULT;
-    configuration.dexed[instance_id].tune = TUNE_DEFAULT;
-    configuration.dexed[instance_id].polyphony = POLYPHONY_DEFAULT;
-    configuration.dexed[instance_id].velocity_level = VELOCITY_LEVEL_DEFAULT;
-    configuration.dexed[instance_id].monopoly = MONOPOLY_DEFAULT;
-    configuration.dexed[instance_id].note_refresh = NOTE_REFRESH_DEFAULT;
-    configuration.dexed[instance_id].pb_range = PB_RANGE_DEFAULT;
-    configuration.dexed[instance_id].pb_step = PB_STEP_DEFAULT;
-    configuration.dexed[instance_id].mw_range = MW_RANGE_DEFAULT;
-    configuration.dexed[instance_id].mw_assign = MW_ASSIGN_DEFAULT;
-    configuration.dexed[instance_id].mw_mode = MW_MODE_DEFAULT;
-    configuration.dexed[instance_id].fc_range = FC_RANGE_DEFAULT;
-    configuration.dexed[instance_id].fc_assign = FC_ASSIGN_DEFAULT;
-    configuration.dexed[instance_id].fc_mode = FC_MODE_DEFAULT;
-    configuration.dexed[instance_id].bc_range = BC_RANGE_DEFAULT;
-    configuration.dexed[instance_id].bc_assign = BC_ASSIGN_DEFAULT;
-    configuration.dexed[instance_id].bc_mode = BC_MODE_DEFAULT;
-    configuration.dexed[instance_id].at_range = AT_RANGE_DEFAULT;
-    configuration.dexed[instance_id].at_assign = AT_ASSIGN_DEFAULT;
-    configuration.dexed[instance_id].at_mode = AT_MODE_DEFAULT;
-    configuration.dexed[instance_id].portamento_mode = PORTAMENTO_MODE_DEFAULT;
-    configuration.dexed[instance_id].portamento_glissando = PORTAMENTO_GLISSANDO_DEFAULT;
-    configuration.dexed[instance_id].portamento_time = PORTAMENTO_TIME_DEFAULT;
-    configuration.dexed[instance_id].op_enabled = OP_ENABLED_DEFAULT;
-
+    // configuration.dexed is initialized by default, so nothing to do here.
+    
     configuration.fx.filter_cutoff[instance_id] = FILTER_CUTOFF_DEFAULT;
     configuration.fx.filter_resonance[instance_id] = FILTER_RESONANCE_DEFAULT;
     configuration.fx.chorus_frequency[instance_id] = CHORUS_FREQUENCY_DEFAULT;
@@ -4654,25 +4576,9 @@ FLASHMEM void init_configuration(void)
     MicroDexed[instance_id]->ControllersRefresh();
   }
 
-  configuration.epiano.decay = EP_DECAY_DEFAULT;
-  configuration.epiano.release = EP_RELEASE_DEFAULT;
-  configuration.epiano.hardness = EP_HARDNESS_DEFAULT;
-  configuration.epiano.treble = EP_TREBLE_DEFAULT;
-  configuration.epiano.pan_tremolo = EP_PAN_TREMOLO_DEFAULT;
-  configuration.epiano.pan_lfo = EP_PAN_LFO_DEFAULT;
-  configuration.epiano.velocity_sense = EP_VELOCITY_SENSE_DEFAULT;
-  configuration.epiano.stereo = EP_STEREO_DEFAULT;
-  configuration.epiano.polyphony = EP_POLYPHONY_DEFAULT;
-  configuration.epiano.tune = EP_TUNE_DEFAULT;
-  configuration.epiano.detune = EP_DETUNE_DEFAULT;
-  configuration.epiano.overdrive = EP_OVERDRIVE_DEFAULT;
-  configuration.epiano.lowest_note = EP_LOWEST_NOTE_DEFAULT;
-  configuration.epiano.highest_note = EP_HIGHEST_NOTE_DEFAULT;
-  configuration.epiano.transpose = EP_TRANSPOSE_DEFAULT;
-  configuration.epiano.sound_intensity = SOUND_INTENSITY_DEFAULT;
-  configuration.epiano.pan = PANORAMA_DEFAULT;
-  configuration.epiano.velocity_sense = EP_VELOCITY_SENSE_DEFAULT;
-  configuration.epiano.midi_channel = EP_MIDI_CHANNEL_DEFAULT;
+  // configuration.epiano is initialized by default.
+
+  // microsynth is initialized by default.
 
   set_volume(configuration.sys.vol, configuration.sys.mono);
 }

@@ -972,16 +972,17 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
   vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
-  load_sd_config_json(filename, &configuration.dexed[instance_id]);
+  if(!load_sd_config_json(filename, &configuration.dexed[instance_id])) return false;
   check_configuration_dexed(instance_id);
   set_voiceconfig_params(instance_id);
+  return true;
 }
 
 FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
   vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
-  save_sd_config_json(filename, &configuration.dexed[instance_id]);
+  return save_sd_config_json(filename, &configuration.dexed[instance_id]);
 }
 
 /******************************************************************************
@@ -991,15 +992,16 @@ FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
   ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
-  load_sd_config_json(filename, &microsynth[instance_id]);
+  if(!load_sd_config_json(filename, &microsynth[instance_id])) return false;
   microsynth_update_all_settings(instance_id);
+  return true;
 }
 
 FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
 {
   ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
-  save_sd_config_json(filename, &microsynth[instance_id]);
+  return save_sd_config_json(filename, &microsynth[instance_id]);
 }
 
 /******************************************************************************
@@ -1191,16 +1193,17 @@ FLASHMEM bool load_sd_epiano_json(uint8_t number)
 {
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
-  load_sd_config_json(filename, &configuration.epiano);
+  if(!load_sd_config_json(filename, &configuration.epiano)) return false;
   check_configuration_epiano();
   set_epiano_params();
+  return true;
 }
 
 FLASHMEM bool save_sd_epiano_json(uint8_t number)
 {
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
-  save_sd_config_json(filename, &configuration.epiano);
+  return save_sd_config_json(filename, &configuration.epiano);
 }
 
 /******************************************************************************
@@ -1387,143 +1390,17 @@ FLASHMEM bool load_sd_braids_json(uint8_t number)
 {
   if (number < 0)
     return (false);
-
-  if (sd_card > 0)
-  {
-    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
-
-    // first check if file exists...
-    AudioNoInterrupts();
-    if (SD.exists(filename))
-    {
-      // ... and if: load
-#ifdef DEBUG
-      LOG.print(F("Found braids configuration"));
-#endif
-      json = SD.open(filename);
-      if (json)
-      {
-        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-        deserializeJson(data_json, json);
-
-        json.close();
-        AudioInterrupts();
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        LOG.println(F("Read JSON data:"));
-        // serializeJsonPretty(data_json, Serial);
-        LOG.println();
-#endif
-
-        braids_osc.sound_intensity = data_json["vol"];
-        braids_osc.algo = data_json["algo"];
-        braids_osc.color = data_json["color"];
-        braids_osc.timbre = data_json["timbre"];
-        braids_osc.coarse = data_json["coarse"];
-        braids_osc.env_attack = data_json["attack"];
-        braids_osc.env_decay = data_json["decay"];
-        braids_osc.env_sustain = data_json["sustain"];
-        braids_osc.env_release = data_json["release"];
-        braids_osc.filter_mode = data_json["filter_mode"];
-        braids_osc.filter_freq_from = data_json["freq_from"];
-        braids_osc.filter_freq_to = data_json["freq_to"];
-        braids_osc.filter_resonance = data_json["res"];
-        braids_osc.filter_speed = data_json["filter_speed"];
-        braids_osc.rev_send = data_json["rev"];
-        braids_osc.flanger = data_json["flanger"];
-        braids_osc.flanger_spread = data_json["flanger_spread"];
-        braids_osc.delay_send_1 = data_json["delay_1"];
-        braids_osc.delay_send_2 = data_json["delay_2"];
-        braids_osc.midi_channel = data_json["midi"];
-        braids_osc.pan = data_json["pan"];
-
-        braids_update_all_settings();
-        return (true);
-      }
-#ifdef DEBUG
-      else
-      {
-        LOG.print(F("E : Cannot open "));
-        LOG.print(filename);
-        LOG.println(F(" on SD."));
-      }
-    }
-    else
-    {
-      LOG.print(F("No "));
-      LOG.print(filename);
-      LOG.println(F(" available."));
-#endif
-    }
-  }
-
-  AudioInterrupts();
-  return (false);
+  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
+  if(!load_sd_config_json(filename, &braids_osc)) return false;
+  braids_update_all_settings();
+  return true;
 }
 
 FLASHMEM bool save_sd_braids_json(uint8_t number)
 {
-  if (sd_card > 0)
-  {
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
-#ifdef DEBUG
-    LOG.print(F("Saving braids"));
-    LOG.print(number);
-    LOG.print(F(" to "));
-    LOG.println(filename);
-#endif
-
-    AudioNoInterrupts();
-    SD.remove(filename);
-    json = SD.open(filename, FILE_WRITE);
-    if (json)
-    {
-      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-      data_json["vol"] = braids_osc.sound_intensity;
-      data_json["algo"] = braids_osc.algo;
-      data_json["color"] = braids_osc.color;
-      data_json["timbre"] = braids_osc.timbre;
-      data_json["coarse"] = braids_osc.coarse;
-      data_json["attack"] = braids_osc.env_attack;
-      data_json["decay"] = braids_osc.env_decay;
-      data_json["sustain"] = braids_osc.env_sustain;
-      data_json["release"] = braids_osc.env_release;
-      data_json["filter_mode"] = braids_osc.filter_mode;
-      data_json["freq_from"] = braids_osc.filter_freq_from;
-      data_json["freq_to"] = braids_osc.filter_freq_to;
-      data_json["res"] = braids_osc.filter_resonance;
-      data_json["filter_speed"] = braids_osc.filter_speed;
-      data_json["rev"] = braids_osc.rev_send;
-      data_json["flanger"] = braids_osc.flanger;
-      data_json["flanger_spread"] = braids_osc.flanger_spread;
-      data_json["delay_1"] = braids_osc.delay_send_1;
-      data_json["delay_2"] = braids_osc.delay_send_2;
-      data_json["midi"] = braids_osc.midi_channel;
-      data_json["pan"] = braids_osc.pan;
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      LOG.println(F("Write JSON data:"));
-      serializeJsonPretty(data_json, Serial);
-      LOG.println();
-#endif
-      serializeJsonPretty(data_json, json);
-      json.close();
-      AudioInterrupts();
-      return (true);
-    }
-    json.close();
-  }
-  else
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open "));
-    LOG.print(filename);
-    LOG.println(F(" on SD."));
-#endif
-  }
-
-  AudioInterrupts();
-  return (false);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
+  return save_sd_config_json(filename, &braids_osc);
 }
 
 /******************************************************************************
