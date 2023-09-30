@@ -162,7 +162,7 @@ PROGMEM const unsigned char font[] = {
 // use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
 
-ILI9341_t3n::ILI9341_t3n(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi,
+FLASHMEM ILI9341_t3n::ILI9341_t3n(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi,
   uint8_t sclk, uint8_t miso)
 {
   _cs = cs;
@@ -189,7 +189,7 @@ ILI9341_t3n::ILI9341_t3n(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi,
 
 //=======================================================================
 
-void ILI9341_t3n::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
+FLASHMEM void ILI9341_t3n::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
   uint16_t y1)
 {
 
@@ -200,7 +200,7 @@ void ILI9341_t3n::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
 
 }
 
-void fillSysex(uint8_t arr[], uint8_t nbArg, ...)
+FLASHMEM void fillSysex(uint8_t arr[], uint8_t nbArg, ...)
 {
   va_list args;
   va_start(args, nbArg);
@@ -215,7 +215,7 @@ void fillSysex(uint8_t arr[], uint8_t nbArg, ...)
   }
 }
 
-uint8_t fillSysexColor(uint8_t* arr, uint8_t nbArg, ...)
+FLASHMEM uint8_t fillSysexColor(uint8_t* arr, uint8_t nbArg, ...)
 {
   va_list args;
   va_start(args, nbArg);
@@ -316,7 +316,7 @@ uint8_t fillSysexColor(uint8_t* arr, uint8_t nbArg, ...)
   return pos;
 }
 
-void ILI9341_t3n::pushColor(uint16_t color)
+FLASHMEM void ILI9341_t3n::pushColor(uint16_t color)
 {
 
   beginSPITransaction(_SPI_CLOCK);
@@ -325,7 +325,7 @@ void ILI9341_t3n::pushColor(uint16_t color)
 
 }
 
-void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color)
+FLASHMEM void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
   x += _originx;
   y += _originy;
@@ -358,7 +358,7 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color)
   endSPITransaction();
 }
 
-void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
+FLASHMEM void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
   uint16_t color)
 {
   x += _originx;
@@ -387,7 +387,7 @@ void ILI9341_t3n::drawFastVLine(int16_t x, int16_t y, int16_t h,
   endSPITransaction();
 }
 
-void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
+FLASHMEM void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
   uint16_t color)
 {
   x += _originx;
@@ -417,14 +417,14 @@ void ILI9341_t3n::drawFastHLine(int16_t x, int16_t y, int16_t w,
   endSPITransaction();
 }
 
-void ILI9341_t3n::fillScreen(uint16_t color)
+FLASHMEM void ILI9341_t3n::fillScreen(uint16_t color)
 {
   if (remote_active)
     console = true;
   fillRect(0, 0, _width, _height, color);
 }
 
-void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
+FLASHMEM void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   uint16_t color)
 {
   x += _originx;
@@ -551,7 +551,7 @@ FLASHMEM void ILI9341_t3n::setRotation(uint8_t m)
   cursor_y = 0;
 }
 
-void ILI9341_t3n::invertDisplay(boolean i)
+FLASHMEM void ILI9341_t3n::invertDisplay(boolean i)
 {
   beginSPITransaction(_SPI_CLOCK);
   writecommand_last(i ? ILI9341_INVON : ILI9341_INVOFF);
@@ -564,7 +564,7 @@ void ILI9341_t3n::invertDisplay(boolean i)
 // pixel
 //					color palette data in array at palette
 //					width must be at least 8 pixels
-void ILI9341_t3n::writeRect1BPP(int16_t x, int16_t y, int16_t w, int16_t h,
+FLASHMEM void ILI9341_t3n::writeRect1BPP(int16_t x, int16_t y, int16_t w, int16_t h,
   const uint8_t* pixels,
   const uint16_t* palette)
 {
@@ -576,7 +576,7 @@ void ILI9341_t3n::writeRect1BPP(int16_t x, int16_t y, int16_t w, int16_t h,
 // writeRectNBPP - 	write N(1, 2, 4, 8) bit per pixel paletted bitmap
 //					bitmap data in array at pixels
 
-void ILI9341_t3n::writeRectNBPP(int16_t x, int16_t y, int16_t w, int16_t h,
+FLASHMEM void ILI9341_t3n::writeRectNBPP(int16_t x, int16_t y, int16_t w, int16_t h,
   uint8_t bits_per_pixel, const uint8_t* pixels,
   const uint16_t* palette)
 {
@@ -846,7 +846,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read)
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void ILI9341_t3n::drawCircle(int16_t x0, int16_t y0, int16_t r,
+FLASHMEM void ILI9341_t3n::drawCircle(int16_t x0, int16_t y0, int16_t r,
   uint16_t color)
 {
   int16_t f = 1 - r;
@@ -894,7 +894,7 @@ void ILI9341_t3n::drawCircle(int16_t x0, int16_t y0, int16_t r,
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void ILI9341_t3n::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
+FLASHMEM void ILI9341_t3n::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
   uint8_t cornername, uint16_t color)
 {
   int16_t f = 1 - r;
@@ -946,7 +946,7 @@ void ILI9341_t3n::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
     @param    color 16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void ILI9341_t3n::fillCircle(int16_t x0, int16_t y0, int16_t r,
+FLASHMEM void ILI9341_t3n::fillCircle(int16_t x0, int16_t y0, int16_t r,
   uint16_t color)
 {
   if (remote_active)
@@ -983,7 +983,7 @@ void ILI9341_t3n::fillCircle(int16_t x0, int16_t y0, int16_t r,
     @param  color    16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void ILI9341_t3n::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
+FLASHMEM void ILI9341_t3n::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
   uint8_t corners, int16_t delta,
   uint16_t color)
 {
@@ -1167,7 +1167,7 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 }
 
 // Draw a rectangle
-void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+FLASHMEM void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
   if (console && remote_active)
   {
@@ -1196,14 +1196,14 @@ void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t 
 
 // overwrite functions from class Print:
 
-size_t ILI9341_t3n::write(uint8_t c)
+FLASHMEM size_t ILI9341_t3n::write(uint8_t c)
 {
   return write(&c, 1);
 }
 
 static uint8_t sysexRenderHeader[6] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20 };
 
-size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
+FLASHMEM size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
 {
 
   if (remote_active)
@@ -1315,7 +1315,7 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
 
 
 // Draw a character
-void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
+FLASHMEM void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
   uint16_t fgcolor, uint16_t bgcolor, uint8_t size_x,
   uint8_t size_y)
 {
@@ -1546,7 +1546,7 @@ void ILI9341_t3n::drawChar(int16_t x, int16_t y, unsigned char c,
   }
 }
 
-void ILI9341_t3n::setCursor(int16_t x, int16_t y, bool autoCenter)
+FLASHMEM void ILI9341_t3n::setCursor(int16_t x, int16_t y, bool autoCenter)
 {
   _center_x_text = autoCenter; // remember the state.
   _center_y_text = autoCenter; // remember the state.
@@ -1572,26 +1572,26 @@ void ILI9341_t3n::setCursor(int16_t x, int16_t y, bool autoCenter)
   cursor_y = y;
 }
 
-void ILI9341_t3n::getCursor(int16_t* x, int16_t* y)
+FLASHMEM void ILI9341_t3n::getCursor(int16_t* x, int16_t* y)
 {
   *x = cursor_x;
   *y = cursor_y;
 }
 
-void ILI9341_t3n::setTextSize(uint8_t s_x, uint8_t s_y)
+FLASHMEM void ILI9341_t3n::setTextSize(uint8_t s_x, uint8_t s_y)
 {
   textsize_x = (s_x > 0) ? s_x : 1;
   textsize_y = (s_y > 0) ? s_y : 1;
 }
 
-void ILI9341_t3n::setTextColor(uint16_t c)
+FLASHMEM void ILI9341_t3n::setTextColor(uint16_t c)
 {
   // For 'transparent' background, we'll set the bg
   // to the same as fg instead of using a flag
   textcolor = textbgcolor = c;
 }
 
-void ILI9341_t3n::setTextColor(uint16_t c, uint16_t b)
+FLASHMEM void ILI9341_t3n::setTextColor(uint16_t c, uint16_t b)
 {
   textcolor = c;
   textbgcolor = b;
@@ -1631,7 +1631,7 @@ int16_t ILI9341_t3n::drawString(const char string[], int16_t len, int poX, int p
 
 //////////////////////////////////////////////////////
 
-void ILI9341_t3n::waitFifoNotFull(void)
+FLASHMEM void ILI9341_t3n::waitFifoNotFull(void)
 {
   uint32_t tmp __attribute__((unused));
   do
@@ -1644,7 +1644,7 @@ void ILI9341_t3n::waitFifoNotFull(void)
     }
   } while ((_pimxrt_spi->SR & LPSPI_SR_TDF) == 0);
 }
-void ILI9341_t3n::waitFifoEmpty(void)
+FLASHMEM void ILI9341_t3n::waitFifoEmpty(void)
 {
   uint32_t tmp __attribute__((unused));
   do
@@ -1657,7 +1657,7 @@ void ILI9341_t3n::waitFifoEmpty(void)
     }
   } while ((_pimxrt_spi->SR & LPSPI_SR_TCF) == 0);
 }
-void ILI9341_t3n::waitTransmitComplete(void)
+FLASHMEM void ILI9341_t3n::waitTransmitComplete(void)
 {
   uint32_t tmp __attribute__((unused));
   //    digitalWriteFast(2, HIGH);
@@ -1674,7 +1674,7 @@ void ILI9341_t3n::waitTransmitComplete(void)
   //    digitalWriteFast(2, LOW);
 }
 
-uint16_t ILI9341_t3n::waitTransmitCompleteReturnLast()
+FLASHMEM uint16_t ILI9341_t3n::waitTransmitCompleteReturnLast()
 {
   uint32_t val = 0;
   //    digitalWriteFast(2, HIGH);
@@ -1692,7 +1692,7 @@ uint16_t ILI9341_t3n::waitTransmitCompleteReturnLast()
   //    digitalWriteFast(2, LOW);
 }
 
-void ILI9341_t3n::waitTransmitComplete(uint32_t mcr)
+FLASHMEM void ILI9341_t3n::waitTransmitComplete(uint32_t mcr)
 {
   // BUGBUG:: figure out if needed...
   waitTransmitComplete();
