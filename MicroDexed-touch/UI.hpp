@@ -624,7 +624,7 @@ FLASHMEM void set_state_dir()
 
 int favsearcher = 0;
 
-void update_seq_speed() {
+FLASHMEM void update_seq_speed() {
   seq.tempo_ms = 60000000 / seq.bpm / 4;
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
@@ -1961,7 +1961,7 @@ FLASHMEM void print_transpose_in_song_page()
 uint8_t song_previous_displayed_chain = 99;
 uint8_t chain_endline = 99;
 
-void calc_chain_endline()
+FLASHMEM void calc_chain_endline()
 {
   for (uint8_t y = 0; y < 16; y++) // chain
   {
@@ -5556,7 +5556,7 @@ FLASHMEM void UI_handle_OP(uint8_t param)
   }
 }
 
-void pattern_preview_in_probability_editor(uint8_t line, uint8_t patternno)
+FLASHMEM void pattern_preview_in_probability_editor(uint8_t line, uint8_t patternno)
 {
   display.setTextSize(1);
   seq.active_pattern = patternno;
@@ -6126,7 +6126,7 @@ void midi_channel_renderer(Editor* editor, bool refresh)
 
 // the drum parameter editors depend on the currently selected sample activesample.
 // So we need custom getters and setters respecting activesample.
-void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr)
+FLASHMEM void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_max, float32_t* valuePtr)
 {
   ui.addCustomEditor(
     name, limit_min, limit_max, valuePtr,
@@ -6149,7 +6149,7 @@ void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_m
 
 // Create drum UI.
 // The drum UI needs to be redrawn if activesample changes.
-void UI_func_drums(uint8_t param)
+FLASHMEM void UI_func_drums(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -6493,7 +6493,7 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
   }
 }
 
-void UI_func_drum_pan(uint8_t param)
+FLASHMEM void UI_func_drum_pan(uint8_t param)
 {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -6639,7 +6639,7 @@ void set_pattern_content_type_color_inverted(uint8_t pattern)
     display.setTextColor(COLOR_BACKGROUND, COLOR_ARP);
 }
 
-void print_performance_name(int x, int y)
+FLASHMEM void print_performance_name(int x, int y)
 {
   display.setTextSize(1);
   display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
@@ -7084,7 +7084,7 @@ void UI_draw_waveform_large(int samplenumber)
 }
 
 
-void sample_editor_update_file_counts()
+FLASHMEM void sample_editor_update_file_counts()
 {
   if (fm.sample_source == 1) // source = FLASH
   {
@@ -7110,7 +7110,7 @@ void sample_editor_update_file_counts()
   }
 }
 
-void print_available_loop_options()
+FLASHMEM void print_available_loop_options()
 {
   if (fm.sample_source == 2 || fm.sample_source == 3)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -7124,7 +7124,7 @@ void print_available_loop_options()
   display.print(F("LOOP TYPE:"));
 }
 
-void UI_func_sample_editor(uint8_t param)
+FLASHMEM void UI_func_sample_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -7325,7 +7325,7 @@ void UI_func_sample_editor(uint8_t param)
   }
 }
 
-void print_content_type()
+FLASHMEM void print_content_type()
 {
   set_pattern_content_type_color(seq.active_pattern);
   display.setTextSize(1);
@@ -7338,7 +7338,7 @@ void print_content_type()
   display.setTextColor(GREY1, COLOR_BACKGROUND);
 }
 
-void print_edit_mode()
+FLASHMEM void print_edit_mode()
 {
   display.setTextSize(1);
   display.setCursor(136 - 12, 71 - 17);
@@ -7505,7 +7505,7 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
   }
 }
 
-void UI_func_seq_vel_editor(uint8_t param)
+FLASHMEM void UI_func_seq_vel_editor(uint8_t param)
 {
   char tmp[5];
   uint8_t prev_item = 0;    // avoid screen flicker at start / end of menu items
@@ -7985,13 +7985,13 @@ void UI_func_seq_vel_editor(uint8_t param)
   }
 }
 
-void seq_clear_active_pattern()
+FLASHMEM void seq_clear_active_pattern()
 {
   memset(seq.note_data[seq.active_pattern], 0, sizeof(seq.note_data[seq.active_pattern]));
   memset(seq.vel[seq.active_pattern], 0, sizeof(seq.vel[seq.active_pattern]));
 }
 
-void seq_clear_all_patterns()
+FLASHMEM void seq_clear_all_patterns()
 {
   for (uint8_t i = 0; i < NUM_SEQ_PATTERN - 1; i++)
   {
@@ -8049,7 +8049,7 @@ void check_variable_samples_basespeed()
   }
 }
 
-void print_sample_type()
+FLASHMEM void print_sample_type()
 {
   if (activesample < NUM_DRUMSET_CONFIG - 1)
   {
@@ -8083,7 +8083,7 @@ void print_sample_type()
   }
 }
 
-void seq_sub_copy_swap()
+FLASHMEM void seq_sub_copy_swap()
 {
   if (seq.menu == 30 || seq.menu == 31)
   { // is in sub-function - swap pattern or copy pattern
@@ -8223,7 +8223,7 @@ void seq_sub_copy_swap()
   }
 }
 
-void seq_sub_pattern_fill()
+FLASHMEM void seq_sub_pattern_fill()
 {
   if (seq.menu == 33)
   { // is in sub-function - fill pattern
@@ -8389,7 +8389,7 @@ void seq_sub_pattern_fill()
   }
 }
 
-void seq_sub_pattern_transpose()
+FLASHMEM void seq_sub_pattern_transpose()
 {
   if (seq.menu == 34)
   { // is in transpose edit
@@ -8494,7 +8494,7 @@ void seq_sub_pattern_transpose()
   }
 }
 
-void seq_sub_clear_pattern_or_clear_all()
+FLASHMEM void seq_sub_clear_pattern_or_clear_all()
 {
   if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   {
@@ -8518,7 +8518,7 @@ void seq_sub_clear_pattern_or_clear_all()
   // button check end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
-void seq_sub_pitch_edit_pitched_sample()
+FLASHMEM void seq_sub_pitch_edit_pitched_sample()
 {
   if (seq.active_function == 40)
   { // pitch edit sample
@@ -8600,7 +8600,7 @@ void seq_sub_pitch_edit_pitched_sample()
   }
 }
 
-void print_current_sample_and_pitch_buffer()
+FLASHMEM void print_current_sample_and_pitch_buffer()
 {
   if (seq.cycle_touch_element == 0) // touch keyboard is off
   {
@@ -8695,7 +8695,7 @@ void set_sample_type_color_of(uint8_t samplekey)
 //   }
 // }
 
-void virtual_keyboard_print_buttons()
+FLASHMEM void virtual_keyboard_print_buttons()
 {
   // oct +- buttons
   draw_button_on_grid(1, 16, "OCTAVE", "-", 0);
@@ -8817,7 +8817,7 @@ uint8_t find_first_chain_step_with_pattern(uint8_t pattern)
   return result;
 }
 
-void pattern_editor_menu_0()
+FLASHMEM void pattern_editor_menu_0()
 {
   display.setTextSize(2);
   if (seq.menu == 0) // sound select menu
@@ -8958,7 +8958,7 @@ void pattern_editor_menu_0()
   }
 }
 
-void UI_func_seq_pattern_editor(uint8_t param)
+FLASHMEM void UI_func_seq_pattern_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -9651,7 +9651,7 @@ void update_microsynth_instance_icons()
   display.setTextColor(GREY1);
 }
 
-void update_pwm_text()
+FLASHMEM void update_pwm_text()
 {
   if (seq.cycle_touch_element != 1)
   {
@@ -9668,7 +9668,7 @@ void update_pwm_text()
   }
 }
 
-void microsynth_refresh_lower_screen_static_text()
+FLASHMEM void microsynth_refresh_lower_screen_static_text()
 {
   helptext_l(back_text);
   helptext_r("LONG PUSH:INST.SEL.  <>SEL.PARA.");
@@ -9787,7 +9787,7 @@ void microsynth_refresh_lower_screen_dynamic_text()
   update_pwm_text();
 }
 
-void print_epiano_static_texts()
+FLASHMEM void print_epiano_static_texts()
 {
   display.setTextSize(1);
   helptext_l(back_text);
@@ -9882,7 +9882,7 @@ void print_epiano_static_texts()
   setCursor_textGrid_small(45, 20);
   display.print(F("]"));
 }
-void update_selective_values_epiano()
+FLASHMEM void update_selective_values_epiano()
 {
   char note_name[4];
   if (menu_item_check(0))
@@ -10068,7 +10068,7 @@ void update_selective_values_epiano()
   }
 }
 
-void UI_func_epiano(uint8_t param)
+FLASHMEM void UI_func_epiano(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -10191,7 +10191,7 @@ void UI_func_epiano(uint8_t param)
   }
 }
 
-void print_static_texts_microsynth()
+FLASHMEM void print_static_texts_microsynth()
 {
   display.setTextSize(1);
 
@@ -10265,7 +10265,7 @@ void print_static_texts_microsynth()
   display.print(F(">"));
 }
 
-void update_selective_values_microsynth()
+FLASHMEM void update_selective_values_microsynth()
 {
   display.setTextSize(1);
   if (seq.edit_state == 1)
@@ -10413,7 +10413,7 @@ void update_selective_values_microsynth()
     print_small_intbar(38, 10, microsynth[microsynth_selected_instance].lfo_speed, 27, 0, 1);
 }
 
-void UI_func_microsynth(uint8_t param)
+FLASHMEM void UI_func_microsynth(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -11437,7 +11437,7 @@ FLASHMEM void UI_func_song(uint8_t param)
   }
 }
 
-void UI_func_seq_pianoroll(uint8_t param)
+FLASHMEM void UI_func_seq_pianoroll(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -11743,7 +11743,7 @@ void show_euclidean()
   draw_euclidean_circle();
 }
 
-void UI_func_arpeggio(uint8_t param)
+FLASHMEM void UI_func_arpeggio(uint8_t param)
 {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -11961,7 +11961,7 @@ setCursor_textGrid_small(14, 9);
   }
 }
 
-void UI_func_seq_mute_matrix(uint8_t param)
+FLASHMEM void UI_func_seq_mute_matrix(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -12118,7 +12118,7 @@ FLASHMEM bool load_performance_and_check_midi(uint8_t perf)
   return ret;
 }
 
-void UI_func_load_performance(uint8_t param)
+FLASHMEM void UI_func_load_performance(uint8_t param)
 {
   static uint8_t mode;
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -12242,7 +12242,7 @@ void UI_func_load_performance(uint8_t param)
   }
 }
 
-void UI_func_save_performance(uint8_t param)
+FLASHMEM void UI_func_save_performance(uint8_t param)
 {
   static bool overwrite;
   static bool yesno;
@@ -12824,7 +12824,7 @@ void update_selective_values_master_effects()
 extern "C" uint8_t external_psram_size;
 // #endif
 
-void UI_func_master_effects(uint8_t param)
+FLASHMEM void UI_func_master_effects(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -13346,7 +13346,7 @@ void sysinfo_reload_prev_voice()
   }
 }
 
-void UI_func_information(uint8_t param)
+FLASHMEM void UI_func_information(uint8_t param)
 {
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
