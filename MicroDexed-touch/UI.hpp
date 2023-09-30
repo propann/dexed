@@ -12473,7 +12473,7 @@ FLASHMEM void print_delay_sync_status(uint8_t instance)
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-void print_static_text_master_effects()
+FLASHMEM void print_static_text_master_effects()
 {
   if (configuration.fx.dexed[0].delay_multiplier == 0)
     configuration.fx.dexed[0].delay_multiplier = 1;
@@ -12717,7 +12717,7 @@ void print_delay_multiplier(uint8_t instance, uint8_t param)
   set_global_delay_filter(instance);
 }
 
-void update_selective_values_master_effects()
+FLASHMEM void update_selective_values_master_effects()
 {
   print_delay_sync_status(0);
   print_delay_sync_status(1);
@@ -17226,7 +17226,7 @@ FLASHMEM void UI_func_mixer(uint8_t param)
   }
 }
 
-void print_sidechain_static_texts()
+FLASHMEM void print_sidechain_static_texts()
 {
   setCursor_textGrid_small(1, 1);
   display.setTextSize(2);
@@ -17378,7 +17378,7 @@ void print_sidechain_static_texts()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-void print_sidechain_editor_values()
+FLASHMEM void print_sidechain_editor_values()
 {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   if (menu_item_check(0))
