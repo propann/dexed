@@ -3408,54 +3408,54 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
           }
           break;
         case 91: // CC 91: reverb send
-          configuration.fx.reverb_send[selected_instance_id] = map(inValue, 0, 0x7f, REVERB_SEND_MIN, REVERB_SEND_MAX);
-          reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-          reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[selected_instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+          configuration.fx.dexed[selected_instance_id].reverb_send = map(inValue, 0, 0x7f, REVERB_SEND_MIN, REVERB_SEND_MAX);
+          reverb_mixer_r.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.dexed[selected_instance_id].reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+          reverb_mixer_l.gain(selected_instance_id, volume_transform(mapfloat(configuration.fx.dexed[selected_instance_id].reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
           // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_reverb_send)) {
           //   LCDML.OTHER_updateFunc();
           //   LCDML.loop_menu();
           // }
           break;
         case 93: // CC 93: chorus level
-          configuration.fx.chorus_level[selected_instance_id] = map(inValue, 0, 0x7f, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
-          ///// global_delay_in_mixer[selected_instance_id]->gain(1, volume_transform(mapfloat(configuration.fx.chorus_level[selected_instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9)));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_chorus_level))
+          configuration.fx.dexed[selected_instance_id].chorus_level = map(inValue, 0, 0x7f, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
+          ///// global_delay_in_mixer[selected_instance_id]->gain(1, volume_transform(mapfloat(configuration.fx.dexed[selected_instance_id].chorus_level, CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX, 0.0, 0.9)));
+          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_audio))
           {
             LCDML.OTHER_updateFunc();
             LCDML.loop_menu();
           }
           break;
         case 103: // CC 103: filter resonance
-          configuration.fx.filter_resonance[instance_id] = map(inValue, 0, 0x7f, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
-          MicroDexed[instance_id]->setFilterResonance(mapfloat(configuration.fx.filter_resonance[instance_id], FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_filter_resonance))
+          configuration.fx.dexed[selected_instance_id].filter_resonance = map(inValue, 0, 0x7f, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
+          MicroDexed[instance_id]->setFilterResonance(mapfloat(configuration.fx.dexed[selected_instance_id].filter_resonance, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
+          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_audio))
           {
             LCDML.OTHER_updateFunc();
             LCDML.loop_menu();
           }
           break;
         case 104: // CC 104: filter cutoff
-          configuration.fx.filter_cutoff[instance_id] = map(inValue, 0, 0x7f, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
-          MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.filter_cutoff[instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
+          configuration.fx.dexed[selected_instance_id].filter_cutoff = map(inValue, 0, 0x7f, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
+          MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.dexed[selected_instance_id].filter_cutoff, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
           ;
-          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_filter_cutoff))
+          if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_audio))
           {
             LCDML.OTHER_updateFunc();
             LCDML.loop_menu();
           }
           break;
         case 105: // CC 105: delay time
-          configuration.fx.delay_time[instance_id] = map(inValue, 0, 0x7f, DELAY_TIME_MIN, DELAY_TIME_MAX);
-          delay_fx[instance_id]->delay(0, constrain(configuration.fx.delay_time[instance_id] * 10, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
+          configuration.fx.dexed[selected_instance_id].delay_time = map(inValue, 0, 0x7f, DELAY_TIME_MIN, DELAY_TIME_MAX);
+          delay_fx[instance_id]->delay(0, constrain(configuration.fx.dexed[selected_instance_id].delay_time * 10, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
           // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_time)) {
           //   LCDML.OTHER_updateFunc();
           //   LCDML.loop_menu();
           // }
           break;
         case 106: // CC 106: delay feedback
-          configuration.fx.delay_feedback[instance_id] = map(inValue, 0, 0x7f, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
-          delay_fb_mixer[instance_id]->gain(1, mapfloat(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 0.7));
-          // delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127))); // amount of feedback
+          configuration.fx.dexed[selected_instance_id].delay_feedback = map(inValue, 0, 0x7f, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
+          delay_fb_mixer[instance_id]->gain(1, mapfloat(configuration.fx.dexed[selected_instance_id].delay_feedback, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 0.7));
+          // delay_fb_mixer[instance_id]->gain(1, midi_volume_transform(map(configuration.fx.dexed[instance_id].delay_feedback, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0, 127))); // amount of feedback
 
           // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_delay_feedback)) {
           //   LCDML.OTHER_updateFunc();
@@ -3463,8 +3463,8 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
           // }
           break;
         case 107: // CC 107: delay volume
-          configuration.fx.delay_level[instance_id] = map(inValue, 0, 0x7f, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-          global_delay_in_mixer[instance_id]->gain(0, mapfloat(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 0.9));
+          configuration.fx.dexed[instance_id].delay_level = map(inValue, 0, 0x7f, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+          global_delay_in_mixer[instance_id]->gain(0, mapfloat(configuration.fx.dexed[selected_instance_id].delay_level, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0, 0.9));
           break;
         case 120:
           MicroDexed[instance_id]->panic();
@@ -4319,14 +4319,14 @@ FLASHMEM void init_MIDI_send_CC(void)
 #endif
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 7, configuration.dexed[selected_instance_id].sound_intensity);
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 10, configuration.dexed[selected_instance_id].pan);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 91, configuration.fx.reverb_send[selected_instance_id]);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.chorus_level[selected_instance_id]);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 91, configuration.fx.dexed[selected_instance_id].reverb_send);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 93, configuration.fx.dexed[selected_instance_id].chorus_level);
   MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 94, configuration.dexed[selected_instance_id].tune);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, configuration.fx.filter_resonance[selected_instance_id]);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, configuration.fx.filter_cutoff[selected_instance_id]);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 105, configuration.fx.delay_time[selected_instance_id]);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 106, configuration.fx.delay_feedback[selected_instance_id]);
-  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.delay_level[selected_instance_id]);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 103, configuration.fx.dexed[selected_instance_id].filter_resonance);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 104, configuration.fx.dexed[selected_instance_id].filter_cutoff);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 105, configuration.fx.dexed[selected_instance_id].delay_time);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 106, configuration.fx.dexed[selected_instance_id].delay_feedback);
+  MD_sendControlChange(configuration.dexed[selected_instance_id].midi_channel, 107, configuration.fx.dexed[selected_instance_id].delay_level);
 }
 
 /******************************************************************************
@@ -4482,38 +4482,9 @@ FLASHMEM void check_configuration_sys(void)
 
 FLASHMEM void check_configuration_fx(void)
 {
-
-  configuration.fx.reverb_lowpass = constrain(configuration.fx.reverb_lowpass, REVERB_LOWPASS_MIN, REVERB_LOWPASS_MAX);
-  configuration.fx.reverb_lodamp = constrain(configuration.fx.reverb_lodamp, REVERB_LODAMP_MIN, REVERB_LODAMP_MAX);
-  configuration.fx.reverb_hidamp = constrain(configuration.fx.reverb_hidamp, REVERB_HIDAMP_MIN, REVERB_HIDAMP_MAX);
-  configuration.fx.reverb_diffusion = constrain(configuration.fx.reverb_diffusion, REVERB_DIFFUSION_MIN, REVERB_DIFFUSION_MAX);
-
-  configuration.fx.reverb_roomsize = constrain(configuration.fx.reverb_roomsize, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX);
-  configuration.fx.reverb_level = constrain(configuration.fx.reverb_level, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX);
-
+  configuration.fx.check();
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-  {
-    configuration.fx.filter_cutoff[instance_id] = constrain(configuration.fx.filter_cutoff[instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX);
-    configuration.fx.filter_resonance[instance_id] = constrain(configuration.fx.filter_resonance[instance_id], FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
-    configuration.fx.chorus_frequency[instance_id] = constrain(configuration.fx.chorus_frequency[instance_id], CHORUS_FREQUENCY_MIN, CHORUS_FREQUENCY_MAX);
-    configuration.fx.chorus_waveform[instance_id] = constrain(configuration.fx.chorus_waveform[instance_id], CHORUS_WAVEFORM_MIN, CHORUS_WAVEFORM_MAX);
-    configuration.fx.chorus_depth[instance_id] = constrain(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX);
-    configuration.fx.chorus_level[instance_id] = constrain(configuration.fx.chorus_level[instance_id], CHORUS_LEVEL_MIN, CHORUS_LEVEL_MAX);
-    if (configuration.fx.delay_sync[instance_id] == 0)
-      configuration.fx.delay_time[instance_id] = constrain(configuration.fx.delay_time[instance_id], DELAY_TIME_MIN, DELAY_TIME_MAX);
-    configuration.fx.delay_feedback[instance_id] = constrain(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX);
-    configuration.fx.delay_level[instance_id] = constrain(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-    configuration.fx.delay_level_global[instance_id] = constrain(configuration.fx.delay_level_global[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
-    configuration.fx.delay_pan[instance_id] = constrain(configuration.fx.delay_pan[instance_id], PANORAMA_MIN, PANORAMA_MAX);
-    configuration.fx.delay_sync[instance_id] = constrain(configuration.fx.delay_sync[instance_id], DELAY_SYNC_MIN, DELAY_SYNC_MAX);
-    configuration.fx.reverb_send[instance_id] = constrain(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX);
-  }
-
-  configuration.fx.ep_chorus_frequency = constrain(configuration.fx.ep_chorus_frequency, EP_CHORUS_FREQUENCY_MIN, EP_CHORUS_FREQUENCY_MAX);
-  configuration.fx.ep_chorus_waveform = constrain(configuration.fx.ep_chorus_waveform, EP_CHORUS_WAVEFORM_MIN, EP_CHORUS_WAVEFORM_MAX);
-  configuration.fx.ep_chorus_depth = constrain(configuration.fx.ep_chorus_depth, EP_CHORUS_DEPTH_MIN, EP_CHORUS_DEPTH_MAX);
-  configuration.fx.ep_chorus_level = constrain(configuration.fx.ep_chorus_level, EP_CHORUS_LEVEL_MIN, EP_CHORUS_LEVEL_MAX);
-  configuration.fx.ep_reverb_send = constrain(configuration.fx.ep_reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX);
+    configuration.fx.dexed[instance_id].check();
 }
 
 FLASHMEM void check_configuration_dexed(uint8_t instance_id)
@@ -4543,36 +4514,13 @@ FLASHMEM void init_configuration(void)
   configuration.sys.screen_saver_start = SCREEN_SAVER_START_DEFAULT;
   configuration.sys.screen_saver_mode = SCREEN_SAVER_MODE_DEFAULT;
   configuration.sys.gamepad_speed = GAMEPAD_SPEED_DEFAULT;
-  configuration.fx.reverb_lowpass = REVERB_LOWPASS_DEFAULT;
-  configuration.fx.reverb_lodamp = REVERB_LODAMP_DEFAULT;
-  configuration.fx.reverb_hidamp = REVERB_HIDAMP_DEFAULT;
-  configuration.fx.reverb_diffusion = REVERB_DIFFUSION_DEFAULT;
-  configuration.fx.reverb_roomsize = REVERB_ROOMSIZE_DEFAULT;
-  configuration.fx.reverb_level = REVERB_LEVEL_DEFAULT;
 
-  configuration.fx.ep_chorus_frequency = EP_CHORUS_FREQUENCY_DEFAULT;
-  configuration.fx.ep_chorus_waveform = EP_CHORUS_WAVEFORM_DEFAULT;
-  configuration.fx.ep_chorus_depth = EP_CHORUS_DEPTH_DEFAULT;
-  configuration.fx.ep_chorus_level = EP_CHORUS_LEVEL_DEFAULT;
-  configuration.fx.ep_reverb_send = REVERB_SEND_DEFAULT;
+  // configuration.fx is initialized by default, so nothing to do here.
 
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
     // configuration.dexed is initialized by default, so nothing to do here.
-    
-    configuration.fx.filter_cutoff[instance_id] = FILTER_CUTOFF_DEFAULT;
-    configuration.fx.filter_resonance[instance_id] = FILTER_RESONANCE_DEFAULT;
-    configuration.fx.chorus_frequency[instance_id] = CHORUS_FREQUENCY_DEFAULT;
-    configuration.fx.chorus_waveform[instance_id] = CHORUS_WAVEFORM_DEFAULT;
-    configuration.fx.chorus_depth[instance_id] = CHORUS_DEPTH_DEFAULT;
-    configuration.fx.chorus_level[instance_id] = CHORUS_LEVEL_DEFAULT;
-    configuration.fx.delay_time[instance_id] = DELAY_TIME_DEFAULT / 10;
-    configuration.fx.delay_feedback[instance_id] = DELAY_FEEDBACK_DEFAULT;
-    configuration.fx.delay_level[instance_id] = DELAY_LEVEL_DEFAULT;
-    configuration.fx.delay_level_global[instance_id] = DELAY_LEVEL_GLOBAL_DEFAULT;
-    configuration.fx.delay_sync[instance_id] = DELAY_SYNC_DEFAULT;
-    configuration.fx.reverb_send[instance_id] = REVERB_SEND_DEFAULT;
-
+    // configuration.fx.dexed is initialized by default, so nothing to do here.
     MicroDexed[instance_id]->ControllersRefresh();
   }
 
@@ -4670,7 +4618,7 @@ FLASHMEM void set_fx_params(void)
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
     // CHORUS
-    switch (configuration.fx.chorus_waveform[instance_id])
+    switch (configuration.fx.dexed[instance_id].chorus_waveform)
     {
     case 0:
       chorus_modulator[instance_id]->begin(WAVEFORM_TRIANGLE);
@@ -4704,32 +4652,32 @@ FLASHMEM void set_fx_params(void)
 
     // DELAY
 
-    delay_mixer[instance_id]->gain(1, mapfloat(configuration.fx.delay_level_global[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
-    delay_mono2stereo[instance_id]->panorama(mapfloat(configuration.fx.delay_pan[instance_id], PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
-    delay_fb_mixer[instance_id]->gain(1, mapfloat(configuration.fx.delay_feedback[instance_id], DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0.0, 0.8));
+    delay_mixer[instance_id]->gain(1, mapfloat(configuration.fx.dexed[instance_id].delay_level_global, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
+    delay_mono2stereo[instance_id]->panorama(mapfloat(configuration.fx.dexed[instance_id].delay_pan, PANORAMA_MIN, PANORAMA_MAX, -1.0, 1.0));
+    delay_fb_mixer[instance_id]->gain(1, mapfloat(configuration.fx.dexed[instance_id].delay_feedback, DELAY_FEEDBACK_MIN, DELAY_FEEDBACK_MAX, 0.0, 0.8));
 
-    if (configuration.fx.delay_level[instance_id] <= DELAY_LEVEL_MIN)
+    if (configuration.fx.dexed[instance_id].delay_level <= DELAY_LEVEL_MIN)
       delay_fx[instance_id]->disable(0);
-    else if (configuration.fx.delay_sync[instance_id] == 0)
-      delay_fx[instance_id]->delay(0, constrain(configuration.fx.delay_time[instance_id], DELAY_TIME_MIN, DELAY_TIME_MAX) * 10);
+    else if (configuration.fx.dexed[instance_id].delay_sync == 0)
+      delay_fx[instance_id]->delay(0, constrain(configuration.fx.dexed[instance_id].delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX) * 10);
 
-    if (configuration.fx.delay_multiplier[instance_id] == 0)
-      configuration.fx.delay_multiplier[instance_id] = 1;
-    if (configuration.fx.delay_sync[instance_id] > 0)
+    if (configuration.fx.dexed[instance_id].delay_multiplier == 0)
+      configuration.fx.dexed[instance_id].delay_multiplier = 1;
+    if (configuration.fx.dexed[instance_id].delay_sync > 0)
     {
-      uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[configuration.fx.delay_sync[instance_id]] / seq.bpm);
+      uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[configuration.fx.dexed[instance_id].delay_sync] / seq.bpm);
       // set_delay_sync(configuration.fx.delay_sync[instance_id], instance_id);
-      delay_fx[instance_id]->delay(0, constrain(midi_sync_delay_time * configuration.fx.delay_multiplier[instance_id], DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
+      delay_fx[instance_id]->delay(0, constrain(midi_sync_delay_time * configuration.fx.dexed[instance_id].delay_multiplier, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     }
-    global_delay_in_mixer[instance_id]->gain(0, mapfloat(configuration.fx.delay_level[instance_id], DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
+    global_delay_in_mixer[instance_id]->gain(0, mapfloat(configuration.fx.dexed[instance_id].delay_level, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
 
     // REVERB SEND
-    reverb_mixer_r.gain(instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
-    reverb_mixer_l.gain(instance_id, volume_transform(mapfloat(configuration.fx.reverb_send[instance_id], REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+    reverb_mixer_r.gain(instance_id, volume_transform(mapfloat(configuration.fx.dexed[instance_id].reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
+    reverb_mixer_l.gain(instance_id, volume_transform(mapfloat(configuration.fx.dexed[instance_id].reverb_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
 
     // DEXED FILTER
-    MicroDexed[instance_id]->setFilterResonance(mapfloat(configuration.fx.filter_resonance[instance_id], FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
-    MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.filter_cutoff[instance_id], FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
+    MicroDexed[instance_id]->setFilterResonance(mapfloat(configuration.fx.dexed[instance_id].filter_resonance, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX, 1.0, 0.0));
+    MicroDexed[instance_id]->setFilterCutoff(mapfloat(configuration.fx.dexed[instance_id].filter_cutoff, FILTER_CUTOFF_MIN, FILTER_CUTOFF_MAX, 1.0, 0.0));
     MicroDexed[instance_id]->doRefreshVoice();
   }
 
@@ -4741,10 +4689,10 @@ FLASHMEM void set_fx_params(void)
   global_delay_in_mixer[1]->gain(7, mapfloat(configuration.fx.delay1_to_delay2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
   global_delay_in_mixer[0]->gain(7, mapfloat(configuration.fx.delay2_to_delay1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 0.9));
 
-  reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-  reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.delay_to_reverb[0], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-  reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
-  reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.delay_to_reverb[1], REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.dexed[0].delay_to_reverb, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY1, mapfloat(configuration.fx.dexed[0].delay_to_reverb, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_l.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.dexed[1].delay_to_reverb, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
+  reverb_mixer_r.gain(REVERB_MIX_CH_AUX_DELAY2, mapfloat(configuration.fx.dexed[1].delay_to_reverb, REVERB_LEVEL_MIN, REVERB_LEVEL_MAX, 0.0, 1.0));
 
   // REVERB
   reverb.size(mapfloat(configuration.fx.reverb_roomsize, REVERB_ROOMSIZE_MIN, REVERB_ROOMSIZE_MAX, 0.0, 1.0));
@@ -5322,27 +5270,27 @@ FLASHMEM void show_configuration(void)
     LOG.print(F("  Highest Note         "));
     LOG.println(configuration.dexed[instance_id].highest_note, DEC);
     LOG.print(F("  Filter Cutoff        "));
-    LOG.println(configuration.fx.filter_cutoff[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].filter_cutoff, DEC);
     LOG.print(F("  Filter Resonance     "));
-    LOG.println(configuration.fx.filter_resonance[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].filter_resonance, DEC);
     LOG.print(F("  Chorus Frequency     "));
-    LOG.println(configuration.fx.chorus_frequency[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].chorus_frequency, DEC);
     LOG.print(F("  Chorus Waveform      "));
-    LOG.println(configuration.fx.chorus_waveform[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].chorus_waveform, DEC);
     LOG.print(F("  Chorus Depth         "));
-    LOG.println(configuration.fx.chorus_depth[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].chorus_depth, DEC);
     LOG.print(F("  Chorus Level         "));
-    LOG.println(configuration.fx.chorus_level[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].chorus_level, DEC);
     LOG.print(F("  Delay Time           "));
-    LOG.println(configuration.fx.delay_time[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].delay_time, DEC);
     LOG.print(F("  Delay Feedback       "));
-    LOG.println(configuration.fx.delay_feedback[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].delay_feedback, DEC);
     LOG.print(F("  Delay Level          "));
-    LOG.println(configuration.fx.delay_level[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].delay_level, DEC);
     LOG.print(F("  Delay Sync           "));
-    LOG.println(configuration.fx.delay_sync[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].delay_sync, DEC);
     LOG.print(F("  Reverb Send          "));
-    LOG.println(configuration.fx.reverb_send[instance_id], DEC);
+    LOG.println(configuration.fx.dexed[instance_id].reverb_send, DEC);
     LOG.print(F("  Sound Intensity      "));
     LOG.println(configuration.dexed[instance_id].sound_intensity, DEC);
     LOG.print(F("  Panorama             "));

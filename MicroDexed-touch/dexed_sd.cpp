@@ -1041,44 +1041,25 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
         serializeJsonPretty(data_json, Serial);
         LOG.println();
 #endif
+
+        Param* prm = configuration.fx.getParams();
+        do{
+          prm->set(data_json[prm->name]);
+          LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          prm = prm->next();
+        }while (prm != NULL);
+
         for (uint8_t i = 0; i < MAX_DEXED; i++)
         {
-          configuration.fx.filter_cutoff[i] = data_json["filter_cutoff"][i];
-          configuration.fx.filter_resonance[i] = data_json["filter_resonance"][i];
-          configuration.fx.chorus_frequency[i] = data_json["chorus_frequency"][i];
-          configuration.fx.chorus_waveform[i] = data_json["chorus_waveform"][i];
-          configuration.fx.chorus_depth[i] = data_json["chorus_depth"][i];
-          configuration.fx.chorus_level[i] = data_json["chorus_level"][i];
-          configuration.fx.delay_multiplier[i] = data_json["delay_multiplier"][i];
-          configuration.fx.delay_time[i] = data_json["delay_time"][i];
-          configuration.fx.delay_feedback[i] = data_json["delay_feedback"][i];
-          configuration.fx.delay_level[i] = data_json["delay_level"][i];
-          configuration.fx.delay_sync[i] = data_json["delay_sync"][i];
-          configuration.fx.delay_pan[i] = data_json["delay_pan"][i];
-          configuration.fx.reverb_send[i] = data_json["reverb_send"][i];
-          configuration.fx.delay_to_reverb[i] = data_json["delay_to_reverb"][i];
-
-          configuration.fx.delay_filter_mode[i] = data_json["delay_filter_mode"][i];
-          configuration.fx.delay_filter_freq[i] = data_json["delay_filter_freq"][i];
-
-          if (configuration.fx.delay_sync[i] > 0)
-            configuration.fx.delay_time[i] = 0;
-          configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
+          Param* prm = configuration.fx.dexed[i].getParams();
+          do{
+            prm->set(data_json[prm->name][i]);
+            LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+            prm = prm->next();
+          }while (prm != NULL);
+          if (configuration.fx.dexed[i].delay_sync > 0)
+            configuration.fx.dexed[i].delay_time = 0;
         }
-        configuration.fx.delay1_to_delay2 = data_json["delay1_to_delay2"];
-        configuration.fx.delay2_to_delay1 = data_json["delay2_to_delay1"];
-        configuration.fx.reverb_roomsize = data_json["reverb_roomsize"];
-        configuration.fx.reverb_damping = data_json["reverb_damping"];
-        configuration.fx.reverb_lowpass = data_json["reverb_lowpass"];
-        configuration.fx.reverb_lodamp = data_json["reverb_lodamp"];
-        configuration.fx.reverb_hidamp = data_json["reverb_hidamp"];
-        configuration.fx.reverb_diffusion = data_json["reverb_diffusion"];
-        configuration.fx.reverb_level = data_json["reverb_level"];
-        configuration.fx.ep_chorus_frequency = data_json["ep_chorus_frequency"];
-        configuration.fx.ep_chorus_waveform = data_json["ep_chorus_waveform"];
-        configuration.fx.ep_chorus_depth = data_json["ep_chorus_depth"];
-        configuration.fx.ep_chorus_level = data_json["ep_chorus_level"];
-        configuration.fx.ep_reverb_send = data_json["ep_reverb_send"];
 
         check_configuration_fx();
         set_fx_params();
@@ -1127,41 +1108,23 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
     if (json)
     {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+      
+      Param* prm = configuration.fx.getParams();
+      do{
+        data_json[prm->name] = prm->get();
+        LOG.print("Save param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+        prm = prm->next();
+      }while (prm != NULL);
+
       for (uint8_t i = 0; i < MAX_DEXED; i++)
       {
-        data_json["filter_cutoff"][i] = configuration.fx.filter_cutoff[i];
-        data_json["filter_resonance"][i] = configuration.fx.filter_resonance[i];
-        data_json["chorus_frequency"][i] = configuration.fx.chorus_frequency[i];
-        data_json["chorus_waveform"][i] = configuration.fx.chorus_waveform[i];
-        data_json["chorus_depth"][i] = configuration.fx.chorus_depth[i];
-        data_json["chorus_level"][i] = configuration.fx.chorus_level[i];
-        data_json["delay_multiplier"][i] = configuration.fx.delay_multiplier[i];
-        data_json["delay_time"][i] = configuration.fx.delay_time[i];
-        data_json["delay_feedback"][i] = configuration.fx.delay_feedback[i];
-        data_json["delay_level"][i] = configuration.fx.delay_level[i];
-        data_json["delay_level_global"][i] = configuration.fx.delay_level_global[i];
-        data_json["delay_sync"][i] = configuration.fx.delay_sync[i];
-        data_json["delay_pan"][i] = configuration.fx.delay_pan[i];
-        data_json["reverb_send"][i] = configuration.fx.reverb_send[i];
-        data_json["delay_to_reverb"][i] = configuration.fx.delay_to_reverb[i];
-
-        data_json["delay_filter_mode"][i] = configuration.fx.delay_filter_mode[i];
-        data_json["delay_filter_freq"][i] = configuration.fx.delay_filter_freq[i];
+        Param* prm = configuration.fx.dexed[i].getParams();
+        do{
+          data_json[prm->name][i] = prm->get();
+          LOG.print("Save param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          prm = prm->next();
+        }while (prm != NULL);
       }
-      data_json["delay1_to_delay2"] = configuration.fx.delay1_to_delay2;
-      data_json["delay2_to_delay1"] = configuration.fx.delay2_to_delay1;
-      data_json["reverb_roomsize"] = configuration.fx.reverb_roomsize;
-      data_json["reverb_damping"] = configuration.fx.reverb_damping;
-      data_json["reverb_lowpass"] = configuration.fx.reverb_lowpass;
-      data_json["reverb_lodamp"] = configuration.fx.reverb_lodamp;
-      data_json["reverb_hidamp"] = configuration.fx.reverb_hidamp;
-      data_json["reverb_diffusion"] = configuration.fx.reverb_diffusion;
-      data_json["reverb_level"] = configuration.fx.reverb_level;
-      data_json["ep_chorus_frequency"] = configuration.fx.ep_chorus_frequency;
-      data_json["ep_chorus_waveform"] = configuration.fx.ep_chorus_waveform;
-      data_json["ep_chorus_depth"] = configuration.fx.ep_chorus_depth;
-      data_json["ep_chorus_level"] = configuration.fx.ep_chorus_level;
-      data_json["ep_reverb_send"] = configuration.fx.ep_reverb_send;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       LOG.println(F("Write JSON data:"));

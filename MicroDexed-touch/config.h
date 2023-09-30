@@ -783,47 +783,54 @@ typedef struct dexed_s : public Params
   P_end;
 } __attribute__((packed)) dexed_t;
 
-typedef struct fx_s
+typedef struct dexed_fx_s : public Params
 {
-  uint8_t filter_cutoff[MAX_DEXED];
-  uint8_t filter_resonance[MAX_DEXED];
-  uint8_t chorus_frequency[MAX_DEXED];
-  uint8_t chorus_waveform[MAX_DEXED];
-  uint8_t chorus_depth[MAX_DEXED];
-  uint8_t chorus_level[MAX_DEXED];
-  uint8_t delay_multiplier[MAX_DEXED];
-  uint16_t delay_time[MAX_DEXED];
-  uint8_t delay_feedback[MAX_DEXED];
-  uint8_t delay_level[MAX_DEXED];
-  uint8_t delay_level_global[MAX_DEXED];
-  uint8_t delay_sync[MAX_DEXED];
-  uint8_t delay_pan[MAX_DEXED];
-  uint8_t reverb_send[MAX_DEXED];
-  uint8_t delay_to_reverb[MAX_DEXED];
-  uint8_t delay_filter_mode[MAX_DEXED];
-  uint16_t delay_filter_freq[MAX_DEXED];
-  uint8_t delay1_to_delay2;
-  uint8_t delay2_to_delay1;
-  uint8_t reverb_roomsize;
-  uint8_t reverb_damping;
-  uint8_t reverb_lowpass;
-  uint8_t reverb_lodamp;
-  uint8_t reverb_hidamp;
-  uint8_t reverb_diffusion;
-  uint8_t reverb_level;
-  uint8_t eq_1;
-  int8_t eq_2;
-  int8_t eq_3;
-  int8_t eq_4;
-  int8_t eq_5;
-  int8_t eq_6;
-  uint8_t eq_7;
-  uint8_t ep_chorus_frequency;
-  uint8_t ep_chorus_waveform;
-  uint8_t ep_chorus_depth;
-  uint8_t ep_chorus_level;
-  uint8_t ep_reverb_send;
-} fx_t;
+  P_uint8_t(filter_cutoff,0,100,0);
+  P_uint8_t(filter_resonance,0,100,0);
+  P_uint8_t(chorus_frequency,0,100,0);
+  P_uint8_t(chorus_waveform,0,1,0);
+  P_uint8_t(chorus_depth,0,100,0);
+  P_uint8_t(chorus_level,0,100,0);
+  P_uint8_t(delay_multiplier,1,4,1);
+  P_uint16_t(delay_time,0,DELAY_MAX_TIME / 10,DELAY_TIME_DEFAULT / 10);
+  P_uint8_t(delay_feedback,0,100,0);
+  P_uint8_t(delay_level,0,100,0);
+  P_uint8_t(delay_level_global,0,100,0);
+  P_uint8_t(delay_sync,0,9,0);
+  P_uint8_t(delay_pan,PANORAMA_MIN,PANORAMA_MAX,PANORAMA_MAX/2);
+  P_uint8_t(reverb_send,0,100,0);
+  P_uint8_t(delay_to_reverb,0,100,0);
+  P_uint8_t(delay_filter_mode,0,3,0);
+  P_uint16_t(delay_filter_freq,0,15000,15000);
+  P_end;
+} __attribute__((packed)) dexed_fx_t;
+
+typedef struct fx_s : public Params
+{
+  P_uint8_t(delay1_to_delay2,0,100,0);
+  P_uint8_t(delay2_to_delay1,0,100,0);
+  P_uint8_t(reverb_roomsize,0,100,0);
+  P_uint8_t(reverb_damping,0,100,0);
+  P_uint8_t(reverb_lowpass,0,100,0);
+  P_uint8_t(reverb_lodamp,0,100,0);
+  P_uint8_t(reverb_hidamp,0,100,0);
+  P_uint8_t(reverb_diffusion,0,100,0);
+  P_uint8_t(reverb_level,0,100,0);
+  P_int32_t(eq_1,-99,99,0);
+  P_int32_t(eq_2,-99,99,0);
+  P_int32_t(eq_3,-99,99,0);
+  P_int32_t(eq_4,-99,99,0);
+  P_int32_t(eq_5,-99,99,0);
+  P_int32_t(eq_6,-99,99,0);
+  P_uint8_t(eq_7,-99,99,0);
+  P_uint8_t(ep_chorus_frequency,0,100,0);
+  P_uint8_t(ep_chorus_waveform,0,1,0);
+  P_uint8_t(ep_chorus_depth,0,100,0);
+  P_uint8_t(ep_chorus_level,0,100,0);
+  P_uint8_t(ep_reverb_send,0,100,0);
+  P_end;
+  dexed_fx_t dexed[2];
+} __attribute__((packed)) fx_t;
 
 typedef struct epiano_s : public Params
 {
