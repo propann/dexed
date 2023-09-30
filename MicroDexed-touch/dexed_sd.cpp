@@ -868,8 +868,8 @@ FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 
         Param* prm = params->getParams();
         do{
-          prm->set(data_json[prm->name]);
-          LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          prm->set<float>(data_json[prm->name]);
+          LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get<float>()); LOG.println();
           prm = prm->next();
         }while (prm != NULL);
 
@@ -903,10 +903,8 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
 {
   if (sd_card > 0)
   {
-#ifdef DEBUG
     LOG.print(F("Saving config "));
     LOG.println(filename);
-#endif
 
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
@@ -928,6 +926,10 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
       serializeJsonPretty(data_json, json);
       json.close();
       AudioInterrupts();
+
+      LOG.print(F("Saving config "));
+      LOG.print(filename);
+      LOG.println(F("done."));
 
       return (true);
     }

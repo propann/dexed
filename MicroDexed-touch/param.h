@@ -4,14 +4,14 @@
 
 class Param {
 public:
-  const uint8_t size, count;
+  const enum Type {
+    P_END=0, P_UINT8_T, P_UINT16_T, P_INT32_T, P_FLOAT, P_TYPE_COUNT
+  } type;
+  const uint8_t sizes[P_TYPE_COUNT]={0,sizeof(uint8_t),sizeof(uint16_t),sizeof(int32_t),sizeof(float)};
+
+  const uint8_t count;
   const char* name;
   const int32_t def,min,max;
-
-  const enum Type {
-    P_END, P_UINT8_T, P_UINT16_T, P_INT32_T, P_FLOAT, P_TYPE_COUNT
-  } type;
-  const uint8_t sizes[P_TYPE_COUNT]={0,1,2,4,4};
 
   Param(Type _type=P_UINT8_T, uint8_t _count=1, const char* _name="", int32_t _min=0, int32_t _max=99, int32_t _default=50) : type(_type), count(_count), name(_name), def(_default), min(_min), max(_max) {};
 
@@ -25,7 +25,11 @@ public:
     if(type == P_UINT8_T) return *((uint8_t*)ptr);
     if(type == P_UINT16_T) return *((uint16_t*)ptr);
     if(type == P_INT32_T) return *((int32_t*)ptr);
-    if(type == P_FLOAT) return *((float*)ptr);
+    if(type == P_FLOAT) {
+    // TODO why is this needed? interpret float bits as uint32_t to prevent crash
+      uint32_t tmp=*((uint32_t*)ptr);
+      return *(float*)&tmp;
+    }
     return 0;
   };
   template<typename T> set(T value) {
@@ -33,7 +37,11 @@ public:
     if(type == P_UINT8_T) *((uint8_t*)ptr) = value;
     if(type == P_UINT16_T) *((uint16_t*)ptr) = value;
     if(type == P_INT32_T) *((uint32_t*)ptr) = value;
-    if(type == P_FLOAT) *((float*)ptr) = value;
+    if(type == P_FLOAT) {
+      // TODO why is this needed? interpret float bits as uint32_t to prevent crash
+      float tmp=value;
+      *((uint32_t*)ptr) = *(uint32_t*)&tmp;
+    }
   };
   void check() {
     int32_t val = get<int32_t>();
