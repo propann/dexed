@@ -847,11 +847,10 @@ FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
     if (SD.exists(filename))
     {
       // ... and if: load
-#ifdef DEBUG
-      LOG.print(F("Found configuration ["));
+      LOG.print(F("Loading "));
       LOG.print(filename);
-      LOG.println(F("]... loading..."));
-#endif
+      LOG.println(F("..."));
+
       json = SD.open(filename);
       if (json)
       {
@@ -873,6 +872,10 @@ FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
           LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
           prm = prm->next();
         }while (prm != NULL);
+
+        LOG.print(F("Loading "));
+        LOG.print(filename);
+        LOG.println(F("done."));
 
         return (true);
       }
@@ -901,12 +904,7 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
   if (sd_card > 0)
   {
 #ifdef DEBUG
-    LOG.print(F("Saving voice config "));
-    LOG.print(vc);
-    LOG.print(F("["));
-    LOG.print(instance_id);
-    LOG.print(F("]"));
-    LOG.print(F(" to "));
+    LOG.print(F("Saving config "));
     LOG.println(filename);
 #endif
 
