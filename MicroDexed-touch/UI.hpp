@@ -116,29 +116,8 @@ bool check_and_confirm_midi_channels;
 extern AudioFilterStateVariable global_delay_filter[NUM_DEXED];
 extern AudioMixer<4> global_delay_filter_mixer[NUM_DEXED];
 
-uint16_t mb_cross_freq_low = 140;
-uint16_t mb_cross_freq_mid = 2100;
-uint16_t mb_cross_freq_upper_mid = 5200;
-uint16_t mb_cross_freq_high = 8600;
-float mb_global_gain = 2.0;
-float mb_gain_low = 0.10;
-float mb_gain_mid = 0.10;
-float mb_gain_upper_mid = 0.10;
-float mb_gain_high = 0.80;
-bool multiband_active = false;
-uint8_t mb_threshold_low = 5;
-uint8_t mb_threshold_mid = 15;
-uint8_t mb_threshold_upper_mid = 12;
-uint8_t mb_threshold_high = 2;
-float mb_q_low = 0.30;
-float mb_q_mid = 0.10;
-float mb_q_upper_mid = 0.10;
-float mb_q_high = 0.50;
-bool mb_solo_low;
-bool mb_solo_mid;
-bool mb_solo_upper_mid;
-bool mb_solo_high;
-uint8_t mb_global_ratio = 32;
+mb_t mb;
+
 extern AudioFilterBiquad mb_filter_l_0;
 extern AudioFilterBiquad mb_filter_l_1;
 extern AudioFilterBiquad mb_filter_l_2;
@@ -13606,7 +13585,7 @@ FLASHMEM void print_mb_params()
   if (generic_temp_select_menu == 0)
   {
     display.setTextColor(COLOR_BACKGROUND, GREEN);
-    if (multiband_active)
+    if (mb.multiband_active)
       display.print(F("ACTIVE  "));
     else
     {
@@ -13617,7 +13596,7 @@ FLASHMEM void print_mb_params()
   else
   {
     display.setTextColor(GREEN, COLOR_BACKGROUND);
-    if (multiband_active)
+    if (mb.multiband_active)
       display.print(F("ACTIVE  "));
     else
     {
@@ -13630,7 +13609,7 @@ FLASHMEM void print_mb_params()
     display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   else
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(mb_global_gain);
+  display.print(mb.mb_global_gain);
   display.print("dB");
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print("  ");
@@ -13641,69 +13620,69 @@ FLASHMEM void print_mb_params()
   else
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print("1:");
-  display.print(mb_global_ratio);
+  display.print(mb.mb_global_ratio);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(" ");
 }
 
 FLASHMEM void mb_set_mutes()
 {
-  if (mb_solo_low)
+  if (mb.mb_solo_low)
   {
-    mb_mixer_l.gain(0, VOL_MAX_FLOAT + mb_global_gain + mb_gain_low);
-    mb_mixer_r.gain(0, VOL_MAX_FLOAT + mb_global_gain + mb_gain_low);
+    mb_mixer_l.gain(0, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_low);
+    mb_mixer_r.gain(0, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_low);
   }
   else
   {
     mb_mixer_l.gain(0, 0);
     mb_mixer_r.gain(0, 0);
   }
-  if (mb_solo_mid)
+  if (mb.mb_solo_mid)
   {
-    mb_mixer_l.gain(1, VOL_MAX_FLOAT + mb_global_gain + mb_gain_mid);
-    mb_mixer_r.gain(1, VOL_MAX_FLOAT + mb_global_gain + mb_gain_mid);
+    mb_mixer_l.gain(1, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_mid);
+    mb_mixer_r.gain(1, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_mid);
   }
   else
   {
     mb_mixer_l.gain(1, 0);
     mb_mixer_r.gain(1, 0);
   }
-  if (mb_solo_upper_mid)
+  if (mb.mb_solo_upper_mid)
   {
-    mb_mixer_l.gain(2, VOL_MAX_FLOAT + mb_global_gain + mb_gain_upper_mid);
-    mb_mixer_r.gain(2, VOL_MAX_FLOAT + mb_global_gain + mb_gain_upper_mid);
+    mb_mixer_l.gain(2, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_upper_mid);
+    mb_mixer_r.gain(2, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_upper_mid);
   }
   else
   {
     mb_mixer_l.gain(2, 0);
     mb_mixer_r.gain(2, 0);
   }
-  if (mb_solo_high)
+  if (mb.mb_solo_high)
   {
-    mb_mixer_l.gain(3, VOL_MAX_FLOAT + mb_global_gain + mb_gain_high);
-    mb_mixer_r.gain(3, VOL_MAX_FLOAT + mb_global_gain + mb_gain_high);
+    mb_mixer_l.gain(3, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_high);
+    mb_mixer_r.gain(3, VOL_MAX_FLOAT + mb.mb_global_gain + mb.mb_gain_high);
   }
   else
   {
     mb_mixer_l.gain(3, 0);
     mb_mixer_r.gain(3, 0);
   }
-  if (mb_solo_low == false && mb_solo_upper_mid == false && mb_solo_mid == false && mb_solo_high == false)
+  if (mb.mb_solo_low == false && mb.mb_solo_upper_mid == false && mb.mb_solo_mid == false && mb.mb_solo_high == false)
   {
-    mb_mixer_l.gain(0, 1.0 + mb_global_gain + mb_gain_low);
-    mb_mixer_r.gain(0, 1.0 + mb_global_gain + mb_gain_low);
-    mb_mixer_l.gain(1, 1.0 + mb_global_gain + mb_gain_mid);
-    mb_mixer_r.gain(1, 1.0 + mb_global_gain + mb_gain_mid);
-    mb_mixer_l.gain(2, 1.0 + mb_global_gain + mb_gain_upper_mid);
-    mb_mixer_r.gain(2, 1.0 + mb_global_gain + mb_gain_upper_mid);
-    mb_mixer_l.gain(3, 1.0 + mb_global_gain + mb_gain_high);
-    mb_mixer_r.gain(3, 1.0 + mb_global_gain + mb_gain_high);
+    mb_mixer_l.gain(0, 1.0 + mb.mb_global_gain + mb.mb_gain_low);
+    mb_mixer_r.gain(0, 1.0 + mb.mb_global_gain + mb.mb_gain_low);
+    mb_mixer_l.gain(1, 1.0 + mb.mb_global_gain + mb.mb_gain_mid);
+    mb_mixer_r.gain(1, 1.0 + mb.mb_global_gain + mb.mb_gain_mid);
+    mb_mixer_l.gain(2, 1.0 + mb.mb_global_gain + mb.mb_gain_upper_mid);
+    mb_mixer_r.gain(2, 1.0 + mb.mb_global_gain + mb.mb_gain_upper_mid);
+    mb_mixer_l.gain(3, 1.0 + mb.mb_global_gain + mb.mb_gain_high);
+    mb_mixer_r.gain(3, 1.0 + mb.mb_global_gain + mb.mb_gain_high);
   }
 }
 
 FLASHMEM void mb_set_master()
 {
-  if (multiband_active)
+  if (mb.multiband_active)
   {
     finalized_mixer_l.gain(0, 0); // mute normal output
     finalized_mixer_r.gain(0, 0);
@@ -13721,139 +13700,139 @@ FLASHMEM void mb_set_master()
 
 FLASHMEM void mb_set_compressor()
 {
-  //  mb_compressor_l_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
-  //  mb_compressor_r_0.compression(mb_threshold_low * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_low );
+  //  mb_compressor_l_0.compression(mb.mb_threshold_low * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_low );
+  //  mb_compressor_r_0.compression(mb.mb_threshold_low * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_low );
   //
-  //  mb_compressor_l_1.compression(mb_threshold_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_mid);
-  //  mb_compressor_r_1.compression(mb_threshold_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_mid);
+  //  mb_compressor_l_1.compression(mb.mb_threshold_mid * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_mid);
+  //  mb_compressor_r_1.compression(mb.mb_threshold_mid * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_mid);
   //
-  //  mb_compressor_l_2.compression(mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_upper_mid);
-  //  mb_compressor_r_2.compression(mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_upper_mid);
+  //  mb_compressor_l_2.compression(mb.mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_upper_mid);
+  //  mb_compressor_r_2.compression(mb.mb_threshold_upper_mid * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_upper_mid);
   //
-  //  mb_compressor_l_3.compression(mb_threshold_high * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_high);
-  //  mb_compressor_r_3.compression(mb_threshold_high * -1, 0.03f , 0.2f , mb_global_ratio, 0.0f , mb_gain_high);
+  //  mb_compressor_l_3.compression(mb.mb_threshold_high * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_high);
+  //  mb_compressor_r_3.compression(mb.mb_threshold_high * -1, 0.03f , 0.2f , mb.mb_global_ratio, 0.0f , mb.mb_gain_high);
 
-  mb_compressor_l_0.limit(mb_threshold_low * -1, 0.03f, 0.2f);
-  mb_compressor_r_0.limit(mb_threshold_low * -1, 0.03f, 0.2f);
+  mb_compressor_l_0.limit(mb.mb_threshold_low * -1, 0.03f, 0.2f);
+  mb_compressor_r_0.limit(mb.mb_threshold_low * -1, 0.03f, 0.2f);
 
-  mb_compressor_l_1.limit(mb_threshold_mid * -1, 0.03f, 0.2f);
-  mb_compressor_r_1.limit(mb_threshold_mid * -1, 0.03f, 0.2f);
+  mb_compressor_l_1.limit(mb.mb_threshold_mid * -1, 0.03f, 0.2f);
+  mb_compressor_r_1.limit(mb.mb_threshold_mid * -1, 0.03f, 0.2f);
 
-  mb_compressor_l_2.limit(mb_threshold_upper_mid * -1, 0.03f, 0.2f);
-  mb_compressor_r_2.limit(mb_threshold_upper_mid * -1, 0.03f, 0.2f);
+  mb_compressor_l_2.limit(mb.mb_threshold_upper_mid * -1, 0.03f, 0.2f);
+  mb_compressor_r_2.limit(mb.mb_threshold_upper_mid * -1, 0.03f, 0.2f);
 
-  mb_compressor_l_3.limit(mb_threshold_high * -1, 0.03f, 0.2f);
-  mb_compressor_r_3.limit(mb_threshold_high * -1, 0.03f, 0.2f);
+  mb_compressor_l_3.limit(mb.mb_threshold_high * -1, 0.03f, 0.2f);
+  mb_compressor_r_3.limit(mb.mb_threshold_high * -1, 0.03f, 0.2f);
 
-  mb_filter_l_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
-  mb_filter_r_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
+  mb_filter_l_0.setLowpass(0, mb.mb_cross_freq_low, mb.mb_q_low);
+  mb_filter_r_0.setLowpass(0, mb.mb_cross_freq_low, mb.mb_q_low);
 
-  mb_filter_l_1.setBandpass(0, mb_cross_freq_mid, mb_q_mid);
-  mb_filter_r_1.setBandpass(0, mb_cross_freq_mid, mb_q_mid);
+  mb_filter_l_1.setBandpass(0, mb.mb_cross_freq_mid, mb.mb_q_mid);
+  mb_filter_r_1.setBandpass(0, mb.mb_cross_freq_mid, mb.mb_q_mid);
 
-  mb_filter_l_2.setBandpass(0, mb_cross_freq_upper_mid, mb_q_upper_mid);
-  mb_filter_r_2.setBandpass(0, mb_cross_freq_upper_mid, mb_q_upper_mid);
+  mb_filter_l_2.setBandpass(0, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid);
+  mb_filter_r_2.setBandpass(0, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid);
 
-  mb_filter_l_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
-  mb_filter_r_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
+  mb_filter_l_3.setHighpass(0, mb.mb_cross_freq_high, mb.mb_q_high);
+  mb_filter_r_3.setHighpass(0, mb.mb_cross_freq_high, mb.mb_q_high);
 
-  //  mb_filter_l_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
-  //  mb_filter_r_0.setLowpass(0, mb_cross_freq_low, mb_q_low);
-  //  mb_filter_l_0.setLowpass(1, mb_cross_freq_low, mb_q_low * 2);
-  //  mb_filter_r_0.setLowpass(1, mb_cross_freq_low, mb_q_low * 2);
-  //  mb_filter_l_0.setLowpass(2, mb_cross_freq_low, mb_q_low);
-  //  mb_filter_r_0.setLowpass(2, mb_cross_freq_low, mb_q_low);
-  //  mb_filter_l_0.setLowpass(3, mb_cross_freq_low, mb_q_low * 2);
-  //  mb_filter_r_0.setLowpass(3, mb_cross_freq_low, mb_q_low * 2);
+  //  mb_filter_l_0.setLowpass(0, mb.mb_cross_freq_low, mb.mb_q_low);
+  //  mb_filter_r_0.setLowpass(0, mb.mb_cross_freq_low, mb.mb_q_low);
+  //  mb_filter_l_0.setLowpass(1, mb.mb_cross_freq_low, mb.mb_q_low * 2);
+  //  mb_filter_r_0.setLowpass(1, mb.mb_cross_freq_low, mb.mb_q_low * 2);
+  //  mb_filter_l_0.setLowpass(2, mb.mb_cross_freq_low, mb.mb_q_low);
+  //  mb_filter_r_0.setLowpass(2, mb.mb_cross_freq_low, mb.mb_q_low);
+  //  mb_filter_l_0.setLowpass(3, mb.mb_cross_freq_low, mb.mb_q_low * 2);
+  //  mb_filter_r_0.setLowpass(3, mb.mb_cross_freq_low, mb.mb_q_low * 2);
   //
-  //  mb_filter_l_1.setBandpass(0, mb_cross_freq_mid, mb_q_mid);
-  //  mb_filter_r_1.setBandpass(0, mb_cross_freq_mid, mb_q_mid);
-  //  mb_filter_l_1.setBandpass(1, mb_cross_freq_mid, mb_q_mid * 2);
-  //  mb_filter_r_1.setBandpass(1, mb_cross_freq_mid, mb_q_mid * 2);
-  //  mb_filter_l_1.setBandpass(2, mb_cross_freq_mid, mb_q_mid);
-  //  mb_filter_r_1.setBandpass(2, mb_cross_freq_mid, mb_q_mid);
-  //  mb_filter_l_1.setBandpass(3, mb_cross_freq_mid, mb_q_mid * 2);
-  //  mb_filter_r_1.setBandpass(3, mb_cross_freq_mid, mb_q_mid * 2);
+  //  mb_filter_l_1.setBandpass(0, mb.mb_cross_freq_mid, mb.mb_q_mid);
+  //  mb_filter_r_1.setBandpass(0, mb.mb_cross_freq_mid, mb.mb_q_mid);
+  //  mb_filter_l_1.setBandpass(1, mb.mb_cross_freq_mid, mb.mb_q_mid * 2);
+  //  mb_filter_r_1.setBandpass(1, mb.mb_cross_freq_mid, mb.mb_q_mid * 2);
+  //  mb_filter_l_1.setBandpass(2, mb.mb_cross_freq_mid, mb.mb_q_mid);
+  //  mb_filter_r_1.setBandpass(2, mb.mb_cross_freq_mid, mb.mb_q_mid);
+  //  mb_filter_l_1.setBandpass(3, mb.mb_cross_freq_mid, mb.mb_q_mid * 2);
+  //  mb_filter_r_1.setBandpass(3, mb.mb_cross_freq_mid, mb.mb_q_mid * 2);
   //
-  //  mb_filter_l_2.setBandpass(0, mb_cross_freq_upper_mid, mb_q_upper_mid);
-  //  mb_filter_r_2.setBandpass(0, mb_cross_freq_upper_mid, mb_q_upper_mid);
-  //  mb_filter_l_2.setBandpass(1, mb_cross_freq_upper_mid, mb_q_upper_mid * 2);
-  //  mb_filter_r_2.setBandpass(1, mb_cross_freq_upper_mid, mb_q_upper_mid * 2);
-  //  mb_filter_l_2.setBandpass(2, mb_cross_freq_upper_mid, mb_q_upper_mid);
-  //  mb_filter_r_2.setBandpass(2, mb_cross_freq_upper_mid, mb_q_upper_mid);
-  //  mb_filter_l_2.setBandpass(3, mb_cross_freq_upper_mid, mb_q_upper_mid * 2);
-  //  mb_filter_r_2.setBandpass(3, mb_cross_freq_upper_mid, mb_q_upper_mid * 2);
+  //  mb_filter_l_2.setBandpass(0, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid);
+  //  mb_filter_r_2.setBandpass(0, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid);
+  //  mb_filter_l_2.setBandpass(1, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid * 2);
+  //  mb_filter_r_2.setBandpass(1, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid * 2);
+  //  mb_filter_l_2.setBandpass(2, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid);
+  //  mb_filter_r_2.setBandpass(2, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid);
+  //  mb_filter_l_2.setBandpass(3, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid * 2);
+  //  mb_filter_r_2.setBandpass(3, mb.mb_cross_freq_upper_mid, mb.mb_q_upper_mid * 2);
   //
-  //  mb_filter_l_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
-  //  mb_filter_r_3.setHighpass(0, mb_cross_freq_high, mb_q_high);
-  //  mb_filter_l_3.setHighpass(1, mb_cross_freq_high, mb_q_high * 2);
-  //  mb_filter_r_3.setHighpass(1, mb_cross_freq_high, mb_q_high * 2);
-  //  mb_filter_l_3.setHighpass(2, mb_cross_freq_high, mb_q_high);
-  //  mb_filter_r_3.setHighpass(2, mb_cross_freq_high, mb_q_high);
-  //  mb_filter_l_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
-  //  mb_filter_r_3.setHighpass(3, mb_cross_freq_high, mb_q_high * 2);
+  //  mb_filter_l_3.setHighpass(0, mb.mb_cross_freq_high, mb.mb_q_high);
+  //  mb_filter_r_3.setHighpass(0, mb.mb_cross_freq_high, mb.mb_q_high);
+  //  mb_filter_l_3.setHighpass(1, mb.mb_cross_freq_high, mb.mb_q_high * 2);
+  //  mb_filter_r_3.setHighpass(1, mb.mb_cross_freq_high, mb.mb_q_high * 2);
+  //  mb_filter_l_3.setHighpass(2, mb.mb_cross_freq_high, mb.mb_q_high);
+  //  mb_filter_r_3.setHighpass(2, mb.mb_cross_freq_high, mb.mb_q_high);
+  //  mb_filter_l_3.setHighpass(3, mb.mb_cross_freq_high, mb.mb_q_high * 2);
+  //  mb_filter_r_3.setHighpass(3, mb.mb_cross_freq_high, mb.mb_q_high * 2);
 }
 
 FLASHMEM void mb_print_solo_buttons()
 {
   if (generic_temp_select_menu == 3 && generic_active_function == 0)
   {
-    if (mb_solo_high)
+    if (mb.mb_solo_high)
       draw_button_on_grid(9, 8, "SOLO", "ON ", 1);
     else
       draw_button_on_grid(9, 8, "SOLO", "  ", 1);
   }
   else if (generic_temp_select_menu > 1 && generic_temp_select_menu < 5)
   {
-    if (mb_solo_high)
+    if (mb.mb_solo_high)
       draw_button_on_grid(9, 8, "SOLO", "ON ", 2);
     else
-      draw_button_on_grid(9, 8, "SOLO", "  ", mb_solo_high);
+      draw_button_on_grid(9, 8, "SOLO", "  ", mb.mb_solo_high);
   }
 
   if (generic_temp_select_menu == 8 && generic_active_function == 0)
   {
-    if (mb_solo_upper_mid)
+    if (mb.mb_solo_upper_mid)
       draw_button_on_grid(9, 14, "SOLO", "ON ", 1);
     else
       draw_button_on_grid(9, 14, "SOLO", "  ", 1);
   }
   else if (generic_temp_select_menu > 6 && generic_temp_select_menu < 10)
   {
-    if (mb_solo_upper_mid)
+    if (mb.mb_solo_upper_mid)
       draw_button_on_grid(9, 14, "SOLO", "ON ", 2);
     else
-      draw_button_on_grid(9, 14, "SOLO", "  ", mb_solo_upper_mid);
+      draw_button_on_grid(9, 14, "SOLO", "  ", mb.mb_solo_upper_mid);
   }
 
   if (generic_temp_select_menu == 13 && generic_active_function == 0)
   {
-    if (mb_solo_mid)
+    if (mb.mb_solo_mid)
       draw_button_on_grid(9, 20, "SOLO", "ON ", 1);
     else
       draw_button_on_grid(9, 20, "SOLO", "  ", 1);
   }
   else if (generic_temp_select_menu > 11 && generic_temp_select_menu < 15)
   {
-    if (mb_solo_mid)
+    if (mb.mb_solo_mid)
       draw_button_on_grid(9, 20, "SOLO", "ON ", 2);
     else
-      draw_button_on_grid(9, 20, "SOLO", "  ", mb_solo_mid);
+      draw_button_on_grid(9, 20, "SOLO", "  ", mb.mb_solo_mid);
   }
 
   if (generic_temp_select_menu == 18 && generic_active_function == 0)
   {
-    if (mb_solo_low)
+    if (mb.mb_solo_low)
       draw_button_on_grid(9, 26, "SOLO", "ON ", 1);
     else
       draw_button_on_grid(9, 26, "SOLO", "  ", 1);
   }
   else if (generic_temp_select_menu > 16 && generic_temp_select_menu < 20)
   {
-    if (mb_solo_low)
+    if (mb.mb_solo_low)
       draw_button_on_grid(9, 26, "SOLO", "ON ", 2);
     else
-      draw_button_on_grid(9, 26, "SOLO", "  ", mb_solo_low);
+      draw_button_on_grid(9, 26, "SOLO", "  ", mb.mb_solo_low);
   }
 }
 
@@ -13861,32 +13840,32 @@ FLASHMEM void mb_print_threshold_buttons()
 {
   char temp_char[4];
   if (generic_temp_select_menu == 7 && generic_active_function == 0)
-    draw_button_on_grid(38, 8, "THRLD", itoa(mb_threshold_high, temp_char, 10), 1);
+    draw_button_on_grid(38, 8, "THRLD", itoa(mb.mb_threshold_high, temp_char, 10), 1);
   else if (generic_temp_select_menu == 7 && generic_active_function == 1)
-    draw_button_on_grid(38, 8, "THRLD", itoa(mb_threshold_high, temp_char, 10), 2);
+    draw_button_on_grid(38, 8, "THRLD", itoa(mb.mb_threshold_high, temp_char, 10), 2);
   else if (generic_temp_select_menu == 6 || generic_temp_select_menu == 8)
-    draw_button_on_grid(38, 8, "THRLD", itoa(mb_threshold_high, temp_char, 10), 0);
+    draw_button_on_grid(38, 8, "THRLD", itoa(mb.mb_threshold_high, temp_char, 10), 0);
 
   if (generic_temp_select_menu == 12 && generic_active_function == 0)
-    draw_button_on_grid(38, 14, "THRLD", itoa(mb_threshold_upper_mid, temp_char, 10), 1);
+    draw_button_on_grid(38, 14, "THRLD", itoa(mb.mb_threshold_upper_mid, temp_char, 10), 1);
   else if (generic_temp_select_menu == 12 && generic_active_function == 1)
-    draw_button_on_grid(38, 14, "THRLD", itoa(mb_threshold_upper_mid, temp_char, 10), 2);
+    draw_button_on_grid(38, 14, "THRLD", itoa(mb.mb_threshold_upper_mid, temp_char, 10), 2);
   else if (generic_temp_select_menu == 11 || generic_temp_select_menu == 13)
-    draw_button_on_grid(38, 14, "THRLD", itoa(mb_threshold_upper_mid, temp_char, 10), 0);
+    draw_button_on_grid(38, 14, "THRLD", itoa(mb.mb_threshold_upper_mid, temp_char, 10), 0);
 
   if (generic_temp_select_menu == 17 && generic_active_function == 0)
-    draw_button_on_grid(38, 20, "THRLD", itoa(mb_threshold_mid, temp_char, 10), 1);
+    draw_button_on_grid(38, 20, "THRLD", itoa(mb.mb_threshold_mid, temp_char, 10), 1);
   else if (generic_temp_select_menu == 17 && generic_active_function == 1)
-    draw_button_on_grid(38, 20, "THRLD", itoa(mb_threshold_mid, temp_char, 10), 2);
+    draw_button_on_grid(38, 20, "THRLD", itoa(mb.mb_threshold_mid, temp_char, 10), 2);
   else if (generic_temp_select_menu == 16 || generic_temp_select_menu == 18)
-    draw_button_on_grid(38, 20, "THRLD", itoa(mb_threshold_mid, temp_char, 10), 0);
+    draw_button_on_grid(38, 20, "THRLD", itoa(mb.mb_threshold_mid, temp_char, 10), 0);
 
   if (generic_temp_select_menu == 22 && generic_active_function == 0)
-    draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 1);
+    draw_button_on_grid(38, 26, "THRLD", itoa(mb.mb_threshold_low, temp_char, 10), 1);
   else if (generic_temp_select_menu == 22 && generic_active_function == 1)
-    draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 2);
+    draw_button_on_grid(38, 26, "THRLD", itoa(mb.mb_threshold_low, temp_char, 10), 2);
   else if (generic_temp_select_menu == 21)
-    draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 0);
+    draw_button_on_grid(38, 26, "THRLD", itoa(mb.mb_threshold_low, temp_char, 10), 0);
 }
 
 FLASHMEM void mb_print_freq_and_q()
@@ -13899,28 +13878,28 @@ FLASHMEM void mb_print_freq_and_q()
     {
       if (generic_temp_select_menu == 4 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_cross_freq_high);
+      display.print(mb.mb_cross_freq_high);
       display.print(F(" "));
     }
     else if (y == 1)
     {
       if (generic_temp_select_menu == 9 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_cross_freq_upper_mid);
+      display.print(mb.mb_cross_freq_upper_mid);
       display.print(F(" "));
     }
     else if (y == 2)
     {
       if (generic_temp_select_menu == 14 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_cross_freq_mid);
+      display.print(mb.mb_cross_freq_mid);
       display.print(F(" "));
     }
     else if (y == 3)
     {
       if (generic_temp_select_menu == 19 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_cross_freq_low);
+      display.print(mb.mb_cross_freq_low);
       display.print(F(" "));
     }
 
@@ -13930,25 +13909,25 @@ FLASHMEM void mb_print_freq_and_q()
     {
       if (generic_temp_select_menu == 5 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_q_high);
+      display.print(mb.mb_q_high);
     }
     if (y == 1)
     {
       if (generic_temp_select_menu == 10 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_q_upper_mid);
+      display.print(mb.mb_q_upper_mid);
     }
     if (y == 2)
     {
       if (generic_temp_select_menu == 15 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_q_mid);
+      display.print(mb.mb_q_mid);
     }
     if (y == 3)
     {
       if (generic_temp_select_menu == 20 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_q_low);
+      display.print(mb.mb_q_low);
     }
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -13957,25 +13936,25 @@ FLASHMEM void mb_print_freq_and_q()
     {
       if (generic_temp_select_menu == 6 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_gain_high);
+      display.print(mb.mb_gain_high);
     }
     if (y == 1)
     {
       if (generic_temp_select_menu == 11 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_gain_upper_mid);
+      display.print(mb.mb_gain_upper_mid);
     }
     if (y == 2)
     {
       if (generic_temp_select_menu == 16 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_gain_mid);
+      display.print(mb.mb_gain_mid);
     }
     if (y == 3)
     {
       if (generic_temp_select_menu == 21 && generic_active_function == 0)
         display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-      display.print(mb_gain_low);
+      display.print(mb.mb_gain_low);
     }
   }
 }
@@ -14023,16 +14002,16 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
     display.print(F("LOW"));
 
     draw_button_on_grid(9, 8, "SOLO", "  ", 0);
-    draw_button_on_grid(38, 8, "THRLD", itoa(mb_threshold_high, temp_char, 10), 0);
+    draw_button_on_grid(38, 8, "THRLD", itoa(mb.mb_threshold_high, temp_char, 10), 0);
 
     draw_button_on_grid(9, 14, "SOLO", "  ", 0);
-    draw_button_on_grid(38, 14, "THRLD", itoa(mb_threshold_upper_mid, temp_char, 10), 0);
+    draw_button_on_grid(38, 14, "THRLD", itoa(mb.mb_threshold_upper_mid, temp_char, 10), 0);
 
     draw_button_on_grid(9, 20, "SOLO", "  ", 0);
-    draw_button_on_grid(38, 20, "THRLD", itoa(mb_threshold_mid, temp_char, 10), 0);
+    draw_button_on_grid(38, 20, "THRLD", itoa(mb.mb_threshold_mid, temp_char, 10), 0);
 
     draw_button_on_grid(9, 26, "SOLO", "  ", 0);
-    draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 0);
+    draw_button_on_grid(38, 26, "THRLD", itoa(mb.mb_threshold_low, temp_char, 10), 0);
 
     print_mb_params();
     if (remote_active) {
@@ -14072,53 +14051,53 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
           generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 22);
         else if (generic_temp_select_menu == 0)
         {
-          multiband_active = !multiband_active;
+          mb.multiband_active = !mb.multiband_active;
           mb_clear_caches();
         }
         else if (generic_temp_select_menu == 1)
-          mb_global_gain = constrain(mb_global_gain + 0.2, -2, 12);
+          mb.mb_global_gain = constrain(mb.mb_global_gain + 0.2, -2, 12);
         else if (generic_temp_select_menu == 2)
-          mb_global_ratio = constrain(mb_global_ratio + ENCODER[ENC_R].speed(), 1, 60);
+          mb.mb_global_ratio = constrain(mb.mb_global_ratio + ENCODER[ENC_R].speed(), 1, 60);
         else if (generic_temp_select_menu == 3)
-          mb_solo_high = !mb_solo_high;
+          mb.mb_solo_high = !mb.mb_solo_high;
         else if (generic_temp_select_menu == 4)
-          mb_cross_freq_high = constrain(mb_cross_freq_high + ENCODER[ENC_R].speed() * 10, 2000, 12000);
+          mb.mb_cross_freq_high = constrain(mb.mb_cross_freq_high + ENCODER[ENC_R].speed() * 10, 2000, 12000);
         else if (generic_temp_select_menu == 5)
-          mb_q_high = constrain(mb_q_high + 0.1, 0, 2);
+          mb.mb_q_high = constrain(mb.mb_q_high + 0.1, 0, 2);
         else if (generic_temp_select_menu == 6)
-          mb_gain_high = constrain(mb_gain_high + 0.2, -9, 9);
+          mb.mb_gain_high = constrain(mb.mb_gain_high + 0.2, -9, 9);
         else if (generic_temp_select_menu == 7)
-          mb_threshold_high = constrain(mb_threshold_high + ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_high = constrain(mb.mb_threshold_high + ENCODER[ENC_R].speed(), 0, 40);
         else if (generic_temp_select_menu == 8)
-          mb_solo_upper_mid = !mb_solo_upper_mid;
+          mb.mb_solo_upper_mid = !mb.mb_solo_upper_mid;
         else if (generic_temp_select_menu == 9)
-          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid + ENCODER[ENC_R].speed() * 10, 1000, 9999);
+          mb.mb_cross_freq_upper_mid = constrain(mb.mb_cross_freq_upper_mid + ENCODER[ENC_R].speed() * 10, 1000, 9999);
         else if (generic_temp_select_menu == 10)
-          mb_q_upper_mid = constrain(mb_q_upper_mid + 0.1, 0, 2);
+          mb.mb_q_upper_mid = constrain(mb.mb_q_upper_mid + 0.1, 0, 2);
         else if (generic_temp_select_menu == 11)
-          mb_gain_upper_mid = constrain(mb_gain_upper_mid + 0.2, -9, 9);
+          mb.mb_gain_upper_mid = constrain(mb.mb_gain_upper_mid + 0.2, -9, 9);
         else if (generic_temp_select_menu == 12)
-          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid + ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_upper_mid = constrain(mb.mb_threshold_upper_mid + ENCODER[ENC_R].speed(), 0, 40);
         else if (generic_temp_select_menu == 13)
-          mb_solo_mid = !mb_solo_mid;
+          mb.mb_solo_mid = !mb.mb_solo_mid;
         else if (generic_temp_select_menu == 14)
-          mb_cross_freq_mid = constrain(mb_cross_freq_mid + ENCODER[ENC_R].speed() * 10, 400, 7000);
+          mb.mb_cross_freq_mid = constrain(mb.mb_cross_freq_mid + ENCODER[ENC_R].speed() * 10, 400, 7000);
         else if (generic_temp_select_menu == 15)
-          mb_q_mid = constrain(mb_q_mid + 0.1, 0, 2);
+          mb.mb_q_mid = constrain(mb.mb_q_mid + 0.1, 0, 2);
         else if (generic_temp_select_menu == 16)
-          mb_gain_mid = constrain(mb_gain_mid + 0.2, -9, 9);
+          mb.mb_gain_mid = constrain(mb.mb_gain_mid + 0.2, -9, 9);
         else if (generic_temp_select_menu == 17)
-          mb_threshold_mid = constrain(mb_threshold_mid + ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_mid = constrain(mb.mb_threshold_mid + ENCODER[ENC_R].speed(), 0, 40);
         else if (generic_temp_select_menu == 18)
-          mb_solo_low = !mb_solo_low;
+          mb.mb_solo_low = !mb.mb_solo_low;
         else if (generic_temp_select_menu == 19)
-          mb_cross_freq_low = constrain(mb_cross_freq_low + ENCODER[ENC_R].speed() * 10, 10, 2000);
+          mb.mb_cross_freq_low = constrain(mb.mb_cross_freq_low + ENCODER[ENC_R].speed() * 10, 10, 2000);
         else if (generic_temp_select_menu == 20)
-          mb_q_low = constrain(mb_q_low + 0.1, 0, 2);
+          mb.mb_q_low = constrain(mb.mb_q_low + 0.1, 0, 2);
         else if (generic_temp_select_menu == 21)
-          mb_gain_low = constrain(mb_gain_low + 0.2, -9, 9);
+          mb.mb_gain_low = constrain(mb.mb_gain_low + 0.2, -9, 9);
         else if (generic_temp_select_menu == 22)
-          mb_threshold_low = constrain(mb_threshold_low + ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_low = constrain(mb.mb_threshold_low + ENCODER[ENC_R].speed(), 0, 40);
       }
       else if (LCDML.BT_checkUp())
       {
@@ -14126,53 +14105,53 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
           generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 22);
         else if (generic_temp_select_menu == 0)
         {
-          multiband_active = !multiband_active;
+          mb.multiband_active = !mb.multiband_active;
           mb_clear_caches();
         }
         else if (generic_temp_select_menu == 1)
-          mb_global_gain = constrain(mb_global_gain - 0.2, -2, 12);
+          mb.mb_global_gain = constrain(mb.mb_global_gain - 0.2, -2, 12);
         else if (generic_temp_select_menu == 2)
-          mb_global_ratio = constrain(mb_global_ratio - ENCODER[ENC_R].speed(), 1, 60);
+          mb.mb_global_ratio = constrain(mb.mb_global_ratio - ENCODER[ENC_R].speed(), 1, 60);
         else if (generic_temp_select_menu == 3)
-          mb_solo_high = !mb_solo_high;
+          mb.mb_solo_high = !mb.mb_solo_high;
         else if (generic_temp_select_menu == 4)
-          mb_cross_freq_high = constrain(mb_cross_freq_high - ENCODER[ENC_R].speed() * 10, 2000, 12000);
+          mb.mb_cross_freq_high = constrain(mb.mb_cross_freq_high - ENCODER[ENC_R].speed() * 10, 2000, 12000);
         else if (generic_temp_select_menu == 5)
-          mb_q_high = constrain(mb_q_high - 0.1, 0, 2);
+          mb.mb_q_high = constrain(mb.mb_q_high - 0.1, 0, 2);
         else if (generic_temp_select_menu == 6)
-          mb_gain_high = constrain(mb_gain_high - 0.2, -9, 9);
+          mb.mb_gain_high = constrain(mb.mb_gain_high - 0.2, -9, 9);
         else if (generic_temp_select_menu == 7)
-          mb_threshold_high = constrain(mb_threshold_high - ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_high = constrain(mb.mb_threshold_high - ENCODER[ENC_R].speed(), 0, 40);
         else if (generic_temp_select_menu == 8)
-          mb_solo_upper_mid = !mb_solo_upper_mid;
+          mb.mb_solo_upper_mid = !mb.mb_solo_upper_mid;
         else if (generic_temp_select_menu == 9)
-          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid - ENCODER[ENC_R].speed() * 10, 1000, 9999);
+          mb.mb_cross_freq_upper_mid = constrain(mb.mb_cross_freq_upper_mid - ENCODER[ENC_R].speed() * 10, 1000, 9999);
         else if (generic_temp_select_menu == 10)
-          mb_q_upper_mid = constrain(mb_q_upper_mid - 0.1, 0, 2);
+          mb.mb_q_upper_mid = constrain(mb.mb_q_upper_mid - 0.1, 0, 2);
         else if (generic_temp_select_menu == 11)
-          mb_gain_upper_mid = constrain(mb_gain_upper_mid - 0.2, -9, 9);
+          mb.mb_gain_upper_mid = constrain(mb.mb_gain_upper_mid - 0.2, -9, 9);
         else if (generic_temp_select_menu == 12)
-          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid - ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_upper_mid = constrain(mb.mb_threshold_upper_mid - ENCODER[ENC_R].speed(), 0, 40);
         else if (generic_temp_select_menu == 13)
-          mb_solo_mid = !mb_solo_mid;
+          mb.mb_solo_mid = !mb.mb_solo_mid;
         else if (generic_temp_select_menu == 14)
-          mb_cross_freq_mid = constrain(mb_cross_freq_mid - ENCODER[ENC_R].speed() * 10, 400, 7000);
+          mb.mb_cross_freq_mid = constrain(mb.mb_cross_freq_mid - ENCODER[ENC_R].speed() * 10, 400, 7000);
         else if (generic_temp_select_menu == 15)
-          mb_q_mid = constrain(mb_q_mid - 0.1, 0, 2);
+          mb.mb_q_mid = constrain(mb.mb_q_mid - 0.1, 0, 2);
         else if (generic_temp_select_menu == 16)
-          mb_gain_mid = constrain(mb_gain_mid - 0.2, -9, 9);
+          mb.mb_gain_mid = constrain(mb.mb_gain_mid - 0.2, -9, 9);
         else if (generic_temp_select_menu == 17)
-          mb_threshold_mid = constrain(mb_threshold_mid - ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_mid = constrain(mb.mb_threshold_mid - ENCODER[ENC_R].speed(), 0, 40);
         else if (generic_temp_select_menu == 18)
-          mb_solo_low = !mb_solo_low;
+          mb.mb_solo_low = !mb.mb_solo_low;
         else if (generic_temp_select_menu == 19)
-          mb_cross_freq_low = constrain(mb_cross_freq_low - ENCODER[ENC_R].speed() * 10, 10, 2000);
+          mb.mb_cross_freq_low = constrain(mb.mb_cross_freq_low - ENCODER[ENC_R].speed() * 10, 10, 2000);
         else if (generic_temp_select_menu == 20)
-          mb_q_low = constrain(mb_q_low - 0.1, 0, 2);
+          mb.mb_q_low = constrain(mb.mb_q_low - 0.1, 0, 2);
         else if (generic_temp_select_menu == 21)
-          mb_gain_low = constrain(mb_gain_low - 0.2, -9, 9);
+          mb.mb_gain_low = constrain(mb.mb_gain_low - 0.2, -9, 9);
         else if (generic_temp_select_menu == 22)
-          mb_threshold_low = constrain(mb_threshold_low - ENCODER[ENC_R].speed(), 0, 40);
+          mb.mb_threshold_low = constrain(mb.mb_threshold_low - ENCODER[ENC_R].speed(), 0, 40);
       }
 
       if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -14196,23 +14175,23 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
       display.console = true;
       if (y == 0)
       {
-        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb_threshold_high / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_high / 2.6, GREEN);
-        display.drawLine(191 + 7 + 27 - mb_threshold_high / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_high / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_high / 2.9, GREEN);
+        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb.mb_threshold_high / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_high / 2.6, GREEN);
+        display.drawLine(191 + 7 + 27 - mb.mb_threshold_high / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_high / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_high / 2.9, GREEN);
       }
       else if (y == 1)
       {
-        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb_threshold_upper_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_upper_mid / 2.6, GREEN);
-        display.drawLine(191 + 7 + 27 - mb_threshold_upper_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_upper_mid / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_upper_mid / 2.9, GREEN);
+        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb.mb_threshold_upper_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_upper_mid / 2.6, GREEN);
+        display.drawLine(191 + 7 + 27 - mb.mb_threshold_upper_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_upper_mid / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_upper_mid / 2.9, GREEN);
       }
       else if (y == 2)
       {
-        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb_threshold_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_mid / 2.6, GREEN);
-        display.drawLine(191 + 7 + 27 - mb_threshold_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_mid / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_mid / 2.9, GREEN);
+        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb.mb_threshold_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_mid / 2.6, GREEN);
+        display.drawLine(191 + 7 + 27 - mb.mb_threshold_mid / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_mid / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_mid / 2.9, GREEN);
       }
       else if (y == 3)
       {
-        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb_threshold_low / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_low / 2.6, GREEN);
-        display.drawLine(191 + 7 + 27 - mb_threshold_low / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_low / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb_threshold_low / 2.9, GREEN);
+        display.drawLine(191 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6), 191 + 27 + 7 - mb.mb_threshold_low / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_low / 2.6, GREEN);
+        display.drawLine(191 + 7 + 27 - mb.mb_threshold_low / 2.5, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_low / 2.6, 191 + 27 + 7, CHAR_height_small * 11 + 5 + y * (CHAR_height_small * 6) - 27 + mb.mb_threshold_low / 2.9, GREEN);
       }
     }
     if (generic_temp_select_menu == 0)
@@ -22203,8 +22182,8 @@ FLASHMEM void draw_volmeters_multiband_compressor()
   float meters[4] = {
     l,
     r,
-    multiband_active ? mb_after_l.read() : l,
-    multiband_active ? mb_after_r.read() : r,
+    mb.multiband_active ? mb_after_l.read() : l,
+    mb.multiband_active ? mb_after_r.read() : r,
   };
   int y = 228;
 

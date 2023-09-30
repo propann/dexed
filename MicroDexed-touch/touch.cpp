@@ -65,11 +65,8 @@ extern microsynth_t microsynth[NUM_MICROSYNTH];
 extern braids_t braids_osc;
 extern bool generic_full_draw_required;
 
+extern mb_t mb;
 extern void mb_set_mutes();
-extern bool mb_solo_low;
-extern bool mb_solo_mid;
-extern bool mb_solo_upper_mid;
-extern bool mb_solo_high;
 extern Realtime_Scope scope;
 extern AudioAnalyzePeak mb_before_l;
 extern AudioAnalyzePeak mb_before_r;
@@ -78,7 +75,6 @@ extern AudioAnalyzePeak mb_after_r;
 extern void draw_volmeter(int x, int y, uint8_t arr, float value);
 extern AudioMixer<4> mb_mixer_l;
 extern AudioMixer<4> mb_mixer_r;
-extern bool multiband_active;
 extern uint8_t generic_active_function;
 extern uint8_t generic_temp_select_menu;
 extern void mb_set_mutes();
@@ -1202,7 +1198,7 @@ FLASHMEM void draw_menu_ui_icons()
     draw_button_on_grid(45, 18, "SEQ.", "START", 1);
   draw_button_on_grid(13, 25, "LOAD", "PERF", 0);
   draw_button_on_grid(24, 25, "SAVE", "PERF", 0);
-  if (multiband_active)
+  if (mb.multiband_active)
     draw_button_on_grid(35, 25, "MULTI", "BAND", 2);
   else
     draw_button_on_grid(35, 25, "MULTI", "BAND", 0);
@@ -1304,8 +1300,8 @@ FLASHMEM void handle_touchscreen_menu()
       }
       else if (check_button_on_grid(35, 25))
       {
-        multiband_active = !multiband_active;
-        if (multiband_active)
+        mb.multiband_active = !mb.multiband_active;
+        if (mb.multiband_active)
           draw_button_on_grid(35, 25, "MULTI", "BAND", 2);
         else
           draw_button_on_grid(35, 25, "MULTI", "BAND", 0);
@@ -1359,58 +1355,58 @@ FLASHMEM void handle_touchscreen_multiband()
   {
     get_scaled_touch_point();
 
-    if (multiband_active)
+    if (mb.multiband_active)
     {
       if (check_button_on_grid(12, 8))
       {
-        mb_solo_high = !mb_solo_high;
-        if (mb_solo_high)
+        mb.mb_solo_high = !mb.mb_solo_high;
+        if (mb.mb_solo_high)
         {
-          draw_button_on_grid(9, 8, "SOLO", "ON", mb_solo_high + 1);
+          draw_button_on_grid(9, 8, "SOLO", "ON", mb.mb_solo_high + 1);
         }
         else
-          draw_button_on_grid(9, 8, "SOLO", "  ", mb_solo_high);
+          draw_button_on_grid(9, 8, "SOLO", "  ", mb.mb_solo_high);
       }
       else if (check_button_on_grid(12, 14))
       {
-        mb_solo_upper_mid = !mb_solo_upper_mid;
-        if (mb_solo_upper_mid)
+        mb.mb_solo_upper_mid = !mb.mb_solo_upper_mid;
+        if (mb.mb_solo_upper_mid)
         {
-          draw_button_on_grid(9, 14, "SOLO", "ON", mb_solo_upper_mid + 1);
+          draw_button_on_grid(9, 14, "SOLO", "ON", mb.mb_solo_upper_mid + 1);
         }
         else
-          draw_button_on_grid(9, 14, "SOLO", "  ", mb_solo_upper_mid);
+          draw_button_on_grid(9, 14, "SOLO", "  ", mb.mb_solo_upper_mid);
       }
       else if (check_button_on_grid(12, 20))
       {
-        mb_solo_mid = !mb_solo_mid;
-        if (mb_solo_mid)
+        mb.mb_solo_mid = !mb.mb_solo_mid;
+        if (mb.mb_solo_mid)
         {
-          draw_button_on_grid(9, 20, "SOLO", "ON", mb_solo_mid + 1);
+          draw_button_on_grid(9, 20, "SOLO", "ON", mb.mb_solo_mid + 1);
         }
         else
-          draw_button_on_grid(9, 20, "SOLO", "  ", mb_solo_mid);
+          draw_button_on_grid(9, 20, "SOLO", "  ", mb.mb_solo_mid);
       }
       else if (check_button_on_grid(12, 26))
       {
-        mb_solo_low = !mb_solo_low;
-        if (mb_solo_low)
+        mb.mb_solo_low = !mb.mb_solo_low;
+        if (mb.mb_solo_low)
         {
-          draw_button_on_grid(9, 26, "SOLO", "ON", mb_solo_low + 1);
+          draw_button_on_grid(9, 26, "SOLO", "ON", mb.mb_solo_low + 1);
         }
         else
-          draw_button_on_grid(9, 26, "SOLO", "  ", mb_solo_low);
+          draw_button_on_grid(9, 26, "SOLO", "  ", mb.mb_solo_low);
       }
-      if (mb_solo_low && mb_solo_upper_mid && mb_solo_mid && mb_solo_high)
+      if (mb.mb_solo_low && mb.mb_solo_upper_mid && mb.mb_solo_mid && mb.mb_solo_high)
       {
-        mb_solo_low = false;
-        mb_solo_mid = false;
-        mb_solo_upper_mid = false;
-        mb_solo_high = false;
-        draw_button_on_grid(9, 8, "SOLO", "   ", mb_solo_high);
-        draw_button_on_grid(9, 14, "SOLO", "   ", mb_solo_upper_mid);
-        draw_button_on_grid(9, 20, "SOLO", "   ", mb_solo_mid);
-        draw_button_on_grid(9, 26, "SOLO", "   ", mb_solo_low);
+        mb.mb_solo_low = false;
+        mb.mb_solo_mid = false;
+        mb.mb_solo_upper_mid = false;
+        mb.mb_solo_high = false;
+        draw_button_on_grid(9, 8, "SOLO", "   ", mb.mb_solo_high);
+        draw_button_on_grid(9, 14, "SOLO", "   ", mb.mb_solo_upper_mid);
+        draw_button_on_grid(9, 20, "SOLO", "   ", mb.mb_solo_mid);
+        draw_button_on_grid(9, 26, "SOLO", "   ", mb.mb_solo_low);
       }
       mb_set_mutes();
 

@@ -962,6 +962,35 @@ typedef struct multisample_zone_s
   unsigned long filelength; // runtime value, do not store
 } multisample_zone_t;
 
+
+
+typedef struct mb_s : public Params{
+  P_uint16_t(mb_cross_freq_low ,0,10000, 140);
+  P_uint16_t(mb_cross_freq_mid ,0,10000, 2100);
+  P_uint16_t(mb_cross_freq_upper_mid ,0,10000, 5200);
+  P_uint16_t(mb_cross_freq_high ,0,10000, 8600);
+  P_float(mb_global_gain ,0,10000, 2.0);
+  P_float(mb_gain_low ,0,10000, 0.10);
+  P_float(mb_gain_mid ,0,10000, 0.10);
+  P_float(mb_gain_upper_mid ,0,10000, 0.10);
+  P_float(mb_gain_high ,0,10000, 0.80);
+  P_bool(multiband_active ,0,1, false);
+  P_uint8_t(mb_threshold_low ,0,10000, 5);
+  P_uint8_t(mb_threshold_mid ,0,10000, 15);
+  P_uint8_t(mb_threshold_upper_mid ,0,10000, 12);
+  P_uint8_t(mb_threshold_high ,0,10000, 2);
+  P_float(mb_q_low ,0,10000, 0.30);
+  P_float(mb_q_mid ,0,10000, 0.10);
+  P_float(mb_q_upper_mid ,0,10000, 0.10);
+  P_float(mb_q_high ,0,10000, 0.50);
+  P_bool(mb_solo_low,0,1,0);
+  P_bool(mb_solo_mid,0,1,0);
+  P_bool(mb_solo_upper_mid,0,1,0);
+  P_bool(mb_solo_high,0,1,0);
+  P_uint8_t(mb_global_ratio ,0,10000, 32);
+  P_end;
+} __attribute__((packed)) mb_t;
+
 typedef struct sys_s
 {
   uint8_t vol;
