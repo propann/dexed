@@ -781,7 +781,7 @@ typedef struct dexed_s : public Params
   P_uint8_t(op_enabled,0,OP_ENABLED_MAX,OP_ENABLED_MAX); // bitmap
   P_uint8_t(midi_channel,0,16,1);
   P_end;
-} __attribute__((packed)) dexed_t;
+} dexed_t;
 
 typedef struct dexed_fx_s : public Params
 {
@@ -803,7 +803,7 @@ typedef struct dexed_fx_s : public Params
   P_uint8_t(delay_filter_mode,0,3,0);
   P_uint16_t(delay_filter_freq,0,15000,15000);
   P_end;
-} __attribute__((packed)) dexed_fx_t;
+} dexed_fx_t;
 
 typedef struct fx_s : public Params
 {
@@ -830,7 +830,7 @@ typedef struct fx_s : public Params
   P_uint8_t(ep_reverb_send,0,100,0);
   P_end;
   dexed_fx_t dexed[2];
-} __attribute__((packed)) fx_t;
+} fx_t;
 
 typedef struct epiano_s : public Params
 {
@@ -855,7 +855,7 @@ typedef struct epiano_s : public Params
   P_uint8_t(delay_send_1,0,DELAY_LEVEL_MAX,0);
   P_uint8_t(delay_send_2,0,DELAY_LEVEL_MAX,0);
   P_end;
-} __attribute__((packed)) epiano_t;
+} epiano_t;
 
 typedef struct microsynth_s : public Params
 {
@@ -906,7 +906,7 @@ typedef struct microsynth_s : public Params
   P_uint8_t(vel_mod_filter_osc, 0, 254, 0);
   P_uint8_t(vel_mod_filter_noise, 0, 254, 0);
   P_end;
-} __attribute__((packed)) microsynth_t;
+} microsynth_t;
 
 typedef struct braids_s : public Params
 {
@@ -935,7 +935,7 @@ typedef struct braids_s : public Params
   P_uint8_t(pan, PANORAMA_MIN, PANORAMA_MAX,PANORAMA_MAX/2);
   P_end;
   uint8_t note_buffer[NUM_BRAIDS];
-} __attribute__((packed)) braids_t;
+} braids_t;
 
 typedef struct multisample_s
 {
@@ -989,7 +989,7 @@ typedef struct mb_s : public Params{
   P_bool(mb_solo_high,0,1,0);
   P_uint8_t(mb_global_ratio ,0,10000, 32);
   P_end;
-} __attribute__((packed)) mb_t;
+} mb_t;
 
 typedef struct sys_s
 {

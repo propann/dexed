@@ -2,7 +2,7 @@
 
 
 
-class Param {
+class Descriptor {
 public:
   const enum Type {
     P_END=0, P_UINT8_T, P_UINT16_T, P_INT32_T, P_FLOAT, P_TYPE_COUNT
@@ -11,62 +11,63 @@ public:
 
   const uint8_t count;
   const char* name;
-  const int32_t def,min,max;
+  const float def,min,max;
 
-  Param(Type _type=P_UINT8_T, uint8_t _count=1, const char* _name="", int32_t _min=0, int32_t _max=99, int32_t _default=50) : type(_type), count(_count), name(_name), def(_default), min(_min), max(_max) {};
+  Descriptor(Type _type=P_UINT8_T, uint8_t _count=1, const char* _name="", float _min=0, float _max=99, float _default=50) : type(_type), count(_count), name(_name), def(_default), min(_min), max(_max) {};
+};
+
+class Param {
+public:
+  Descriptor* desc;
+
+  Param(Descriptor::Type _type=Descriptor::P_UINT8_T, uint8_t _count=1, const char* _name="", float _min=0, float _max=99, float _default=50) : desc(
+    new Descriptor(_type, _count, _name, _min, _max, _default )
+  ) {};
 
   Param* next() {
-    Param* ptr = (Param*)(((char*)this) + sizeof(Param) + sizes[type] * count );
-    if(ptr->type != P_END) return ptr;
-    else                   return NULL;
+    Param* ptr = (Param*)(((char*)this) + sizeof(Param) + 4 * desc->count );
+    if(ptr->desc->type != Descriptor::P_END) return ptr;
+    else                         return NULL;
   };
-  template<typename T=float> T get() {
+  float get() {
     char* ptr = ((char*)this) + sizeof(Param);
-    if(type == P_UINT8_T) return *((uint8_t*)ptr);
-    if(type == P_UINT16_T) return *((uint16_t*)ptr);
-    if(type == P_INT32_T) return *((int32_t*)ptr);
-    if(type == P_FLOAT) {
-    // TODO why is this needed? interpret float bits as uint32_t to prevent crash
-      uint32_t tmp=*((uint32_t*)ptr);
-      return *(float*)&tmp;
-    }
+    if(desc->type == Descriptor::P_UINT8_T) return *((uint8_t*)ptr);
+    if(desc->type == Descriptor::P_UINT16_T) return *((uint16_t*)ptr);
+    if(desc->type == Descriptor::P_INT32_T) return *((int32_t*)ptr);
+    if(desc->type == Descriptor::P_FLOAT) return *((float*)ptr);
     return 0;
   };
-  template<typename T> set(T value) {
+  void set(float value) {
     char* ptr = ((char*)this) + sizeof(Param);
-    if(type == P_UINT8_T) *((uint8_t*)ptr) = value;
-    if(type == P_UINT16_T) *((uint16_t*)ptr) = value;
-    if(type == P_INT32_T) *((uint32_t*)ptr) = value;
-    if(type == P_FLOAT) {
-      // TODO why is this needed? interpret float bits as uint32_t to prevent crash
-      float tmp=value;
-      *((uint32_t*)ptr) = *(uint32_t*)&tmp;
-    }
+    if(desc->type == Descriptor::P_UINT8_T) *((uint8_t*)ptr) = round(value);
+    if(desc->type == Descriptor::P_UINT16_T) *((uint16_t*)ptr) = round(value);
+    if(desc->type == Descriptor::P_INT32_T) *((uint32_t*)ptr) = round(value);
+    if(desc->type == Descriptor::P_FLOAT) *((float*)ptr) = value;
   };
   void check() {
-    int32_t val = get<int32_t>();
-    if(val < min) set<int32_t>(min);
-    if(val > max) set<int32_t>(max);
+    float val = get();
+    if(val < desc->min) set(desc->min);
+    if(val > desc->max) set(desc->max);
     
   };
-} __attribute__((packed));
+} __attribute__ ((aligned (4)));
 
 #define P_bool(name,min,max,def) \
-  Param name##_meta{Param::P_UINT8_T, 1, #name, min, max, def}; uint8_t name = def
+  Param name##_meta{Descriptor::P_UINT8_T, 1, #name, min, max, def}; uint8_t name = def
 
 #define P_uint8_t(name,min,max,def) \
-  Param name##_meta{Param::P_UINT8_T, 1, #name, min, max, def}; uint8_t name = def
+  Param name##_meta{Descriptor::P_UINT8_T, 1, #name, min, max, def}; uint8_t name = def
 
 #define P_uint16_t(name,min,max,def) \
-  Param name##_meta{Param::P_UINT16_T, 1, #name,min,max,def}; uint16_t name = def
+  Param name##_meta{Descriptor::P_UINT16_T, 1, #name,min,max,def}; uint16_t name = def
 
 #define P_int32_t(name,min,max,def) \
-  Param name##_meta{Param::P_INT32_T, 1, #name,min,max,def}; int32_t name = def
+  Param name##_meta{Descriptor::P_INT32_T, 1, #name,min,max,def}; int32_t name = def
 
 #define P_float(name,min,max,def) \
-  Param name##_meta{Param::P_FLOAT, 1, #name,min,max,def}; float name = def
+  Param name##_meta{Descriptor::P_FLOAT, 1, #name,min,max,def}; float name = def
 
-#define P_end Param _p_end{Param::P_END};
+#define P_end Param _p_end{Descriptor::P_END};
 
 class Params {
 public:
@@ -87,7 +88,7 @@ public:
       prm = prm->next();
     } while (prm != NULL);
   }
-} __attribute__((packed));
+};
 
 
 

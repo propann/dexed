@@ -868,8 +868,8 @@ FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 
         Param* prm = params->getParams();
         do{
-          prm->set<float>(data_json[prm->name]);
-          LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get<float>()); LOG.println();
+          prm->set(data_json[prm->desc->name]);
+          LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
           prm = prm->next();
         }while (prm != NULL);
 
@@ -913,8 +913,8 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       Param* prm = params->getParams();
       do{
-        data_json[prm->name] = prm->get();
-        LOG.print("Save param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+        data_json[prm->desc->name] = prm->get();
+        LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
         prm = prm->next();
       }while (prm != NULL);
 
@@ -1023,8 +1023,8 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
 
         Param* prm = configuration.fx.getParams();
         do{
-          prm->set(data_json[prm->name]);
-          LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          prm->set(data_json[prm->desc->name]);
+          LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
           prm = prm->next();
         }while (prm != NULL);
 
@@ -1032,8 +1032,8 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
         {
           Param* prm = configuration.fx.dexed[i].getParams();
           do{
-            prm->set(data_json[prm->name][i]);
-            LOG.print("Load param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+            prm->set(data_json[prm->desc->name][i]);
+            LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
             prm = prm->next();
           }while (prm != NULL);
           if (configuration.fx.dexed[i].delay_sync > 0)
@@ -1090,8 +1090,8 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
       
       Param* prm = configuration.fx.getParams();
       do{
-        data_json[prm->name] = prm->get();
-        LOG.print("Save param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+        data_json[prm->desc->name] = prm->get();
+        LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
         prm = prm->next();
       }while (prm != NULL);
 
@@ -1099,8 +1099,8 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
       {
         Param* prm = configuration.fx.dexed[i].getParams();
         do{
-          data_json[prm->name][i] = prm->get();
-          LOG.print("Save param:"); LOG.print(prm->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          data_json[prm->desc->name][i] = prm->get();
+          LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
           prm = prm->next();
         }while (prm != NULL);
       }
