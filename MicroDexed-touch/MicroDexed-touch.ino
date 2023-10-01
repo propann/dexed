@@ -5237,112 +5237,35 @@ FLASHMEM void show_configuration(void)
   LOG.flush();
 }
 
+// print dexed patch parameters
+FLASHMEM void print_voice_param_table(uint8_t instance_id, voice_param* params, uint8_t count, uint8_t offset) {
+    for(uint8_t i=0; i<count; i+=4) {
+      for(uint8_t col=0; col<4 && i+col<count; col++)
+        LOG.printf("|%-14s",params[i+col].name);
+      LOG.println("|");
+      for(uint8_t col=0; col<4 && i+col<count; col++)
+        LOG.printf("|%14d",MicroDexed[instance_id]->getVoiceDataElement(offset + i+col));
+      LOG.println("|"); LOG.println();
+    }
+}
+
 FLASHMEM void show_patch(uint8_t instance_id)
 {
-  char vn[VOICE_NAME_LEN];
-
   LOG.print(F("INSTANCE "));
   LOG.println(instance_id, DEC);
 
+  char vn[VOICE_NAME_LEN];
   memset(vn, 0, sizeof(vn));
-  LOG.println(F(" += == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == = +"));
-  for (int8_t i = 5; i >= 0; --i)
-  {
-    LOG.println(F(" += == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == = +"));
-    LOG.print(F(" | OP"));
-    LOG.print(6 - i, DEC);
-    LOG.println(F("                                                                                                      | "));
-    LOG.println(F(" += == == = += == == = += == == = += == == = += == == = += == == = += == == = += == == = += == == == == == == == = += == == == == == == == = += == == == == == == == = +"));
-    LOG.println(F(" |  R1  |  R2  |  R3  |  R4  |  L1  |  L2  |  L3  |  L4  | LEV_SCL_BRK_PT | SCL_LEFT_DEPTH | SCL_RGHT_DEPTH | "));
-    LOG.println(F(" + ------ +------ +------ +------ +------ +------ +------ +------ +---------------- +---------------- +---------------- +"));
-    LOG.print(F(" | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R1));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R2));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R3));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_R4));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_L1));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_L2));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_L3));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_EG_L4));
-    LOG.print(F("  |           "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_LEV_SCL_BRK_PT));
-    LOG.print(F("  |           "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_LEFT_DEPTH));
-    LOG.print(F("  |           "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_RGHT_DEPTH));
-    LOG.println(F("  | "));
-    LOG.println(F(" += == == = += == == = += == == = += == == = += == == = += == += = += = += == += == == = += == = += == == == = += = += == = += == == == += == += == == == == == == == = +"));
-    LOG.println(F(" | SCL_L_CURVE | SCL_R_CURVE | RT_SCALE | AMS | KVS | OUT_LEV | OP_MOD | FRQ_C | FRQ_F | DETUNE             | "));
-    LOG.println(F(" + ------------ - +------------ - +---------- +---- - +---- - +-------- - +-------- +------ - +------ - +-------------------- +"));
-    LOG.print(F(" |        "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_LEFT_CURVE));
-    LOG.print(F("  |        "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_SCL_RGHT_CURVE));
-    LOG.print(F("  |     "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OSC_RATE_SCALE));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_AMP_MOD_SENS));
-    LOG.print(F("  | "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_KEY_VEL_SENS));
-    LOG.print(F("  |    "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OUTPUT_LEV));
-    LOG.print(F("  |   "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OSC_MODE));
-    LOG.print(F("  |  "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_FREQ_COARSE));
-    LOG.print(F("  |  "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_FREQ_FINE));
-    LOG.print(F("  |               "));
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement((i * 21) + DEXED_OP_OSC_DETUNE));
-    LOG.println(F("  | "));
-  }
-  LOG.println(F(" += == == == += == == += += == == == += == += == += == == = ++ == == += = += = += == = += == = += = += == == = += == == = += == == += += == == == == == == == == == = +"));
-  LOG.println(F(" |  PR1  |  PR2  |  PR3  |  PR4  |  PL1  |  PL2  |  PL3  |  PL4  | ALG  |  FB  | OKS | TRANSPOSE            | "));
-  LOG.println(F(" + ------ - +------ - +------ - +------ - +------ - +------ - +------ - +------ - +------ +------ +---- - +---------------------- +"));
-  LOG.print(F(" |  "));
-  for (int8_t i = 0; i < 8; i++)
-  {
-    SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + i));
-    LOG.print(F("  |  "));
-  }
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_ALGORITHM));
-  LOG.print(F(" | "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_FEEDBACK));
-  LOG.print(F("  | "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_OSC_KEY_SYNC));
-  LOG.print(F("  |                 "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_TRANSPOSE));
-  LOG.println(F("  | "));
-  LOG.println(F(" += == == == += += == == += == += == += == == += += == == == += == == == += = += == = += == == += += == == = ++ == == = += == == += == == == == == == == == == == = +"));
-  LOG.println(F(" | LFO SPD | LFO DLY | LFO PMD | LFO AMD | LFO SYNC | LFO WAVE | LFO PMS | NAME                             | "));
-  LOG.println(F(" + -------- - +-------- - +-------- - +-------- - +---------- +---------- +-------- - +---------------------------------- +"));
-  LOG.print(F(" |    "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_SPEED));
-  LOG.print(F("  |    "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_DELAY));
-  LOG.print(F("  |    "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_PITCH_MOD_DEP));
-  LOG.print(F("  |    "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_AMP_MOD_DEP));
-  LOG.print(F("  |     "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_SYNC));
-  LOG.print(F("  |     "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_WAVE));
-  LOG.print(F("  |    "));
-  SerialPrintFormatInt3(MicroDexed[instance_id]->getVoiceDataElement(DEXED_VOICE_OFFSET + DEXED_LFO_PITCH_MOD_SENS));
-  LOG.print(F("  | "));
   MicroDexed[instance_id]->getName(vn);
   LOG.print(vn);
-  LOG.println(F("                       | "));
-  LOG.println(F(" += == == == == += == == == == += == == == == += == == == == += == == == == = += == == == == = += == == == == += == == == == == == == == == == == == == == == == = +"));
-  LOG.println(F(" += == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == = +"));
+
+  // 6x OP parameters
+  for(uint8_t op=0; op<6; op++) {
+    LOG.print("OP "); LOG.print(op); LOG.println(":");
+    print_voice_param_table(instance_id, voice_op_params, num_voice_op_params, op*21);
+  }
+  // global voice parameters
+  print_voice_param_table(instance_id, voice_params, num_voice_params, DEXED_VOICE_OFFSET);
 }
 
 FLASHMEM void SerialPrintFormatInt3(uint8_t num)
