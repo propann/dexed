@@ -4394,8 +4394,6 @@ FLASHMEM void set_volume(uint8_t v, uint8_t m)
 
 FLASHMEM void initial_values(bool init)
 {
-  init_configuration();
-
   load_sd_sys_json();
   if (bootup_performance_loading)
   {
@@ -4443,6 +4441,9 @@ FLASHMEM void initial_values(bool init)
     // drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
   }
   check_configuration();
+  
+  for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+    MicroDexed[instance_id]->ControllersRefresh();
   set_volume(configuration.sys.vol, configuration.sys.mono);
 
 #ifdef DEBUG
@@ -4474,40 +4475,6 @@ FLASHMEM void check_configuration_dexed(uint8_t instance_id)
 FLASHMEM void check_configuration_epiano(void)
 {
   configuration.epiano.check();
-}
-
-FLASHMEM void init_configuration(void)
-{
-#ifdef DEBUG
-  LOG.println(F("INITIALIZING CONFIGURATION"));
-#endif
-
-  configuration.sys.vol = VOLUME_DEFAULT;
-  configuration.sys.mono = MONO_DEFAULT;
-  configuration.sys.soft_midi_thru = SOFT_MIDI_THRU_DEFAULT;
-  configuration.sys.performance_number = PERFORMANCE_NUM_DEFAULT;
-  configuration.sys.load_at_startup_performance = STARTUP_NUM_DEFAULT;
-  configuration.sys.display_rotation = DISPLAY_ROTATION_DEFAULT;
-  configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
-  configuration.sys.ui_reverse = false;
-  configuration.sys.screen_saver_start = SCREEN_SAVER_START_DEFAULT;
-  configuration.sys.screen_saver_mode = SCREEN_SAVER_MODE_DEFAULT;
-  configuration.sys.gp_speed = GAMEPAD_SPEED_DEFAULT;
-
-  // configuration.fx is initialized by default, so nothing to do here.
-
-  for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-  {
-    // configuration.dexed is initialized by default, so nothing to do here.
-    // configuration.fx.dexed is initialized by default, so nothing to do here.
-    MicroDexed[instance_id]->ControllersRefresh();
-  }
-
-  // configuration.epiano is initialized by default.
-
-  // microsynth is initialized by default.
-
-  set_volume(configuration.sys.vol, configuration.sys.mono);
 }
 
 /******************************************************************************

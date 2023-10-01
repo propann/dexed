@@ -993,20 +993,21 @@ typedef struct mb_s : public Params{
 
 typedef struct sys_s : public Params
 {
-  P_uint8_t(vol,VOLUME_MIN, VOLUME_MAX,0);
-  P_uint8_t(mono,MONO_MIN, MONO_MAX,0);
-  P_uint8_t(soft_midi_thru,SOFT_MIDI_THRU_MIN, SOFT_MIDI_THRU_MAX,0);
-  P_uint8_t(performance_number,PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX,0);
+  P_uint8_t(vol,VOLUME_MIN, VOLUME_MAX,VOLUME_DEFAULT);
+  P_uint8_t(mono,MONO_MIN, MONO_MAX,MONO_DEFAULT);
+  P_uint8_t(soft_midi_thru,SOFT_MIDI_THRU_MIN, SOFT_MIDI_THRU_MAX,SOFT_MIDI_THRU_DEFAULT);
+  P_uint8_t(performance_number,PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX,PERFORMANCE_NUM_DEFAULT);
   P_uint8_t(favorites,FAVORITES_NUM_MIN, FAVORITES_NUM_MAX,0);
-  P_uint8_t(load_at_startup_performance,STARTUP_NUM_MIN, STARTUP_NUM_MAX,0);
+  P_uint8_t(load_at_startup_performance,STARTUP_NUM_MIN, STARTUP_NUM_MAX,STARTUP_NUM_DEFAULT);
   P_uint8_t(load_at_startup_page,0,100,0);
-  P_uint8_t(display_rotation,0,3,0);
-  P_uint8_t(touch_rotation,0,3,0);
+  P_uint8_t(display_rotation,0,3,DISPLAY_ROTATION_DEFAULT);
+  P_uint8_t(touch_rotation,0,3,TOUCH_ROTATION_DEFAULT);
   P_uint16_t(calib_x_min,0,4000,0);
   P_uint16_t(calib_y_min,0,4000,0);
   P_uint16_t(calib_x_max,0,4000,0);
   P_uint16_t(calib_y_max,0,4000,0);
-  P_uint8_t(screen_saver_start,SCREEN_SAVER_START_MIN,SCREEN_SAVER_START_MAX,4); // minutes
+  P_bool(ui_reverse,false);
+  P_uint8_t(screen_saver_start,SCREEN_SAVER_START_MIN,SCREEN_SAVER_START_MAX,SCREEN_SAVER_START_DEFAULT); // minutes
   P_uint8_t(screen_saver_mode,SCREEN_SAVER_MODE_MIN,SCREEN_SAVER_MODE_MAX,SCREEN_SAVER_MODE_DEFAULT); // 0 = random, modes 1...4 , 99 = off
 
   P_uint16_t(gp_speed,60,500,GAMEPAD_SPEED_DEFAULT);     // milliseconds  
@@ -1023,7 +1024,6 @@ typedef struct sys_s : public Params
   P_uint32_t(gp_a,0,255,2);
   P_uint32_t(gp_b,0,255,1);
 
-  P_bool(ui_reverse,false);
   P_end;
 } sys_t;
 
