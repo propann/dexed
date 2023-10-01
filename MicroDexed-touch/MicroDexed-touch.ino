@@ -5196,135 +5196,43 @@ FLASHMEM void show_cpu_and_mem_usage(void)
 #endif
 
 #ifdef DEBUG
+
+FLASHMEM void show_configuration(Params* config)
+{
+  Param* prm = config->getParams();
+    do{
+      // print name
+      LOG.print("  "); LOG.print(prm->desc->name);
+      // add padding
+      uint8_t len = strlen(prm->desc->name);
+      for(uint8_t i=0; i<32-len; i++)
+        LOG.print(" ");
+
+      // print value
+      LOG.print(prm->get(),DEC);
+      LOG.println();
+
+      prm = prm->next();
+    }while (prm != NULL);
+}
+
 FLASHMEM void show_configuration(void)
 {
   LOG.println();
   LOG.println(F("CONFIGURATION : "));
+
+  // TODO  should we add back the old long parameter names that where here to the config struct? just for the debug output?
+  
   LOG.println(F("System"));
-  LOG.print(F("  Volume              "));
-  LOG.println(configuration.sys.vol, DEC);
-  LOG.print(F("  Mono                "));
-  LOG.println(configuration.sys.mono, DEC);
-  LOG.print(F("  Soft MIDI Thru      "));
-  LOG.println(configuration.sys.soft_midi_thru, DEC);
-  LOG.print(F("  Favorites           "));
-  LOG.println(configuration.sys.favorites, DEC);
-  LOG.print(F("  Performance Number  "));
-  LOG.println(configuration.sys.performance_number, DEC);
-  LOG.print(F("  Load at startup     "));
-  LOG.println(configuration.sys.load_at_startup_performance, DEC);
-  LOG.print(F("  Display rotation    "));
-  LOG.println(configuration.sys.display_rotation, DEC);
-  LOG.print(F("  Touch rotation      "));
-  LOG.println(configuration.sys.touch_rotation, DEC);
-  LOG.print(F("  UI reverse          "));
-  LOG.println(configuration.sys.ui_reverse);
-  LOG.print(F("  Screen saver start  "));
-  LOG.println(configuration.sys.screen_saver_start, DEC);
+  show_configuration(&configuration.sys);
   LOG.println(F("FX"));
-  LOG.print(F("  Reverb Roomsize     "));
-  LOG.println(configuration.fx.reverb_roomsize, DEC);
-  LOG.print(F("  Reverb Level        "));
-  LOG.println(configuration.fx.reverb_level, DEC);
-
-  LOG.print(F("  Reverb Lowpass      "));
-  LOG.println(configuration.fx.reverb_lowpass, DEC);
-  LOG.print(F("  Reverb Lodamp       "));
-  LOG.println(configuration.fx.reverb_lodamp, DEC);
-  LOG.print(F("  Reverb Hidamp       "));
-  LOG.println(configuration.fx.reverb_hidamp, DEC);
-  LOG.print(F("  Reverb Diffusion     "));
-  LOG.println(configuration.fx.reverb_diffusion, DEC);
-
+  show_configuration(&configuration.fx);
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
     LOG.print(F("Dexed instance "));
     LOG.println(instance_id, DEC);
-    LOG.print(F("  Bank                 "));
-    LOG.println(configuration.dexed[instance_id].bank, DEC);
-    LOG.print(F("  Voice                "));
-    LOG.println(configuration.dexed[instance_id].voice, DEC);
-    LOG.print(F("  MIDI - Channel         "));
-    LOG.println(configuration.dexed[instance_id].midi_channel, DEC);
-    LOG.print(F("  Lowest Note          "));
-    LOG.println(configuration.dexed[instance_id].lowest_note, DEC);
-    LOG.print(F("  Highest Note         "));
-    LOG.println(configuration.dexed[instance_id].highest_note, DEC);
-    LOG.print(F("  Filter Cutoff        "));
-    LOG.println(configuration.fx.dexed[instance_id].filter_cutoff, DEC);
-    LOG.print(F("  Filter Resonance     "));
-    LOG.println(configuration.fx.dexed[instance_id].filter_resonance, DEC);
-    LOG.print(F("  Chorus Frequency     "));
-    LOG.println(configuration.fx.dexed[instance_id].chorus_frequency, DEC);
-    LOG.print(F("  Chorus Waveform      "));
-    LOG.println(configuration.fx.dexed[instance_id].chorus_waveform, DEC);
-    LOG.print(F("  Chorus Depth         "));
-    LOG.println(configuration.fx.dexed[instance_id].chorus_depth, DEC);
-    LOG.print(F("  Chorus Level         "));
-    LOG.println(configuration.fx.dexed[instance_id].chorus_level, DEC);
-    LOG.print(F("  Delay Time           "));
-    LOG.println(configuration.fx.dexed[instance_id].delay_time, DEC);
-    LOG.print(F("  Delay Feedback       "));
-    LOG.println(configuration.fx.dexed[instance_id].delay_feedback, DEC);
-    LOG.print(F("  Delay Level          "));
-    LOG.println(configuration.fx.dexed[instance_id].delay_level, DEC);
-    LOG.print(F("  Delay Sync           "));
-    LOG.println(configuration.fx.dexed[instance_id].delay_sync, DEC);
-    LOG.print(F("  Reverb Send          "));
-    LOG.println(configuration.fx.dexed[instance_id].reverb_send, DEC);
-    LOG.print(F("  Sound Intensity      "));
-    LOG.println(configuration.dexed[instance_id].sound_intensity, DEC);
-    LOG.print(F("  Panorama             "));
-    LOG.println(configuration.dexed[instance_id].pan, DEC);
-    LOG.print(F("  Transpose            "));
-    LOG.println(configuration.dexed[instance_id].transpose, DEC);
-    LOG.print(F("  Tune                 "));
-    LOG.println(configuration.dexed[instance_id].tune, DEC);
-    LOG.print(F("  Polyphony            "));
-    LOG.println(configuration.dexed[instance_id].polyphony, DEC);
-    LOG.print(F("  Mono / Poly            "));
-    LOG.println(configuration.dexed[instance_id].monopoly, DEC);
-    LOG.print(F("  Note Refresh         "));
-    LOG.println(configuration.dexed[instance_id].note_refresh, DEC);
-    LOG.print(F("  Pitchbend Range      "));
-    LOG.println(configuration.dexed[instance_id].pb_range, DEC);
-    LOG.print(F("  Pitchbend Step       "));
-    LOG.println(configuration.dexed[instance_id].pb_step, DEC);
-    LOG.print(F("  Modwheel Range       "));
-    LOG.println(configuration.dexed[instance_id].mw_range, DEC);
-    LOG.print(F("  Modwheel Assign      "));
-    LOG.println(configuration.dexed[instance_id].mw_assign, DEC);
-    LOG.print(F("  Modwheel Mode        "));
-    LOG.println(configuration.dexed[instance_id].mw_mode, DEC);
-    LOG.print(F("  Footctrl Range       "));
-    LOG.println(configuration.dexed[instance_id].fc_range, DEC);
-    LOG.print(F("  Footctrl Assign      "));
-    LOG.println(configuration.dexed[instance_id].fc_assign, DEC);
-    LOG.print(F("  Footctrl Mode        "));
-    LOG.println(configuration.dexed[instance_id].fc_mode, DEC);
-    LOG.print(F("  BreathCtrl Range     "));
-    LOG.println(configuration.dexed[instance_id].bc_range, DEC);
-    LOG.print(F("  Breathctrl Assign    "));
-    LOG.println(configuration.dexed[instance_id].bc_assign, DEC);
-    LOG.print(F("  Breathctrl Mode      "));
-    LOG.println(configuration.dexed[instance_id].bc_mode, DEC);
-    LOG.print(F("  Aftertouch Range     "));
-    LOG.println(configuration.dexed[instance_id].at_range, DEC);
-    LOG.print(F("  Aftertouch Assign    "));
-    LOG.println(configuration.dexed[instance_id].at_assign, DEC);
-    LOG.print(F("  Aftertouch Mode      "));
-    LOG.println(configuration.dexed[instance_id].at_mode, DEC);
-    LOG.print(F("  Portamento Mode      "));
-    LOG.println(configuration.dexed[instance_id].portamento_mode, DEC);
-    LOG.print(F("  Portamento Glissando "));
-    LOG.println(configuration.dexed[instance_id].portamento_glissando, DEC);
-    LOG.print(F("  Portamento Time      "));
-    LOG.println(configuration.dexed[instance_id].portamento_time, DEC);
-    LOG.print(F("  OP Enabled           "));
-    LOG.println(configuration.dexed[instance_id].op_enabled, DEC);
-    LOG.flush();
+    show_configuration(&configuration.dexed[instance_id]);
   }
-
   LOG.println();
   LOG.flush();
 }
