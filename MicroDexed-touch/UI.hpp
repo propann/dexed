@@ -6885,7 +6885,7 @@ uint16_t get_overview_factor(unsigned long filelength)
   return overview_factor;
 }
 
-void UI_draw_waveform_large(int samplenumber)
+FLASHMEM void UI_draw_waveform_large(int samplenumber)
 {
   display.console = true;
   uint8_t overview_buffer[142];

@@ -422,56 +422,8 @@ public:
     int predator_buffer_x;
     int predator_buffer_y;
 
-    void start() {
-        for (int i = 0; i < boidCount; i++) {
-            boids[i] = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
-        }
-        predator = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
-        predator.maxforce *= 1.6666666;
-        predator.maxspeed *= 1.1;
-        predator.neighbordist = 25.0;
-        predator.desiredseparation = 0.0;
-    }
-
-    unsigned int drawFrame() {
-
-        bool applyWind = random(0, 255) > 250;
-        if (applyWind) {
-            wind.x = Boid::randomf();
-            wind.y = Boid::randomf();
-        }
-
-        int col = ColorHSV(0, 0, screensaver_brightness);
-        for (int i = 0; i < boidCount; i++) {
-            Boid* boid = &boids[i];
-
-                // flee from predator
-                boid->repelForce(predator.location, 25);
-          
-            boid->run(boids);
-            PVector location = boid->location;
-
-            display.fillRect(flock_buffer_x[i], flock_buffer_y[i], 2, 2, COLOR_BACKGROUND);
-            display.fillRect(location.x, location.y, 2, 2, col);
-
-            flock_buffer_x[i] = location.x;
-            flock_buffer_y[i] = location.y;
-
-            if (applyWind) {
-                boid->applyForce(wind);
-                applyWind = false;
-            }
-        }
-
-            predator.run(boids);
-            PVector location = predator.location;
-            display.fillRect(predator_buffer_x, predator_buffer_y, 2, 2, COLOR_BACKGROUND);
-            display.fillRect(location.x, location.y, 2, 2, ColorHSV(0, 255, screensaver_brightness));
-            predator_buffer_x = location.x;
-            predator_buffer_y = location.y;
-
-        return 50;
-    }
+    void start();
+    unsigned int drawFrame();
 };
 
 
