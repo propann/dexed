@@ -4440,7 +4440,6 @@ FLASHMEM void initial_values(bool init)
     msp[1].midi_channel = DEFAULT_MSP_MIDI_CHANNEL_INST1;
     // drum_midi_channel = constrain(drum_midi_channel + 1, 0, 16);
   }
-  check_configuration();
   
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     MicroDexed[instance_id]->ControllersRefresh();
@@ -4451,31 +4450,6 @@ FLASHMEM void initial_values(bool init)
 #endif
 }
 
-FLASHMEM void check_configuration(void)
-{
-  configuration.sys.check();
-  check_configuration_fx();
-  for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-    check_configuration_dexed(instance_id);
-  check_configuration_epiano();
-}
-
-FLASHMEM void check_configuration_fx(void)
-{
-  configuration.fx.check();
-  for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-    configuration.fx.dexed[instance_id].check();
-}
-
-FLASHMEM void check_configuration_dexed(uint8_t instance_id)
-{
-  configuration.dexed[instance_id].check();
-}
-
-FLASHMEM void check_configuration_epiano(void)
-{
-  configuration.epiano.check();
-}
 
 /******************************************************************************
   PARAMETER-HELPERS

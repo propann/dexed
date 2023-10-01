@@ -40,6 +40,8 @@ public:
   };
   void set(float value) {
     char* ptr = ((char*)this) + sizeof(Param);
+    if(value < desc->min) value = desc->min;
+    if(value > desc->max) value = desc->max;
     if(desc->type == Descriptor::P_UINT8_T) *((uint8_t*)ptr) = round(value);
     if(desc->type == Descriptor::P_UINT16_T) *((uint16_t*)ptr) = round(value);
     if(desc->type == Descriptor::P_UINT32_T) *((uint32_t*)ptr) = round(value);
@@ -50,7 +52,6 @@ public:
     float val = get();
     if(val < desc->min) set(desc->min);
     if(val > desc->max) set(desc->max);
-    
   };
 } __attribute__ ((aligned (4)));
 

@@ -50,10 +50,6 @@ extern fm_t fm;
 extern char g_voice_name[NUM_DEXED][VOICE_NAME_LEN];
 extern char g_bank_name[NUM_DEXED][BANK_NAME_LEN];
 extern void init_MIDI_send_CC(void);
-extern void check_configuration_dexed(uint8_t instance_id);
-extern void check_configuration_performance(void);
-extern void check_configuration_fx(void);
-extern void check_configuration_epiano(void);
 extern void update_euclidean(void);
 
 extern microsynth_t microsynth[NUM_MICROSYNTH];
@@ -84,7 +80,6 @@ extern void handleStop(void);
 extern void handleStart(void);
 extern void dac_mute(void);
 extern void dac_unmute(void);
-extern void check_configuration_sys(void);
 extern uint8_t get_sample_note(uint8_t sample);
 extern float get_sample_pitch(uint8_t sample);
 extern float get_sample_p_offset(uint8_t sample);
@@ -936,7 +931,6 @@ FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
   vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
   if(!load_sd_config_json(filename, &configuration.dexed[instance_id])) return false;
-  check_configuration_dexed(instance_id);
   set_voiceconfig_params(instance_id);
   return true;
 }
@@ -1024,7 +1018,6 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
             configuration.fx.dexed[i].delay_time = 0;
         }
 
-        check_configuration_fx();
         set_fx_params();
 
         return (true);
@@ -1120,7 +1113,6 @@ FLASHMEM bool load_sd_epiano_json(uint8_t number)
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
   if(!load_sd_config_json(filename, &configuration.epiano)) return false;
-  check_configuration_epiano();
   set_epiano_params();
   return true;
 }
