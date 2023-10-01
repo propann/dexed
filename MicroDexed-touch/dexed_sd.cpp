@@ -108,6 +108,119 @@ File json;
 char filename[CONFIG_FILENAME_LEN];
 const char* sError = "*ERROR*";
 
+
+FLASHMEM File open_file_for_read(const char* filename)
+{
+  AudioNoInterrupts();
+  File file = SD.open(filename);
+  if(!file)
+  {
+#ifdef DEBUG
+    LOG.print(F("E : Cannot open for read: ")); LOG.println(filename);
+#endif
+    AudioInterrupts();
+    return file;
+  }
+#ifdef DEBUG
+  LOG.print(F("Reading ")); LOG.println(filename);
+#endif
+  return file;
+}
+
+FLASHMEM File open_file_for_write(const char* filename)
+{
+  AudioNoInterrupts();
+  SD.remove(filename);
+  File file = SD.open(filename, FILE_WRITE);
+  if (!file)
+  {
+#ifdef DEBUG
+    LOG.print(F("E : Cannot open for write: ")); LOG.println(filename);
+#endif
+    file.close();
+    AudioInterrupts();
+    return file;
+  }
+#ifdef DEBUG
+  LOG.print(F("Writing ")); LOG.println(filename);
+#endif
+  return file;
+}
+
+FLASHMEM void close_file (File file)
+{
+#ifdef DEBUG
+  LOG.print(F("Closing ")); LOG.println(file.name());
+#endif
+  file.close();
+  AudioInterrupts();
+}
+
+FLASHMEM bool read_file_json(const char* filename, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
+{
+  File file = open_file_for_read(filename);
+  if(!file) return false;
+  deserializeJson(document, file);
+  close_file(file);
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+  LOG.println(F("Read JSON data:"));
+  serializeJsonPretty(document, Serial);
+  LOG.println();
+#endif
+  return true;
+}
+
+FLASHMEM bool write_file_json(const char* filename, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
+{
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+  LOG.println(F("Write JSON data:")); serializeJsonPretty(document, Serial); LOG.println();
+#endif
+
+  File file = open_file_for_write(filename);
+  if(!file) return false;
+
+  serializeJsonPretty(document, file);
+  close_file(file);
+  return true;
+}
+
+
+FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
+{
+  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+  if(!read_file_json(filename, data_json)) return;
+
+  Param* prm = params->getParams();
+  do{
+    if(data_json.containsKey(prm->desc->name))
+    {
+      prm->set(data_json[prm->desc->name]);
+      LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+    }
+    else
+      LOG.print("Missing param:"); LOG.println(prm->desc->name);
+    prm = prm->next();
+  }while (prm != NULL);
+
+  return true;
+}
+
+FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
+{
+  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+  Param* prm = params->getParams();
+  do{
+    data_json[prm->desc->name] = prm->get();
+    LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+    prm = prm->next();
+  }while (prm != NULL);
+
+  write_file_json(filename, data_json);
+
+  return true;
+}
+
 /******************************************************************************
    SD BANK/VOICE LOADING
  ******************************************************************************/
@@ -813,118 +926,6 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
    SD VOICECONFIG
  ******************************************************************************/
 
-FLASHMEM File open_file_for_read(const char* filename)
-{
-  AudioNoInterrupts();
-  File file = SD.open(filename);
-  if(!file) 
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open for read: ")); LOG.println(filename);
-#endif
-    AudioInterrupts();
-    return file;
-  }
-#ifdef DEBUG
-  LOG.print(F("Reading ")); LOG.println(filename);
-#endif  
-  return file;
-}
-
-FLASHMEM File open_file_for_write(const char* filename)
-{
-  AudioNoInterrupts();
-  SD.remove(filename);
-  File file = SD.open(filename, FILE_WRITE);
-  if (!file)
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open for write: ")); LOG.println(filename);
-#endif
-    file.close();
-    AudioInterrupts();
-    return file;
-  } 
-#ifdef DEBUG
-  LOG.print(F("Writing ")); LOG.println(filename);
-#endif
-  return file;
-}
-
-FLASHMEM void close_file (File file)
-{
-#ifdef DEBUG
-  LOG.print(F("Closing ")); LOG.println(file.name());
-#endif
-  file.close();
-  AudioInterrupts();
-}
-
-FLASHMEM bool read_file_json(const char* filename, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
-{
-  File file = open_file_for_read(filename);
-  if(!file) return false;
-  deserializeJson(document, file);
-  close_file(file);
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-  LOG.println(F("Read JSON data:"));
-  serializeJsonPretty(document, Serial);
-  LOG.println();
-#endif
-  return true;
-}
-
-FLASHMEM bool write_file_json(const char* filename, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
-{
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-  LOG.println(F("Write JSON data:")); serializeJsonPretty(document, Serial); LOG.println();
-#endif
-
-  File file = open_file_for_write(filename);
-  if(!file) return false;
-
-  serializeJsonPretty(document, file);
-  close_file(file);
-  return true;
-}
-
-
-FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return;
-
-  Param* prm = params->getParams();
-  do{
-    if(data_json.containsKey(prm->desc->name)) 
-    {
-      prm->set(data_json[prm->desc->name]);
-      LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
-    }
-    else
-      LOG.print("Missing param:"); LOG.println(prm->desc->name);
-    prm = prm->next();
-  }while (prm != NULL);
-
-  return true;
-}
-
-FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  Param* prm = params->getParams();
-  do{
-    data_json[prm->desc->name] = prm->get();
-    LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
-    prm = prm->next();
-  }while (prm != NULL);
-
-  write_file_json(filename, data_json);
-
-  return true;
-}
-
 FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
 {
   vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
@@ -1051,7 +1052,6 @@ FLASHMEM bool load_sd_sys_json(void)
 {
   snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
   if(!load_sd_config_json(filename, &configuration.sys)) return false;
-  configuration.sys.check();
   set_sys_params();
 }
 
