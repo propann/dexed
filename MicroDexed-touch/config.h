@@ -974,7 +974,7 @@ typedef struct mb_s : public Params{
   P_float(mb_gain_mid ,0,10000, 0.10);
   P_float(mb_gain_upper_mid ,0,10000, 0.10);
   P_float(mb_gain_high ,0,10000, 0.80);
-  P_bool(multiband_active ,0,1, false);
+  P_bool(multiband_active, false);
   P_uint8_t(mb_threshold_low ,0,10000, 5);
   P_uint8_t(mb_threshold_mid ,0,10000, 15);
   P_uint8_t(mb_threshold_upper_mid ,0,10000, 12);
@@ -983,33 +983,48 @@ typedef struct mb_s : public Params{
   P_float(mb_q_mid ,0,10000, 0.10);
   P_float(mb_q_upper_mid ,0,10000, 0.10);
   P_float(mb_q_high ,0,10000, 0.50);
-  P_bool(mb_solo_low,0,1,0);
-  P_bool(mb_solo_mid,0,1,0);
-  P_bool(mb_solo_upper_mid,0,1,0);
-  P_bool(mb_solo_high,0,1,0);
+  P_bool(mb_solo_low,0);
+  P_bool(mb_solo_mid,0);
+  P_bool(mb_solo_upper_mid,0);
+  P_bool(mb_solo_high,0);
   P_uint8_t(mb_global_ratio ,0,10000, 32);
   P_end;
 } mb_t;
 
-typedef struct sys_s
+typedef struct sys_s : public Params
 {
-  uint8_t vol;
-  uint8_t mono;
-  uint8_t soft_midi_thru;
-  uint8_t performance_number;
-  uint8_t favorites;
-  uint8_t load_at_startup_performance;
-  uint8_t load_at_startup_page;
-  uint8_t display_rotation;
-  uint8_t touch_rotation;
-  uint16_t calib_x_min;
-  uint16_t calib_y_min;
-  uint16_t calib_x_max;
-  uint16_t calib_y_max;
-  uint8_t screen_saver_start; // minutes
-  uint8_t screen_saver_mode; // 0 = random, modes 1...4 , 99 = off
-  uint16_t gamepad_speed;     // milliseconds
-  bool ui_reverse;
+  P_uint8_t(vol,VOLUME_MIN, VOLUME_MAX,0);
+  P_uint8_t(mono,MONO_MIN, MONO_MAX,0);
+  P_uint8_t(soft_midi_thru,SOFT_MIDI_THRU_MIN, SOFT_MIDI_THRU_MAX,0);
+  P_uint8_t(performance_number,PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX,0);
+  P_uint8_t(favorites,FAVORITES_NUM_MIN, FAVORITES_NUM_MAX,0);
+  P_uint8_t(load_at_startup_performance,STARTUP_NUM_MIN, STARTUP_NUM_MAX,0);
+  P_uint8_t(load_at_startup_page,0,100,0);
+  P_uint8_t(display_rotation,0,3,0);
+  P_uint8_t(touch_rotation,0,3,0);
+  P_uint16_t(calib_x_min,0,4000,0);
+  P_uint16_t(calib_y_min,0,4000,0);
+  P_uint16_t(calib_x_max,0,4000,0);
+  P_uint16_t(calib_y_max,0,4000,0);
+  P_uint8_t(screen_saver_start,SCREEN_SAVER_START_MIN,SCREEN_SAVER_START_MAX,4); // minutes
+  P_uint8_t(screen_saver_mode,SCREEN_SAVER_MODE_MIN,SCREEN_SAVER_MODE_MAX,SCREEN_SAVER_MODE_DEFAULT); // 0 = random, modes 1...4 , 99 = off
+
+  P_uint16_t(gp_speed,60,500,GAMEPAD_SPEED_DEFAULT);     // milliseconds  
+  P_uint8_t(gp_up_0,0,255,127);
+  P_uint8_t(gp_up_1,0,255,0);
+  P_uint8_t(gp_down_0,0,255,127);
+  P_uint8_t(gp_down_1,0,255,255);
+  P_uint8_t(gp_right_0,0,255,255);
+  P_uint8_t(gp_right_1,0,255,127);
+  P_uint8_t(gp_left_0,0,255,0);
+  P_uint8_t(gp_left_1,0,255,127);
+  P_uint32_t(gp_select,0,255,256);
+  P_uint32_t(gp_start,0,255,512);
+  P_uint32_t(gp_a,0,255,2);
+  P_uint32_t(gp_b,0,255,1);
+
+  P_bool(ui_reverse,false);
+  P_end;
 } sys_t;
 
 typedef struct storage_file_s

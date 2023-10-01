@@ -60,27 +60,6 @@ extern microsynth_t microsynth[NUM_MICROSYNTH];
 
 extern braids_t braids_osc;
 
-extern uint8_t GAMEPAD_UP_0;
-extern uint8_t GAMEPAD_UP_1;
-extern uint8_t GAMEPAD_UP_BUTTONS;
-
-extern uint8_t GAMEPAD_DOWN_0;
-extern uint8_t GAMEPAD_DOWN_1;
-extern uint8_t GAMEPAD_DOWN_BUTTONS;
-
-extern uint8_t GAMEPAD_RIGHT_0;
-extern uint8_t GAMEPAD_RIGHT_1;
-extern uint8_t GAMEPAD_RIGHT_BUTTONS;
-
-extern uint8_t GAMEPAD_LEFT_0;
-extern uint8_t GAMEPAD_LEFT_1;
-extern uint8_t GAMEPAD_LEFT_BUTTONS;
-
-extern uint32_t GAMEPAD_SELECT;
-extern uint32_t GAMEPAD_START;
-extern uint32_t GAMEPAD_BUTTON_A;
-extern uint32_t GAMEPAD_BUTTON_B;
-
 extern uint8_t gamepad_0_neutral;
 extern uint8_t gamepad_1_neutral;
 
@@ -1158,175 +1137,16 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number)
  ******************************************************************************/
 FLASHMEM bool load_sd_sys_json(void)
 {
-  if (sd_card > 0)
-  {
-    snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
-
-    // first check if file exists...
-    AudioNoInterrupts();
-    if (SD.exists(filename))
-    {
-      // ... and if: load
-#ifdef DEBUG
-      LOG.println(F("Found sys configuration"));
-#endif
-      json = SD.open(filename);
-      if (json)
-      {
-        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-        deserializeJson(data_json, json);
-
-        json.close();
-        AudioInterrupts();
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        LOG.println(F("Read JSON data:"));
-        serializeJsonPretty(data_json, Serial);
-        LOG.println();
-#endif
-
-        configuration.sys.vol = data_json["vol"];
-        configuration.sys.mono = data_json["mono"];
-        configuration.sys.soft_midi_thru = data_json["soft_midi_thru"];
-        configuration.sys.performance_number = data_json["performance_number"];
-        configuration.sys.favorites = data_json["favorites"];
-        configuration.sys.load_at_startup_performance = data_json["load_at_startup_performance"];
-        configuration.sys.load_at_startup_page = data_json["load_at_startup_page"];
-        configuration.sys.screen_saver_start = data_json["screen_saver_start"];
-        configuration.sys.screen_saver_mode = data_json["screen_saver_mode"];
-        if (data_json.containsKey("display_rotation"))
-        {
-          configuration.sys.display_rotation = data_json["display_rotation"];
-          configuration.sys.touch_rotation = data_json["touch_rotation"];
-          configuration.sys.ui_reverse = data_json["ui_reverse"];
-        }
-        if (data_json.containsKey("gp_speed"))
-          configuration.sys.gamepad_speed = data_json["gp_speed"];
-        if (data_json["gp_a"] != data_json["gp_b"])
-        {
-          GAMEPAD_UP_0 = data_json["gp_up_0"];
-          GAMEPAD_UP_1 = data_json["gp_up_1"];
-          GAMEPAD_DOWN_0 = data_json["gp_down_0"];
-          GAMEPAD_DOWN_1 = data_json["gp_down_1"];
-          GAMEPAD_LEFT_0 = data_json["gp_left_0"];
-          GAMEPAD_LEFT_1 = data_json["gp_left_1"];
-          GAMEPAD_RIGHT_0 = data_json["gp_right_0"];
-          GAMEPAD_RIGHT_1 = data_json["gp_right_1"];
-          GAMEPAD_SELECT = data_json["gp_select"];
-          GAMEPAD_START = data_json["gp_start"];
-          GAMEPAD_BUTTON_A = data_json["gp_a"];
-          GAMEPAD_BUTTON_B = data_json["gp_b"];
-        }
-        if (data_json["calib_x_min"] != data_json["calib_x_max"])
-        {
-          configuration.sys.calib_x_min = data_json["calib_x_min"];
-          configuration.sys.calib_y_min = data_json["calib_y_min"];
-          configuration.sys.calib_x_max = data_json["calib_x_max"];
-          configuration.sys.calib_y_max = data_json["calib_y_max"];
-        }
-
-        check_configuration_sys();
-        set_sys_params();
-
-        return (true);
-      }
-#ifdef DEBUG
-      else
-      {
-        LOG.print(F("E : Cannot open "));
-        LOG.print(filename);
-        LOG.println(F(" on SD."));
-      }
-    }
-    else
-    {
-      LOG.print(F("No "));
-      LOG.print(filename);
-      LOG.println(F(" available."));
-#endif
-    }
-  }
-
-  AudioInterrupts();
-  return (false);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
+  if(!load_sd_config_json(filename, &configuration.sys)) return false;
+  configuration.sys.check();
+  set_sys_params();
 }
 
 FLASHMEM bool save_sd_sys_json(void)
 {
-  if (sd_card > 0)
-  {
-    snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
-
-#ifdef DEBUG
-    LOG.print(F("Saving sys config to "));
-    LOG.println(filename);
-#endif
-
-    SD.remove(filename);
-    json = SD.open(filename, FILE_WRITE);
-    if (json)
-    {
-      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-      data_json["vol"] = configuration.sys.vol;
-      data_json["mono"] = configuration.sys.mono;
-      data_json["soft_midi_thru"] = configuration.sys.soft_midi_thru;
-      data_json["performance_number"] = configuration.sys.performance_number;
-      data_json["favorites"] = configuration.sys.favorites;
-      data_json["load_at_startup_performance"] = configuration.sys.load_at_startup_performance;
-      data_json["load_at_startup_page"] = configuration.sys.load_at_startup_page;
-      data_json["display_rotation"] = configuration.sys.display_rotation;
-      data_json["touch_rotation"] = configuration.sys.touch_rotation;
-      data_json["ui_reverse"] = configuration.sys.ui_reverse;
-      data_json["screen_saver_start"] = configuration.sys.screen_saver_start;
-      data_json["screen_saver_mode"] = configuration.sys.screen_saver_mode;
-      data_json["gp_speed"] = configuration.sys.gamepad_speed;
-      if (GAMEPAD_BUTTON_A != GAMEPAD_BUTTON_B)
-      {
-        data_json["gp_up_0"] = GAMEPAD_UP_0;
-        data_json["gp_up_1"] = GAMEPAD_UP_1;
-        data_json["gp_down_0"] = GAMEPAD_DOWN_0;
-        data_json["gp_down_1"] = GAMEPAD_DOWN_1;
-        data_json["gp_left_0"] = GAMEPAD_LEFT_0;
-        data_json["gp_left_1"] = GAMEPAD_LEFT_1;
-        data_json["gp_right_0"] = GAMEPAD_RIGHT_0;
-        data_json["gp_right_1"] = GAMEPAD_RIGHT_1;
-        data_json["gp_select"] = GAMEPAD_SELECT;
-        data_json["gp_start"] = GAMEPAD_START;
-        data_json["gp_a"] = GAMEPAD_BUTTON_A;
-        data_json["gp_b"] = GAMEPAD_BUTTON_B;
-      }
-
-      if (configuration.sys.calib_x_min != configuration.sys.calib_x_max)
-      {
-        data_json["calib_x_min"] = configuration.sys.calib_x_min;
-        data_json["calib_y_min"] = configuration.sys.calib_y_min;
-        data_json["calib_x_max"] = configuration.sys.calib_x_max;
-        data_json["calib_y_max"] = configuration.sys.calib_y_max;
-      }
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      LOG.println(F("Write JSON data:"));
-      serializeJsonPretty(data_json, Serial);
-      LOG.println();
-#endif
-      serializeJsonPretty(data_json, json);
-      json.close();
-      AudioInterrupts();
-      return (true);
-    }
-    json.close();
-  }
-  else
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open "));
-    LOG.print(filename);
-    LOG.println(F(" on SD."));
-#endif
-  }
-
-  AudioInterrupts();
-  return (false);
+  snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
+  return save_sd_config_json(filename, &configuration.sys);
 }
 
 /******************************************************************************

@@ -4452,32 +4452,11 @@ FLASHMEM void initial_values(bool init)
 
 FLASHMEM void check_configuration(void)
 {
-  check_configuration_sys();
+  configuration.sys.check();
   check_configuration_fx();
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
     check_configuration_dexed(instance_id);
   check_configuration_epiano();
-}
-
-FLASHMEM void check_configuration_sys(void)
-{
-  configuration.sys.vol = constrain(configuration.sys.vol, VOLUME_MIN, VOLUME_MAX);
-  configuration.sys.mono = constrain(configuration.sys.mono, MONO_MIN, MONO_MAX);
-  configuration.sys.soft_midi_thru = constrain(configuration.sys.soft_midi_thru, SOFT_MIDI_THRU_MIN, SOFT_MIDI_THRU_MAX);
-  configuration.sys.favorites = constrain(configuration.sys.favorites, FAVORITES_NUM_MIN, FAVORITES_NUM_MAX);
-  configuration.sys.performance_number = constrain(configuration.sys.performance_number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-  configuration.sys.load_at_startup_performance = constrain(configuration.sys.load_at_startup_performance, STARTUP_NUM_MIN, STARTUP_NUM_MAX);
-  configuration.sys.display_rotation = constrain(configuration.sys.display_rotation, 0, 3);
-  configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
-  configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
-
-  // if (configuration.sys.screen_saver_mode == 5) //disable screensaver
-  //  LCDML.SCREEN_disable();
-  //else
-  //configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
-  setup_screensaver();
-
-  configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 60, 500);
 }
 
 FLASHMEM void check_configuration_fx(void)
@@ -4513,7 +4492,7 @@ FLASHMEM void init_configuration(void)
   configuration.sys.ui_reverse = false;
   configuration.sys.screen_saver_start = SCREEN_SAVER_START_DEFAULT;
   configuration.sys.screen_saver_mode = SCREEN_SAVER_MODE_DEFAULT;
-  configuration.sys.gamepad_speed = GAMEPAD_SPEED_DEFAULT;
+  configuration.sys.gp_speed = GAMEPAD_SPEED_DEFAULT;
 
   // configuration.fx is initialized by default, so nothing to do here.
 
@@ -4805,6 +4784,8 @@ FLASHMEM void set_sys_params(void)
     ts.finished_calibration = true;
   }
 #endif
+
+  setup_screensaver();
 }
 
 /******************************************************************************

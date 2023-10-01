@@ -84,23 +84,6 @@ int gamepad_accelerate;
 
 uint8_t gamepad_last_dir;
 
-uint8_t GAMEPAD_UP_0 = 127;
-uint8_t GAMEPAD_UP_1 = 0;
-
-uint8_t GAMEPAD_DOWN_0 = 127;
-uint8_t GAMEPAD_DOWN_1 = 255;
-
-uint8_t GAMEPAD_RIGHT_0 = 255;
-uint8_t GAMEPAD_RIGHT_1 = 127;
-
-uint8_t GAMEPAD_LEFT_0 = 0;
-uint8_t GAMEPAD_LEFT_1 = 127;
-
-uint32_t GAMEPAD_SELECT = 256;
-uint32_t GAMEPAD_START = 512;
-uint32_t GAMEPAD_BUTTON_A = 2;
-uint32_t GAMEPAD_BUTTON_B = 1;
-
 uint32_t gamepad_buttons_neutral;
 int gamepad_0_neutral;
 int gamepad_1_neutral;
@@ -2934,7 +2917,7 @@ FLASHMEM boolean key_right()
     return true;
 #endif
 
-  if (joysticks[0].getAxis(0) == GAMEPAD_RIGHT_0 && joysticks[0].getAxis(1) == GAMEPAD_RIGHT_1)
+  if (joysticks[0].getAxis(0) == configuration.sys.gp_right_0 && joysticks[0].getAxis(1) == configuration.sys.gp_right_1)
     return true;
 
   return false;
@@ -2953,7 +2936,7 @@ FLASHMEM boolean key_left()
     return true;
 #endif
 
-  if (joysticks[0].getAxis(0) == GAMEPAD_LEFT_0 && joysticks[0].getAxis(1) == GAMEPAD_LEFT_1)
+  if (joysticks[0].getAxis(0) == configuration.sys.gp_left_0 && joysticks[0].getAxis(1) == configuration.sys.gp_left_1)
     return true;
 
   return false;
@@ -2973,7 +2956,7 @@ FLASHMEM boolean key_up()
     return true;
 #endif
 
-  if (joysticks[0].getAxis(0) == GAMEPAD_UP_0 && joysticks[0].getAxis(1) == GAMEPAD_UP_1)
+  if (joysticks[0].getAxis(0) == configuration.sys.gp_up_0 && joysticks[0].getAxis(1) == configuration.sys.gp_up_1)
     return true;
 
   return false;
@@ -2993,7 +2976,7 @@ FLASHMEM boolean key_down()
     return true;
 #endif
 
-  if (joysticks[0].getAxis(0) == GAMEPAD_DOWN_0 && joysticks[0].getAxis(1) == GAMEPAD_DOWN_1)
+  if (joysticks[0].getAxis(0) == configuration.sys.gp_down_0 && joysticks[0].getAxis(1) == configuration.sys.gp_down_1)
     return true;
 
   return false;
@@ -3001,7 +2984,7 @@ FLASHMEM boolean key_down()
 
 FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons)
 {
-  if (gamepad_millis > configuration.sys.gamepad_speed && seq.cycle_touch_element < 6 && buttons == GAMEPAD_SELECT && key_right())
+  if (gamepad_millis > configuration.sys.gp_speed && seq.cycle_touch_element < 6 && buttons == configuration.sys.gp_select && key_right())
   {
     seq.cycle_touch_element = 6; // goto chain edit
     seq.help_text_needs_refresh = true;
@@ -3013,7 +2996,7 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons)
     print_song_mode_help();
     gamepad_millis = 0;
   }
-  else if ((seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && key_left()) || (seq.cycle_touch_element == 7 && buttons == GAMEPAD_SELECT && key_left()))
+  else if ((seq.cycle_touch_element == 6 && buttons == configuration.sys.gp_select && key_left()) || (seq.cycle_touch_element == 7 && buttons == configuration.sys.gp_select && key_left()))
   {
     seq.cycle_touch_element = 0; // goto main song mode
     seq.help_text_needs_refresh = true;
@@ -3025,7 +3008,7 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons)
     print_song_mode_help();
     gamepad_millis = 0;
   }
-  else if ((seq.cycle_touch_element == 8 && buttons == GAMEPAD_SELECT && key_left()) || (seq.cycle_touch_element == 9 && buttons == GAMEPAD_SELECT && key_left()))
+  else if ((seq.cycle_touch_element == 8 && buttons == configuration.sys.gp_select && key_left()) || (seq.cycle_touch_element == 9 && buttons == configuration.sys.gp_select && key_left()))
   {
     seq.cycle_touch_element = 6; // go back from transpose to chain
     seq.help_text_needs_refresh = true;
@@ -3037,7 +3020,7 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons)
     print_song_mode_help();
     gamepad_millis = 0;
   }
-  else if ((seq.cycle_touch_element == 6 && buttons == GAMEPAD_SELECT && key_right()) || (seq.cycle_touch_element == 7 && buttons == GAMEPAD_SELECT && key_right()))
+  else if ((seq.cycle_touch_element == 6 && buttons == configuration.sys.gp_select && key_right()) || (seq.cycle_touch_element == 7 && buttons == configuration.sys.gp_select && key_right()))
   {
     seq.cycle_touch_element = 8; // goto transpose from chain
     seq.help_text_needs_refresh = true;
@@ -3049,13 +3032,13 @@ FLASHMEM void gamepad_seq_navigation_func(uint32_t buttons)
     print_song_mode_help();
     gamepad_millis = 0;
   }
-  else if (buttons == GAMEPAD_SELECT && key_up())
+  else if (buttons == configuration.sys.gp_select && key_up())
   {
     generic_temp_select_menu = 6; // preselect BPM
     LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
     gamepad_millis = 0;
   }
-  else if (seq.cycle_touch_element > 7 && buttons == GAMEPAD_SELECT && key_right())
+  else if (seq.cycle_touch_element > 7 && buttons == configuration.sys.gp_select && key_right())
   { // go to pattern editor
     gamepad_millis = 0;
     seq.quicknav_song_to_pattern_jump = true;
@@ -3101,9 +3084,9 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 6);
-    print_formatted_number(GAMEPAD_UP_0, 3);
+    print_formatted_number(configuration.sys.gp_up_0, 3);
     setCursor_textGrid_small(20, 6);
-    print_formatted_number(GAMEPAD_UP_1, 3);
+    print_formatted_number(configuration.sys.gp_up_1, 3);
 
     if (temp_int == 1)
       display.setTextColor(RED, COLOR_BACKGROUND);
@@ -3112,9 +3095,9 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 7);
-    print_formatted_number(GAMEPAD_DOWN_0, 3);
+    print_formatted_number(configuration.sys.gp_down_0, 3);
     setCursor_textGrid_small(20, 7);
-    print_formatted_number(GAMEPAD_DOWN_1, 3);
+    print_formatted_number(configuration.sys.gp_down_1, 3);
 
     if (temp_int == 2)
       display.setTextColor(RED, COLOR_BACKGROUND);
@@ -3123,9 +3106,9 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 8);
-    print_formatted_number(GAMEPAD_LEFT_0, 3);
+    print_formatted_number(configuration.sys.gp_left_0, 3);
     setCursor_textGrid_small(20, 8);
-    print_formatted_number(GAMEPAD_LEFT_1, 3);
+    print_formatted_number(configuration.sys.gp_left_1, 3);
 
     if (temp_int == 3)
       display.setTextColor(RED, COLOR_BACKGROUND);
@@ -3134,9 +3117,9 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 9);
-    print_formatted_number(GAMEPAD_RIGHT_0, 3);
+    print_formatted_number(configuration.sys.gp_right_0, 3);
     setCursor_textGrid_small(20, 9);
-    print_formatted_number(GAMEPAD_RIGHT_1, 3);
+    print_formatted_number(configuration.sys.gp_right_1, 3);
 
     if (temp_int == 4)
       display.setTextColor(RED, COLOR_BACKGROUND);
@@ -3145,7 +3128,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 11);
-    print_formatted_number(GAMEPAD_BUTTON_A, 3);
+    print_formatted_number(configuration.sys.gp_a, 3);
     if (temp_int == 5)
       display.setTextColor(RED, COLOR_BACKGROUND);
     else if (temp_int > 5)
@@ -3153,7 +3136,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 12);
-    print_formatted_number(GAMEPAD_BUTTON_B, 3);
+    print_formatted_number(configuration.sys.gp_b, 3);
     if (temp_int == 6)
       display.setTextColor(RED, COLOR_BACKGROUND);
     else if (temp_int > 6)
@@ -3161,7 +3144,7 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 14);
-    print_formatted_number(GAMEPAD_SELECT, 3);
+    print_formatted_number(configuration.sys.gp_select, 3);
     if (temp_int == 7)
       display.setTextColor(RED, COLOR_BACKGROUND);
     else if (temp_int > 7)
@@ -3169,44 +3152,44 @@ FLASHMEM void gamepad_learn_func(uint32_t buttons)
     else
       display.setTextColor(GREY2, COLOR_BACKGROUND);
     setCursor_textGrid_small(16, 15);
-    print_formatted_number(GAMEPAD_START, 3);
+    print_formatted_number(configuration.sys.gp_start, 3);
     if (buttons != gamepad_buttons_neutral || joysticks[0].getAxis(0) != gamepad_0_neutral || joysticks[0].getAxis(1) != gamepad_1_neutral)
     {
       if (temp_int == 0)
       {
-        GAMEPAD_UP_0 = joysticks[0].getAxis(0);
-        GAMEPAD_UP_1 = joysticks[0].getAxis(1);
+        configuration.sys.gp_up_0 = joysticks[0].getAxis(0);
+        configuration.sys.gp_up_1 = joysticks[0].getAxis(1);
       }
       else if (temp_int == 1)
       {
-        GAMEPAD_DOWN_0 = joysticks[0].getAxis(0);
-        GAMEPAD_DOWN_1 = joysticks[0].getAxis(1);
+        configuration.sys.gp_down_0 = joysticks[0].getAxis(0);
+        configuration.sys.gp_down_1 = joysticks[0].getAxis(1);
       }
       else if (temp_int == 2)
       {
-        GAMEPAD_LEFT_0 = joysticks[0].getAxis(0);
-        GAMEPAD_LEFT_1 = joysticks[0].getAxis(1);
+        configuration.sys.gp_left_0 = joysticks[0].getAxis(0);
+        configuration.sys.gp_left_1 = joysticks[0].getAxis(1);
       }
       else if (temp_int == 3)
       {
-        GAMEPAD_RIGHT_0 = joysticks[0].getAxis(0);
-        GAMEPAD_RIGHT_1 = joysticks[0].getAxis(1);
+        configuration.sys.gp_right_0 = joysticks[0].getAxis(0);
+        configuration.sys.gp_right_1 = joysticks[0].getAxis(1);
       }
       else if (temp_int == 4)
       {
-        GAMEPAD_BUTTON_A = buttons;
+        configuration.sys.gp_a = buttons;
       }
       else if (temp_int == 5)
       {
-        GAMEPAD_BUTTON_B = buttons;
+        configuration.sys.gp_b = buttons;
       }
       else if (temp_int == 6)
       {
-        GAMEPAD_SELECT = buttons;
+        configuration.sys.gp_select = buttons;
       }
       else if (temp_int == 7)
       {
-        GAMEPAD_START = buttons;
+        configuration.sys.gp_start = buttons;
       }
       temp_int++;
       gamepad_millis = 0;
@@ -3808,21 +3791,21 @@ FLASHMEM void lcdml_menu_control(void)
     {
     case 24: // SELECT
       remote_MIDI_CC = 0;
-      buttons = GAMEPAD_SELECT;
+      buttons = configuration.sys.gp_select;
       remote_console_keystate_select = (remote_MIDI_CC_value == 127 ? true : false);
       break;
       // case 25: // START
-      // buttons = buttons + GAMEPAD_START;
+      // buttons = buttons + configuration.sys.gp_start;
       // remote_MIDI_CC = 0;
       //   break;
     case 26: // BUTTON B
       remote_MIDI_CC = 0;
-      buttons = buttons + GAMEPAD_BUTTON_B;
+      buttons = buttons + configuration.sys.gp_b;
       remote_console_keystate_b = (remote_MIDI_CC_value == 127 ? true : false);
       break;
     case 27: // BUTTON A
       remote_MIDI_CC = 0;
-      buttons = buttons + GAMEPAD_BUTTON_A;
+      buttons = buttons + configuration.sys.gp_a;
       remote_console_keystate_a = (remote_MIDI_CC_value == 127 ? true : false);
       break;
     case 28: // init display at remote connection
@@ -3890,41 +3873,41 @@ FLASHMEM void lcdml_menu_control(void)
   {
 
     if (digitalRead(BI_SELECT) == false)
-      buttons = GAMEPAD_SELECT;
+      buttons = configuration.sys.gp_select;
     if (digitalRead(BI_START) == false)
     {
-      if (buttons == GAMEPAD_SELECT)
-        buttons = buttons + GAMEPAD_START;
+      if (buttons == configuration.sys.gp_select)
+        buttons = buttons + configuration.sys.gp_start;
       else
-        buttons = GAMEPAD_START;
+        buttons = configuration.sys.gp_start;
     }
     if (digitalRead(BI_BUTTON_A) == false)
-      // buttons = buttons + GAMEPAD_BUTTON_A;
-      buttons = GAMEPAD_BUTTON_A;
+      // buttons = buttons + configuration.sys.gp_a;
+      buttons = configuration.sys.gp_a;
     if (digitalRead(BI_BUTTON_B) == false)
-      // buttons = buttons + GAMEPAD_BUTTON_B;
-      buttons = GAMEPAD_BUTTON_B;
+      // buttons = buttons + configuration.sys.gp_b;
+      buttons = configuration.sys.gp_b;
     //}
   }
 #endif
 
   if (remote_console_keystate_select)
   {
-    buttons = GAMEPAD_SELECT;
+    buttons = configuration.sys.gp_select;
     remote_console_keystate_select = true;
   }
   if (remote_console_keystate_a)
   {
-    buttons = buttons + GAMEPAD_BUTTON_A;
+    buttons = buttons + configuration.sys.gp_a;
     remote_console_keystate_a = true;
   }
   if (remote_console_keystate_b)
   {
-    buttons = buttons + GAMEPAD_BUTTON_B;
+    buttons = buttons + configuration.sys.gp_b;
     remote_console_keystate_b = true;
   }
 
-  if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gamepad_speed)
+  if (gamepad_millis + (gamepad_accelerate) >= configuration.sys.gp_speed)
   {
 
     // key-learn function
@@ -3933,13 +3916,13 @@ FLASHMEM void lcdml_menu_control(void)
       gamepad_learn_func(buttons);
     }
     // LSDJ Style Navigation:
-    else if (buttons == GAMEPAD_SELECT && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
+    else if (buttons == configuration.sys.gp_select && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
     {
       gamepad_seq_navigation_func(buttons);
     }
     else if ((buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) || (buttons != 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)))
     {
-      if (buttons == GAMEPAD_SELECT && key_left())
+      if (buttons == configuration.sys.gp_select && key_left())
       { // go back to song-transpose
         seq.help_text_needs_refresh = true;
         seq.edit_state = true;
@@ -3949,7 +3932,7 @@ FLASHMEM void lcdml_menu_control(void)
         LCDML.OTHER_jumpToFunc(UI_func_song);
       }
     }
-    else if (buttons == GAMEPAD_SELECT && key_down() && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_settings))
+    else if (buttons == configuration.sys.gp_select && key_down() && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_settings))
     {
       LCDML.OTHER_jumpToFunc(UI_func_song); // go back from seq.settings to song
     }
@@ -4069,24 +4052,24 @@ FLASHMEM void lcdml_menu_control(void)
 
       // end gamepad cases
     }
-    if (gamepad_accelerate > configuration.sys.gamepad_speed / 1.1)
-      gamepad_accelerate = configuration.sys.gamepad_speed / 1.1;
+    if (gamepad_accelerate > configuration.sys.gp_speed / 1.1)
+      gamepad_accelerate = configuration.sys.gp_speed / 1.1;
 
     // GAMEPAD BUTTON HANDLING
 
     if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad))
     {
-      if (buttons == GAMEPAD_BUTTON_B)
+      if (buttons == configuration.sys.gp_b)
       {
         button[ENC_L] = 0;
         gamepad_accelerate = 0;
       }
-      else if (buttons == GAMEPAD_BUTTON_A)
+      else if (buttons == configuration.sys.gp_a)
       {
         button[ENC_R] = 0;
         gamepad_accelerate = 0;
       }
-      else if (buttons == GAMEPAD_START && gamepad_millis >= configuration.sys.gamepad_speed * 3)
+      else if (buttons == configuration.sys.gp_start && gamepad_millis >= configuration.sys.gp_speed * 3)
       {
         gamepad_millis = 0;
         gamepad_accelerate = 0;
@@ -16527,7 +16510,7 @@ FLASHMEM void _render_misc_settings()
   setCursor_textGrid_small(36, 14);
   display.print(F("Y MAX"));
   setCursor_textGrid_small(42, 7);
-  print_formatted_number(configuration.sys.gamepad_speed, 3);
+  print_formatted_number(configuration.sys.gp_speed, 3);
   setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
 
@@ -16577,7 +16560,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 9);
         else if (generic_temp_select_menu == menu++)
         {
-          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
+          configuration.sys.gp_speed = constrain(configuration.sys.gp_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
           settings_modified = 1;
         }
         else if (generic_temp_select_menu == menu++)
@@ -16633,7 +16616,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 9);
         else if (generic_temp_select_menu == menu++)
         {
-          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
+          configuration.sys.gp_speed = constrain(configuration.sys.gp_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
           settings_modified = 1;
         }
         else if (generic_temp_select_menu == menu++)
@@ -16702,7 +16685,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     // Gamepad settings
     setModeColor(0);
     setCursor_textGrid_small(42, 7);
-    print_formatted_number(configuration.sys.gamepad_speed, 3);
+    print_formatted_number(configuration.sys.gp_speed, 3);
     setCursor_textGrid_small(46, 7);
     display.print(F("ms"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
