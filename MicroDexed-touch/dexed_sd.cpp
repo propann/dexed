@@ -868,8 +868,13 @@ FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 
         Param* prm = params->getParams();
         do{
-          prm->set(data_json[prm->desc->name]);
-          LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          if(data_json.containsKey(prm->desc->name)) 
+          {
+            prm->set(data_json[prm->desc->name]);
+            LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+          }
+          else
+            LOG.print("Missing param:"); LOG.println(prm->desc->name);
           prm = prm->next();
         }while (prm != NULL);
 
