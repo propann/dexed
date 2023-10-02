@@ -173,6 +173,16 @@ FLASHMEM void close_file (File file)
   AudioInterrupts();
 }
 
+FLASHMEM void get_config_path(const char* filename, uint8_t number, const char* config_name) 
+{
+  snprintf_P(filename, CONFIG_FILENAME_LEN, PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, config_name);
+}
+
+FLASHMEM void get_config_path(const char* filename, uint8_t number, const char* config_name, uint8_t instance_id) 
+{
+  snprintf_P(filename, CONFIG_FILENAME_LEN, PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, number, config_name, instance_id);
+}
+
 FLASHMEM bool read_file_json(const char* filename, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
 {
   File file = open_file_for_read(filename);
@@ -188,6 +198,12 @@ FLASHMEM bool read_file_json(const char* filename, StaticJsonDocument<JSON_BUFFE
   return true;
 }
 
+FLASHMEM bool read_file_json(uint8_t number, const char* config_name, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
+{
+  get_config_path(filename, number, config_name);
+  return read_file_json(filename, document);
+}
+
 FLASHMEM bool write_file_json(const char* filename, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
 {
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
@@ -200,6 +216,12 @@ FLASHMEM bool write_file_json(const char* filename, StaticJsonDocument<JSON_BUFF
   serializeJsonPretty(document, file);
   close_file(file);
   return true;
+}
+
+FLASHMEM bool write_file_json(uint8_t number, const char* config_name, StaticJsonDocument<JSON_BUFFER_SIZE>& document)
+{
+  get_config_path(filename, number, config_name);
+  return write_file_json(filename, document);
 }
 
 FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
@@ -236,6 +258,31 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
 
   return true;
 }
+
+FLASHMEM bool load_sd_config_json(uint8_t number, const char* config_name, Params* params)
+{
+  get_config_path(filename, number, config_name);
+  return load_sd_config_json(filename, params);
+}
+
+FLASHMEM bool load_sd_config_json(uint8_t number, const char* config_name, uint8_t instance_id, Params* params)
+{
+  get_config_path(filename, number, config_name, instance_id);
+  return load_sd_config_json(filename, params);
+}
+
+FLASHMEM bool save_sd_config_json(uint8_t number, const char* config_name, Params* params)
+{
+  get_config_path(filename, number, config_name);
+  return save_sd_config_json(filename, params);
+}
+
+FLASHMEM bool save_sd_config_json(uint8_t number, const char* config_name, uint8_t instance_id, Params* params)
+{
+  get_config_path(filename, number, config_name, instance_id);
+  return save_sd_config_json(filename, params);
+}
+
 
 /******************************************************************************
    SD BANK/VOICE LOADING
@@ -478,9 +525,8 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data)
 FLASHMEM bool load_sd_drummappings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
+  if(!read_file_json(number, DRUMS_MAPPING_NAME, data_json)) return false;
 
   for (uint8_t i = 0; i < NUM_CUSTOM_MIDI_MAPPINGS; i++)
   {
@@ -504,8 +550,7 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number)
     data_json["out"][i] = custom_midi_map[i].out;
     data_json["channel"][i] = custom_midi_map[i].channel;
   }
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, DRUMS_MAPPING_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, DRUMS_MAPPING_NAME, data_json);
 #endif
 }
 
@@ -515,9 +560,8 @@ FLASHMEM bool save_sd_drummappings_json(uint8_t number)
 FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
 {
 #if NUM_DRUMS > 0
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
+  if(!read_file_json(number, DRUMS_CONFIG_NAME, data_json)) return false;
 
   seq.drums_volume = data_json["drums_volume"];
   set_drums_volume(seq.drums_volume);
@@ -554,48 +598,8 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
     data_json["vol_min"][i] = get_sample_vol_min(i);
     data_json["reverb_send"][i] = get_sample_reverb_send(i);
   }
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, DRUMS_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, DRUMS_CONFIG_NAME, data_json);
 #endif
-}
-
-/******************************************************************************
-   SD VOICECONFIG
- ******************************************************************************/
-
-FLASHMEM bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
-{
-  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
-  if(!load_sd_config_json(filename, &configuration.dexed[instance_id])) return false;
-  set_voiceconfig_params(instance_id);
-  return true;
-}
-
-FLASHMEM bool save_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id)
-{
-  vc = constrain(vc, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, vc, VOICE_CONFIG_NAME, instance_id + 1);
-  return save_sd_config_json(filename, &configuration.dexed[instance_id]);
-}
-
-/******************************************************************************
-   SD MICROSYNTH
- ******************************************************************************/
-FLASHMEM bool load_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
-{
-  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
-  if(!load_sd_config_json(filename, &microsynth[instance_id])) return false;
-  microsynth_update_all_settings(instance_id);
-  return true;
-}
-
-FLASHMEM bool save_sd_microsynth_json(uint8_t ms, uint8_t instance_id)
-{
-  ms = constrain(ms, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, ms, MICROSYNTH_CONFIG_NAME, instance_id + 1);
-  return save_sd_config_json(filename, &microsynth[instance_id]);
 }
 
 /******************************************************************************
@@ -605,9 +609,8 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
 {
   load_sd_drumsettings_json(number);
 
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);  
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
+  if(!read_file_json(number, FX_CONFIG_NAME, data_json)) return false;
 
   Param* prm = configuration.fx.getParams();
   do{
@@ -656,25 +659,7 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
     }while (prm != NULL);
   }
 
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, FX_CONFIG_NAME);
-  return write_file_json(filename, data_json);
-}
-
-/******************************************************************************
-   SD EPIANO
- ******************************************************************************/
-FLASHMEM bool load_sd_epiano_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
-  if(!load_sd_config_json(filename, &configuration.epiano)) return false;
-  set_epiano_params();
-  return true;
-}
-
-FLASHMEM bool save_sd_epiano_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, EPIANO_CONFIG_NAME);
-  return save_sd_config_json(filename, &configuration.epiano);
+  return write_file_json(number, FX_CONFIG_NAME, data_json);
 }
 
 /******************************************************************************
@@ -694,65 +679,13 @@ FLASHMEM bool save_sd_sys_json(void)
 }
 
 /******************************************************************************
-   SD BRAIDS
- ******************************************************************************/
-
-FLASHMEM bool load_sd_braids_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
-  if(!load_sd_config_json(filename, &braids_osc)) return false;
-  braids_update_all_settings();
-  return true;
-}
-
-FLASHMEM bool save_sd_braids_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, BRAIDS_CONFIG_NAME);
-  return save_sd_config_json(filename, &braids_osc);
-}
-
-/******************************************************************************
-   SD MULTIBAND
- ******************************************************************************/
-
-FLASHMEM bool load_sd_multiband_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, MULTIBAND_CONFIG_NAME);
-  return load_sd_config_json(filename, &mb);
-}
-
-FLASHMEM bool save_sd_multiband_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, MULTIBAND_CONFIG_NAME);
-  return save_sd_config_json(filename, &mb);
-}
-
-/******************************************************************************
-   SD SIDECHAIN
- ******************************************************************************/
-
-FLASHMEM bool load_sd_sidechain_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SIDECHAIN_CONFIG_NAME);
-  return load_sd_config_json(filename, &sidechain);
-}
-
-FLASHMEM bool save_sd_sidechain_json(uint8_t number)
-{
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SIDECHAIN_CONFIG_NAME);
-  return save_sd_config_json(filename, &sidechain);  
-}
-
-/******************************************************************************
    SD SEQUENCER
  ******************************************************************************/
 
 FLASHMEM bool load_sd_chain_json(uint8_t number)
 {
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
-
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
+  if(!read_file_json(number, CHAIN_CONFIG_NAME, data_json)) return false;
 
   int total = sizeof(seq.chain);
   int columns = sizeof(seq.chain[0]);
@@ -785,15 +718,13 @@ FLASHMEM bool save_sd_chain_json(uint8_t number)
     }
   }
 
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, CHAIN_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, CHAIN_CONFIG_NAME, data_json);
 }
 
 FLASHMEM bool load_sd_transpose_json(uint8_t number)
 {
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
+  if(!read_file_json(number, TRANSPOSE_CONFIG_NAME, data_json)) return false;
   int total = sizeof(seq.chain_transpose);
   int columns = sizeof(seq.chain_transpose[0]);
   int rows = total / columns;
@@ -825,16 +756,13 @@ FLASHMEM bool save_sd_transpose_json(uint8_t number)
       count++;
     }
   }
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, TRANSPOSE_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, TRANSPOSE_CONFIG_NAME, data_json);
 }
 
 FLASHMEM bool load_sd_song_json(uint8_t number)
 {
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
-
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  read_file_json(filename, data_json);
+  read_file_json(number, SONG_CONFIG_NAME, data_json);
   int total = sizeof(seq.song);
   int columns = sizeof(seq.song[0]);
   int rows = total / columns;
@@ -866,8 +794,7 @@ FLASHMEM bool save_sd_song_json(uint8_t number)
       count++;
     }
   }
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SONG_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, SONG_CONFIG_NAME, data_json);
 }
 
 FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number)
@@ -885,8 +812,7 @@ FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number)
       count++;
     }
   }
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
-  write_file_json(filename, data_json);
+  write_file_json(number, VELOCITY_CONFIG_NAME, data_json);
   return (true);
 }
 
@@ -906,8 +832,7 @@ FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number)
       count++;
     }
   }
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, PATTERN_CONFIG_NAME, data_json);
 }
 
 FLASHMEM bool save_sd_performance_json(uint8_t number)
@@ -932,17 +857,16 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
   save_sd_transpose_json(number);
   save_sd_chain_json(number);
   save_sd_fx_json(number);
-  save_sd_epiano_json(number);
+  save_sd_config_json(number, EPIANO_CONFIG_NAME, &configuration.epiano);
   save_sd_multisample_presets_json(number);
-  save_sd_braids_json(number);
-  save_sd_multiband_json(number);
-  save_sd_sidechain_json(number);
+  save_sd_config_json(number, BRAIDS_CONFIG_NAME, &braids_osc);
+  save_sd_config_json(number, MULTIBAND_CONFIG_NAME, &mb);
+  save_sd_config_json(number, SIDECHAIN_CONFIG_NAME, &sidechain);
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s%d.json"), PERFORMANCE_CONFIG_PATH, number, VOICE_CONFIG_NAME, i);
-    save_sd_microsynth_json(number, i);
-    save_sd_voiceconfig_json(number, i);
+    save_sd_config_json(number, MICROSYNTH_CONFIG_NAME, i + 1, &microsynth[i]);
+    save_sd_config_json(number, VOICE_CONFIG_NAME, i+1, &configuration.dexed[i]);
   }
 
 
@@ -986,8 +910,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
   }
   data_json["drum_midi_channel"] = drum_midi_channel;
 
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
-  bool ret=write_file_json(filename, data_json);
+  bool ret=write_file_json(number, SEQUENCER_CONFIG_NAME, data_json);
   dac_unmute();
   if (ret && seq_was_running == true)
     handleStart();
@@ -1030,8 +953,7 @@ FLASHMEM void get_sd_performance_name_json(uint8_t number)
   memset(seq.name_temp, 0, FILENAME_LEN);
 
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
-  if(!read_file_json(filename, data_json)) return;
+  if(!read_file_json(number, SEQUENCER_CONFIG_NAME, data_json)) return;
   if (data_json["seq_name"][0] != 0)
   {
     for (uint8_t i = 0; i < FILENAME_LEN; i++)
@@ -1047,8 +969,7 @@ FLASHMEM void get_sd_performance_name_json(uint8_t number)
 FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number)
 {
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, VELOCITY_CONFIG_NAME);
-  if(!read_file_json(filename,data_json)) return false;
+  if(!read_file_json(number, VELOCITY_CONFIG_NAME,data_json)) return false;
 
   int total = sizeof(seq.vel);
   int columns = sizeof(seq.vel[0]);
@@ -1068,8 +989,7 @@ FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number)
 FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number)
 {
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, PATTERN_CONFIG_NAME);
-  read_file_json(filename, data_json);
+  read_file_json(number, PATTERN_CONFIG_NAME, data_json);
 
   int total = sizeof(seq.note_data);
   int columns = sizeof(seq.note_data[0]);
@@ -1100,20 +1020,21 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
   AudioNoInterrupts();
   load_sd_seq_sub_patterns_json(number);
   load_sd_seq_sub_vel_json(number);
-  load_sd_epiano_json(number);
+  load_sd_config_json(number, EPIANO_CONFIG_NAME, &configuration.epiano);
+  set_epiano_params();  
   load_sd_drummappings_json(number);
   load_sd_song_json(number);
   load_sd_transpose_json(number);
   load_sd_chain_json(number);
   load_sd_multisample_presets_json(number);
-  load_sd_braids_json(number);
-  load_sd_multiband_json(number);
-  load_sd_sidechain_json(number);
+  load_sd_config_json(number, BRAIDS_CONFIG_NAME, &braids_osc);
+  braids_update_all_settings();
+  load_sd_config_json(number, MULTIBAND_CONFIG_NAME, &mb);
+  load_sd_config_json(number, SIDECHAIN_CONFIG_NAME, &sidechain);
   configuration.sys.performance_number = number;
 
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SEQUENCER_CONFIG_NAME);
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
+  if(!read_file_json(number, SEQUENCER_CONFIG_NAME, data_json)) return false;
   for (uint8_t i = 0; i < sizeof(seq.track_type); i++)
   {
     seq.track_type[i] = data_json["track_type"][i];
@@ -1170,8 +1091,12 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
 
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
-    load_sd_microsynth_json(number, instance_id);
-    load_sd_voiceconfig_json(number, instance_id);
+    load_sd_config_json(number, MICROSYNTH_CONFIG_NAME, instance_id + 1, &microsynth[instance_id]);
+    microsynth_update_all_settings(instance_id);
+
+    load_sd_config_json(number, VOICE_CONFIG_NAME, instance_id + 1, &configuration.dexed[instance_id]);
+    set_voiceconfig_params(instance_id);
+
     load_sd_voice(configuration.dexed[instance_id].pool, configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
     MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
     MicroDexed[instance_id]->panic();
@@ -1279,8 +1204,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
     }
   }
 
-  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, MULTISAMPLE_PRESETS_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return write_file_json(number, MULTISAMPLE_PRESETS_CONFIG_NAME, data_json);
 }
 
 FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
