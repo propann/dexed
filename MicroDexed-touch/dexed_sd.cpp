@@ -224,6 +224,50 @@ FLASHMEM bool write_file_json(uint8_t number, const char* config_name, StaticJso
   return write_file_json(filename, document);
 }
 
+FLASHMEM void get_from_json(JsonDocument&  data, const char* key, Param* prm)
+{
+  if(data[key])
+  {
+    if(prm->desc->count>1)
+      for(uint32_t i=0; i<prm->desc->count; i++)
+        prm->set(data[key][i],i);
+    else
+      prm->set(data[key]);
+    LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+  }
+  else
+    LOG.print("Missing param:"); LOG.println(prm->desc->name);
+}
+
+FLASHMEM void set_to_json(JsonDocument&  data, const char* key, Param* prm)
+{
+  if(prm->desc->count>1)
+    for(uint32_t i=0; i<prm->desc->count; i++)
+      data[key][i]=prm->get(i);
+  else
+    data[key]=prm->get();
+
+  LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+}
+
+FLASHMEM bool load_sd_config_json(uint8_t number, const char* config_name, Param* prm)
+{
+  get_config_path(filename, number, config_name);
+  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+  if(!read_file_json(filename, data_json)) return false;
+  get_from_json(data_json,prm->desc->name, prm);
+
+  return true;
+}
+
+FLASHMEM bool save_sd_config_json(uint8_t number, const char* config_name, Param* prm)
+{
+  get_config_path(filename, number, config_name);
+  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+  set_to_json(data_json,prm->desc->name, prm);
+  return write_file_json(filename, data_json);
+}
+
 FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 {
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
@@ -231,13 +275,7 @@ FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 
   Param* prm = params->getParams();
   do{
-    if(data_json.containsKey(prm->desc->name))
-    {
-      prm->set(data_json[prm->desc->name]);
-      LOG.print("Load param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
-    }
-    else
-      LOG.print("Missing param:"); LOG.println(prm->desc->name);
+    get_from_json(data_json,prm->desc->name, prm);
     prm = prm->next();
   }while (prm != NULL);
 
@@ -249,14 +287,11 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
   Param* prm = params->getParams();
   do{
-    data_json[prm->desc->name] = prm->get();
-    LOG.print("Save param:"); LOG.print(prm->desc->name); LOG.print(" "); LOG.print(prm->get()); LOG.println();
+    set_to_json(data_json, prm->desc->name, prm);
     prm = prm->next();
   }while (prm != NULL);
 
-  write_file_json(filename, data_json);
-
-  return true;
+  return write_file_json(filename, data_json);
 }
 
 FLASHMEM bool load_sd_config_json(uint8_t number, const char* config_name, Params* params)
@@ -670,6 +705,7 @@ FLASHMEM bool load_sd_sys_json(void)
   snprintf_P(filename, sizeof(filename), PSTR("/%s.json"), SYS_CONFIG_NAME);
   if(!load_sd_config_json(filename, &configuration.sys)) return false;
   set_sys_params();
+  return true;
 }
 
 FLASHMEM bool save_sd_sys_json(void)
