@@ -59,9 +59,9 @@
 #include <math.h>
 
 enum ParamType {
-  P_END=0, P_UINT8_T, P_UINT16_T, P_UINT32_T, P_INT32_T, P_FLOAT, P_TYPE_COUNT
+  P_END=0, P_UINT8_T, P_INT8_T, P_UINT16_T, P_UINT32_T, P_INT32_T, P_FLOAT, P_TYPE_COUNT
 };
-const uint8_t param_sizes[P_TYPE_COUNT]={0,sizeof(uint8_t),sizeof(uint16_t),sizeof(uint32_t),sizeof(int32_t),sizeof(float)};
+const uint8_t param_sizes[P_TYPE_COUNT]={0,sizeof(uint8_t),sizeof(int8_t),sizeof(uint16_t),sizeof(uint32_t),sizeof(int32_t),sizeof(float)};
 
 class 
 Descriptor {
@@ -126,7 +126,7 @@ public:
 } __attribute__ ((aligned (4)));
 
 #define P_bool(name,def) \
-  Param name##_desc{P_UINT8_T, 1, #name, def}; uint8_t name = def
+  Param name##_desc{P_UINT8_T, 1, #name, 0, 1, def}; uint8_t name = def
 
 #define P_uint8_t(name,min,max,def) \
   Param name##_desc{P_UINT8_T, 1, #name, min, max, def}; uint8_t name = def
