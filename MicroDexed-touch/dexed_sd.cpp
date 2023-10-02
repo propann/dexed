@@ -752,48 +752,8 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
     save_sd_config_json(number, VOICE_CONFIG_NAME, i+1, &configuration.dexed[i]);
   }
 
+  bool ret=save_sd_config_json(number, SEQUENCER_CONFIG_NAME, &seq);
 
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  data_json["seq_tempo_ms"] = seq.tempo_ms;
-  data_json["pattern_len_dec"] = seq.pattern_len_dec;
-  data_json["swing_steps"] = seq.swing_steps;
-  data_json["seq_bpm"] = seq.bpm;
-  data_json["arp_speed"] = seq.arp_speed;
-  data_json["arp_length"] = seq.arp_length;
-  data_json["arp_volume_fade"] = seq.arp_volume_fade;
-  data_json["arp_style"] = seq.arp_style;
-  data_json["seq_chord_vel"] = seq.chord_vel;
-  data_json["seq_transpose"] = seq.transpose;
-  data_json["chord_key_ammount"] = seq.chord_key_ammount;
-  data_json["seq_oct_shift"] = seq.oct_shift;
-  data_json["seq_element_shift"] = seq.element_shift;
-  data_json["euclidean_active"] = seq.euclidean_active;
-  data_json["euclidean_offset"] = seq.euclidean_offset;
-
-  for (uint8_t i = 0; i < sizeof(seq.track_type); i++)
-  {
-    data_json["track_type"][i] = seq.track_type[i];
-  }
-  for (uint8_t i = 0; i < sizeof(seq.content_type); i++)
-  {
-    data_json["content_type"][i] = seq.content_type[i];
-  }
-  for (uint8_t i = 0; i < sizeof(seq.instrument); i++)
-  {
-    data_json["seq_inst_dexed"][i] = seq.instrument[i];
-  }
-  for (uint8_t i = 0; i < FILENAME_LEN; i++)
-  {
-    data_json["seq_name"][i] = seq.name[i];
-  }
-  for (uint8_t pat = 0; pat < NUM_SEQ_PATTERN; pat++)
-  {
-    data_json["chance"][pat] = seq.pat_chance[pat];
-    data_json["vel_variation"][pat] = seq.pat_vel_variation[pat];
-  }
-  data_json["drum_midi_channel"] = drum_midi_channel;
-
-  bool ret=write_file_json(number, SEQUENCER_CONFIG_NAME, data_json);
   dac_unmute();
   if (ret && seq_was_running == true)
     handleStart();
@@ -874,62 +834,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
   load_sd_config_json(number, MULTIBAND_CONFIG_NAME, &mb);
   load_sd_config_json(number, SIDECHAIN_CONFIG_NAME, &sidechain);
   configuration.sys.performance_number = number;
-
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(number, SEQUENCER_CONFIG_NAME, data_json)) return false;
-  for (uint8_t i = 0; i < sizeof(seq.track_type); i++)
-  {
-    seq.track_type[i] = data_json["track_type"][i];
-  }
-  for (uint8_t i = 0; i < sizeof(seq.content_type); i++)
-  {
-    seq.content_type[i] = data_json["content_type"][i];
-  }
-  for (uint8_t i = 0; i < sizeof(seq.instrument); i++)
-  {
-    seq.instrument[i] = data_json["seq_inst_dexed"][i];
-  }
-
-  if (data_json["seq_name"][0] != 0)
-  {
-    for (uint8_t i = 0; i < FILENAME_LEN; i++)
-    {
-      seq.name[i] = data_json["seq_name"][i];
-    }
-  }
-
-  for (uint8_t pat = 0; pat < NUM_SEQ_PATTERN; pat++)
-  {
-    if (data_json["chance"][pat] > 0)
-    {
-      seq.pat_chance[pat] = data_json["chance"][pat];
-      seq.pat_vel_variation[pat] = data_json["vel_variation"][pat];
-    }
-    else
-    {
-      seq.pat_chance[pat] = 100;
-      seq.pat_vel_variation[pat] = 0;
-    }
-  }
-
-  seq.tempo_ms = data_json["seq_tempo_ms"];
-  seq.bpm = data_json["seq_bpm"];
-  seq.pattern_len_dec = data_json["pattern_len_dec"];
-  seq.swing_steps = data_json["swing_steps"];
-  seq.arp_speed = data_json["arp_speed"];
-  seq.arp_length = data_json["arp_length"];
-  seq.arp_volume_fade = data_json["arp_volume_fade"];
-  seq.arp_style = data_json["arp_style"];
-  seq.chord_vel = data_json["seq_chord_vel"];
-  seq.transpose = data_json["seq_transpose"];
-  seq.chord_key_ammount = data_json["chord_key_ammount"];
-  seq.oct_shift = data_json["seq_oct_shift"];
-  seq.element_shift = data_json["seq_element_shift"];
-  seq.euclidean_active = data_json["euclidean_active"];
-  seq.euclidean_offset = data_json["euclidean_offset"];
-
-  if (data_json["drum_midi_channel"] > 0) //do not set to onmi when it was never saved before. Better to use the default channel in this case.
-    drum_midi_channel = data_json["drum_midi_channel"];
+  load_sd_config_json(number,SEQUENCER_CONFIG_NAME, &seq);
 
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {

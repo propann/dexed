@@ -60,14 +60,37 @@ static const float tune_frequencies2_PGM[128] = {
     5274.0409, 5587.6517, 5919.9108, 6271.9270, 6644.8752, 7040.0000, 7458.6202, 7902.1328,
     8372.0181, 8869.8442, 9397.2726, 9956.0635, 10548.0818, 11175.3034, 11839.8215, 12543.8540 };
 
-typedef struct sequencer_s
+typedef struct sequencer_s : public Params
 {
+    Param tempo_ms_desc{P_INT32_T, 1, "seq_tempo_ms", 16000,360000,180000}; int32_t tempo_ms;
+    Param pattern_len_dec_desc{P_UINT8_T, 1, "pattern_len_dec", 0,8,0}; uint8_t pattern_len_dec;
+    Param swing_steps_desc{P_UINT8_T, 1, "swing_steps", 0,2,0}; uint8_t swing_steps;
+    Param bpm_desc{P_UINT8_T, 1, "seq_bpm", 40,190,102}; uint8_t bpm;
+    Param arp_speed_desc{P_UINT8_T, 1, "arp_speed", 0,3,0}; uint8_t arp_speed;
+    Param arp_length_desc{P_UINT8_T, 1, "arp_length", 0,16,8}; uint8_t arp_length;
+    Param arp_volume_fade_desc{P_FLOAT, 1, "arp_volume_fade", 0,1.,0.01}; float arp_volume_fade;
+    Param arp_style_desc{P_UINT8_T, 1, "arp_style", 0,3,0}; uint8_t arp_style; // up, down, up&down, random
+    Param chord_vel_desc{P_UINT8_T, 1, "seq_chord_vel", 10,120,60}; uint8_t chord_vel;
+    Param transpose_desc{P_UINT8_T, 1, "seq_transpose", 0,60,0}; uint8_t transpose;
+    Param chord_key_ammount_desc{P_UINT8_T, 1, "chord_key_ammount", 1,7,4}; uint8_t chord_key_ammount;
+    Param oct_shift_desc{P_INT8_T, 1, "seq_oct_shift", -2,2,0}; int8_t oct_shift;
+    Param element_shift_desc{P_UINT8_T, 1, "seq_element_shift", 0,6,0}; uint8_t element_shift;
+    Param euclidean_active_desc{P_UINT8_T, 1, "euclidean_active", 0,1,0}; bool euclidean_active;
+    Param euclidean_offset_desc{P_UINT8_T, 1, "euclidean_offset", 0,15,5}; uint8_t euclidean_offset;
+    Param track_type_desc{P_UINT8_T, NUM_SEQ_TRACKS, "track_type", 0,3,0}; uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
+    Param content_type_desc{P_UINT8_T, NUM_SEQ_PATTERN, "content_type", 0,2,0}; uint8_t content_type[NUM_SEQ_PATTERN];
+    // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
+    Param instrument_desc{P_UINT8_T, NUM_SEQ_TRACKS, "seq_inst_dexed", 0,47,0}; uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
+    Param name_desc{P_UINT8_T, FILENAME_LEN, "seq_name", 0,255,'\0'}; char name[FILENAME_LEN];
+    Param pat_chance_desc{P_UINT8_T, NUM_SEQ_PATTERN, "chance", 0,100,100}; uint8_t pat_chance[NUM_SEQ_PATTERN];
+    Param pat_vel_variation_desc{P_UINT8_T, NUM_SEQ_PATTERN, "vel_variation", 0,100,0}; uint8_t pat_vel_variation[NUM_SEQ_PATTERN];
+    Param p_end{P_END};
+   //    uint8_t drum_midi_channel
+
     bool stop_screensaver = false;
     bool quicknav_song_to_pattern_jump = false;
     bool quicknav_pattern_to_song_jump = false;
     bool euclidean_state[16];
-    uint8_t euclidean_offset = 5;
-    bool euclidean_active;
     bool DAC_mute_state = false;
     bool play_mode; // false = song, true = current pattern only
     bool hunt_pattern = false;
@@ -88,8 +111,6 @@ typedef struct sequencer_s
     uint8_t loop_start = 99;
     uint8_t loop_end = 99;
     uint8_t ticks;
-    uint8_t pattern_len_dec;
-    uint8_t swing_steps;
     uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
     uint8_t scrollpos;
     int cursor_scroll;
@@ -111,23 +132,15 @@ typedef struct sequencer_s
     uint8_t UI_last_seq_step;
     uint8_t note_editor_view = 99; // 0 = list/tracker view, 1 = pianoroll
     bool noteoffsent[NUM_SEQ_TRACKS] = { false, false, false, false, false, false, false, false };
-    uint8_t instrument[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
     uint8_t step = 0;
     //uint8_t total_played_patterns=0;//MIDI SLAVE SYNC TEST
     bool running = false;
     bool recording = false;
     bool smartfilter = false;
     uint8_t state_last_loadsave = 200;
-    char name[FILENAME_LEN];
     char name_temp[FILENAME_LEN];
     uint8_t note_in;
     uint8_t note_in_velocity;
-    int transpose = 0;
-    uint8_t chord_vel = 60;
-    uint8_t chord_key_ammount = 4;
-    uint8_t element_shift = 0;
-    int oct_shift = 0;
-    uint8_t arp_style = 0; // up, down, up&down, random
 
     const uint8_t arps[6][23] = {
         {0, 4, 7, 12, 16, 19, 24, 28, 31, 36, 40, 43, 48, 52, 55, 60, 64, 67, 72, 76, 79, 84, 0}, // major
@@ -139,21 +152,19 @@ typedef struct sequencer_s
     };
 
     const char chord_names[7][7] = {
-        {'M', 'a', 'j', 'o', 'r', ' ', ' '}, // major
-        {'M', 'i', 'n', 'o', 'r', ' ', ' '},
-        {'s', 'e', 'v', 'e', 'n', ' ', ' '},
-        {'a', 'u', 'g', ' ', ' ', ' ', ' '},
-        {'d', 'i', 'm', ' ', ' ', ' ', ' '},
-        {'M', 'a', 'j', '7', ' ', ' ', ' '},
-        {'N', 'o', 'C', 'h', 'o', 'r', 'd'} };
+         "Major  ",
+         "Minor  ",
+         "seven  ",
+         "aug    ",
+         "dim    ",
+         "Maj7   ",
+         "NoChord" };
 
     const char arp_style_names[4][3] = {
-        {'U', 'P', ' '},
-        {'D', 'W', 'N'},
-        {'U', '&', 'D'},
-        {'R', 'N', 'D'} };
-    int tempo_ms = 180000;
-    int bpm = 102;
+        "UP ",
+        "DWN",
+        "U&D",
+        "RND" };
     uint8_t temp_select_menu;
     uint8_t temp_active_menu = 99;
 
@@ -170,43 +181,26 @@ typedef struct sequencer_s
     uint8_t arp_note_prev;
     uint8_t arp_octave;
     uint8_t arp_prev_oct;
-    uint8_t arp_speed = 0;
     uint8_t arp_counter = 0;
-    uint8_t arp_length = 8;
     uint8_t arp_num_notes_max = 22;
     uint8_t arp_num_notes_count = 0;
-    float arp_volume_fade;
     float arp_volume_base = 50;
     uint8_t data_buffer[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     Param note_data_desc{P_UINT8_T, NUM_SEQ_PATTERN * 16, "seq_data", 0, 255, 0};
     uint8_t note_data[NUM_SEQ_PATTERN][16];
-    //Param note_data_desc_end{P_END};
 
     Param vel_desc{P_UINT8_T, NUM_SEQ_PATTERN * 16, "seq_velocity", 0, 255, 0};
     uint8_t vel[NUM_SEQ_PATTERN][16];
-    //Param vel_desc_end{P_END};
 
     Param song_desc{P_UINT8_T, NUM_SEQ_TRACKS * SONG_LENGTH, "s", 0, 99, 99};
     uint8_t song[NUM_SEQ_TRACKS][SONG_LENGTH];
-    //Param song_desc_end{P_END};
 
     Param chain_desc{P_UINT8_T, NUM_CHAINS * 16, "c", 0, 99, 99};
     uint8_t chain[NUM_CHAINS][16];
-    //Param chain_desc_end{P_END};
-    
+
     Param chain_transpose_desc{P_UINT8_T, NUM_CHAINS * 16, "t", 0, 99, 99};
     uint8_t chain_transpose[NUM_CHAINS][16];
-    //Param chain_t_desc_end{P_END};
-        
-    uint8_t content_type[NUM_SEQ_PATTERN] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    // 0 = Drum pattern, 1 = Instrument pattern, 2 = Chord or Arpeggio
-
-    uint8_t track_type[NUM_SEQ_TRACKS] = { 0, 0, 1, 1, 1, 1, 0, 0 }; // 0 = track is Drumtrack, 1 = Instrumenttrack, 2 = Chord, 3 = Arp
-
-    uint8_t pat_chance[NUM_SEQ_PATTERN];
-    uint8_t pat_vel_variation[NUM_SEQ_PATTERN];
-
 } sequencer_t;
 
 #endif
