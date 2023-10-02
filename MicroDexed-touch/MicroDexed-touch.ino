@@ -792,18 +792,12 @@ uint32_t cpumax = 0;
 elapsedMillis sidechain_a_millis;
 elapsedMillis sidechain_b_millis;
 
-bool sidechain_a_active = false;
-bool sidechain_b_active = false;
 
 bool sidechain_trigger_a;
 bool sidechain_trigger_b;
 
-uint8_t sidechain_a_sample_number = NUM_DRUMSET_CONFIG - 1;
-uint8_t sidechain_b_sample_number = NUM_DRUMSET_CONFIG - 1;
-
-uint8_t sidechain_a_speed = 0;
-uint8_t sidechain_b_speed = 0;
-
+sidechain_t sidechain;
+ 
 sdcard_t sdcard_infos;
 
 #ifdef COMPILE_FOR_FLASH
@@ -1664,7 +1658,7 @@ void update_sidechain()
   if (seq.running && sc_dexed1_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_dexed1_target_a != 0)
   {
 
-    sc_dexed1_current = sc_dexed1_current + (float)0.002 * sidechain_a_speed;
+    sc_dexed1_current = sc_dexed1_current + (float)0.002 * sidechain.a_speed;
 
     if (sc_dexed1_current >= VOL_MAX_FLOAT)
       sc_dexed1_current = VOL_MAX_FLOAT;
@@ -1676,7 +1670,7 @@ void update_sidechain()
   if (seq.running && sc_dexed2_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_dexed2_target_a != 0)
   {
 
-    sc_dexed2_current = sc_dexed2_current + (float)0.002 * sidechain_a_speed;
+    sc_dexed2_current = sc_dexed2_current + (float)0.002 * sidechain.a_speed;
 
     if (sc_dexed2_current >= VOL_MAX_FLOAT)
       sc_dexed2_current = VOL_MAX_FLOAT;
@@ -1688,7 +1682,7 @@ void update_sidechain()
   if (seq.running && sc_braids_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_braids_target_a != 0)
   {
 
-    sc_braids_current = sc_braids_current + (float)0.002 * sidechain_a_speed;
+    sc_braids_current = sc_braids_current + (float)0.002 * sidechain.a_speed;
 
     if (sc_braids_current >= VOL_MAX_FLOAT)
       sc_braids_current = VOL_MAX_FLOAT;
@@ -1700,7 +1694,7 @@ void update_sidechain()
   if (seq.running && sc_delay_a_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_delay_a_target_a != 0)
   {
 
-    sc_delay_a_current = sc_delay_a_current + (float)0.002 * sidechain_a_speed;
+    sc_delay_a_current = sc_delay_a_current + (float)0.002 * sidechain.a_speed;
 
     if (sc_delay_a_current >= VOL_MAX_FLOAT)
       sc_delay_a_current = VOL_MAX_FLOAT;
@@ -1712,7 +1706,7 @@ void update_sidechain()
   if (seq.running && sc_delay_b_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_delay_b_target_a != 0)
   {
 
-    sc_delay_b_current = sc_delay_b_current + (float)0.002 * sidechain_b_speed;
+    sc_delay_b_current = sc_delay_b_current + (float)0.002 * sidechain.b_speed;
 
     if (sc_delay_b_current >= VOL_MAX_FLOAT)
       sc_delay_b_current = VOL_MAX_FLOAT;
@@ -1724,7 +1718,7 @@ void update_sidechain()
   if (seq.running && sc_reverb_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_reverb_target_a != 0)
   {
 
-    sc_reverb_current = sc_reverb_current + (float)0.002 * sidechain_a_speed;
+    sc_reverb_current = sc_reverb_current + (float)0.002 * sidechain.a_speed;
 
     if (sc_reverb_current >= VOL_MAX_FLOAT)
       sc_reverb_current = VOL_MAX_FLOAT;
@@ -2131,7 +2125,7 @@ void loop()
 
   if (seq.running)
   {
-    if (sidechain_a_active || sidechain_b_active)
+    if (sidechain.a_active || sidechain.b_active)
       ;
     // update_sidechain();  //work in progress
   }
@@ -2902,9 +2896,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
               drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
               drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
 
-              if (sidechain_a_active && d == sidechain_a_sample_number)
+              if (sidechain.a_active && d == sidechain.a_sample_number)
                 sidechain_trigger_a = true;
-              if (sidechain_b_active && d == sidechain_b_sample_number)
+              if (sidechain.b_active && d == sidechain.b_sample_number)
                 sidechain_trigger_b = true;
 
 #ifdef COMPILE_FOR_PROGMEM
@@ -2921,9 +2915,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
                 // test with envelopes for samples
                 //sample_envelope[slot]->noteOn();
 
-                if (sidechain_a_active && d == sidechain_a_sample_number)
+                if (sidechain.a_active && d == sidechain.a_sample_number)
                   sidechain_trigger_a = true;
-                if (sidechain_b_active && d == sidechain_b_sample_number)
+                if (sidechain.b_active && d == sidechain.b_sample_number)
                   sidechain_trigger_b = true;
 
 #ifdef COMPILE_FOR_PROGMEM
@@ -2935,9 +2929,9 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
                 snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
                 Drum[slot]->playWav(temp_name);
                 // Drum[slot]->playWav("DMpop.wav");  //Test
-                if (sidechain_a_active && d == sidechain_a_sample_number)
+                if (sidechain.a_active && d == sidechain.a_sample_number)
                   sidechain_trigger_a = true;
-                if (sidechain_b_active && d == sidechain_b_sample_number)
+                if (sidechain.b_active && d == sidechain.b_sample_number)
                   sidechain_trigger_b = true;
 #endif
 

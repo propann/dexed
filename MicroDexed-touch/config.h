@@ -991,6 +991,29 @@ typedef struct mb_s : public Params{
   P_end;
 } mb_t;
 
+typedef struct sidechain_s : public Params
+{
+  P_bool(a_active, false);
+  P_bool(b_active, false);
+  P_uint8_t(a_sample_number, 0, NUM_DRUMSET_CONFIG - 1, NUM_DRUMSET_CONFIG - 1);
+  P_uint8_t(b_sample_number, 0, NUM_DRUMSET_CONFIG - 1 ,NUM_DRUMSET_CONFIG - 1);
+  P_uint8_t(a_speed, 0, 100, 0);
+  P_uint8_t(b_speed, 0, 100, 0);
+  P_uint8_t(dexed1_target_a, 0, 100, 0);
+  P_uint8_t(dexed2_target_a, 0, 100, 0);
+  P_uint8_t(dexed1_target_b, 0, 100, 0);
+  P_uint8_t(dexed2_target_b, 0, 100, 0);
+  P_uint8_t(reverb_target_a, 0, 100, 0);
+  P_uint8_t(reverb_target_b, 0, 100, 0);
+  P_uint8_t(braids_target_a, 0, 100, 0);
+  P_uint8_t(braids_target_b, 0, 100, 0);
+  P_uint8_t(delay_a_target_a, 0, 100, 0);
+  P_uint8_t(delay_a_target_b, 0, 100, 0);
+  P_uint8_t(delay_b_target_a, 0, 100, 0);
+  P_uint8_t(delay_b_target_b, 0, 100, 0);
+  P_end;
+} sidechain_t;
+
 typedef struct sys_s : public Params
 {
   P_uint8_t(vol,VOLUME_MIN, VOLUME_MAX,VOLUME_DEFAULT);

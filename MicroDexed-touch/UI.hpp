@@ -70,14 +70,7 @@ int sample_editor_scale_end;
 // extern uint8_t glow_type;
 
 // sidechains
-extern uint8_t sidechain_a_sample_number;
-extern uint8_t sidechain_b_sample_number;
-
-extern uint8_t sidechain_a_speed;
-extern uint8_t sidechain_b_speed;
-
-extern bool sidechain_a_active;
-extern bool sidechain_b_active;
+extern sidechain_t sidechain;
 
 elapsedMillis gamepad_millis;
 int gamepad_accelerate;
@@ -152,29 +145,10 @@ extern Adafruit_FT6206 touch;
 
 extern float sc_dexed1_current;
 extern float sc_dexed2_current;
-
 extern float sc_braids_current;
-
-extern uint8_t sc_dexed1_target_a;
-extern uint8_t sc_dexed2_target_a;
-
-extern uint8_t sc_dexed1_target_b;
-extern uint8_t sc_dexed2_target_b;
-
 extern float sc_reverb_current;
-extern uint8_t sc_reverb_target_a;
-extern uint8_t sc_reverb_target_b;
-
-extern uint8_t sc_braids_target_a;
-extern uint8_t sc_braids_target_b;
-
 extern float sc_delay_a_current;
 extern float sc_delay_b_current;
-
-extern uint8_t sc_delay_a_target_a;
-extern uint8_t sc_delay_a_target_b;
-extern uint8_t sc_delay_b_target_a;
-extern uint8_t sc_delay_b_target_b;
 
 extern void sequencer(void);
 extern void preview_sample(void);
@@ -17274,25 +17248,25 @@ FLASHMEM void print_sidechain_static_texts()
   setCursor_textGrid_small(1, 21);
   display.print(F("REVERB"));
 
-  print_small_intbar(33, 10, sc_dexed1_target_b, 17, 1, 1);
-  print_small_intbar(33, 11, sc_dexed2_target_b, 18, 1, 1);
+  print_small_intbar(33, 10, sidechain.dexed1_target_b, 17, 1, 1);
+  print_small_intbar(33, 11, sidechain.dexed2_target_b, 18, 1, 1);
 
   print_small_intbar(33, 12, 0, 19, 1, 1);
   print_small_intbar(33, 13, 0, 20, 1, 1);
   print_small_intbar(33, 14, 0, 21, 1, 1);
-  print_small_intbar(33, 15, sc_braids_target_b, 22, 1, 1);
+  print_small_intbar(33, 15, sidechain.braids_target_b, 22, 1, 1);
   print_small_intbar(33, 16, 0, 23, 1, 1);
   print_small_intbar(33, 17, 0, 24, 1, 1);
 
-  print_small_intbar(33, 19, sc_delay_a_target_b, 25, 1, 1);
-  print_small_intbar(33, 20, sc_delay_b_target_b, 26, 1, 1);
-  print_small_intbar(33, 21, sc_reverb_target_b, 27, 1, 1);
+  print_small_intbar(33, 19, sidechain.delay_a_target_b, 25, 1, 1);
+  print_small_intbar(33, 20, sidechain.delay_b_target_b, 26, 1, 1);
+  print_small_intbar(33, 21, sidechain.reverb_target_b, 27, 1, 1);
 
   // display.setTextSize(2);
 
   setModeColor(0);
   setCursor_textGrid_small(15, 4);
-  if (sidechain_a_active)
+  if (sidechain.a_active)
   {
     display.print(F("ON "));
   }
@@ -17302,7 +17276,7 @@ FLASHMEM void print_sidechain_static_texts()
   }
   setModeColor(14);
   setCursor_textGrid_small(37, 4);
-  if (sidechain_b_active)
+  if (sidechain.b_active)
   {
     display.print(F("ON "));
   }
@@ -17313,37 +17287,37 @@ FLASHMEM void print_sidechain_static_texts()
 
   setModeColor(1);
   setCursor_textGrid_small(11, 5);
-  print_formatted_number(sidechain_a_sample_number, 3);
-  show_no_grid(6 * CHAR_height_small + 2, 15 * CHAR_width_small, 14, basename(drum_config[sidechain_a_sample_number].name));
+  print_formatted_number(sidechain.a_sample_number, 3);
+  show_no_grid(6 * CHAR_height_small + 2, 15 * CHAR_width_small, 14, basename(drum_config[sidechain.a_sample_number].name));
 
   setModeColor(15);
   setCursor_textGrid_small(33, 5);
-  print_formatted_number(sidechain_b_sample_number, 3);
-  show_no_grid(6 * CHAR_height_small + 2, 37 * CHAR_width_small, 14, basename(drum_config[sidechain_b_sample_number].name));
+  print_formatted_number(sidechain.b_sample_number, 3);
+  show_no_grid(6 * CHAR_height_small + 2, 37 * CHAR_width_small, 14, basename(drum_config[sidechain.b_sample_number].name));
 
-  print_small_intbar(11, 6, sidechain_a_speed, 2, 1, 1); // sidechain a speed
+  print_small_intbar(11, 6, sidechain.a_speed, 2, 1, 1); // sidechain a speed
 
-  print_small_intbar(11, 10, sc_dexed1_target_a, 3, 1, 1);
-  print_small_intbar(11, 11, sc_dexed2_target_a, 4, 1, 1);
+  print_small_intbar(11, 10, sidechain.dexed1_target_a, 3, 1, 1);
+  print_small_intbar(11, 11, sidechain.dexed2_target_a, 4, 1, 1);
 
   print_small_intbar(11, 12, 0, 5, 1, 1);
   print_small_intbar(11, 13, 0, 6, 1, 1);
   print_small_intbar(11, 14, 0, 7, 1, 1);
-  print_small_intbar(11, 15, sc_braids_target_a, 8, 1, 1);
+  print_small_intbar(11, 15, sidechain.braids_target_a, 8, 1, 1);
   print_small_intbar(11, 16, 0, 9, 1, 1);
   print_small_intbar(11, 17, 0, 10, 1, 1);
 
-  print_small_intbar(11, 19, sc_delay_a_target_a, 11, 1, 1);
-  print_small_intbar(11, 20, sc_delay_b_target_a, 12, 1, 1);
-  print_small_intbar(11, 21, sc_reverb_target_a, 13, 1, 1);
+  print_small_intbar(11, 19, sidechain.delay_a_target_a, 11, 1, 1);
+  print_small_intbar(11, 20, sidechain.delay_b_target_a, 12, 1, 1);
+  print_small_intbar(11, 21, sidechain.reverb_target_a, 13, 1, 1);
 
   // b
   display.setTextSize(1);
-  print_small_intbar(33, 6, sidechain_b_speed, 16, 1, 1); // sidechain b speed
+  print_small_intbar(33, 6, sidechain.b_speed, 16, 1, 1); // sidechain b speed
 
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   setCursor_textGrid_small(21, 6);
-  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain.a_speed / 10));
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(displayname);
   setCursor_textGrid_small(26, 6);
@@ -17351,7 +17325,7 @@ FLASHMEM void print_sidechain_static_texts()
   display.print("MS");
 
   setCursor_textGrid_small(43, 6);
-  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain.b_speed / 10));
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(displayname);
   setCursor_textGrid_small(48, 6);
@@ -17368,7 +17342,7 @@ FLASHMEM void print_sidechain_editor_values()
   {
     setModeColor(0);
     setCursor_textGrid_small(15, 4);
-    if (sidechain_a_active)
+    if (sidechain.a_active)
     {
       display.print(F("ON "));
     }
@@ -17382,24 +17356,24 @@ FLASHMEM void print_sidechain_editor_values()
   {
     setModeColor(1);
     setCursor_textGrid_small(11, 5);
-    print_formatted_number(sidechain_a_sample_number, 3);
-    show_no_grid(6 * CHAR_height_small + 2, 15 * CHAR_width_small, 14, basename(drum_config[sidechain_a_sample_number].name));
+    print_formatted_number(sidechain.a_sample_number, 3);
+    show_no_grid(6 * CHAR_height_small + 2, 15 * CHAR_width_small, 14, basename(drum_config[sidechain.a_sample_number].name));
   }
   if (menu_item_check(2))
   {
 
-    print_small_intbar(11, 6, sidechain_a_speed, 2, 1, 1); // sidechain a speed
+    print_small_intbar(11, 6, sidechain.a_speed, 2, 1, 1); // sidechain a speed
     setCursor_textGrid_small(21, 6);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain.a_speed / 10));
     display.print(displayname);
   }
   if (menu_item_check(3))
   {
-    print_small_intbar(11, 10, sc_dexed1_target_a, 3, 1, 1);
+    print_small_intbar(11, 10, sidechain.dexed1_target_a, 3, 1, 1);
   }
   if (menu_item_check(4))
   {
-    print_small_intbar(11, 11, sc_dexed2_target_a, 4, 1, 1);
+    print_small_intbar(11, 11, sidechain.dexed2_target_a, 4, 1, 1);
   }
 
   if (menu_item_check(5))
@@ -17416,7 +17390,7 @@ FLASHMEM void print_sidechain_editor_values()
   }
   if (menu_item_check(8))
   {
-    print_small_intbar(11, 15, sc_braids_target_a, 8, 1, 1);
+    print_small_intbar(11, 15, sidechain.braids_target_a, 8, 1, 1);
   }
   if (menu_item_check(9))
   {
@@ -17428,15 +17402,15 @@ FLASHMEM void print_sidechain_editor_values()
   }
   if (menu_item_check(11))
   {
-    print_small_intbar(11, 19, sc_delay_a_target_a, 11, 1, 1);
+    print_small_intbar(11, 19, sidechain.delay_a_target_a, 11, 1, 1);
   }
   if (menu_item_check(12))
   {
-    print_small_intbar(11, 20, sc_delay_b_target_a, 12, 1, 1);
+    print_small_intbar(11, 20, sidechain.delay_b_target_a, 12, 1, 1);
   }
   if (menu_item_check(13))
   {
-    print_small_intbar(11, 21, sc_reverb_target_a, 13, 1, 1);
+    print_small_intbar(11, 21, sidechain.reverb_target_a, 13, 1, 1);
   }
 
   /// COMPRESSOR B
@@ -17445,7 +17419,7 @@ FLASHMEM void print_sidechain_editor_values()
   {
     setModeColor(14);
     setCursor_textGrid_small(37, 4);
-    if (sidechain_b_active)
+    if (sidechain.b_active)
     {
       display.print(F("ON "));
     }
@@ -17458,24 +17432,24 @@ FLASHMEM void print_sidechain_editor_values()
   {
     setModeColor(15);
     setCursor_textGrid_small(33, 5);
-    print_formatted_number(sidechain_b_sample_number, 3);
-    show_no_grid(6 * CHAR_height_small + 2, 37 * CHAR_width_small, 14, basename(drum_config[sidechain_b_sample_number].name));
+    print_formatted_number(sidechain.b_sample_number, 3);
+    show_no_grid(6 * CHAR_height_small + 2, 37 * CHAR_width_small, 14, basename(drum_config[sidechain.b_sample_number].name));
   }
   if (menu_item_check(16))
   {
-    print_small_intbar(33, 6, sidechain_b_speed, 16, 1, 1); // sidechain b speed
+    print_small_intbar(33, 6, sidechain.b_speed, 16, 1, 1); // sidechain b speed
     setCursor_textGrid_small(43, 6);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain.b_speed / 10));
     display.print(displayname);
   }
 
   if (menu_item_check(17))
   {
-    print_small_intbar(33, 10, sc_dexed1_target_b, 17, 1, 1);
+    print_small_intbar(33, 10, sidechain.dexed1_target_b, 17, 1, 1);
   }
   if (menu_item_check(18))
   {
-    print_small_intbar(33, 11, sc_dexed2_target_b, 18, 1, 1);
+    print_small_intbar(33, 11, sidechain.dexed2_target_b, 18, 1, 1);
   }
 
   if (menu_item_check(19))
@@ -17492,7 +17466,7 @@ FLASHMEM void print_sidechain_editor_values()
   }
   if (menu_item_check(22))
   {
-    print_small_intbar(33, 15, sc_braids_target_b, 22, 1, 1);
+    print_small_intbar(33, 15, sidechain.braids_target_b, 22, 1, 1);
   }
   if (menu_item_check(23))
   {
@@ -17512,13 +17486,13 @@ FLASHMEM void print_sidechain_editor_values()
   }
   if (menu_item_check(27))
   {
-    print_small_intbar(33, 21, sc_reverb_target_b, 27, 1, 1);
+    print_small_intbar(33, 21, sidechain.reverb_target_b, 27, 1, 1);
   }
 }
 
 void print_sidechain_level_indicators()
 {
-  if (sidechain_a_active && seq.running)
+  if (sidechain.a_active && seq.running)
   {
     print_fast_level_indicator(17, 10, 100 - (float)sc_dexed1_current * 100, 0, 100);
     print_fast_level_indicator(17, 11, 100 - (float)sc_dexed2_current * 100, 0, 100);
@@ -17585,136 +17559,136 @@ FLASHMEM void UI_func_sidechain(uint8_t param)
         if (generic_temp_select_menu == 0) // sidechain a on/off
         {
           if (LCDML.BT_checkDown())
-            sidechain_a_active = !sidechain_a_active;
+            sidechain.a_active = !sidechain.a_active;
           else if (LCDML.BT_checkUp())
-            sidechain_a_active = !sidechain_a_active;
+            sidechain.a_active = !sidechain.a_active;
         }
         else if (generic_temp_select_menu == 14) // sidechain b on/off
         {
           if (LCDML.BT_checkDown())
-            sidechain_b_active = !sidechain_b_active;
+            sidechain.b_active = !sidechain.b_active;
           else if (LCDML.BT_checkUp())
-            sidechain_b_active = !sidechain_b_active;
+            sidechain.b_active = !sidechain.b_active;
         }
         else
 
           if (generic_temp_select_menu == 1) // sidechain a sample
           {
             if (LCDML.BT_checkDown())
-              sidechain_a_sample_number = constrain(sidechain_a_sample_number + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain.a_sample_number = constrain(sidechain.a_sample_number + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
             else if (LCDML.BT_checkUp())
-              sidechain_a_sample_number = constrain(sidechain_a_sample_number - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain.a_sample_number = constrain(sidechain.a_sample_number - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
           }
           else if (generic_temp_select_menu == 15) // sidechain b sample
           {
             if (LCDML.BT_checkDown())
-              sidechain_b_sample_number = constrain(sidechain_b_sample_number + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain.b_sample_number = constrain(sidechain.b_sample_number + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
             else if (LCDML.BT_checkUp())
-              sidechain_b_sample_number = constrain(sidechain_b_sample_number - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain.b_sample_number = constrain(sidechain.b_sample_number - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
           }
 
         if (generic_temp_select_menu == 2) // sidechain a speed
         {
           if (LCDML.BT_checkDown())
-            sidechain_a_speed = constrain(sidechain_a_speed + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.a_speed = constrain(sidechain.a_speed + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sidechain_a_speed = constrain(sidechain_a_speed - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.a_speed = constrain(sidechain.a_speed - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 16) // sidechain b speed
         {
           if (LCDML.BT_checkDown())
-            sidechain_b_speed = constrain(sidechain_b_speed + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.b_speed = constrain(sidechain.b_speed + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sidechain_b_speed = constrain(sidechain_b_speed - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.b_speed = constrain(sidechain.b_speed - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 3) // dexed 0 target A
         {
           if (LCDML.BT_checkDown())
-            sc_dexed1_target_a = constrain(sc_dexed1_target_a + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed1_target_a = constrain(sidechain.dexed1_target_a + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_dexed1_target_a = constrain(sc_dexed1_target_a - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed1_target_a = constrain(sidechain.dexed1_target_a - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 4) // dexed 1 target A
         {
           if (LCDML.BT_checkDown())
-            sc_dexed2_target_a = constrain(sc_dexed2_target_a + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed2_target_a = constrain(sidechain.dexed2_target_a + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_dexed2_target_a = constrain(sc_dexed2_target_a - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed2_target_a = constrain(sidechain.dexed2_target_a - ENCODER[ENC_R].speed(), 0, 100);
         }
 
         else if (generic_temp_select_menu == 8) // braids target A
         {
           if (LCDML.BT_checkDown())
-            sc_braids_target_a = constrain(sc_braids_target_a + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.braids_target_a = constrain(sidechain.braids_target_a + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_braids_target_a = constrain(sc_braids_target_a - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.braids_target_a = constrain(sidechain.braids_target_a - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 22) // braids target B
         {
           if (LCDML.BT_checkDown())
-            sc_braids_target_b = constrain(sc_braids_target_b + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.braids_target_b = constrain(sidechain.braids_target_b + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_braids_target_b = constrain(sc_braids_target_b - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.braids_target_b = constrain(sidechain.braids_target_b - ENCODER[ENC_R].speed(), 0, 100);
         }
 
         else if (generic_temp_select_menu == 11) // delay A target A
         {
           if (LCDML.BT_checkDown())
-            sc_delay_a_target_a = constrain(sc_delay_a_target_a + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_a_target_a = constrain(sidechain.delay_a_target_a + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_delay_a_target_a = constrain(sc_delay_a_target_a - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_a_target_a = constrain(sidechain.delay_a_target_a - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 12) // delay B target A
         {
           if (LCDML.BT_checkDown())
-            sc_delay_b_target_a = constrain(sc_delay_b_target_a + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_b_target_a = constrain(sidechain.delay_b_target_a + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_delay_b_target_a = constrain(sc_delay_b_target_a - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_b_target_a = constrain(sidechain.delay_b_target_a - ENCODER[ENC_R].speed(), 0, 100);
         }
 
         else if (generic_temp_select_menu == 25) // delay A target B
         {
           if (LCDML.BT_checkDown())
-            sc_delay_a_target_b = constrain(sc_delay_a_target_b + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_a_target_b = constrain(sidechain.delay_a_target_b + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_delay_a_target_b = constrain(sc_delay_a_target_b - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_a_target_b = constrain(sidechain.delay_a_target_b - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 26) // delay B target B
         {
           if (LCDML.BT_checkDown())
-            sc_delay_b_target_b = constrain(sc_delay_b_target_b + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_b_target_b = constrain(sidechain.delay_b_target_b + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_delay_b_target_b = constrain(sc_delay_b_target_b - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.delay_b_target_b = constrain(sidechain.delay_b_target_b - ENCODER[ENC_R].speed(), 0, 100);
         }
 
         else if (generic_temp_select_menu == 13) // reverb target A
         {
           if (LCDML.BT_checkDown())
-            sc_reverb_target_a = constrain(sc_reverb_target_a + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.reverb_target_a = constrain(sidechain.reverb_target_a + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_reverb_target_a = constrain(sc_reverb_target_a - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.reverb_target_a = constrain(sidechain.reverb_target_a - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 27) // reverb target B
         {
           if (LCDML.BT_checkDown())
-            sc_reverb_target_b = constrain(sc_reverb_target_b + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.reverb_target_b = constrain(sidechain.reverb_target_b + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_reverb_target_b = constrain(sc_reverb_target_b - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.reverb_target_b = constrain(sidechain.reverb_target_b - ENCODER[ENC_R].speed(), 0, 100);
         }
 
         else if (generic_temp_select_menu == 17) // dexed 0 target B
         {
           if (LCDML.BT_checkDown())
-            sc_dexed1_target_b = constrain(sc_dexed1_target_b + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed1_target_b = constrain(sidechain.dexed1_target_b + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_dexed1_target_b = constrain(sc_dexed1_target_b - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed1_target_b = constrain(sidechain.dexed1_target_b - ENCODER[ENC_R].speed(), 0, 100);
         }
         else if (generic_temp_select_menu == 18) // dexed 1 target B
         {
           if (LCDML.BT_checkDown())
-            sc_dexed2_target_b = constrain(sc_dexed2_target_b + ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed2_target_b = constrain(sidechain.dexed2_target_b + ENCODER[ENC_R].speed(), 0, 100);
           else if (LCDML.BT_checkUp())
-            sc_dexed2_target_b = constrain(sc_dexed2_target_b - ENCODER[ENC_R].speed(), 0, 100);
+            sidechain.dexed2_target_b = constrain(sidechain.dexed2_target_b - ENCODER[ENC_R].speed(), 0, 100);
         }
       }
     }

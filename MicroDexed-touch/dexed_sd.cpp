@@ -90,19 +90,7 @@ extern float get_sample_reverb_send(uint8_t sample);
 extern uint8_t find_drum_number_from_note(uint8_t note);
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
-
-extern bool sidechain_a_active;
-extern bool sidechain_b_active;
-extern uint8_t sidechain_a_sample_number;
-extern uint8_t sidechain_b_sample_number;
-extern uint8_t sidechain_a_speed;
-extern uint8_t sidechain_b_speed;
-extern uint8_t sc_dexed1_target_a;
-extern uint8_t sc_dexed2_target_a;
-extern uint8_t sc_dexed1_target_b;
-extern uint8_t sc_dexed2_target_b;
-extern uint8_t sc_reverb_target_a;
-extern uint8_t sc_reverb_target_b;
+extern sidechain_t sidechain;
 
 File json;
 char filename[CONFIG_FILENAME_LEN];
@@ -769,47 +757,14 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number)
 
 FLASHMEM bool load_sd_sidechain_json(uint8_t number)
 {
-  if (number < 0) return false;
-
-  number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SIDECHAIN_CONFIG_NAME);
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return false;
-
-  sidechain_a_active = data_json["a_active"];
-  sidechain_b_active = data_json["b_active"];
-  sidechain_a_sample_number = data_json["a_sample_number"];
-  sidechain_b_sample_number = data_json["b_sample_number"];
-  sidechain_a_speed = data_json["a_speed"];
-  sidechain_b_speed = data_json["b_speed"];
-  sc_dexed1_target_a = data_json["dexed1_target_a"];
-  sc_dexed2_target_a = data_json["dexed2_target_a"];
-  sc_dexed1_target_b = data_json["dexed1_target_b"];
-  sc_dexed2_target_b = data_json["dexed2_target_b"];
-  sc_reverb_target_a = data_json["reverb_target_a"];
-  sc_reverb_target_b = data_json["reverb_target_b"];
-  return (true);
+  return load_sd_config_json(filename, &sidechain);
 }
 
 FLASHMEM bool save_sd_sidechain_json(uint8_t number)
 {
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-
-  data_json["a_active"] = sidechain_a_active;
-  data_json["b_active"] = sidechain_b_active;
-  data_json["a_sample_number"] = sidechain_a_sample_number;
-  data_json["b_sample_number"] = sidechain_b_sample_number;
-  data_json["a_speed"] = sidechain_a_speed;
-  data_json["b_speed"] = sidechain_b_speed;
-  data_json["dexed1_target_a"] = sc_dexed1_target_a;
-  data_json["dexed2_target_a"] = sc_dexed2_target_a;
-  data_json["dexed1_target_b"] = sc_dexed1_target_b;
-  data_json["dexed2_target_b"] = sc_dexed2_target_b;
-  data_json["reverb_target_a"] = sc_reverb_target_a;
-  data_json["reverb_target_b"] = sc_reverb_target_b;
-
   snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SIDECHAIN_CONFIG_NAME);
-  return write_file_json(filename, data_json);
+  return save_sd_config_json(filename, &sidechain);  
 }
 
 /******************************************************************************
