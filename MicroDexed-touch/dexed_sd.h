@@ -49,8 +49,6 @@ extern void set_epiano_params(void);
 
 bool load_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id);
 bool save_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id);
-bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t *data);
-bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t *data);
 bool save_sd_bank(const char* bank_filename, uint8_t *data);
 
 bool load_sd_voiceconfig_json(uint8_t vc, uint8_t instance_id);

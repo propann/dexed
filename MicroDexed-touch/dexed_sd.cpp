@@ -130,7 +130,6 @@ FLASHMEM File open_file_for_read(const char* filename)
 FLASHMEM File open_file_for_write(const char* filename)
 {
   AudioNoInterrupts();
-  SD.remove(filename);
   File file = SD.open(filename, FILE_WRITE);
   if (!file)
   {
@@ -145,6 +144,13 @@ FLASHMEM File open_file_for_write(const char* filename)
   LOG.print(F("Writing ")); LOG.println(filename);
 #endif
   return file;
+}
+
+FLASHMEM File create_file_for_write(const char* filename)
+{
+  AudioNoInterrupts();
+  SD.remove(filename);
+  return open_file_for_write(filename);
 }
 
 FLASHMEM void close_file (File file)
@@ -177,7 +183,7 @@ FLASHMEM bool write_file_json(const char* filename, StaticJsonDocument<JSON_BUFF
   LOG.println(F("Write JSON data:")); serializeJsonPretty(document, Serial); LOG.println();
 #endif
 
-  File file = open_file_for_write(filename);
+  File file = create_file_for_write(filename);
   if(!file) return false;
 
   serializeJsonPretty(document, file);
@@ -185,11 +191,10 @@ FLASHMEM bool write_file_json(const char* filename, StaticJsonDocument<JSON_BUFF
   return true;
 }
 
-
 FLASHMEM bool load_sd_config_json(const char* filename, Params* params)
 {
   StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(filename, data_json)) return;
+  if(!read_file_json(filename, data_json)) return false;
 
   Param* prm = params->getParams();
   do{
@@ -225,124 +230,122 @@ FLASHMEM bool save_sd_config_json(const char* filename, Params* params)
    SD BANK/VOICE LOADING
  ******************************************************************************/
 
+
+FLASHMEM bool check_magic(File sysex, uint16_t offset, uint8_t magic, const char* message) {
+  sysex.seek(offset);
+  if (sysex.read() != magic)
+  {
+#ifdef DEBUG
+    LOG.println(message);
+#endif
+    return false;
+  }
+  return true;
+}
+
+FLASHMEM bool check_syx(File sysex)
+{
+  if (sysex.size() != 4104) // check sysex size
+  {
+#ifdef DEBUG
+    LOG.println(F("E : SysEx file size wrong."));
+#endif
+    return false;
+  }
+  if(!check_magic(sysex, 0, 0xf0, "E : SysEx start byte not found."  )) return false;
+  if(!check_magic(sysex, 1, 0x43, "E : SysEx vendor not Yamaha."     )) return false;
+  if(!check_magic(sysex, 4103, 0xf7, "E : SysEx end byte not found." )) return false;
+  if(!check_magic(sysex, 3, 0x09, "E : SysEx type not 32 voices."    )) return false;
+}
+
+FLASHMEM int8_t checksum_syx(File sysex)
+{
+  sysex.seek(6); // start of bulk data
+  uint8_t data[4096];
+  sysex.read(data, 4096);
+  int32_t checksum = 0;
+  for (uint16_t n = 0; n < 4096; n++)
+    checksum -= data[n];
+
+  return checksum & 0x7f;
+}
+
+FLASHMEM File find_first_file(const char* dirname)
+{
+  File dir = open_file_for_read(dirname);
+  if (!dir) return false;
+
+  File file;
+  do
+  {
+    file = dir.openNextFile();
+  } while (file.isDirectory());
+  dir.close();
+  
+  return file;
+}
+
 FLASHMEM bool load_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("load voice, bank [%d] - voice [%d]\n"), b, v + 1);
 #endif
-  p = constrain(p, 0, DEXED_POOLS - 1);
-  v = constrain(v, 0, MAX_VOICES - 1);
-  b = constrain(b, 0, MAX_BANKS - 1);
 
-  if (sd_card > 0)
-  {
-    File sysex_dir;
-    char bankdir[FILENAME_LEN];
-    char bank_name[BANK_NAME_LEN];
-    char voice_name[VOICE_NAME_LEN];
-    uint8_t data[128];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
-
-    AudioNoInterrupts();
-    sysex_dir = SD.open(bankdir);
-    AudioInterrupts();
-    if (!sysex_dir)
-    {
-      strcpy(g_bank_name[instance_id], sError);
-      strcpy(g_voice_name[instance_id], sError);
-
-#ifdef DEBUG
-      LOG.print(F("E : Cannot open "));
-      LOG.print(bankdir);
-      LOG.println(F(" on SD."));
-#endif
-      return (false);
-    }
-
-    File entry;
-    do
-    {
-      entry = sysex_dir.openNextFile();
-    } while (entry.isDirectory());
-
-    if (entry.isDirectory())
-    {
-      AudioNoInterrupts();
-      entry.close();
-      sysex_dir.close();
-      AudioInterrupts();
-      strcpy(g_bank_name[instance_id], sError);
-      strcpy(g_voice_name[instance_id], sError);
-      return (false);
-    }
-
-    strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
-    string_toupper(bank_name);
-    strcpy(g_bank_name[instance_id], bank_name);
-#ifdef DEBUG
-    char filename[FILENAME_LEN];
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, b, bank_name);
-    LOG.print(F("Loading voice from "));
-    LOG.print(filename);
-    LOG.print(F(" bank:["));
-    LOG.print(g_bank_name[instance_id]);
-    LOG.println(F("]"));
-#endif
-    // search voice name
-    memset(voice_name, '\0', VOICE_NAME_LEN);
-    entry.seek(124 + (v * 128));
-    entry.read(voice_name, min(VOICE_NAME_LEN, 10));
-    string_toupper(voice_name);
-    strcpy(g_voice_name[instance_id], voice_name);
-
-    if (get_sd_voice(entry, v, data))
-    {
-#ifdef DEBUG
-      LOG.print(F("get_sd_voice:["));
-      LOG.print(g_voice_name[instance_id]);
-      LOG.println(F("]"));
-#endif
-      uint8_t tmp_data[156];
-      bool ret = MicroDexed[instance_id]->decodeVoice(tmp_data, data);
-      MicroDexed[instance_id]->loadVoiceParameters(tmp_data);
-#ifdef DEBUG
-      show_patch(instance_id);
-#endif
-
-      AudioNoInterrupts();
-      entry.close();
-      sysex_dir.close();
-      AudioInterrupts();
-      configuration.dexed[instance_id].transpose = MicroDexed[instance_id]->getTranspose();
-      configuration.dexed[instance_id].pool = p;
-      configuration.dexed[instance_id].bank = b;
-      configuration.dexed[instance_id].voice = v;
-
-      uint8_t data_copy[155];
-      MicroDexed[instance_id]->getVoiceData(data_copy);
-      send_sysex_voice(configuration.dexed[instance_id].midi_channel, data_copy);
-      init_MIDI_send_CC();
-      return (ret);
-    }
-    else
-    {
-      strcpy(g_voice_name[instance_id], sError);
-#ifdef DEBUG
-      LOG.println(F("E : Cannot load voice data"));
-#endif
-    }
-    AudioNoInterrupts();
-    entry.close();
-    sysex_dir.close();
-    AudioInterrupts();
-
-    return true;
-  }
-
+  // default on error names until all steps where successful
   strcpy(g_bank_name[instance_id], sError);
   strcpy(g_voice_name[instance_id], sError);
-  return false;
+
+  // find the first file (any name) in bank directory
+  char bankdir[FILENAME_LEN];
+  snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
+  File sysex = find_first_file(bankdir);
+  if (!sysex || !check_syx(sysex))
+  {
+    close_file(sysex);
+    return false;
+  }
+
+  strip_extension(sysex.name(), g_bank_name[instance_id], BANK_NAME_LEN);
+  string_toupper(g_bank_name[instance_id]);
+#ifdef DEBUG
+  LOG.printf(F("Loading voice from /%s/%d/%s.syx\n"),DEXED_CONFIG_PATH, b, g_bank_name[instance_id]); 
+#endif
+
+  v = constrain(v, 0, MAX_VOICES - 1);
+  
+  uint8_t data[128];
+  sysex.seek(6 + v * 128); // start of selected voice data
+  sysex.read(data, 128);
+  close_file(sysex);
+
+  memset(g_voice_name[instance_id], '\0', VOICE_NAME_LEN);
+  memcpy(g_voice_name[instance_id], &data[118], min(VOICE_NAME_LEN-1, 10));
+  string_toupper(g_voice_name[instance_id]);
+  
+  // MicroDexed[0]->resetRenderTimeMax(); // necessary?
+
+#ifdef DEBUG
+  LOG.printf(F("get_sd_voice:[%s]\n"),g_voice_name[instance_id]);
+#endif
+
+  uint8_t tmp_data[156];
+  if(!MicroDexed[instance_id]->decodeVoice(tmp_data, data)) return false;
+
+  MicroDexed[instance_id]->loadVoiceParameters(tmp_data);
+#ifdef DEBUG
+  show_patch(instance_id);
+#endif
+
+  configuration.dexed[instance_id].transpose = MicroDexed[instance_id]->getTranspose();
+  configuration.dexed[instance_id].pool = p;
+  configuration.dexed[instance_id].bank = b;
+  configuration.dexed[instance_id].voice = v;
+
+  send_sysex_voice(configuration.dexed[instance_id].midi_channel, tmp_data);
+  init_MIDI_send_CC();
+
+  return true;
 }
 
 FLASHMEM bool save_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
@@ -350,211 +353,35 @@ FLASHMEM bool save_sd_voice(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
   LOG.printf_P(PSTR("save_sd_voice, b:%d - d:%d\n"), b, v);
 #endif
-  p = constrain(p, 0, DEXED_POOLS - 1);
+
+  snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, p, b, g_bank_name[instance_id]);
+
+  File sysex = open_file_for_write(filename);
+  if (!sysex) return false;
+  if(!check_syx(sysex)) {
+    close_file(sysex);
+    return false;
+  }
+
+  uint8_t data[128];
+  MicroDexed[instance_id]->encodeVoice(data);
+  memcpy(&data[118],g_voice_name[instance_id], 10); // TODO voice appears empty sometimes otherwise, why?
   v = constrain(v, 0, MAX_VOICES - 1);
-  b = constrain(b, 0, MAX_BANKS - 1);
-
-  if (sd_card > 0)
-  {
-    File sysex;
-    char filename[FILENAME_LEN];
-    uint8_t data[128];
-
-    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, p, b, g_bank_name[instance_id]);
-
-    AudioNoInterrupts();
-    sysex = SD.open(filename, FILE_WRITE);
-    AudioInterrupts();
-    if (!sysex)
-    {
-#ifdef DEBUG
-      LOG.print(F("E : Cannot open "));
-      LOG.print(filename);
-      LOG.println(F(" on SD."));
-#endif
-      return (false);
-    }
-
-    MicroDexed[instance_id]->encodeVoice(data);
-
-    if (put_sd_voice(sysex, v, data))
-    {
-#ifdef DEBUG
-      LOG.print(F("Saving voice to "));
-      LOG.print(filename);
-      LOG.print(F(" ["));
-      LOG.print(g_voice_name[instance_id]);
-      LOG.println(F("]"));
-#endif
-      AudioNoInterrupts();
-      sysex.close();
-      AudioInterrupts();
-
-      return (true);
-    }
-#ifdef DEBUG
-    else
-      LOG.println(F("E : Cannot load voice data"));
-#endif
-    AudioNoInterrupts();
-    sysex.close();
-    AudioInterrupts();
-  }
-
-  return (false);
-}
-
-FLASHMEM bool get_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
-{
-  uint16_t n;
-  int32_t bulk_checksum_calc = 0;
-  int8_t bulk_checksum;
-
-  AudioNoInterrupts();
-  if (sysex.size() != 4104) // check sysex size
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx file size wrong."));
-#endif
-    return (false);
-  }
-
-  sysex.seek(0);
-  if (sysex.read() != 0xf0) // check sysex start-byte
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx start byte not found."));
-#endif
-    return (false);
-  }
-  if (sysex.read() != 0x43) // check sysex vendor is Yamaha
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx vendor not Yamaha."));
-#endif
-    return (false);
-  }
-  sysex.seek(4103);
-  if (sysex.read() != 0xf7) // check sysex end-byte
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx end byte not found."));
-#endif
-    return (false);
-  }
-  sysex.seek(3);
-  if (sysex.read() != 0x09) // check for sysex type (0x09=32 voices)
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx type not 32 voices."));
-#endif
-    return (false);
-  }
-  sysex.seek(4102); // Bulk checksum
-  bulk_checksum = sysex.read();
-
-  sysex.seek(6); // start of bulk data
-  for (n = 0; n < 4096; n++)
-  {
-    uint8_t d = sysex.read();
-    if (n >= voice_number * 128 && n < (voice_number + 1) * 128)
-      data[n - (voice_number * 128)] = d;
-    bulk_checksum_calc -= d;
-  }
-  bulk_checksum_calc &= 0x7f;
-  AudioInterrupts();
-
-#ifdef DEBUG
-  LOG.print(F("Bulk checksum : 0x"));
-  LOG.print(bulk_checksum_calc, HEX);
-  LOG.print(F(" [0x"));
-  LOG.print(bulk_checksum, HEX);
-  LOG.println(F("]"));
-#endif
-
-  if (bulk_checksum_calc != bulk_checksum)
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Bulk checksum mismatch : 0x"));
-
-    LOG.print(bulk_checksum_calc, HEX);
-    LOG.print(F(" != 0x"));
-    LOG.println(bulk_checksum, HEX);
-#endif
-    return (false);
-  }
-
-  // MicroDexed[0]->resetRenderTimeMax(); // necessary?
-
-  return (true);
-}
-
-FLASHMEM bool put_sd_voice(File sysex, uint8_t voice_number, uint8_t* data)
-{
-  uint16_t n;
-  int32_t bulk_checksum_calc = 0;
-
-  AudioNoInterrupts();
-  sysex.seek(0);
-
-  if (sysex.size() != 4104) // check sysex size
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx file size wrong."));
-#endif
-    return (false);
-  }
-  if (sysex.read() != 0xf0) // check sysex start-byte
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx start byte not found."));
-#endif
-    return (false);
-  }
-  if (sysex.read() != 0x43) // check sysex vendor is Yamaha
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx vendor not Yamaha."));
-#endif
-    return (false);
-  }
-  sysex.seek(4103);
-  if (sysex.read() != 0xf7) // check sysex end-byte
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx end byte not found."));
-#endif
-    return (false);
-  }
-  sysex.seek(3);
-  if (sysex.read() != 0x09) // check for sysex type (0x09=32 voices)
-  {
-#ifdef DEBUG
-    LOG.println(F("E : SysEx type not 32 voices."));
-#endif
-    return (false);
-  }
-
-  sysex.seek(6 + (voice_number * 128));
+  sysex.seek(6 + (v * 128));
   sysex.write(data, 128);
-
   // checksum calculation
-  sysex.seek(6); // start of bulk data
-  for (n = 0; n < 4096; n++)
-  {
-    uint8_t d = sysex.read();
-    bulk_checksum_calc -= d;
-  }
+  uint8_t checksum=checksum_syx(sysex);
   sysex.seek(4102); // Bulk checksum
-  sysex.write(bulk_checksum_calc & 0x7f);
-  AudioInterrupts();
-
+  sysex.write(checksum);
 #ifdef DEBUG
-  LOG.print(F("Bulk checksum : 0x"));
-  LOG.println(bulk_checksum_calc & 0x7f, HEX);
+  LOG.print(F("Bulk checksum : 0x")); LOG.println(checksum, HEX);
 #endif
 
-  return (true);
+  close_file(sysex);
+#ifdef DEBUG
+  LOG.printf(F("Saved voice to %s [%s]\n"), filename, g_voice_name[instance_id]);
+#endif
+  return true;
 }
 
 FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data)
@@ -567,7 +394,7 @@ FLASHMEM bool save_sd_bank(const char* bank_filename, uint8_t* data)
   if (sd_card > 0)
   {
 #ifdef DEBUG
-    LOG.print(F("Trying so store "));
+    LOG.print(F("Trying t o store "));
     LOG.print(bank_filename);
     LOG.println(F("."));
 #endif
