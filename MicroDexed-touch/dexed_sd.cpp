@@ -718,159 +718,6 @@ FLASHMEM bool save_sd_sys_json(void)
    SD SEQUENCER
  ******************************************************************************/
 
-FLASHMEM bool load_sd_chain_json(uint8_t number)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(number, CHAIN_CONFIG_NAME, data_json)) return false;
-
-  int total = sizeof(seq.chain);
-  int columns = sizeof(seq.chain[0]);
-  int rows = total / columns;
-  int count = 0;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      seq.chain[i][j] = data_json["c"][count];
-      count++;
-    }
-  }
-  return true;
-}
-
-FLASHMEM bool save_sd_chain_json(uint8_t number)
-{
-  int count = 0;
-  int total = sizeof(seq.chain);
-  int columns = sizeof(seq.chain[0]);
-  int rows = total / columns;
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      data_json["c"][count] = seq.chain[i][j];
-      count++;
-    }
-  }
-
-  return write_file_json(number, CHAIN_CONFIG_NAME, data_json);
-}
-
-FLASHMEM bool load_sd_transpose_json(uint8_t number)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(number, TRANSPOSE_CONFIG_NAME, data_json)) return false;
-  int total = sizeof(seq.chain_transpose);
-  int columns = sizeof(seq.chain_transpose[0]);
-  int rows = total / columns;
-  int count = 0;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      seq.chain_transpose[i][j] = data_json["t"][count];
-      count++;
-    }
-  }
-  return true;
-}
-
-FLASHMEM bool save_sd_transpose_json(uint8_t number)
-{
-  int count = 0;
-  int total = sizeof(seq.chain_transpose);
-  int columns = sizeof(seq.chain_transpose[0]);
-  int rows = total / columns;
-
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      data_json["t"][count] = seq.chain_transpose[i][j];
-      count++;
-    }
-  }
-  return write_file_json(number, TRANSPOSE_CONFIG_NAME, data_json);
-}
-
-FLASHMEM bool load_sd_song_json(uint8_t number)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  read_file_json(number, SONG_CONFIG_NAME, data_json);
-  int total = sizeof(seq.song);
-  int columns = sizeof(seq.song[0]);
-  int rows = total / columns;
-  int count = 0;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      seq.song[i][j] = data_json["s"][count];
-      count++;
-    }
-  }
-  return true;
-}
-
-FLASHMEM bool save_sd_song_json(uint8_t number)
-{
-  int count = 0;
-  int total = sizeof(seq.song);
-  int columns = sizeof(seq.song[0]);
-  int rows = total / columns;
-
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      data_json["s"][count] = seq.song[i][j];
-      count++;
-    }
-  }
-  return write_file_json(number, SONG_CONFIG_NAME, data_json);
-}
-
-FLASHMEM bool save_sd_seq_sub_vel_json(uint8_t number)
-{
-  int count = 0;
-  int total = sizeof(seq.vel);
-  int columns = sizeof(seq.vel[0]);
-  int rows = total / columns;
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      data_json["seq_velocity"][count] = seq.vel[i][j];
-      count++;
-    }
-  }
-  write_file_json(number, VELOCITY_CONFIG_NAME, data_json);
-  return (true);
-}
-
-FLASHMEM bool save_sd_seq_sub_patterns_json(uint8_t number)
-{
-  int count = 0;
-  int total = sizeof(seq.note_data);
-  int columns = sizeof(seq.note_data[0]);
-  int rows = total / columns;
-
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      data_json["seq_data"][count] = seq.note_data[i][j];
-      count++;
-    }
-  }
-  return write_file_json(number, PATTERN_CONFIG_NAME, data_json);
-}
-
 FLASHMEM bool save_sd_performance_json(uint8_t number)
 {
   bool seq_was_running = false;
@@ -886,12 +733,12 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
 
   check_performance_directory(number);
 
-  save_sd_seq_sub_vel_json(number);
-  save_sd_seq_sub_patterns_json(number);
+  save_sd_config_json(number, VELOCITY_CONFIG_NAME, &seq.vel_desc);
+  save_sd_config_json(number, PATTERN_CONFIG_NAME, &seq.note_data_desc);
   save_sd_drummappings_json(number);
-  save_sd_song_json(number);
-  save_sd_transpose_json(number);
-  save_sd_chain_json(number);
+  save_sd_config_json(number, SONG_CONFIG_NAME, &seq.song_desc);
+  save_sd_config_json(number, TRANSPOSE_CONFIG_NAME, &seq.chain_transpose_desc);
+  save_sd_config_json(number, CHAIN_CONFIG_NAME, &seq.chain_desc);
   save_sd_fx_json(number);
   save_sd_config_json(number, EPIANO_CONFIG_NAME, &configuration.epiano);
   save_sd_multisample_presets_json(number);
@@ -1002,47 +849,6 @@ FLASHMEM void get_sd_performance_name_json(uint8_t number)
   }
 }
 
-FLASHMEM bool load_sd_seq_sub_vel_json(uint8_t number)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  if(!read_file_json(number, VELOCITY_CONFIG_NAME,data_json)) return false;
-
-  int total = sizeof(seq.vel);
-  int columns = sizeof(seq.vel[0]);
-  int rows = total / columns;
-  int count = 0;
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      seq.vel[i][j] = data_json["seq_velocity"][count];
-      count++;
-    }
-  }
-  return true;
-}
-
-FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number)
-{
-  StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
-  read_file_json(number, PATTERN_CONFIG_NAME, data_json);
-
-  int total = sizeof(seq.note_data);
-  int columns = sizeof(seq.note_data[0]);
-  int rows = total / columns;
-  int count = 0;
-
-  for (uint8_t i = 0; i < rows; i++)
-  {
-    for (uint8_t j = 0; j < columns; j++)
-    {
-      seq.note_data[i][j] = data_json["seq_data"][count];
-      count++;
-    }
-  }
-  return true;
-}
-
 FLASHMEM bool load_sd_performance_json(uint8_t number)
 {
   bool seq_was_running = false;
@@ -1054,14 +860,14 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
   dac_mute();
   handleStop();
   AudioNoInterrupts();
-  load_sd_seq_sub_patterns_json(number);
-  load_sd_seq_sub_vel_json(number);
+  load_sd_config_json(number, PATTERN_CONFIG_NAME, &seq.note_data_desc);
+  load_sd_config_json(number, VELOCITY_CONFIG_NAME, &seq.vel_desc);
   load_sd_config_json(number, EPIANO_CONFIG_NAME, &configuration.epiano);
   set_epiano_params();  
   load_sd_drummappings_json(number);
-  load_sd_song_json(number);
-  load_sd_transpose_json(number);
-  load_sd_chain_json(number);
+  load_sd_config_json(number, SONG_CONFIG_NAME, &seq.song_desc);
+  load_sd_config_json(number, TRANSPOSE_CONFIG_NAME, &seq.chain_transpose_desc);
+  load_sd_config_json(number, CHAIN_CONFIG_NAME, &seq.chain_desc);
   load_sd_multisample_presets_json(number);
   load_sd_config_json(number, BRAIDS_CONFIG_NAME, &braids_osc);
   braids_update_all_settings();
