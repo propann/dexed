@@ -88,8 +88,7 @@ boolean Adafruit_FT6206::begin(uint8_t thresh)
 uint8_t Adafruit_FT6206::touched(void)
 {
   //if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
-    if (touch_control_rate >= TOUCH_CONTROL_RATE_MS )
-  {
+
     uint8_t n = readRegister8(FT62XX_REG_NUMTOUCHES);
     touch_control_rate = 0;
     if (n > 2)
@@ -97,9 +96,8 @@ uint8_t Adafruit_FT6206::touched(void)
       n = 0;
     }
     return n;
-  }
-  else
-    return 0;
+  
+
 }
 
 /**************************************************************************/

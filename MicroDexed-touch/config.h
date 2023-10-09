@@ -124,9 +124,9 @@
 //*************************************************************************************************
 //* DISPLAY AND TOUCHSCREEN
 //*************************************************************************************************
-
-#define GENERIC_DISPLAY // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
-//#define CAPACITIVE_TOUCH_DISPLAY  // TFT with Capacitive Touchscreen, currently for testing purposes only
+#ifndef CAPACITIVE_TOUCH_DISPLAY // TFT with Capacitive Touchscreen, currently for testing purposes only
+  #define GENERIC_DISPLAY // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
+#endif
 
 //*************************************************************************************************
 //* DEXED SEQUENCER, EPIANO AND EFFECTS SETTINGS
@@ -275,7 +275,7 @@ const char back_clear[5] = { ' ', ' ', ' ', ' ' };
 #define TOUCH_CONTROL_RATE_MS 40
 
 #define VOICE_SELECTION_MS 60000
-#define BACK_FROM_VOLUME_MS 2000
+#define BACK_FROM_VOLUME_MS 500
 #define MESSAGE_WAIT_TIME 1000
 #define MIDI_DECAY_TIMER 50
 

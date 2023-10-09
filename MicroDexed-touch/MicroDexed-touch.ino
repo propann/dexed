@@ -3295,9 +3295,6 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
         LOG.print(F(": "));
         LOG.println(inValue, DEC);
 #endif
-
-        ts.slowdown_UI_input++;
-
         switch (inCtrl)
         {
         case 0: // BankSelect MSB
