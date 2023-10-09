@@ -325,7 +325,6 @@ FLASHMEM void virtual_keyboard_key_on()
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, ts.virtual_keyboard_velocity);
             else
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
-            touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
           }
           else
           {
@@ -333,7 +332,6 @@ FLASHMEM void virtual_keyboard_key_on()
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, ts.virtual_keyboard_velocity);
             else
               handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
-            touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
             display.console = true;
             display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, RED); // white key
             display.console = false;
@@ -360,7 +358,6 @@ FLASHMEM void virtual_keyboard_key_on()
                 handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, ts.virtual_keyboard_velocity);
               else
                 handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, 210 + ts.virtual_keyboard_instrument - 8, 100);
-              touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
             }
             else
             {
@@ -368,7 +365,6 @@ FLASHMEM void virtual_keyboard_key_on()
                 handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, ts.virtual_keyboard_velocity);
               else
                 handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, 120);
-              touch_control_rate = TOUCH_CONTROL_RATE_MS - 50;
               display.console = true;
               display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, RED); // BLACK key
               display.console = false;

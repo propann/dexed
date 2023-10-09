@@ -271,9 +271,6 @@ const char back_clear[5] = { ' ', ' ', ' ', ' ' };
 #define TFT_TOUCH_CS 38
 #endif
 
-//#define TOUCH_CONTROL_RATE_MS 200
-#define TOUCH_CONTROL_RATE_MS 40
-
 #define VOICE_SELECTION_MS 60000
 #define BACK_FROM_VOLUME_MS 500
 #define MESSAGE_WAIT_TIME 1000
