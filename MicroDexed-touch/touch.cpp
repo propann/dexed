@@ -361,7 +361,7 @@ FLASHMEM void virtual_keyboard_key_on()
   display.setTextColor(COLOR_SYSTEXT);
   display.setTextSize(1);
 
-  const int aftertouch = 10; // rather workaround for ++/--
+  const int sustain = 5; // rather workaround for ++/--
 
   // draw white keys
   if (ts.p.y > VIRT_KEYB_YPOS + 36) {
@@ -371,7 +371,7 @@ FLASHMEM void virtual_keyboard_key_on()
       if(isKeyPressed) {
         
         if(ts.virtual_keyboard_state_white[x] == 0) {
-          ts.virtual_keyboard_state_white[x] = aftertouch;
+          ts.virtual_keyboard_state_white[x] = sustain;
       
           for (uint8_t z = 0; z < x; z++) {
             if (seq.piano2[z] == 1) {
@@ -409,7 +409,7 @@ FLASHMEM void virtual_keyboard_key_on()
         if(isKeyPressed) {
 
           if (ts.virtual_keyboard_state_black[x] == 0) {
-            ts.virtual_keyboard_state_black[x] = aftertouch;
+            ts.virtual_keyboard_state_black[x] = sustain;
             
             // pitched samples
             if (ts.virtual_keyboard_instrument > 7) {
@@ -446,6 +446,7 @@ FLASHMEM void virtual_keyboard_key_on()
 
 FLASHMEM void virtual_keyboard()
 {
+  int offcount = 0;
   uint8_t oct_count = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
@@ -478,6 +479,9 @@ FLASHMEM void virtual_keyboard()
       display.console = true;
       display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, COLOR_BACKGROUND); // BLACK key
       display.console = false;
+      offcount++;
+      if (offcount == 5)
+        offcount = 0;
     }
   }
   display.setTextSize(2);

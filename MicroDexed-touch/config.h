@@ -272,7 +272,7 @@ const char back_clear[5] = { ' ', ' ', ' ', ' ' };
 #endif
 
 #define VOICE_SELECTION_MS 60000
-#define BACK_FROM_VOLUME_MS 500
+#define BACK_FROM_VOLUME_MS 2000
 #define MESSAGE_WAIT_TIME 1000
 #define MIDI_DECAY_TIMER 50
 
