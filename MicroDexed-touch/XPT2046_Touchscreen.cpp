@@ -28,18 +28,11 @@
 #define Z_THRESHOLD_INT 75
 #define MSEC_THRESHOLD 3
 
-#if defined GENERIC_DISPLAY 
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
-#endif
 
-
-elapsedMillis touch_control_rate;
-#if defined GENERIC_DISPLAY
 static XPT2046_Touchscreen *isrPinptr;
 void isrPin(void);
-#endif
 
-#if defined GENERIC_DISPLAY
 FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 {
  
@@ -55,16 +48,13 @@ FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
   }
   return true;
 }
-#endif
 
 ISR_PREFIX
-#if defined GENERIC_DISPLAY
 void isrPin(void)
 {
   XPT2046_Touchscreen *o = isrPinptr;
   o->isrWake = true;
 }
-#endif
 
 extern bool remote_touched;
 
@@ -77,26 +67,21 @@ TS_Point XPT2046_Touchscreen::getPoint()
 TS_Point XPT2046_Touchscreen::getPixel()
 {
   update();
-#ifdef GENERIC_DISPLAY
   uint16_t xPixel = (uint16_t)(_cal_dx * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
   uint16_t yPixel = (uint16_t)(_cal_dy * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
 
   // this->rotateCal(xPixel, yPixel);
 
   return TS_Point(xPixel, yPixel, zraw);
-  #endif
 }
 
-#if defined GENERIC_DISPLAY
 void XPT2046_Touchscreen::getCalibrationPoints(uint16_t &x1, uint16_t &y1, uint16_t &x2, uint16_t &y2)
 {
   x1 = y1 = CAL_OFFSET;
   x2 = DISPLAY_WIDTH - CAL_OFFSET;
   y2 = DISPLAY_HEIGHT - CAL_OFFSET;
 }
-#endif
 
-#if defined GENERIC_DISPLAY
 void XPT2046_Touchscreen::setCalibration(TS_Calibration cal)
 {
   _cal_dx = DISPLAY_WIDTH - 2 * CAL_OFFSET;
@@ -107,46 +92,34 @@ void XPT2046_Touchscreen::setCalibration(TS_Calibration cal)
   _cal_dvi = (int32_t)cal.vi2 - cal.vi1;
   _cal_dvj = (int32_t)cal.vj2 - cal.vj1;
 }
-#endif
 
-#if defined GENERIC_DISPLAY
 bool XPT2046_Touchscreen::tirqTouched()
 {
   return (isrWake);
 }
-#endif
 
 bool XPT2046_Touchscreen::touched()
 {
-  #if defined GENERIC_DISPLAY
-  if (touch_control_rate > (remote_touched ? TOUCH_CONTROL_RATE_MS / 2 : TOUCH_CONTROL_RATE_MS))
+  if (remote_touched)
   {
-    if (remote_touched)
-    {
-      touch_control_rate = 0;
-      return true;
-    }
-    // no remote touch, so update to check for real touch
-    update();
-    if (zraw >= Z_THRESHOLD)
-    {
-      touch_control_rate = 0;
-      return true;
-    }
+    return true;
   }
+  // no remote touch, so update to check for real touch
+  update();
+  if (zraw >= Z_THRESHOLD)
+  {
+    return true;
+  }
+  
   return false;
-  #endif
 }
 
 void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z)
 {
   update();
-#if defined GENERIC_DISPLAY
   *x = xraw;
   *y = yraw;
   *z = zraw;
-  #endif
-
 }
 
 bool XPT2046_Touchscreen::bufferEmpty()
@@ -156,7 +129,6 @@ bool XPT2046_Touchscreen::bufferEmpty()
 
 static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
 {
-#if defined GENERIC_DISPLAY
   int16_t da, db, dc;
   int16_t reta = 0;
   if (x > y)
@@ -180,7 +152,6 @@ static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
     reta = (y + z) >> 1; //    else if ( dc <= da && dc <= db ) reta = (x + y) >> 1;
 
   return (reta);
-#endif
 }
 
 // TODO: perhaps a future version should offer an option for more oversampling,
@@ -188,7 +159,6 @@ static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
 
 void XPT2046_Touchscreen::update()
 {
-  #ifdef GENERIC_DISPLAY
   int16_t data[6];
   int z;
   if (!isrWake)
@@ -274,6 +244,5 @@ void XPT2046_Touchscreen::update()
       yraw = 4095 - y;
     }
   }
-    #endif
 }
 #endif

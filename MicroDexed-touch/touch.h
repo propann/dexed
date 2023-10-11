@@ -34,7 +34,6 @@ typedef struct ts_s
   bool finished_calibration = false;
   uint16_t temp_col_hue = 1;
   uint8_t temp_col_sat = 240, temp_col_bright = 240;
-  int slowdown_UI_input;
   uint8_t virtual_keyboard_octave = 3;
   uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums 7=braids, 8- pitched samples
   uint8_t virtual_keyboard_midi_channel = 1;
@@ -45,7 +44,6 @@ typedef struct ts_s
   uint8_t virtual_keyboard_state_white[11];
   uint8_t virtual_keyboard_state_black[17];
   bool update_virtual_keyboard_octave;
-  bool block_screen_update;
   uint8_t displayed_peak[20]; // volmeter peak levels, currently displayed level
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu = false;

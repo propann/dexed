@@ -36,7 +36,6 @@
 #define Wire Wire1
 #endif
 
-elapsedMillis touch_control_rate;
 
 /**************************************************************************/
 /*!
@@ -87,19 +86,11 @@ boolean Adafruit_FT6206::begin(uint8_t thresh)
 
 uint8_t Adafruit_FT6206::touched(void)
 {
-  //if (touch_control_rate > TOUCH_CONTROL_RATE_MS && digitalRead(TFT_TOUCH_IRQ) == 0)
-    if (touch_control_rate >= TOUCH_CONTROL_RATE_MS )
-  {
-    uint8_t n = readRegister8(FT62XX_REG_NUMTOUCHES);
-    touch_control_rate = 0;
-    if (n > 2)
-    {
-      n = 0;
-    }
-    return n;
+  uint8_t n = readRegister8(FT62XX_REG_NUMTOUCHES);
+  if (n > 2) {
+    n = 0;
   }
-  else
-    return 0;
+  return n;
 }
 
 /**************************************************************************/
@@ -122,10 +113,7 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n)
   }
   else
   {
-    //test rotated
-         return TS_Point(240-touchX[n], 320-touchY[n], 1);
-       //  touch_control_rate = 0;
-    //return TS_Point(touchX[n], touchY[n], 1);
+    return TS_Point(DISPLAY_HEIGHT-touchX[n], DISPLAY_WIDTH-touchY[n], 1);
   }
 }
 
