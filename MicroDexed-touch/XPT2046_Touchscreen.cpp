@@ -33,7 +33,6 @@
 #endif
 
 
-elapsedMillis touch_control_rate;
 #if defined GENERIC_DISPLAY
 static XPT2046_Touchscreen *isrPinptr;
 void isrPin(void);

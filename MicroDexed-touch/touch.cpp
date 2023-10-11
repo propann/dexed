@@ -90,7 +90,6 @@ ts_t ts;                         // touch screen
 fm_t fm;                         // file manager
 dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and release
 extern int temp_int;
-extern elapsedMillis touch_control_rate;
 
 uint16_t touchedItem = 0;
 
@@ -446,7 +445,6 @@ FLASHMEM void virtual_keyboard_key_on()
 
 FLASHMEM void virtual_keyboard()
 {
-  int offcount = 0;
   uint8_t oct_count = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
@@ -479,9 +477,6 @@ FLASHMEM void virtual_keyboard()
       display.console = true;
       display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, COLOR_BACKGROUND); // BLACK key
       display.console = false;
-      offcount++;
-      if (offcount == 5)
-        offcount = 0;
     }
   }
   display.setTextSize(2);
