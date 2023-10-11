@@ -91,7 +91,7 @@ fm_t fm;                         // file manager
 dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and release
 extern int temp_int;
 
-uint16_t touchedItem = 0;
+bool isButtonTouched = false;
 
 FLASHMEM void helptext_l(const char* str)
 {
@@ -507,8 +507,8 @@ FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
 {
   bool result = false;
   if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
-    if(touchedItem == 0) {
-      touchedItem = (x << 8) | y;
+    if(isButtonTouched == false) {
+      isButtonTouched = true;
       result = true;
     }
   }
@@ -722,7 +722,7 @@ FLASHMEM void handle_touchscreen_voice_select()
       virtual_keyboard_key_on();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -876,7 +876,7 @@ FLASHMEM void handle_touchscreen_pattern_editor()
       virtual_keyboard_key_on();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -926,7 +926,7 @@ FLASHMEM void handle_touchscreen_microsynth()
       virtual_keyboard_key_on();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -1016,7 +1016,7 @@ FLASHMEM void handle_touchscreen_file_manager()
       print_file_manager_active_border();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1044,7 +1044,7 @@ FLASHMEM void handle_touchscreen_custom_mappings()
       update_midi_learn_button();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1059,7 +1059,7 @@ FLASHMEM void handle_touchscreen_cc_mappings()
       update_midi_learn_button();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1122,7 +1122,7 @@ FLASHMEM void handle_touchscreen_mute_matrix()
       }
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1139,7 +1139,7 @@ FLASHMEM void handle_touchscreen_arpeggio()
         handleStart();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1158,7 +1158,7 @@ FLASHMEM void handle_touchscreen_braids()
       virtual_keyboard_key_on();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
@@ -1303,7 +1303,7 @@ FLASHMEM void handle_touchscreen_menu()
     }
     ts.touch_ui_drawn_in_menu = true;
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && ts.keyb_in_menu_activated)
     {
       print_virtual_keyboard_octave();
@@ -1413,7 +1413,7 @@ FLASHMEM void handle_touchscreen_multiband()
       }
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
   if (scope.scope_delay % 60 == 0)
   {
@@ -1434,7 +1434,7 @@ FLASHMEM void handle_touchscreen_sample_editor()
       preview_sample();
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1451,7 +1451,7 @@ FLASHMEM void handle_touchscreen_settings_button_test()
       button_state = !button_state;
     }
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
 
@@ -1466,6 +1466,6 @@ FLASHMEM void handle_touchscreen_test_touchscreen()
     display.fillRect(ts.p.x, ts.p.y, 2, 2, COLOR_SYSTEXT);
     display.console = false;
   } else {
-    touchedItem = 0;
+    isButtonTouched = false;
   }
 }
