@@ -1,0 +1,37 @@
+Installation Instructions
+
+Several binary, HEX Files are provided in the /release folder. For starting, we suggest to flash mdt_default_(latest version number you see).hex
+
+Upload HEX file to your Teensy 4.1:
+
+You just need the Teensy Loader application and your HEX file. 
+
+Get Teensy Loader
+https://www.pjrc.com/teensy/loader.html
+
+- [x] connect your teensy to your computer with a known working USB-Micro-B to USB-A data cable.
+
+- [x] launch teensy loader
+
+- [x] Drop the HEX file onto Teensy Loader
+
+- [x] Push the button on the Teensy and Teensy Loader should send the program to the Teensy.
+
+* Copy all Files/Directories from /addon/SD/ to the root of your SD Card (FAT32) and insert the card in SD Slot of the Teensy 4.1
+
+* Power on the Teensy and attach USB MIDI Keyboard (or use the virtual Touch Keyboard and the Encoders to navigate)
+
+* If you have a FLASH chip, go to FileManager, Touch the icon "Copy Presets" and push Encoder R. This will copy all Samples from sdcard/DRUMS to FLASH.
+
+* If you are using the prototype PCB, check out the current state at:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Build-Instructions
+
+* if you do not have the prototype PCB but want to get one, you can order it at:
+https://www.pcbway.com/project/shareproject/MicroDexed_Touch_current_version_with_PCM5102_d643a695.html
+
+Otherwise, follow the pinout at:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Wiring
+
+FAQ:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/Troubleshooting-Guide-and-FAQ
+
