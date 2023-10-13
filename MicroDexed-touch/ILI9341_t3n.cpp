@@ -23,6 +23,7 @@
 extern bool remote_active;
 extern bool terrain_running;
 extern bool skip_drawing_to_mdt_display;
+extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 
 // 5x7 font
 PROGMEM const unsigned char font[] = {
@@ -505,6 +506,36 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   }
   endSPITransaction();
 }
+
+// draw rectangle with rainbow gradient
+FLASHMEM void ILI9341_t3n::fillRectRainbow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t last_h)
+{
+  int z = 0;
+  do
+  {
+    uint16_t color = ColorHSV((100 - h + z), 200, 200);
+    drawFastHLine(x, y - h + z, w, color);
+    z++;
+  } while (z < h - last_h);
+
+  // TODO implement FILL_RAINBOW_RECT command in MicroDexed-WebRemote.
+  // Until then, just draw green rectangle.
+  if (console && remote_active)
+  {
+     static uint8_t sysexFillRect[7 + 12 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 94,
+                                                     0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+                                                     0x0, 0x0, 0x0, 0x0, // could be unknown color
+                                                     0xf7 };
+    fillSysex(sysexFillRect, 4, x, y - h, w, h);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexColor(colors, 1, GREEN);
+    memcpy(sysexFillRect + 7 + 8, colors, nbBytes);
+    sysexFillRect[7 + 8 + nbBytes] = 0xf7;
+
+    usbMIDI.sendSysEx(7 + 8 + nbBytes + 1, sysexFillRect, true);
+  }
+}
+
 
 #define MADCTL_MY 0x80
 #define MADCTL_MX 0x40

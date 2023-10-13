@@ -14222,11 +14222,6 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
     draw_button_on_grid(38, 26, "THRLD", itoa(mb_threshold_low, temp_char, 10), 0);
 
     print_mb_params();
-    if (remote_active) {
-      // init volmeters
-      static uint8_t sysex[7 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 69, 0xf7 };
-      display.sendSysEx(8, sysex, true);
-    }
 
     for (int y = 0; y < 4; y++)
     {
@@ -22282,12 +22277,8 @@ FLASHMEM void _draw_volmeter(int x, int y, uint8_t meter, float height)
   // draw bar
   if (height > ts.displayed_peak[meter])
   {
-    int z = 0;
-    do
-    {
-      display.drawFastHLine(x, y - height + z, 17, ColorHSV((100 - height + z), 200, 200));
-      z++;
-    } while (z < height - ts.displayed_peak[meter]);
+    // draw a rainbow gradient rectangle, but only up to the old displayed_peak
+    display.fillRectRainbow(x, y, 17, height, ts.displayed_peak[meter]);
     ts.displayed_peak[meter] = height;
   }
   else
@@ -22304,10 +22295,6 @@ FLASHMEM void _draw_volmeter(int x, int y, uint8_t meter, float height)
     }
   }
 }
-
-static uint8_t sysexMixer[7 + 13 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 70,
-                                  0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, // value for 13 volmeters
-                                  0xf7 };
 
 FLASHMEM void draw_volmeters_mixer()
 {
@@ -22330,7 +22317,6 @@ FLASHMEM void draw_volmeters_mixer()
 
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.console = false;
 
   for (uint8_t i = 0; i < 13; i++) {
     int x = CHAR_width_small * i * 4 + (i >= 9 ? 2 * CHAR_width_small : 0);
@@ -22339,22 +22325,10 @@ FLASHMEM void draw_volmeters_mixer()
     display.setCursor(x, y + 4);
 
     int height = mapfloat(meters[i], 0.0, 1.0, 0, 99);
-    if (ts.displayed_peak[i] != height)
-    {
-      // print_formatted_number(height, 3);
-
-      if (remote_active)
-        sysexMixer[7 + i] = height;
-    }
 
     // draw bar
     _draw_volmeter(x, y, i, height);
   }
-
-  if (remote_active) {
-    display.sendSysEx(7 + 13 + 1, sysexMixer, true);
-  }
-
 }
 
 static uint8_t sysexMultiBandCompressor[7 + 4 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 71,
@@ -22377,7 +22351,6 @@ FLASHMEM void draw_volmeters_multiband_compressor()
 
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.console = false;
 
   for (uint8_t i = 0; i < 4; i++) {
     int x = CHAR_width_small * i * 4 + (i >= 2 ? 38 * CHAR_width_small : 1);
