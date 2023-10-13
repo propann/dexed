@@ -129,8 +129,8 @@ public:
   void begin(uint32_t spi_clock = ILI9341_SPICLOCK,
     uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
 
-  void ILI9341_t3n::flushSysEx();
-  void ILI9341_t3n::sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd);
+  void flushSysEx();
+  void sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd);
 
   void pushColor(uint16_t color);
   void fillScreen(uint16_t color);

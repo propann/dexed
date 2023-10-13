@@ -1720,7 +1720,7 @@ void ILI9341_t3n::sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd)
 {
   length = length - 6 - 1; // do not count header and end byte
 
-  if(sysex_len + length > sizeof(sysex_buffer)-1) // flush if full, keep space for end byte
+  if(sysex_len + length > sizeof(sysex_buffer)-2) // flush if full, keep space for end byte
     flushSysEx();
 
   if(hasStartEnd)
