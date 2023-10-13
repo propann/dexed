@@ -344,7 +344,7 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color)
     memcpy(sysexDrawPixel + 7 + 4, colors, nbBytes);
     sysexDrawPixel[7 + 4 + nbBytes] = 0xf7;
 
-    usbMIDI.sendSysEx(7 + 4 + nbBytes + 1, sysexDrawPixel, true);
+    sendSysEx(7 + 4 + nbBytes + 1, sysexDrawPixel, true);
    // usbMIDI.send_now();
    // delayMicroseconds(50);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
     //delay up to 50, test 05/04/2023
@@ -464,7 +464,7 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
       memcpy(sysexFillRect + 7 + 8, colors, nbBytes);
       sysexFillRect[7 + 8 + nbBytes] = 0xf7;
 
-      usbMIDI.sendSysEx(7 + 8 + nbBytes + 1, sysexFillRect, true);
+      sendSysEx(7 + 8 + nbBytes + 1, sysexFillRect, true);
     }
     else // is fillscreen
     {
@@ -476,7 +476,7 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
       memcpy(sysexFillScreen + 7, colors, nbBytes);
       sysexFillScreen[7 + nbBytes] = 0xf7;
 
-      usbMIDI.sendSysEx(7 + nbBytes + 1, sysexFillScreen, true);
+      sendSysEx(7 + nbBytes + 1, sysexFillScreen, true);
     }
    //  usbMIDI.send_now();
     delayMicroseconds(50);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
@@ -962,7 +962,7 @@ void ILI9341_t3n::fillCircle(int16_t x0, int16_t y0, int16_t r,
     memcpy(sysexFillCircle + 7 + 6, colors, nbBytes);
     sysexFillCircle[7 + 6 + nbBytes] = 0xf7;
 
-    usbMIDI.sendSysEx(7 + 6 + nbBytes + 1, sysexFillCircle, true);
+    sendSysEx(7 + 6 + nbBytes + 1, sysexFillCircle, true);
    // usbMIDI.send_now();
     delayMicroseconds(40);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
     console = false;
@@ -1047,7 +1047,7 @@ void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
     memcpy(sysexDrawLine + 7 + 8, colors, nbBytes);
     sysexDrawLine[7 + 8 + nbBytes] = 0xf7;
 
-    usbMIDI.sendSysEx(7 + 8 + nbBytes + 1, sysexDrawLine, true);
+    sendSysEx(7 + 8 + nbBytes + 1, sysexDrawLine, true);
     //usbMIDI.send_now();
    // delayMicroseconds(60);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
     //delay up to 50, test 05/04/2023
@@ -1182,7 +1182,7 @@ void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t 
     memcpy(sysexDrawRect + 7 + 8, colors, nbBytes);
     sysexDrawRect[7 + 8 + nbBytes] = 0xf7;
 
-    usbMIDI.sendSysEx(7 + 8 + nbBytes + 1, sysexDrawRect, true);
+    sendSysEx(7 + 8 + nbBytes + 1, sysexDrawRect, true);
    // usbMIDI.send_now();
     delayMicroseconds(50);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
     console = false;
@@ -1232,7 +1232,7 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
       memcpy(sysexDrawString + 7 + 4 + 1 + nbBytes + 1, buffer, size);
       sysexDrawString[sizeMsg - 1] = 0xf7;
 
-      usbMIDI.sendSysEx(sizeMsg, sysexDrawString, true);
+      sendSysEx(sizeMsg, sysexDrawString, true);
       usbMIDI.send_now();
 
       free(sysexDrawString);
@@ -1289,7 +1289,7 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
 //       memcpy(sysexDrawString + 7 + 4 + 1 + nbBytes + 2, buffer, size);
 //       sysexDrawString[sizeMsg - 1] = 0xf7;
 
-//       usbMIDI.sendSysEx(sizeMsg, sysexDrawString, true);
+//       sendSysEx(sizeMsg, sysexDrawString, true);
 //       usbMIDI.send_now();
 
 //       free(sysexDrawString);
@@ -1697,3 +1697,42 @@ void ILI9341_t3n::waitTransmitComplete(uint32_t mcr)
   // BUGBUG:: figure out if needed...
   waitTransmitComplete();
 }
+
+// send sysex bundled.
+// we use header byte 6 = 0x21 to mark the bundled format.
+void ILI9341_t3n::flushSysEx() {
+  if(sysex_len <= 6)
+    return;
+  memcpy(sysex_buffer, sysexRenderHeader, 6); // place official header
+  sysex_buffer[5]         = 0x21; // mark as bundled message (original header is 0x20 here)
+  sysex_buffer[sysex_len] = 0xF7; // place official end byte
+
+  usbMIDI.sendSysEx(sysex_len+1, sysex_buffer, true);
+
+  sysex_len = 6;
+}
+
+
+// append sysex data to buffer for sending in a bundled fashion
+// the header is skipped and a size field added to split the messages
+// on receiver side.
+void ILI9341_t3n::sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd)
+{
+  length = length - 6 - 1; // do not count header and end byte
+
+  if(sysex_len + length > sizeof(sysex_buffer)-1) // flush if full, keep space for end byte
+    flushSysEx();
+
+  if(hasStartEnd)
+  {
+    sysex_buffer[sysex_len] = length; // store length to slice bundled messages on receiver side
+    sysex_len++;
+    memcpy(&sysex_buffer[sysex_len], &data[6], length); // copy without header / end byte
+    sysex_len += length;
+  }
+  else
+  {
+   // TODO IMPLEMENT or remove hasStartEnd parameter
+  }
+}
+

@@ -2750,7 +2750,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     if (remote_active) {
       // screensaver on
       static uint8_t sysex[7 + 1 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 75, 1, 0xf7 };
-      usbMIDI.sendSysEx(9, sysex, true);
+      display.sendSysEx(9, sysex, true);
     }
 
     // setup function
@@ -2863,7 +2863,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         // screensaver off
         terrain_running = false;
         static uint8_t sysex[7 + 1 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 75, 0, 0xf7 };
-        usbMIDI.sendSysEx(9, sysex, true);
+        display.sendSysEx(9, sysex, true);
       }
 
       encoderDir[ENC_L].reset();
@@ -14225,7 +14225,7 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
     if (remote_active) {
       // init volmeters
       static uint8_t sysex[7 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 69, 0xf7 };
-      usbMIDI.sendSysEx(8, sysex, true);
+      display.sendSysEx(8, sysex, true);
     }
 
     for (int y = 0; y < 4; y++)
@@ -17237,7 +17237,7 @@ FLASHMEM void UI_func_mixer(uint8_t param)
     if (remote_active) {
       // init volmeters
       static uint8_t sysex[7 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 69, 0xf7 };
-      usbMIDI.sendSysEx(8, sysex, true);
+      display.sendSysEx(8, sysex, true);
     }
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
@@ -22352,9 +22352,7 @@ FLASHMEM void draw_volmeters_mixer()
   }
 
   if (remote_active) {
-    usbMIDI.sendSysEx(7 + 13 + 1, sysexMixer, true);
-    usbMIDI.send_now();
-    delayMicroseconds(30);
+    display.sendSysEx(7 + 13 + 1, sysexMixer, true);
   }
 
 }
@@ -22401,9 +22399,7 @@ FLASHMEM void draw_volmeters_multiband_compressor()
   }
 
   if (remote_active) {
-    usbMIDI.sendSysEx(7 + 4 + 1, sysexMultiBandCompressor, true);
-    usbMIDI.send_now();
-    delayMicroseconds(30);
+    display.sendSysEx(7 + 4 + 1, sysexMultiBandCompressor, true);
   }
 
 }

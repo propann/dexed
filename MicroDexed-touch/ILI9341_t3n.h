@@ -119,12 +119,18 @@
 
 class ILI9341_t3n: public Print
 {
+private:
+  uint8_t  sysex_buffer[512];
+  uint16_t sysex_len=6;
 public:
 
   ILI9341_t3n(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI = 11,
     uint8_t _SCLK = 13, uint8_t _MISO = 12);
   void begin(uint32_t spi_clock = ILI9341_SPICLOCK,
     uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
+
+  void ILI9341_t3n::flushSysEx();
+  void ILI9341_t3n::sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd);
 
   void pushColor(uint16_t color);
   void fillScreen(uint16_t color);
