@@ -518,21 +518,14 @@ FLASHMEM void ILI9341_t3n::fillRectRainbow(uint16_t x, uint16_t y, uint16_t w, u
     z++;
   } while (z < h - last_h);
 
-  // TODO implement FILL_RAINBOW_RECT command in MicroDexed-WebRemote.
-  // Until then, just draw green rectangle.
+  // issue FILL_RECT_RAINBOW command in MicroDexed-WebRemote.
   if (console && remote_active)
   {
-     static uint8_t sysexFillRect[7 + 12 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 94,
-                                                     0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-                                                     0x0, 0x0, 0x0, 0x0, // could be unknown color
-                                                     0xf7 };
-    fillSysex(sysexFillRect, 4, x, y - h, w, h);
-    uint8_t colors[4];
-    uint8_t nbBytes = fillSysexColor(colors, 1, GREEN);
-    memcpy(sysexFillRect + 7 + 8, colors, nbBytes);
-    sysexFillRect[7 + 8 + nbBytes] = 0xf7;
-
-    usbMIDI.sendSysEx(7 + 8 + nbBytes + 1, sysexFillRect, true);
+     static uint8_t sysex[7 + 8 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 95,
+                                         0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+                                         0xf7 };
+    fillSysex(sysex, 4, x, y - h, w, h);
+    usbMIDI.sendSysEx(7 + 8 + 1, sysex, true);
   }
 }
 
