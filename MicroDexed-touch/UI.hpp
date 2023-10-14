@@ -22331,10 +22331,6 @@ FLASHMEM void draw_volmeters_mixer()
   }
 }
 
-static uint8_t sysexMultiBandCompressor[7 + 4 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 71,
-                                  0x0, 0x0, 0x0, 0x0, // value for 4 volmeters
-                                  0xf7 };
-
 FLASHMEM void draw_volmeters_multiband_compressor()
 {
   float l, r;
@@ -22359,22 +22355,10 @@ FLASHMEM void draw_volmeters_multiband_compressor()
     display.setCursor(x, y + 4);
 
     int height = mapfloat(meters[i], 0.0, 1.0, 0, 99);
-    if (ts.displayed_peak[i] != height)
-    {
-      // print_formatted_number(height, 3);
-
-      if (remote_active)
-        sysexMultiBandCompressor[7 + i] = height;
-    }
 
     // draw bar
     _draw_volmeter(x, y, i, height);
   }
-
-  if (remote_active) {
-    display.sendSysEx(7 + 4 + 1, sysexMultiBandCompressor, true);
-  }
-
 }
 
 FLASHMEM void clear_volmeter(int x, int y)
