@@ -18295,7 +18295,7 @@ FLASHMEM void UI_func_velocity_level(uint8_t param)
 
 FLASHMEM void UI_update_instance_icons()
 {
-  display.fillRect(14 * CHAR_width + 16, 5, 20, 9, COLOR_BACKGROUND);
+  // display.fillRect(14 * CHAR_width + 16, 5, 20, 9, COLOR_BACKGROUND); //should not be required, testing
   display.setTextSize(1);
   display.console = true;
   if (selected_instance_id == 0)
@@ -18617,35 +18617,17 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     dexed_onscreen_algo = 88; // dummy value to force draw on screen init
     display.fillScreen(COLOR_BACKGROUND);
     border0();
-
-    if (seq.cycle_touch_element != 1)
-    {
-
-      if (LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume) && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
-        generic_temp_select_menu = 3;
-      draw_button_on_grid(45, 1, "", "", 99); // print keyboard icon
-      draw_button_on_grid(37, 1, "SET AS", "FAV.", 0);
-      print_voice_settings_in_dexed_voice_select(true, true);
-      print_voice_select_default_help();
-      print_perfmod_buttons();
-      print_perfmod_lables();
-      UI_update_instance_icons();
-      draw_favorite_icon(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-    }
-    else
-    {
-      draw_button_on_grid(45, 1, "DEXED", "DETAIL", 0);
-      virtual_keyboard();
-      virtual_keyboard_print_buttons();
-      virtual_keyboard_print_current_instrument();
-
-      display.setTextSize(1);
-      setCursor_textGrid_small(2, 6);
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      display.print(F("VOLUME"));
-      setCursor_textGrid_small(2, 7);
-      display.print(F("TRANSP."));
-    }
+    ts.fav_buttton_state = 0; //clear touch button state when starting page
+    seq.cycle_touch_element = 0;
+    if (LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume) && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
+      generic_temp_select_menu = 3;
+    draw_button_on_grid(45, 1, "", "", 99); // print keyboard icon
+    print_voice_settings_in_dexed_voice_select(true, true);
+    print_voice_select_default_help();
+    print_perfmod_buttons();
+    print_perfmod_lables();
+    UI_update_instance_icons();
+    draw_favorite_icon(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
     display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
     display.setTextSize(1);
     setCursor_textGrid_small(22, 6);
@@ -19342,8 +19324,8 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
     encoderDir[ENC_R].reset();
+    }
   }
-}
 
 FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
 {
@@ -19478,8 +19460,8 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
           }
+          }
         }
-      }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -19491,9 +19473,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-    }
+      }
     encoderDir[ENC_R].reset();
-  }
+    }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -19509,7 +19491,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
   }
-}
+  }
 
 FLASHMEM void UI_func_set_performance_name(uint8_t param)
 {
@@ -19856,7 +19838,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
             {
               show(2, 12, 2, "01");
               send_sysex_voice(1, voice_data);
-            }
+          }
             else
             {
               show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
@@ -19867,8 +19849,8 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
             sysex.close();
 
             bank_number = 0xff;
-          }
         }
+      }
         else
         {
           show(2, 1, 16, "No voice.");
@@ -19878,9 +19860,9 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
         break;
-      }
     }
   }
+}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -20755,7 +20737,7 @@ FLASHMEM bool check_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_i
   }
   else
     return false;
-}
+    }
 
 FLASHMEM float eraseBytesPerSecond(const unsigned char* id)
 {
@@ -20956,16 +20938,16 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       psram_test();
 #endif
-    }
-    // setCursor_textGrid(1, 2);
   }
+    // setCursor_textGrid(1, 2);
+}
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 void sub_touchscreen_test_page_init()
 {
@@ -21294,7 +21276,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
   }
   else
     return false;
-}
+    }
 
 FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
@@ -21346,7 +21328,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-      }
+    }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -21364,7 +21346,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
-    }
+  }
   }
 }
 

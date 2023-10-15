@@ -48,7 +48,7 @@ typedef struct ts_s
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu = false;
   bool keyb_in_menu_activated = false;
-  uint8_t fav_buttton_state;
+  uint8_t fav_buttton_state = 0;
 } ts_t;
 
 // (Touch)File Manager
