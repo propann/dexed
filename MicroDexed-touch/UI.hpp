@@ -4629,29 +4629,50 @@ FLASHMEM void lcdml_menu_display(void)
 
 FLASHMEM void draw_instance_editor(Editor* editor, bool refresh)
 {
-
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
 
   if (!refresh)
   {
-    display.setCursor(CHAR_width_small * 34, 6);
-    display.print(F("OR LONG PUSH "));
-    display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("ENC_R"));
-  }
+    display.setTextSize(1);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 25, 6);
+    display.print(F("DEXED"));
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 25 + 2, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2);
+    display.print(F("SHORT:"));
+    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+    if (generic_active_function == 1)
+      display.print(F("APPLY"));
+    else if (generic_active_function == 0)
+      display.print(F(" EDIT"));
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    display.print(F(" LONG:"));
+    display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
+    display.print(F("TOGGLE INST"));
 
+  }
   display.setCursor(CHAR_width_small * 10, 6);
   if (generic_temp_select_menu == editor->select_id)
   {
     setModeColor(editor->select_id);
-    display.print(F("SELECT INSTANCE  ->"));
+    helptext_r("< > SELECT INSTANCE");
+    display.setTextSize(1);
+    if (seq.edit_state == 0)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    else
+      display.setTextColor(COLOR_SYSTEXT, RED);
+    display.setCursor(CHAR_width_small * 25, 6);
+    display.print(F("DEXED"));
   }
   else
   {
-    display.print(F("                   "));
+    display.setTextSize(1);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 25, 6);
+    display.print(F("DEXED"));
+    helptext_r("< > EDIT PARAM.");
   }
-
   UI_update_instance_icons();
 }
 
@@ -19323,8 +19344,8 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
     encoderDir[ENC_R].reset();
-    }
   }
+}
 
 FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
 {
@@ -19459,8 +19480,8 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
           }
-          }
         }
+      }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -19472,9 +19493,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-      }
-    encoderDir[ENC_R].reset();
     }
+    encoderDir[ENC_R].reset();
+  }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -19490,7 +19511,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
   }
-  }
+}
 
 FLASHMEM void UI_func_set_performance_name(uint8_t param)
 {
@@ -19837,7 +19858,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
             {
               show(2, 12, 2, "01");
               send_sysex_voice(1, voice_data);
-          }
+            }
             else
             {
               show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
@@ -19848,8 +19869,8 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
             sysex.close();
 
             bank_number = 0xff;
+          }
         }
-      }
         else
         {
           show(2, 1, 16, "No voice.");
@@ -19859,9 +19880,9 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
         break;
+      }
     }
   }
-}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -20736,7 +20757,7 @@ FLASHMEM bool check_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_i
   }
   else
     return false;
-    }
+}
 
 FLASHMEM float eraseBytesPerSecond(const unsigned char* id)
 {
@@ -20937,16 +20958,16 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       psram_test();
 #endif
-  }
+    }
     // setCursor_textGrid(1, 2);
-}
+  }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-  }
+}
 
 void sub_touchscreen_test_page_init()
 {
@@ -21275,7 +21296,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
   }
   else
     return false;
-    }
+}
 
 FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
@@ -21327,7 +21348,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-    }
+      }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -21345,7 +21366,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
-  }
+    }
   }
 }
 
