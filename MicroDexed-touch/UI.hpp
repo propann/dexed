@@ -3878,7 +3878,6 @@ FLASHMEM void lcdml_menu_control(void)
       }
 
       // LCDML.FUNC_goBackToMenu();
-      draw_menu_ui_icons();
       LCDML.MENU_goRoot();
       break;
     case 29: // remote touch, receive x
