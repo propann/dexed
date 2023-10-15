@@ -925,7 +925,7 @@ FLASHMEM void sub_song_print_instruments(uint16_t front, uint16_t back)
         display.print(F("#"));
         print_formatted_number(seq.instrument[x] - 31, 2);
       }
- else if (seq.instrument[x] > 47 && seq.instrument[x] < 64)
+      else if (seq.instrument[x] > 47 && seq.instrument[x] < 64)
       {
         // if (seq.tracktype_or_instrument_assign == 2) {
         display.setCursor(6 * CHAR_width_small + (4 * CHAR_width_small) * x, CHAR_height_small * 5);
@@ -2898,7 +2898,7 @@ FLASHMEM void setup_screensaver(void)
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
     LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-   // LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick test time
+    // LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick test time
   }
 }
 
@@ -11317,9 +11317,9 @@ FLASHMEM void UI_func_song(uint8_t param)
             if (seq.instrument[seq.selected_track] > 0)
             {
               seq.instrument[seq.selected_track]--;
-               if (seq.instrument[seq.selected_track] == 5)
-              sub_song_print_tracktypes();
-}
+              if (seq.instrument[seq.selected_track] == 5)
+                sub_song_print_tracktypes();
+            }
             if (seq.instrument[seq.selected_track] > 5 && seq.instrument[seq.selected_track] < 16) // skip currently unused msp slots
             {
               if (seq.instrument[seq.selected_track] > 5 + NUM_MULTISAMPLES)
@@ -11965,10 +11965,10 @@ void UI_func_arpeggio(uint8_t param)
     display.print(F("MODE"));
     setCursor_textGrid_small(2, 9);
     display.print(F("MX NOTES"));
-  display.setTextColor(GREY2, COLOR_BACKGROUND);
-setCursor_textGrid_small(14, 9);
+    display.setTextColor(GREY2, COLOR_BACKGROUND);
+    setCursor_textGrid_small(14, 9);
     display.print(F("[SID STYLE]"));
-    
+
     setCursor_textGrid_small(2, 11);
     display.print(F("FROM ADV. SETTINGS:"));
 
@@ -18303,17 +18303,17 @@ FLASHMEM void UI_update_instance_icons()
     display.fillRect(14 * CHAR_width + 17, 5, 9, 9, COLOR_SYSTEXT);
     display.setCursor(14 * CHAR_width + 19, 6);
     if (configuration.dexed[0].polyphony == 0)
-      display.setTextColor(RED);
+      display.setTextColor(RED, COLOR_SYSTEXT);
     else
-      display.setTextColor(COLOR_BACKGROUND);
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     display.print(F("1"));
     display.console = true;
     display.fillRect(15 * CHAR_width + 17, 5, 9, 9, COLOR_BACKGROUND);
     display.setCursor(15 * CHAR_width + 19, 6);
     if (configuration.dexed[1].polyphony == 0)
-      display.setTextColor(RED);
+      display.setTextColor(RED, COLOR_BACKGROUND);
     else
-      display.setTextColor(COLOR_SYSTEXT);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.print(F("2"));
   }
   else
@@ -18322,17 +18322,17 @@ FLASHMEM void UI_update_instance_icons()
     display.fillRect(14 * CHAR_width + 17, 5, 9, 9, COLOR_BACKGROUND);
     display.setCursor(14 * CHAR_width + 19, 6);
     if (configuration.dexed[0].polyphony == 0)
-      display.setTextColor(RED);
+      display.setTextColor(RED, COLOR_BACKGROUND);
     else
-      display.setTextColor(COLOR_SYSTEXT);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.print(F("1"));
     display.console = true;
     display.fillRect(15 * CHAR_width + 17, 5, 9, 9, COLOR_SYSTEXT);
     display.setCursor(15 * CHAR_width + 19, 6);
     if (configuration.dexed[1].polyphony == 0)
-      display.setTextColor(RED);
+      display.setTextColor(RED, COLOR_SYSTEXT);
     else
-      display.setTextColor(COLOR_BACKGROUND);
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     display.print(F("2"));
   }
   display.setTextSize(2);
@@ -21239,7 +21239,7 @@ FLASHMEM void draw_favorite_icon(uint8_t p, uint8_t b, uint8_t v, uint8_t instan
     { // is Favorite
       display.fillRect(4 * CHAR_width + 18, 5, 9, 9, GREEN);
       display.setCursor(4 * CHAR_width + 20, 6);
-      display.setTextColor(COLOR_BACKGROUND);
+      display.setTextColor(COLOR_BACKGROUND, GREEN);
       display.print(F("F"));
       if (ts.fav_buttton_state != 2)
       {
@@ -21252,7 +21252,7 @@ FLASHMEM void draw_favorite_icon(uint8_t p, uint8_t b, uint8_t v, uint8_t instan
       // it is not a favorite
       display.fillRect(4 * CHAR_width + 18, 5, 9, 9, GREY2);
       display.setCursor(4 * CHAR_width + 20, 6);
-      display.setTextColor(COLOR_BACKGROUND);
+      display.setTextColor(COLOR_BACKGROUND, GREY2);
       display.print(F("F"));
       if (ts.fav_buttton_state != 1)
       {
