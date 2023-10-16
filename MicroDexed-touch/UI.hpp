@@ -18137,16 +18137,16 @@ FLASHMEM void print_voice_settings_in_dexed_voice_select(bool fullrefresh_text, 
   {
     display.setTextSize(2);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(2 * CHAR_width_small, 2 * CHAR_height_small);
+    display.setCursor(2 * CHAR_width_small, 2 * CHAR_height_small+3);
     display.print(F("B"));
 
-    display.setCursor(2 * CHAR_width_small, 4 * CHAR_height_small);
+    display.setCursor(2 * CHAR_width_small, 4 * CHAR_height_small+5);
     display.print(F("V"));
 
     display.setTextSize(1);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width, 6);
+    display.setCursor(2 * CHAR_width_small+1, 6);
     display.print(F("POOL "));
     setCursor_textGrid_small(2, 6);
     display.setCursor(CHAR_width_small * 25, 6);
@@ -18809,14 +18809,14 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     }
     display.setTextSize(2);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(5 * CHAR_width_small, 2 * CHAR_height_small);
+    display.setCursor(5 * CHAR_width_small, 2 * CHAR_height_small+3);
     print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
-    display.setCursor(5 * CHAR_width_small, 4 * CHAR_height_small);
+    display.setCursor(5 * CHAR_width_small, 4 * CHAR_height_small+5);
     print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
     setModeColor(2);
-    show_no_grid(2 * CHAR_height_small, 11 * CHAR_width_small, 10, g_bank_name[selected_instance_id]);//2 extra chars for FAV searching text
+    show_no_grid(2 * CHAR_height_small+3, 11 * CHAR_width_small, 10, g_bank_name[selected_instance_id]);//2 extra chars for FAV searching text
     setModeColor(3);
-    show_no_grid(4 * CHAR_height_small, 11 * CHAR_width_small, 10, g_voice_name[selected_instance_id]);
+    show_no_grid(4 * CHAR_height_small+5, 11 * CHAR_width_small, 10, g_voice_name[selected_instance_id]);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
