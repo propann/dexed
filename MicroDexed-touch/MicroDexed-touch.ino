@@ -2315,6 +2315,9 @@ void loop()
     show_cpu_and_mem_usage();
   }
 #endif
+
+  // send all buffered draw commands to WebRemote
+  display.flushSysEx();
 }
 
 /******************************************************************************

@@ -119,12 +119,18 @@
 
 class ILI9341_t3n: public Print
 {
+private:
+  uint8_t  sysex_buffer[512];
+  uint16_t sysex_len=6;
 public:
 
   ILI9341_t3n(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI = 11,
     uint8_t _SCLK = 13, uint8_t _MISO = 12);
   void begin(uint32_t spi_clock = ILI9341_SPICLOCK,
     uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
+
+  void flushSysEx();
+  void sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd);
 
   void pushColor(uint16_t color);
   void fillScreen(uint16_t color);
@@ -136,6 +142,7 @@ public:
   void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
   void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
   void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+  void fillRectRainbow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t last_h);
 
   void setRotation(uint8_t r);
   void invertDisplay(boolean i);
