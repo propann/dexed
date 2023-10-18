@@ -338,7 +338,7 @@ void arp_track(uint8_t d)
         }
 #endif
 
- else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+        else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
         {
           if (check_probability(seq.current_pattern[d]))
             handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
@@ -388,7 +388,7 @@ void arp_track(uint8_t d)
             handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
         }
 #endif
-  else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+        else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
         {
           if (check_probability(seq.current_pattern[d]))
             handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length - seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
@@ -441,7 +441,7 @@ void arp_track(uint8_t d)
               handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
           }
 #endif
-  else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
           {
             if (check_probability(seq.current_pattern[d]))
               handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
@@ -492,7 +492,7 @@ void arp_track(uint8_t d)
               handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
           }
 #endif
- else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
           {
             if (check_probability(seq.current_pattern[d]))
               handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_length * 2 - seq.arp_step], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
@@ -546,7 +546,7 @@ void arp_track(uint8_t d)
             handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
         }
 #endif
- else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+        else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
         {
           if (check_probability(seq.current_pattern[d]))
             handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][rnd1 + seq.element_shift] + (seq.oct_shift * 12), check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
@@ -695,7 +695,7 @@ void sequencer_part1(void)
 #endif
               }
 
-else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+              else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
               {
                 if (check_probability(seq.current_pattern[d]))
                   handleNoteOn(seq.instrument[d] - 47, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d], check_vel_variation(seq.current_pattern[d], seq.vel[seq.current_pattern[d]][seq.step]), 3);
@@ -769,7 +769,7 @@ else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for inter
                     handleNoteOn(seq.instrument[d] - 31, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
                 }
 #endif
-   else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+                else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
                 {
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(seq.instrument[d] - 47, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
@@ -841,7 +841,7 @@ void sequencer_part2(void)
             handleNoteOff(seq.instrument[d] - 31, seq.prev_note[d], 0, 2);
           }
 #endif
-  else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
           {
             handleNoteOff(seq.instrument[d] - 47, seq.prev_note[d], 0, 3);
           }
@@ -870,7 +870,7 @@ void sequencer_part2(void)
                 handleNoteOff(seq.instrument[d] - 31, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 2);
               }
 #endif
- else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+              else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
               {
                 handleNoteOff(seq.instrument[d] - 47, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 3);
               }
@@ -898,7 +898,7 @@ void sequencer_part2(void)
             handleNoteOff(seq.instrument[d] - 31, seq.arp_note_prev, 0, 2);
           }
 #endif
- else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
           {
             handleNoteOff(seq.instrument[d] - 47, seq.arp_note_prev, 0, 3);
           }
@@ -990,7 +990,7 @@ int get_pattern_content_type_color(uint8_t pattern)
   return col;
 }
 
-void print_formatted_number(uint16_t number, uint8_t length)
+FLASHMEM void print_formatted_number(uint16_t number, uint8_t length)
 {
   char nb[5];
   if (length == 4)
@@ -1009,7 +1009,21 @@ void print_formatted_number(uint16_t number, uint8_t length)
   display.print(nb);
 }
 
-void print_formatted_number_signed(int number, uint8_t length)
+FLASHMEM void print_formatted_number_trailing_space(uint16_t number, uint8_t length) {
+  char nb[5];
+  if (length == 4)
+  {
+    sprintf(nb, "%-4d", number);
+  }
+  else
+    // if not 4 then length defaults to 3
+  {
+    sprintf(nb, "%-3d", number);
+  }
+  display.print(nb);
+}
+
+FLASHMEM void print_formatted_number_signed(int number, uint8_t length)
 {
   char nb[5];
 
@@ -1020,7 +1034,7 @@ void print_formatted_number_signed(int number, uint8_t length)
   display.print(nb);
 }
 
-void print_chord_name(uint8_t currentstep)
+FLASHMEM void print_chord_name(uint8_t currentstep)
 {
   for (uint8_t i = 0; i < 7; i++)
   {
