@@ -157,6 +157,9 @@ PROGMEM const unsigned char font[] = {
     0x08, 0x1C, 0x2A, 0x08, 0x08, // <-
 };
 
+// MIDI sysex render header for remote
+const uint8_t sysexRenderHeader[] = { 0xf0, 0x43, 0x21 };
+
 // Teensy 3.1 can only generate 30 MHz SPI when running at 120 MHz (overclock)
 
 // Constructor when using hardware ILI9241_KINETISK__pspi->  Faster, but must
@@ -201,121 +204,6 @@ void ILI9341_t3n::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
 
 }
 
-void fillSysex(uint8_t arr[], uint8_t nbArg, ...)
-{
-  va_list args;
-  va_start(args, nbArg);
-  for (uint8_t x = 0; x < nbArg; x++)
-  {
-    int val = va_arg(args, int);
-    uint8_t posInArray = 7 + x * 2;
-
-    // Convert value to two 7bit bytes for MIDI
-    arr[posInArray] = val / 128;
-    arr[posInArray + 1] = val % 128;
-  }
-}
-
-uint8_t fillSysexColor(uint8_t* arr, uint8_t nbArg, ...)
-{
-  va_list args;
-  va_start(args, nbArg);
-  int prev_val = -1;
-
-  uint8_t pos = 0;
-  for (uint8_t i = 0; i < nbArg; i++)
-  {
-    int val = va_arg(args, int);
-
-    uint8_t colorCode = 0;
-    switch (val) {
-    case COLOR_BACKGROUND:
-      colorCode = 0;
-      break;
-    case COLOR_SYSTEXT:
-      colorCode = 1;
-      break;
-    case COLOR_INSTR:
-      colorCode = 2;
-      break;
-    case COLOR_CHORDS:
-      colorCode = 3;
-      break;
-    case COLOR_ARP:
-      colorCode = 4;
-      break;
-    case COLOR_DRUMS:
-      colorCode = 5;
-      break;
-    case COLOR_PITCHSMP:
-      colorCode = 6;
-      break;
-
-    case RED:
-      colorCode = 7;
-      break;
-    case PINK:
-      colorCode = 8;
-      break;
-    case YELLOW:
-      colorCode = 9;
-      break;
-
-    case GREEN:
-      colorCode = 10;
-      break;
-    case MIDDLEGREEN:
-      colorCode = 11;
-      break;
-    case DARKGREEN:
-      colorCode = 12;
-      break;
-
-    case GREY1:
-      colorCode = 13;
-      break;
-    case GREY2:
-      colorCode = 14;
-      break;
-    case GREY3:
-      colorCode = 15;
-      break;
-    case GREY4:
-      colorCode = 16;
-      break;
-      // #define GREY4 0xC638 //only for UI test
-    case DX_DARKCYAN:
-      colorCode = 17;
-      break;
-    default:
-      colorCode = 255;
-      if (val == prev_val) {
-        colorCode = 0;
-      }
-      else {
-        // unknown color => to be sent on 4 bytes
-        uint16_t hByte = highByte(val);
-        arr[pos] = hByte / 128;
-        arr[pos + 1] = hByte % 128;
-        uint16_t lByte = lowByte(val);
-        arr[pos + 2] = lByte / 128;
-        arr[pos + 3] = lByte % 128;
-
-        pos += 4;
-      }
-    }
-
-    if (colorCode != 255) {
-      // avoid sending known color on 4 bytes, just send a 1 byte code by MIDI
-      arr[pos] = colorCode;
-      pos++;
-    }
-
-    prev_val = val;
-  }
-
-  return pos;
-}
 
 void ILI9341_t3n::pushColor(uint16_t color)
 {
@@ -335,21 +223,18 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color)
 
   if (console && remote_active)
   {
-    static uint8_t sysexDrawPixel[7 + 8 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 90,
-                                                 0x0, 0x0, 0x0, 0x0,
-                                                 0x0, 0x0, 0x0, 0x0, // could be a unknown color
-                                                 0xf7 };
-    fillSysex(sysexDrawPixel, 2, x, y);
-    uint8_t colors[4];
-    uint8_t nbBytes = fillSysexColor(colors, 1, color);
-    memcpy(sysexDrawPixel + 7 + 4, colors, nbBytes);
-    sysexDrawPixel[7 + 4 + nbBytes] = 0xf7;
+    static uint8_t sysexDrawPixel[9] = {
+      0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0, 0x0 // could be a unknown color
+    };
 
-    sendSysEx(7 + 4 + nbBytes + 1, sysexDrawPixel, true);
-   // usbMIDI.send_now();
-   // delayMicroseconds(50);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
-    //delay up to 50, test 05/04/2023
-    console = false;
+    fillSysexData(sysexDrawPixel, 2, x, y);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+    sysexDrawPixel[4] = nbBytes;
+    memcpy(sysexDrawPixel + 4 + 1, colors, nbBytes);
+
+    sendSysEx(90, 4 + 1 + nbBytes, sysexDrawPixel, true);
   }
 
   beginSPITransaction(_SPI_CLOCK);
@@ -455,32 +340,32 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   {
     if (w != DISPLAY_WIDTH && h != DISPLAY_HEIGHT)
     {
-      static uint8_t sysexFillRect[7 + 12 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 94,
-                                                   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-                                                   0x0, 0x0, 0x0, 0x0, // could be unknown color
-                                                   0xf7 };
-      fillSysex(sysexFillRect, 4, x, y, w, h);
-      uint8_t colors[4];
-      uint8_t nbBytes = fillSysexColor(colors, 1, color);
-      memcpy(sysexFillRect + 7 + 8, colors, nbBytes);
-      sysexFillRect[7 + 8 + nbBytes] = 0xf7;
+      static uint8_t sysexFillRect[13] = {
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0 // could be unknown color
+      };
 
-      sendSysEx(7 + 8 + nbBytes + 1, sysexFillRect, true);
+      fillSysexData(sysexFillRect, 4, x, y, w, h);
+      uint8_t colors[4];
+      uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+      sysexFillRect[8] = nbBytes;
+      memcpy(sysexFillRect + 8 + 1, colors, nbBytes);
+
+      sendSysEx(94, 8 + 1 + nbBytes, sysexFillRect, true);
     }
     else // is fillscreen
     {
-      static uint8_t sysexFillScreen[7 + 4 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 93,
-                                                   0x0, 0x0, 0x0, 0x0, // could be unknown color
-                                                   0xf7 };
-      uint8_t colors[4];
-      uint8_t nbBytes = fillSysexColor(colors, 1, color);
-      memcpy(sysexFillScreen + 7, colors, nbBytes);
-      sysexFillScreen[7 + nbBytes] = 0xf7;
+      static uint8_t sysexFillScreen[5] = {
+        0x0, 0x0, 0x0, 0x0, 0x0 // could be unknown color
+      };
 
-      sendSysEx(7 + nbBytes + 1, sysexFillScreen, true);
+      uint8_t colors[4];
+      uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+      sysexFillScreen[0] = nbBytes;
+      memcpy(sysexFillScreen + 1, colors, nbBytes);
+
+      sendSysEx(93, nbBytes + 1, sysexFillScreen, true);
     }
-   //  usbMIDI.send_now();
-    delayMicroseconds(50);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
   }
 
 
@@ -521,11 +406,12 @@ FLASHMEM void ILI9341_t3n::fillRectRainbow(uint16_t x, uint16_t y, uint16_t w, u
   // issue FILL_RECT_RAINBOW command in MicroDexed-WebRemote.
   if (console && remote_active)
   {
-     static uint8_t sysex[7 + 8 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 95,
-                                         0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-                                         0xf7 };
-    fillSysex(sysex, 4, x, y - h, w, h);
-    usbMIDI.sendSysEx(7 + 8 + 1, sysex, true);
+    static uint8_t sysex[8] = {
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    };
+
+    fillSysexData(sysex, 4, x, y - h, w, h);
+    sendSysEx(95, 8, sysex, true);
   }
 }
 
@@ -975,20 +861,18 @@ void ILI9341_t3n::fillCircle(int16_t x0, int16_t y0, int16_t r,
 {
   if (remote_active)
   {
-    static uint8_t sysexFillCircle[7 + 10 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 97,
-                                                  0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-                                                  0x0, 0x0, 0x0, 0x0, // could be unknow color
-                                                  0xf7 };
-    fillSysex(sysexFillCircle, 3, x0, y0, r);
-    // fillSysexColor(sysexFillCircle, 7 + 6, 1, color);
-    uint8_t colors[4];
-    uint8_t nbBytes = fillSysexColor(colors, 1, color);
-    memcpy(sysexFillCircle + 7 + 6, colors, nbBytes);
-    sysexFillCircle[7 + 6 + nbBytes] = 0xf7;
+    static uint8_t sysexFillCircle[11] = {
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0, 0x0, // could be unknow color
+    };
 
-    sendSysEx(7 + 6 + nbBytes + 1, sysexFillCircle, true);
-   // usbMIDI.send_now();
-    delayMicroseconds(40);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
+    fillSysexData(sysexFillCircle, 3, x0, y0, r);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+    sysexFillCircle[6] = nbBytes;
+    memcpy(sysexFillCircle + 6 + 1, colors, nbBytes);
+
+    sendSysEx(97, 6 + 1 + nbBytes, sysexFillCircle, true);
     console = false;
   }
 
@@ -1058,23 +942,20 @@ void ILI9341_t3n::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
   uint16_t color)
 {
-  if (remote_active && terrain_running == false) //massive problems with terrain screensaver, do not draw it to remote
+  if (remote_active && terrain_running == false)
   {
-    static uint8_t sysexDrawLine[7 + 12 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 96,
-                                                0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-                                                0x0, 0x0, 0x0, 0x0, // could be unknown color
-                                                0xf7 };
-    fillSysex(sysexDrawLine, 4, x0, y0, x1, y1);
-    // fillSysexColor(sysexDrawLine, 7 + 8, 1, color);
-    uint8_t colors[4];
-    uint8_t nbBytes = fillSysexColor(colors, 1, color);
-    memcpy(sysexDrawLine + 7 + 8, colors, nbBytes);
-    sysexDrawLine[7 + 8 + nbBytes] = 0xf7;
+    static uint8_t sysexDrawLine[13] = {
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0, 0x0, // could be unknown color
+    };
 
-    sendSysEx(7 + 8 + nbBytes + 1, sysexDrawLine, true);
-    //usbMIDI.send_now();
-   // delayMicroseconds(60);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
-    //delay up to 50, test 05/04/2023
+    fillSysexData(sysexDrawLine, 4, x0, y0, x1, y1);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+    sysexDrawLine[8] = nbBytes;
+    memcpy(sysexDrawLine + 8 + 1, colors, nbBytes);
+
+    sendSysEx(96, 8 + 1 + nbBytes, sysexDrawLine, true);
     console = false;
   }
 
@@ -1195,20 +1076,18 @@ void ILI9341_t3n::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t 
 {
   if (console && remote_active)
   {
-    static uint8_t sysexDrawRect[7 + 12 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 98,
-                                        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-                                        0x0, 0x0, 0x0, 0x0, // could be unknown color
-                                        0xf7 };
-    fillSysex(sysexDrawRect, 4, x, y, w, h);
-    // fillSysexColor(sysexDrawRect, 7 + 8, 1, color);
-    uint8_t colors[4];
-    uint8_t nbBytes = fillSysexColor(colors, 1, color);
-    memcpy(sysexDrawRect + 7 + 8, colors, nbBytes);
-    sysexDrawRect[7 + 8 + nbBytes] = 0xf7;
+    static uint8_t sysexDrawRect[13] = {
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0, 0x0, // could be unknown color
+    };
 
-    sendSysEx(7 + 8 + nbBytes + 1, sysexDrawRect, true);
-   // usbMIDI.send_now();
-    delayMicroseconds(50);  //necessary to avoid screen freeze in remote console TEST 21/03/2023
+    fillSysexData(sysexDrawRect, 4, x, y, w, h);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+    sysexDrawRect[8] = nbBytes;
+    memcpy(sysexDrawRect + 8 + 1, colors, nbBytes);
+
+    sendSysEx(98, 8 + 1 + nbBytes, sysexDrawRect, true);
     console = false;
   }
 
@@ -1225,17 +1104,15 @@ size_t ILI9341_t3n::write(uint8_t c)
   return write(&c, 1);
 }
 
-static uint8_t sysexRenderHeader[6] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20 };
-
 size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
 {
 
   if (remote_active)
   {
     uint8_t colors[8];
-    uint8_t nbBytes = fillSysexColor(colors, 2, textcolor, textbgcolor);
+    uint8_t nbBytes = fillSysexDataColor(colors, 2, textcolor, textbgcolor);
 
-    uint8_t sizeMsg = 6 + 1 + 2 * 2 + 1 + nbBytes + 1 + size + 1;
+    uint8_t sizeMsg = 2 * 2 + 1 + nbBytes + 1 + size;
 
     uint8_t* sysexDrawString = (uint8_t*)malloc(sizeMsg);
     if (sysexDrawString == NULL)
@@ -1246,40 +1123,34 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
     }
     else
     {
-      memcpy(sysexDrawString, sysexRenderHeader, sizeof(sysexRenderHeader));
-      sysexDrawString[6] = 72;
-      fillSysex(sysexDrawString, 2, cursor_x, cursor_y);
-      sysexDrawString[7 + 4] = nbBytes;
-      memcpy(sysexDrawString + 7 + 4 + 1, colors, nbBytes);
+      fillSysexData(sysexDrawString, 2, cursor_x, cursor_y);
+      sysexDrawString[4] = nbBytes;
+      memcpy(sysexDrawString + 4 + 1, colors, nbBytes);
+      sysexDrawString[4 + 1 + nbBytes] = textsize_x;
+      memcpy(sysexDrawString + 4 + 1 + nbBytes + 1, buffer, size);
 
-      sysexDrawString[7 + 4 + 1 + nbBytes] = textsize_x;
-      memcpy(sysexDrawString + 7 + 4 + 1 + nbBytes + 1, buffer, size);
-      sysexDrawString[sizeMsg - 1] = 0xf7;
-
-      sendSysEx(sizeMsg, sysexDrawString, true);
-      usbMIDI.send_now();
+      sendSysEx(72, sizeMsg, sysexDrawString, true);
 
       free(sysexDrawString);
     }
 
-   delayMicroseconds(40); // necessary to avoid screen freeze in remote console TEST 21/03/2023
     console = false;
   }
 
   size_t cb = size;
-  if (skip_drawing_to_mdt_display==false)
-{
-  while (cb)
+  if (skip_drawing_to_mdt_display == false)
   {
-    uint8_t c = *buffer++;
-    cb--;
-    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
-      textsize_y);
-    cursor_x += textsize_x * 6;
+    while (cb)
+    {
+      uint8_t c = *buffer++;
+      cb--;
+      drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
+        textsize_y);
+      cursor_x += textsize_x * 6;
+    }
+
   }
- 
-}
- return size;
+  return size;
 }
 
 
@@ -1289,7 +1160,7 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
 //   if (remote_active)
 //   {
 //     uint8_t colors[8];
-//     uint8_t nbBytes = fillSysexColor(colors, 2, textcolor, textbgcolor);
+//     uint8_t nbBytes = fillSysexDataColor(colors, 2, textcolor, textbgcolor);
 
 //     uint8_t sizeMsg = 6 + 1 + 2 * 2 + 1 + nbBytes + 1 + 1 + size + 1;
 
@@ -1304,7 +1175,7 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
 //     {
 //       memcpy(sysexDrawString, sysexRenderHeader, sizeof(sysexRenderHeader));
 //       sysexDrawString[6] = 73;
-//       fillSysex(sysexDrawString, 2, cursor_x, cursor_y);
+//       fillSysexData(sysexDrawString, 2, cursor_x, cursor_y);
 //       sysexDrawString[7 + 4] = nbBytes;
 //       memcpy(sysexDrawString + 7 + 4 + 1, colors, nbBytes);
 
@@ -1722,41 +1593,156 @@ void ILI9341_t3n::waitTransmitComplete(uint32_t mcr)
   waitTransmitComplete();
 }
 
+
 // send sysex bundled.
-// we use header byte 6 = 0x21 to mark the bundled format.
-void ILI9341_t3n::flushSysEx() {
-  if(sysex_len <= 6)
+FLASHMEM void ILI9341_t3n::flushSysEx() {
+  if (sysex_len <= SYSEX_HEADER_SIZE)
     return;
-  memcpy(sysex_buffer, sysexRenderHeader, 6); // place official header
-  sysex_buffer[5]         = 0x21; // mark as bundled message (original header is 0x20 here)
-  sysex_buffer[sysex_len] = 0xF7; // place official end byte
 
-  usbMIDI.sendSysEx(sysex_len+1, sysex_buffer, true);
+  memcpy(sysex_buffer, sysexRenderHeader, SYSEX_HEADER_SIZE); // place sysex MIDI header
+  sysex_buffer[sysex_len] = 0xF7; // place sysex end byte
 
-  sysex_len = 6;
+  usbMIDI.sendSysEx(sysex_len + 1, sysex_buffer, true);
+
+  sysex_len = SYSEX_HEADER_SIZE;
 }
 
 
 // append sysex data to buffer for sending in a bundled fashion
-// the header is skipped and a size field added to split the messages
-// on receiver side.
-void ILI9341_t3n::sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd)
+// a size field added to split the messages on receiver side.
+FLASHMEM void ILI9341_t3n::sendSysEx(uint8_t renderCmd, uint8_t length, uint8_t* data, bool hasStartEnd)
 {
-  length = length - 6 - 1; // do not count header and end byte
-
-  if(sysex_len + length > sizeof(sysex_buffer)-2) // flush if full, keep space for end byte
+  if (sysex_len + length > sizeof(sysex_buffer) - 2) // flush if full, keep space for end byte
     flushSysEx();
 
-  if(hasStartEnd)
+  if (hasStartEnd)
   {
-    sysex_buffer[sysex_len] = length; // store length to slice bundled messages on receiver side
+    sysex_buffer[sysex_len] = length + 1; // store length (with renderCmd byte added) to slice bundled messages on receiver side
     sysex_len++;
-    memcpy(&sysex_buffer[sysex_len], &data[6], length); // copy without header / end byte
+    sysex_buffer[sysex_len] = renderCmd;
+    sysex_len++;
+    memcpy(&sysex_buffer[sysex_len], data, length);
     sysex_len += length;
   }
   else
   {
-   // TODO IMPLEMENT or remove hasStartEnd parameter
+    // TODO IMPLEMENT or remove hasStartEnd parameter
   }
 }
 
+// Fill MIDI sysex data with two 7bits bytes for each value
+FLASHMEM void ILI9341_t3n::fillSysexData(uint8_t arr[], uint8_t nbArg, ...)
+{
+  va_list args;
+  va_start(args, nbArg);
+  for (uint8_t x = 0; x < nbArg; x++)
+  {
+    int val = va_arg(args, int);
+    uint8_t posInArray = x * 2;
+
+    // Convert value to two 7bit bytes for MIDI
+    arr[posInArray] = val / 128;
+    arr[posInArray + 1] = val % 128;
+  }
+}
+
+FLASHMEM uint8_t ILI9341_t3n::fillSysexDataColor(uint8_t* arr, uint8_t nbArg, ...)
+{
+  va_list args;
+  va_start(args, nbArg);
+  int prev_val = -1;
+
+  uint8_t pos = 0;
+  for (uint8_t i = 0; i < nbArg; i++)
+  {
+    int val = va_arg(args, int);
+
+    uint8_t colorCode = 0;
+    switch (val) {
+    case COLOR_BACKGROUND:
+      colorCode = 0;
+      break;
+    case COLOR_SYSTEXT:
+      colorCode = 1;
+      break;
+    case COLOR_INSTR:
+      colorCode = 2;
+      break;
+    case COLOR_CHORDS:
+      colorCode = 3;
+      break;
+    case COLOR_ARP:
+      colorCode = 4;
+      break;
+    case COLOR_DRUMS:
+      colorCode = 5;
+      break;
+    case COLOR_PITCHSMP:
+      colorCode = 6;
+      break;
+
+    case RED:
+      colorCode = 7;
+      break;
+    case PINK:
+      colorCode = 8;
+      break;
+    case YELLOW:
+      colorCode = 9;
+      break;
+
+    case GREEN:
+      colorCode = 10;
+      break;
+    case MIDDLEGREEN:
+      colorCode = 11;
+      break;
+    case DARKGREEN:
+      colorCode = 12;
+      break;
+
+    case GREY1:
+      colorCode = 13;
+      break;
+    case GREY2:
+      colorCode = 14;
+      break;
+    case GREY3:
+      colorCode = 15;
+      break;
+    case GREY4:
+      colorCode = 16;
+      break;
+      // #define GREY4 0xC638 //only for UI test
+    case DX_DARKCYAN:
+      colorCode = 17;
+      break;
+    default:
+      colorCode = 255;
+      if (val == prev_val) {
+        colorCode = 0;
+      }
+      else {
+        // unknown color => to be sent on four 7bits bytes
+        uint16_t hByte = highByte(val);
+        arr[pos] = hByte / 128;
+        arr[pos + 1] = hByte % 128;
+        uint16_t lByte = lowByte(val);
+        arr[pos + 2] = lByte / 128;
+        arr[pos + 3] = lByte % 128;
+
+        pos += 4;
+      }
+    }
+
+    if (colorCode != 255) {
+      // avoid sending known color on 4 bytes, just send a 1 byte code by MIDI
+      arr[pos] = colorCode;
+      pos++;
+    }
+
+    prev_val = val;
+  }
+
+  return pos;
+}

@@ -494,7 +494,7 @@ FLASHMEM void terrain_frame()
   {
     skip_drawing_to_mdt_display = true;
     display.setTextSize(2);
-    setCursor_textGrid(1, 2);
+    setCursor_textGrid(1, 10);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.print(fly);
     skip_drawing_to_mdt_display = false;

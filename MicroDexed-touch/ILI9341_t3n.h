@@ -31,7 +31,7 @@
 #ifndef _ILI9341_t3NH_
 #define _ILI9341_t3NH_
 
- #define ILI9341_USE_DMAMEM
+#define ILI9341_USE_DMAMEM
 
  // Allow way to override using SPI
 
@@ -106,9 +106,9 @@
 // clock
 
  //#ifdef GENERIC_DISPLAY
- #define ILI9341_SPICLOCK 50000000
- #define ILI9341_SPICLOCK_READ 2000000
- //#endif
+#define ILI9341_SPICLOCK 50000000
+#define ILI9341_SPICLOCK_READ 2000000
+//#endif
 
 
 // #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -117,11 +117,14 @@
 // #define ILI9341_SPICLOCK_READ 2000000
 // #endif
 
-class ILI9341_t3n: public Print
+#define SYSEX_HEADER_SIZE 3
+
+class ILI9341_t3n : public Print
 {
 private:
   uint8_t  sysex_buffer[512];
-  uint16_t sysex_len=6;
+  uint16_t sysex_len = SYSEX_HEADER_SIZE;
+
 public:
 
   ILI9341_t3n(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI = 11,
@@ -130,7 +133,9 @@ public:
     uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
 
   void flushSysEx();
-  void sendSysEx(uint8_t length, uint8_t* data, bool hasStartEnd);
+  void sendSysEx(uint8_t cmd, uint8_t length, uint8_t* data, bool hasStartEnd);
+  void fillSysexData(uint8_t arr[], uint8_t nbArg, ...);
+  uint8_t fillSysexDataColor(uint8_t* arr, uint8_t nbArg, ...);
 
   void pushColor(uint16_t color);
   void fillScreen(uint16_t color);

@@ -223,7 +223,6 @@ uint16_t record_x_pos;
 
 extern config_t configuration;
 extern void set_volume(uint8_t v, uint8_t m);
-extern bool load_sysex(uint8_t b, uint8_t v);
 extern void generate_version_string(char* buffer, uint8_t len);
 extern float midi_volume_transform(uint8_t midi_amp);
 extern float volume_transform(float amp);
@@ -235,16 +234,15 @@ extern void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_num
 extern void update_pianoroll();
 extern void set_pattern_content_type_color(uint8_t pattern);
 extern void print_formatted_number(uint16_t v, uint8_t l);
+extern void print_formatted_number_trailing_space(uint16_t v, uint8_t l);
 extern void print_formatted_number_signed(int v, uint8_t l);
 extern void seq_print_current_note_from_step(uint8_t s);
-extern void seq_print_step_numbers(int xpos, int ypos);
 extern void print_single_pattern_pianoroll_in_pattern_editor(int xpos, int ypos, uint8_t pattern, uint8_t actstep, bool fullredraw);
 extern void print_chord_name(uint8_t currentstep);
 extern void print_file_manager_buttons(void);
 extern void print_file_manager_active_border(void);
 extern uint16_t RGB24toRGB565(uint8_t r, uint8_t g, uint8_t b);
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
-extern uint32_t ColorHSV2(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint8_t get_chain_length_from_current_track(uint8_t tr);
 extern uint8_t get_song_length(void);
 extern void helptext_l(const char* str);
@@ -279,7 +277,6 @@ extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
 extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
-extern void fillSysex(uint8_t arr[], uint8_t nbArg, ...);
 
 #if NUM_DRUMS > 0
 #include "drums.h"
@@ -2747,12 +2744,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     else
       screensaver_mode_active = configuration.sys.screen_saver_mode;
 
-    if (remote_active) {
-      // screensaver on
-      static uint8_t sysex[7 + 1 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 75, 1, 0xf7 };
-      display.sendSysEx(9, sysex, true);
-    }
-
     // setup function
     LCDML.FUNC_setLoopInterval(50); // starts a trigger event for the loop function every 50 milliseconds
 
@@ -2801,11 +2792,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         //draw info to remote, do not paint actual terrain to remote but some stats only
         if (remote_active)
         {
-          skip_drawing_to_mdt_display = true;
-          display.setTextSize(1);
-          setCursor_textGrid(1, 1);
-          display.setTextColor(COLOR_SYSTEXT);
-          display.print(F("TERRAIN SCREENSAVER ACTIVE"));
           skip_drawing_to_mdt_display = false;
         }
 
@@ -2814,8 +2800,8 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       }
       else
       {
+        skip_drawing_to_mdt_display = true;
         terrain_frame();
-
       }
     }
 
@@ -2862,8 +2848,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       if (remote_active) {
         // screensaver off
         terrain_running = false;
-        static uint8_t sysex[7 + 1 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 75, 0, 0xf7 };
-        display.sendSysEx(9, sysex, true);
       }
 
       encoderDir[ENC_L].reset();
@@ -3277,8 +3261,8 @@ FLASHMEM void print_small_scaled_bar(uint8_t x, uint8_t y, int16_t input_value, 
 {
   setCursor_textGrid_small(x, y);
   setModeColor(selected_option);
-  display.print(F("   ")); // make sure long numbers don't stuck vs. short zero-names
-  setCursor_textGrid_small(x, y);
+  // display.print(F("   ")); // make sure long numbers don't stuck vs. short zero-names
+  // setCursor_textGrid_small(x, y);
 
   if (limit_min == 0 && limit_max == 1)
     display.print(input_value ? F("ON ") : F("OFF"));
@@ -17228,12 +17212,6 @@ FLASHMEM void UI_func_mixer(uint8_t param)
     helptext_r("< > SELECT CH");
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     print_mixer_text();
-
-    if (remote_active) {
-      // init volmeters
-      static uint8_t sysex[7 + 1] = { 0xf0, 0x41, 0x36, 0x00, 0x23, 0x20, 69, 0xf7 };
-      display.sendSysEx(8, sysex, true);
-    }
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
@@ -18137,16 +18115,16 @@ FLASHMEM void print_voice_settings_in_dexed_voice_select(bool fullrefresh_text, 
   {
     display.setTextSize(2);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(2 * CHAR_width_small, 2 * CHAR_height_small+3);
+    display.setCursor(2 * CHAR_width_small, 2 * CHAR_height_small + 3);
     display.print(F("B"));
 
-    display.setCursor(2 * CHAR_width_small, 4 * CHAR_height_small+5);
+    display.setCursor(2 * CHAR_width_small, 4 * CHAR_height_small + 5);
     display.print(F("V"));
 
     display.setTextSize(1);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(2 * CHAR_width_small+1, 6);
+    display.setCursor(2 * CHAR_width_small + 1, 6);
     display.print(F("POOL "));
     setCursor_textGrid_small(2, 6);
     display.setCursor(CHAR_width_small * 25, 6);
@@ -18245,8 +18223,7 @@ FLASHMEM void print_voice_settings_in_dexed_voice_select(bool fullrefresh_text, 
       }
       else
       {
-        print_formatted_number(configuration.dexed[selected_instance_id].midi_channel, 2);
-        display.print(F("  "));
+        print_formatted_number_trailing_space(configuration.dexed[selected_instance_id].midi_channel, 4);
       }
     }
     if (menu_item_check(10) || fullrefresh_values)
@@ -18809,14 +18786,14 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     }
     display.setTextSize(2);
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    display.setCursor(5 * CHAR_width_small, 2 * CHAR_height_small+3);
+    display.setCursor(5 * CHAR_width_small, 2 * CHAR_height_small + 3);
     print_formatted_number(configuration.dexed[selected_instance_id].bank, 2);
-    display.setCursor(5 * CHAR_width_small, 4 * CHAR_height_small+5);
+    display.setCursor(5 * CHAR_width_small, 4 * CHAR_height_small + 5);
     print_formatted_number(configuration.dexed[selected_instance_id].voice + 1, 2);
     setModeColor(2);
-    show_no_grid(2 * CHAR_height_small+3, 11 * CHAR_width_small, 10, g_bank_name[selected_instance_id]);//2 extra chars for FAV searching text
+    show_no_grid(2 * CHAR_height_small + 3, 11 * CHAR_width_small, 10, g_bank_name[selected_instance_id]);//2 extra chars for FAV searching text
     setModeColor(3);
-    show_no_grid(4 * CHAR_height_small+5, 11 * CHAR_width_small, 10, g_voice_name[selected_instance_id]);
+    show_no_grid(4 * CHAR_height_small + 5, 11 * CHAR_width_small, 10, g_voice_name[selected_instance_id]);
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
@@ -21659,7 +21636,6 @@ FLASHMEM void splash_screen1()
 
 FLASHMEM void splash_screen2_anim()
 {
-
   if (sysinfo_sound_state - 10 < 8)
   {
     unsigned char splash[23360];
@@ -21678,11 +21654,11 @@ FLASHMEM void splash_screen2_anim()
         {
           if (splash[x + y * DISPLAY_WIDTH] > 130 || y < 26 || (x < 163 && y < 46) || x > 241 || x < 80 || (x > 189 && y > 64))
           {
-
             color = RGB24toRGB565(splash[x + y * DISPLAY_WIDTH], splash[x + y * DISPLAY_WIDTH], splash[x + y * DISPLAY_WIDTH]);
           }
           else
             color = RGB24toRGB565(0, splash[x + y * DISPLAY_WIDTH] * 1.5, splash[x + y * DISPLAY_WIDTH]);
+
           for (uint16_t s = 3; s < 200; s++)
           {
             if (splash[x + y * DISPLAY_WIDTH] == splash[(x + s) + y * DISPLAY_WIDTH] && x + s < DISPLAY_WIDTH)
@@ -21692,16 +21668,15 @@ FLASHMEM void splash_screen2_anim()
           }
           if (c > 0)
           {
-
             display.fillRect(x, y, c + 1, 1, color);
             x = x + c;
           }
           else
           {
-
             display.drawPixel(x, y, color);
           }
         }
+
         c = 0;
         if (y < 26 && x > 132)
           break;
