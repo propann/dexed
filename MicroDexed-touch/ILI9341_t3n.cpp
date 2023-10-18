@@ -22,7 +22,6 @@
 
 extern bool remote_active;
 extern bool terrain_running;
-extern bool skip_drawing_to_mdt_display;
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 
 // 5x7 font
@@ -1138,8 +1137,6 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
   }
 
   size_t cb = size;
-  if (skip_drawing_to_mdt_display == false)
-  {
     while (cb)
     {
       uint8_t c = *buffer++;
@@ -1148,8 +1145,6 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
         textsize_y);
       cursor_x += textsize_x * 6;
     }
-
-  }
   return size;
 }
 

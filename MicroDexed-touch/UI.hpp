@@ -2694,7 +2694,6 @@ bool flock_running = false;
 extern void terrain_init();
 extern void terrain_frame();
 bool terrain_running = false;
-bool skip_drawing_to_mdt_display = false;
 
 FLASHMEM void check_buttons_screensaver()
 {
@@ -2788,19 +2787,11 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     {
       if (terrain_running == false)
       {
-
-        //draw info to remote, do not paint actual terrain to remote but some stats only
-        if (remote_active)
-        {
-          skip_drawing_to_mdt_display = false;
-        }
-
         terrain_init();
         terrain_running = true;
       }
       else
       {
-        skip_drawing_to_mdt_display = true;
         terrain_frame();
       }
     }
@@ -2815,14 +2806,11 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 
         randomSeed(analogRead(0));
         screensaver_mode_active = random(4) + 1;
-
         // screensaver_mode_active++;
         if (screensaver_mode_active > 3)  //safety
           screensaver_mode_active = 1;
-
         if (screensaver_mode_active == 2) //is cube - reinit because 3dterrain messes up some of it's vars in same functions
           InitializeCube();
-
         screensaver_switcher_timer = 0;
         screensaver_brightness = 0;
       }
@@ -2836,11 +2824,8 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         screensaver_brightness = screensaver_brightness + 2;
       }
     }
-
     //  }
-
   }
-
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     if (configuration.sys.screen_saver_mode != 5)
@@ -2849,7 +2834,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         // screensaver off
         terrain_running = false;
       }
-
       encoderDir[ENC_L].reset();
       encoderDir[ENC_R].reset();
       LCDML.SCREEN_resetTimer();
@@ -2864,16 +2848,13 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     //    LCDML.MENU_goRoot();
     //  else
      //  
-
     }
-
   }
 }
 
 FLASHMEM void setup_screensaver(void)
 {
   configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
-
   if (configuration.sys.screen_saver_mode == 5) // off
   {
     LCDML.SCREEN_disable();
@@ -2882,7 +2863,7 @@ FLASHMEM void setup_screensaver(void)
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
     LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-    // LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick test time
+   //  LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
   }
 }
 
@@ -21666,12 +21647,12 @@ FLASHMEM void splash_screen2_anim()
             else
               break;
           }
-          if (c > 0)
+          if (c > 0 && color > 0)
           {
             display.fillRect(x, y, c + 1, 1, color);
             x = x + c;
           }
-          else
+          else if (color > 0)
           {
             display.drawPixel(x, y, color);
           }
@@ -21718,12 +21699,12 @@ FLASHMEM void draw_logo_instant(uint8_t yoffset)
           else
             break;
         }
-        if (c > 0)
+       if (c > 0 && color > 0)
         {
           display.fillRect(x, y + yoffset, c + 1, 1, color);
           x = x + c;
         }
-        else
+        else if (color > 0)
         {
           display.drawPixel(x, y + yoffset, color);
         }

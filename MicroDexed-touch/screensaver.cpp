@@ -478,7 +478,6 @@ public:
   }
 };
 
-extern bool skip_drawing_to_mdt_display;
 extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void draw_logo_instant(uint8_t yoffset);
 Terrain  terrain;
@@ -490,13 +489,4 @@ FLASHMEM void terrain_init()
 FLASHMEM void terrain_frame()
 {
   terrain.draw();
-  if (remote_active)
-  {
-    skip_drawing_to_mdt_display = true;
-    display.setTextSize(2);
-    setCursor_textGrid(1, 10);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(fly);
-    skip_drawing_to_mdt_display = false;
-  }
 }
