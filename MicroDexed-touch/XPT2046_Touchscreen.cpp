@@ -30,8 +30,6 @@
 
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
-static XPT2046_Touchscreen *isrPinptr;
-void isrPin(void);
 
 FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 {
@@ -40,21 +38,10 @@ FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
   _pspi->begin();
   pinMode(csPin, OUTPUT);
   digitalWrite(csPin, HIGH);
-  if (255 != tirqPin)
-  {
-    pinMode(tirqPin, INPUT);
-    attachInterrupt(digitalPinToInterrupt(tirqPin), isrPin, FALLING);
-    isrPinptr = this;
-  }
+
   return true;
 }
 
-ISR_PREFIX
-void isrPin(void)
-{
-  XPT2046_Touchscreen *o = isrPinptr;
-  o->isrWake = true;
-}
 
 extern bool remote_touched;
 
@@ -91,11 +78,6 @@ void XPT2046_Touchscreen::setCalibration(TS_Calibration cal)
   _cal_vj1 = cal.vj1;
   _cal_dvi = (int32_t)cal.vi2 - cal.vi1;
   _cal_dvj = (int32_t)cal.vj2 - cal.vj1;
-}
-
-bool XPT2046_Touchscreen::tirqTouched()
-{
-  return (isrWake);
 }
 
 bool XPT2046_Touchscreen::touched()
@@ -161,8 +143,7 @@ void XPT2046_Touchscreen::update()
 {
   int16_t data[6];
   int z;
-  if (!isrWake)
-    return;
+
   uint32_t now = millis();
   if (now - msraw < MSEC_THRESHOLD)
     return;
@@ -204,11 +185,7 @@ void XPT2046_Touchscreen::update()
   { //	if ( !touched ) {
     // LOG.println();
     zraw = 0;
-    if (z < Z_THRESHOLD_INT)
-    { //	if ( !touched ) {
-      if (255 != tirqPin)
-        isrWake = false;
-    }
+
     return;
   }
   zraw = z;
