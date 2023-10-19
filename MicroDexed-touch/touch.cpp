@@ -57,7 +57,8 @@ extern void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id);
 extern void preview_sample(void);
 extern void draw_volmeters_mixer();
 extern void draw_volmeters_multiband_compressor();
-
+extern bool legacy_touch_button_back_page();
+extern bool touch_button_back_page();
 
 extern uint8_t activesample;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
@@ -104,6 +105,7 @@ int getNumTouchPoints() {
   return numTouchPoints;
 }
 
+
 FLASHMEM void helptext_l(const char* str)
 {
   display.setTextSize(1);
@@ -121,6 +123,37 @@ FLASHMEM void helptext_l(const char* str)
   }
 
   ts.old_helptext_length[0] = l;
+}
+
+FLASHMEM void back_touchbutton()
+{
+  if (ts.keyb_in_menu_activated == false)
+  {
+    // back text can be drawn as a touch button
+    if (LCDML.MENU_getLayer() != 0 && LCDML.FUNC_getID() == 255) //not in root menu but in menu
+    {
+      draw_button_on_grid(2, 25, "GO", back_text, 1);
+    }
+    else
+      if (LCDML.MENU_getLayer() == 0 && LCDML.FUNC_getID() == 255) // root menu, no where to go back
+      {
+        draw_button_on_grid(2, 25, "", "", 98);//clear
+      }
+  }
+  if (legacy_touch_button_back_page())
+  {
+    //remove unusable touch buttons from screen
+    display.console = true;
+    display.fillRect(270, 87, CHAR_width_small * button_size_x, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
+    display.fillRect(12, 144, 300, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
+    display.fillRect(78, 200, 234, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
+    display.console = false;
+    //draw_button_on_grid(2, 25, "GO", back_text, 0);  //the back button should already be there
+  }
+  else if (touch_button_back_page() && seq.cycle_touch_element != 1)
+  {
+    draw_button_on_grid(2, 25, "GO", back_text, 1);
+  }
 }
 
 FLASHMEM void helptext_r(const char* str)
@@ -929,6 +962,7 @@ FLASHMEM void handle_touchscreen_microsynth()
         generic_full_draw_required = true;
         microsynth_refresh_lower_screen_static_text();
         microsynth_refresh_lower_screen_dynamic_text();
+        back_touchbutton();
         generic_full_draw_required = false;
       }
       else
@@ -1264,7 +1298,8 @@ FLASHMEM void handle_touchscreen_menu()
         {
           if (ts.keyb_in_menu_activated == false)
           {
-            helptext_l(back_text);
+            //helptext_l(back_text);
+            back_touchbutton();
           }
         }
       }
@@ -1322,6 +1357,11 @@ FLASHMEM void handle_touchscreen_menu()
         mb_set_mutes();
         mb_set_master();
         mb_set_compressor();
+      }
+      else if (check_button_on_grid(2, 25)) // back button
+      {
+        // LCDML.FUNC_goBackToMenu(); 
+        LCDML.BT_quit();
       }
     }
 
@@ -1506,3 +1546,16 @@ FLASHMEM void handle_touchscreen_test_touchscreen()
     isButtonTouched = false;
   }
 }
+
+FLASHMEM void handle_page_with_touch_back_button()
+{
+  if (getNumTouchPoints() > 0)
+  {
+    get_scaled_touch_point();
+    if (seq.cycle_touch_element != 1 && check_button_on_grid(2, 25)) // back button
+    {
+      LCDML.BT_quit();
+    }
+  }
+}
+
