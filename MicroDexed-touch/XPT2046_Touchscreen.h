@@ -68,7 +68,6 @@ public:
   TS_Point getPoint();
   TS_Point getPixel();
   bool touched();
-  void readData(uint16_t *x, uint16_t *y, uint8_t *z);
   uint16_t CAL_OFFSET = 20;
   uint8_t bufferSize()
   {

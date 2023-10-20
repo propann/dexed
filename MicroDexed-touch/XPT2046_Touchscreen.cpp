@@ -24,7 +24,7 @@
 
 #include "XPT2046_Touchscreen.h"
 
-#define Z_THRESHOLD 800
+#define Z_THRESHOLD 500
 
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
@@ -78,20 +78,8 @@ void XPT2046_Touchscreen::setCalibration(TS_Calibration cal)
 bool XPT2046_Touchscreen::touched()
 {
   update();
-  if (zraw >= Z_THRESHOLD)
-  {
-    return true;
-  }
-  
-  return false;
-}
-
-void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z)
-{
-  update();
-  *x = xraw;
-  *y = yraw;
-  *z = zraw;
+  bool isTouched = (zraw >= Z_THRESHOLD);
+  return isTouched;
 }
 
 // TODO: perhaps a future version should offer an option for more oversampling,
@@ -99,7 +87,7 @@ void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z)
 
 void XPT2046_Touchscreen::update()
 {
-  int16_t data[6];
+  int16_t data[4];
   int z = 0;
 
   if (_pspi) {
@@ -114,10 +102,8 @@ void XPT2046_Touchscreen::update()
     _pspi->transfer16(0x91 /* X */); // dummy X measure, 1st is always noisy
     data[0] = _pspi->transfer16(0xD1 /* Y */) >> 3;
     data[1] = _pspi->transfer16(0x91 /* X */) >> 3; // make 2 x-y measurements
-    data[2] = _pspi->transfer16(0xD1 /* Y */) >> 3;
-    data[3] = _pspi->transfer16(0x91 /* X */) >> 3;
-    data[4] = _pspi->transfer16(0xD0 /* Y */) >> 3; // Last Y touch power down
-    data[5] = _pspi->transfer16(0) >> 3;
+    data[2] = _pspi->transfer16(0xD0 /* Y */) >> 3; // Last Y touch power down
+    data[3] = _pspi->transfer16(0) >> 3;
     digitalWrite(csPin, HIGH);
     _pspi->endTransaction();
   
@@ -126,12 +112,9 @@ void XPT2046_Touchscreen::update()
     // LOG.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
     // LOG.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
     // data[0], data[1], data[2], data[3], data[4], data[5]);
-    int16_t x = 0;
-    int16_t y = 0;
-    if(zraw > Z_THRESHOLD) {
-      x = data[2];
-      y = data[3];
-    }
+    int16_t x = data[0];
+    int16_t y = data[1];
+
   // LOG.printf_P(PSTR("    %d,%d"), x, y);
   // LOG.println();
    
