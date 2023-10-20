@@ -879,6 +879,7 @@ extern void handle_touchscreen_sample_editor(void);
 extern void handle_touchscreen_test_touchscreen(void);
 extern void handle_touchscreen_multiband();
 extern void handle_touchscreen_mixer();
+extern void handle_page_with_touch_back_button();
 
 extern void sequencer_part2(void);
 
@@ -1860,6 +1861,9 @@ void preview_sample()
 //     glow_count = glow_smoothness_pts / 2;
 // }
 
+bool back_button_touch_page_check_and_init_done = false;
+bool current_page_has_touch_back_button = false;
+
 void loop()
 {
 
@@ -1888,6 +1892,23 @@ void loop()
   ENCODER[ENC_R].update();
 
   LCDML.loop();
+
+  if (back_button_touch_page_check_and_init_done == false)
+  {
+    if (touch_button_back_page() || legacy_touch_button_back_page())
+    {
+      back_touchbutton();
+      current_page_has_touch_back_button = true;
+    }
+    else
+    {
+      current_page_has_touch_back_button = false;
+    }
+    back_button_touch_page_check_and_init_done = true;
+  }
+
+  if (current_page_has_touch_back_button)
+    handle_page_with_touch_back_button();
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_recorder))
   {
@@ -2274,7 +2295,7 @@ void loop()
       }
       else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_calibrate_touch))
       {
-        draw_button_on_grid(2, 23, "CONFIG", "SAVED", 1);
+        draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
       }
 #ifdef DEBUG
@@ -2302,7 +2323,7 @@ void loop()
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_calibrate_touch))
     {
       display.console = true;
-      display.fillRect(2 * CHAR_width_small, 23 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
+      display.fillRect(2 * CHAR_width_small, 25 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
       ui_save_notification_icon = false;
       display.console = false;
     }
