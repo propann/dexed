@@ -133,9 +133,11 @@ void Adafruit_FT6206::readData(void)
   Wire.write((byte)0);
   Wire.endTransmission();
 
-  Wire.requestFrom((byte)FT62XX_ADDR, (byte)16);
-  for (uint8_t i = 0; i < 16; i++)
+  static constexpr uint8_t numBytesRead = 3 + MAX_NUM_TOUCH_POINTS * 4;
+  Wire.requestFrom((byte)FT62XX_ADDR, (byte)numBytesRead);
+  for (uint8_t i = 0; i < numBytesRead; i++) {
     i2cdat[i] = Wire.read();
+  }
 
   touches = i2cdat[0x02];
   if ((touches > MAX_NUM_TOUCH_POINTS) || (touches == 0))
