@@ -107,13 +107,13 @@ uint8_t Adafruit_FT6206::touched(void)
 TS_Point Adafruit_FT6206::getPoint(uint8_t n)
 {
   readData();
-  if ((touches == 0) || (n > 1))
+  if ((touches == 0) || (n > MAX_NUM_TOUCH_POINTS))
   {
     return TS_Point(0, 0, 0);
   }
   else
   {
-    return TS_Point(DISPLAY_HEIGHT-touchX[n], DISPLAY_WIDTH-touchY[n], 1);
+    return TS_Point(touchX[n], touchY[n], 1);
   }
 }
 
@@ -138,12 +138,12 @@ void Adafruit_FT6206::readData(void)
     i2cdat[i] = Wire.read();
 
   touches = i2cdat[0x02];
-  if ((touches > 2) || (touches == 0))
+  if ((touches > MAX_NUM_TOUCH_POINTS) || (touches == 0))
   {
     touches = 0;
   }
 
-  for (uint8_t i = 0; i < 2; i++)
+  for (uint8_t i = 0; i < MAX_NUM_TOUCH_POINTS; i++)
   {
     touchX[i] = i2cdat[0x03 + i * 6] & 0x0F;
     touchX[i] <<= 8;

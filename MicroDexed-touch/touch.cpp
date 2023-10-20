@@ -99,7 +99,12 @@ int numTouchPoints = 0;
 int getNumTouchPoints() {
   if (touchReadTimer > TOUCH_MAX_REFRESH_RATE) {
     touchReadTimer = 0;
-    numTouchPoints = touch.touched();
+      if (remote_touched) {
+        numTouchPoints = 1;
+      } else {
+        // no remote touch, so update to check for real touch
+        numTouchPoints = touch.touched();
+    }
   }
   return numTouchPoints;
 }
@@ -621,15 +626,9 @@ FLASHMEM void get_scaled_touch_point()
     // Retrieve a point
     TS_Point p = touch.getPoint();
 
-
     //touch rotation seems to have changed, this is working for my current setup:
     ts.p.x = p.y;
     ts.p.y = DISPLAY_HEIGHT - p.x;
-
-    // rotate coordinate system
-    // flip it around to match the screen.
-    //ts.p.x = DISPLAY_WIDTH - p.y;
-    //ts.p.y = p.x;
 #endif
   }
 }

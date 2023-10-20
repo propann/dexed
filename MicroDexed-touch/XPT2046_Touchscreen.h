@@ -69,7 +69,6 @@ public:
   TS_Point getPixel();
   bool touched();
   void readData(uint16_t *x, uint16_t *y, uint8_t *z);
-  bool bufferEmpty();
   uint16_t CAL_OFFSET = 20;
   uint8_t bufferSize()
   {
@@ -87,8 +86,6 @@ public:
   {
     rotation = n % 4;
   }
-  // protected:
-  volatile bool isrWake = true;
 
 private:
   void update();

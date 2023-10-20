@@ -75,6 +75,7 @@ private:
   void readData(void);
   uint8_t touches;
   uint16_t touchX[2], touchY[2], touchID[2];
+  static constexpr int MAX_NUM_TOUCH_POINTS = 1; // no multitouch for now
 };
 
 #endif // ADAFRUIT_FT6206_LIBRARY
