@@ -92,12 +92,12 @@ dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and re
 extern int temp_int;
 
 bool isButtonTouched = false;
-static constexpr int TOUCH_MAX_REFRESH_RATE = 10;
+static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
 elapsedMillis touchReadTimer;
 int numTouchPoints = 0;
 
 int getNumTouchPoints() {
-  if (touchReadTimer > TOUCH_MAX_REFRESH_RATE) {
+  if (touchReadTimer > TOUCH_MAX_REFRESH_RATE_MS) {
     touchReadTimer = 0;
       if (remote_touched) {
         numTouchPoints = 1;

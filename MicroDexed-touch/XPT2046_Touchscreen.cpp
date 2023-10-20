@@ -24,7 +24,7 @@
 
 #include "XPT2046_Touchscreen.h"
 
-#define Z_THRESHOLD 500
+#define Z_THRESHOLD 400
 
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
@@ -87,39 +87,22 @@ bool XPT2046_Touchscreen::touched()
 
 void XPT2046_Touchscreen::update()
 {
-  int16_t data[4];
-  int z = 0;
-
   if (_pspi) {
     _pspi->beginTransaction(SPI_SETTING);
     digitalWrite(csPin, LOW);
-    _pspi->transfer(0xB1 /* Z1 */);
-    int16_t z1 = _pspi->transfer16(0xC1 /* Z2 */) >> 3;
-    z = z1 + 4095;
-    int16_t z2 = _pspi->transfer16(0x91 /* X */) >> 3;
+    _pspi->transfer(0xB1 /* queue Z1 */);
+    int16_t z1 = _pspi->transfer16(0xC1 /* read Z1, queue Z2 */) >> 3;
+    uint16_t z = z1 + 4095;
+    int16_t z2 = _pspi->transfer16(0x91 /* read Z2, queue X */) >> 3;
     z -= z2;
 
-    _pspi->transfer16(0x91 /* X */); // dummy X measure, 1st is always noisy
-    data[0] = _pspi->transfer16(0xD1 /* Y */) >> 3;
-    data[1] = _pspi->transfer16(0x91 /* X */) >> 3; // make 2 x-y measurements
-    data[2] = _pspi->transfer16(0xD0 /* Y */) >> 3; // Last Y touch power down
-    data[3] = _pspi->transfer16(0) >> 3;
+    _pspi->transfer16(0x91);                  // dummy read, queue X again
+    int16_t x = _pspi->transfer16(0xD0) >> 3; // read Y, queue Y, power down after next measurement
+    int16_t y = _pspi->transfer16(0x00) >> 3; // read X, dummy write
     digitalWrite(csPin, HIGH);
     _pspi->endTransaction();
-  
-    zraw = z;
-    // Average pair with least distance between each measured x then y
-    // LOG.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
-    // LOG.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
-    // data[0], data[1], data[2], data[3], data[4], data[5]);
-    int16_t x = data[0];
-    int16_t y = data[1];
-
-  // LOG.printf_P(PSTR("    %d,%d"), x, y);
-  // LOG.println();
    
-    switch (rotation)
-    {
+    switch (rotation) {
     case 0:
       xraw = 4095 - y;
       yraw = x;
@@ -136,6 +119,7 @@ void XPT2046_Touchscreen::update()
       xraw = 4095 - x;
       yraw = 4095 - y;
     }
+    zraw = z;
   }
 }
 #endif
