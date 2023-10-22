@@ -86,11 +86,8 @@ boolean Adafruit_FT6206::begin(uint8_t thresh)
 
 uint8_t Adafruit_FT6206::touched(void)
 {
-  uint8_t n = readRegister8(FT62XX_REG_NUMTOUCHES);
-  if (n > 2) {
-    n = 0;
-  }
-  return n;
+  readData();
+  return touches;
 }
 
 /**************************************************************************/
@@ -106,14 +103,13 @@ uint8_t Adafruit_FT6206::touched(void)
 /**************************************************************************/
 TS_Point Adafruit_FT6206::getPoint(uint8_t n)
 {
-  readData();
-  if ((touches == 0) || (n > 1))
+  if ((touches == 0) || (n > MAX_NUM_TOUCH_POINTS))
   {
     return TS_Point(0, 0, 0);
   }
   else
   {
-    return TS_Point(DISPLAY_HEIGHT-touchX[n], DISPLAY_WIDTH-touchY[n], 1);
+    return TS_Point(touchX[n], touchY[n], 1);
   }
 }
 
@@ -127,31 +123,40 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n)
 /**************************************************************************/
 void Adafruit_FT6206::readData(void)
 {
-
-  uint8_t i2cdat[16];
   Wire.beginTransmission(FT62XX_ADDR);
-  Wire.write((byte)0);
+  Wire.write((byte)0x02); // start from address 0x02: number of touch points
   Wire.endTransmission();
 
-  Wire.requestFrom((byte)FT62XX_ADDR, (byte)16);
-  for (uint8_t i = 0; i < 16; i++)
-    i2cdat[i] = Wire.read();
+  static constexpr uint8_t bytesPerPoint = 6;
+  static constexpr uint8_t numBytesRead = 3 + MAX_NUM_TOUCH_POINTS * bytesPerPoint;
+  uint8_t i2cdat[numBytesRead];
 
-  touches = i2cdat[0x02];
-  if ((touches > 2) || (touches == 0))
-  {
+  Wire.requestFrom((byte)FT62XX_ADDR, (byte)numBytesRead);
+  for (uint8_t i = 0; i < numBytesRead; i++) {
+    i2cdat[i] = Wire.read();
+  }
+  // 0x00: [-] device mode
+  // 0x01: [-] guesture id
+  // 0x02: [0] number of touch points <-- we start reading from here
+  touches = i2cdat[0];
+  if ((touches > MAX_NUM_TOUCH_POINTS) || (touches == 0)) {
     touches = 0;
   }
-
-  for (uint8_t i = 0; i < 2; i++)
-  {
-    touchX[i] = i2cdat[0x03 + i * 6] & 0x0F;
+  // 0x03: [1] high nibble: event flag / low nibble: x_higher 4 bits
+  // 0x04: [2] x_lower 8 bits
+  // 0x05: [3] high nibble: num touch points / low nibble: y_higher 4 bits
+  // 0x06: [4] y_lower 8 bits
+  // 0x07: [5] touch weight - unused
+  // 0x08: [6] touch area - unused
+  for (uint8_t i = 0; i < MAX_NUM_TOUCH_POINTS; i++) {
+    const uint8_t offsetTouchpoint = i * bytesPerPoint;
+    touchX[i] = i2cdat[1 + offsetTouchpoint] & 0x0F;
     touchX[i] <<= 8;
-    touchX[i] |= i2cdat[0x04 + i * 6];
-    touchY[i] = i2cdat[0x05 + i * 6] & 0x0F;
+    touchX[i] |= i2cdat[2 + offsetTouchpoint];
+    touchY[i] = i2cdat[3 + offsetTouchpoint] & 0x0F;
     touchY[i] <<= 8;
-    touchY[i] |= i2cdat[0x06 + i * 6];
-    touchID[i] = i2cdat[0x05 + i * 6] >> 4;
+    touchY[i] |= i2cdat[4 + offsetTouchpoint];
+    touchID[i] = i2cdat[3 + offsetTouchpoint] >> 4;
   }
 }
 

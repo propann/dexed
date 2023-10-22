@@ -71,10 +71,11 @@ public:
 private:
   void writeRegister8(uint8_t reg, uint8_t val);
   uint8_t readRegister8(uint8_t reg);
-
   void readData(void);
   uint8_t touches;
-  uint16_t touchX[2], touchY[2], touchID[2];
+  
+  static constexpr int MAX_NUM_TOUCH_POINTS = 1; // no multitouch for now
+  uint16_t touchX[MAX_NUM_TOUCH_POINTS], touchY[MAX_NUM_TOUCH_POINTS], touchID[MAX_NUM_TOUCH_POINTS];
 };
 
 #endif // ADAFRUIT_FT6206_LIBRARY

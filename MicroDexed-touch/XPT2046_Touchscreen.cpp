@@ -25,13 +25,9 @@
 #include "XPT2046_Touchscreen.h"
 
 #define Z_THRESHOLD 400
-#define Z_THRESHOLD_INT 75
-#define MSEC_THRESHOLD 3
 
 #define SPI_SETTING SPISettings(2000000, MSBFIRST, SPI_MODE0)
 
-static XPT2046_Touchscreen *isrPinptr;
-void isrPin(void);
 
 FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 {
@@ -40,38 +36,19 @@ FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
   _pspi->begin();
   pinMode(csPin, OUTPUT);
   digitalWrite(csPin, HIGH);
-  if (255 != tirqPin)
-  {
-    pinMode(tirqPin, INPUT);
-    attachInterrupt(digitalPinToInterrupt(tirqPin), isrPin, FALLING);
-    isrPinptr = this;
-  }
+
   return true;
 }
 
-ISR_PREFIX
-void isrPin(void)
-{
-  XPT2046_Touchscreen *o = isrPinptr;
-  o->isrWake = true;
-}
-
-extern bool remote_touched;
-
 TS_Point XPT2046_Touchscreen::getPoint()
 {
-  update();
   return TS_Point(xraw, yraw, zraw);
 }
 
 TS_Point XPT2046_Touchscreen::getPixel()
 {
-  update();
   uint16_t xPixel = (uint16_t)(_cal_dx * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
   uint16_t yPixel = (uint16_t)(_cal_dy * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
-
-  // this->rotateCal(xPixel, yPixel);
-
   return TS_Point(xPixel, yPixel, zraw);
 }
 
@@ -93,65 +70,11 @@ void XPT2046_Touchscreen::setCalibration(TS_Calibration cal)
   _cal_dvj = (int32_t)cal.vj2 - cal.vj1;
 }
 
-bool XPT2046_Touchscreen::tirqTouched()
-{
-  return (isrWake);
-}
-
 bool XPT2046_Touchscreen::touched()
 {
-  if (remote_touched)
-  {
-    return true;
-  }
-  // no remote touch, so update to check for real touch
   update();
-  if (zraw >= Z_THRESHOLD)
-  {
-    return true;
-  }
-  
-  return false;
-}
-
-void XPT2046_Touchscreen::readData(uint16_t *x, uint16_t *y, uint8_t *z)
-{
-  update();
-  *x = xraw;
-  *y = yraw;
-  *z = zraw;
-}
-
-bool XPT2046_Touchscreen::bufferEmpty()
-{
-  return ((millis() - msraw) < MSEC_THRESHOLD);
-}
-
-static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
-{
-  int16_t da, db, dc;
-  int16_t reta = 0;
-  if (x > y)
-    da = x - y;
-  else
-    da = y - x;
-  if (x > z)
-    db = x - z;
-  else
-    db = z - x;
-  if (z > y)
-    dc = z - y;
-  else
-    dc = y - z;
-
-  if (da <= db && da <= dc)
-    reta = (x + y) >> 1;
-  else if (db <= da && db <= dc)
-    reta = (x + z) >> 1;
-  else
-    reta = (y + z) >> 1; //    else if ( dc <= da && dc <= db ) reta = (x + y) >> 1;
-
-  return (reta);
+  bool isTouched = (zraw >= Z_THRESHOLD);
+  return isTouched;
 }
 
 // TODO: perhaps a future version should offer an option for more oversampling,
@@ -159,74 +82,22 @@ static int16_t besttwoavg(int16_t x, int16_t y, int16_t z)
 
 void XPT2046_Touchscreen::update()
 {
-  int16_t data[6];
-  int z;
-  if (!isrWake)
-    return;
-  uint32_t now = millis();
-  if (now - msraw < MSEC_THRESHOLD)
-    return;
-  if (_pspi)
-  {
-   
+  if (_pspi) {
     _pspi->beginTransaction(SPI_SETTING);
     digitalWrite(csPin, LOW);
-    _pspi->transfer(0xB1 /* Z1 */);
-    int16_t z1 = _pspi->transfer16(0xC1 /* Z2 */) >> 3;
-    z = z1 + 4095;
-    int16_t z2 = _pspi->transfer16(0x91 /* X */) >> 3;
+    _pspi->transfer(0xB1 /* queue Z1 */);
+    int16_t z1 = _pspi->transfer16(0xC1 /* read Z1, queue Z2 */) >> 3;
+    uint16_t z = z1 + 4095;
+    int16_t z2 = _pspi->transfer16(0x91 /* read Z2, queue X */) >> 3;
     z -= z2;
-    if (z >= Z_THRESHOLD)
-    {
-      _pspi->transfer16(0x91 /* X */); // dummy X measure, 1st is always noisy
-      data[0] = _pspi->transfer16(0xD1 /* Y */) >> 3;
-      data[1] = _pspi->transfer16(0x91 /* X */) >> 3; // make 3 x-y measurements
-      data[2] = _pspi->transfer16(0xD1 /* Y */) >> 3;
-      data[3] = _pspi->transfer16(0x91 /* X */) >> 3;
-    }
-    else
-      data[0] = data[1] = data[2] = data[3] = 0;    // Compiler warns these values may be used unset on early exit.
-    data[4] = _pspi->transfer16(0xD0 /* Y */) >> 3; // Last Y touch power down
-    data[5] = _pspi->transfer16(0) >> 3;
+
+    _pspi->transfer16(0x91);                  // dummy read, queue X again
+    int16_t x = _pspi->transfer16(0xD0) >> 3; // read Y, queue Y, power down after next measurement
+    int16_t y = _pspi->transfer16(0x00) >> 3; // read X, dummy write
     digitalWrite(csPin, HIGH);
     _pspi->endTransaction();
-
-  }
-
-  // If we do not have either _pspi or _pflexspi than bail.
-  else
-    return;
-
-  // LOG.printf_P(PSTR("z=%d  ::  z1=%d,  z2=%d  "), z, z1, z2);
-  if (z < 0)
-    z = 0;
-  if (z < Z_THRESHOLD)
-  { //	if ( !touched ) {
-    // LOG.println();
-    zraw = 0;
-    if (z < Z_THRESHOLD_INT)
-    { //	if ( !touched ) {
-      if (255 != tirqPin)
-        isrWake = false;
-    }
-    return;
-  }
-  zraw = z;
-
-  // Average pair with least distance between each measured x then y
-  // LOG.printf_P(PSTR("    z1=%d,z2=%d  "), z1, z2);
-  // LOG.printf_P(PSTR("p=%d,  %d,%d  %d,%d  %d,%d"), zraw,
-  // data[0], data[1], data[2], data[3], data[4], data[5]);
-  int16_t x = besttwoavg(data[0], data[2], data[4]);
-  int16_t y = besttwoavg(data[1], data[3], data[5]);
-
-  // LOG.printf_P(PSTR("    %d,%d"), x, y);
-  // LOG.println();
-  if (z >= Z_THRESHOLD)
-  {
-    msraw = now; // good read completed, set wait
-    switch (rotation)
-    {
+   
+    switch (rotation) {
     case 0:
       xraw = 4095 - y;
       yraw = x;
@@ -243,6 +114,7 @@ void XPT2046_Touchscreen::update()
       xraw = 4095 - x;
       yraw = 4095 - y;
     }
+    zraw = z;
   }
 }
 #endif

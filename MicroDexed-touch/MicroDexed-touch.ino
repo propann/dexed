@@ -123,7 +123,7 @@ bool sysinfo_page_at_bootup_shown_once = false;
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 
 #if defined GENERIC_DISPLAY 
-XPT2046_Touchscreen touch(TFT_TOUCH_CS, TFT_TOUCH_IRQ); // CS, Touch IRQ Pin - interrupt enabled polling
+XPT2046_Touchscreen touch(TFT_TOUCH_CS); 
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
