@@ -31,18 +31,16 @@
 #include "config.h"
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
-extern config_t configuration;
 #if defined(__SAM3X8E__)
 #define Wire Wire1
 #endif
 
-
-/**************************************************************************/
-/*!
-    @brief  Instantiates a new FT6206 class
-*/
-/**************************************************************************/
-// I2C, no address adjustments or pins
+ /**************************************************************************/
+ /*!
+     @brief  Instantiates a new FT6206 class
+ */
+ /**************************************************************************/
+ // I2C, no address adjustments or pins
 Adafruit_FT6206::Adafruit_FT6206()
 {
   touches = 0;
@@ -109,12 +107,15 @@ TS_Point Adafruit_FT6206::getPoint(uint8_t n)
   }
   else
   {
-    if (configuration.sys.touch_rotation == 0) //positionhigh capacitive touch rotation
-      return TS_Point(DISPLAY_HEIGHT - touchX[n], DISPLAY_WIDTH - touchY[n], 1);
-    else if (configuration.sys.touch_rotation == 1)  //damster capacitive touch rotation
-      return TS_Point(touchX[n], touchY[n], 1);
-    else // in case configuration.sys.touch_rotation in config-file has stored something else from the old screen, better set it to new default
-       return TS_Point(DISPLAY_HEIGHT - touchX[n], DISPLAY_WIDTH - touchY[n], 1); 
+    return TS_Point(touchX[n], touchY[n], 1);
+    // return TS_Point( DISPLAY_WIDTH-touchY[n],  touchX[n], 1); 
+
+     //  if (configuration.sys.touch_rotation == 0) //positionhigh capacitive touch rotation
+     //     return TS_Point(DISPLAY_HEIGHT - touchX[n], DISPLAY_WIDTH - touchY[n], 1);
+     //   else if (configuration.sys.touch_rotation == 1)  //damster capacitive touch rotation
+     //     return TS_Point(touchX[n], touchY[n], 1);
+     //   else // in case configuration.sys.touch_rotation in config-file has stored something else from the old screen, better set it to new default
+     //      return TS_Point(DISPLAY_HEIGHT - touchX[n], DISPLAY_WIDTH - touchY[n], 1); 
   }
 }
 

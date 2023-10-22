@@ -100,11 +100,12 @@ int numTouchPoints = 0;
 int getNumTouchPoints() {
   if (touchReadTimer > TOUCH_MAX_REFRESH_RATE_MS) {
     touchReadTimer = 0;
-      if (remote_touched) {
-        numTouchPoints = 1;
-      } else {
-        // no remote touch, so update to check for real touch
-        numTouchPoints = touch.touched();
+    if (remote_touched) {
+      numTouchPoints = 1;
+    }
+    else {
+      // no remote touch, so update to check for real touch
+      numTouchPoints = touch.touched();
     }
   }
   return numTouchPoints;
@@ -447,17 +448,18 @@ FLASHMEM void handleVirtualKeyboardKeys()
         display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, RED); // white key
         display.console = false;
       }
-    } else if(isKeyRelease) {
+    }
+    else if (isKeyRelease) {
       ts.virtual_keyboard_state_white &= ~(1 << x);
       virtual_keyboard_key_off_white(x);
-    }   
+    }
   }
   for (uint8_t x = 0; x < 16; x++) {
     if (seq.piano[x] == 1) {
       bool isWithinKey = isPressed && ts.p.x > x * 18.46 && ts.p.x < x * 18.46 + 24 && ts.p.y > VIRT_KEYB_YPOS && ts.p.y < VIRT_KEYB_YPOS + 34;
       bool isKeyPress = (ts.virtual_keyboard_state_black & (1 << x)) == 0 && isWithinKey;
       bool isKeyRelease = (ts.virtual_keyboard_state_black & (1 << x)) != 0 && !isWithinKey;
-    
+
       if (isKeyPress) {
         ts.virtual_keyboard_state_black |= (1 << x);
 
@@ -482,7 +484,8 @@ FLASHMEM void handleVirtualKeyboardKeys()
           display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, RED); // BLACK key
           display.console = false;
         }
-      } else if(isKeyRelease) {
+      }
+      else if (isKeyRelease) {
         ts.virtual_keyboard_state_black &= ~(1 << x);
         virtual_keyboard_key_off_black(x);
       }
@@ -638,9 +641,16 @@ FLASHMEM void get_scaled_touch_point()
     // Retrieve a point
     TS_Point p = touch.getPoint();
 
-    //touch rotation seems to have changed, this is working for my current setup:
-    ts.p.x = p.y;
-    ts.p.y = DISPLAY_HEIGHT - p.x;
+    if (configuration.sys.touch_rotation == 1)  //damster capacitive touch rotation (1)
+    {
+      ts.p.x = p.x;
+      ts.p.y = p.y;
+    }
+    else if (configuration.sys.touch_rotation == 0 || configuration.sys.touch_rotation > 1) //positionhigh capacitive touch rotation (0)
+    {// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
+      ts.p.x = DISPLAY_WIDTH - p.y;
+      ts.p.y = p.x;
+    }
 #endif
   }
 }
@@ -1337,7 +1347,7 @@ FLASHMEM void handle_touchscreen_menu()
     {
       touch_check_all_keyboard_buttons();
     }
-    
+
     ts.touch_ui_drawn_in_menu = true;
   }
   else {
