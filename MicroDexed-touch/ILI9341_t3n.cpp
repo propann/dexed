@@ -941,20 +941,23 @@ void ILI9341_t3n::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
   uint16_t color)
 {
-  if (remote_active && terrain_running == false)
+  if (remote_active)
   {
-    static uint8_t sysexDrawLine[13] = {
-      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-      0x0, 0x0, 0x0, 0x0, 0x0, // could be unknown color
-    };
+    if (terrain_running == false) {
+      static uint8_t sysexDrawLine[13] = {
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0, // could be unknown color
+      };
 
-    fillSysexData(sysexDrawLine, 4, x0, y0, x1, y1);
-    uint8_t colors[4];
-    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
-    sysexDrawLine[8] = nbBytes;
-    memcpy(sysexDrawLine + 8 + 1, colors, nbBytes);
+      fillSysexData(sysexDrawLine, 4, x0, y0, x1, y1);
+      uint8_t colors[4];
+      uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+      sysexDrawLine[8] = nbBytes;
+      memcpy(sysexDrawLine + 8 + 1, colors, nbBytes);
 
-    sendSysEx(96, 8 + 1 + nbBytes, sysexDrawLine, true);
+      sendSysEx(96, 8 + 1 + nbBytes, sysexDrawLine, true);
+    }
+
     console = false;
   }
 
@@ -1137,14 +1140,14 @@ size_t ILI9341_t3n::write(const uint8_t* buffer, size_t size)
   }
 
   size_t cb = size;
-    while (cb)
-    {
-      uint8_t c = *buffer++;
-      cb--;
-      drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
-        textsize_y);
-      cursor_x += textsize_x * 6;
-    }
+  while (cb)
+  {
+    uint8_t c = *buffer++;
+    cb--;
+    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize_x,
+      textsize_y);
+    cursor_x += textsize_x * 6;
+  }
   return size;
 }
 
