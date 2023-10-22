@@ -42,18 +42,13 @@ FLASHMEM bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 
 TS_Point XPT2046_Touchscreen::getPoint()
 {
-  update();
   return TS_Point(xraw, yraw, zraw);
 }
 
 TS_Point XPT2046_Touchscreen::getPixel()
 {
-  update();
   uint16_t xPixel = (uint16_t)(_cal_dx * (xraw - _cal_vi1) / _cal_dvi + CAL_OFFSET);
   uint16_t yPixel = (uint16_t)(_cal_dy * (yraw - _cal_vj1) / _cal_dvj + CAL_OFFSET);
-
-  // this->rotateCal(xPixel, yPixel);
-
   return TS_Point(xPixel, yPixel, zraw);
 }
 
