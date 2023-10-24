@@ -641,15 +641,17 @@ FLASHMEM void get_scaled_touch_point()
     // Retrieve a point
     TS_Point p = touch.getPoint();
 
-    if (configuration.sys.touch_rotation == 1)  //damster capacitive touch rotation (1)
-    {
-      ts.p.x = p.x;
-      ts.p.y = p.y;
-    }
-    else if (configuration.sys.touch_rotation == 0 || configuration.sys.touch_rotation > 1) //positionhigh capacitive touch rotation (0)
-    {// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
+    switch(configuration.sys.touch_rotation) {
+      case 1: //damster capacitive touch rotation (1)
+      ts.p.x = p.y;
+      ts.p.y = DISPLAY_HEIGHT - p.x;
+      break;
+
+      case 0: //positionhigh capacitive touch rotation (0)
+      default:// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
       ts.p.x = DISPLAY_WIDTH - p.y;
       ts.p.y = p.x;
+      break;
     }
 #endif
   }
