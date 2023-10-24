@@ -641,14 +641,14 @@ FLASHMEM void get_scaled_touch_point()
     // Retrieve a point
     TS_Point p = touch.getPoint();
 
-    switch(configuration.sys.touch_rotation) {
-      case 1: //damster capacitive touch rotation (1)
+    switch (configuration.sys.touch_rotation) {
+    case 1: //damster capacitive touch rotation (1)
       ts.p.x = p.y;
       ts.p.y = DISPLAY_HEIGHT - p.x;
       break;
 
-      case 0: //positionhigh capacitive touch rotation (0)
-      default:// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
+    case 0: //positionhigh capacitive touch rotation (0)
+    default:// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
       ts.p.x = DISPLAY_WIDTH - p.y;
       ts.p.y = p.x;
       break;
@@ -690,13 +690,13 @@ FLASHMEM void handle_touchscreen_voice_select()
         virtual_keyboard_print_current_instrument();
       }
     }
+    if (check_button_on_grid(37, 1))
+    {
+      save_favorite(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
+    }
     if (seq.cycle_touch_element != 1)
     {
-      if (check_button_on_grid(37, 1))
-      {
-        save_favorite(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
-      }
-      else if (selected_instance_id == 0)
+      if (selected_instance_id == 0)
       {
         if (check_button_on_grid(2, 25))
         {
