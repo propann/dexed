@@ -1,21 +1,45 @@
->MicroDexed-touch is still in early development. However, these instructions should not change much in general in their steps. Some building/case parts and "look" might change rapidly.
+>There is a new version of MicroDexed-touch in early development featuring a capacitive touch display. Progress about this update is located here:
+https://codeberg.org/positionhigh/MicroDexed-touch/wiki/MicroDexed-Capacitive-Touch
     
 <p> 
+25/10/2023:
+- [x] This build guide page will be unified for new and old version since the differences are not that big. Some components have changed the location on the PCB and an audio amplifier is added (optional). Further there are 2 optional buttons for soft power and and a program button.
 
+<p> 
+17/09/2023:
+
+- [x] Working on an Hardware update with better display but at a similar price. This display offers capacitive touch and is MUCH more responsive as the current default display.
+However, so far only one source of this display type is available and the order amount seems to be limited to one screen only per order.
+https://www.aliexpress.com/item/1005005926026997.html?spm=a2g0o.cart.0.0.4c6e4ae4FvwMuX&mp=1
+Note: It is possible to modifiy the current mdt pcb to fit this display. However this requires cutting 2 traces that are below the display connector on the mdt pcb. I do not suggest to make this modification if you have not somewhat advanced skill in desoldering and soldering components with multiple pins.
+
+- [x] It will take some time to figure out software and hardware changes and the waiting for the arrival of a new pcb test version. I estimate this can take severals weeks or even months, so progress on this topic is estimated about end of 2023.
 <br>
-    
-**Build instructions**
+    <p> 
+### Build instructions
     
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front.png" >
 <br>
-PCB Front
+PCB Front (Resistive touch)
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/back.png" >
 <br>
-PCB Back
+PCB Back (Resistive touch)
 <p>
 <br>
+
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front-c.png" >
+<br>
+PCB Front (Capacitive touch)
+<br>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/back-c.png" >
+<br>
+PCB Back (Capacitive touch)
+<p>
+<br>
+
 <p>
 
 **If you want to donate to this project, please check out this link:**
@@ -33,21 +57,36 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
     
 <br><p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcb_populated.jpg" > 
-
+<br>
+(Resistive touch)
 <br>
 <p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/resistors.png" >
 <br>
-        
-Let's begin with the resistors. You need 4, the values are printed on the board and are also listed in the BOM. 2x 47 Ohms, 1x 220 Ohms, 1x470 Ohms. For resistors, it does not matter, in which direction you put them in. At the botton, put in the 1N4148 diode. Make sure the cathode is pointing to the left side.
+ (Resistive touch)
+<br>    
+<p>
+Let's begin with the resistors. You need 4, the values are printed on the board and are also listed in the BOM. 2x 47 Ohm, 1x 220 Ohm, 1x470 Ohm. For resistors, it does not matter, in which direction you put them in. At the botton, put in the 1N4148 diode. Make sure the cathode is pointing to the left side.
     
 <p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/6n138.png" >
 <br>
+ (Resistive touch)
+<br>
+<p>
 This is the 6n138 optocoupler for MIDI. Make sure pin 1 is on the top left. Your chip will either have a notch at the top side or a circle mark at the first pin. You can use an old-school IC socket, solder it in directly or use a socket with (round) precision pins. All of these 3 methods should work fine.
 
-
-**MAIN PIN HEADER / SOCKETS**
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/resistors-c.png" >
+<br>
+(Capacitive touch)
+<br>
+<p>
+The location of the resistors and the diode is slightly different on the newer capacitive touch pcb. Otherwise, the same instructions are valid as for the previous version.
+<br>
+<p>
+<br>
+### MAIN PIN HEADER / SOCKETS
     
 <br><p>
 For the Teensy, the PCM 5102 and the external Flash Chip, we will use pin socket rows instead of IC sockets. The sockets will be soldered to the main PCB.<p>
@@ -93,7 +132,7 @@ For the 2 encoder connections, it is advised to use vertical pin headers - Also,
 This way they will use the free space "above" the encoder's PCBs and won't collide with them.  
 <p>
 
-**ENCODERS**
+### ENCODERS
 <br><p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoder.jpg" >
     <br>
@@ -103,6 +142,11 @@ This way they will use the free space "above" the encoder's PCBs and won't colli
 <p>
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/usbsocket.png" >
+<br>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/usbsocket-c.png" >
+<br>
+The capactive touch pcb is identical, however there is an option to add buttons for soft-power and a program-button. The program-button really is only required when something during firmware flashing goes wrong. In this case it is more convinient that the button is reachable without opening the enclosure. The soft-power is mainly useful when using mdt from an optional battery.
 
 The small 4 pin row between the 2 large Teensy pin rows is for USB MIDI HOST. Do not forget to put in the socked and also the counterpart pin headers on the Teensy.
 <br>
@@ -123,7 +167,7 @@ Teensy with pin headers
 Teensy with pin headers and sockets loosely attached to test fit.
 <br><p>
 
- **AUDIO**
+### AUDIO
 <p>
 
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm1.png" >  
@@ -160,7 +204,7 @@ Front viel with pin headers attached
 <p>
 <br>
     
-**FLASH chip**
+### FLASH chip
     
 <p>
 
@@ -186,7 +230,7 @@ Flash board with pin headers soldered, frontside
     
 <p><br>
     
-**DISPLAY**
+### DISPLAY
     
 <p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector.png" >
@@ -222,7 +266,7 @@ Take off the metal lid from the SD card reader on the TFT backside. These larger
 >    
 
 
-**FIRST TEST**
+### FIRST TEST
 <p>
 At this stage, it should be possible to do a first test. 
 
@@ -237,7 +281,7 @@ At this stage, it should be possible to do a first test.
 <br>
 <p>
     
-**CASE**
+### CASE/ENCLOSURE
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/case_0.jpg" >
 <br>
@@ -258,7 +302,7 @@ Also you can order a printed SLA case from pcbway:<p>
 <p> The SLA version also has some extra details, that are not possible to print by a PLA printer, like the MDT Logo.   
 <p>
     
-**3D PRINTING TIPS - Valid for both case versions**
+### 3D PRINTING TIPS - Valid for both case versions
     
 <p>
 <br>
@@ -285,7 +329,7 @@ Also you can order a printed SLA case from pcbway:<p>
         <br>Do not put any mechanical stress on your SD CARD or sooner or later it will get a fracture and then become unreliable or will stop working completely.
 > 
  
-**CASE OPTIONS**  
+### CASE OPTIONS
     
 The first case option described here is the improved version, featuring threaded inserts for M3 screws. This makes the overall stability and handling much better since you can open/close the device as many times as you like, without having to rely only on the printed snap-in clips to hold it together.
 <p>
@@ -299,7 +343,7 @@ To make the instructions less confusing, photos on this page showing a black cas
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/case_1.jpg" >
 <br>
     
-**Threaded Inserts Case**
+### Threaded Inserts Case
     
 <p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/case_2.jpg" >
@@ -401,7 +445,7 @@ STL - KNOB (two of them are needed):
 <br>    
 
 -----
-**CASE MODIFICATION (for easy SD CARD access)**
+### CASE MODIFICATION (for easy SD CARD access)
 <p> 
 This section is about a modified LID part, there is no change required for the bottom part of the enclosure.
 <p> 
@@ -436,7 +480,7 @@ If you find the bottom position to be too high or low in general, you can edit t
 
 <p><br> 
         
-**OLD CASE (without Threaded Inserts, deprecated)**
+### OLD CASE (without Threaded Inserts, deprecated)
 <p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/bottomcase.png" >
     <br>
@@ -492,12 +536,12 @@ PCB with all on board components ready, view from rear connector side
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final2.png" >
 <br>
     
-**Final Assembly (depreciated case)**
+### Final Assembly (depreciated case)
 <p>
 <p><br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/case_1.jpg" >
 <br>
     
-**Final Assembly (Threaded Inserts Case)**
+### Final Assembly (Threaded Inserts Case)
 
 <p>
