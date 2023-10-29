@@ -61,8 +61,8 @@ FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w)
   {
     uint16_t i = 0;
     scope_is_drawing = true;
-    //display.console = false;
-     display.console = true;
+    display.console = false;
+    // display.console = true; //only for full remote console rendering, do not put in for normal usage
     do
     {
       if (scopebuffer_old[i] != scopebuffer[i])
