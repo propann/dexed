@@ -1896,6 +1896,11 @@ void loop()
 
   LCDML.loop();
 
+  if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS) {
+    touchReadTimer = 0;
+    updateTouchScreen();
+  }
+
   if (back_button_touch_page_check_and_init_done == false)
   {
     if (touch_button_back_page() || legacy_touch_button_back_page())
@@ -2158,11 +2163,6 @@ void loop()
     if (sidechain_a_active || sidechain_b_active)
       ;
     // update_sidechain();  //work in progress
-  }
-
-  if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS) {
-    touchReadTimer = 0;
-    updateTouchScreen();
   }
 
   if (control_rate > CONTROL_RATE_MS)

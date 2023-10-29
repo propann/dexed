@@ -95,6 +95,14 @@ extern int temp_int;
 bool isButtonTouched = false;
 int numTouchPoints = 0;
 
+static constexpr float KEY_WIDTH_WHITE = 30;
+static constexpr float KEY_HEIGHT_WHITE = 74;
+static constexpr float KEY_SPACING_WHITE = 2;
+static constexpr float KEY_LABEL_OFFSET = 9;
+static constexpr float KEY_OFFSET_BLACK = 18.7;
+static constexpr float KEY_WIDTH_BLACK = 22;
+static constexpr float KEY_HEIGHT_BLACK = 35;
+
 FLASHMEM void updateTouchScreen() {
   if (remote_touched) {
     numTouchPoints = 1;
@@ -378,61 +386,50 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
   }
 }
 
-FLASHMEM void virtual_keyboard_key_off_white(uint8_t note)
+FLASHMEM void virtual_keyboard_key_off_white(uint8_t x)
 {
   uint8_t halftones = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
 
   // draw white keys
-
-  for (uint8_t x = 0; x < 10; x++)
+  for (uint8_t z = 0; z < x; z++)
   {
-    if (x == note)
-    {
-      for (uint8_t z = 0; z < x; z++)
-      {
-        if (seq.piano2[z] == 1)
-          halftones = halftones + 1;
-      }
-      // handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
-      handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note + halftones, 0);
-      display.console = true;
-      display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, COLOR_SYSTEXT); // white key
-      display.console = false;
-
-      if (x == 0 || x == 7)
-      {
-        display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
-        display.print("C");
-        if (x == 0)
-          display.print(ts.virtual_keyboard_octave);
-        else if (x == 7)
-          display.print(ts.virtual_keyboard_octave + 1);
-      }
-    }
+    if (seq.piano2[z] == 1)
+      halftones = halftones + 1;
   }
+  // handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
+  handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 0);
+  display.console = true;
+  display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS + 34, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, COLOR_SYSTEXT); // white key
+  display.console = false;
+
+  if (x == 0 || x == 7)
+  {
+    display.setCursor(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
+    display.print("C");
+    if (x == 0)
+      display.print(ts.virtual_keyboard_octave);
+    else if (x == 7)
+      display.print(ts.virtual_keyboard_octave + 1);
+  }
+
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.console = false;
 }
 
-FLASHMEM void virtual_keyboard_key_off_black(uint8_t note)
+FLASHMEM void virtual_keyboard_key_off_black(uint8_t x)
 {
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
 
-  for (uint8_t x = 0; x < 16; x++)
-  {
-    if (x == note)
-    {
-      //  handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
-      handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 0);
-      display.console = true;
-      display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, COLOR_BACKGROUND); // BLACK key
-      display.console = false;
-    }
-  }
+  //  handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + note, 120);
+  handleNoteOff_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, 0);
+  display.console = true;
+  display.fillRect(x * KEY_OFFSET_BLACK, VIRT_KEYB_YPOS, KEY_WIDTH_BLACK, KEY_HEIGHT_BLACK, COLOR_BACKGROUND); // BLACK key
+  display.console = false;
+
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.console = false;
@@ -447,8 +444,9 @@ FLASHMEM void handleVirtualKeyboardKeys()
   bool isPressed = numTouchPoints > 0;
 
   // draw white keys
+  bool isWithinWhiteY = ts.p.y > VIRT_KEYB_YPOS + 36;
   for (uint8_t x = 0; x < 10; x++) {
-    bool isWithinKey = isPressed && ts.p.x > x * 32.22 && ts.p.x < x * 32.22 + 32 && ts.p.y > VIRT_KEYB_YPOS + 36;
+    bool isWithinKey = isPressed && ts.p.x > x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) && ts.p.x < (x + 1) * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) && isWithinWhiteY;
     bool isKeyPress = (ts.virtual_keyboard_state_white & (1 << x)) == 0 && isWithinKey;
     bool isKeyRelease = (ts.virtual_keyboard_state_white & (1 << x)) != 0 && !isWithinKey;
 
@@ -479,7 +477,7 @@ FLASHMEM void handleVirtualKeyboardKeys()
           handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x + halftones, 120);
         }
         display.console = true;
-        display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS + 34, 29.33, 39, RED); // white key
+        display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS + 34, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, RED); // white key
         display.console = false;
       }
     }
@@ -488,9 +486,10 @@ FLASHMEM void handleVirtualKeyboardKeys()
       virtual_keyboard_key_off_white(x);
     }
   }
+  bool isWithinBlackY = ts.p.y > VIRT_KEYB_YPOS && ts.p.y < VIRT_KEYB_YPOS + 34;
   for (uint8_t x = 0; x < 16; x++) {
     if (seq.piano[x] == 1) {
-      bool isWithinKey = isPressed && ts.p.x > x * 18.46 && ts.p.x < x * 18.46 + 24 && ts.p.y > VIRT_KEYB_YPOS && ts.p.y < VIRT_KEYB_YPOS + 34;
+      bool isWithinKey = isPressed && ts.p.x > x * 18.46 && ts.p.x < x * 18.46 + 24 && isWithinBlackY;
       bool isKeyPress = (ts.virtual_keyboard_state_black & (1 << x)) == 0 && isWithinKey;
       bool isKeyRelease = (ts.virtual_keyboard_state_black & (1 << x)) != 0 && !isWithinKey;
 
@@ -515,7 +514,7 @@ FLASHMEM void handleVirtualKeyboardKeys()
             handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, ts.virtual_keyboard_octave * 12 + x, 120);
           }
           display.console = true;
-          display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, RED); // BLACK key
+          display.fillRect(x * KEY_OFFSET_BLACK, VIRT_KEYB_YPOS, KEY_WIDTH_BLACK, KEY_HEIGHT_BLACK, RED); // BLACK key
           display.console = false;
         }
       }
@@ -550,11 +549,11 @@ FLASHMEM void virtual_keyboard()
   for (uint8_t x = 0; x < 10; x++)
   {
     display.console = true;
-    display.fillRect(1 + x * 32.22, VIRT_KEYB_YPOS, 29.33, 73.5, COLOR_SYSTEXT); // WHITE key
+    display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, COLOR_SYSTEXT); // WHITE key
     display.console = false;
-    if (x == 0 || x == 7 || x == 14)
+    if (x == 0 || x == 7)
     {
-      display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
+      display.setCursor(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
       display.print("C");
       display.print(ts.virtual_keyboard_octave + oct_count);
@@ -566,7 +565,7 @@ FLASHMEM void virtual_keyboard()
     if (seq.piano[x] == 1)
     {
       display.console = true;
-      display.fillRect(x * 18.56, VIRT_KEYB_YPOS, 21.33, 34.5, COLOR_BACKGROUND); // BLACK key
+      display.fillRect(x * KEY_OFFSET_BLACK, VIRT_KEYB_YPOS, KEY_WIDTH_BLACK, KEY_HEIGHT_BLACK, COLOR_BACKGROUND); // BLACK key
       display.console = false;
     }
   }
@@ -581,15 +580,13 @@ FLASHMEM void print_virtual_keyboard_octave()
   display.setTextSize(1);
 
   // draw white keys
-  for (uint8_t x = 0; x < 10; x++)
+  uint8_t indexes[2] = { 0, 7 };
+  for (int i = 0; i < 2; i++)
   {
-    if (x == 0 || x == 7 || x == 14)
-    {
-      display.setCursor(1 + x * 32.22 + 11.3, VIRT_KEYB_YPOS + 57.75);
-      display.print("C");
-      display.print(ts.virtual_keyboard_octave + oct_count);
-      oct_count++;
-    }
+    display.setCursor(1 + indexes[i] * KEY_WIDTH_WHITE + KEY_SPACING_WHITE, VIRT_KEYB_YPOS + 57.75);
+    display.print("C");
+    display.print(ts.virtual_keyboard_octave + oct_count);
+    oct_count++;
   }
   // display.setTextSize(2);
 }
