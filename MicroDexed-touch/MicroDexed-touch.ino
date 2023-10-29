@@ -1919,6 +1919,7 @@ void loop()
   {
     handle_touchscreen_menu();
     display.console = false;
+    //display.console = true; //only for full remote console rendering, do not put in for normal usage
     scope.draw_scope(230, 18, 87);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics))

@@ -11185,6 +11185,7 @@ FLASHMEM void UI_func_song(uint8_t param)
     display.print(F("LC"));
     print_chain_header();
 
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
     show_no_grid(10, 1, 10, seq.name);
     // print loop text
     print_song_loop_text();
