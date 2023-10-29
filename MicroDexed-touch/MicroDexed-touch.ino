@@ -780,6 +780,8 @@ elapsedMillis long_button_pressed;
 elapsedMillis control_rate;
 elapsedMillis save_sys;
 elapsedMillis record_timer;
+static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
+elapsedMillis touchReadTimer;
 
 bool save_sys_flag = false;
 uint8_t active_voices[NUM_DEXED];
@@ -880,6 +882,7 @@ extern void handle_touchscreen_test_touchscreen(void);
 extern void handle_touchscreen_multiband();
 extern void handle_touchscreen_mixer();
 extern void handle_page_with_touch_back_button();
+extern void updateTouchScreen();
 
 extern void sequencer_part2(void);
 
@@ -2157,10 +2160,14 @@ void loop()
     // update_sidechain();  //work in progress
   }
 
+  if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS) {
+    touchReadTimer = 0;
+    updateTouchScreen();
+  }
+
   if (control_rate > CONTROL_RATE_MS)
   {
     control_rate = 0;
-
     // glow();
     // display.fillRect(10,10,30,30, ColorHSV(1, 0, int(led_bright)));
 

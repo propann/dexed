@@ -93,62 +93,56 @@ dexed_live_mod_t dexed_live_mod; // dexed quick live modifiers for attack and re
 extern int temp_int;
 
 bool isButtonTouched = false;
-static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
-elapsedMillis touchReadTimer;
 int numTouchPoints = 0;
 
-int getNumTouchPoints() {
-  if (touchReadTimer > TOUCH_MAX_REFRESH_RATE_MS) {
-    touchReadTimer = 0;
-    if (remote_touched) {
-      numTouchPoints = 1;
-    }
-    else {
-      // no remote touch, so update to check for real touch
-      numTouchPoints = touch.touched();
-      if(numTouchPoints > 0) {
-        LCDML.SCREEN_resetTimer();
+FLASHMEM void updateTouchScreen() {
+  if (remote_touched) {
+    numTouchPoints = 1;
+  }
+  else {    
+    // no remote touch, so update to check for real touch
+    numTouchPoints = touch.touched();
+    if(numTouchPoints > 0) {
+      LCDML.SCREEN_resetTimer();
 
 #if defined GENERIC_DISPLAY
-        if (ts.finished_calibration)
-        {
-          ts.p = touch.getPixel();
-          // ts.p.x = map(ts.p.x, ts.calib_x_min, ts.calib_x_max, 0, TFT_HEIGHT);
-          // ts.p.y = map(ts.p.y, ts.calib_y_min, ts.calib_y_max, 0, TFT_WIDTH);
-        }
-        else
-        {
-          // Scale from ~0->4000 to tft
-          ts.p = touch.getPoint();
-          ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-          ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
-        }
+      if (ts.finished_calibration)
+      {
+        ts.p = touch.getPixel();
+        // ts.p.x = map(ts.p.x, ts.calib_x_min, ts.calib_x_max, 0, TFT_HEIGHT);
+        // ts.p.y = map(ts.p.y, ts.calib_y_min, ts.calib_y_max, 0, TFT_WIDTH);
+      }
+      else
+      {
+        // Scale from ~0->4000 to tft
+        ts.p = touch.getPoint();
+        ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+        ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
+      }
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
-        // Retrieve a point
-        TS_Point p = touch.getPoint();
+      // Retrieve a point
+      TS_Point p = touch.getPoint();
 
-        switch (configuration.sys.touch_rotation) {
-        case 1: //damster capacitive touch rotation (1)
-          ts.p.x = p.y;
-          ts.p.y = DISPLAY_HEIGHT - p.x;
-          break;
+      switch (configuration.sys.touch_rotation) {
+      case 1: //damster capacitive touch rotation (1)
+        ts.p.x = p.y;
+        ts.p.y = DISPLAY_HEIGHT - p.x;
+        break;
 
-        case 0: //positionhigh capacitive touch rotation (0)
-        default:// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
-          ts.p.x = DISPLAY_WIDTH - p.y;
-          ts.p.y = p.x;
-          break;
-        }
-#endif
+      case 0: //positionhigh capacitive touch rotation (0)
+      default:// in case configuration.sys.touch_rotation in config-file has stored 2 or 3 from the old screen, better behave like new default for now
+        ts.p.x = DISPLAY_WIDTH - p.y;
+        ts.p.y = p.x;
+        break;
       }
+#endif
     }
-    if(numTouchPoints == 0) {
+    else {
       isButtonTouched = false;
     }
   }
-  return numTouchPoints;
 }
 
 
@@ -661,7 +655,7 @@ extern uint8_t dexed_onscreen_algo;
 FLASHMEM void handle_touchscreen_voice_select()
 {
 
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(45, 1))
     {
@@ -797,7 +791,7 @@ FLASHMEM void update_step_rec_buttons()
 
 FLASHMEM void handle_touchscreen_pattern_editor()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
     {
@@ -926,7 +920,7 @@ FLASHMEM void handle_touchscreen_pattern_editor()
 
 FLASHMEM void handle_touchscreen_microsynth()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(45, 1))
     {
@@ -1002,7 +996,7 @@ FLASHMEM void print_file_manager_active_border()
 
 FLASHMEM void handle_touchscreen_file_manager()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     // check touch buttons
     if (ts.p.y > CHAR_height_small * 20)
@@ -1065,7 +1059,7 @@ FLASHMEM void update_midi_learn_button()
 
 FLASHMEM void handle_touchscreen_custom_mappings()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(45, 1))
     {
@@ -1077,7 +1071,7 @@ FLASHMEM void handle_touchscreen_custom_mappings()
 
 FLASHMEM void handle_touchscreen_cc_mappings()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(45, 1))
     {
@@ -1089,7 +1083,7 @@ FLASHMEM void handle_touchscreen_cc_mappings()
 
 FLASHMEM void handle_touchscreen_mute_matrix()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     uint8_t button_count = 0;
     char buf[4];
@@ -1149,7 +1143,7 @@ FLASHMEM void handle_touchscreen_mute_matrix()
 
 FLASHMEM void handle_touchscreen_arpeggio()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(2, 23))
     {
@@ -1163,7 +1157,7 @@ FLASHMEM void handle_touchscreen_arpeggio()
 
 FLASHMEM void handle_touchscreen_braids()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     seq.cycle_touch_element = 1;
     if (ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
@@ -1222,7 +1216,7 @@ FLASHMEM void handle_touchscreen_menu()
     }
     ts.touch_ui_drawn_in_menu = true;
   }
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(45, 11))
     {
@@ -1348,7 +1342,7 @@ FLASHMEM void handle_touchscreen_mixer()
 
 FLASHMEM void handle_touchscreen_multiband()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (multiband_active)
     {
@@ -1437,7 +1431,7 @@ extern int temp_int;
 
 FLASHMEM void handle_touchscreen_sample_editor()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(45, 23))
     {
@@ -1450,7 +1444,7 @@ FLASHMEM void handle_touchscreen_settings_button_test()
 {
   static bool button_state = false;
 
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(42, 1))
     {
@@ -1462,7 +1456,7 @@ FLASHMEM void handle_touchscreen_settings_button_test()
 
 FLASHMEM void handle_touchscreen_test_touchscreen()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (check_button_on_grid(42, 1))
       sub_touchscreen_test_page_init();
@@ -1474,7 +1468,7 @@ FLASHMEM void handle_touchscreen_test_touchscreen()
 
 FLASHMEM void handle_page_with_touch_back_button()
 {
-  if (getNumTouchPoints() > 0)
+  if (numTouchPoints > 0)
   {
     if (seq.cycle_touch_element != 1 && check_button_on_grid(2, 25)) // back button
     {
