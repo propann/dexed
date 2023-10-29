@@ -144,6 +144,9 @@ int getNumTouchPoints() {
 #endif
       }
     }
+    if(numTouchPoints == 0) {
+      isButtonTouched = false;
+    }
   }
   return numTouchPoints;
 }
@@ -759,7 +762,6 @@ FLASHMEM void handle_touchscreen_voice_select()
     }
   }
   else {
-    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -911,7 +913,6 @@ FLASHMEM void handle_touchscreen_pattern_editor()
     }
   }
   else {
-    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -958,7 +959,6 @@ FLASHMEM void handle_touchscreen_microsynth()
     }
   }
   else {
-    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -1048,9 +1048,6 @@ FLASHMEM void handle_touchscreen_file_manager()
       print_file_manager_active_border();
     }
   }
-  else {
-    isButtonTouched = false;
-  }
 }
 
 FLASHMEM void update_midi_learn_button()
@@ -1076,9 +1073,6 @@ FLASHMEM void handle_touchscreen_custom_mappings()
       update_midi_learn_button();
     }
   }
-  else {
-    isButtonTouched = false;
-  }
 }
 
 FLASHMEM void handle_touchscreen_cc_mappings()
@@ -1090,9 +1084,6 @@ FLASHMEM void handle_touchscreen_cc_mappings()
       seq.midi_learn_active = !seq.midi_learn_active;
       update_midi_learn_button();
     }
-  }
-  else {
-    isButtonTouched = false;
   }
 }
 
@@ -1154,9 +1145,6 @@ FLASHMEM void handle_touchscreen_mute_matrix()
       }
     }
   }
-  else {
-    isButtonTouched = false;
-  }
 }
 
 FLASHMEM void handle_touchscreen_arpeggio()
@@ -1171,9 +1159,6 @@ FLASHMEM void handle_touchscreen_arpeggio()
         handleStart();
     }
   }
-  else {
-    isButtonTouched = false;
-  }
 }
 
 FLASHMEM void handle_touchscreen_braids()
@@ -1187,8 +1172,6 @@ FLASHMEM void handle_touchscreen_braids()
     }
   }
   else {
-    isButtonTouched = false;
-
     if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
     {
       print_virtual_keyboard_octave();
@@ -1336,7 +1319,6 @@ FLASHMEM void handle_touchscreen_menu()
     ts.touch_ui_drawn_in_menu = true;
   }
   else {
-    isButtonTouched = false;
     if (ts.update_virtual_keyboard_octave && ts.keyb_in_menu_activated)
     {
       print_virtual_keyboard_octave();
@@ -1445,9 +1427,6 @@ FLASHMEM void handle_touchscreen_multiband()
       }
     }
   }
-  else {
-    isButtonTouched = false;
-  }
   if (scope.scope_delay % 60 == 0)
   {
     draw_volmeters_multiband_compressor();
@@ -1465,9 +1444,6 @@ FLASHMEM void handle_touchscreen_sample_editor()
       preview_sample();
     }
   }
-  else {
-    isButtonTouched = false;
-  }
 }
 
 FLASHMEM void handle_touchscreen_settings_button_test()
@@ -1482,9 +1458,6 @@ FLASHMEM void handle_touchscreen_settings_button_test()
       button_state = !button_state;
     }
   }
-  else {
-    isButtonTouched = false;
-  }
 }
 
 FLASHMEM void handle_touchscreen_test_touchscreen()
@@ -1496,9 +1469,6 @@ FLASHMEM void handle_touchscreen_test_touchscreen()
     display.console = true;
     display.fillRect(ts.p.x, ts.p.y, 2, 2, COLOR_SYSTEXT);
     display.console = false;
-  }
-  else {
-    isButtonTouched = false;
   }
 }
 
