@@ -101,7 +101,7 @@ static constexpr float KEY_SPACING_WHITE = 2;
 static constexpr float KEY_LABEL_OFFSET = 9;
 static constexpr float KEY_OFFSET_BLACK = 18.7;
 static constexpr float KEY_WIDTH_BLACK = 22;
-static constexpr float KEY_HEIGHT_BLACK = 35;
+static constexpr float KEY_HEIGHT_BLACK = 34;
 
 FLASHMEM void updateTouchScreen() {
   if (remote_touched) {
@@ -386,6 +386,21 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
   }
 }
 
+FLASHMEM void print_virtual_keyboard_octave()
+{
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+  display.setTextSize(1);
+
+  // draw octave labels
+  uint8_t indexes[2] = { 0, 7 };
+  for (int i = 0; i < 2; i++)
+  {
+    display.setCursor(1 + indexes[i] * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
+    display.print("C");
+    display.print(ts.virtual_keyboard_octave + i);
+  }
+}
+
 FLASHMEM void virtual_keyboard_key_off_white(uint8_t x)
 {
   uint8_t halftones = 0;
@@ -404,15 +419,7 @@ FLASHMEM void virtual_keyboard_key_off_white(uint8_t x)
   display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS + 34, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, COLOR_SYSTEXT); // white key
   display.console = false;
 
-  if (x == 0 || x == 7)
-  {
-    display.setCursor(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
-    display.print("C");
-    if (x == 0)
-      display.print(ts.virtual_keyboard_octave);
-    else if (x == 7)
-      display.print(ts.virtual_keyboard_octave + 1);
-  }
+  print_virtual_keyboard_octave();
 
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -532,10 +539,8 @@ FLASHMEM void handleVirtualKeyboardKeys()
 }
 
 
-
 FLASHMEM void virtual_keyboard()
 {
-  uint8_t oct_count = 0;
   display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
   display.console = true;
@@ -551,15 +556,11 @@ FLASHMEM void virtual_keyboard()
     display.console = true;
     display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, COLOR_SYSTEXT); // WHITE key
     display.console = false;
-    if (x == 0 || x == 7)
-    {
-      display.setCursor(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      display.print("C");
-      display.print(ts.virtual_keyboard_octave + oct_count);
-      oct_count++;
-    }
   }
+  
+  print_virtual_keyboard_octave();
+
+  // draw black keys
   for (uint8_t x = 0; x < 16; x++)
   {
     if (seq.piano[x] == 1)
@@ -571,24 +572,6 @@ FLASHMEM void virtual_keyboard()
   }
   display.setTextSize(2);
   display.console = false;
-}
-
-FLASHMEM void print_virtual_keyboard_octave()
-{
-  uint8_t oct_count = 0;
-  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-  display.setTextSize(1);
-
-  // draw white keys
-  uint8_t indexes[2] = { 0, 7 };
-  for (int i = 0; i < 2; i++)
-  {
-    display.setCursor(1 + indexes[i] * KEY_WIDTH_WHITE + KEY_SPACING_WHITE, VIRT_KEYB_YPOS + 57.75);
-    display.print("C");
-    display.print(ts.virtual_keyboard_octave + oct_count);
-    oct_count++;
-  }
-  // display.setTextSize(2);
 }
 
 FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
