@@ -386,15 +386,18 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
   }
 }
 
-FLASHMEM void print_virtual_keyboard_octave()
+FLASHMEM void print_virtual_keyboard_octave(int8_t notePressed = -1)
 {
-  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
   display.setTextSize(1);
-
   // draw octave labels
   uint8_t indexes[2] = { 0, 7 };
   for (int i = 0; i < 2; i++)
   {
+    if(notePressed == indexes[i]) {
+      display.setTextColor(COLOR_SYSTEXT, RED);
+    } else {
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    }
     display.setCursor(1 + indexes[i] * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
     display.print("C");
     display.print(ts.virtual_keyboard_octave + i);
@@ -485,6 +488,8 @@ FLASHMEM void handleVirtualKeyboardKeys()
         }
         display.console = true;
         display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS + 34, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, RED); // white key
+        print_virtual_keyboard_octave(x);
+
         display.console = false;
       }
     }
@@ -591,14 +596,12 @@ FLASHMEM void touch_button_oct_up()
   ts.virtual_keyboard_octave++;
   if (ts.virtual_keyboard_octave > 8)
     ts.virtual_keyboard_octave = 8;
-  ts.update_virtual_keyboard_octave = true;
 }
 FLASHMEM void touch_button_oct_down()
 {
   ts.virtual_keyboard_octave--;
   if (ts.virtual_keyboard_octave < 1)
     ts.virtual_keyboard_octave = 1;
-  ts.update_virtual_keyboard_octave = true;
 }
 FLASHMEM void touch_button_inst_up()
 {
@@ -606,7 +609,6 @@ FLASHMEM void touch_button_inst_up()
   if (ts.virtual_keyboard_instrument > 12)
     ts.virtual_keyboard_instrument = 12;
   virtual_keyboard_print_current_instrument();
-  ts.update_virtual_keyboard_octave = true;
 }
 FLASHMEM void touch_button_inst_down()
 {
@@ -614,7 +616,6 @@ FLASHMEM void touch_button_inst_down()
   if (ts.virtual_keyboard_instrument < 1)
     ts.virtual_keyboard_instrument = 1;
   virtual_keyboard_print_current_instrument();
-  ts.update_virtual_keyboard_octave = true;
 }
 
 FLASHMEM void touch_check_all_keyboard_buttons()
@@ -730,16 +731,9 @@ FLASHMEM void handle_touchscreen_voice_select()
       print_perfmod_lables();
     }
 
-    if (ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
+    if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
-    }
-  }
-  else {
-    if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
-    {
-      print_virtual_keyboard_octave();
-      ts.update_virtual_keyboard_octave = false;
     }
   }
   if (seq.cycle_touch_element == 1) {
@@ -881,16 +875,9 @@ FLASHMEM void handle_touchscreen_pattern_editor()
         }
       }
 
-    if (ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
+    if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
-    }
-  }
-  else {
-    if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
-    {
-      print_virtual_keyboard_octave();
-      ts.update_virtual_keyboard_octave = false;
     }
   }
   if (seq.cycle_touch_element == 1) {
@@ -927,16 +914,9 @@ FLASHMEM void handle_touchscreen_microsynth()
       }
     }
 
-    if (ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
+    if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
-    }
-  }
-  else {
-    if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
-    {
-      print_virtual_keyboard_octave();
-      ts.update_virtual_keyboard_octave = false;
     }
   }
   if (seq.cycle_touch_element == 1) {
@@ -1140,16 +1120,9 @@ FLASHMEM void handle_touchscreen_braids()
   if (numTouchPoints > 0)
   {
     seq.cycle_touch_element = 1;
-    if (ts.update_virtual_keyboard_octave == false && seq.cycle_touch_element == 1)
+    if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
-    }
-  }
-  else {
-    if (ts.update_virtual_keyboard_octave && seq.cycle_touch_element == 1)
-    {
-      print_virtual_keyboard_octave();
-      ts.update_virtual_keyboard_octave = false;
     }
   }
   if (seq.cycle_touch_element == 1) {
@@ -1285,19 +1258,12 @@ FLASHMEM void handle_touchscreen_menu()
       }
     }
 
-    if (ts.update_virtual_keyboard_octave == false && ts.keyb_in_menu_activated)
+    if (ts.keyb_in_menu_activated)
     {
       touch_check_all_keyboard_buttons();
     }
 
     ts.touch_ui_drawn_in_menu = true;
-  }
-  else {
-    if (ts.update_virtual_keyboard_octave && ts.keyb_in_menu_activated)
-    {
-      print_virtual_keyboard_octave();
-      ts.update_virtual_keyboard_octave = false;
-    }
   }
   if (ts.keyb_in_menu_activated) {
     handleVirtualKeyboardKeys();

@@ -45,7 +45,6 @@ typedef struct ts_s
   uint32_t virtual_keyboard_state_white = 0;
   uint32_t virtual_keyboard_state_black = 0;
 
-  bool update_virtual_keyboard_octave;
   uint8_t displayed_peak[20]; // volmeter peak levels, currently displayed level
   uint8_t old_helptext_length[3];
   bool touch_ui_drawn_in_menu = false;
