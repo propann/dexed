@@ -10900,7 +10900,7 @@ FLASHMEM void UI_func_seq_tracker(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
     UI_toplineInfoText(1);
     display.setCursor(1, 2);
-    display.setTextColor(COLOR_SYSTEXT);
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
     display.print(F("TRACKER"));
     display.setCursor(CHAR_width_small * 10, 2);
     display.print(F("CHAIN"));
@@ -11177,7 +11177,15 @@ FLASHMEM void UI_func_song(uint8_t param)
     display.setCursor(1, 1);
     display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
     display.print(F("SONG"));
+    display.setCursor(CHAR_width_small * 11, 1);
+    display.print(F("LOOP"));
+    display.setCursor(CHAR_width_small * 21, 1);
+    display.print(F("SLEN"));
+    display.setCursor(CHAR_width_small * 26, 1);
+    display.print(F("LC"));
+    print_chain_header();
 
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
     show_no_grid(10, 1, 10, seq.name);
     // print loop text
     print_song_loop_text();
@@ -11190,16 +11198,7 @@ FLASHMEM void UI_func_song(uint8_t param)
     sub_song_print_tracktypes();
     sub_song_print_instruments(GREY2, COLOR_BACKGROUND);
 
-    display.setTextColor(COLOR_SYSTEXT);
-    display.setCursor(CHAR_width_small * 11, 1);
-    display.print(F("LOOP"));
-    display.setCursor(CHAR_width_small * 21, 1);
-    display.print(F("SLEN"));
-    display.setCursor(CHAR_width_small * 26, 1);
-    display.print(F("LC"));
-    print_chain_header();
     display.setTextSize(1);
-
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
@@ -11215,7 +11214,6 @@ FLASHMEM void UI_func_song(uint8_t param)
             if (seq.scrollpos > SONG_LENGTH - 16)
               seq.scrollpos = SONG_LENGTH - 16;
             print_song_loop_arrows();
-
           }
 
           else if (seq.tracktype_or_instrument_assign == 10) // go back from loop copy to tracktype
@@ -12191,7 +12189,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
     UI_toplineInfoText(1);
     display.setTextSize(1);
     display.setCursor(1, 2);
-    display.setTextColor(COLOR_SYSTEXT);
+    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
     display.print("MUTE");
     display.setCursor(1 + 5 * CHAR_width_small, 2);
     display.print("MATRIX");
