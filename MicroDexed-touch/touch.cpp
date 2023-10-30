@@ -624,9 +624,9 @@ FLASHMEM void touch_check_all_keyboard_buttons()
   else if (check_button_on_grid(45, 16))
     touch_button_oct_up();
 
-  if ((check_button_on_grid(9, 16) && seq.cycle_touch_element == 1) || (check_button_on_grid(9, 16) && ts.keyb_in_menu_activated))
+  if (check_button_on_grid(9, 16) && ((seq.cycle_touch_element == 1) || ts.keyb_in_menu_activated))
     touch_button_inst_down();
-  else if ((check_button_on_grid(37, 16) && seq.cycle_touch_element == 1) || (check_button_on_grid(37, 16) && ts.keyb_in_menu_activated))
+  else if (check_button_on_grid(37, 16) && ((seq.cycle_touch_element == 1) || ts.keyb_in_menu_activated))
     touch_button_inst_up();
 }
 
