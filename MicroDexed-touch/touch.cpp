@@ -386,14 +386,14 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
   }
 }
 
-FLASHMEM void print_virtual_keyboard_octave(int8_t notePressed = -1)
+FLASHMEM void print_virtual_keyboard_octave()
 {
   display.setTextSize(1);
   // draw octave labels
   uint8_t indexes[2] = { 0, 7 };
   for (int i = 0; i < 2; i++)
   {
-    if(notePressed == indexes[i]) {
+    if(ts.virtual_keyboard_state_white & (1 << indexes[i])) {
       display.setTextColor(COLOR_SYSTEXT, RED);
     } else {
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
@@ -421,8 +421,6 @@ FLASHMEM void virtual_keyboard_key_off_white(uint8_t x)
   display.console = true;
   display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS + 34, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, COLOR_SYSTEXT); // white key
   display.console = false;
-
-  print_virtual_keyboard_octave();
 
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -488,14 +486,15 @@ FLASHMEM void handleVirtualKeyboardKeys()
         }
         display.console = true;
         display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS + 34, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, RED); // white key
-        print_virtual_keyboard_octave(x);
-
         display.console = false;
       }
     }
     else if (isKeyRelease) {
       ts.virtual_keyboard_state_white &= ~(1 << x);
       virtual_keyboard_key_off_white(x);
+    }
+    if(isKeyPress || isKeyRelease) {
+      print_virtual_keyboard_octave();
     }
   }
   bool isWithinBlackY = ts.p.y > VIRT_KEYB_YPOS && ts.p.y < VIRT_KEYB_YPOS + 34;
@@ -594,14 +593,18 @@ FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
 FLASHMEM void touch_button_oct_up()
 {
   ts.virtual_keyboard_octave++;
-  if (ts.virtual_keyboard_octave > 8)
+  if (ts.virtual_keyboard_octave > 8) {
     ts.virtual_keyboard_octave = 8;
+  }
+  print_virtual_keyboard_octave();
 }
 FLASHMEM void touch_button_oct_down()
 {
   ts.virtual_keyboard_octave--;
-  if (ts.virtual_keyboard_octave < 1)
+  if (ts.virtual_keyboard_octave < 1) {
     ts.virtual_keyboard_octave = 1;
+  }
+  print_virtual_keyboard_octave();
 }
 FLASHMEM void touch_button_inst_up()
 {
