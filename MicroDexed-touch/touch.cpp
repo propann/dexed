@@ -594,14 +594,18 @@ FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
 FLASHMEM void touch_button_oct_up()
 {
   ts.virtual_keyboard_octave++;
-  if (ts.virtual_keyboard_octave > 8)
+  if (ts.virtual_keyboard_octave > 8) {
     ts.virtual_keyboard_octave = 8;
+  }
+  print_virtual_keyboard_octave();
 }
 FLASHMEM void touch_button_oct_down()
 {
   ts.virtual_keyboard_octave--;
-  if (ts.virtual_keyboard_octave < 1)
+  if (ts.virtual_keyboard_octave < 1) {
     ts.virtual_keyboard_octave = 1;
+  }
+  print_virtual_keyboard_octave();
 }
 FLASHMEM void touch_button_inst_up()
 {
