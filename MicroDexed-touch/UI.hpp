@@ -22353,7 +22353,7 @@ FLASHMEM void draw_volmeters_multiband_compressor()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
   for (uint8_t i = 0; i < 4; i++) {
-    int x = CHAR_width_small * i * 4 + (i >= 2 ? 38 * CHAR_width_small : 1);
+    int x = CHAR_width_small * i * 4 + (i >= 2 ? 38 * CHAR_width_small : 1 * CHAR_width_small);
 
     // draw text
     display.setCursor(x, y + 4);
