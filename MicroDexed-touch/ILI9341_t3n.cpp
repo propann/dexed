@@ -337,7 +337,7 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 
   if (console && remote_active)
   {
-    if (w != DISPLAY_WIDTH && h != DISPLAY_HEIGHT)
+    if (h != DISPLAY_WIDTH && w != DISPLAY_HEIGHT)
     {
       static uint8_t sysexFillRect[13] = {
         0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
