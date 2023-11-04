@@ -2,7 +2,6 @@ This guide shows how to convert your PCB from resistive touch to capacitive Touc
     <br>
     <p> 
     
-    
 ### SCHEMATICS
 
 CUT all traces/connections shown in RED color.
@@ -24,7 +23,9 @@ Unfortunately it is required to remove the display connector to reach these 2 tr
 Use your favorite proven method, how to remove the connector. This could be hot air, a desoldering tool/gun or desoldering wick.
 <br>
 <p>
+
 ### PCB BACK
+
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Display-Conversion/back.jpg" >
 <br>
