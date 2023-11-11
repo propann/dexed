@@ -2735,7 +2735,6 @@ bool flock_running = false;
 
 extern void terrain_init();
 extern void terrain_frame();
-bool terrain_running = false;
 
 FLASHMEM void check_buttons_screensaver()
 {
@@ -2744,9 +2743,7 @@ FLASHMEM void check_buttons_screensaver()
 
   if (LCDML.BT_checkAny() || touch.touched() == true || seq.stop_screensaver) // check if any button is pressed (enter, up, down, left, right)
   {
-
     seq.stop_screensaver = false;
-    terrain_running = false;
     LCDML.SCREEN_resetTimer();
     //  LCDML.FUNC_goBackToMenu(); // leave this function
     //   if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
@@ -2774,7 +2771,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     LCDML_UNUSED(param);
     display.fillScreen(0);
 
-    terrain_running = false;
     qix.counthue = random(358);
     InitializeCube();
     if (configuration.sys.screen_saver_mode == 0) //is random
@@ -2785,6 +2781,9 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     else
       screensaver_mode_active = configuration.sys.screen_saver_mode;
 
+    if (screensaver_mode_active == 4)
+      terrain_init();
+
     // setup function
     LCDML.FUNC_setLoopInterval(50); // starts a trigger event for the loop function every 50 milliseconds
 
@@ -2794,7 +2793,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     //   if (configuration.sys.screen_saver_mode == 5) //disable screensaver
     //   {
     //     seq.stop_screensaver = false;
-    //     terrain_running = false;
     //     LCDML.SCREEN_resetTimer();
     //   }
 
@@ -2827,15 +2825,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     }
     else if (screensaver_mode_active == 4)
     {
-      if (terrain_running == false)
-      {
-        terrain_init();
-        terrain_running = true;
-      }
-      else
-      {
-        terrain_frame();
-      }
+      terrain_frame();
     }
 
     if (configuration.sys.screen_saver_mode == 0)  //random
@@ -2844,7 +2834,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       if (screensaver_switcher_timer > 1000)
       {
         display.fillScreen(COLOR_BACKGROUND);
-        terrain_running = false;
 
         randomSeed(analogRead(0));
         screensaver_mode_active = random(4) + 1;
@@ -2872,10 +2861,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
   {
     if (configuration.sys.screen_saver_mode != 5)
     { // 5 == off
-      if (remote_active) {
-        // screensaver off
-        terrain_running = false;
-      }
       encoderDir[ENC_L].reset();
       encoderDir[ENC_R].reset();
       LCDML.SCREEN_resetTimer();
@@ -4615,7 +4600,7 @@ FLASHMEM void lcdml_menu_display(void)
             else
               display.setTextColor(GREY2, COLOR_BACKGROUND);
             show(n + 1, 1, display_cols - 3, content_text);
-          }
+        }
           else
           {
             if (tmp->checkType_dynParam())
@@ -4668,7 +4653,7 @@ FLASHMEM void draw_instance_editor(Editor* editor, bool refresh)
     display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);
     display.print(F("TOGGLE INST"));
 
-  }
+      }
   display.setCursor(CHAR_width_small * 10, 6);
   if (generic_temp_select_menu == editor->select_id)
   {
@@ -4691,7 +4676,7 @@ FLASHMEM void draw_instance_editor(Editor* editor, bool refresh)
     helptext_r("< > EDIT PARAM.");
   }
   UI_update_instance_icons();
-}
+    }
 
 FLASHMEM void addInstanceEditor(
   void (*renderer)(Editor* param, bool refresh) = &draw_instance_editor)
@@ -5198,7 +5183,6 @@ FLASHMEM void UI_func_filter_resonance(uint8_t param)
     encoderDir[ENC_R].reset();
   }
 }
-#endif
 
 FLASHMEM void getNoteName(char* noteName, uint8_t noteNumber)
 {
@@ -13138,7 +13122,7 @@ void UI_func_master_effects(uint8_t param)
           master_effects_set_delay_time(0);
           print_delay_time(0, 2);
           print_delay_sync_status(0);
-        }
+          }
         if (generic_temp_select_menu == 3)
         {
           master_effects_set_delay_feedback(0); // feedback instance 0
@@ -13532,15 +13516,15 @@ void UI_func_master_effects(uint8_t param)
           braids_mixer_reverb.gain(1, volume_transform(mapfloat(braids_osc.rev_send, REVERB_SEND_MIN, REVERB_SEND_MAX, 0.0, VOL_MAX_FLOAT)));
           print_small_intbar(43, 19, braids_osc.rev_send, 40, 1, 0);
         }
+          }
+        }
       }
-    }
-  }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+    }
 
 void sysinfo_reload_prev_voice()
 {
@@ -15319,7 +15303,7 @@ FLASHMEM void calc_low_high(uint8_t preset)
     {
       if (msz[preset][result_zone].low > msz[preset][result_zone].rootnote - result || msz[preset][result_zone].low == 0)
         msz[preset][result_zone].low = msz[preset][result_zone].rootnote - result;
-    }
+}
     else
     {
       if (msz[preset][result_zone].high < msz[preset][result_zone].rootnote + result && msz[preset][result_zone].rootnote != 0)
@@ -15865,10 +15849,10 @@ FLASHMEM void sd_go_parent_folder()
       {
         fm.sd_new_name[count] = '\0';
         break;
-      }
-    }
-    fm.sd_folder_depth--;
+}
   }
+    fm.sd_folder_depth--;
+}
 
   fm.sd_selected_file = 0;
 }
@@ -16058,7 +16042,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
               LOG.print(ff.size());
               LOG.println(F(" bytes"));
 #endif
-            }
+              }
             // delete the copy on the Flash chip, if different
 #ifdef DEBUG
             LOG.println(F("  delete file from Flash chip"));
@@ -16197,14 +16181,14 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #endif
                   f.close();
                   ff.close();
-                }
+            }
                 else
                 {
 #ifdef DEBUG
                   LOG.println(F("  files are different"));
 #endif
                 }
-              }
+          }
               else
               {
 #ifdef DEBUG
@@ -16218,7 +16202,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
               LOG.println(F("  delete file from Flash chip"));
 #endif
               SerialFlash.remove(filename);
-            }
+      }
             else
             {
               // create the file on the Flash chip and copy data
@@ -16329,8 +16313,8 @@ FLASHMEM void UI_func_midi_soft_thru(uint8_t param)
     case 1:
       display.print(F("[ON ]"));
       break;
-    }
-  }
+                  }
+                }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
@@ -16340,7 +16324,7 @@ FLASHMEM void UI_func_midi_soft_thru(uint8_t param)
       save_sys = 0;
     }
   }
-}
+              }
 
 FLASHMEM void _print_midi_channel(uint8_t midi_channel)
 {
@@ -19530,7 +19514,7 @@ FLASHMEM void UI_func_set_performance_name(uint8_t param)
       {
         if (mode == 1)
           ui_select_name_state = UI_select_name(2, 2, seq.name_temp, BANK_NAME_LEN - 1, false);
-      }
+    }
       else if (LCDML.BT_checkUp())
       {
         if (mode == 1)
@@ -19552,7 +19536,7 @@ FLASHMEM void UI_func_set_performance_name(uint8_t param)
           LCDML.FUNC_goBackToMenu();
         }
       }
-    }
+      }
     if (mode == 0)
     {
       mode = 1;
@@ -19986,7 +19970,7 @@ FLASHMEM void UI_func_startup_performance(uint8_t param)
     encoderDir[ENC_R].reset();
     helptext_r("");
   }
-}
+            }
 
 FLASHMEM void UI_func_startup_page(uint8_t param)
 {
@@ -21010,8 +20994,8 @@ FLASHMEM void UI_func_test_touchscreen(uint8_t param)
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
+    }
   }
-}
 
 FLASHMEM void UI_func_clear_song(uint8_t param)
 {
@@ -21349,7 +21333,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-      }
+    }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -21367,8 +21351,8 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
-    }
   }
+}
 }
 
 FLASHMEM char* basename(const char* filename)
@@ -21536,7 +21520,7 @@ FLASHMEM void splash_draw_header()
   display.print(F("m   i   c   r   o"));
   display.fillRect(3, 25, DISPLAY_WIDTH - 7, 2, GREY2);
   display.setTextSize(1);
-}
+  }
 FLASHMEM void splash_draw_D()
 {
   if (remote_active)
@@ -22370,3 +22354,5 @@ FLASHMEM void clear_volmeter(int x, int y)
   display.console = false;
   display.fillRect(x, y - 100, 17, 100, COLOR_BACKGROUND);
 }
+
+#endif
