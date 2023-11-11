@@ -489,4 +489,5 @@ FLASHMEM void terrain_init()
 FLASHMEM void terrain_frame()
 {
   terrain.draw();
+  display.flushSysEx();
 }

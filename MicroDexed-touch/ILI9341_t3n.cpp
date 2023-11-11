@@ -21,7 +21,6 @@
 #include <SPI.h>
 
 extern bool remote_active;
-extern bool terrain_running;
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 
 // 5x7 font
@@ -234,6 +233,7 @@ void ILI9341_t3n::drawPixel(int16_t x, int16_t y, uint16_t color)
     memcpy(sysexDrawPixel + 4 + 1, colors, nbBytes);
 
     sendSysEx(90, 4 + 1 + nbBytes, sysexDrawPixel, true);
+    delayMicroseconds(40);
   }
 
   beginSPITransaction(_SPI_CLOCK);
@@ -937,26 +937,123 @@ void ILI9341_t3n::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
   }
 }
 
+
+#define CLIPLEFT  1
+#define CLIPRIGHT 2
+#define CLIPLOWER 4
+#define CLIPUPPER 8
+
+// Cohen Sutherland Line Clipping - thx Wikipedia
+int get_clips(int16_t& x, int16_t& y, int16_t XMin, int16_t YMin, int16_t XMax, int16_t YMax)
+{
+  int K = 0;
+  if (y < YMin) K = CLIPLOWER;
+  if (y > YMax) K = CLIPUPPER;
+  if (x < XMin) K |= CLIPLEFT;
+  if (x > XMax) K |= CLIPRIGHT;
+
+  return K;
+}
+
+bool clipline(int16_t& x1, int16_t& y1, int16_t& x2, int16_t& y2, int16_t XMin, int16_t YMin, int16_t XMax, int16_t YMax)
+{
+  int K1 = 0, K2 = 0;
+  int32_t dx, dy;
+
+  dx = x2 - x1;
+  dy = y2 - y1;
+
+  //  if(dx == 0 && dy == 0)
+  //    return false;
+
+  K1 = get_clips(x1, y1, XMin, YMin, XMax, YMax);
+  K2 = get_clips(x2, y2, XMin, YMin, XMax, YMax);
+
+  int i = 0;
+  while (K1 || K2)
+  {
+    if (i++ >= 2)
+      return false;
+
+    if (K1 & K2)
+      return false;
+
+    if (K1)
+    {
+      if (K1 & CLIPLEFT)
+      {
+        y1 += (XMin - x1) * dy / dx;
+        x1 = XMin;
+      }
+      else if (K1 & CLIPRIGHT)
+      {
+        y1 += (XMax - x1) * dy / dx;
+        x1 = XMax;
+      }
+      if (K1 & CLIPLOWER)
+      {
+        x1 += (YMin - y1) * dx / dy;
+        y1 = YMin;
+      }
+      else if (K1 & CLIPUPPER)
+      {
+        x1 += (YMax - y1) * dx / dy;
+        y1 = YMax;
+      }
+
+      K1 = get_clips(x1, y1, XMin, YMin, XMax, YMax);
+    }
+
+    if (K2)
+    {
+      if (K2 & CLIPLEFT)
+      {
+        y2 += (XMin - x2) * dy / dx;
+        x2 = XMin;
+      }
+      else if (K2 & CLIPRIGHT)
+      {
+        y2 += (XMax - x2) * dy / dx;
+        x2 = XMax;
+      }
+      if (K2 & CLIPLOWER)
+      {
+        x2 += (YMin - y2) * dx / dy;
+        y2 = YMin;
+      }
+      else if (K2 & CLIPUPPER)
+      {
+        x2 += (YMax - y2) * dx / dy;
+        y2 = YMax;
+      }
+
+      K2 = get_clips(x2, y2, XMin, YMin, XMax, YMax);
+    }
+  }
+  return true;
+}
+
 // Bresenham's algorithm - thx wikpedia
 void ILI9341_t3n::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
   uint16_t color)
 {
+  if (!clipline(x0, y0, x1, y1, _displayclipx1, _displayclipy1, _displayclipx2, _displayclipy2))
+    return;
+
   if (remote_active)
   {
-    if (terrain_running == false) {
-      static uint8_t sysexDrawLine[13] = {
-        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-        0x0, 0x0, 0x0, 0x0, 0x0, // could be unknown color
-      };
+    static uint8_t sysexDrawLine[13] = {
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0, 0x0, // could be unknown color
+    };
 
-      fillSysexData(sysexDrawLine, 4, x0, y0, x1, y1);
-      uint8_t colors[4];
-      uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
-      sysexDrawLine[8] = nbBytes;
-      memcpy(sysexDrawLine + 8 + 1, colors, nbBytes);
+    fillSysexData(sysexDrawLine, 4, x0, y0, x1, y1);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+    sysexDrawLine[8] = nbBytes;
+    memcpy(sysexDrawLine + 8 + 1, colors, nbBytes);
 
-      sendSysEx(96, 8 + 1 + nbBytes, sysexDrawLine, true);
-    }
+    sendSysEx(96, 8 + 1 + nbBytes, sysexDrawLine, true);
 
     console = false;
   }
