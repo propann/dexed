@@ -105,12 +105,11 @@
 // At all other speeds, _pspi->beginTransaction() will use the fastest available
 // clock
 
-
 #define ILI9341_SPICLOCK 50000000
+
 #ifdef GENERIC_DISPLAY
 #define ILI9341_SPICLOCK_READ 2000000
 #endif
-#define ILI9341_SPICLOCK_READ 2000000
 
 #define SYSEX_HEADER_SIZE 3
 
