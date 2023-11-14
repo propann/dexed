@@ -755,6 +755,11 @@ void sequencer_part1(void)
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(braids_osc.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
+// else if (seq.instrument[d] > 5 && seq.instrument[d] < 16) // Chords: MSP - unstable for chords
+//               {
+//                 if (check_probability(seq.current_pattern[d]))
+//                 handleNoteOn(msp[seq.instrument[d] - 6].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+//               }
 #ifdef MIDI_DEVICE_USB_HOST
                 else if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
                 {

@@ -596,13 +596,19 @@ static const uint8_t PROGMEM init_commands[] = { 4, 0xEF, 0x03, 0x80, 0x02,
                                                 3, 0xb1, 0x00, 0x10,                            // FrameRate Control 119Hz
                                                 0 };
 
+#if defined GENERIC_DISPLAY
 FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock, uint32_t spi_clock_read)
+#else
+FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock)
+#endif
 {
-
   // verify SPI pins are valid;
   // allow user to say use current ones...
   _SPI_CLOCK = spi_clock;           // #define ILI9341_SPICLOCK 30000000
+  
+#if defined GENERIC_DISPLAY
   _SPI_CLOCK_READ = spi_clock_read; // #define ILI9341_SPICLOCK_READ 2000000
+#endif
 
   // LOG.printf_P(PSTR("_t3n::begin mosi:%d miso:%d SCLK:%d CS:%d DC:%d SPI clocks: %lu %lu\n"), _mosi, _miso, _sclk, _cs, _dc, _SPI_CLOCK, _SPI_CLOCK_READ);
   // LOG.flush();

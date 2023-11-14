@@ -105,17 +105,12 @@
 // At all other speeds, _pspi->beginTransaction() will use the fastest available
 // clock
 
- //#ifdef GENERIC_DISPLAY
+
 #define ILI9341_SPICLOCK 50000000
+#ifdef GENERIC_DISPLAY
 #define ILI9341_SPICLOCK_READ 2000000
-//#endif
-
-
-// #ifdef CAPACITIVE_TOUCH_DISPLAY
-// //#define ILI9341_SPICLOCK 50000000
-// #define ILI9341_SPICLOCK 20000000
-// #define ILI9341_SPICLOCK_READ 2000000
-// #endif
+#endif
+#define ILI9341_SPICLOCK_READ 2000000
 
 #define SYSEX_HEADER_SIZE 3
 
@@ -129,8 +124,13 @@ public:
 
   ILI9341_t3n(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI = 11,
     uint8_t _SCLK = 13, uint8_t _MISO = 12);
+
+#if defined GENERIC_DISPLAY
   void begin(uint32_t spi_clock = ILI9341_SPICLOCK,
     uint32_t spi_clock_read = ILI9341_SPICLOCK_READ);
+#else
+  void begin(uint32_t spi_clock = ILI9341_SPICLOCK);
+#endif
 
   void flushSysEx();
   void sendSysEx(uint8_t cmd, uint8_t length, uint8_t* data, bool hasStartEnd);
@@ -311,7 +311,9 @@ protected:
 
   uint8_t _spi_num;         // Which buss is this spi on?
   uint32_t _SPI_CLOCK;      // #define ILI9341_SPICLOCK 30000000
+#if defined GENERIC_DISPLAY
   uint32_t _SPI_CLOCK_READ; // #define ILI9341_SPICLOCK_READ 2000000
+#endif
 
   IMXRT_LPSPI_t* _pimxrt_spi;
 
