@@ -65,7 +65,7 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
     
 [https://www.pcbway.com/setinvite.aspx?inviteid=565384](https://www.pcbway.com/setinvite.aspx?inviteid=565384)
 
-<a href="https://www.pcbway.com/project/shareproject/MicroDexed_Touch_current_version_with_PCM5102_d643a695.html"><img src="https://www.pcbway.com/project/img/images/frompcbway-1220.png" alt="PCB from PCBWay" /></a>
+<a href="https://www.pcbway.com/project/shareproject/MicroDexed_Capacitive_Touch_64970fee.html"><img src="https://www.pcbway.com/project/img/images/frompcbway-1220.png" alt="PCB from PCBWay" /></a>
 
 <br>
 <p>
@@ -73,6 +73,7 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
 ## WIKI
 
 Installation / BOM / Compile Instructions / 3D printer files / FAQ / Changelog / News / Troubleshooting etc.
+<br>
 [https://codeberg.org/positionhigh/MicroDexed-touch/wiki/?action=_pages](https://codeberg.org/positionhigh/MicroDexed-touch/wiki/?action=_pages)
 
 ## License
