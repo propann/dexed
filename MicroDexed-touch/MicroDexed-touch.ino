@@ -938,16 +938,19 @@ void setup()
 
   // Init display / SPI Flash
   SPI.begin();
-
   display.begin();
 
-  //test invert display
+  // invert display colors
 #ifdef CAPACITIVE_TOUCH_DISPLAY
   display.invertDisplay(true);
 #endif
 
 #if defined GENERIC_DISPLAY
   touch.begin();
+#endif
+
+#if defined(PSRAM) && defined(CAPACITIVE_TOUCH_DISPLAY)
+  delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
