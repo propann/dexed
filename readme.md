@@ -4,7 +4,7 @@
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/mdt_capacitive_touch.png" >
 <br>
 
-## This is the MicroDexed with TFT Touch Display, graphic UI and sequencer
+## This is MicroDexed with TFT Touch Display, graphic UI and sequencer
 
 ### This build requires a Teensy 4.1,  PCM5102 Audio Board, 320x240 ILI9341 SPI Display with Capacitive Touchscreen and a serial Flash Chip.
 
