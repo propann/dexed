@@ -7,19 +7,21 @@
 ## This is MicroDexed with TFT Touch Display, graphic UI and sequencer
 
 ### This build requires a Teensy 4.1,  PCM5102 Audio Board, 320x240 ILI9341 SPI Display with Capacitive Touchscreen and a serial Flash Chip.
-
-* The Flash Chip is presoldered on a small PCB attachment for <2$. You do not have to solder small SMD parts to add this to your build.
 <p>
 
 MicroDexed started as a Teensy based, 6-operator-FM-synthesizer. The first generation is still maintained at: [https://codeberg.org/dcoredump/MicroDexed](https://codeberg.org/dcoredump/MicroDexed)
 
 Compared to the first generation, MicroDexed-touch offers a lot of new features/improvements:
 
+* The Flash Chip is presoldered on a small PCB attachment for <2$. You do not have to solder small SMD parts to add this to your build.
+
 * "Large" Graphical Interface, view and edit multiple Parameters in one Screen
 
 * Use external MIDI gear over USB or Mini TRS Jacks (DIN MIDI with adaptor) from 2 x 16 MIDI Channels in the Sequencer
 
 * Map MIDI CC to external MIDI Devices to control Input/Parameters
+
+* Global plate reverb, 2 global delay effects (500ms, with added PSRAM chip 60 seconds or even more)
 
 * Loading, playing and editing multi-sampled instruments or layered instruments in a "live" mode or played by the sequencer. Auto detection sample zones but also can be edited manually. This is early work in progress and currently not stable when using pitch shifting and polyphony
 
