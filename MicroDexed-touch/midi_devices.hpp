@@ -148,6 +148,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
   case midi::NoteOff:
     seq.note_in = inData1;
     seq.note_in_velocity = inData2;
+    seq.stop_screensaver = false;
     handleNoteOff(inChannel, inData1, inData2, 0);
 #ifdef DEBUG
     strcpy(text, "NoteOff");

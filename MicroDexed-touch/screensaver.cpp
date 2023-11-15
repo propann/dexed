@@ -468,8 +468,6 @@ public:
           d_x1 = b1x;
           d_y1 = b1y;
           display.drawLine(d_x1, d_y1, d_x2, d_y2, col);
-
-          check_buttons_screensaver();
         }
       }
     }
