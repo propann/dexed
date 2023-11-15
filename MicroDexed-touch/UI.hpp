@@ -2739,9 +2739,6 @@ extern int getNumTouchPoints();
 
 FLASHMEM void check_buttons_screensaver()
 {
-  ENCODER[ENC_L].update();
-  ENCODER[ENC_R].update();
-
   if (LCDML.BT_checkAny() || (getNumTouchPoints() > 0) || seq.stop_screensaver) // check if any button is pressed (enter, up, down, left, right)
   {
     seq.stop_screensaver = false;
