@@ -6,7 +6,6 @@
 extern ILI9341_t3n display;
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint8_t screensaver_brightness;
-extern void check_buttons_screensaver();
 
 qix_s qix;
 

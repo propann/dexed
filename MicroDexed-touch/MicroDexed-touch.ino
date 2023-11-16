@@ -4503,10 +4503,6 @@ FLASHMEM void check_configuration_sys(void)
   configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
   configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
 
-  // if (configuration.sys.screen_saver_mode == 5) //disable screensaver
-  //  LCDML.SCREEN_disable();
-  //else
-  //configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
   setup_screensaver();
 
   configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 60, 500);

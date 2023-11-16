@@ -95,10 +95,6 @@ extern int temp_int;
 bool isButtonTouched = false;
 int numTouchPoints = 0;
 
-FLASHMEM int getNumTouchPoints() {
-  return numTouchPoints;
-}
-
 static constexpr float KEY_WIDTH_WHITE = 30;
 static constexpr float KEY_HEIGHT_WHITE = 74;
 static constexpr float KEY_SPACING_WHITE = 2;

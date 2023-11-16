@@ -629,6 +629,10 @@ uint8_t last_menu_depth = 99;
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
 LCDMenuLib2 LCDML(LCDML_0, _LCDML_DISP_rows, _LCDML_DISP_cols, lcdml_menu_display, lcdml_menu_clear, lcdml_menu_control);
 
+FLASHMEM void resetScreenTimer() {
+  LCDML.SCREEN_resetTimer();
+}
+
 #include "UI.h"
 
 uint8_t state_dir;
@@ -2735,35 +2739,13 @@ bool flock_running = false;
 
 extern void terrain_init();
 extern void terrain_frame();
-extern int getNumTouchPoints();
-
-FLASHMEM void check_buttons_screensaver()
-{
-  if (LCDML.BT_checkAny() || (getNumTouchPoints() > 0) || seq.stop_screensaver) // check if any button is pressed (enter, up, down, left, right)
-  {
-    seq.stop_screensaver = false;
-    LCDML.SCREEN_resetTimer();
-    //  LCDML.FUNC_goBackToMenu(); // leave this function
-    //   if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
-//if (LCDML.MENU_getLastActiveFunctionID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
- //LCDML.FUNC_goBackToMenu();
- //else
-    if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
-      LCDML.OTHER_jumpToID(LCDML.MENU_getLastActiveFunctionID());
-    else
-      LCDML.FUNC_goBackToMenu(); // leave this function
-  }
-}
 
 // *********************************************************************
 FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 // *********************************************************************
 {
-
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
-    // if (configuration.sys.screen_saver_mode != 5) // 5 == off
-    // {
     encoderDir[ENC_R].reset();
     // remove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
@@ -2784,26 +2766,10 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 
     // setup function
     LCDML.FUNC_setLoopInterval(50); // starts a trigger event for the loop function every 50 milliseconds
-
-    // }
-    // else
-
-    //   if (configuration.sys.screen_saver_mode == 5) //disable screensaver
-    //   {
-    //     seq.stop_screensaver = false;
-    //     LCDML.SCREEN_resetTimer();
-    //   }
-
   }
+
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-
-
-    // if (configuration.sys.screen_saver_mode != 5)// 5 == off
-    // {
-
-    check_buttons_screensaver();
-
     if (remote_active) {
       display.console = true;
     }
@@ -2853,7 +2819,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         screensaver_brightness = screensaver_brightness + 2;
       }
     }
-    //  }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -2863,16 +2828,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       encoderDir[ENC_R].reset();
       LCDML.SCREEN_resetTimer();
       display.fillScreen(COLOR_BACKGROUND);
-
-      // if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
-      //   LCDML.OTHER_jumpToID(LCDML.MENU_getLastActiveFunctionID());
-      // else
-      //  LCDML.FUNC_goBackToMenu(); // leave this function
-
-    //  if ( LCDML.MENU_getLastActiveFunctionID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
-    //    LCDML.MENU_goRoot();
-    //  else
-     //  
     }
   }
 }
@@ -2888,7 +2843,7 @@ FLASHMEM void setup_screensaver(void)
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
     LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-    //  LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
+    LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
   }
 }
 
