@@ -51,7 +51,7 @@
                                                     // 4 = default 
 
     // enable debug strings (remove comments from this line)
-    #define LCDML_DBG                          1
+    //#define LCDML_DBG                          1
 
     // debug special method groups          // enable a flag to control the function call order
     #define LCDML_DBG_function_name_LOOP        0

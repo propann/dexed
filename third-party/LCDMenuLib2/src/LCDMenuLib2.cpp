@@ -2885,14 +2885,13 @@ void    LCDMenuLib2::SCREEN_resetTimer(void)
 {
     // debug information
     DBG_println(LCDML_DBG_function_name_SCREEN, F("LCDML.SCREEN_resetTimer"));
-    Serial.printf("SCREEN_resetTimer: timer: %i, time: %i\n", (millis() - screensaver_timer), screensaver_default_time);
 
     if(FUNC_getID() == OTHER_getIDFromFunction(mFunc_screensaver)) {
         int id = MENU_getLastActiveFunctionID();
         if(id != _LCDML_NO_FUNC) {
             OTHER_jumpToID(id);
         } else {
-            FUNC_goBackToMenu(); // leave this function
+            FUNC_goBackToMenu();
         }
     }
     TIMER_msReset(screensaver_timer);

@@ -168,13 +168,13 @@ extern AudioAnalyzePeak mb_after_l;
 extern AudioAnalyzePeak mb_after_r;
 
 enum ScreenSaver {
-  RANDOM = 0,
-  QIX,
-  CUBE,
-  SWARM,
-  TERRAIN,
-  DEACVIVATED,
-  NUM_SCREENSAVERS
+  RANDOM            = 0,
+  QIX               = 1,
+  CUBE              = 2,
+  SWARM             = 3,
+  TERRAIN           = 4,
+  DEACVIVATED       = 5,
+  NUM_SCREENSAVERS  = 6
 };
 
 extern void InitializeCube();
@@ -2748,7 +2748,7 @@ bool flock_running = false;
 extern void terrain_init();
 extern void terrain_frame();
 
-#define STAY_TIME 500 // * 1000 = 25s
+#define STAY_TIME 1000 // * 1000 = 25s
 #define FADE_TIME 40 // * 40 = 1s
 #define BRIGHTNESS_STEP (255/FADE_TIME)
 #define MAX_COUNTHUE 358
@@ -2817,7 +2817,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       if (screensaver_switcher_timer > STAY_TIME)
       {
         screensaver_switcher_timer = 0;
-
         display.fillScreen(COLOR_BACKGROUND);
 
         randomSeed(analogRead(0));
@@ -2825,7 +2824,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         while(oldScreenSaver == screensaver_mode_active) {
           screensaver_mode_active = random(ScreenSaver::NUM_SCREENSAVERS - 2) + 1; // skip 0, since that is for random
         }
-        Serial.printf("new saver: %i\n", screensaver_mode_active);
         if (screensaver_mode_active == ScreenSaver::CUBE) { // reinit because 3dterrain messes up some of it's vars in same functions
           InitializeCube();
         }
@@ -2870,7 +2868,7 @@ FLASHMEM void setup_screensaver(void)
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
     LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-    LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
+    //LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
   }
 }
 
