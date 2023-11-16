@@ -167,6 +167,16 @@ extern AudioAnalyzePeak mb_before_r;
 extern AudioAnalyzePeak mb_after_l;
 extern AudioAnalyzePeak mb_after_r;
 
+enum ScreenSaver {
+  RANDOM = 0,
+  QIX,
+  CUBE,
+  SWARM,
+  TERRAIN,
+  DEACVIVATED,
+  NUM_SCREENSAVERS
+};
+
 extern void InitializeCube();
 extern void cube_screensaver();
 extern void qix_screensaver();
@@ -2619,9 +2629,6 @@ FLASHMEM void update_display_functions_while_seq_running()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
   {
-
-    if (seq.running)
-      LCDML.SCREEN_resetTimer();
     print_song_playhead();
 
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++) // print currently playing notes/chords/drums
@@ -2733,12 +2740,18 @@ FLASHMEM void update_display_functions_while_seq_running()
 uint8_t screensaver_mode_active;
 int screensaver_switcher_timer;
 uint8_t screensaver_brightness = 255;
+uint16_t screensaver_counthue = 0;
 
 PatternFlock flock_instance;
 bool flock_running = false;
 
 extern void terrain_init();
 extern void terrain_frame();
+
+#define STAY_TIME 500 // * 1000 = 25s
+#define FADE_TIME 40 // * 40 = 1s
+#define BRIGHTNESS_STEP (255/FADE_TIME)
+#define MAX_COUNTHUE 358
 
 // *********************************************************************
 FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
@@ -2751,18 +2764,20 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     LCDML_UNUSED(param);
     display.fillScreen(0);
 
-    qix.counthue = random(358);
+    screensaver_counthue = random(MAX_COUNTHUE);
     InitializeCube();
-    if (configuration.sys.screen_saver_mode == 0) //is random
+    if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     {
       randomSeed(analogRead(0));
-      screensaver_mode_active = random(4) + 1; //skip 0, since that is for random
+      screensaver_mode_active = random(ScreenSaver::NUM_SCREENSAVERS - 2) + 1; // skip 0, since that is for random
     }
-    else
+    else {
       screensaver_mode_active = configuration.sys.screen_saver_mode;
-
-    if (screensaver_mode_active == 4)
+    }
+    
+    if (screensaver_mode_active == ScreenSaver::TERRAIN) {
       terrain_init();
+    }
 
     // setup function
     LCDML.FUNC_setLoopInterval(50); // starts a trigger event for the loop function every 50 milliseconds
@@ -2773,11 +2788,15 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     if (remote_active) {
       display.console = true;
     }
-    if (screensaver_mode_active == 1)
+    screensaver_counthue++;
+    if (screensaver_counthue > MAX_COUNTHUE) {
+      screensaver_counthue = 0;
+    }
+    if (screensaver_mode_active == ScreenSaver::QIX)
       qix_screensaver();
-    else if (screensaver_mode_active == 2)
+    else if (screensaver_mode_active == ScreenSaver::CUBE)
       cube_screensaver();
-    else if (screensaver_mode_active == 3)
+    else if (screensaver_mode_active == ScreenSaver::SWARM)
     {
       if (flock_running == false)
       {
@@ -2787,47 +2806,55 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       else
         flock_instance.drawFrame();
     }
-    else if (screensaver_mode_active == 4)
+    else if (screensaver_mode_active == ScreenSaver::TERRAIN)
     {
       terrain_frame();
     }
 
-    if (configuration.sys.screen_saver_mode == 0)  //random
+    if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     {
       screensaver_switcher_timer++;
-      if (screensaver_switcher_timer > 1000)
+      if (screensaver_switcher_timer > STAY_TIME)
       {
+        screensaver_switcher_timer = 0;
+
         display.fillScreen(COLOR_BACKGROUND);
 
         randomSeed(analogRead(0));
-        screensaver_mode_active = random(4) + 1;
-        // screensaver_mode_active++;
-        if (screensaver_mode_active > 3)  //safety
-          screensaver_mode_active = 1;
-        if (screensaver_mode_active == 2) //is cube - reinit because 3dterrain messes up some of it's vars in same functions
+        uint8_t oldScreenSaver = screensaver_mode_active;
+        while(oldScreenSaver == screensaver_mode_active) {
+          screensaver_mode_active = random(ScreenSaver::NUM_SCREENSAVERS - 2) + 1; // skip 0, since that is for random
+        }
+        Serial.printf("new saver: %i\n", screensaver_mode_active);
+        if (screensaver_mode_active == ScreenSaver::CUBE) { // reinit because 3dterrain messes up some of it's vars in same functions
           InitializeCube();
-        screensaver_switcher_timer = 0;
-        screensaver_brightness = 0;
+        }
+        if (screensaver_mode_active == ScreenSaver::TERRAIN) { // reinit because 3dterrain messes up some of it's vars in same functions
+          terrain_init();
+        }
       }
 
-      if (screensaver_switcher_timer > 950)
-      {
-        screensaver_brightness = (uint8_t)(float)screensaver_brightness / 1.075;
-      }
-      else if (screensaver_brightness < 252)
-      {
-        screensaver_brightness = screensaver_brightness + 2;
+      if (screensaver_switcher_timer > (STAY_TIME - FADE_TIME)) {
+        if(screensaver_brightness > BRIGHTNESS_STEP) {
+          screensaver_brightness -= BRIGHTNESS_STEP;
+        }
+      } else if (screensaver_switcher_timer < FADE_TIME) {
+        if(screensaver_brightness < 255 - BRIGHTNESS_STEP) {
+          screensaver_brightness += BRIGHTNESS_STEP;
+        }
+      } else {
+        screensaver_brightness = 255;
       }
     }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
-    if (configuration.sys.screen_saver_mode != 5)
-    { // 5 == off
+    if (configuration.sys.screen_saver_mode != ScreenSaver::DEACVIVATED)
+    {
       encoderDir[ENC_L].reset();
       encoderDir[ENC_R].reset();
-      LCDML.SCREEN_resetTimer();
       display.fillScreen(COLOR_BACKGROUND);
+      resetScreenTimer();
     }
   }
 }
@@ -19088,7 +19115,6 @@ FLASHMEM void UI_func_volume(uint8_t param)
     old_volume = configuration.sys.vol;
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //LCDML.SCREEN_resetTimer();
     encoderDir[ENC_L].reset();
     back_from_volume = 0;
   }

@@ -6,6 +6,7 @@
 extern ILI9341_t3n display;
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint8_t screensaver_brightness;
+extern uint16_t screensaver_counthue;
 
 qix_s qix;
 
@@ -190,11 +191,7 @@ FLASHMEM void ProjectCube()
 
 FLASHMEM void DrawCube()
 {
-  qix.counthue = qix.counthue + 1;
-  if (qix.counthue > 359)
-    qix.counthue = 0;
-
-  int col = ColorHSV(qix.counthue, 254, screensaver_brightness);
+  int col = ColorHSV(screensaver_counthue, 254, screensaver_brightness);
 
   display.drawLine(b5x_old, b5y_old, b8x_old, b8y_old, COLOR_BACKGROUND);
   display.drawLine(b5x_old, b5y_old, b6x_old, b6y_old, COLOR_BACKGROUND);
@@ -244,14 +241,10 @@ FLASHMEM void DrawCube()
 
 FLASHMEM void qix_screensaver()
 {
-  qix.counthue = qix.counthue + 1;
-  if (qix.counthue > 359 - qix_num)
-    qix.counthue = 0;
-
   display.drawLine(qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1], 0);
   for (uint8_t j = 0; j < qix_num - 1; j++)
   {
-    display.drawLine(qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(qix.counthue + j, 254, screensaver_brightness));
+    display.drawLine(qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(screensaver_counthue + j, 254, screensaver_brightness));
   }
   for (uint8_t j = qix_num - 1; j >= 1; j--)
   {
@@ -442,7 +435,7 @@ public:
           }
           else
           {
-            col = COLOR_SYSTEXT;
+            col = ColorHSV(screensaver_counthue, 254, screensaver_brightness);
             z_shift = 0;
           }
           a1x = x * scl - xoffset;

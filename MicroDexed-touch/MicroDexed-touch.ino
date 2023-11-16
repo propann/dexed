@@ -2198,6 +2198,7 @@ void loop()
     if (seq.running && seq.step != seq.UI_last_seq_step)
     {
       update_display_functions_while_seq_running();
+      resetScreenTimer(); // inhibit screensaver while sequencer is running
     }
 
     // check for value changes, unused voices and CPU overload
