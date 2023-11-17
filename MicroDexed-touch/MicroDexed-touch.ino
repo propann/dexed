@@ -1912,7 +1912,7 @@ void loop()
     screenSaverResetTimer = 0;
     if(wakeScreenFlag) {
       wakeScreenFlag = false;
-      LCDML.SCREEN_resetTimer();
+      resetScreenTimer();
     }
   }
 

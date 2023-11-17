@@ -423,9 +423,13 @@ public:
     int col;
     uint8_t z_shift = 0;
     for (int y = yOffset; y < rows; y++) {
+      // darken at horizon a bit
+      uint8_t brightness = screensaver_brightness;
+      float factor = (y - yOffset) * 0.05;
+      brightness *= min(factor, 1.0);
+
       for (int x = 0; x < cols + 4; x++) {
         for (uint8_t d = 0; d < 2; d++) {
-
           if (d == 0)
           {
             col = COLOR_BACKGROUND;
@@ -433,7 +437,7 @@ public:
           }
           else
           {
-            col = ColorHSV(screensaver_counthue, 254, screensaver_brightness); 
+            col = ColorHSV(screensaver_counthue, 254, brightness); 
             z_shift = 0;
           }
           a1x = x * scl - xoffset;

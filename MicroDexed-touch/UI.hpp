@@ -2738,6 +2738,19 @@ extern void flock_frame();
 
 extern bool wakeScreenFlag;
 
+void resetScreenTimer() {
+  LCDML.SCREEN_resetTimer();
+  // exit screensaver if active
+  if(LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(mFunc_screensaver)) {
+    int id = LCDML.MENU_getLastActiveFunctionID();
+    if(id != _LCDML_NO_FUNC) {
+        LCDML.OTHER_jumpToID(id);
+    } else {
+        LCDML.FUNC_goBackToMenu();
+    }
+  }
+}
+
 // *********************************************************************
 FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 // *********************************************************************
@@ -2773,9 +2786,9 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     if (remote_active) {
       display.console = true;
     }
-    if(wakeScreenFlag) {
+    if(wakeScreenFlag || LCDML.BT_checkAny()) {
       // fast wakeup from MIDI noteOn event and touch presses
-      LCDML.SCREEN_resetTimer();
+      resetScreenTimer();
     }
 
     if (++screensaver_counthue > SCREENSAVER_MAX_COUNTHUE) {
@@ -2841,7 +2854,6 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
       encoderDir[ENC_L].reset();
       encoderDir[ENC_R].reset();
       display.fillScreen(COLOR_BACKGROUND);
-      LCDML.SCREEN_resetTimer();
     }
   }
 }
@@ -4444,6 +4456,7 @@ FLASHMEM void lcdml_menu_control(void)
         }
         else
           LCDML.BT_quit();
+          LCDML.SCREEN_resetTimer(); // reset timer on exiting screensaver through back key
       }
     }
   }
