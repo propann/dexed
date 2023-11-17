@@ -1,7 +1,7 @@
 #ifndef _SCREENSAVER_H
 #define _SCREENSAVER_H
 
-uint8_t const qix_num = 50;
+uint8_t const qix_num = 22;
 
 typedef struct qix_s
 {

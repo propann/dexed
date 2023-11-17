@@ -78,9 +78,9 @@ FLASHMEM void InitializeCube(void)
   a8y = -1;
   a8z = 1;
 
-  x_rot = 0.008;
-  y_rot = 0.01;
-  z_rot = 0.0112;
+  x_rot = 0.016;
+  y_rot = 0.02;
+  z_rot = 0.0224;
 
   return;
 }
@@ -263,12 +263,12 @@ FLASHMEM void qix_screensaver()
         if (v < 0)                  \
         {                           \
             v = 0;                  \
-            dv = ((random(5) / 4.0) + 2);  \
+            dv = (rand() & 6) + 2;  \
         }                           \
         if (v >= max_v)             \
         {                           \
             v = max_v - 1;          \
-            dv = -((random(5) / 4.0) + 2); \
+            dv = -(rand() & 6) - 2; \
         }                           \
     }
   limit(qix.x0s[0], qix.dx0, TFT_HEIGHT);
@@ -414,7 +414,7 @@ public:
     //octaves are the number of "layers" of noise that get computed
     octaves = 3;
   }
-  void draw()
+  void draw(int yOffset)
   {
     float d_x1 = 0;
     float d_x2 = 0;
@@ -422,8 +422,13 @@ public:
     float d_y2 = 0;
     int col;
     uint8_t z_shift = 0;
-    for (int y = 0; y < rows; y++) {
-
+    for (int y = yOffset; y < rows; y++) {
+      // fade into dark at horizon
+      uint16_t brightness = screensaver_brightness;
+      uint16_t brightnessReduction = 10 * (rows - y + yOffset);
+      if(screensaver_brightness > brightnessReduction) {
+        brightness -= brightnessReduction;
+      }
       for (int x = 0; x < cols + 4; x++) {
         for (uint8_t d = 0; d < 2; d++) {
 
@@ -434,7 +439,7 @@ public:
           }
           else
           {
-            col = ColorHSV(screensaver_counthue, 254, screensaver_brightness);
+            col = ColorHSV(screensaver_counthue, 254, brightness); 
             z_shift = 0;
           }
           a1x = x * scl - xoffset;
@@ -468,15 +473,29 @@ public:
 
 extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void draw_logo_instant(uint8_t yoffset);
+extern void splash_draw_header();
+extern void splash_draw_D();
+extern void splash_draw_reverseD();
+extern void splash_draw_X(uint8_t c);
 Terrain  terrain;
+int yTerrainOffset = 0;
 FLASHMEM void terrain_init()
 {
   terrain.setup();
-  draw_logo_instant(20);
+  if(rand() & 0x01) {
+    yTerrainOffset = 3;
+    splash_draw_header();
+    splash_draw_D();
+    splash_draw_X(1);
+    splash_draw_reverseD();
+  } else {
+    yTerrainOffset = 0;
+    draw_logo_instant(20);
+  }
 }
 FLASHMEM void terrain_frame()
 {
-  terrain.draw();
+  terrain.draw(yTerrainOffset);
 }
 
 class PatternFlock {
