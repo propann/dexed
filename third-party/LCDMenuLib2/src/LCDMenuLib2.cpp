@@ -155,53 +155,15 @@ void LCDMenuLib2::loop_control(void)
         if(bitRead(REG_special, _LCDML_REG_special_disable_screensaver) == false && cb_screensaver != NULL)
         {
             // check the state when menu is active do another handling as when a function is active
-            if(actMenu_id != _LCDML_NO_FUNC)
-            {
-                // a menu function is active
-                // when the screensaver function is active do nothing otherwise close the old function and call the screensaver 
-                if(actMenu_cb_function != cb_screensaver) 
-                {
-                    if(TIMER_ms(screensaver_timer, screensaver_default_time))
-                    {  
-                        // close the running function 
-                        FUNC_goBackToMenu(); 
-                        loop_control();
-                        REG_button = 0;
+            if((actMenu_cb_function != cb_screensaver) && TIMER_ms(screensaver_timer, screensaver_default_time)) {
+                // reset all button states
+                REG_button = 0;
 
-                        // debug information
-                        DBG_println(LCDML_DBG_function_name_LOOP, F("LCDML.loop_control - jump to screensaver"));
+                // debug information
+                DBG_println(LCDML_DBG_function_name_LOOP, F("LCDML.loop_control - jump to screensaver"));
 
-                        // open the screensaver                                        
-                        OTHER_jumpToFunc(cb_screensaver);                        
-                    }
-                    else
-                    {
-                        // do nothing
-                    }
-                }
-                else
-                {
-                    // do nothing
-                }
-            }
-            else
-            {
-                // only the menu is active
-                if(TIMER_ms(screensaver_timer, screensaver_default_time))
-                {
-                    // reset all button states
-                    REG_button = 0;
-
-                    // debug information
-                    DBG_println(LCDML_DBG_function_name_LOOP, F("LCDML.loop_control - jump to screensaver"));
-
-                    // open the screensaver
-                    OTHER_jumpToFunc(cb_screensaver);
-                }
-                else
-                {
-                    // do nothing
-                }
+                // open the screensaver
+                OTHER_jumpToFunc(cb_screensaver);
             }
         }
 
@@ -241,27 +203,11 @@ void LCDMenuLib2::loop_control(void)
                                 // switch to new callback function
                                 OTHER_jumpToFunc(ce_cb[i]);
                             }
-                            else
-                            {
-                                // do nothing, function is running
-                            }
                         }                   
                     }
-                    else
-                    {
-                        // do nothing
-                    }
-                }
-                else
-                {
-                    // do nothing
                 }
             }
         }
-        else
-        {
-            // do nothing
-        } 
     }
 }
 
@@ -384,7 +330,7 @@ void LCDMenuLib2::loop_menu(void)
     if(CE_checkAny() == true)
     {     
         // reset screensaver timer
-        SCREEN_resetTimer();        
+        SCREEN_resetTimer();
     }
     
     // ============================================
@@ -2877,16 +2823,15 @@ void    LCDMenuLib2::SCREEN_disable(void)
     cb_screensaver = NULL;
 }
 
-extern void mFunc_screensaver(uint8_t param);
-
 /* ******************************************************************** */
 void    LCDMenuLib2::SCREEN_resetTimer(void)
 /* ******************************************************************** */
 {
     // debug information
     DBG_println(LCDML_DBG_function_name_SCREEN, F("LCDML.SCREEN_resetTimer"));
+    //Serial.printf("SCREEN_resetTimer\n");
 
-    if(FUNC_getID() == OTHER_getIDFromFunction(mFunc_screensaver)) {
+    if(actMenu_cb_function == cb_screensaver) {
         int id = MENU_getLastActiveFunctionID();
         if(id != _LCDML_NO_FUNC) {
             OTHER_jumpToID(id);

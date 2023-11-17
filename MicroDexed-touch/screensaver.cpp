@@ -78,9 +78,9 @@ FLASHMEM void InitializeCube(void)
   a8y = -1;
   a8z = 1;
 
-  x_rot = 0.02;
-  y_rot = 0.025;
-  z_rot = 0.028;
+  x_rot = 0.008;
+  y_rot = 0.01;
+  z_rot = 0.0112;
 
   return;
 }
@@ -244,7 +244,8 @@ FLASHMEM void qix_screensaver()
   display.drawLine(qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1], 0);
   for (uint8_t j = 0; j < qix_num - 1; j++)
   {
-    display.drawLine(qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(screensaver_counthue + j, 254, screensaver_brightness));
+    uint16_t hsv = (screensaver_counthue + 2 * j) % 360;
+    display.drawLine(qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(hsv, 254, screensaver_brightness));
   }
   for (uint8_t j = qix_num - 1; j >= 1; j--)
   {
@@ -262,12 +263,12 @@ FLASHMEM void qix_screensaver()
         if (v < 0)                  \
         {                           \
             v = 0;                  \
-            dv = (rand() & 6) + 4;  \
+            dv = ((random(5) / 4.0) + 2);  \
         }                           \
         if (v >= max_v)             \
         {                           \
             v = max_v - 1;          \
-            dv = -(rand() & 6) - 4; \
+            dv = -((random(5) / 4.0) + 2); \
         }                           \
     }
   limit(qix.x0s[0], qix.dx0, TFT_HEIGHT);
@@ -392,14 +393,13 @@ FLASHMEM void terrain_project(float ax, float ay, float az, float* bx, float* by
 
 }
 using namespace std;
-int  fly = 1;
+int fly = 1;
 
 class Terrain {
 public:
   int cols, rows;
   int scl = 16;
   int xoffset = DISPLAY_WIDTH / 2 + scl * 2;
-  int flying = 0;
   int octaves;
   float yy = 3.0;
   float ang = -0.04;
@@ -420,7 +420,6 @@ public:
     float d_x2 = 0;
     float d_y1 = 0;
     float d_y2 = 0;
-    // float shape = 0;
     int col;
     uint8_t z_shift = 0;
     for (int y = 0; y < rows; y++) {
@@ -464,7 +463,6 @@ public:
       }
     }
     fly = fly + 1;
-
   }
 };
 
@@ -479,5 +477,78 @@ FLASHMEM void terrain_init()
 FLASHMEM void terrain_frame()
 {
   terrain.draw();
-  display.flushSysEx();
+}
+
+class PatternFlock {
+public:
+
+  Boid boids[boidCount];
+  Boid predator;
+  PVector wind;
+
+  int flock_buffer_x[boidCount];
+  int flock_buffer_y[boidCount];
+
+  int predator_buffer_x;
+  int predator_buffer_y;
+
+  void start() {
+      for (int i = 0; i < boidCount; i++) {
+          boids[i] = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
+      }
+      predator = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
+      predator.maxforce *= 1.6666666;
+      predator.maxspeed *= 1.1;
+      predator.neighbordist = 25.0;
+      predator.desiredseparation = 0.0;
+  }
+
+  unsigned int drawFrame() {
+    bool applyWind = random(0, 255) > 250;
+    if (applyWind) {
+        wind.x = Boid::randomf();
+        wind.y = Boid::randomf();
+    }
+
+    int col = ColorHSV(0, 0, screensaver_brightness);
+    for (int i = 0; i < boidCount; i++) {
+        Boid* boid = &boids[i];
+
+        // flee from predator
+        boid->repelForce(predator.location, 25);
+      
+        boid->run(boids);
+        PVector location = boid->location;
+
+        display.fillRect(flock_buffer_x[i], flock_buffer_y[i], 2, 2, COLOR_BACKGROUND);
+        display.fillRect(location.x, location.y, 2, 2, col);
+
+        flock_buffer_x[i] = location.x;
+        flock_buffer_y[i] = location.y;
+
+        if (applyWind) {
+            boid->applyForce(wind);
+            applyWind = false;
+        }
+    }
+
+    predator.run(boids);
+    PVector location = predator.location;
+    display.fillCircle(predator_buffer_x, predator_buffer_y, 3, COLOR_BACKGROUND);
+    display.fillCircle(location.x, location.y, 3, ColorHSV(screensaver_counthue, 255, screensaver_brightness));
+    predator_buffer_x = location.x;
+    predator_buffer_y = location.y;
+
+    return 50;
+  }
+};
+PatternFlock flock_instance;
+
+FLASHMEM void flock_init()
+{
+  flock_instance.start();
+}
+FLASHMEM void flock_frame()
+{
+  flock_instance.drawFrame();
 }

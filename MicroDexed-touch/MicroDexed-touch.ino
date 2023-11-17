@@ -781,7 +781,11 @@ elapsedMillis control_rate;
 elapsedMillis save_sys;
 elapsedMillis record_timer;
 static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
-elapsedMillis touchReadTimer;
+elapsedMillis touchReadTimer = 0;
+
+static constexpr int SCREENSAVER_RESET_RATE_MS = 500;
+elapsedMillis screenSaverResetTimer = 0;
+bool wakeScreenFlag = true;
 
 bool save_sys_flag = false;
 uint8_t active_voices[NUM_DEXED];
@@ -1904,6 +1908,14 @@ void loop()
     updateTouchScreen();
   }
 
+  if (screenSaverResetTimer >= SCREENSAVER_RESET_RATE_MS) {
+    screenSaverResetTimer = 0;
+    if(wakeScreenFlag) {
+      wakeScreenFlag = false;
+      LCDML.SCREEN_resetTimer();
+    }
+  }
+
   if (back_button_touch_page_check_and_init_done == false)
   {
     if (touch_button_back_page() || legacy_touch_button_back_page())
@@ -2198,7 +2210,6 @@ void loop()
     if (seq.running && seq.step != seq.UI_last_seq_step)
     {
       update_display_functions_while_seq_running();
-      resetScreenTimer(); // inhibit screensaver while sequencer is running
     }
 
     // check for value changes, unused voices and CPU overload
@@ -2648,6 +2659,7 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber)
 
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 {
+  wakeScreenFlag = true;
 
   // clash with virtual keyboard - comment out for now:
 

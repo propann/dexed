@@ -103,6 +103,8 @@ static constexpr float KEY_OFFSET_BLACK = 18.7;
 static constexpr float KEY_WIDTH_BLACK = 22;
 static constexpr float KEY_HEIGHT_BLACK = 34;
 
+extern bool wakeScreenFlag;
+
 FLASHMEM void updateTouchScreen() {
   if (remote_touched) {
     numTouchPoints = 1;
@@ -111,8 +113,6 @@ FLASHMEM void updateTouchScreen() {
     // no remote touch, so update to check for real touch
     numTouchPoints = touch.touched();
     if(numTouchPoints > 0) {
-      LCDML.SCREEN_resetTimer();
-
 #if defined GENERIC_DISPLAY
       if (ts.finished_calibration)
       {
@@ -151,6 +151,8 @@ FLASHMEM void updateTouchScreen() {
       isButtonTouched = false;
     }
   }
+  
+  wakeScreenFlag |= (numTouchPoints > 0);
 }
 
 

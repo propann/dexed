@@ -127,8 +127,6 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 
 //void handle_pitchbend((byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event));
 
-extern void resetScreenTimer();
-
 void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event)
 {
 #ifdef DEBUG
@@ -139,7 +137,6 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi
   switch (event)
   {
   case midi::NoteOn:
-    resetScreenTimer();
     seq.note_in = inData1;
     seq.note_in_velocity = inData2;
     handleNoteOn(inChannel, inData1, inData2, 0);

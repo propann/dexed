@@ -173,7 +173,7 @@ enum ScreenSaver {
   CUBE              = 2,
   SWARM             = 3,
   TERRAIN           = 4,
-  DEACVIVATED       = 5,
+  DISABLED          = 5,
   NUM_SCREENSAVERS  = 6
 };
 
@@ -638,10 +638,6 @@ uint8_t last_menu_depth = 99;
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
 LCDMenuLib2 LCDML(LCDML_0, _LCDML_DISP_rows, _LCDML_DISP_cols, lcdml_menu_display, lcdml_menu_clear, lcdml_menu_control);
-
-FLASHMEM void resetScreenTimer() {
-  LCDML.SCREEN_resetTimer();
-}
 
 #include "UI.h"
 
@@ -2742,16 +2738,15 @@ int screensaver_switcher_timer;
 uint8_t screensaver_brightness = 255;
 uint16_t screensaver_counthue = 0;
 
-PatternFlock flock_instance;
 bool flock_running = false;
 
 extern void terrain_init();
 extern void terrain_frame();
 
-#define STAY_TIME 1000 // * 1000 = 25s
-#define FADE_TIME 40 // * 40 = 1s
-#define BRIGHTNESS_STEP (255/FADE_TIME)
-#define MAX_COUNTHUE 358
+extern void flock_init();
+extern void flock_frame();
+
+extern bool wakeScreenFlag;
 
 // *********************************************************************
 FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
@@ -2764,7 +2759,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     LCDML_UNUSED(param);
     display.fillScreen(0);
 
-    screensaver_counthue = random(MAX_COUNTHUE);
+    screensaver_counthue = random(SCREENSAVER_MAX_COUNTHUE);
     InitializeCube();
     if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     {
@@ -2780,7 +2775,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     }
 
     // setup function
-    LCDML.FUNC_setLoopInterval(50); // starts a trigger event for the loop function every 50 milliseconds
+    LCDML.FUNC_setLoopInterval(SCREENSAVER_INTERVAL_MS); // screensaver FUNC_loop() call interval
   }
 
   if (LCDML.FUNC_loop()) // ****** LOOP *********
@@ -2788,8 +2783,12 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     if (remote_active) {
       display.console = true;
     }
-    screensaver_counthue++;
-    if (screensaver_counthue > MAX_COUNTHUE) {
+    if(wakeScreenFlag) {
+      // fast wakeup from MIDI noteOn event and touch presses
+      LCDML.SCREEN_resetTimer();
+    }
+
+    if (++screensaver_counthue > SCREENSAVER_MAX_COUNTHUE) {
       screensaver_counthue = 0;
     }
     if (screensaver_mode_active == ScreenSaver::QIX)
@@ -2800,11 +2799,11 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     {
       if (flock_running == false)
       {
-        flock_instance.start();
+        flock_init();
         flock_running = true;
       }
       else
-        flock_instance.drawFrame();
+        flock_frame();
     }
     else if (screensaver_mode_active == ScreenSaver::TERRAIN)
     {
@@ -2814,7 +2813,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
     if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     {
       screensaver_switcher_timer++;
-      if (screensaver_switcher_timer > STAY_TIME)
+      if (screensaver_switcher_timer > SCREENSAVER_STAY_TIME)
       {
         screensaver_switcher_timer = 0;
         display.fillScreen(COLOR_BACKGROUND);
@@ -2832,13 +2831,13 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
         }
       }
 
-      if (screensaver_switcher_timer > (STAY_TIME - FADE_TIME)) {
-        if(screensaver_brightness > BRIGHTNESS_STEP) {
-          screensaver_brightness -= BRIGHTNESS_STEP;
+      if (screensaver_switcher_timer > (SCREENSAVER_STAY_TIME - SCREENSAVER_FADE_TIME)) {
+        if(screensaver_brightness > SCREENSAVER_BRIGHTNESS_STEP) {
+          screensaver_brightness -= SCREENSAVER_BRIGHTNESS_STEP;
         }
-      } else if (screensaver_switcher_timer < FADE_TIME) {
-        if(screensaver_brightness < 255 - BRIGHTNESS_STEP) {
-          screensaver_brightness += BRIGHTNESS_STEP;
+      } else if (screensaver_switcher_timer < SCREENSAVER_FADE_TIME) {
+        if(screensaver_brightness < 255 - SCREENSAVER_BRIGHTNESS_STEP) {
+          screensaver_brightness += SCREENSAVER_BRIGHTNESS_STEP;
         }
       } else {
         screensaver_brightness = 255;
@@ -2847,12 +2846,12 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
-    if (configuration.sys.screen_saver_mode != ScreenSaver::DEACVIVATED)
+    if (configuration.sys.screen_saver_mode != ScreenSaver::DISABLED)
     {
       encoderDir[ENC_L].reset();
       encoderDir[ENC_R].reset();
       display.fillScreen(COLOR_BACKGROUND);
-      resetScreenTimer();
+      LCDML.SCREEN_resetTimer();
     }
   }
 }
@@ -2860,7 +2859,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 FLASHMEM void setup_screensaver(void)
 {
   configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
-  if (configuration.sys.screen_saver_mode == 5) // off
+  if (configuration.sys.screen_saver_mode == ScreenSaver::DISABLED) // off
   {
     LCDML.SCREEN_disable();
   }
@@ -16651,17 +16650,17 @@ FLASHMEM void UI_func_midi_channels(uint8_t param)
 
 FLASHMEM void print_screensaver_mode()
 {
-  if (configuration.sys.screen_saver_mode == 0)
+  if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     display.print(F("RANDOM "));
-  else if (configuration.sys.screen_saver_mode == 1)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::QIX)
     display.print(F("QIX    "));
-  else if (configuration.sys.screen_saver_mode == 2)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::CUBE)
     display.print(F("CUBE   "));
-  else if (configuration.sys.screen_saver_mode == 3)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::SWARM)
     display.print(F("SWARM  "));
-  else if (configuration.sys.screen_saver_mode == 4)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::TERRAIN)
     display.print(F("TERRAIN"));
-  else if (configuration.sys.screen_saver_mode == 5)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::DISABLED)
     display.print(F("OFF    "));
 
   else
