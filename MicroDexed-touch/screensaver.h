@@ -1,6 +1,16 @@
 #ifndef _SCREENSAVER_H
 #define _SCREENSAVER_H
 
+enum ScreenSaver {
+  RANDOM            = 0,
+  QIX               = 1,
+  CUBE              = 2,
+  SWARM             = 3,
+  TERRAIN           = 4,
+  DISABLED          = 5,
+  NUM_SCREENSAVERS  = 6
+};
+
 uint8_t const qix_num = 22;
 
 typedef struct qix_s

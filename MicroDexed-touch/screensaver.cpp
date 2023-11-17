@@ -423,12 +423,6 @@ public:
     int col;
     uint8_t z_shift = 0;
     for (int y = yOffset; y < rows; y++) {
-      // fade into dark at horizon
-      uint16_t brightness = screensaver_brightness;
-      uint16_t brightnessReduction = 10 * (rows - y + yOffset);
-      if(screensaver_brightness > brightnessReduction) {
-        brightness -= brightnessReduction;
-      }
       for (int x = 0; x < cols + 4; x++) {
         for (uint8_t d = 0; d < 2; d++) {
 
@@ -439,7 +433,7 @@ public:
           }
           else
           {
-            col = ColorHSV(screensaver_counthue, 254, brightness); 
+            col = ColorHSV(screensaver_counthue, 254, screensaver_brightness); 
             z_shift = 0;
           }
           a1x = x * scl - xoffset;

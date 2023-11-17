@@ -167,16 +167,6 @@ extern AudioAnalyzePeak mb_before_r;
 extern AudioAnalyzePeak mb_after_l;
 extern AudioAnalyzePeak mb_after_r;
 
-enum ScreenSaver {
-  RANDOM            = 0,
-  QIX               = 1,
-  CUBE              = 2,
-  SWARM             = 3,
-  TERRAIN           = 4,
-  DISABLED          = 5,
-  NUM_SCREENSAVERS  = 6
-};
-
 extern void InitializeCube();
 extern void cube_screensaver();
 extern void qix_screensaver();
