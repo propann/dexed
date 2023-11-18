@@ -105,3 +105,9 @@ LCDML_addAdvanced(64, LCDML_0, 19, COND_hide, "SD_NOT_FOUND", UI_func_sd_content
 //LCDML_add(64, LCDML_0,  19, "SD_NOT_FOUND", UI_func_sd_content_not_found);
 #define _LCDML_DISP_cnt 64
 #endif
+
+#define SCREENSAVER_INTERVAL_MS 40  // 25Hz refresh rate
+#define SCREENSAVER_STAY_TIME 1500  // 60s @ 25Hz rate
+#define SCREENSAVER_FADE_TIME 25    // 1s @ 25Hz rate
+#define SCREENSAVER_BRIGHTNESS_STEP (255/SCREENSAVER_FADE_TIME)
+#define SCREENSAVER_MAX_COUNTHUE 359

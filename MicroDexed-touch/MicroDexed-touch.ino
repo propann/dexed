@@ -781,7 +781,11 @@ elapsedMillis control_rate;
 elapsedMillis save_sys;
 elapsedMillis record_timer;
 static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
-elapsedMillis touchReadTimer;
+elapsedMillis touchReadTimer = 0;
+
+static constexpr int SCREENSAVER_RESET_RATE_MS = 500;
+elapsedMillis screenSaverResetTimer = 0;
+bool wakeScreenFlag = true;
 
 bool save_sys_flag = false;
 uint8_t active_voices[NUM_DEXED];
@@ -1904,6 +1908,14 @@ void loop()
     updateTouchScreen();
   }
 
+  if (screenSaverResetTimer >= SCREENSAVER_RESET_RATE_MS) {
+    screenSaverResetTimer = 0;
+    if(wakeScreenFlag) {
+      wakeScreenFlag = false;
+      resetScreenTimer();
+    }
+  }
+
   if (back_button_touch_page_check_and_init_done == false)
   {
     if (touch_button_back_page() || legacy_touch_button_back_page())
@@ -2647,6 +2659,7 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber)
 
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 {
+  wakeScreenFlag = true;
 
   // clash with virtual keyboard - comment out for now:
 
@@ -4503,10 +4516,6 @@ FLASHMEM void check_configuration_sys(void)
   configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
   configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
 
-  // if (configuration.sys.screen_saver_mode == 5) //disable screensaver
-  //  LCDML.SCREEN_disable();
-  //else
-  //configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
   setup_screensaver();
 
   configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed, 60, 500);

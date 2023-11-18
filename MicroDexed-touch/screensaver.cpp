@@ -6,7 +6,7 @@
 extern ILI9341_t3n display;
 extern uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 extern uint8_t screensaver_brightness;
-extern void check_buttons_screensaver();
+extern uint16_t screensaver_counthue;
 
 qix_s qix;
 
@@ -78,9 +78,9 @@ FLASHMEM void InitializeCube(void)
   a8y = -1;
   a8z = 1;
 
-  x_rot = 0.02;
-  y_rot = 0.025;
-  z_rot = 0.028;
+  x_rot = 0.016;
+  y_rot = 0.02;
+  z_rot = 0.0224;
 
   return;
 }
@@ -191,11 +191,7 @@ FLASHMEM void ProjectCube()
 
 FLASHMEM void DrawCube()
 {
-  qix.counthue = qix.counthue + 1;
-  if (qix.counthue > 359)
-    qix.counthue = 0;
-
-  int col = ColorHSV(qix.counthue, 254, screensaver_brightness);
+  int col = ColorHSV(screensaver_counthue, 254, screensaver_brightness);
 
   display.drawLine(b5x_old, b5y_old, b8x_old, b8y_old, COLOR_BACKGROUND);
   display.drawLine(b5x_old, b5y_old, b6x_old, b6y_old, COLOR_BACKGROUND);
@@ -245,14 +241,11 @@ FLASHMEM void DrawCube()
 
 FLASHMEM void qix_screensaver()
 {
-  qix.counthue = qix.counthue + 1;
-  if (qix.counthue > 359 - qix_num)
-    qix.counthue = 0;
-
   display.drawLine(qix.x0s[qix_num - 1], qix.y0s[qix_num - 1], qix.x1s[qix_num - 1], qix.y1s[qix_num - 1], 0);
   for (uint8_t j = 0; j < qix_num - 1; j++)
   {
-    display.drawLine(qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(qix.counthue + j, 254, screensaver_brightness));
+    uint16_t hsv = (screensaver_counthue + 2 * j) % 360;
+    display.drawLine(qix.x0s[j], qix.y0s[j], qix.x1s[j], qix.y1s[j], ColorHSV(hsv, 254, screensaver_brightness));
   }
   for (uint8_t j = qix_num - 1; j >= 1; j--)
   {
@@ -270,12 +263,12 @@ FLASHMEM void qix_screensaver()
         if (v < 0)                  \
         {                           \
             v = 0;                  \
-            dv = (rand() & 6) + 4;  \
+            dv = (rand() & 6) + 2;  \
         }                           \
         if (v >= max_v)             \
         {                           \
             v = max_v - 1;          \
-            dv = -(rand() & 6) - 4; \
+            dv = -(rand() & 6) - 2; \
         }                           \
     }
   limit(qix.x0s[0], qix.dx0, TFT_HEIGHT);
@@ -400,14 +393,13 @@ FLASHMEM void terrain_project(float ax, float ay, float az, float* bx, float* by
 
 }
 using namespace std;
-int  fly = 1;
+int fly = 1;
 
 class Terrain {
 public:
   int cols, rows;
   int scl = 16;
   int xoffset = DISPLAY_WIDTH / 2 + scl * 2;
-  int flying = 0;
   int octaves;
   float yy = 3.0;
   float ang = -0.04;
@@ -422,20 +414,22 @@ public:
     //octaves are the number of "layers" of noise that get computed
     octaves = 3;
   }
-  void draw()
+  void draw(int yOffset)
   {
     float d_x1 = 0;
     float d_x2 = 0;
     float d_y1 = 0;
     float d_y2 = 0;
-    // float shape = 0;
     int col;
     uint8_t z_shift = 0;
-    for (int y = 0; y < rows; y++) {
+    for (int y = yOffset; y < rows; y++) {
+      // darken at horizon a bit
+      uint8_t brightness = screensaver_brightness;
+      float factor = (y - yOffset) * 0.05;
+      brightness *= min(factor, 1.0);
 
       for (int x = 0; x < cols + 4; x++) {
         for (uint8_t d = 0; d < 2; d++) {
-
           if (d == 0)
           {
             col = COLOR_BACKGROUND;
@@ -443,7 +437,7 @@ public:
           }
           else
           {
-            col = COLOR_SYSTEXT;
+            col = ColorHSV(screensaver_counthue, 254, brightness); 
             z_shift = 0;
           }
           a1x = x * scl - xoffset;
@@ -472,20 +466,106 @@ public:
       }
     }
     fly = fly + 1;
-
   }
 };
 
 extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void draw_logo_instant(uint8_t yoffset);
+extern void splash_draw_header();
+extern void splash_draw_D();
+extern void splash_draw_reverseD();
+extern void splash_draw_X(uint8_t c);
 Terrain  terrain;
+int yTerrainOffset = 0;
 FLASHMEM void terrain_init()
 {
   terrain.setup();
-  draw_logo_instant(20);
+  if(rand() & 0x01) {
+    yTerrainOffset = 3;
+    splash_draw_header();
+    splash_draw_D();
+    splash_draw_X(1);
+    splash_draw_reverseD();
+  } else {
+    yTerrainOffset = 0;
+    draw_logo_instant(20);
+  }
 }
 FLASHMEM void terrain_frame()
 {
-  terrain.draw();
-  display.flushSysEx();
+  terrain.draw(yTerrainOffset);
+}
+
+class PatternFlock {
+public:
+
+  Boid boids[boidCount];
+  Boid predator;
+  PVector wind;
+
+  int flock_buffer_x[boidCount];
+  int flock_buffer_y[boidCount];
+
+  int predator_buffer_x;
+  int predator_buffer_y;
+
+  void start() {
+      for (int i = 0; i < boidCount; i++) {
+          boids[i] = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
+      }
+      predator = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
+      predator.maxforce *= 1.6666666;
+      predator.maxspeed *= 1.1;
+      predator.neighbordist = 25.0;
+      predator.desiredseparation = 0.0;
+  }
+
+  unsigned int drawFrame() {
+    bool applyWind = random(0, 255) > 250;
+    if (applyWind) {
+        wind.x = Boid::randomf();
+        wind.y = Boid::randomf();
+    }
+
+    int col = ColorHSV(0, 0, screensaver_brightness);
+    for (int i = 0; i < boidCount; i++) {
+        Boid* boid = &boids[i];
+
+        // flee from predator
+        boid->repelForce(predator.location, 25);
+      
+        boid->run(boids);
+        PVector location = boid->location;
+
+        display.fillRect(flock_buffer_x[i], flock_buffer_y[i], 2, 2, COLOR_BACKGROUND);
+        display.fillRect(location.x, location.y, 2, 2, col);
+
+        flock_buffer_x[i] = location.x;
+        flock_buffer_y[i] = location.y;
+
+        if (applyWind) {
+            boid->applyForce(wind);
+            applyWind = false;
+        }
+    }
+
+    predator.run(boids);
+    PVector location = predator.location;
+    display.fillCircle(predator_buffer_x, predator_buffer_y, 3, COLOR_BACKGROUND);
+    display.fillCircle(location.x, location.y, 3, ColorHSV(screensaver_counthue, 255, screensaver_brightness));
+    predator_buffer_x = location.x;
+    predator_buffer_y = location.y;
+
+    return 50;
+  }
+};
+PatternFlock flock_instance;
+
+FLASHMEM void flock_init()
+{
+  flock_instance.start();
+}
+FLASHMEM void flock_frame()
+{
+  flock_instance.drawFrame();
 }

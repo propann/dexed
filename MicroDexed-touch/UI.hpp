@@ -2615,9 +2615,6 @@ FLASHMEM void update_display_functions_while_seq_running()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
   {
-
-    if (seq.running)
-      LCDML.SCREEN_resetTimer();
     print_song_playhead();
 
     for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++) // print currently playing notes/chords/drums
@@ -2729,29 +2726,28 @@ FLASHMEM void update_display_functions_while_seq_running()
 uint8_t screensaver_mode_active;
 int screensaver_switcher_timer;
 uint8_t screensaver_brightness = 255;
+uint16_t screensaver_counthue = 0;
 
-PatternFlock flock_instance;
 bool flock_running = false;
 
 extern void terrain_init();
 extern void terrain_frame();
-extern int getNumTouchPoints();
 
-FLASHMEM void check_buttons_screensaver()
-{
-  if (LCDML.BT_checkAny() || (getNumTouchPoints() > 0) || seq.stop_screensaver) // check if any button is pressed (enter, up, down, left, right)
-  {
-    seq.stop_screensaver = false;
-    LCDML.SCREEN_resetTimer();
-    //  LCDML.FUNC_goBackToMenu(); // leave this function
-    //   if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
-//if (LCDML.MENU_getLastActiveFunctionID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
- //LCDML.FUNC_goBackToMenu();
- //else
-    if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
-      LCDML.OTHER_jumpToID(LCDML.MENU_getLastActiveFunctionID());
-    else
-      LCDML.FUNC_goBackToMenu(); // leave this function
+extern void flock_init();
+extern void flock_frame();
+
+extern bool wakeScreenFlag;
+
+void resetScreenTimer() {
+  LCDML.SCREEN_resetTimer();
+  // exit screensaver if active
+  if(LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(mFunc_screensaver)) {
+    int id = LCDML.MENU_getLastActiveFunctionID();
+    if(id != _LCDML_NO_FUNC) {
+        LCDML.OTHER_jumpToID(id);
+    } else {
+        LCDML.FUNC_goBackToMenu();
+    }
   }
 }
 
@@ -2759,120 +2755,105 @@ FLASHMEM void check_buttons_screensaver()
 FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 // *********************************************************************
 {
-
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
-    // if (configuration.sys.screen_saver_mode != 5) // 5 == off
-    // {
     encoderDir[ENC_R].reset();
     // remove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
     display.fillScreen(0);
 
-    qix.counthue = random(358);
+    screensaver_counthue = random(SCREENSAVER_MAX_COUNTHUE);
     InitializeCube();
-    if (configuration.sys.screen_saver_mode == 0) //is random
+    if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     {
       randomSeed(analogRead(0));
-      screensaver_mode_active = random(4) + 1; //skip 0, since that is for random
+      screensaver_mode_active = random(ScreenSaver::NUM_SCREENSAVERS - 2) + 1; // skip 0, since that is for random
     }
-    else
+    else {
       screensaver_mode_active = configuration.sys.screen_saver_mode;
-
-    if (screensaver_mode_active == 4)
+    }
+    
+    if (screensaver_mode_active == ScreenSaver::TERRAIN) {
       terrain_init();
+    }
 
     // setup function
-    LCDML.FUNC_setLoopInterval(50); // starts a trigger event for the loop function every 50 milliseconds
-
-    // }
-    // else
-
-    //   if (configuration.sys.screen_saver_mode == 5) //disable screensaver
-    //   {
-    //     seq.stop_screensaver = false;
-    //     LCDML.SCREEN_resetTimer();
-    //   }
-
+    LCDML.FUNC_setLoopInterval(SCREENSAVER_INTERVAL_MS); // screensaver FUNC_loop() call interval
   }
+
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-
-
-    // if (configuration.sys.screen_saver_mode != 5)// 5 == off
-    // {
-
-    check_buttons_screensaver();
-
     if (remote_active) {
       display.console = true;
     }
-    if (screensaver_mode_active == 1)
+    if(wakeScreenFlag || LCDML.BT_checkAny()) {
+      // fast wakeup from MIDI noteOn event and touch presses
+      resetScreenTimer();
+    }
+
+    if (++screensaver_counthue > SCREENSAVER_MAX_COUNTHUE) {
+      screensaver_counthue = 0;
+    }
+    if (screensaver_mode_active == ScreenSaver::QIX)
       qix_screensaver();
-    else if (screensaver_mode_active == 2)
+    else if (screensaver_mode_active == ScreenSaver::CUBE)
       cube_screensaver();
-    else if (screensaver_mode_active == 3)
+    else if (screensaver_mode_active == ScreenSaver::SWARM)
     {
       if (flock_running == false)
       {
-        flock_instance.start();
+        flock_init();
         flock_running = true;
       }
       else
-        flock_instance.drawFrame();
+        flock_frame();
     }
-    else if (screensaver_mode_active == 4)
+    else if (screensaver_mode_active == ScreenSaver::TERRAIN)
     {
       terrain_frame();
     }
 
-    if (configuration.sys.screen_saver_mode == 0)  //random
+    if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     {
       screensaver_switcher_timer++;
-      if (screensaver_switcher_timer > 1000)
+      if (screensaver_switcher_timer > SCREENSAVER_STAY_TIME)
       {
+        screensaver_switcher_timer = 0;
         display.fillScreen(COLOR_BACKGROUND);
 
         randomSeed(analogRead(0));
-        screensaver_mode_active = random(4) + 1;
-        // screensaver_mode_active++;
-        if (screensaver_mode_active > 3)  //safety
-          screensaver_mode_active = 1;
-        if (screensaver_mode_active == 2) //is cube - reinit because 3dterrain messes up some of it's vars in same functions
+        uint8_t oldScreenSaver = screensaver_mode_active;
+        while(oldScreenSaver == screensaver_mode_active) {
+          screensaver_mode_active = random(ScreenSaver::NUM_SCREENSAVERS - 2) + 1; // skip 0, since that is for random
+        }
+        if (screensaver_mode_active == ScreenSaver::CUBE) { // reinit because 3dterrain messes up some of it's vars in same functions
           InitializeCube();
-        screensaver_switcher_timer = 0;
-        screensaver_brightness = 0;
+        }
+        if (screensaver_mode_active == ScreenSaver::TERRAIN) { // reinit because 3dterrain messes up some of it's vars in same functions
+          terrain_init();
+        }
       }
 
-      if (screensaver_switcher_timer > 950)
-      {
-        screensaver_brightness = (uint8_t)(float)screensaver_brightness / 1.075;
-      }
-      else if (screensaver_brightness < 252)
-      {
-        screensaver_brightness = screensaver_brightness + 2;
+      if (screensaver_switcher_timer > (SCREENSAVER_STAY_TIME - SCREENSAVER_FADE_TIME)) {
+        if(screensaver_brightness > SCREENSAVER_BRIGHTNESS_STEP) {
+          screensaver_brightness -= SCREENSAVER_BRIGHTNESS_STEP;
+        }
+      } else if (screensaver_switcher_timer < SCREENSAVER_FADE_TIME) {
+        if(screensaver_brightness < 255 - SCREENSAVER_BRIGHTNESS_STEP) {
+          screensaver_brightness += SCREENSAVER_BRIGHTNESS_STEP;
+        }
+      } else {
+        screensaver_brightness = 255;
       }
     }
-    //  }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
-    if (configuration.sys.screen_saver_mode != 5)
-    { // 5 == off
+    if (configuration.sys.screen_saver_mode != ScreenSaver::DISABLED)
+    {
       encoderDir[ENC_L].reset();
       encoderDir[ENC_R].reset();
-      LCDML.SCREEN_resetTimer();
       display.fillScreen(COLOR_BACKGROUND);
-
-      // if (LCDML.MENU_getLastActiveFunctionID() < _LCDML_DISP_cnt - 1 && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
-      //   LCDML.OTHER_jumpToID(LCDML.MENU_getLastActiveFunctionID());
-      // else
-      //  LCDML.FUNC_goBackToMenu(); // leave this function
-
-    //  if ( LCDML.MENU_getLastActiveFunctionID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
-    //    LCDML.MENU_goRoot();
-    //  else
-     //  
     }
   }
 }
@@ -2880,7 +2861,7 @@ FLASHMEM void mFunc_screensaver(uint8_t param) // screensaver
 FLASHMEM void setup_screensaver(void)
 {
   configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start, 1, 59);
-  if (configuration.sys.screen_saver_mode == 5) // off
+  if (configuration.sys.screen_saver_mode == ScreenSaver::DISABLED) // off
   {
     LCDML.SCREEN_disable();
   }
@@ -2888,7 +2869,7 @@ FLASHMEM void setup_screensaver(void)
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
     LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-    //  LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
+    //LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
   }
 }
 
@@ -4475,6 +4456,7 @@ FLASHMEM void lcdml_menu_control(void)
         }
         else
           LCDML.BT_quit();
+          LCDML.SCREEN_resetTimer(); // reset timer on exiting screensaver through back key
       }
     }
   }
@@ -16671,17 +16653,17 @@ FLASHMEM void UI_func_midi_channels(uint8_t param)
 
 FLASHMEM void print_screensaver_mode()
 {
-  if (configuration.sys.screen_saver_mode == 0)
+  if (configuration.sys.screen_saver_mode == ScreenSaver::RANDOM)
     display.print(F("RANDOM "));
-  else if (configuration.sys.screen_saver_mode == 1)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::QIX)
     display.print(F("QIX    "));
-  else if (configuration.sys.screen_saver_mode == 2)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::CUBE)
     display.print(F("CUBE   "));
-  else if (configuration.sys.screen_saver_mode == 3)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::SWARM)
     display.print(F("SWARM  "));
-  else if (configuration.sys.screen_saver_mode == 4)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::TERRAIN)
     display.print(F("TERRAIN"));
-  else if (configuration.sys.screen_saver_mode == 5)
+  else if (configuration.sys.screen_saver_mode == ScreenSaver::DISABLED)
     display.print(F("OFF    "));
 
   else
@@ -19133,7 +19115,6 @@ FLASHMEM void UI_func_volume(uint8_t param)
     old_volume = configuration.sys.vol;
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    //LCDML.SCREEN_resetTimer();
     encoderDir[ENC_L].reset();
     back_from_volume = 0;
   }

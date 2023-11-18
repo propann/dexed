@@ -1,13 +1,22 @@
 #ifndef _SCREENSAVER_H
 #define _SCREENSAVER_H
 
+enum ScreenSaver {
+  RANDOM            = 0,
+  QIX               = 1,
+  CUBE              = 2,
+  SWARM             = 3,
+  TERRAIN           = 4,
+  DISABLED          = 5,
+  NUM_SCREENSAVERS  = 6
+};
+
 uint8_t const qix_num = 22;
 
 typedef struct qix_s
 {
-    int counthue;
-    int x0s[qix_num], y0s[qix_num], x1s[qix_num], y1s[qix_num];
-    int dx0 = 2, dx1 = 3, dy0 = 3, dy1 = 2;
+    float x0s[qix_num], y0s[qix_num], x1s[qix_num], y1s[qix_num];
+    float dx0 = 3.3, dx1 = 4.4, dy0 = 4.8, dy1 = 1.3;
 } qix_t;
 
 #endif
@@ -409,69 +418,5 @@ public:
 
 };
 
-class PatternFlock {
-public:
-
-    Boid boids[boidCount];
-    Boid predator;
-    PVector wind;
-
-    int flock_buffer_x[boidCount];
-    int flock_buffer_y[boidCount];
-
-    int predator_buffer_x;
-    int predator_buffer_y;
-
-    void start() {
-        for (int i = 0; i < boidCount; i++) {
-            boids[i] = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
-        }
-        predator = Boid(random(DISPLAY_WIDTH), random(DISPLAY_HEIGHT));
-        predator.maxforce *= 1.6666666;
-        predator.maxspeed *= 1.1;
-        predator.neighbordist = 25.0;
-        predator.desiredseparation = 0.0;
-    }
-
-    unsigned int drawFrame() {
-
-        bool applyWind = random(0, 255) > 250;
-        if (applyWind) {
-            wind.x = Boid::randomf();
-            wind.y = Boid::randomf();
-        }
-
-        int col = ColorHSV(0, 0, screensaver_brightness);
-        for (int i = 0; i < boidCount; i++) {
-            Boid* boid = &boids[i];
-
-                // flee from predator
-                boid->repelForce(predator.location, 25);
-          
-            boid->run(boids);
-            PVector location = boid->location;
-
-            display.fillRect(flock_buffer_x[i], flock_buffer_y[i], 2, 2, COLOR_BACKGROUND);
-            display.fillRect(location.x, location.y, 2, 2, col);
-
-            flock_buffer_x[i] = location.x;
-            flock_buffer_y[i] = location.y;
-
-            if (applyWind) {
-                boid->applyForce(wind);
-                applyWind = false;
-            }
-        }
-
-            predator.run(boids);
-            PVector location = predator.location;
-            display.fillRect(predator_buffer_x, predator_buffer_y, 2, 2, COLOR_BACKGROUND);
-            display.fillRect(location.x, location.y, 2, 2, ColorHSV(0, 255, screensaver_brightness));
-            predator_buffer_x = location.x;
-            predator_buffer_y = location.y;
-
-        return 50;
-    }
-};
 
 
