@@ -123,7 +123,7 @@ bool sysinfo_page_at_bootup_shown_once = false;
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 
 #if defined GENERIC_DISPLAY 
-XPT2046_Touchscreen touch(TFT_TOUCH_CS); 
+XPT2046_Touchscreen touch(TFT_TOUCH_CS);
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -1910,7 +1910,7 @@ void loop()
 
   if (screenSaverResetTimer >= SCREENSAVER_RESET_RATE_MS) {
     screenSaverResetTimer = 0;
-    if(wakeScreenFlag) {
+    if (wakeScreenFlag) {
       wakeScreenFlag = false;
       resetScreenTimer();
     }
@@ -4384,15 +4384,36 @@ FLASHMEM void set_drums_volume(float vol)
   master_mixer_l.gain(MASTER_MIX_CH_DRUMS, vol);
 }
 
+static float VolumeToAmplification(int volume)
+//Volume in the Range 0..100
+{
+  /*
+     https://www.dr-lex.be/info-stuff/volumecontrols.html
+
+     Dynamic range   a           b       Approximation
+     50 dB         3.1623e-3     5.757       x^3
+     60 dB         1e-3          6.908       x^4
+     70 dB         3.1623e-4     8.059       x^5
+     80 dB         1e-4          9.210       x^6
+     90 dB         3.1623e-5     10.36       x^6
+     100 dB        1e-5          11.51       x^7
+ */
+
+  float x = volume / 100.0f;
+
+  float a = 0.00397; //2
+  float b = 5.53;
+  float ampl = a * expf(b * x);
+  if (x < 0.001f) ampl = 0.0;
+
+  return ampl;
+}
+
 FLASHMEM void set_volume(uint8_t v, uint8_t m)
 {
-  float tmp_v;
-
-  configuration.sys.vol = v;
 
   if (configuration.sys.vol > 100)
     configuration.sys.vol = 100;
-  tmp_v = float(v);
 
   configuration.sys.mono = m;
 
@@ -4403,8 +4424,11 @@ FLASHMEM void set_volume(uint8_t v, uint8_t m)
   LOG.println(volume_transform(tmp_v / 100.0));
 #endif
 
-  volume_r.gain(volume_transform(tmp_v / 100.0) * VOLUME_MULTIPLIER);
-  volume_l.gain(volume_transform(tmp_v / 100.0) * VOLUME_MULTIPLIER);
+  // volume_r.gain(volume_transform(tmp_v / 100.0) * VOLUME_MULTIPLIER);
+  // volume_l.gain(volume_transform(tmp_v / 100.0) * VOLUME_MULTIPLIER);
+
+  volume_r.gain(VolumeToAmplification(configuration.sys.vol));
+  volume_l.gain(VolumeToAmplification(configuration.sys.vol));
 
   switch (m)
   {

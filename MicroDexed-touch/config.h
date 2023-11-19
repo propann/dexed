@@ -736,8 +736,6 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define STARTUP_NUM_MAX 255
 #define STARTUP_NUM_DEFAULT 0
 
-#define VOLUME_MULTIPLIER 1.4
-
 // Buffer-size define for load/save configuration as JSON
 #define JSON_BUFFER_SIZE 12000
 
