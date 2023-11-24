@@ -183,11 +183,7 @@ void playNextEvent(void) {
     }
     playIndex++;
     unsigned long timeToNextEvent = midiEvents[playIndex].time - midiEvents[playIndex - 1].time;
-    if(timeToNextEvent >= 0) {
-      loadNextEvent(timeToNextEvent);
-    } else {
-      Serial.printf("NOPE\n");
-    }
+    loadNextEvent(timeToNextEvent);
   }
 }
 
