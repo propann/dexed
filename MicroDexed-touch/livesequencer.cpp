@@ -29,15 +29,15 @@ std::string LiveSequencer::getName(midi::MidiType event) {
   }
 }
 
-void LiveSequencer::printEvent(unsigned int i) {
-  MidiEvent e = midiEvents[i];
+void LiveSequencer::printEvent(int i, MidiEvent e) {
   Serial.printf("[%i]: %i, %s, %i, %i\n", i, e.time, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
 }
 
 void LiveSequencer::printEvents() {
-  Serial.printf("--- %i events:\n", eventsSize);
-  for(unsigned int i = 0; i < eventsSize; i++) {
-    printEvent(i);
+  Serial.printf("--- %i events:\n", events.size());
+  int i = 0;
+  for(auto &e : events) {
+    printEvent(i++, e);
   }
 }
 
@@ -45,35 +45,34 @@ void LiveSequencer::addEvent(midi::MidiType event, uint8_t note, uint8_t velocit
   if(seq.running) {
     unsigned long now = patternTimer;
     static constexpr midi::Channel channel = 16;
-    MidiEvent e = { now, channel, event, note, velocity };
+    
+
+    for (auto it = events.begin(); it != events.end(); ++it) {
+      if(it->time < now) {
+        //events.erase(it);
+      }
+    }
 
     bool clearAll = false;
     clearAll |= note == 49;
-    if(eventsSize > 0) {
-      clearAll |= now < midiEvents[eventsSize - 1].time;
-    }
+   
     if(clearAll) {
-      memset(midiEvents, 0, EVENTS_SIZE * sizeof(MidiEvent));
+      events.clear();
+      events.shrink_to_fit();
       Serial.printf("clear map\n");
-      eventsSize = 0;
       liveTimer.stop();
       if(event == midi::NoteOff) {
         return;
       }
     }
-    if(eventsSize == 0 && event == midi::NoteOff) {
+    if(events.size() == 0 && event == midi::NoteOff) {
       return;
     }
-    if(eventsSize < EVENTS_SIZE) {
-      midiEvents[eventsSize] = e;
-      eventsSize++;
-    } else {
-      Serial.printf("events buffer full! dropping...\n");
-    }
+    MidiEvent e = { now, channel, event, note, velocity };
+    events.push_back(e);
+    
     printEvents();
     
-  } else {
-    //Serial.printf("ignoring event since not running...\n");
   }
 }
 
@@ -86,11 +85,11 @@ void LiveSequencer::loadNextEvent(unsigned long timeMs) {
 }
 
 void LiveSequencer::playNextEvent(void) {
-  if(eventsSize > playIndex) {
+  if(events.size() > playIndex) {
     unsigned long now = patternTimer;
     Serial.printf("PLAY: ");
-    MidiEvent e = midiEvents[playIndex];
-    printEvent(playIndex);
+    MidiEvent e = events.at(playIndex);
+    printEvent(playIndex, e);
     switch(e.event) {
     case midi::NoteOn:
       handleNoteOn(e.channel, e.note_in, e.note_in_velocity, 0);
@@ -103,19 +102,20 @@ void LiveSequencer::playNextEvent(void) {
     default:
       break;
     }
-    playIndex++;
-    unsigned long timeToNextEvent = max(midiEvents[playIndex].time - now, 0);
-    loadNextEvent(timeToNextEvent);
+    if(events.size() > ++playIndex) {
+      unsigned long timeToNextEvent = max(events.at(playIndex).time - now, 0);
+      loadNextEvent(timeToNextEvent);
+    } 
   }
 }
 
 void LiveSequencer::handlePatternBegin(void) {
   printEvents();
   patternTimer = 0;
-  Serial.printf("total events size: %i bytes with one be %i bytes\n", EVENTS_SIZE * sizeof(MidiEvent), sizeof(MidiEvent));
-  if(eventsSize > 0) {
+  Serial.printf("total events size: %i bytes with one be %i bytes\n", events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
+  if(events.size() > 0) {
     playIndex = 0;
     liveTimer.begin(timerCallback);
-    loadNextEvent(midiEvents[0].time);
+    loadNextEvent(events.at(0).time);
   }
 }

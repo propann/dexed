@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 #include "MIDI.h"
 #include "TeensyTimerTool.h"
 
@@ -21,17 +22,15 @@ private:
     uint8_t note_in_velocity;
   };
 
-  static constexpr int EVENTS_SIZE = 50;
-  MidiEvent midiEvents[EVENTS_SIZE];
+  std::vector<MidiEvent> events;
   elapsedMillis patternTimer;
 
   unsigned int playIndex = 0;
-  unsigned int eventsSize = 0;
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
   std::string getName(midi::MidiType event);
-  void printEvent(unsigned int i);
+  void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(unsigned long timeMs);
 
