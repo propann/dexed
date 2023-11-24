@@ -127,7 +127,6 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 
 #include "livesequencer.h"
 
-extern void addEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
 extern LiveSequencer liveSeq;
 //void handle_pitchbend((byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event));
 

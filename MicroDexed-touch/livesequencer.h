@@ -4,10 +4,6 @@
 #ifndef LIVESEQUENCER_H
 #define LIVESEQUENCER_H
 
-extern "C" {
-    void handlePatternBegin(void);
-}
-
 class LiveSequencer {
 
 public:
