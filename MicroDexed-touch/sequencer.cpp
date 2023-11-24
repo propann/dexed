@@ -95,6 +95,8 @@ unsigned int eventsSize = 0;
 
 TeensyTimerTool::OneShotTimer liveTimer;
 
+void playNextEvent(void);
+
 std::string getName(midi::MidiType event) {
   switch(event) {
   case midi::NoteOn:
@@ -155,8 +157,15 @@ void addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   }
 }
 
-void playNextEvent() {
-  
+void loadNextEvent(unsigned long timeMs) {
+  if(timeMs > 0) {
+    liveTimer.trigger(timeMs * 1000);
+  } else {
+    playNextEvent();
+  }
+}
+
+void playNextEvent(void) {
   if(eventsSize > playIndex) {
     Serial.printf("PLAY: ");
     printEvent(playIndex);
@@ -175,16 +184,11 @@ void playNextEvent() {
     playIndex++;
     unsigned long timeToNextEvent = midiEvents[playIndex].time - midiEvents[playIndex - 1].time;
     if(timeToNextEvent >= 0) {
-      if(timeToNextEvent > 0) {
-        liveTimer.trigger(timeToNextEvent * 1000);
-      } else {
-        playNextEvent();
-      }
+      loadNextEvent(timeToNextEvent);
     } else {
       Serial.printf("NOPE\n");
     }
   }
-  
 }
 
 void handlePatternBegin(void) {
@@ -194,7 +198,7 @@ void handlePatternBegin(void) {
   if(eventsSize > 0) {
     playIndex = 0;
     liveTimer.begin(playNextEvent);
-    liveTimer.trigger(midiEvents[0].time * 1000);
+    loadNextEvent(midiEvents[0].time);
   }
 }
 
