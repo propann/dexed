@@ -93,6 +93,8 @@ using namespace TeensyTimerTool;
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
 
+#include "livesequencer.h"
+
 elapsedMillis sysinfo_millis;
 elapsedMillis midi_start_delay;
 uint8_t sysinfo_sound_state = 0;
@@ -4164,7 +4166,8 @@ FLASHMEM void dac_unmute(void)
   seq.DAC_mute_state = false;
 }
 
-extern void handlePatternBegin(void);
+LiveSequencer liveSeq;
+
 
 void handleStart(void)
 {
@@ -4181,7 +4184,7 @@ void handleStart(void)
     //seq.total_played_patterns = 0;//MIDI SLAVE SYNC TEST
 
     seq.step = 0;
-    handlePatternBegin();
+    liveSeq.handlePatternBegin();
     //seq.step=1; //MIDI SLAVE SYNC TEST
     seq.current_song_step = 0;
     seq.arp_note = 0;
