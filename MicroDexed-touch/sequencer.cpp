@@ -28,8 +28,6 @@
 #include "synth_dexed.h"
 #include "ILI9341_t3n.h"
 
-#include <MIDI.h>
-
 extern ILI9341_t3n display;
 extern LCDMenuLib2 LCDML;
 extern bool remote_active;
@@ -77,6 +75,94 @@ extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern multisample_s msp[NUM_MULTISAMPLES];
+
+#include <MIDI.h>
+#include <map>
+#include "TeensyTimerTool.h"
+
+struct MidiEvent {
+    midi::MidiType event;
+    uint8_t note_in;
+    uint8_t note_in_velocity;
+};
+
+std::map<unsigned long, MidiEvent> midiEvents;
+elapsedMillis patternTimer;
+unsigned int currentIndex = 0;
+TeensyTimerTool::OneShotTimer liveTimer;
+
+std::string getName(midi::MidiType event) {
+  switch(event) {
+  case midi::NoteOn:
+    return "NoteOn...";
+  case midi::NoteOff:
+    return "NoteOff...";    
+  default:
+    return "None";
+  }
+}
+
+void addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
+  if(seq.running) {
+    unsigned long now = patternTimer;
+    MidiEvent e = { event, note, velocity };
+    if(midiEvents.empty() && event == midi::NoteOff) {
+      return;
+    }
+    if(midiEvents.size()) {
+      if(note == 44) {
+        midiEvents.clear();
+        Serial.printf("clear map\n");
+        return;
+      }
+      /*if(now < std::prev(midiEvents.end())->first) {
+        midiEvents.clear();
+        Serial.printf("clear map\n");
+      }*/
+    }
+    midiEvents.insert(std::pair<unsigned long, MidiEvent>(now, e));
+    Serial.printf("[%i] added event: %s, %i, %i. now has %i events\n", now, getName(event).c_str(), note, velocity, midiEvents.size());
+  } else {
+    Serial.printf("ignoring event since not running...\n");
+  }
+}
+
+void playNextEvent() {
+  currentIndex++;
+  if(midiEvents.size() > currentIndex) {
+    unsigned long now = patternTimer;
+    
+    auto iter = midiEvents.begin();
+    for(unsigned int i = 0; i < currentIndex; i++) {
+      iter++;
+    }
+    Serial.printf("[%i] %s\n", now, getName(iter->second.event).c_str());
+    switch(iter->second.event) {
+    case midi::NoteOn:
+      handleNoteOn(16, iter->second.note_in, iter->second.note_in_velocity, 0);
+      break;
+    
+    case midi::NoteOff:
+      handleNoteOff(16, iter->second.note_in, iter->second.note_in_velocity, 0);
+      break;
+    
+    default:
+      break;
+    }
+
+    liveTimer.trigger((iter->first - now) * 1000);
+  }
+  
+}
+
+void handlePatternBegin(void) {
+  patternTimer = 0;
+  if(midiEvents.size()) {
+    currentIndex = 0;
+    liveTimer.begin(playNextEvent);
+    liveTimer.trigger(midiEvents.begin()->first * 1000);
+  }
+}
 
 void seq_live_recording(void)
 {
@@ -203,6 +289,7 @@ void handle_pattern_end_in_song_mode()
   if (seq.step > 15 - seq.pattern_len_dec)  // change to vari length
   {
     seq.step = 0;
+    handlePatternBegin();
     //seq.total_played_patterns++;//MIDI SLAVE SYNC TEST
     if (seq.play_mode == false) // play mode = full song
     {

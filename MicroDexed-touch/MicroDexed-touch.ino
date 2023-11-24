@@ -4164,6 +4164,8 @@ FLASHMEM void dac_unmute(void)
   seq.DAC_mute_state = false;
 }
 
+extern void handlePatternBegin(void);
+
 void handleStart(void)
 {
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
@@ -4179,6 +4181,7 @@ void handleStart(void)
     //seq.total_played_patterns = 0;//MIDI SLAVE SYNC TEST
 
     seq.step = 0;
+    handlePatternBegin();
     //seq.step=1; //MIDI SLAVE SYNC TEST
     seq.current_song_step = 0;
     seq.arp_note = 0;
@@ -4421,7 +4424,7 @@ FLASHMEM void set_volume(uint8_t v, uint8_t m)
   LOG.print(F("Setting volume : VOL = "));
   LOG.println(v, DEC);
   LOG.print(F(" V = "));
-  LOG.println(volume_transform(tmp_v / 100.0));
+  //LOG.println(volume_transform(tmp_v / 100.0));
 #endif
 
   // volume_r.gain(volume_transform(tmp_v / 100.0) * VOLUME_MULTIPLIER);
