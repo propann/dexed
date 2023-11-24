@@ -16921,7 +16921,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     if (settings_modified == 5)
     {
       touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-    }
+  }
 #endif
 
     // UI reverse
@@ -16975,7 +16975,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       save_sys = SAVE_SYS_MS / 2;
       settings_modified = 0;
     }
-  }
+}
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {
@@ -19124,29 +19124,50 @@ FLASHMEM void UI_func_volume(uint8_t param)
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_L].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_L].Up()))
     {
-      back_from_volume = 0;
-      if (LCDML.BT_checkDown())
-      {
-        if (ENCODER[ENC_L].speed() > 5)
-          configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_L].speed() / 2, VOLUME_MIN, VOLUME_MAX);
-        else
-          configuration.sys.vol = constrain(configuration.sys.vol + 1, VOLUME_MIN, VOLUME_MAX);
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        if (ENCODER[ENC_L].speed() > 5)
-          configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_L].speed() / 2, VOLUME_MIN, VOLUME_MAX);
-        else
-          configuration.sys.vol = constrain(configuration.sys.vol - 1, VOLUME_MIN, VOLUME_MAX);
+      if (multiband_active == false) {
+        back_from_volume = 0;
+        if (LCDML.BT_checkDown())
+        {
+          if (ENCODER[ENC_L].speed() > 5)
+            configuration.sys.vol = constrain(configuration.sys.vol + ENCODER[ENC_L].speed() / 2, VOLUME_MIN, VOLUME_MAX);
+          else
+            configuration.sys.vol = constrain(configuration.sys.vol + 1, VOLUME_MIN, VOLUME_MAX);
+        }
+        else if (LCDML.BT_checkUp())
+        {
+          if (ENCODER[ENC_L].speed() > 5)
+            configuration.sys.vol = constrain(configuration.sys.vol - ENCODER[ENC_L].speed() / 2, VOLUME_MIN, VOLUME_MAX);
+          else
+            configuration.sys.vol = constrain(configuration.sys.vol - 1, VOLUME_MIN, VOLUME_MAX);
+        }
       }
     }
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     // Master Volume
     setCursor_textGrid(1, 1);
-    display.print(F("Master Volume"));
-    display_bar_int("Master Vol.", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
-    set_volume(configuration.sys.vol, configuration.sys.mono);
+    if (multiband_active == false)
+    {
+      display.print(F("Master Volume"));
+      setCursor_textGrid(13, 2);
+      display.print(F(" "));
+      display_bar_int("Master Vol.", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
+      set_volume(configuration.sys.vol, configuration.sys.mono);
+    }
+    else
+    {
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("VOLUME LOCKED"));
+      setCursor_textGrid(14, 2);
+      display.print(F("   "));
+      display.fillRect(CHAR_width, 2 * CHAR_height, 12 * CHAR_width, 6, COLOR_BACKGROUND);
+      display.setTextSize(1);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      setCursor_textGrid_small(2, 4);
+      display.print(F("WHILE MULTIBAND IS ACTIVE"));
+      display.fillRect(CHAR_width, 3 * CHAR_height - 3, 12 * CHAR_width, 2, COLOR_BACKGROUND);
+      display.setTextSize(2);
+    }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
