@@ -15,6 +15,7 @@ public:
 private:
   struct MidiEvent {
     unsigned long time;
+    midi::Channel channel;
     midi::MidiType event;
     uint8_t note_in;
     uint8_t note_in_velocity;

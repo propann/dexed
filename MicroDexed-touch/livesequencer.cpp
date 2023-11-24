@@ -4,10 +4,7 @@
 
 extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
-
-extern "C" {
-  extern sequencer_t seq;
-}
+extern sequencer_t seq;
 
 LiveSequencer *instance;
 
@@ -47,7 +44,8 @@ void LiveSequencer::printEvents() {
 void LiveSequencer::addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(seq.running) {
     unsigned long now = patternTimer;
-    MidiEvent e = { now, event, note, velocity };
+    static constexpr midi::Channel channel = 16;
+    MidiEvent e = { now, channel, event, note, velocity };
 
     bool clearAll = false;
     clearAll |= note == 49;
@@ -89,22 +87,24 @@ void LiveSequencer::loadNextEvent(unsigned long timeMs) {
 
 void LiveSequencer::playNextEvent(void) {
   if(eventsSize > playIndex) {
+    unsigned long now = patternTimer;
     Serial.printf("PLAY: ");
+    MidiEvent e = midiEvents[playIndex];
     printEvent(playIndex);
-    switch(midiEvents[playIndex].event) {
+    switch(e.event) {
     case midi::NoteOn:
-      handleNoteOn(16, midiEvents[playIndex].note_in, midiEvents[playIndex].note_in_velocity, 0);
+      handleNoteOn(e.channel, e.note_in, e.note_in_velocity, 0);
       break;
     
     case midi::NoteOff:
-      handleNoteOff(16, midiEvents[playIndex].note_in, midiEvents[playIndex].note_in_velocity, 0);
+      handleNoteOff(e.channel, e.note_in, e.note_in_velocity, 0);
       break;
     
     default:
       break;
     }
     playIndex++;
-    unsigned long timeToNextEvent = midiEvents[playIndex].time - midiEvents[playIndex - 1].time;
+    unsigned long timeToNextEvent = max(midiEvents[playIndex].time - now, 0);
     loadNextEvent(timeToNextEvent);
   }
 }
