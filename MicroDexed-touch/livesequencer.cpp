@@ -6,17 +6,17 @@ extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
 
 extern "C" {
-    extern sequencer_t seq;
+  extern sequencer_t seq;
 }
 
 LiveSequencer *instance;
 
 LiveSequencer::LiveSequencer() {
-    instance = this;
+  instance = this;
 }
 
 void LiveSequencer::timerCallback() {
-    instance->playNextEvent();
+  instance->playNextEvent();
 }
 
 std::string LiveSequencer::getName(midi::MidiType event) {
