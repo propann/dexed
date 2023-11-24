@@ -1,21 +1,22 @@
 #include "livesequencer.h"
-
-
 #include "config.h"
+#include "sequencer.h"
 
 extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
-#include "sequencer.h"
+
 extern "C" {
     extern sequencer_t seq;
 }
-
-
 
 LiveSequencer *instance;
 
 LiveSequencer::LiveSequencer() {
     instance = this;
+}
+
+void LiveSequencer::timerCallback() {
+    instance->playNextEvent();
 }
 
 std::string LiveSequencer::getName(midi::MidiType event) {
@@ -86,14 +87,10 @@ void LiveSequencer::loadNextEvent(unsigned long timeMs) {
   }
 }
 
-void LiveSequencer::timerCallback() {
-    instance->playNextEvent();
-}
-
 void LiveSequencer::playNextEvent(void) {
   if(eventsSize > playIndex) {
     Serial.printf("PLAY: ");
-    instance->printEvent(playIndex);
+    printEvent(playIndex);
     switch(midiEvents[playIndex].event) {
     case midi::NoteOn:
       handleNoteOn(16, midiEvents[playIndex].note_in, midiEvents[playIndex].note_in_velocity, 0);
@@ -108,7 +105,7 @@ void LiveSequencer::playNextEvent(void) {
     }
     playIndex++;
     unsigned long timeToNextEvent = midiEvents[playIndex].time - midiEvents[playIndex - 1].time;
-    instance->loadNextEvent(timeToNextEvent);
+    loadNextEvent(timeToNextEvent);
   }
 }
 
