@@ -77,7 +77,6 @@ extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern multisample_s msp[NUM_MULTISAMPLES];
 
 #include <MIDI.h>
-#include <map>
 #include "TeensyTimerTool.h"
 
 struct MidiEvent {
@@ -135,6 +134,7 @@ void addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
       memset(midiEvents, 0, EVENTS_SIZE * sizeof(MidiEvent));
       Serial.printf("clear map\n");
       eventsSize = 0;
+      liveTimer.stop();
       if(event == midi::NoteOff) {
         return;
       }
@@ -142,8 +142,12 @@ void addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
     if(eventsSize == 0 && event == midi::NoteOff) {
       return;
     }
-    midiEvents[eventsSize] = e;
-    eventsSize++;
+    if(eventsSize < EVENTS_SIZE) {
+      midiEvents[eventsSize] = e;
+      eventsSize++;
+    } else {
+      Serial.printf("events buffer full! dropping...\n");
+    }
     printEvents();
     
   } else {
@@ -174,7 +178,7 @@ void playNextEvent() {
       if(timeToNextEvent > 0) {
         liveTimer.trigger(timeToNextEvent * 1000);
       } else {
-        liveTimer.trigger(10);
+        playNextEvent();
       }
     } else {
       Serial.printf("NOPE\n");
@@ -186,6 +190,7 @@ void playNextEvent() {
 void handlePatternBegin(void) {
   printEvents();
   patternTimer = 0;
+  Serial.printf("total events size: %i bytes with one be %i bytes\n", EVENTS_SIZE * sizeof(MidiEvent), sizeof(MidiEvent));
   if(eventsSize > 0) {
     playIndex = 0;
     liveTimer.begin(playNextEvent);
