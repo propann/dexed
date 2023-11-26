@@ -1,10 +1,11 @@
+#ifndef LIVESEQUENCER_H
+#define LIVESEQUENCER_H
+
 #include <string>
 #include <vector>
 #include "MIDI.h"
 #include "TeensyTimerTool.h"
 
-#ifndef LIVESEQUENCER_H
-#define LIVESEQUENCER_H
 
 class LiveSequencer {
 
@@ -16,7 +17,7 @@ public:
 private:
   struct MidiEvent {
     unsigned long time;
-    midi::Channel channel;
+    uint8_t track;
     midi::MidiType event;
     uint8_t note_in;
     uint8_t note_in_velocity;
@@ -26,6 +27,7 @@ private:
   elapsedMillis patternTimer;
 
   unsigned int playIndex = 0;
+  midi::Channel trackChannels[8];
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
@@ -36,6 +38,8 @@ private:
 
   static void timerCallback();
   void playNextEvent(void);
+  void updateTrackChannels();
+  
 };
 
 #endif //LIVESEQUENCER_H
