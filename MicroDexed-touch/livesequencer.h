@@ -6,7 +6,6 @@
 #include "MIDI.h"
 #include "TeensyTimerTool.h"
 
-
 class LiveSequencer {
 
 public:

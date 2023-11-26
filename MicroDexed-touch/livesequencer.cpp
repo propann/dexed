@@ -58,7 +58,6 @@ void LiveSequencer::addEvent(midi::MidiType event, uint8_t note, uint8_t velocit
     }
   
     if(clearAll) {
-      playIndex = 0;
       liveTimer.stop();
       events.clear();
       events.shrink_to_fit();
@@ -114,7 +113,9 @@ void LiveSequencer::playNextEvent(void) {
 }
 
 void LiveSequencer::handlePatternBegin(void) {
-  patternLenghtMs = seq.tempo_ms;
+  // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
+  patternLenghtMs = (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
+  Serial.printf("seq len ms: %i\n", patternLenghtMs);
   updateTrackChannels(); // only to be called initially and when track instruments are changed
   printEvents();
   patternTimer = 0;
