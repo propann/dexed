@@ -16,7 +16,7 @@ public:
 
 private:
   struct MidiEvent {
-    unsigned long time;
+    float time;
     uint8_t track;
     midi::MidiType event;
     uint8_t note_in;
@@ -39,6 +39,8 @@ private:
   static void timerCallback();
   void playNextEvent(void);
   void updateTrackChannels();
+
+  unsigned long patternLenghtMs = 2000;
   
 };
 

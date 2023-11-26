@@ -34,7 +34,7 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::printEvent(int i, MidiEvent e) {
-  Serial.printf("[%i]: (%i) %i, %s, %i, %i\n", i, e.track, e.time, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
+  Serial.printf("[%i]: %0.3f, (%i), %s, %i, %i\n", i, e.time, e.track, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
 }
 
 void LiveSequencer::printEvents() {
@@ -47,14 +47,14 @@ void LiveSequencer::printEvents() {
 
 void LiveSequencer::addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(seq.running) {
-    unsigned long now = patternTimer;
+    float time = patternTimer / float(patternLenghtMs);
 
     static constexpr uint8_t track = 7;
 
     bool clearAll = false;
     clearAll |= note == 49;
     if(events.size()) {
-      clearAll |= (events.back().time > now);
+      clearAll |= (events.back().time > time);
     }
   
     if(clearAll) {
@@ -70,7 +70,8 @@ void LiveSequencer::addEvent(midi::MidiType event, uint8_t note, uint8_t velocit
     if(events.size() == 0 && event == midi::NoteOff) {
       return;
     }
-    MidiEvent e = { now, track, event, note, velocity };
+    
+    MidiEvent e = { time, track, event, note, velocity };
     events.push_back(e);
     
     printEvents();
@@ -106,13 +107,14 @@ void LiveSequencer::playNextEvent(void) {
       break;
     }
     if(events.size() > ++playIndex) {
-      unsigned long timeToNextEvent = max(events.at(playIndex).time - now, 0UL);
+      unsigned long timeToNextEvent = max(events.at(playIndex).time * patternLenghtMs - now, 0UL);
       loadNextEvent(timeToNextEvent);
     } 
   }
 }
 
 void LiveSequencer::handlePatternBegin(void) {
+  patternLenghtMs = seq.tempo_ms;
   updateTrackChannels(); // only to be called initially and when track instruments are changed
   printEvents();
   patternTimer = 0;
@@ -120,7 +122,7 @@ void LiveSequencer::handlePatternBegin(void) {
   if(events.size() > 0) {
     playIndex = 0;
     liveTimer.begin(timerCallback);
-    loadNextEvent(events.at(0).time);
+    loadNextEvent(events.at(0).time * patternLenghtMs);
   }
 }
 
