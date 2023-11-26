@@ -4192,7 +4192,6 @@ void handleStart(void)
     seq.arp_note = 0;
     seq.arp_chord = 0;
 
-
     mb_set_mutes();
     mb_set_compressor();
     mb_set_master();

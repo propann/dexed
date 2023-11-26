@@ -47,7 +47,6 @@ extern const char* seq_find_shortname_in_track(uint8_t sstep, uint8_t track);
 extern void set_sample_pitch(uint8_t, float); // float32_t not working
 extern float get_sample_vol_max(uint8_t);
 extern float get_sample_p_offset(uint8_t);
-//boolean interrupt_swapper = false;
 extern void helptext_l(const char* str);
 extern void helptext_r(const char* str);
 extern AudioSynthDexed* MicroDexed[NUM_DEXED];
@@ -664,7 +663,6 @@ void sequencer_part1(void)
         {
           if (seq.track_type[d] == 1) // instrument track
           {
-            // if (seq.note_data[seq.current_pattern[d]][seq.step] != 130 && seq.ticks == 0)
             if (seq.note_data[seq.current_pattern[d]][seq.step] != 130)
             {
               // Braids Instrument
@@ -755,11 +753,11 @@ void sequencer_part1(void)
                   if (check_probability(seq.current_pattern[d]))
                     handleNoteOn(braids_osc.midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 4);
                 }
-// else if (seq.instrument[d] > 5 && seq.instrument[d] < 16) // Chords: MSP - unstable for chords
-//               {
-//                 if (check_probability(seq.current_pattern[d]))
-//                 handleNoteOn(msp[seq.instrument[d] - 6].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
-//               }
+                // else if (seq.instrument[d] > 5 && seq.instrument[d] < 16) // Chords: MSP - unstable for chords
+                //               {
+                //                 if (check_probability(seq.current_pattern[d]))
+                //                 handleNoteOn(msp[seq.instrument[d] - 6].midi_channel, seq.note_data[seq.current_pattern[d]][seq.step] + tr[d] + (seq.oct_shift * 12) + seq.arps[seq.vel[seq.current_pattern[d]][seq.step] - 200][x], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 0);
+                //               }
 #ifdef MIDI_DEVICE_USB_HOST
                 else if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
                 {
@@ -805,11 +803,8 @@ void sequencer_part1(void)
     }
     seq.noteoffsent[d] = false;
   }
-  //if (seq.ticks == 0)
-  //{
 
   //handle pattern end moved to interrupt timer
-// }
 }
 
 void sequencer_part2(void)
@@ -824,13 +819,13 @@ void sequencer_part2(void)
       {
         if (seq.note_data[seq.current_pattern[d]][seq.step] != 130)
         {
-          if (seq.instrument[d] < 2) // dexed
+          if (seq.instrument[d] < 2 && seq.ticks == 7) // dexed
             handleNoteOff(configuration.dexed[seq.instrument[d]].midi_channel, seq.prev_note[d], 0, 0);
-          else if (seq.instrument[d] == 2) // epiano
+          else if (seq.instrument[d] == 2 && seq.ticks == 7) // epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d], 0, 0);
           else if (seq.instrument[d] > 2 && seq.instrument[d] < 5)
             handleNoteOff(microsynth[seq.instrument[d] - 3].midi_channel, seq.prev_note[d], 0, 0);
-          else if (seq.instrument[d] == 5)
+          else if (seq.instrument[d] == 5 && seq.ticks == 7)
             handleNoteOff(braids_osc.midi_channel, seq.prev_note[d], 0, 4);
           else if (seq.instrument[d] > 5 && seq.instrument[d] < 16) // MultiSampler
             handleNoteOff(msp[seq.instrument[d] - 6].midi_channel, seq.prev_note[d], 0, 0);
@@ -841,12 +836,12 @@ void sequencer_part2(void)
           }
 #endif
 #ifdef MIDI_DEVICE_DIN
-          else if (seq.instrument[d] > 31 && seq.instrument[d] < 48) // track is for external DIN MIDI
+          else if (seq.instrument[d] > 31 && seq.instrument[d] < 48 && seq.ticks == 7) // track is for external DIN MIDI
           {
             handleNoteOff(seq.instrument[d] - 31, seq.prev_note[d], 0, 2);
           }
 #endif
-          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64) // track is for internal Micro MIDI
+          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64 && seq.ticks == 7) // track is for internal Micro MIDI
           {
             handleNoteOff(seq.instrument[d] - 47, seq.prev_note[d], 0, 3);
           }
@@ -865,7 +860,6 @@ void sequencer_part2(void)
 #ifdef MIDI_DEVICE_USB_HOST
               else if (seq.instrument[d] > 15 && seq.instrument[d] < 32) // track is for external USB MIDI
               {
-
                 handleNoteOff(seq.instrument[d] - 15, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 1);
               }
 #endif
@@ -881,7 +875,9 @@ void sequencer_part2(void)
               }
               else if (seq.instrument[d] == 5)
                 handleNoteOff(braids_osc.midi_channel, seq.prev_note[d] + seq.arps[seq.prev_vel[d] - 200][x], 0, 4);
+
               seq.noteoffsent[d] = true;
+
             }
           }
         }
@@ -912,30 +908,32 @@ void sequencer_part2(void)
           else if (seq.instrument[d] > 2) // track is assigned to Microsynth
             handleNoteOff(microsynth[seq.instrument[d] - 3].midi_channel, seq.arp_note_prev, 0, 0);
           seq.noteoffsent[d] = true;
+
         }
       }
     }
   }
 }
 
+
 void sequencer(void)
-{ // Runs in Interrupt Timer. Switches between the Noteon and Noteoff Task, each cycle
-  //interrupt_swapper = !interrupt_swapper;
+{ // Runs in Interrupt Timer
 
   if (seq.running)
   {
+
     // if (seq.ticks < 4)
 //   seq_live_recording();
-// if (interrupt_swapper)
- // (seq.arp_speed == 2 && seq.ticks == 6) || seq.arp_speed == 3)
 
     if ((seq.ticks == 0 && seq.swing_steps == 0) ||//swing is disabled
       (seq.ticks == 0 && seq.step % 2 == 0) ||  //step 1, 3, 5.. etc are played without swing
       (seq.swing_steps > 0 && seq.swing_steps == seq.ticks && seq.step % 2 != 0))  //step is 2,4,6 etc. and swing is on and in lean-forward 
     {
       sequencer_part1();
-
     }
+
+    if (seq.ticks == 0)
+      seq.step++;
 
     if (seq.ticks == 0 || (seq.ticks == 0 && seq.step % 2 == 0) ||
       (seq.swing_steps > 0 && seq.swing_steps == seq.ticks && seq.step % 2 != 0) ||
@@ -948,11 +946,8 @@ void sequencer(void)
           arp_track(d);
 
       }
-
       //   seq.arp_counter++;
-
     }
-
 
     if (seq.ticks == 7)
       sequencer_part2();
@@ -961,7 +956,6 @@ void sequencer(void)
     if (seq.ticks > 7)
     {
       seq.ticks = 0;
-      seq.step++;
       handle_pattern_end_in_song_mode();
     }
   }
