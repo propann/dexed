@@ -34,8 +34,11 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::handleStop(void) {
+  playIndex = events.size();
+  patternCount = 0;
+  pendingEvents.clear();
+  pendingEvents.shrink_to_fit();
   allNotesOff();
-  liveTimer.stop();
 }
 
 void LiveSequencer::allNotesOff(void) {
@@ -51,7 +54,7 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 }
 
 void LiveSequencer::printEvents() {
-  Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
+  Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", events.size(), events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
   int i = 0;
   for(auto &e : events) {
     printEvent(i++, e);
@@ -68,7 +71,6 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
     switch(note) {
     case 48: // clear track
       clearTrackEvents(activeRecordingTrack);
-      allNotesOff();
       return;
     
     case 49: // track down
@@ -85,7 +87,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
 
     float time = patternTimer / float(patternLengthMs);
 
-    if(time > 0.95f) {
+    if((patternLengthMs - patternTimer) < 100 && event == midi::NoteOn) {
       Serial.printf("rounding up...\n");
       time = 0;
     }
@@ -107,18 +109,19 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       break;
 
     case midi::NoteOff:
-      int index = 0;
       // check if it has a corresponding NoteOn
-      for(auto e : pendingEvents) {
-        if(e.note_in == newEvent.note_in) {
+      for(std::vector<MidiEvent>::iterator it = pendingEvents.begin(); it != pendingEvents.end();) {
+        if(it->note_in == newEvent.note_in) {
           // if so, insert sorted NoteOn and add this NoteOff at end
-          insertSorted(e);
-          events.push_back(newEvent);
+          insertSorted(*it);
+          insertSorted(newEvent);
+          playIndex += 2; // fixme--
           lastTrackEvent[activeRecordingTrack] = time;
-          pendingEvents.erase(pendingEvents.begin() + index);
+          pendingEvents.erase(it);
           break;
+        } else {
+          it++;
         }
-        index++;
       }
       break;
     }
@@ -193,7 +196,6 @@ void LiveSequencer::handlePatternBegin(void) {
   static constexpr int NUM_PATTERNS = 4; // needs GUI config
   Serial.printf("Sequence %i/%i\n", patternCount + 1, NUM_PATTERNS);
   if(patternCount == 0) {
-    pendingEvents.clear();
     patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
     Serial.printf("seq len ms: %i\n", patternLengthMs);
     updateTrackChannels(); // only to be called initially and when track instruments are changed
