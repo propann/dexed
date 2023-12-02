@@ -4247,6 +4247,7 @@ void handleStop(void)
   {
     if (seq.running)
     {
+      liveSeq.handleStop();
       sequencer_part2();
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
       {

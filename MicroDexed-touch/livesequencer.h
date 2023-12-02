@@ -12,6 +12,7 @@ public:
   LiveSequencer();
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
+  void handleStop(void);
 
 private:
   struct MidiEvent {
@@ -37,6 +38,7 @@ private:
   void printEvents();
   void loadNextEvent(unsigned long timeMs);
   void insertSorted(MidiEvent e);
+  void allNotesOff(void);
 
   static void timerCallback();
   void playNextEvent(void);
