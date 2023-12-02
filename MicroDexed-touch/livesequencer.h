@@ -24,7 +24,7 @@ private:
 
   std::vector<MidiEvent> events;
   std::vector<MidiEvent> pendingEvents;
-  
+
   elapsedMillis patternTimer;
 
   unsigned int playIndex = 0;
@@ -36,6 +36,7 @@ private:
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(unsigned long timeMs);
+  void insertSorted(MidiEvent e);
 
   static void timerCallback();
   void playNextEvent(void);

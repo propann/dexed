@@ -34,13 +34,18 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::printEvent(int i, MidiEvent e) {
-  Serial.printf("[%i]: %0.3f, (%i), %s, %i, %i\n", i, e.time, e.track, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
+  Serial.printf("[%i]: 0.%i, (%i), %s, %i, %i\n", i, int(e.time * 1000), e.track, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
 }
 
 void LiveSequencer::printEvents() {
   Serial.printf("--- %i events:\n", events.size());
   int i = 0;
   for(auto &e : events) {
+    printEvent(i++, e);
+  }
+  Serial.printf("--- %i pending events:\n", pendingEvents.size());
+  i = 0;
+  for(auto &e : pendingEvents) {
     printEvent(i++, e);
   }
 }
@@ -59,23 +64,56 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   
     if(clearAll) {
       liveTimer.stop();
+      pendingEvents.clear();
+      pendingEvents.shrink_to_fit();
       events.clear();
       events.shrink_to_fit();
       Serial.printf("clear map\n");
-      if(event == midi::NoteOff) {
-        return;
+    }
+  
+    MidiEvent newEvent = { time, track, event, note, velocity };
+    switch(newEvent.event) {
+    case midi::NoteOn:
+      pendingEvents.push_back(newEvent);
+      break;
+
+    case midi::NoteOff: {
+      // check if it has a corresponding NoteOn
+      // if so, insert sorted NoteOn of this NoteOff
+      int index = 0;
+      for(auto e : pendingEvents) {
+        if(e.note_in == newEvent.note_in) {
+          insertSorted(e);
+          events.push_back(newEvent);
+          pendingEvents.erase(pendingEvents.begin() + index);
+          break;
+        }
+        index++;
       }
     }
-    if(events.size() == 0 && event == midi::NoteOff) {
-      return;
+    break;
+
+    default:
+      // ignore all other types
+      break;
     }
-    
-    MidiEvent e = { time, track, event, note, velocity };
-    events.push_back(e);
     
     printEvents();
     
   }
+}
+
+void LiveSequencer::insertSorted(MidiEvent e) {
+  int insertIndex = events.size();
+  for (uint i = 0; i < events.size(); i++) {
+    Serial.printf("%i < %i?", int(e.time * 1000), int(events.at(i).time * 1000));  
+    if(e.time < events.at(i).time) {
+      Serial.printf("Yes");  
+      insertIndex = i;
+      break;
+    }
+  }
+  events.insert(events.begin() + insertIndex, e);
 }
 
 void LiveSequencer::loadNextEvent(unsigned long timeMs) {
@@ -117,6 +155,7 @@ void LiveSequencer::handlePatternBegin(void) {
   static constexpr int NUM_PATTERNS = 2; // needs GUI config
 
   if(patternCount == 0) {
+    pendingEvents.clear();
     patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
     Serial.printf("seq len ms: %i\n", patternLengthMs);
     updateTrackChannels(); // only to be called initially and when track instruments are changed
