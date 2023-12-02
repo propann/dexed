@@ -27,9 +27,12 @@ private:
   std::vector<MidiEvent> pendingEvents;
 
   elapsedMillis patternTimer;
+  uint8_t activeRecordingTrack = 7;
 
   unsigned int playIndex = 0;
   midi::Channel trackChannels[8];
+
+  float lastTrackEvent[8] = { 0 };
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
@@ -39,6 +42,7 @@ private:
   void loadNextEvent(unsigned long timeMs);
   void insertSorted(MidiEvent e);
   void allNotesOff(void);
+  void clearTrackEvents(uint8_t track);
 
   static void timerCallback();
   void playNextEvent(void);
