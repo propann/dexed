@@ -10,7 +10,7 @@ class LiveSequencer {
 
 public:
   LiveSequencer();
-  void addEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
+  void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
 
 private:
@@ -23,6 +23,8 @@ private:
   };
 
   std::vector<MidiEvent> events;
+  std::vector<MidiEvent> pendingEvents;
+  
   elapsedMillis patternTimer;
 
   unsigned int playIndex = 0;
@@ -39,7 +41,8 @@ private:
   void playNextEvent(void);
   void updateTrackChannels();
 
-  unsigned long patternLenghtMs = 2000;
+  unsigned long patternLengthMs = 2000;
+  int patternCount = 0;
   
 };
 

@@ -45,11 +45,11 @@ void LiveSequencer::printEvents() {
   }
 }
 
-void LiveSequencer::addEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
+void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(seq.running) {
-    float time = patternTimer / float(patternLenghtMs);
+    float time = patternTimer / float(patternLengthMs);
 
-    static constexpr uint8_t track = 7;
+    static constexpr uint8_t track = 7; // needs GUI config, rather pattern than track?
 
     bool clearAll = false;
     clearAll |= note == 49;
@@ -106,7 +106,7 @@ void LiveSequencer::playNextEvent(void) {
       break;
     }
     if(events.size() > ++playIndex) {
-      unsigned long timeToNextEvent = max(events.at(playIndex).time * patternLenghtMs - now, 0UL);
+      unsigned long timeToNextEvent = max(events.at(playIndex).time * patternLengthMs - now, 0UL);
       loadNextEvent(timeToNextEvent);
     } 
   }
@@ -114,16 +114,23 @@ void LiveSequencer::playNextEvent(void) {
 
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
-  patternLenghtMs = (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
-  Serial.printf("seq len ms: %i\n", patternLenghtMs);
-  updateTrackChannels(); // only to be called initially and when track instruments are changed
-  printEvents();
-  patternTimer = 0;
-  Serial.printf("total events size: %i bytes with one be %i bytes\n", events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
-  if(events.size() > 0) {
-    playIndex = 0;
-    liveTimer.begin(timerCallback);
-    loadNextEvent(events.at(0).time * patternLenghtMs);
+  static constexpr int NUM_PATTERNS = 2; // needs GUI config
+
+  if(patternCount == 0) {
+    patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
+    Serial.printf("seq len ms: %i\n", patternLengthMs);
+    updateTrackChannels(); // only to be called initially and when track instruments are changed
+    printEvents();
+    patternTimer = 0;
+    Serial.printf("total events size: %i bytes with one be %i bytes\n", events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
+    if(events.size() > 0) {
+      playIndex = 0;
+      liveTimer.begin(timerCallback);
+      loadNextEvent(events.at(0).time * patternLengthMs);
+    }
+  }
+  if(++patternCount == NUM_PATTERNS) {
+    patternCount = 0;
   }
 }
 
