@@ -147,8 +147,8 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
 }
 
 void LiveSequencer::insertSorted(MidiEvent e) {
-  int insertIndex = events.size();
-  for (uint i = 0; i < events.size(); i++) {
+  uint insertIndex = events.size();
+  for (uint i = 0; i < insertIndex; i++) {
     if(e.time < events.at(i).time) {
       insertIndex = i;
       break;
@@ -166,10 +166,11 @@ void LiveSequencer::loadNextEvent(unsigned long timeMs) {
 }
 
 void LiveSequencer::playNextEvent(void) {
-  if(events.size() > playIndex) {
+  uint eventsSize = events.size();
+  if(eventsSize > playIndex) {
     unsigned long now = patternTimer;
     //Serial.printf("PLAY: ");
-    MidiEvent e = events.at(playIndex);
+    MidiEvent &e = events[playIndex];
     //printEvent(playIndex, e);
     midi::Channel channel = trackChannels[e.track];
     switch(e.event) {
@@ -184,8 +185,8 @@ void LiveSequencer::playNextEvent(void) {
     default:
       break;
     }
-    if(events.size() > ++playIndex) {
-      unsigned long timeToNextEvent = max(events.at(playIndex).time * patternLengthMs - now, 0UL);
+    if(eventsSize > ++playIndex) {
+      unsigned long timeToNextEvent = max(events[playIndex].time * patternLengthMs - now, 0UL);
       loadNextEvent(timeToNextEvent);
     } 
   }
@@ -193,7 +194,7 @@ void LiveSequencer::playNextEvent(void) {
 
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
-  static constexpr int NUM_PATTERNS = 4; // needs GUI config
+  static constexpr int NUM_PATTERNS = 1; // needs GUI config
   Serial.printf("Sequence %i/%i\n", patternCount + 1, NUM_PATTERNS);
   if(patternCount == 0) {
     patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
@@ -205,7 +206,7 @@ void LiveSequencer::handlePatternBegin(void) {
     if(events.size() > 0) {
       playIndex = 0;
       liveTimer.begin(timerCallback);
-      loadNextEvent(events.at(0).time * patternLengthMs);
+      loadNextEvent(events[0].time * patternLengthMs);
     }
   }
   if(++patternCount == NUM_PATTERNS) {
