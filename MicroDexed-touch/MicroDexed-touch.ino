@@ -265,7 +265,7 @@ AudioPlaySerialflashRaw WAV_preview_FLASH;
 
 #ifdef COMPILE_FOR_FLASH
 AudioPlayFlashResmp* Drum[NUM_DRUMS];
-// AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitch)
+// AudioPlaySerialflashRaw*        Drum[NUM_DRUMS];  // playflash from normal audio library (no pitchshift)
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
@@ -293,6 +293,9 @@ AudioAnalyzePeak reverb_return_peak_r;
 AudioAnalyzePeak reverb_return_peak_l;
 
 // Outputs
+
+AudioOutputSPDIF3 spdif3; // enable S/PDIF by default
+
 #if defined(TEENSY_AUDIO_BOARD)
 AudioOutputI2S i2s1;
 AudioControlSGTL5000 sgtl5000;
@@ -309,9 +312,11 @@ AudioMixer<4> invMixer;
 #elif defined(TEENSY_DAC)
 AudioOutputAnalogStereo dacOut;
 #endif
+
 #ifdef AUDIO_DEVICE_USB
 AudioOutputUSB usb1;
 #endif
+
 #if defined(TEENSY_AUDIO_BOARD) && defined(SGTL5000_AUDIO_THRU)
 AudioInputI2S i2s1in;
 #endif
@@ -574,6 +579,9 @@ AudioConnection patchCord[] = {
 
 AudioConnection patchCordUsbL(finalized_mixer_l, 0, usb1, 0);
 AudioConnection patchCordUsbR(finalized_mixer_r, 0, usb1, 1);
+
+AudioConnection patchCord_spdif_L(finalized_mixer_l, 0, spdif3, 0); //enable S/PDIF OUTPUT BY DEFAULT
+AudioConnection patchCord_spdif_R(finalized_mixer_r, 0, spdif3, 1);
 
 //
 // Dynamic patching of MicroDexed objects
@@ -4189,7 +4197,6 @@ void handleStart(void)
     seq.current_song_step = 0;
     seq.arp_note = 0;
     seq.arp_chord = 0;
-
 
     mb_set_mutes();
     mb_set_compressor();

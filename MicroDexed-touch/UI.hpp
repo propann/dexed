@@ -19109,6 +19109,8 @@ FLASHMEM void UI_func_dexed_controllers(uint8_t param)
   }
 }
 
+
+
 FLASHMEM void UI_func_volume(uint8_t param)
 {
   static uint8_t old_volume;
@@ -19140,9 +19142,27 @@ FLASHMEM void UI_func_volume(uint8_t param)
           configuration.sys.vol = constrain(configuration.sys.vol - 1, VOLUME_MIN, VOLUME_MAX);
       }
     }
+
+    // Master Volume
+
+    if (multiband_active)
+    {
+      multiband_active = false;
+      display.setTextSize(2);
+      setCursor_textGrid(1, 4);
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("MULTIBAND"));
+      setCursor_textGrid(1, 5);
+      display.print(F("DEACTIVATED"));
+      display.setTextSize(2);
+      mb_set_master();
+      mb_set_mutes();
+      mb_set_compressor();
+      if (LCDML.FUNC_getID() > _LCDML_DISP_cnt || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
+        draw_button_on_grid(35, 25, "MULTI", "BAND", 0);
+    }
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    // Master Volume
     setCursor_textGrid(1, 1);
     display.print(F("Master Volume"));
     display_bar_int("Master Vol.", configuration.sys.vol, 1.0, VOLUME_MIN, VOLUME_MAX, 3, false, false, false);
@@ -19449,8 +19469,8 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
           }
+          }
         }
-      }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -19462,9 +19482,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-    }
+      }
     encoderDir[ENC_R].reset();
-  }
+    }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -19480,7 +19500,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
   }
-}
+  }
 
 FLASHMEM void UI_func_set_performance_name(uint8_t param)
 {
@@ -19810,7 +19830,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 #endif
             show(2, 1, 16, "Read error.");
             bank_number = 0xff;
-          }
+        }
           else
           {
             uint8_t voice_data[155];
@@ -19838,7 +19858,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 
             bank_number = 0xff;
           }
-        }
+      }
         else
         {
           show(2, 1, 16, "No voice.");
@@ -19848,9 +19868,9 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
         break;
-      }
     }
   }
+}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -20939,7 +20959,7 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 void sub_touchscreen_test_page_init()
 {
@@ -21307,7 +21327,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Added to Favorites..."));
 #endif
-    }
+      }
     else
     { // delete the file, is no longer a favorite
       SD.remove(tmp);
@@ -21338,15 +21358,15 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
+      }
     }
-  }
-}
+    }
 
 FLASHMEM char* basename(const char* filename)
 {
   char* p = strrchr(filename, '/');
   return p ? p + 1 : (char*)filename;
-}
+  }
 
 #ifdef COMPILE_FOR_FLASH
 FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number)
@@ -21399,7 +21419,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     case 'G':
       offset = 7;
       break;
-    }
+  }
 
     if (root_note[ms.MatchLength - 2 - 1] == '#')
     {

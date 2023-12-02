@@ -102,7 +102,6 @@ LCDML_add(61, LCDML_0, 16, "Info", UI_func_information);
 LCDML_addAdvanced(62, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
 LCDML_addAdvanced(63, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
 LCDML_addAdvanced(64, LCDML_0, 19, COND_hide, "SD_NOT_FOUND", UI_func_sd_content_not_found, 0, _LCDML_TYPE_default);
-//LCDML_add(64, LCDML_0,  19, "SD_NOT_FOUND", UI_func_sd_content_not_found);
 #define _LCDML_DISP_cnt 64
 #endif
 
