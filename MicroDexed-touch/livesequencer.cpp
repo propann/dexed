@@ -55,35 +55,49 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 
 void LiveSequencer::printEvents() {
   Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", events.size(), events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
-  int i = 0;
+  /*int i = 0;
   for(auto &e : events) {
     printEvent(i++, e);
-  }
-  Serial.printf("--- %i pending events:\n", pendingEvents.size());
-  i = 0;
-  for(auto &e : pendingEvents) {
-    printEvent(i++, e);
-  }
+  }*/
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  if(seq.running) {
-    switch(note) {
-    case 48: // clear track
-      clearTrackEvents(activeRecordingTrack);
-      return;
-    
-    case 49: // track down
-      activeRecordingTrack = 6;
-      return;
-    
-    case 51: // track up
-      activeRecordingTrack = 7;
-      return;
+  switch(note) {
+  case 48: // clear track
+    clearTrackEvents(activeRecordingTrack);
+    Serial.printf("cleared track %i\n", activeRecordingTrack);
+    return;
+  
+  case 49: // track down
+    activeRecordingTrack = 6;
+    Serial.printf("rec track now is %i\n", activeRecordingTrack);
+    return;
+  
+  case 51: // track up
+    activeRecordingTrack = 7;
+    Serial.printf("rec track now is %i\n", activeRecordingTrack);
+    return;
 
-    default:
-      break;
-    }
+  default:
+    break;
+  }
+
+  midi::Channel ch = trackChannels[activeRecordingTrack];
+  switch(event) {
+  case midi::NoteOn:
+    handleNoteOn(ch, note, velocity, 0);
+    break;
+  
+  case midi::NoteOff:
+    handleNoteOff(ch, note, velocity, 0);
+    break;
+  
+  default:
+    break;
+  }
+
+  if(seq.running) {
+    
 
     float time = patternTimer / float(patternLengthMs);
 
@@ -139,6 +153,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
         handleNoteOff(trackChannels[it->track], it->note_in, it->note_in_velocity, 0);
       }
       events.erase(it);
+      playIndex--;
     } else {
       it++;
     }
@@ -149,7 +164,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
 void LiveSequencer::insertSorted(MidiEvent e) {
   uint insertIndex = events.size();
   for (uint i = 0; i < insertIndex; i++) {
-    if(e.time < events.at(i).time) {
+    if(e.time < events[i].time) {
       insertIndex = i;
       break;
     }
@@ -194,7 +209,7 @@ void LiveSequencer::playNextEvent(void) {
 
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
-  static constexpr int NUM_PATTERNS = 1; // needs GUI config
+  static constexpr int NUM_PATTERNS = 4; // needs GUI config
   Serial.printf("Sequence %i/%i\n", patternCount + 1, NUM_PATTERNS);
   if(patternCount == 0) {
     patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature

@@ -30,7 +30,7 @@ private:
   uint8_t activeRecordingTrack = 7;
 
   unsigned int playIndex = 0;
-  midi::Channel trackChannels[8];
+  midi::Channel trackChannels[8] = { 0 };
 
   float lastTrackEvent[8] = { 0 };
 

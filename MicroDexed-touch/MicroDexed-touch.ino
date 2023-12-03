@@ -964,7 +964,7 @@ void setup()
 #endif
 
 #if defined(PSRAM) && defined(CAPACITIVE_TOUCH_DISPLAY)
-  delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+  delay(50); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
