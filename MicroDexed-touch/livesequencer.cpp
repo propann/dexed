@@ -34,6 +34,7 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::handleStop(void) {
+  playIterator = events.end();
   patternCount = 0;
   pendingEvents.clear();
   pendingEvents.shrink_to_fit();
@@ -207,7 +208,7 @@ void LiveSequencer::playNextEvent(void) {
 
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
-  static constexpr int NUM_PATTERNS = 1; // needs GUI config
+  static constexpr int NUM_PATTERNS = 4; // needs GUI config
   Serial.printf("Sequence %i/%i\n", patternCount + 1, NUM_PATTERNS);
   if(patternCount == 0) {
     patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature

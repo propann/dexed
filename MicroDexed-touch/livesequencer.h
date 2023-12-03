@@ -15,6 +15,11 @@ public:
   void handleStop(void);
 
 private:
+  struct EventTime {
+    uint32_t patternNumber : 8;
+    uint32_t patternTime : 24;
+  };
+
   struct MidiEvent {
     float time;
     uint8_t track;
