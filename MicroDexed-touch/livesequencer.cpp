@@ -34,7 +34,6 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::handleStop(void) {
-  playIndex = events.size();
   patternCount = 0;
   pendingEvents.clear();
   pendingEvents.shrink_to_fit();
@@ -55,10 +54,10 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 
 void LiveSequencer::printEvents() {
   Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", events.size(), events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
-  /*int i = 0;
+  int i = 0;
   for(auto &e : events) {
     printEvent(i++, e);
-  }*/
+  }
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
@@ -129,7 +128,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
           // if so, insert sorted NoteOn and add this NoteOff at end
           insertSorted(*it);
           insertSorted(newEvent);
-          playIndex += 2; // fixme--
+          playIterator += 2;
           lastTrackEvent[activeRecordingTrack] = time;
           pendingEvents.erase(it);
           break;
@@ -153,7 +152,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
         handleNoteOff(trackChannels[it->track], it->note_in, it->note_in_velocity, 0);
       }
       events.erase(it);
-      playIndex--;
+      playIterator--;
     } else {
       it++;
     }
@@ -161,7 +160,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
   lastTrackEvent[track] = 0;
 }
 
-void LiveSequencer::insertSorted(MidiEvent e) {
+void LiveSequencer::insertSorted(MidiEvent &e) {
   uint insertIndex = events.size();
   for (uint i = 0; i < insertIndex; i++) {
     if(e.time < events[i].time) {
@@ -174,6 +173,7 @@ void LiveSequencer::insertSorted(MidiEvent e) {
 
 void LiveSequencer::loadNextEvent(unsigned long timeMs) {
   if(timeMs > 0) {
+    //Serial.printf("trigger in %ims\n", timeMs);
     liveTimer.trigger(timeMs * 1000);
   } else {
     playNextEvent();
@@ -181,27 +181,25 @@ void LiveSequencer::loadNextEvent(unsigned long timeMs) {
 }
 
 void LiveSequencer::playNextEvent(void) {
-  uint eventsSize = events.size();
-  if(eventsSize > playIndex) {
+  if(playIterator != events.end()) {
     unsigned long now = patternTimer;
     //Serial.printf("PLAY: ");
-    MidiEvent &e = events[playIndex];
-    //printEvent(playIndex, e);
-    midi::Channel channel = trackChannels[e.track];
-    switch(e.event) {
+    //printEvent(1, *playIterator);
+    midi::Channel channel = trackChannels[playIterator->track];
+    switch(playIterator->event) {
     case midi::NoteOn:
-      handleNoteOn(channel, e.note_in, e.note_in_velocity, 0);
+      handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
       break;
     
     case midi::NoteOff:
-      handleNoteOff(channel, e.note_in, e.note_in_velocity, 0);
+      handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
       break;
     
     default:
       break;
     }
-    if(eventsSize > ++playIndex) {
-      unsigned long timeToNextEvent = max(events[playIndex].time * patternLengthMs - now, 0UL);
+    if(++playIterator != events.end()) {
+      unsigned long timeToNextEvent = max(playIterator->time * patternLengthMs - now, 0UL);
       loadNextEvent(timeToNextEvent);
     } 
   }
@@ -209,7 +207,7 @@ void LiveSequencer::playNextEvent(void) {
 
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
-  static constexpr int NUM_PATTERNS = 4; // needs GUI config
+  static constexpr int NUM_PATTERNS = 1; // needs GUI config
   Serial.printf("Sequence %i/%i\n", patternCount + 1, NUM_PATTERNS);
   if(patternCount == 0) {
     patternLengthMs = NUM_PATTERNS * (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
@@ -219,9 +217,9 @@ void LiveSequencer::handlePatternBegin(void) {
     patternTimer = 0;
     
     if(events.size() > 0) {
-      playIndex = 0;
+      playIterator = events.begin();
       liveTimer.begin(timerCallback);
-      loadNextEvent(events[0].time * patternLengthMs);
+      loadNextEvent(playIterator->time * patternLengthMs);
     }
   }
   if(++patternCount == NUM_PATTERNS) {

@@ -26,10 +26,11 @@ private:
   std::vector<MidiEvent> events;
   std::vector<MidiEvent> pendingEvents;
 
+  std::vector<MidiEvent>::iterator playIterator;
+
   elapsedMillis patternTimer;
   uint8_t activeRecordingTrack = 7;
 
-  unsigned int playIndex = 0;
   midi::Channel trackChannels[8] = { 0 };
 
   float lastTrackEvent[8] = { 0 };
@@ -40,7 +41,7 @@ private:
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(unsigned long timeMs);
-  void insertSorted(MidiEvent e);
+  void insertSorted(MidiEvent &e);
   void allNotesOff(void);
   void clearTrackEvents(uint8_t track);
 
