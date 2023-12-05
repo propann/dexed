@@ -117,9 +117,6 @@ bool bootup_performance_loading = true;
 bool remote_active = false;
 bool sysinfo_page_at_bootup_shown_once = false;
 
-//uint8_t midi_seq_step = 0;
-//uint8_t midi_song_step = 0;
-
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 
 #if defined GENERIC_DISPLAY 
@@ -274,6 +271,8 @@ AudioPlaySdResmp* Drum[NUM_DRUMS];
 AudioPlayArrayResmp* Drum[NUM_DRUMS];
 #endif
 
+AudioFilterBiquad* Drum_filter[NUM_DRUMS];
+
 // test with envelopes for samples
 //AudioEffectEnvelope* sample_envelope[NUM_DRUMS];
 
@@ -289,6 +288,11 @@ AudioMixer<NUM_DRUMS> drum_reverb_send_mixer_l;
 
 AudioAnalyzePeak reverb_return_peak_r;
 AudioAnalyzePeak reverb_return_peak_l;
+
+
+//SPDIF
+//AsyncAudioInputSPDIF3 spdif_in;
+//AudioInputSPDIF3 spdif_in;
 
 // Outputs
 
@@ -743,13 +747,24 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id)
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
 
+ Drum_filter[instance_id] = new AudioFilterBiquad();
   Drum[instance_id]->enableInterpolation(false);
   Drum[instance_id]->setPlaybackRate(1.0);
 
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
-  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_r, instance_id);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_mixer_l, instance_id);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
+  // dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
+
+//test with filters for samples
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, *Drum_filter[instance_id], 0);
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, drum_mixer_r, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, drum_mixer_l, instance_id);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
+
+  Drum_filter[instance_id]->setLowpass(0, 20000, 0.2); //phtodo
 
   // test with envelopes for samples
   // dynamicConnections[nDynamic++] = new AudioConnection(*Drum[instance_id], 0, *sample_envelope[instance_id], 0);
@@ -898,6 +913,8 @@ extern void updateTouchScreen();
 
 extern void sequencer_part2(void);
 
+bool touch_ic_found=false;
+
 // // Hook (https://www.pjrc.com/teensy/td_startup.html)
 // extern "C" void startup_late_hook(void);
 // extern "C" volatile uint32_t systick_millis_count;
@@ -909,6 +926,7 @@ extern void sequencer_part2(void);
 /***********************************************************************
    SETUP
  ***********************************************************************/
+
 void setup()
 {
 #ifdef DEBUG
@@ -972,6 +990,8 @@ void setup()
 #ifdef DEBUG
     LOG.println("Unable to start touchscreen.");
 #endif
+touch_ic_found=false;
+
   }
   else
   {
@@ -979,6 +999,7 @@ void setup()
 #ifdef DEBUG
     LOG.println("Touchscreen started.");
 #endif
+ touch_ic_found=true;
   }
 #endif
 
@@ -1911,7 +1932,7 @@ void loop()
 
   LCDML.loop();
 
-  if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS) {
+  if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS && touch_ic_found) {
     touchReadTimer = 0;
     updateTouchScreen();
   }
@@ -2018,6 +2039,22 @@ void loop()
       print_formatted_number(AudioProcessorUsage(), 3);
       display.setCursor(CHAR_width_small * 48 - 2, CHAR_height_small * 25);
       print_formatted_number(tempmonGetTemp(), 2);
+
+
+      //SPDIF
+
+      // display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
+      //  print_formatted_number(spdif_in.pllLocked(), 2);
+      //  display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
+      //  print_formatted_number(spdif_in.sampleRate(), 9);
+
+      //        display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
+      //  print_formatted_number(spdif_in.pllLocked(), 2);
+      //  display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
+      //  print_formatted_number(spdif_in.sampleRate(), 9);
+
+
+      /////SPDIF END
     }
     if (sysinfo_chord_state == 4 && sysinfo_millis >= 2800 && seq.running == false)
     {
@@ -2468,12 +2505,19 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id)
       if (inNumber >= msz[presetslot][y].low && inNumber <= msz[presetslot][y].high)
       {
 
+        Drum_filter[slot]->setLowpass(0, (inVelocity * 110), 0.3);
+
+
         float pan = mapfloat(msz[presetslot][y].pan, PANORAMA_MIN, PANORAMA_MAX, 0.0, 1.0);
-        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 1270000, 0.0, 0.7)));
-        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 1270000, 0.0, 0.7)));
+        // drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 1270000, 0.0, 0.9)));
+        // drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 1270000, 0.0, 0.9)));
+
+        drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 1270000, 0.2, 0.98)));
+        drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity, 0, 1270000, 0.2, 0.98)));
+
         ts.msp_peak[presetslot] = (inVelocity * msz[presetslot][y].vol * msp[presetslot].sound_intensity) / 900000;
-        drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 0.7)));
-        drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 0.7)));
+        drum_reverb_send_mixer_r.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 0.8)));
+        drum_reverb_send_mixer_l.gain(slot, volume_transform(mapfloat(msz[presetslot][y].rev, 0, 100, 0.0, 0.8)));
 
         msp_playmode_sample_slot[slot] = msz[presetslot][y].playmode;
 
@@ -2951,12 +2995,27 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
             if (slot != 99)
             {
+
+              // if (drum_config[d].filter_mode == 0)
+              //   Drum_filter[slot]->setLowpass(0, 20000, 0.2);
+              // else if (drum_config[d].filter_mode == 1)
+              //   Drum_filter[slot]->setLowpass(0, drum_config[d].filter_freq * 1000, 0.5);
+              // else if (drum_config[d].filter_mode == 2)
+              //   Drum_filter[slot]->setBandpass(0, drum_config[d].filter_freq * 1000, 0.5);
+              // else if (drum_config[d].filter_mode == 3)
+              //   Drum_filter[slot]->setHighpass(0, drum_config[d].filter_freq * 1000, 0.5);
+
+
+              //photodo
+
               float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
 
               drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
               drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+
               drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
               drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
+
 
               if (sidechain_a_active && d == sidechain_a_sample_number)
                 sidechain_trigger_a = true;
@@ -4428,7 +4487,7 @@ FLASHMEM void set_volume(uint8_t v, uint8_t m)
   LOG.print(F("Setting volume : VOL = "));
   LOG.println(v, DEC);
   LOG.print(F(" V = "));
-  LOG.println(volume_transform(tmp_v / 100.0));
+  LOG.println(volume_transform(v / 100.0));
 #endif
 
   // volume_r.gain(volume_transform(tmp_v / 100.0) * VOLUME_MULTIPLIER);
@@ -4788,6 +4847,21 @@ void set_sample_reverb_send(uint8_t sample, float s_reverb)
   drum_config[sample].reverb_send = s_reverb;
 }
 
+void set_sample_filter_mode(uint8_t sample, uint8_t s_filter_mode)
+{
+  drum_config[sample].filter_mode = s_filter_mode;
+}
+
+void set_sample_filter_freq(uint8_t sample, float s_freq)
+{
+  drum_config[sample].filter_freq = s_freq;
+}
+
+void set_sample_filter_q(uint8_t sample, float s_q)
+{
+  drum_config[sample].filter_q = s_q;
+}
+
 uint8_t get_sample_note(uint8_t sample)
 {
   return (drum_config[sample].midinote);
@@ -4815,6 +4889,18 @@ float get_sample_vol_min(uint8_t sample)
 float get_sample_reverb_send(uint8_t sample)
 {
   return (drum_config[sample].reverb_send);
+}
+uint8_t get_sample_filter_mode(uint8_t sample)
+{
+  return (drum_config[sample].filter_mode);
+}
+float get_sample_filter_freq(uint8_t sample)
+{
+  return (drum_config[sample].filter_freq);
+}
+float get_sample_filter_q(uint8_t sample)
+{
+  return (drum_config[sample].filter_q);
 }
 
 FLASHMEM uint8_t find_drum_number_from_note(uint8_t note)

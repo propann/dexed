@@ -44,6 +44,7 @@
 #include "screensaver.h"
 
 extern qix_s qix;
+extern bool touch_ic_found;
 
 #include "synth_mda_epiano.h"
 extern AudioSynthEPiano ep;
@@ -6337,6 +6338,24 @@ void addDrumParameterEditor(const char* name, int16_t limit_min, int16_t limit_m
     NULL);
 }
 
+void addDrumParameterEditor_int16_t(const char* name, int16_t limit_min, int16_t limit_max, int16_t* valuePtr)
+{
+  ui.addCustomEditor(
+    name, limit_min, limit_max, valuePtr,
+    [](Editor* editor) -> int16_t
+    {
+      int16_t* ptr = (int16_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      return *ptr;
+    },
+    [](Editor* editor, int16_t value)
+    {
+      int16_t* ptr = (int16_t*)((char*)editor->value - (char*)&drum_config[0] + (char*)&drum_config[activesample]);
+      *ptr = value;
+    },
+    NULL);
+}
+
+
 // Create drum UI.
 // The drum UI needs to be redrawn if activesample changes.
 void UI_func_drums(uint8_t param)
@@ -6367,9 +6386,11 @@ void UI_func_drums(uint8_t param)
         setModeColor(editor->select_id);
         show(editor->y, editor->x, 10, number);
         show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
+
+
       });
 
-    ui.setCursor(1, 4);
+    ui.setCursor(2, 4);
     // the parameter editors depend on activesample. We define them by sample index 0,
     // but they will act on current slot activesample later.
     addDrumParameterEditor((const char*)F("VOLUME"), 0, 100, &drum_config[0].vol_max);
@@ -6377,9 +6398,12 @@ void UI_func_drums(uint8_t param)
     addDrumParameterEditor((const char*)F("REVERB"), 0, 100, &drum_config[0].reverb_send);
     addDrumParameterEditor((const char*)F("PITCH"), 0, 200, &drum_config[0].pitch);
     addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
+    addDrumParameterEditor_int16_t((const char*)F("FILTER"), 0, 4, &drum_config[0].filter_mode);
+    addDrumParameterEditor((const char*)F("FREQ"), 0, 220, &drum_config[0].filter_freq);
+    addDrumParameterEditor((const char*)F("Q"), 0, 100, &drum_config[0].filter_q);
 
-    ui.setCursor(1, 10);
-    ui.addEditor((const char*)F("MAIN VOLUME"), 0, 100,
+    ui.setCursor(2, 15);
+    ui.addEditor((const char*)F("DRUMS MAIN VOLUME"), 0, 100,
       [](Editor* editor) -> int16_t
       {
         return round(mapfloat(seq.drums_volume, 0.0, VOL_MAX_FLOAT, 0., 100.));
@@ -6390,9 +6414,10 @@ void UI_func_drums(uint8_t param)
         master_mixer_r.gain(MASTER_MIX_CH_DRUMS, volume_transform(seq.drums_volume));
         master_mixer_l.gain(MASTER_MIX_CH_DRUMS, volume_transform(seq.drums_volume));
       });
-    ui.addEditor((const char*)F("MIDI CHANNEL"), 0, 16, &drum_midi_channel, NULL, NULL, midi_channel_renderer);
 
-    ui.setCursor(1, 13);
+    ui.addEditor((const char*)F("DRUMS MIDI CHANNEL"), 0, 16, &drum_midi_channel, NULL, NULL, midi_channel_renderer);
+
+    ui.setCursor(2, 17);
     ui.addEditor((const char*)F("SMART FILTER"), 0, 1,
       [](Editor* editor) -> int16_t
       {
@@ -6406,6 +6431,23 @@ void UI_func_drums(uint8_t param)
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
     ui.handle_input();
+
+    ///  just a hack to test if all this dynamics filter code is working at all for samples
+    display.setTextSize(1);
+    setCursor_textGrid_small(20, 9);
+    if (drum_config[activesample].filter_mode == 0)
+      display.print("OFF     ");
+    else
+      if (drum_config[activesample].filter_mode == 1)
+        display.print("LOWPASS ");
+      else
+        if (drum_config[activesample].filter_mode == 2)
+          display.print("BANDPASS");
+        else
+          if (drum_config[activesample].filter_mode == 3)
+            display.print("HIGHPASS");
+    ////
+
   }
   if (LCDML.FUNC_close()) // ****** CLOSE *********
   {
@@ -13651,6 +13693,28 @@ void UI_func_information(uint8_t param)
     display.print(F(" "));
     display.setTextColor(COLOR_BACKGROUND, GREY2);
 
+    /////////////
+
+    /////SPDIF
+    display.setTextColor(GREY1);
+    display.setCursor(CHAR_width_small * 8 - 2, CHAR_height_small * 29);
+    display.print(F("SPDIF IN:"));
+    display.setCursor(CHAR_width_small * 21 - 2, CHAR_height_small * 29);
+    display.print(F("FREQ:"));
+
+
+    /// CAPACITIVE TOUCH STATUS
+#ifdef CAPACITIVE_TOUCH_DISPLAY
+    display.setCursor(CHAR_width_small * 34 - 2, CHAR_height_small * 29);
+    if (touch_ic_found)
+      display.setTextColor(COLOR_BACKGROUND, GREEN);
+    else
+      display.setTextColor(COLOR_BACKGROUND, RED);
+    display.print(F("TOUCH"));
+    display.setTextColor(GREY1);
+#endif
+
+    ///////////////
     if (sysinfo_sound_state == 0)
     {
       if (seq.running == false)
@@ -19469,8 +19533,8 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
           }
-          }
         }
+      }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -19482,9 +19546,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-      }
-    encoderDir[ENC_R].reset();
     }
+    encoderDir[ENC_R].reset();
+  }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -19500,7 +19564,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
   }
-  }
+}
 
 FLASHMEM void UI_func_set_performance_name(uint8_t param)
 {
@@ -19830,7 +19894,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 #endif
             show(2, 1, 16, "Read error.");
             bank_number = 0xff;
-        }
+          }
           else
           {
             uint8_t voice_data[155];
@@ -19858,7 +19922,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 
             bank_number = 0xff;
           }
-      }
+        }
         else
         {
           show(2, 1, 16, "No voice.");
@@ -19868,9 +19932,9 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
         break;
+      }
     }
   }
-}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -20959,7 +21023,7 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-  }
+}
 
 void sub_touchscreen_test_page_init()
 {
@@ -21327,7 +21391,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Added to Favorites..."));
 #endif
-      }
+    }
     else
     { // delete the file, is no longer a favorite
       SD.remove(tmp);
@@ -21358,15 +21422,15 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
-      }
     }
-    }
+  }
+}
 
 FLASHMEM char* basename(const char* filename)
 {
   char* p = strrchr(filename, '/');
   return p ? p + 1 : (char*)filename;
-  }
+}
 
 #ifdef COMPILE_FOR_FLASH
 FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number)
@@ -21419,7 +21483,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     case 'G':
       offset = 7;
       break;
-  }
+    }
 
     if (root_note[ms.MatchLength - 2 - 1] == '#')
     {

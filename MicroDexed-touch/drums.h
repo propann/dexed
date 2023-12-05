@@ -47,6 +47,10 @@ typedef struct drum_config_s
   float32_t vol_max;     // max. Volume (0.0 - 1.0)
   float32_t vol_min;     // min. Volume (0.0 - 1.0, should be <= vol_max)
   float32_t reverb_send; // how much signal to send to the reverb (0.0 - 1.0)
+  int16_t filter_mode;   // multimode filter mode
+  float32_t filter_freq; // multimode filter frequency
+  float32_t filter_q; // multimode filter Q
+
 } drum_config_t;
 
 enum
