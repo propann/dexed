@@ -337,36 +337,19 @@ void ILI9341_t3n::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 
   if (console && remote_active)
   {
-    if (h != DISPLAY_WIDTH && w != DISPLAY_HEIGHT)
-    {
-      static uint8_t sysexFillRect[13] = {
-        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-        0x0, 0x0, 0x0, 0x0, 0x0 // could be unknown color
-      };
+    static uint8_t sysexFillRect[13] = {
+      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0, 0x0 // could be unknown color
+    };
 
-      fillSysexData(sysexFillRect, 4, x, y, w, h);
-      uint8_t colors[4];
-      uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
-      sysexFillRect[8] = nbBytes;
-      memcpy(sysexFillRect + 8 + 1, colors, nbBytes);
+    fillSysexData(sysexFillRect, 4, x, y, w, h);
+    uint8_t colors[4];
+    uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
+    sysexFillRect[8] = nbBytes;
+    memcpy(sysexFillRect + 8 + 1, colors, nbBytes);
 
-      sendSysEx(94, 8 + 1 + nbBytes, sysexFillRect, true);
-    }
-    else // is fillscreen
-    {
-      static uint8_t sysexFillScreen[5] = {
-        0x0, 0x0, 0x0, 0x0, 0x0 // could be unknown color
-      };
-
-      uint8_t colors[4];
-      uint8_t nbBytes = fillSysexDataColor(colors, 1, color);
-      sysexFillScreen[0] = nbBytes;
-      memcpy(sysexFillScreen + 1, colors, nbBytes);
-
-      sendSysEx(93, nbBytes + 1, sysexFillScreen, true);
-    }
+    sendSysEx(94, 8 + 1 + nbBytes, sysexFillRect, true);
   }
-
 
   // TODO: this can result in a very long transaction time
   // should break this into multiple transactions, even though
@@ -605,7 +588,7 @@ FLASHMEM void ILI9341_t3n::begin(uint32_t spi_clock)
   // verify SPI pins are valid;
   // allow user to say use current ones...
   _SPI_CLOCK = spi_clock;           // #define ILI9341_SPICLOCK 30000000
-  
+
 #if defined GENERIC_DISPLAY
   _SPI_CLOCK_READ = spi_clock_read; // #define ILI9341_SPICLOCK_READ 2000000
 #endif

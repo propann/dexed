@@ -122,6 +122,11 @@ extern void set_sample_pan(uint8_t sample, float s_pan);
 extern void set_sample_vol_max(uint8_t sample, float s_max);
 extern void set_sample_vol_min(uint8_t sample, float s_min);
 extern void set_sample_reverb_send(uint8_t sample, float s_reverb);
+
+extern void set_sample_filter_mode(uint8_t sample, uint8_t s_filter_mode);
+extern void set_sample_filter_freq(uint8_t sample, float s_filter_freq);
+extern void set_sample_filter_q(uint8_t sample, float s_filter_q);
+
 extern void handleStop(void);
 extern void handleStart(void);
 extern void dac_mute(void);
@@ -134,6 +139,10 @@ extern float get_sample_pan(uint8_t sample);
 extern float get_sample_vol_max(uint8_t sample);
 extern float get_sample_vol_min(uint8_t sample);
 extern float get_sample_reverb_send(uint8_t sample);
+extern uint8_t get_sample_filter_mode(uint8_t sample);
+extern float get_sample_filter_freq(uint8_t sample);
+extern float get_sample_filter_q(uint8_t sample);
+
 extern uint8_t find_drum_number_from_note(uint8_t note);
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
@@ -756,6 +765,9 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
             set_sample_vol_max(drumnumber, data_json["vol_max"][i]);
             set_sample_vol_min(drumnumber, data_json["vol_min"][i]);
             set_sample_reverb_send(drumnumber, data_json["reverb_send"][i]);
+            set_sample_filter_mode(drumnumber, data_json["f_mode"][i]);
+            set_sample_filter_freq(drumnumber, data_json["f_freq"][i]);
+            set_sample_filter_q(drumnumber, data_json["f_q"][i]);
           }
         }
         return (true);
@@ -818,6 +830,10 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
           data_json["vol_max"][i] = get_sample_vol_max(i);
           data_json["vol_min"][i] = get_sample_vol_min(i);
           data_json["reverb_send"][i] = get_sample_reverb_send(i);
+           data_json["f_mode"][i] = get_sample_filter_mode(i);
+          data_json["f_freq"][i] = get_sample_filter_freq(i);
+          data_json["f_q"][i] = get_sample_filter_q(i);
+
         }
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
         LOG.println(F("Write JSON data:"));
