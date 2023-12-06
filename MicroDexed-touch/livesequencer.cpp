@@ -56,7 +56,7 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 }
 
 uint16_t LiveSequencer::roundUpDownToMultiple(uint16_t number, uint16_t multiple) {
-  return ((number % multiple) > multiple / 2) ? number + multiple - number % multiple : number - number % multiple;
+    return ((number + multiple / 2) / multiple) * multiple;
 }
 
 void LiveSequencer::printEvents() {
@@ -135,7 +135,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       // check if it has a corresponding NoteOn
       auto on = notesOn.find(note);
       if(on != notesOn.end()) {
-          // if so, insert sorted NoteOn and add this NoteOff at end
+          // if so, insert NoteOn and this NoteOff at end
           pendingEvents.push_back(on->second);
           pendingEvents.push_back(newEvent);
           notesOn.erase(on);
