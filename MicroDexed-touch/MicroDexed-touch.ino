@@ -979,6 +979,7 @@ void setup()
 
 #if defined GENERIC_DISPLAY
   touch.begin();
+  touch_ic_found=true;
 #endif
 
 #if defined(PSRAM) && defined(CAPACITIVE_TOUCH_DISPLAY)
