@@ -9,30 +9,33 @@
 class LiveSequencer {
 
 public:
-  LiveSequencer();
-  void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
-  void handlePatternBegin(void);
-  void handleStop(void);
-
   struct EventTime {
     uint16_t patternNumber;
     uint16_t patternMs;
   };
   
   struct MidiEvent {
-    EventTime time;
+    EventTime timeRecord;
+    EventTime timePlay;
     uint8_t track;
     midi::MidiType event;
     uint8_t note_in;
     uint8_t note_in_velocity;
   };
 
+  LiveSequencer();
+  void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
+  void handlePatternBegin(void);
+  void handleStop(void);
+//  void init(int bpm, std::vector<MidiEvents> loadedEvents);
+  void init(int bpm);
+
 private:
   uint32_t eventTimeToMs(EventTime &t);
 
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
-    return ((a.time.patternNumber * 2000) + a.time.patternMs) < ((b.time.patternNumber * 2000) + b.time.patternMs);
+    return ((a.timePlay.patternNumber * 2000) + a.timePlay.patternMs) < ((b.timePlay.patternNumber * 2000) + b.timePlay.patternMs);
   }
   
   std::vector<MidiEvent> events;
@@ -44,7 +47,7 @@ private:
 
   midi::Channel trackChannels[8] = { 0 };
 
-  EventTime lastTrackEvent[8] = { { 0, 0 } };
+  int currentBpm = 90;
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
@@ -58,11 +61,12 @@ private:
   static void timerCallback();
   void playNextEvent(void);
   void updateTrackChannels();
-  uint16_t roundUpDownToMultiple(uint16_t number, uint16_t multiple);
+  void timeQuantization(EventTime &timeRec, EventTime &timePlay, uint16_t multiple);
 
   unsigned long patternLengthMs;
-  uint16_t patternQuantisizeMs = 20;
   static constexpr int NUM_PATTERNS = 4; // needs GUI config
+  uint16_t quantisizeDenom = 16; // 1/x
+  uint16_t quantisizeMs = 10;
   uint16_t patternCount = NUM_PATTERNS - 1;
   
 };
