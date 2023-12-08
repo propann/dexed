@@ -60,6 +60,7 @@ private:
   void playNextEvent(void);
   void updateTrackChannels();
   void timeQuantization(EventTime &timeRec, EventTime &timePlay, uint16_t multiple);
+  void onBpmChanged(int bpm);
 
   unsigned long patternLengthMs;
   static constexpr int NUM_PATTERNS = 4; // needs GUI config

@@ -198,10 +198,20 @@ uint32_t LiveSequencer::eventTimeToMs(EventTime &t) {
 //void LiveSequencer::init(int bpm, std::vector<MidiEvent> loadedEvents) {
 void LiveSequencer::init(int bpm) {
   //events = loadedEvents;
-  
-  currentBpm = bpm;
+  onBpmChanged(bpm);
   liveTimer.begin([this] { playNextEvent(); });
   pendingEvents.resize(50);
+}
+
+void LiveSequencer::onBpmChanged(int bpm) {
+  float resampleFactor =  currentBpm / float(bpm);
+  patternLengthMs = (4 * 1000 * 60) / bpm; // for a 4/4 signature
+  quantisizeMs = patternLengthMs / quantisizeDenom;
+  currentBpm = bpm;
+  for(auto &e : events) {
+    e.timeRecord.patternMs *= resampleFactor;
+    timeQuantization(e.timeRecord, e.timePlay, quantisizeMs);
+  }
 }
 
 void LiveSequencer::handlePatternBegin(void) {
@@ -211,28 +221,21 @@ void LiveSequencer::handlePatternBegin(void) {
   if(++patternCount == NUM_PATTERNS) {
     patternCount = 0;
 
-    if(currentBpm != seq.bpm) {
-      float resampleFactor =  currentBpm / float(seq.bpm);
-      for(auto &e : events) {
-        e.timeRecord.patternMs *= resampleFactor;
-        timeQuantization(e.timeRecord, e.timePlay, quantisizeMs);
-      }
-      currentBpm = seq.bpm;
-    }
-
-    patternLengthMs = (4 * 1000 * 60) / (seq.bpm); // for a 4/4 signature
-    quantisizeMs = patternLengthMs / quantisizeDenom;
-    
-    updateTrackChannels(); // only to be called initially and when track instruments are changed
-    
+    // first insert pending to events and sort
     if(pendingEvents.size()) {
-      // insert pending to events and sort
       events.resize(events.size() + pendingEvents.size());
       events.insert(events.end(), pendingEvents.begin(), pendingEvents.end());
       pendingEvents.clear();
       std::sort(events.begin(), events.end(), LiveSequencer::sortMidiEvent);
     }
 
+    // react to external bpm change
+    if(currentBpm != seq.bpm) {
+      onBpmChanged(seq.bpm);
+    }
+
+    updateTrackChannels(); // only to be called initially and when track instruments are changed
+    
     //printEvents();
     
     if(events.size() > 0) {
