@@ -162,7 +162,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
   events.shrink_to_fit();
 }
 
-void LiveSequencer::loadNextEvent(unsigned long timeMs) {
+void LiveSequencer::loadNextEvent(int timeMs) {
   if(timeMs > 0) {
     //Serial.printf("trigger in %ims\n", timeMs);
     liveTimer.trigger(timeMs * 1000);
@@ -190,9 +190,9 @@ void LiveSequencer::playNextEvent(void) {
       break;
     }
     if(++playIterator != events.end()) {
-      unsigned long timeToNextEvent = max(eventTimeToMs(playIterator->timePlay) - now, 0UL);
+      int timeToNextEvent = eventTimeToMs(playIterator->timePlay) - now;
       loadNextEvent(timeToNextEvent);
-    } 
+    }
   }
 }
 

@@ -54,7 +54,7 @@ private:
   std::string getName(midi::MidiType event);
   void printEvent(int i, MidiEvent e);
   void printEvents();
-  void loadNextEvent(uint32_t timeMs);
+  void loadNextEvent(int timeMs);
   void allNotesOff(void);
   void clearTrackEvents(uint8_t track);
 
