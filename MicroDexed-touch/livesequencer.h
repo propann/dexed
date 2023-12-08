@@ -57,8 +57,6 @@ private:
   void loadNextEvent(int timeMs);
   void allNotesOff(void);
   void clearTrackEvents(uint8_t track);
-
-  static void timerCallback();
   void playNextEvent(void);
   void updateTrackChannels();
   void timeQuantization(EventTime &timeRec, EventTime &timePlay, uint16_t multiple);
@@ -68,7 +66,6 @@ private:
   uint16_t quantisizeDenom = 16; // 1/x
   uint16_t quantisizeMs = 150;
   uint16_t patternCount = NUM_PATTERNS - 1;
-  
 };
 
 #endif //LIVESEQUENCER_H

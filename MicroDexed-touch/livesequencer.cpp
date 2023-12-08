@@ -12,16 +12,9 @@ extern config_t configuration;
 extern microsynth_t microsynth[2];
 extern braids_t braids_osc;
 
-LiveSequencer *instance;
-
 std::map<uint8_t, LiveSequencer::MidiEvent> notesOn;
 
 LiveSequencer::LiveSequencer() {
-  instance = this;
-}
-
-inline void LiveSequencer::timerCallback() {
-  instance->playNextEvent();
 }
 
 std::string LiveSequencer::getName(midi::MidiType event) {
@@ -205,8 +198,10 @@ uint32_t LiveSequencer::eventTimeToMs(EventTime &t) {
 //void LiveSequencer::init(int bpm, std::vector<MidiEvent> loadedEvents) {
 void LiveSequencer::init(int bpm) {
   //events = loadedEvents;
+  
   currentBpm = bpm;
-  liveTimer.begin(timerCallback);
+  liveTimer.begin([this] { playNextEvent(); });
+  pendingEvents.resize(50);
 }
 
 void LiveSequencer::handlePatternBegin(void) {
@@ -235,7 +230,6 @@ void LiveSequencer::handlePatternBegin(void) {
       events.resize(events.size() + pendingEvents.size());
       events.insert(events.end(), pendingEvents.begin(), pendingEvents.end());
       pendingEvents.clear();
-      pendingEvents.shrink_to_fit();
       std::sort(events.begin(), events.end(), LiveSequencer::sortMidiEvent);
     }
 
