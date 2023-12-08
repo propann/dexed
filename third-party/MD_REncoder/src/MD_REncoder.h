@@ -147,7 +147,7 @@ speed = ClickCount * (1000 / period)
  Set this to 1 to emit codes when the rotary encoder is at 11 as well as 00. 
  The default is to emit codes only at 00.
  */
-#define ENABLE_HALF_STEP  0
+#define ENABLE_HALF_STEP  1
 
 /**
  \def ENABLE_PULLUPS

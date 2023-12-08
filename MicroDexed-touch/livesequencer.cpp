@@ -20,7 +20,7 @@ LiveSequencer::LiveSequencer() {
   instance = this;
 }
 
-void LiveSequencer::timerCallback() {
+inline void LiveSequencer::timerCallback() {
   instance->playNextEvent();
 }
 
@@ -57,6 +57,7 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 
 void LiveSequencer::timeQuantization(EventTime &timeRec, EventTime &timePlay, uint16_t multiple) {
   const uint16_t halfStep = multiple / 2;
+  // first round up an event just at end that was meant to be played at 1
   if((patternLengthMs - timeRec.patternMs) < halfStep) {
     timeRec.patternNumber++;
     if(timeRec.patternNumber == NUM_PATTERNS) {
@@ -64,6 +65,7 @@ void LiveSequencer::timeQuantization(EventTime &timeRec, EventTime &timePlay, ui
     }
     timeRec.patternMs = 0;
   }
+  // then do quantization
   timePlay.patternMs = ((timeRec.patternMs + halfStep) / multiple) * multiple;
   timePlay.patternNumber = timeRec.patternNumber;
   Serial.printf("round %i to %i\n", timeRec.patternMs, timePlay.patternMs);

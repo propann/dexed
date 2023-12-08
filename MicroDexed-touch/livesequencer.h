@@ -66,7 +66,7 @@ private:
   unsigned long patternLengthMs;
   static constexpr int NUM_PATTERNS = 4; // needs GUI config
   uint16_t quantisizeDenom = 16; // 1/x
-  uint16_t quantisizeMs = 10;
+  uint16_t quantisizeMs = 150;
   uint16_t patternCount = NUM_PATTERNS - 1;
   
 };
