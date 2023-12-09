@@ -73,41 +73,27 @@ void LiveSequencer::printEvents() {
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  switch(note) {
-  case 48: // clear track
-    clearTrackEvents(activeRecordingTrack);
-    Serial.printf("cleared track %i\n", activeRecordingTrack);
-    return;
-  
-  case 49: // track down
-    activeRecordingTrack = 6;
-    Serial.printf("rec track now is %i\n", activeRecordingTrack);
-    return;
-  
-  case 51: // track up
-    activeRecordingTrack = 7;
-    Serial.printf("rec track now is %i\n", activeRecordingTrack);
-    return;
-
-  default:
-    break;
-  }
-
-  midi::Channel ch = trackChannels[activeRecordingTrack];
-  switch(event) {
-  case midi::NoteOn:
-    handleNoteOn(ch, note, velocity, 0);
-    break;
-  
-  case midi::NoteOff:
-    handleNoteOff(ch, note, velocity, 0);
-    break;
-  
-  default:
-    break;
-  }
-
   if(seq.running) {
+    switch(note) {
+    case 48: // clear track
+      clearTrackEvents(activeRecordingTrack);
+      Serial.printf("cleared track %i\n", activeRecordingTrack);
+      return;
+    
+    case 49: // track down
+      activeRecordingTrack = 6;
+      Serial.printf("rec track now is %i\n", activeRecordingTrack);
+      return;
+    
+    case 51: // track up
+      activeRecordingTrack = 7;
+      Serial.printf("rec track now is %i\n", activeRecordingTrack);
+      return;
+
+    default:
+      break;
+    }
+
     const EventTime timeRecord = { patternCount, uint16_t(patternTimer) };
   
     MidiEvent newEvent = { timeRecord, timeRecord, activeRecordingTrack, event, note, velocity };
@@ -139,6 +125,21 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
     
     //printEvents();
     
+  }
+
+  // forward midi with correct channel
+  midi::Channel ch = trackChannels[activeRecordingTrack];
+  switch(event) {
+  case midi::NoteOn:
+    handleNoteOn(ch, note, velocity, 0);
+    break;
+  
+  case midi::NoteOff:
+    handleNoteOff(ch, note, velocity, 0);
+    break;
+  
+  default:
+    break;
   }
 }
 
