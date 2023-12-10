@@ -58,10 +58,15 @@ void LiveSequencer::timeQuantization(EventTime &timeRec, EventTime &timePlay, ui
     }
     timeRec.patternMs = 0;
   }
-  // then do quantization
-  timePlay.patternMs = ((timeRec.patternMs + halfStep) / multiple) * multiple;
+  if(activeRecordingTrack == 7) {
+    // avoid instr quant... hack
+    timePlay.patternMs = timeRec.patternMs;
+  } else {
+    // then do quantization
+    timePlay.patternMs = ((timeRec.patternMs + halfStep) / multiple) * multiple;
+    Serial.printf("round %i to %i\n", timeRec.patternMs, timePlay.patternMs);
+  }
   timePlay.patternNumber = timeRec.patternNumber;
-  Serial.printf("round %i to %i\n", timeRec.patternMs, timePlay.patternMs);
 }
 
 void LiveSequencer::printEvents() {
@@ -155,7 +160,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
       it++;
     }
   }
-  events.shrink_to_fit();
+  pendingEvents.clear(); // all of them...
 }
 
 void LiveSequencer::loadNextEvent(int timeMs) {
@@ -201,6 +206,7 @@ void LiveSequencer::init(int bpm) {
   //events = loadedEvents;
   onBpmChanged(bpm);
   liveTimer.begin([this] { playNextEvent(); });
+  events.resize(300);
   pendingEvents.resize(50);
 }
 
