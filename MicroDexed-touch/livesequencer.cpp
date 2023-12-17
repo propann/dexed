@@ -45,28 +45,25 @@ void LiveSequencer::allNotesOff(void) {
 }
 
 void LiveSequencer::printEvent(int i, MidiEvent e) {
-  Serial.printf("[%i]: %i:%04i\t%i:%04i, (%i), %s, %i, %i\n", i, e.timeRecord.patternNumber, e.timeRecord.patternMs, e.timePlay.patternNumber, e.timePlay.patternMs, e.track, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
+  Serial.printf("[%i]: %i:%04i, (%i), %s, %i, %i\n", i, e.time.patternNumber, e.time.patternMs, e.track, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
 }
 
-void LiveSequencer::timeQuantization(EventTime &timeRec, EventTime &timePlay, uint16_t multiple) {
+LiveSequencer::EventTime LiveSequencer::timeQuantization(uint16_t patternNumber, uint16_t patternMs, uint16_t multiple) {
   const uint16_t halfStep = multiple / 2;
+  EventTime result({ patternNumber, patternMs });
   // first round up an event just at end that was meant to be played at 1
-  if((patternLengthMs - timeRec.patternMs) < halfStep) {
-    timeRec.patternNumber++;
-    if(timeRec.patternNumber == NUM_PATTERNS) {
-      timeRec.patternNumber = 0;
+  if((patternLengthMs - patternMs) < halfStep) {
+    result.patternNumber++;
+    if(result.patternNumber == NUM_PATTERNS) {
+      result.patternNumber = 0;
     }
-    timeRec.patternMs = 0;
+    result.patternMs = 0;
   }
-  if(activeRecordingTrack == 7) {
-    // avoid instr quant... hack
-    timePlay.patternMs = timeRec.patternMs;
-  } else {
-    // then do quantization
-    timePlay.patternMs = ((timeRec.patternMs + halfStep) / multiple) * multiple;
-    Serial.printf("round %i to %i\n", timeRec.patternMs, timePlay.patternMs);
+  if(activeRecordingTrack != 7) {
+    result.patternMs = ((patternMs + halfStep) / multiple) * multiple;
+    Serial.printf("round %i to %i\n", patternMs, result.patternMs);
   }
-  timePlay.patternNumber = timeRec.patternNumber;
+  return result;
 }
 
 void LiveSequencer::printEvents() {
@@ -81,27 +78,33 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   if(seq.running) {
     switch(note) {
     case 48: // clear track
-      clearTrackEvents(activeRecordingTrack);
-      Serial.printf("cleared track %i\n", activeRecordingTrack);
+      if(event == midi::NoteOn) {
+        clearTrackEvents(activeRecordingTrack);
+        Serial.printf("cleared track %i\n", activeRecordingTrack);
+      }
       return;
     
     case 49: // track down
-      activeRecordingTrack = 6;
-      Serial.printf("rec track now is %i\n", activeRecordingTrack);
+      if(event == midi::NoteOn) {
+        activeRecordingTrack = std::max(--activeRecordingTrack, MIN_TRACK_CHANNEL);
+        Serial.printf("rec track now is %i\n", activeRecordingTrack);
+      }
       return;
     
     case 51: // track up
-      activeRecordingTrack = 7;
-      Serial.printf("rec track now is %i\n", activeRecordingTrack);
+      if(event == midi::NoteOn) {
+          activeRecordingTrack = std::min(++activeRecordingTrack, MAX_TRACK_CHANNEL);
+          Serial.printf("rec track now is %i\n", activeRecordingTrack);
+      }
       return;
 
     default:
       break;
     }
 
-    const EventTime timeRecord = { patternCount, uint16_t(patternTimer) };
+    const EventTime timeRecord = timeQuantization(patternCount, patternTimer, quantisizeMs);
   
-    MidiEvent newEvent = { timeRecord, timeRecord, activeRecordingTrack, event, note, velocity };
+    MidiEvent newEvent = { timeRecord, activeRecordingTrack, event, note, velocity };
     switch(newEvent.event) {
     default:
       // ignore all other types
@@ -116,12 +119,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       const auto on = notesOn.find(note);
       if(on != notesOn.end()) {
           // if so, insert NoteOn and this NoteOff at end
-          timeQuantization(on->second.timeRecord, on->second.timePlay, quantisizeMs);
           pendingEvents.push_back(on->second);
-          timeQuantization(newEvent.timeRecord, newEvent.timePlay, quantisizeMs);
-          if(on->second.timePlay.patternMs == newEvent.timePlay.patternMs) {
-            newEvent.timePlay.patternMs += quantisizeMs;
-          }
           pendingEvents.push_back(newEvent);
           notesOn.erase(on);
       }
@@ -191,7 +189,7 @@ void LiveSequencer::playNextEvent(void) {
       break;
     }
     if(++playIterator != events.end()) {
-      int timeToNextEvent = eventTimeToMs(playIterator->timePlay) - now;
+      int timeToNextEvent = eventTimeToMs(playIterator->time) - now;
       loadNextEvent(timeToNextEvent);
     }
   }
@@ -216,8 +214,8 @@ void LiveSequencer::onBpmChanged(int bpm) {
   quantisizeMs = patternLengthMs / quantisizeDenom;
   currentBpm = bpm;
   for(auto &e : events) {
-    e.timeRecord.patternMs *= resampleFactor;
-    timeQuantization(e.timeRecord, e.timePlay, quantisizeMs);
+    e.time.patternMs *= resampleFactor;
+    //timeQuantization(e.time, e.timePlay, quantisizeMs);
   }
 }
 
@@ -247,7 +245,7 @@ void LiveSequencer::handlePatternBegin(void) {
     
     if(events.size() > 0) {
       playIterator = events.begin();
-      loadNextEvent(eventTimeToMs(playIterator->timePlay));
+      loadNextEvent(eventTimeToMs(playIterator->time));
     }
   }
   Serial.printf("Sequence %i/%i @%ibpm : %ims\n", patternCount + 1, NUM_PATTERNS, currentBpm, patternLengthMs);

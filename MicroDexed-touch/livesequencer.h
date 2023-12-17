@@ -15,8 +15,7 @@ public:
   };
   
   struct MidiEvent {
-    EventTime timeRecord;
-    EventTime timePlay;
+    EventTime time;
     uint8_t track;
     midi::MidiType event;
     uint8_t note_in;
@@ -35,7 +34,7 @@ private:
 
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
-    return ((a.timePlay.patternNumber * 2000) + a.timePlay.patternMs) < ((b.timePlay.patternNumber * 2000) + b.timePlay.patternMs);
+    return ((a.time.patternNumber * 2000) + a.time.patternMs) < ((b.time.patternNumber * 2000) + b.time.patternMs);
   }
   
   std::vector<MidiEvent> events;
@@ -43,8 +42,6 @@ private:
   std::vector<MidiEvent>::iterator playIterator;
 
   elapsedMillis patternTimer;
-  uint8_t activeRecordingTrack = 7;
-
   midi::Channel trackChannels[8] = { 0 };
 
   int currentBpm = 90;
@@ -59,7 +56,7 @@ private:
   void clearTrackEvents(uint8_t track);
   void playNextEvent(void);
   void updateTrackChannels();
-  void timeQuantization(EventTime &timeRec, EventTime &timePlay, uint16_t multiple);
+  EventTime timeQuantization(uint16_t patternNumber, uint16_t patternMs, uint16_t multiple);
   void onBpmChanged(int bpm);
 
   unsigned long patternLengthMs;
@@ -67,6 +64,11 @@ private:
   uint16_t quantisizeDenom = 16; // 1/x
   uint16_t quantisizeMs = 150;
   uint16_t patternCount = NUM_PATTERNS - 1;
+
+  static constexpr uint8_t MIN_TRACK_CHANNEL = 5;
+  static constexpr uint8_t MAX_TRACK_CHANNEL = 7;
+  uint8_t activeRecordingTrack = MAX_TRACK_CHANNEL;
+
 };
 
 #endif //LIVESEQUENCER_H
