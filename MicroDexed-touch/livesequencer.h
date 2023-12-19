@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include "MIDI.h"
 #include "TeensyTimerTool.h"
 
@@ -33,9 +34,9 @@ private:
     return ((a.patternNumber * 2000) + a.patternMs) < ((b.patternNumber * 2000) + b.patternMs); // FIXME: patternLengthMs
   }
   
-  std::vector<MidiEvent> events;
+  std::list<MidiEvent> eventsList;
   std::vector<MidiEvent> pendingEvents;
-  std::vector<MidiEvent>::iterator playIterator;
+  std::list<MidiEvent>::iterator playIterator;
 
   elapsedMillis patternTimer;
   midi::Channel trackChannels[8] = { 0 };
@@ -57,7 +58,7 @@ private:
   void onBpmChanged(int bpm);
 
   unsigned long patternLengthMs;
-  static constexpr int NUM_PATTERNS = 1; // needs GUI config
+  static constexpr int NUM_PATTERNS = 4; // needs GUI config
   uint16_t quantisizeDenom = 16; // 1/x
   uint16_t quantisizeMs = 150;
   uint16_t patternCount = NUM_PATTERNS - 1;

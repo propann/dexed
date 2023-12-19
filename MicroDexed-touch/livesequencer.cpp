@@ -32,13 +32,12 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::handleStop(void) {
-  playIterator = events.end();
   patternCount = NUM_PATTERNS - 1;
   allNotesOff();
 }
 
 void LiveSequencer::allNotesOff(void) {
-  for(auto &e : events) {
+  for(auto &e : eventsList) {
     if(e.event == midi::NoteOff) {
       handleNoteOff(trackChannels[e.track], e.note_in, e.note_in_velocity, 0);
     }
@@ -65,12 +64,15 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
     Serial.printf("round %i to %i\n", patternMs, resultMs);
   }
+  patternNumber = resultNumber;
+  patternMs = resultMs;
 }
 
 void LiveSequencer::printEvents() {
-  Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", events.size(), events.size() * sizeof(MidiEvent), sizeof(MidiEvent));
-  for(uint i = 0; i < events.size(); i++) {
-    printEvent(i, events[i]);
+  Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", eventsList.size(), eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent));
+  uint i = 0;
+  for(auto &e : eventsList) {
+    printEvent(i++, e);
   }
 }
 
@@ -119,16 +121,13 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       // check if it has a corresponding NoteOn
       const auto on = notesOn.find(note);
       if(on != notesOn.end()) {
-          // if so, insert NoteOn and this NoteOff at end
+          // if so, insert NoteOn and this NoteOff to pending
           pendingEvents.push_back(on->second);
           pendingEvents.push_back(newEvent);
           notesOn.erase(on);
       }
       break;
     }
-    
-    //printEvents();
-    
   }
 
   // forward midi with correct channel
@@ -156,15 +155,13 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
     if(trackLayers[activeRecordingTrack] > 0) {
       trackLayers[activeRecordingTrack]--;
     }
-    for(std::vector<MidiEvent>::iterator it = events.begin(); it != events.end();) {
-      if(it->track == track && it->layer == trackLayers[activeRecordingTrack]) {
-        if(it->event == midi::NoteOff) {
-          handleNoteOff(trackChannels[it->track], it->note_in, it->note_in_velocity, 0);
+
+    for(auto &e : eventsList) {
+       if(e.track == track && e.layer == trackLayers[activeRecordingTrack]) {
+        if(e.event == midi::NoteOff) {
+          handleNoteOff(trackChannels[e.track], e.note_in, e.note_in_velocity, 0);
         }
-        events.erase(it);
-        playIterator--; // FIXME: only if event is in the future
-      } else {
-        it++;
+        e.event = midi::InvalidType; // delete later
       }
     }
   }
@@ -180,7 +177,7 @@ void LiveSequencer::loadNextEvent(int timeMs) {
 }
 
 void LiveSequencer::playNextEvent(void) {
-  if(playIterator != events.end()) {
+  if(playIterator != eventsList.end()) {
     const unsigned long now = ((patternCount * patternLengthMs) + patternTimer);
     //Serial.printf("PLAY: ");
     //printEvent(1, *playIterator);
@@ -197,7 +194,7 @@ void LiveSequencer::playNextEvent(void) {
     default:
       break;
     }
-    if(++playIterator != events.end()) {
+    if(++playIterator != eventsList.end()) {
       int timeToNextEvent = timeToMs(playIterator->patternNumber, playIterator->patternMs) - now;
       loadNextEvent(timeToNextEvent);
     }
@@ -213,7 +210,6 @@ void LiveSequencer::init(int bpm) {
   //events = loadedEvents;
   onBpmChanged(bpm);
   liveTimer.begin([this] { playNextEvent(); });
-  events.reserve(300);
   pendingEvents.reserve(50);
 }
 
@@ -222,9 +218,9 @@ void LiveSequencer::onBpmChanged(int bpm) {
   patternLengthMs = (4 * 1000 * 60) / bpm; // for a 4/4 signature
   quantisizeMs = patternLengthMs / quantisizeDenom;
   currentBpm = bpm;
-  for(auto &e : events) {
+  for(auto &e : eventsList) {
     e.patternMs *= resampleFactor;
-    //timeQuantization(e.time, e.timePlay, quantisizeMs);
+    timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
   }
 }
 
@@ -237,10 +233,12 @@ void LiveSequencer::handlePatternBegin(void) {
 
     // first insert pending to events and sort
     if(pendingEvents.size()) {
-      //events.resize(events.size() + pendingEvents.size());
-      events.insert(events.end(), pendingEvents.begin(), pendingEvents.end());
+      for(auto &e : pendingEvents) {
+        eventsList.emplace_back(e);
+      }
       pendingEvents.clear();
-      std::sort(events.begin(), events.end(), LiveSequencer::sortMidiEvent);
+
+      eventsList.sort(sortMidiEvent);
       trackLayers[activeRecordingTrack]++;
     }
 
@@ -251,10 +249,11 @@ void LiveSequencer::handlePatternBegin(void) {
 
     updateTrackChannels(); // only to be called initially and when track instruments are changed
     
-    printEvents();
-    
-    if(events.size() > 0) {
-      playIterator = events.begin();
+    if(eventsList.size() > 0) {
+      // remove all invalidated notes
+      eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
+      //printEvents();
+      playIterator = eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
