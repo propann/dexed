@@ -9,14 +9,11 @@
 class LiveSequencer {
 
 public:
-  struct EventTime {
-    uint16_t patternNumber;
-    uint16_t patternMs;
-  };
-  
   struct MidiEvent {
-    EventTime time;
+    uint16_t patternMs;
+    uint8_t patternNumber;
     uint8_t track;
+    uint8_t layer;
     midi::MidiType event;
     uint8_t note_in;
     uint8_t note_in_velocity;
@@ -30,11 +27,10 @@ public:
   void init(int bpm);
 
 private:
-  uint32_t eventTimeToMs(EventTime &t);
-
+  uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
-    return ((a.time.patternNumber * 2000) + a.time.patternMs) < ((b.time.patternNumber * 2000) + b.time.patternMs);
+    return ((a.patternNumber * 2000) + a.patternMs) < ((b.patternNumber * 2000) + b.patternMs); // FIXME: patternLengthMs
   }
   
   std::vector<MidiEvent> events;
@@ -43,6 +39,7 @@ private:
 
   elapsedMillis patternTimer;
   midi::Channel trackChannels[8] = { 0 };
+  uint8_t trackLayers[8] = { 0 };
 
   int currentBpm = 90;
 
@@ -56,18 +53,18 @@ private:
   void clearTrackEvents(uint8_t track);
   void playNextEvent(void);
   void updateTrackChannels();
-  EventTime timeQuantization(uint16_t patternNumber, uint16_t patternMs, uint16_t multiple);
+  void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void onBpmChanged(int bpm);
 
   unsigned long patternLengthMs;
-  static constexpr int NUM_PATTERNS = 4; // needs GUI config
+  static constexpr int NUM_PATTERNS = 1; // needs GUI config
   uint16_t quantisizeDenom = 16; // 1/x
   uint16_t quantisizeMs = 150;
   uint16_t patternCount = NUM_PATTERNS - 1;
 
   static constexpr uint8_t MIN_TRACK_CHANNEL = 5;
   static constexpr uint8_t MAX_TRACK_CHANNEL = 7;
-  uint8_t activeRecordingTrack = MAX_TRACK_CHANNEL;
+  uint8_t activeRecordingTrack;
 
 };
 
