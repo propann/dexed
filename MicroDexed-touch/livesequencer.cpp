@@ -15,8 +15,9 @@ extern braids_t braids_osc;
 std::map<uint8_t, LiveSequencer::MidiEvent> notesOn;
 
 LiveSequencer::LiveSequencer() :
-  ui(&isRunning, &patternCount, &patternTimer) {
-  activeRecordingTrack = MAX_TRACK_CHANNEL;
+  activeRecordingTrack(MAX_TRACK_CHANNEL),
+  ui(&isRecording, &activeRecordingTrack, &isRunning, &patternCount, &patternTimer) {
+  
 }
 
 std::string LiveSequencer::getName(midi::MidiType event) {
@@ -84,25 +85,11 @@ void LiveSequencer::printEvents() {
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  if(isRunning) {
+  if(isRecording && isRunning) {
     switch(note) {
     case 48: // clear track
       if(event == midi::NoteOn) {
         clearTrackEvents(activeRecordingTrack);
-      }
-      return;
-    
-    case 49: // track down
-      if(event == midi::NoteOn) {
-        activeRecordingTrack = std::max(--activeRecordingTrack, MIN_TRACK_CHANNEL);
-        Serial.printf("rec track now is %i\n", activeRecordingTrack);
-      }
-      return;
-    
-    case 51: // track up
-      if(event == midi::NoteOn) {
-          activeRecordingTrack = std::min(++activeRecordingTrack, MAX_TRACK_CHANNEL);
-          Serial.printf("rec track now is %i\n", activeRecordingTrack);
       }
       return;
 

@@ -31,6 +31,11 @@ public:
   void init(int bpm);
 
 private:
+  static constexpr uint8_t MIN_TRACK_CHANNEL = 5;
+  static constexpr uint8_t MAX_TRACK_CHANNEL = 7;
+  uint8_t activeRecordingTrack;
+
+  bool isRecording = false;
   bool isRunning = false;
   UI_LiveSequencer ui;
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
@@ -67,11 +72,6 @@ private:
   uint16_t quantisizeDenom = 16; // 1/x
   uint16_t quantisizeMs = 150;
   uint16_t patternCount = NUM_PATTERNS - 1;
-
-  static constexpr uint8_t MIN_TRACK_CHANNEL = 5;
-  static constexpr uint8_t MAX_TRACK_CHANNEL = 7;
-  uint8_t activeRecordingTrack;
-
 };
 
 #endif //LIVESEQUENCER_H

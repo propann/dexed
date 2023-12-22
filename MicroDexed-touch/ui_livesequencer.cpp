@@ -15,15 +15,21 @@ uint16_t *patternCount;
 elapsedMillis *patternTimer;
 bool *isRunning;
 bool runningHere = false;
+uint8_t *recordingTrack;
+bool *recording;
 
-UI_LiveSequencer::UI_LiveSequencer(bool *running, uint16_t *patCount, elapsedMillis *patTimer) {
+UI_LiveSequencer::UI_LiveSequencer(bool *rec, uint8_t *recTrack, bool *running, uint16_t *patCount, elapsedMillis *patTimer) {
   patternCount = patCount;
   patternTimer = patTimer;
   isRunning = running;
+  recordingTrack = recTrack;
+  recording = rec;
 }
 
+void drawButtons();
+
 static constexpr int NUM_TRACKS = 6;
-bool buttonStates[NUM_TRACKS] = { false };
+bool trackEnabled[NUM_TRACKS] = { false };
 
 void UI_func_livesequencer(uint8_t param)
 {
@@ -46,26 +52,42 @@ void UI_func_livesequencer(uint8_t param)
 }
 
 void handle_touchscreen_live_sequencer(void) {
-  bool updateButtons = (*isRunning != runningHere);
-  runningHere = *isRunning;
+  bool buttonsChanged = false;
 
-  if (check_button_on_grid(0, 0)) {
+  bool runningPressed = check_button_on_grid(0, 0);
+  bool runningChanged = (runningHere != *isRunning);
+  
+  if (runningPressed) {
     if(runningHere) {
       handleStop();
     } else {
       handleStart();
     }
-    updateButtons = true;
+  }
+  if(runningChanged) {
+    runningHere = *isRunning;
+  }
+  if(runningPressed || runningChanged) {
+    buttonsChanged = true;
+  }
+
+  bool recPressed = check_button_on_grid(9, 0);
+  if(recPressed) {
+    *recording = !*recording;
+    buttonsChanged = true;
   }
 
   for(int i = 0; i < NUM_TRACKS; i++) {
-    if (check_button_on_grid(i * 9, 5)) {
-      buttonStates[i] = !buttonStates[i];
-      updateButtons = true;
+    bool pressed = check_button_on_grid(i * 9, 5);
+    if(pressed) {
+      if(*recording) {
+        *recordingTrack = i;
+        Serial.printf("rec track now is %i\n", *recordingTrack + 1);
+      } else {
+        trackEnabled[i] = !trackEnabled[i];
+      }
+      buttonsChanged = true;
     }
-  }
-  if(updateButtons) {
-    drawButtons();
   }
 
   display.setCursor(1, 100);
@@ -75,16 +97,21 @@ void handle_touchscreen_live_sequencer(void) {
   if(runningHere) {
     patCount = *patternCount;
     timeMs = *patternTimer;
-    
   }
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.printf("Time: %i.%04i", patCount, timeMs);
+
+  if(buttonsChanged) {
+    drawButtons();
+  }
 }
 
-void drawButtons(void) {
-  char temp_char[4];
+void drawButtons() {
   draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
- 
+  draw_button_on_grid(9, 0, "REC", "", *recording ? 2 : 0);
+
+  char temp_char[4];
   for(int i = 0; i < NUM_TRACKS; i++) {
-    draw_button_on_grid(i * 9, 5, "TRACK", itoa(i + 1, temp_char, 10), buttonStates[i] ? 1 : 0);
+    draw_button_on_grid(i * 9, 5, "TRACK", itoa(i + 1, temp_char, 10), *recording && (i == *recordingTrack) ? 2 : (trackEnabled[i] ? 1 : 0));
   }
 }
