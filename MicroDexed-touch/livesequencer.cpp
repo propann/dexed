@@ -257,7 +257,7 @@ void LiveSequencer::handlePatternBegin(void) {
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-  Serial.printf("Sequence %i/%i @%ibpm : %ims\n", patternCount + 1, NUM_PATTERNS, currentBpm, patternLengthMs);
+  Serial.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", patternCount + 1, NUM_PATTERNS, currentBpm, patternLengthMs, eventsList.size());
 
 }
 
