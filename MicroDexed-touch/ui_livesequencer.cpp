@@ -3,27 +3,21 @@
 #include "ILI9341_t3n.h"
 #include "sequencer.h"
 
+#include "livesequencer.h"
+
 extern LCDMenuLib2 LCDML;
 extern ILI9341_t3n display;
 extern void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, uint8_t color);
 extern bool check_button_on_grid(uint8_t x, uint8_t y);
 extern void handleStart();
 extern void handleStop();
-extern sequencer_t seq;
 
-uint16_t *patternCount;
-elapsedMillis *patternTimer;
-bool *isRunning;
 bool runningHere = false;
-uint8_t *recordingTrack;
-bool *recording;
 
-UI_LiveSequencer::UI_LiveSequencer(bool *rec, uint8_t *recTrack, bool *running, uint16_t *patCount, elapsedMillis *patTimer) {
-  patternCount = patCount;
-  patternTimer = patTimer;
-  isRunning = running;
-  recordingTrack = recTrack;
-  recording = rec;
+LiveSequencer::LiveSeqData *liveSeqData;
+
+UI_LiveSequencer::UI_LiveSequencer(void *ldata) {
+  liveSeqData = ldata;
 }
 
 void drawButtons();
@@ -55,7 +49,7 @@ void handle_touchscreen_live_sequencer(void) {
   bool buttonsChanged = false;
 
   bool runningPressed = check_button_on_grid(0, 0);
-  bool runningChanged = (runningHere != *isRunning);
+  bool runningChanged = (runningHere != liveSeqData->isRunning);
   
   if (runningPressed) {
     if(runningHere) {
@@ -65,7 +59,7 @@ void handle_touchscreen_live_sequencer(void) {
     }
   }
   if(runningChanged) {
-    runningHere = *isRunning;
+    runningHere = liveSeqData->isRunning;
   }
   if(runningPressed || runningChanged) {
     buttonsChanged = true;
@@ -73,16 +67,16 @@ void handle_touchscreen_live_sequencer(void) {
 
   bool recPressed = check_button_on_grid(9, 0);
   if(recPressed) {
-    *recording = !*recording;
+    liveSeqData->isRecording = !liveSeqData->isRecording;
     buttonsChanged = true;
   }
 
   for(int i = 0; i < NUM_TRACKS; i++) {
     bool pressed = check_button_on_grid(i * 9, 5);
     if(pressed) {
-      if(*recording) {
-        *recordingTrack = i;
-        Serial.printf("rec track now is %i\n", *recordingTrack + 1);
+      if(liveSeqData->isRecording) {
+        liveSeqData->activeRecordingTrack = i;
+        Serial.printf("rec track now is %i\n", i + 1);
       } else {
         trackEnabled[i] = !trackEnabled[i];
       }
@@ -95,8 +89,8 @@ void handle_touchscreen_live_sequencer(void) {
   uint16_t patCount = 0;
   uint16_t timeMs = 0;
   if(runningHere) {
-    patCount = *patternCount;
-    timeMs = *patternTimer;
+    patCount = liveSeqData->patternCount;
+    timeMs = liveSeqData->patternTimer;
   }
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.printf("Time: %i.%04i", patCount, timeMs);
@@ -108,10 +102,10 @@ void handle_touchscreen_live_sequencer(void) {
 
 void drawButtons() {
   draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
-  draw_button_on_grid(9, 0, "REC", "", *recording ? 2 : 0);
+  draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
 
   char temp_char[4];
   for(int i = 0; i < NUM_TRACKS; i++) {
-    draw_button_on_grid(i * 9, 5, "TRACK", itoa(i + 1, temp_char, 10), *recording && (i == *recordingTrack) ? 2 : (trackEnabled[i] ? 1 : 0));
+    draw_button_on_grid(i * 9, 5, "TRACK", itoa(i + 1, temp_char, 10), liveSeqData->isRecording && (i == liveSeqData->activeRecordingTrack) ? 2 : (trackEnabled[i] ? 1 : 0));
   }
 }

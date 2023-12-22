@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include "elapsedMillis.h"
 
+class LiveSequencer;
+
 class UI_LiveSequencer {
 
 public:
 
-  UI_LiveSequencer(bool *rec, uint8_t *recTrack, bool *running, uint16_t *patCount, elapsedMillis *patTimer);
+  UI_LiveSequencer(void *ldata);
 
 private:
   

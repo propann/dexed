@@ -21,6 +21,18 @@ public:
     uint8_t note_in_velocity;
   };
 
+  struct LiveSeqData {
+    bool isRunning = false;;
+    bool isRecording = false;
+    uint8_t activeRecordingTrack = 0;
+    uint8_t trackLayers[8] = { 0 };
+    midi::Channel trackChannels[8] = { 0 };
+
+    elapsedMillis patternTimer;
+    unsigned long patternLengthMs;
+    int numberOfBars = 4;
+    uint16_t patternCount = 0;
+  };
 
   LiveSequencer();
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
@@ -31,12 +43,10 @@ public:
   void init(int bpm);
 
 private:
+  LiveSeqData data;
   static constexpr uint8_t MIN_TRACK_CHANNEL = 5;
   static constexpr uint8_t MAX_TRACK_CHANNEL = 7;
-  uint8_t activeRecordingTrack;
 
-  bool isRecording = false;
-  bool isRunning = false;
   UI_LiveSequencer ui;
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
 
@@ -47,10 +57,6 @@ private:
   std::list<MidiEvent> eventsList;
   std::vector<MidiEvent> pendingEvents;
   std::list<MidiEvent>::iterator playIterator;
-
-  elapsedMillis patternTimer;
-  midi::Channel trackChannels[8] = { 0 };
-  uint8_t trackLayers[8] = { 0 };
 
   int currentBpm = 90;
 
@@ -67,11 +73,9 @@ private:
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void onBpmChanged(int bpm);
 
-  unsigned long patternLengthMs;
-  static constexpr int NUM_PATTERNS = 4; // needs GUI config
   uint16_t quantisizeDenom = 16; // 1/x
   uint16_t quantisizeMs = 150;
-  uint16_t patternCount = NUM_PATTERNS - 1;
+  
 };
 
 #endif //LIVESEQUENCER_H

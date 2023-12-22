@@ -15,9 +15,7 @@ extern braids_t braids_osc;
 std::map<uint8_t, LiveSequencer::MidiEvent> notesOn;
 
 LiveSequencer::LiveSequencer() :
-  activeRecordingTrack(MAX_TRACK_CHANNEL),
-  ui(&isRecording, &activeRecordingTrack, &isRunning, &patternCount, &patternTimer) {
-  
+  ui(&data) {
 }
 
 std::string LiveSequencer::getName(midi::MidiType event) {
@@ -36,18 +34,18 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 void LiveSequencer::handleStop(void) {
   playIterator = eventsList.end();
   allNotesOff();
-  isRunning = false;
+  data.isRunning = false;
 }
 
 void LiveSequencer::handleStart(void) {
-  patternCount = NUM_PATTERNS - 1;
-  isRunning = true;
+  data.patternCount = data.numberOfBars - 1;
+  data.isRunning = true;
 }
 
 void LiveSequencer::allNotesOff(void) {
   for(auto &e : eventsList) {
     if(e.event == midi::NoteOff) {
-      handleNoteOff(trackChannels[e.track], e.note_in, e.note_in_velocity, 0);
+      handleNoteOff(data.trackChannels[e.track], e.note_in, e.note_in_velocity, 0);
     }
   }
 }
@@ -61,14 +59,14 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
   uint8_t resultNumber = patternNumber;
   uint16_t resultMs = patternMs;
   // first round up an event just at end that was meant to be played at 1
-  if((patternLengthMs - patternMs) < halfStep) {
+  if((data.patternLengthMs - patternMs) < halfStep) {
     resultNumber++;
-    if(resultNumber == NUM_PATTERNS) {
+    if(resultNumber == data.numberOfBars) {
       resultNumber = 0;
     }
     resultMs = 0;
   }
-  if(activeRecordingTrack != 7) {
+  if(data.activeRecordingTrack != 7) {
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
     Serial.printf("round %i to %i\n", patternMs, resultMs);
   }
@@ -85,11 +83,11 @@ void LiveSequencer::printEvents() {
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  if(isRecording && isRunning) {
+  if(data.isRecording && data.isRunning) {
     switch(note) {
     case 48: // clear track
       if(event == midi::NoteOn) {
-        clearTrackEvents(activeRecordingTrack);
+        clearTrackEvents(data.activeRecordingTrack);
       }
       return;
 
@@ -97,11 +95,11 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       break;
     }
 
-    uint8_t patternNumber = patternCount;
-    uint16_t patternMs = patternTimer;
+    uint8_t patternNumber = data.patternCount;
+    uint16_t patternMs = data.patternTimer;
     timeQuantization(patternNumber, patternMs, quantisizeMs);
   
-    MidiEvent newEvent = { patternMs, patternNumber, activeRecordingTrack, trackLayers[activeRecordingTrack], event, note, velocity };
+    MidiEvent newEvent = { patternMs, patternNumber, data.activeRecordingTrack, data.trackLayers[data.activeRecordingTrack], event, note, velocity };
     switch(newEvent.event) {
     default:
       // ignore all other types
@@ -125,7 +123,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   }
 
   // forward midi with correct channel
-  midi::Channel ch = trackChannels[activeRecordingTrack];
+  midi::Channel ch = data.trackChannels[data.activeRecordingTrack];
   switch(event) {
   case midi::NoteOn:
     handleNoteOn(ch, note, velocity, 0);
@@ -146,14 +144,14 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
     pendingEvents.clear();
   } else {
     // if already finished sequence (pending have been added), delete highest layer
-    if(trackLayers[activeRecordingTrack] > 0) {
-      trackLayers[activeRecordingTrack]--;
+    if(data.trackLayers[data.activeRecordingTrack] > 0) {
+      data.trackLayers[data.activeRecordingTrack]--;
     }
 
     for(auto &e : eventsList) {
-       if(e.track == track && e.layer == trackLayers[activeRecordingTrack]) {
+       if(e.track == track && e.layer == data.trackLayers[data.activeRecordingTrack]) {
         if(e.event == midi::NoteOff) {
-          handleNoteOff(trackChannels[e.track], e.note_in, e.note_in_velocity, 0);
+          handleNoteOff(data.trackChannels[e.track], e.note_in, e.note_in_velocity, 0);
         }
         e.event = midi::InvalidType; // delete later
       }
@@ -172,10 +170,10 @@ void LiveSequencer::loadNextEvent(int timeMs) {
 
 void LiveSequencer::playNextEvent(void) {
   if(playIterator != eventsList.end()) {
-    const unsigned long now = ((patternCount * patternLengthMs) + patternTimer);
+    const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
     //Serial.printf("PLAY: ");
     //printEvent(1, *playIterator);
-    midi::Channel channel = trackChannels[playIterator->track];
+    midi::Channel channel = data.trackChannels[playIterator->track];
     switch(playIterator->event) {
     case midi::NoteOn:
       handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
@@ -196,7 +194,7 @@ void LiveSequencer::playNextEvent(void) {
 }
 
 inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternMs) {
-  return (patternNumber * patternLengthMs) + patternMs;
+  return (patternNumber * data.patternLengthMs) + patternMs;
 }
 
 //void LiveSequencer::init(int bpm, std::vector<MidiEvent> loadedEvents) {
@@ -209,8 +207,8 @@ void LiveSequencer::init(int bpm) {
 
 void LiveSequencer::onBpmChanged(int bpm) {
   float resampleFactor =  currentBpm / float(bpm);
-  patternLengthMs = (4 * 1000 * 60) / bpm; // for a 4/4 signature
-  quantisizeMs = patternLengthMs / quantisizeDenom;
+  data.patternLengthMs = (4 * 1000 * 60) / bpm; // for a 4/4 signature
+  quantisizeMs = data.patternLengthMs / quantisizeDenom;
   currentBpm = bpm;
   for(auto &e : eventsList) {
     e.patternMs *= resampleFactor;
@@ -220,10 +218,10 @@ void LiveSequencer::onBpmChanged(int bpm) {
 
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
-  patternTimer = 0;
+  data.patternTimer = 0;
 
-  if(++patternCount == NUM_PATTERNS) {
-    patternCount = 0;
+  if(++data.patternCount == data.numberOfBars) {
+    data.patternCount = 0;
 
     // first insert pending to events and sort
     if(pendingEvents.size()) {
@@ -233,7 +231,7 @@ void LiveSequencer::handlePatternBegin(void) {
       pendingEvents.clear();
 
       eventsList.sort(sortMidiEvent);
-      trackLayers[activeRecordingTrack]++;
+      data.trackLayers[data.activeRecordingTrack]++;
     }
 
     // react to external bpm change
@@ -251,7 +249,7 @@ void LiveSequencer::handlePatternBegin(void) {
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-  Serial.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", patternCount + 1, NUM_PATTERNS, currentBpm, patternLengthMs, eventsList.size());
+  Serial.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, eventsList.size());
 
 }
 
@@ -286,7 +284,7 @@ void LiveSequencer::updateTrackChannels() {
       break;
     }
     if(channel != -1) {
-      trackChannels[i] = channel;
+      data.trackChannels[i] = channel;
       //Serial.printf("track %i has midi channel %i\n", i, channel);
     }
   }
