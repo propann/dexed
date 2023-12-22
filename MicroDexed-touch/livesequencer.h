@@ -44,14 +44,10 @@ public:
   void handlePatternBegin(void);
   void handleStart(void);
   void handleStop(void);
-//  void init(int bpm, std::vector<MidiEvents> loadedEvents);
   void init(int bpm);
 
 private:
   LiveSeqData data;
-  static constexpr uint8_t MIN_TRACK_CHANNEL = 5;
-  static constexpr uint8_t MAX_TRACK_CHANNEL = 7;
-
   UI_LiveSequencer ui;
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
 
