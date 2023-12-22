@@ -15,7 +15,6 @@ extern void handleStop();
 extern Realtime_Scope scope;
 
 bool runningHere = false;
-bool flushBars = false;
 bool barPhases[2] = { 0 };
 
 LiveSequencer *liveSeqPtr;
@@ -57,10 +56,10 @@ void UI_func_livesequencer(uint8_t param)
 
 void handle_touchscreen_live_sequencer(void) {
   bool buttonsChanged = false;
-
   bool runningPressed = check_button_on_grid(0, 0);
   bool runningChanged = (runningHere != liveSeqData->isRunning);
-  scope.draw_scope(220, -20, 90);
+
+  scope.draw_scope(220, -20, 90); // rly?
   if (runningPressed) {
     if(runningHere) {
       handleStop();
@@ -101,10 +100,11 @@ void handle_touchscreen_live_sequencer(void) {
     for(int y = 0; y < liveSeqData->trackLayers[i]; y++) {
       bool pressed = check_button_on_grid(x, 10 + y * 5);
       if(pressed) {
-        if(liveSeqData->trackMutes[i] & (1 << y)) {
-          liveSeqData->trackMutes[i] &= ~(1 << y);
+        uint8_t layerMask = (1 << y);
+        if(liveSeqData->trackMutes[i] & layerMask) {
+          liveSeqData->trackMutes[i] &= ~layerMask;
         } else {
-          liveSeqData->trackMutes[i] |= (1 << y);
+          liveSeqData->trackMutes[i] |= layerMask;
         }
         buttonsChanged = true;
       }
@@ -116,9 +116,7 @@ void handle_touchscreen_live_sequencer(void) {
   if(runningHere) {
     patCount = liveSeqData->patternCount;
     timeMs = liveSeqData->patternTimer;
-    // bar
-    //display.drawRect(110, 0, 200, 30, GREY1);
-    //float progress = liveSeqData->patternTimer / liveSeqData->patternLengthMs;
+    
     if(liveSeqData->patternBeginFlag) {
       liveSeqData->patternBeginFlag = false;
 
