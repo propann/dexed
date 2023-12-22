@@ -153,8 +153,13 @@ void drawButtons() {
     int x = i * 9;
     draw_button_on_grid(x, 5, "TRACK", itoa(i + 1, temp_char, 10), liveSeqData->isRecording && (i == liveSeqData->activeRecordingTrack) ? 2 : (liveSeqData->trackMutes[i] ? 0 : 1));
 
+    // layer button
     for(int y = 0; y < liveSeqData->trackLayers[i]; y++) {
       draw_button_on_grid(x, 10 + y * 5, "LAYER", itoa(y + 1, temp_char, 10), liveSeqData->trackMutes[i] & (1 << y) ? 0 : 1);
+    }
+    // no button
+    for(int y = liveSeqData->trackLayers[i]; y < 4; y++) {
+      draw_button_on_grid(x, 10 + y * 5, "", "", 98); // clear button
     }
   }
 }
