@@ -6,6 +6,7 @@
 #include <list>
 #include "MIDI.h"
 #include "TeensyTimerTool.h"
+#include "ui_livesequencer.h"
 
 class LiveSequencer {
 
@@ -20,14 +21,18 @@ public:
     uint8_t note_in_velocity;
   };
 
+
   LiveSequencer();
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
+  void handleStart(void);
   void handleStop(void);
 //  void init(int bpm, std::vector<MidiEvents> loadedEvents);
   void init(int bpm);
 
 private:
+  bool isRunning = false;
+  UI_LiveSequencer ui;
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
