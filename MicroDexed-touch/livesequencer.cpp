@@ -15,7 +15,11 @@ extern braids_t braids_osc;
 std::map<uint8_t, LiveSequencer::MidiEvent> notesOn;
 
 LiveSequencer::LiveSequencer() :
-  ui(&data) {
+  ui(this) {
+}
+
+LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
+  return &data;
 }
 
 std::string LiveSequencer::getName(midi::MidiType event) {
@@ -224,7 +228,7 @@ void LiveSequencer::handlePatternBegin(void) {
 
   if(++data.patternCount == data.numberOfBars) {
     data.patternCount = 0;
-
+    
     // first insert pending to events and sort
     if(pendingEvents.size()) {
       for(auto &e : pendingEvents) {
@@ -240,8 +244,6 @@ void LiveSequencer::handlePatternBegin(void) {
     if(currentBpm != seq.bpm) {
       onBpmChanged(seq.bpm);
     }
-
-    updateTrackChannels(); // only to be called initially and when track instruments are changed
     
     if(eventsList.size() > 0) {
       // remove all invalidated notes
@@ -252,7 +254,7 @@ void LiveSequencer::handlePatternBegin(void) {
     }
   }
   Serial.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, eventsList.size());
-
+  ui.onPatternBegin();
 }
 
 void LiveSequencer::updateTrackChannels() {

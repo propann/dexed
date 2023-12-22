@@ -10,7 +10,9 @@ class UI_LiveSequencer {
 
 public:
 
-  UI_LiveSequencer(void *ldata);
+  UI_LiveSequencer(LiveSequencer *sequencer);
+  void onPatternBegin();
+
 
 private:
   

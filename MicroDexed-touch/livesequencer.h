@@ -35,6 +35,8 @@ public:
   };
 
   LiveSequencer();
+  LiveSequencer::LiveSeqData* getData(void);
+  void updateTrackChannels();
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
@@ -69,7 +71,6 @@ private:
   void allNotesOff(void);
   void clearTrackEvents(uint8_t track);
   void playNextEvent(void);
-  void updateTrackChannels();
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void onBpmChanged(int bpm);
 
