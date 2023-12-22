@@ -23,7 +23,6 @@ UI_LiveSequencer::UI_LiveSequencer(void *ldata) {
 void drawButtons();
 
 static constexpr int NUM_TRACKS = 6;
-bool trackEnabled[NUM_TRACKS] = { false };
 
 void UI_func_livesequencer(uint8_t param)
 {
@@ -78,7 +77,7 @@ void handle_touchscreen_live_sequencer(void) {
         liveSeqData->activeRecordingTrack = i;
         Serial.printf("rec track now is %i\n", i + 1);
       } else {
-        trackEnabled[i] = !trackEnabled[i];
+        liveSeqData->trackMutes[i] = !liveSeqData->trackMutes[i];
       }
       buttonsChanged = true;
     }
@@ -106,6 +105,6 @@ void drawButtons() {
 
   char temp_char[4];
   for(int i = 0; i < NUM_TRACKS; i++) {
-    draw_button_on_grid(i * 9, 5, "TRACK", itoa(i + 1, temp_char, 10), liveSeqData->isRecording && (i == liveSeqData->activeRecordingTrack) ? 2 : (trackEnabled[i] ? 1 : 0));
+    draw_button_on_grid(i * 9, 5, "TRACK", itoa(i + 1, temp_char, 10), liveSeqData->isRecording && (i == liveSeqData->activeRecordingTrack) ? 2 : (liveSeqData->trackMutes[i] ? 0 : 1));
   }
 }

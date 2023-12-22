@@ -66,7 +66,8 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
     }
     resultMs = 0;
   }
-  if(data.activeRecordingTrack != 7) {
+  if(seq.track_type[data.activeRecordingTrack] == 0) {
+    // drum track
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
     Serial.printf("round %i to %i\n", patternMs, resultMs);
   }
@@ -176,7 +177,8 @@ void LiveSequencer::playNextEvent(void) {
     midi::Channel channel = data.trackChannels[playIterator->track];
     switch(playIterator->event) {
     case midi::NoteOn:
-      handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+      // handle muted tracks
+      handleNoteOn(channel, playIterator->note_in, data.trackMutes[playIterator->track] ? 0 : playIterator->note_in_velocity, 0);
       break;
     
     case midi::NoteOff:

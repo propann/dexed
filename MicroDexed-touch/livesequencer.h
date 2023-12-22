@@ -27,7 +27,7 @@ public:
     uint8_t activeRecordingTrack = 0;
     uint8_t trackLayers[8] = { 0 };
     midi::Channel trackChannels[8] = { 0 };
-
+    bool trackMutes[8] = { 0 };
     elapsedMillis patternTimer;
     unsigned long patternLengthMs;
     int numberOfBars = 4;
