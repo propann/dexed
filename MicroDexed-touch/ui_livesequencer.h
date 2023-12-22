@@ -9,13 +9,9 @@ class LiveSequencer;
 class UI_LiveSequencer {
 
 public:
-
   UI_LiveSequencer(LiveSequencer *sequencer);
-  void onPatternBegin();
-
 
 private:
-  
 };
 
 void UI_func_livesequencer(uint8_t param);

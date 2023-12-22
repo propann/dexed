@@ -89,17 +89,6 @@ void LiveSequencer::printEvents() {
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
-    switch(note) {
-    case 48: // clear track
-      if(event == midi::NoteOn) {
-        clearTrackEvents(data.activeRecordingTrack);
-      }
-      return;
-
-    default:
-      break;
-    }
-
     uint8_t patternNumber = data.patternCount;
     uint16_t patternMs = data.patternTimer;
     timeQuantization(patternNumber, patternMs, quantisizeMs);
@@ -143,7 +132,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   }
 }
 
-void LiveSequencer::clearTrackEvents(uint8_t track) {
+void LiveSequencer::clearLastTrackLayer(uint8_t track) {
   if(pendingEvents.size()) {
     // if still in pending sequence, delete pending events
     pendingEvents.clear();
@@ -151,6 +140,7 @@ void LiveSequencer::clearTrackEvents(uint8_t track) {
     // if already finished sequence (pending have been added), delete highest layer
     if(data.trackLayers[data.activeRecordingTrack] > 0) {
       data.trackLayers[data.activeRecordingTrack]--;
+      data.trackLayersChanged = true;
     }
 
     for(auto &e : eventsList) {
@@ -182,7 +172,7 @@ void LiveSequencer::playNextEvent(void) {
     switch(playIterator->event) {
     case midi::NoteOn:
       // handle muted tracks
-      handleNoteOn(channel, playIterator->note_in, data.trackMutes[playIterator->track] ? 0 : playIterator->note_in_velocity, 0);
+      handleNoteOn(channel, playIterator->note_in, data.trackMutes[playIterator->track] & (1 << playIterator->layer) ? 0 : playIterator->note_in_velocity, 0);
       break;
     
     case midi::NoteOff:
@@ -238,6 +228,7 @@ void LiveSequencer::handlePatternBegin(void) {
 
       eventsList.sort(sortMidiEvent);
       data.trackLayers[data.activeRecordingTrack]++;
+      data.trackLayersChanged = true;
     }
 
     // react to external bpm change
@@ -254,7 +245,7 @@ void LiveSequencer::handlePatternBegin(void) {
     }
   }
   Serial.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, eventsList.size());
-  ui.onPatternBegin();
+  data.patternBeginFlag = true;
 }
 
 void LiveSequencer::updateTrackChannels() {
