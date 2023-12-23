@@ -22,16 +22,17 @@ public:
     uint8_t note_in_velocity;
   };
 
-  struct TrackInfo {
+  struct Track {
     midi::Channel channel;
     char name[4];
     LCDML_FuncPtr_pu8 screen;
+    SetupFn screenSetupFn;
     uint8_t layerCount;
     uint8_t layerMutes;
   };
 
   struct LiveSeqData {
-    TrackInfo tracks[8];
+    Track tracks[8];
     bool isRunning = false;
     bool isRecording = false;
     uint8_t activeRecordingTrack = 0;

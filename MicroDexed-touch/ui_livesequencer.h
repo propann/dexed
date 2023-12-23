@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "elapsedMillis.h"
 
+typedef void (*SetupFn)( void*);
+
 class LiveSequencer;
 
 class UI_LiveSequencer {

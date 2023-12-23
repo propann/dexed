@@ -89,6 +89,11 @@ void handle_touchscreen_live_sequencer(void) {
           liveSeqPtr->clearLastTrackLayer(i);
         } else {
           // open instrument settings
+          if(liveSeqData->tracks[i].screenSetupFn != nullptr) {
+            void (*f)();
+            f = (SetupFn)liveSeqData->tracks[i].screenSetupFn;
+            f();
+          }
           LCDML.FUNC_setGBAToLastFunc();
           LCDML.OTHER_jumpToFunc(liveSeqData->tracks[i].screen);
         }

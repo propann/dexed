@@ -18,6 +18,9 @@ extern void UI_func_microsynth(uint8_t param);
 extern void UI_func_epiano(uint8_t param);
 extern void UI_func_braids(uint8_t param);
 
+extern uint8_t microsynth_selected_instance;
+extern uint8_t selected_instance_id; // dexed
+
 std::map<uint8_t, LiveSequencer::MidiEvent> notesOn;
 
 LiveSequencer::LiveSequencer() :
@@ -254,8 +257,24 @@ void LiveSequencer::handlePatternBegin(void) {
   data.patternBeginFlag = true;
 }
 
+void selectDexed0() {
+  selected_instance_id = 0;
+}
+void selectDexed1() {
+  selected_instance_id = 1;
+}
+
+void selectMs0() {
+  microsynth_selected_instance = 0;
+}
+
+void selectMs1() {
+  microsynth_selected_instance = 1;
+}
+
 void LiveSequencer::updateTrackChannels() {
   for(uint8_t i = 0; i < NUM_SEQ_TRACKS; i++) {
+    data.tracks[i].screenSetupFn = nullptr;
     switch(seq.track_type[i]) {
     case 0:
       data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
@@ -270,6 +289,11 @@ void LiveSequencer::updateTrackChannels() {
         case 1:
           data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[seq.instrument[i]].midi_channel);
           data.tracks[i].screen = UI_func_voice_select;
+          if(seq.instrument[i] == 0) {
+            data.tracks[i].screenSetupFn = (SetupFn)selectDexed0;
+          } else {
+            data.tracks[i].screenSetupFn = (SetupFn)selectDexed1;
+          }
           sprintf(data.tracks[i].name, "DX%i", seq.instrument[i] + 1);
           break;
 
@@ -283,6 +307,11 @@ void LiveSequencer::updateTrackChannels() {
         case 4:
           data.tracks[i].channel = microsynth[seq.instrument[i] - 3].midi_channel;
           data.tracks[i].screen = UI_func_microsynth;
+          if(seq.instrument[i] == 3) {
+            data.tracks[i].screenSetupFn = (SetupFn)selectMs0;
+          } else {
+            data.tracks[i].screenSetupFn = (SetupFn)selectMs1;
+          }
           sprintf(data.tracks[i].name, "MS%i", seq.instrument[i] - 2);
           break;
 
