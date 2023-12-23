@@ -7,6 +7,7 @@
 #include "MIDI.h"
 #include "TeensyTimerTool.h"
 #include "ui_livesequencer.h"
+#include "LCDMenuLib2_typedef.h"
 
 class LiveSequencer {
 
@@ -21,13 +22,19 @@ public:
     uint8_t note_in_velocity;
   };
 
+  struct TrackInfo {
+    midi::Channel channel;
+    char name[4];
+    LCDML_FuncPtr_pu8 screen;
+    uint8_t layerCount;
+    uint8_t layerMutes;
+  };
+
   struct LiveSeqData {
-    bool isRunning = false;;
+    TrackInfo tracks[8];
+    bool isRunning = false;
     bool isRecording = false;
     uint8_t activeRecordingTrack = 0;
-    uint8_t trackLayers[8] = { 0 };
-    midi::Channel trackChannels[8] = { 0 };
-    uint8_t trackMutes[8] = { 0 };
     elapsedMillis patternTimer;
     unsigned long patternLengthMs;
     int numberOfBars = 4;

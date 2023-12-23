@@ -84,27 +84,30 @@ void handle_touchscreen_live_sequencer(void) {
     int x = i * 9;
     bool pressed = check_button_on_grid(x, 5);
     if(pressed) {
-      if(liveSeqData->isRecording) {
-        if(liveSeqData->activeRecordingTrack == i) {
+      if(i == liveSeqData->activeRecordingTrack) {
+        if(liveSeqData->isRecording) {
           liveSeqPtr->clearLastTrackLayer(i);
         } else {
-          liveSeqData->activeRecordingTrack = i;
-          Serial.printf("rec track now is %i\n", i + 1);
+          // open instrument settings
+          LCDML.FUNC_setGBAToLastFunc();
+          LCDML.OTHER_jumpToFunc(liveSeqData->tracks[i].screen);
         }
       } else {
-        liveSeqData->trackMutes[i] = !liveSeqData->trackMutes[i]; // fixme now
+        liveSeqData->activeRecordingTrack = i;
+        Serial.printf("rec track now is %i\n", i + 1);
       }
+      
       buttonsChanged = true;
     }
 
-    for(int y = 0; y < liveSeqData->trackLayers[i]; y++) {
+    for(int y = 0; y < liveSeqData->tracks[i].layerCount; y++) {
       bool pressed = check_button_on_grid(x, 10 + y * 5);
       if(pressed) {
         uint8_t layerMask = (1 << y);
-        if(liveSeqData->trackMutes[i] & layerMask) {
-          liveSeqData->trackMutes[i] &= ~layerMask;
+        if(liveSeqData->tracks[i].layerMutes & layerMask) {
+          liveSeqData->tracks[i].layerMutes &= ~layerMask;
         } else {
-          liveSeqData->trackMutes[i] |= layerMask;
+          liveSeqData->tracks[i].layerMutes |= layerMask;
         }
         buttonsChanged = true;
       }
@@ -149,14 +152,14 @@ void drawButtons() {
   char temp_char[4];
   for(int i = 0; i < NUM_TRACKS; i++) {
     int x = i * 9;
-    draw_button_on_grid(x, 5, "TRACK", itoa(i + 1, temp_char, 10), liveSeqData->isRecording && (i == liveSeqData->activeRecordingTrack) ? 2 : (liveSeqData->trackMutes[i] ? 0 : 1));
+    draw_button_on_grid(x, 5, liveSeqData->tracks[i].name, itoa(i + 1, temp_char, 10), (i == liveSeqData->activeRecordingTrack) ? (liveSeqData->isRecording ? 2 : 3) : (liveSeqData->tracks[i].layerMutes ? 0 : 1));
 
     // layer button
-    for(int y = 0; y < liveSeqData->trackLayers[i]; y++) {
-      draw_button_on_grid(x, 10 + y * 5, "LAYER", itoa(y + 1, temp_char, 10), liveSeqData->trackMutes[i] & (1 << y) ? 0 : 1);
+    for(int y = 0; y < liveSeqData->tracks[i].layerCount; y++) {
+      draw_button_on_grid(x, 10 + y * 5, "LAYER", itoa(y + 1, temp_char, 10), liveSeqData->tracks[i].layerMutes & (1 << y) ? 0 : 1);
     }
     // no button
-    for(int y = liveSeqData->trackLayers[i]; y < 4; y++) {
+    for(int y = liveSeqData->tracks[i].layerCount; y < 4; y++) {
       draw_button_on_grid(x, 10 + y * 5, "", "", 98); // clear button
     }
   }

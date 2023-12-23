@@ -1002,6 +1002,11 @@ FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const ch
       display.setTextColor(COLOR_SYSTEXT, RED);
       display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, RED);
     }
+    else if (color == 3) // button has highlighted color
+    {
+      display.setTextColor(COLOR_SYSTEXT, MIDDLEGREEN);
+      display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, MIDDLEGREEN);
+    }
     display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6);
     display.print(t1);
     if (t2[1] == '\0')
