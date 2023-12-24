@@ -64,7 +64,7 @@ void LiveSequencer::allNotesOff(void) {
 }
 
 void LiveSequencer::printEvent(int i, MidiEvent e) {
-  Serial.printf("[%i]: %i:%04i, (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, e.track, e.layer, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
+  LOG.printf("[%i]: %i:%04i, (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, e.track, e.layer, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
 }
 
 void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple) {
@@ -82,14 +82,14 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
   if(seq.track_type[data.activeRecordingTrack] == 0) {
     // drum track
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
-    Serial.printf("round %i to %i\n", patternMs, resultMs);
+    LOG.printf("round %i to %i\n", patternMs, resultMs);
   }
   patternNumber = resultNumber;
   patternMs = resultMs;
 }
 
 void LiveSequencer::printEvents() {
-  Serial.printf("--- %i events (%i bytes with one be %i bytes)\n", eventsList.size(), eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent));
+  LOG.printf("--- %i events (%i bytes with one be %i bytes)\n", eventsList.size(), eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent));
   uint i = 0;
   for(auto &e : eventsList) {
     printEvent(i++, e);
@@ -165,7 +165,7 @@ void LiveSequencer::clearLastTrackLayer(uint8_t track) {
 
 void LiveSequencer::loadNextEvent(int timeMs) {
   if(timeMs > 0) {
-    //Serial.printf("trigger in %ims\n", timeMs);
+    //LOG.printf("trigger in %ims\n", timeMs);
     liveTimer.trigger(timeMs * 1000);
   } else {
     playNextEvent();
@@ -175,7 +175,7 @@ void LiveSequencer::loadNextEvent(int timeMs) {
 void LiveSequencer::playNextEvent(void) {
   if(playIterator != eventsList.end()) {
     const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
-    //Serial.printf("PLAY: ");
+    //LOG.printf("PLAY: ");
     //printEvent(1, *playIterator);
     midi::Channel channel = data.tracks[playIterator->track].channel;
     switch(playIterator->event) {
@@ -236,6 +236,7 @@ void LiveSequencer::handlePatternBegin(void) {
       pendingEvents.clear();
 
       eventsList.sort(sortMidiEvent);
+      data.tracks[data.activeRecordingTrack].layerMutes &= ~(1 << data.tracks[data.activeRecordingTrack].layerCount); // set new unmuted
       data.tracks[data.activeRecordingTrack].layerCount++;
       data.trackLayersChanged = true;
     }
@@ -253,7 +254,7 @@ void LiveSequencer::handlePatternBegin(void) {
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-  Serial.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, eventsList.size());
+  LOG.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, eventsList.size());
   data.patternBeginFlag = true;
 }
 

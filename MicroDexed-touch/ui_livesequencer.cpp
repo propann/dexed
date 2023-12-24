@@ -59,7 +59,7 @@ void handle_touchscreen_live_sequencer(void) {
   bool runningPressed = check_button_on_grid(0, 0);
   bool runningChanged = (runningHere != liveSeqData->isRunning);
 
-  scope.draw_scope(220, -20, 90); // rly?
+  //scope.draw_scope(220, -20, 90); // rly?
   if (runningPressed) {
     if(runningHere) {
       handleStop();
@@ -99,7 +99,7 @@ void handle_touchscreen_live_sequencer(void) {
         }
       } else {
         liveSeqData->activeRecordingTrack = i;
-        Serial.printf("rec track now is %i\n", i + 1);
+        LOG.printf("rec track now is %i\n", i + 1);
       }
       
       buttonsChanged = true;
@@ -128,8 +128,10 @@ void handle_touchscreen_live_sequencer(void) {
     if(liveSeqData->patternBeginFlag) {
       liveSeqData->patternBeginFlag = false;
 
+      display.fillRect(115, 5, 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       barPhases[0] = !barPhases[0];
       if(liveSeqData->patternCount == 0) {
+        display.fillRect(115, 10, 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
         barPhases[1] = !barPhases[1];
       }
     } else {
