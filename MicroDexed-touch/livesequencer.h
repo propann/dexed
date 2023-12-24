@@ -39,32 +39,35 @@ public:
     elapsedMillis patternTimer;
     unsigned long patternLengthMs;
     int numberOfBars = 4;
-    uint16_t patternCount = 0;
+    uint8_t patternCount = 0;
     bool trackLayersChanged = false;
     bool patternBeginFlag = false;
+    std::list<MidiEvent> eventsList;
+    std::vector<MidiEvent> pendingEvents;
+    uint16_t quantisizeDenom = 16; // 1/x
   };
 
   LiveSequencer();
   LiveSequencer::LiveSeqData* getData(void);
   void clearLastTrackLayer(uint8_t track);
-  void updateTrackChannels();
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
   void handleStop(void);
-  void init(int bpm);
+  void init(void);
 
 private:
+  void updateTrackChannels();
+
   LiveSeqData data;
   UI_LiveSequencer ui;
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
-    return ((a.patternNumber * 2000) + a.patternMs) < ((b.patternNumber * 2000) + b.patternMs); // FIXME: patternLengthMs
+    return ((a.patternNumber * 5000) + a.patternMs) < ((b.patternNumber * 5000) + b.patternMs); // FIXME: patternLengthMs
   }
   
-  std::list<MidiEvent> eventsList;
-  std::vector<MidiEvent> pendingEvents;
+  
   std::list<MidiEvent>::iterator playIterator;
 
   int currentBpm = 90;
@@ -79,9 +82,9 @@ private:
   
   void playNextEvent(void);
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
-  void onBpmChanged(int bpm);
+  void checkBpmChanged(void);
 
-  uint16_t quantisizeDenom = 16; // 1/x
+  
   uint16_t quantisizeMs = 150;
   
 };

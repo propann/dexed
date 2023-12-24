@@ -1396,7 +1396,6 @@ touch_ic_found=false;
 #endif
   // Load initial Performance or the last used one
   initial_values(false);
-  liveSeq.init(seq.bpm);
 
   setup_ui();
 

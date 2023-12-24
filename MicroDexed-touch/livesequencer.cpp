@@ -45,7 +45,7 @@ std::string LiveSequencer::getName(midi::MidiType event) {
 }
 
 void LiveSequencer::handleStop(void) {
-  playIterator = eventsList.end();
+  playIterator = data.eventsList.end();
   allNotesOff();
   data.isRunning = false;
 }
@@ -56,7 +56,7 @@ void LiveSequencer::handleStart(void) {
 }
 
 void LiveSequencer::allNotesOff(void) {
-  for(auto &e : eventsList) {
+  for(auto &e : data.eventsList) {
     if(e.event == midi::NoteOff) {
       handleNoteOff(data.tracks[e.track].channel, e.note_in, e.note_in_velocity, 0);
     }
@@ -64,7 +64,7 @@ void LiveSequencer::allNotesOff(void) {
 }
 
 void LiveSequencer::printEvent(int i, MidiEvent e) {
-  LOG.printf("[%i]: %i:%04i, (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, e.track, e.layer, getName(e.event).c_str(), e.note_in, e.note_in_velocity);
+  DBG_LOG(printf("[%i]: %i:%04i, (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, e.track, e.layer, getName(e.event).c_str(), e.note_in, e.note_in_velocity));
 }
 
 void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple) {
@@ -82,27 +82,23 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
   if(seq.track_type[data.activeRecordingTrack] == 0) {
     // drum track
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
-    LOG.printf("round %i to %i\n", patternMs, resultMs);
+    DBG_LOG(printf("round %i to %i\n", patternMs, resultMs));
   }
   patternNumber = resultNumber;
   patternMs = resultMs;
 }
 
 void LiveSequencer::printEvents() {
-  LOG.printf("--- %i events (%i bytes with one be %i bytes)\n", eventsList.size(), eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent));
+  DBG_LOG(printf("--- %i events (%i bytes with one be %i bytes)\n", data.eventsList.size(), data.eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent)));
   uint i = 0;
-  for(auto &e : eventsList) {
+  for(auto &e : data.eventsList) {
     printEvent(i++, e);
   }
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
-    uint8_t patternNumber = data.patternCount;
-    uint16_t patternMs = data.patternTimer;
-    timeQuantization(patternNumber, patternMs, quantisizeMs);
-  
-    MidiEvent newEvent = { patternMs, patternNumber, data.activeRecordingTrack, data.tracks[data.activeRecordingTrack].layerCount, event, note, velocity };
+    const MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeRecordingTrack, data.tracks[data.activeRecordingTrack].layerCount, event, note, velocity };
     switch(newEvent.event) {
     default:
       // ignore all other types
@@ -117,8 +113,8 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       const auto on = notesOn.find(note);
       if(on != notesOn.end()) {
           // if so, insert NoteOn and this NoteOff to pending
-          pendingEvents.push_back(on->second);
-          pendingEvents.push_back(newEvent);
+          data.pendingEvents.push_back(on->second);
+          data.pendingEvents.push_back(newEvent);
           notesOn.erase(on);
       }
       break;
@@ -126,7 +122,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   }
 
   // forward midi with correct channel
-  midi::Channel ch = data.tracks[data.activeRecordingTrack].channel;
+  const midi::Channel ch = data.tracks[data.activeRecordingTrack].channel;
   switch(event) {
   case midi::NoteOn:
     handleNoteOn(ch, note, velocity, 0);
@@ -142,9 +138,9 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
 }
 
 void LiveSequencer::clearLastTrackLayer(uint8_t track) {
-  if(pendingEvents.size()) {
+  if(data.pendingEvents.size()) {
     // if still in pending sequence, delete pending events
-    pendingEvents.clear();
+    data.pendingEvents.clear();
   } else {
     // if already finished sequence (pending have been added), delete highest layer
     if(data.tracks[data.activeRecordingTrack].layerCount > 0) {
@@ -152,7 +148,7 @@ void LiveSequencer::clearLastTrackLayer(uint8_t track) {
       data.trackLayersChanged = true;
     }
 
-    for(auto &e : eventsList) {
+    for(auto &e : data.eventsList) {
        if(e.track == track && e.layer == data.tracks[data.activeRecordingTrack].layerCount) {
         if(e.event == midi::NoteOff) {
           handleNoteOff(data.tracks[e.track].channel, e.note_in, e.note_in_velocity, 0);
@@ -173,7 +169,7 @@ void LiveSequencer::loadNextEvent(int timeMs) {
 }
 
 void LiveSequencer::playNextEvent(void) {
-  if(playIterator != eventsList.end()) {
+  if(playIterator != data.eventsList.end()) {
     const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
     //LOG.printf("PLAY: ");
     //printEvent(1, *playIterator);
@@ -191,7 +187,7 @@ void LiveSequencer::playNextEvent(void) {
     default:
       break;
     }
-    if(++playIterator != eventsList.end()) {
+    if(++playIterator != data.eventsList.end()) {
       int timeToNextEvent = timeToMs(playIterator->patternNumber, playIterator->patternMs) - now;
       loadNextEvent(timeToNextEvent);
     }
@@ -203,21 +199,24 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
 }
 
 //void LiveSequencer::init(int bpm, std::vector<MidiEvent> loadedEvents) {
-void LiveSequencer::init(int bpm) {
+void LiveSequencer::init(void) {
   //events = loadedEvents;
-  onBpmChanged(bpm);
+  data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
+  checkBpmChanged();
+  updateTrackChannels();
   liveTimer.begin([this] { playNextEvent(); });
-  pendingEvents.reserve(50);
+  data.pendingEvents.reserve(50);
 }
 
-void LiveSequencer::onBpmChanged(int bpm) {
-  float resampleFactor =  currentBpm / float(bpm);
-  data.patternLengthMs = (4 * 1000 * 60) / bpm; // for a 4/4 signature
-  quantisizeMs = data.patternLengthMs / quantisizeDenom;
-  currentBpm = bpm;
-  for(auto &e : eventsList) {
-    e.patternMs *= resampleFactor;
-    timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
+void LiveSequencer::checkBpmChanged() {
+  if(seq.bpm != currentBpm) {
+    float resampleFactor =  currentBpm / float(seq.bpm);
+    quantisizeMs = data.patternLengthMs / data.quantisizeDenom;
+    currentBpm = seq.bpm;
+    for(auto &e : data.eventsList) {
+      e.patternMs *= resampleFactor;
+      timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
+    }
   }
 }
 
@@ -229,32 +228,28 @@ void LiveSequencer::handlePatternBegin(void) {
     data.patternCount = 0;
     
     // first insert pending to events and sort
-    if(pendingEvents.size()) {
-      for(auto &e : pendingEvents) {
-        eventsList.emplace_back(e);
+    if(data.pendingEvents.size()) {
+      for(auto &e : data.pendingEvents) {
+        timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
+        data.eventsList.emplace_back(e);
       }
-      pendingEvents.clear();
+      data.pendingEvents.clear();
 
-      eventsList.sort(sortMidiEvent);
+      data.eventsList.sort(sortMidiEvent);
       data.tracks[data.activeRecordingTrack].layerMutes &= ~(1 << data.tracks[data.activeRecordingTrack].layerCount); // set new unmuted
       data.tracks[data.activeRecordingTrack].layerCount++;
       data.trackLayersChanged = true;
     }
 
-    // react to external bpm change
-    if(currentBpm != seq.bpm) {
-      onBpmChanged(seq.bpm);
-    }
-    
-    if(eventsList.size() > 0) {
+    if(data.eventsList.size() > 0) {
       // remove all invalidated notes
-      eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
-      //printEvents();
-      playIterator = eventsList.begin();
+      data.eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
+      printEvents();
+      playIterator = data.eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-  LOG.printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, eventsList.size());
+  DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;
 }
 

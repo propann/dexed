@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include "elapsedMillis.h"
 
+#ifdef DEBUG
+#define DBG_LOG(s) LOG.s
+#else
+#define DBG_LOG(s)
+#endif
+
 typedef void (*SetupFn)( void*);
 
 class LiveSequencer;

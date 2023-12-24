@@ -37,7 +37,8 @@ void UI_func_livesequencer(uint8_t param)
   if (LCDML.FUNC_setup()) {
 
     display.fillScreen(COLOR_BACKGROUND);
-    liveSeqPtr->updateTrackChannels();
+    liveSeqPtr->init();
+
     barPhases[0] = 0;
     barPhases[1] = 0;
     drawButtons();
@@ -99,7 +100,7 @@ void handle_touchscreen_live_sequencer(void) {
         }
       } else {
         liveSeqData->activeRecordingTrack = i;
-        LOG.printf("rec track now is %i\n", i + 1);
+        DBG_LOG(printf("rec track now is %i\n", i + 1));
       }
       
       buttonsChanged = true;
@@ -161,12 +162,13 @@ void drawButtons() {
     int x = i * 9;
     draw_button_on_grid(x, 5, liveSeqData->tracks[i].name, itoa(i + 1, temp_char, 10), (i == liveSeqData->activeRecordingTrack) ? (liveSeqData->isRecording ? 2 : 3) : (liveSeqData->tracks[i].layerMutes ? 0 : 1));
 
+    int printLayers = liveSeqData->isRunning ? liveSeqData->tracks[i].layerCount : 0;
     // layer button
-    for(int y = 0; y < liveSeqData->tracks[i].layerCount; y++) {
+    for(int y = 0; y < printLayers; y++) {
       draw_button_on_grid(x, 10 + y * 5, "LAYER", itoa(y + 1, temp_char, 10), liveSeqData->tracks[i].layerMutes & (1 << y) ? 0 : 1);
     }
     // no button
-    for(int y = liveSeqData->tracks[i].layerCount; y < 4; y++) {
+    for(int y = printLayers; y < 4; y++) {
       draw_button_on_grid(x, 10 + y * 5, "", "", 98); // clear button
     }
   }
