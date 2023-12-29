@@ -58,6 +58,7 @@ void LiveSequencer::allNotesOff(void) {
       for(auto note : data.tracks[track].activeNotes[layer]) {
         handleNoteOff(data.tracks[track].channel, note, 0, 0);
       }
+      data.tracks[track].activeNotes[layer].clear();
     }
   }
 }
@@ -149,14 +150,17 @@ void LiveSequencer::clearLastTrackLayer(uint8_t track) {
       data.trackLayersChanged = true;
     }
 
+    // mark all tracklayer events as invalid
     for(auto &e : data.eventsList) {
        if(e.track == track && e.layer == data.tracks[data.activeTrack].layerCount) {
-        if(e.event == midi::NoteOff) {
-          handleNoteOff(data.tracks[e.track].channel, e.note_in, e.note_in_velocity, 0);
-        }
         e.event = midi::InvalidType; // delete later
       }
     }
+    // play noteOff for active notes
+    for(auto &note : data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].channel]){
+      handleNoteOff(data.tracks[data.activeTrack].channel, note, 0, 0);
+    }
+    data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].layerCount].clear();
   }
 }
 
@@ -183,8 +187,6 @@ void LiveSequencer::playNextEvent(void) {
         const auto it = data.tracks[playIterator->track].activeNotes[playIterator->layer].find(playIterator->note_in);
         if(it != data.tracks[playIterator->track].activeNotes[playIterator->layer].end()) {
           data.tracks[playIterator->track].activeNotes[playIterator->layer].erase(it);
-        } else {
-          // FIXME: noteOn not registered..
         }
         handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
         }
@@ -288,6 +290,7 @@ void LiveSequencer::handleLayerMuteChanged(uint8_t track, uint8_t layer, bool is
     for(auto note : data.tracks[track].activeNotes[layer]) {
       handleNoteOff(data.tracks[track].channel, note, 0, 0);
     }
+    data.tracks[track].activeNotes[layer].clear();
   }
 }
 
