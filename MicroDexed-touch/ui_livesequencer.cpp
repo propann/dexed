@@ -25,11 +25,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
-void drawButtons();
-void drawTrackLayers();
-
-static constexpr int NUM_TRACKS = 6;
-
+void drawGUI();
 void UI_func_livesequencer(uint8_t param)
 {
 
@@ -41,7 +37,7 @@ void UI_func_livesequencer(uint8_t param)
 
     barPhases[0] = 0;
     barPhases[1] = 0;
-    drawButtons();
+    drawGUI();
   }
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
@@ -81,11 +77,11 @@ void handle_touchscreen_live_sequencer(void) {
     buttonsChanged = true;
   }
 
-  for(int i = 0; i < NUM_TRACKS; i++) {
+  for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     int x = i * 9;
     bool pressed = check_button_on_grid(x, 5);
     if(pressed) {
-      if(i == liveSeqData->activeRecordingTrack) {
+      if(i == liveSeqData->activeTrack) {
         if(liveSeqData->isRecording) {
           liveSeqPtr->clearLastTrackLayer(i);
         } else {
@@ -99,7 +95,7 @@ void handle_touchscreen_live_sequencer(void) {
           LCDML.OTHER_jumpToFunc(liveSeqData->tracks[i].screen);
         }
       } else {
-        liveSeqData->activeRecordingTrack = i;
+        liveSeqData->activeTrack = i;
         DBG_LOG(printf("rec track now is %i\n", i + 1));
       }
       
@@ -142,34 +138,38 @@ void handle_touchscreen_live_sequencer(void) {
       display.fillRect(115, 10, progressTotal * 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
   }
+
+  // print time
   display.setCursor(115, 20);
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.printf("Time: %i.%04i", patCount, timeMs);
+  display.printf("%i.%04i", patCount, timeMs);
 
   if(liveSeqData->trackLayersChanged || buttonsChanged) {
     liveSeqData->trackLayersChanged = false;
-    drawButtons();
+    drawGUI();
   }
 }
 
-void drawButtons() {
+void drawGUI() {
   draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
   draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
 
   char temp_char[4];
-  for(int i = 0; i < NUM_TRACKS; i++) {
-    int x = i * 9;
-    draw_button_on_grid(x, 5, liveSeqData->tracks[i].name, itoa(i + 1, temp_char, 10), (i == liveSeqData->activeRecordingTrack) ? (liveSeqData->isRecording ? 2 : 3) : (liveSeqData->tracks[i].layerMutes ? 0 : 1));
+  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+    const int x = track * 9;
+    draw_button_on_grid(x, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? 2 : 3) : (liveSeqData->tracks[track].layerMutes ? 0 : 1));
 
-    int printLayers = liveSeqData->isRunning ? liveSeqData->tracks[i].layerCount : 0;
+    int printLayers = liveSeqData->isRunning ? liveSeqData->tracks[track].layerCount : 0;
     // layer button
-    for(int y = 0; y < printLayers; y++) {
-      draw_button_on_grid(x, 10 + y * 5, "LAYER", itoa(y + 1, temp_char, 10), liveSeqData->tracks[i].layerMutes & (1 << y) ? 0 : 1);
+    for(int layer = 0; layer < printLayers; layer++) {
+      const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
+      display.drawFastVLine(x * button_size_x + 2, layer * 5, numNotesOn * 10, COLOR_SYSTEXT);
+      draw_button_on_grid(x, 10 + layer * 5, "LAYER", itoa(layer + 1, temp_char, 10), liveSeqData->tracks[track].layerMutes & (1 << layer) ? 0 : 1);
     }
     // no button
-    for(int y = printLayers; y < 4; y++) {
-      draw_button_on_grid(x, 10 + y * 5, "", "", 98); // clear button
+    for(int noLayer = printLayers; noLayer < LIVESEQUENCER_NUM_LAYERS; noLayer++) {
+      draw_button_on_grid(x, 10 + noLayer * 5, "", "", 98); // clear button
     }
   }
 }

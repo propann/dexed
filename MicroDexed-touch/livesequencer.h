@@ -8,6 +8,8 @@
 #include "TeensyTimerTool.h"
 #include "ui_livesequencer.h"
 #include "LCDMenuLib2_typedef.h"
+#include <unordered_map>
+#include <unordered_set>
 
 class LiveSequencer {
 
@@ -29,21 +31,25 @@ public:
     SetupFn screenSetupFn;
     uint8_t layerCount;
     uint8_t layerMutes;
+    //                      note     // layers
+    std::unordered_multiset<uint8_t> activeNotes[8];
   };
 
   struct LiveSeqData {
-    Track tracks[8];
+    Track tracks[LIVESEQUENCER_NUM_TRACKS];
     bool isRunning = false;
     bool isRecording = false;
-    uint8_t activeRecordingTrack = 0;
+    uint8_t activeTrack = 0;
     elapsedMillis patternTimer;
     unsigned long patternLengthMs;
-    int numberOfBars = 4;
     uint8_t patternCount = 0;
     bool trackLayersChanged = false;
     bool patternBeginFlag = false;
     std::list<MidiEvent> eventsList;
     std::vector<MidiEvent> pendingEvents;
+    std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
+    // those need GUI config
+    int numberOfBars = 4;
     uint16_t quantisizeDenom = 16; // 1/x
   };
 
@@ -61,20 +67,19 @@ private:
 
   LiveSeqData data;
   UI_LiveSequencer ui;
-  uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs);
+  uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
     return ((a.patternNumber * 5000) + a.patternMs) < ((b.patternNumber * 5000) + b.patternMs); // FIXME: patternLengthMs
   }
   
-  
   std::list<MidiEvent>::iterator playIterator;
-
   int currentBpm = 90;
+  uint16_t quantisizeMs = 150;
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
-  std::string getName(midi::MidiType event);
+  const std::string getName(midi::MidiType event) const;
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
@@ -84,9 +89,6 @@ private:
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void checkBpmChanged(void);
 
-  
-  uint16_t quantisizeMs = 150;
-  
 };
 
 #endif //LIVESEQUENCER_H

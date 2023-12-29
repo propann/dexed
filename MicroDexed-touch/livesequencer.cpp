@@ -1,7 +1,6 @@
 #include "livesequencer.h"
 #include "config.h"
 #include "sequencer.h"
-#include <map>
 #include <algorithm>
 
 extern void handleNoteOn(byte, byte, byte, byte);
@@ -21,8 +20,6 @@ extern void UI_func_braids(uint8_t param);
 extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
-std::map<uint8_t, LiveSequencer::MidiEvent> notesOn;
-
 LiveSequencer::LiveSequencer() :
   ui(this) {
 }
@@ -31,7 +28,7 @@ LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
   return &data;
 }
 
-std::string LiveSequencer::getName(midi::MidiType event) {
+const std::string LiveSequencer::getName(midi::MidiType event) const {
   switch(event) {
   case midi::NoteOn:
     return "NoteOn";
@@ -56,9 +53,11 @@ void LiveSequencer::handleStart(void) {
 }
 
 void LiveSequencer::allNotesOff(void) {
-  for(auto &e : data.eventsList) {
-    if(e.event == midi::NoteOff) {
-      handleNoteOff(data.tracks[e.track].channel, e.note_in, e.note_in_velocity, 0);
+  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+    for(uint8_t layer = 0; layer < data.tracks[track].layerCount; layer++) {
+      for(auto note : data.tracks[track].activeNotes[layer]) {
+        handleNoteOff(data.tracks[track].channel, note, 0, 0);
+      }
     }
   }
 }
@@ -79,7 +78,7 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
     }
     resultMs = 0;
   }
-  if(seq.track_type[data.activeRecordingTrack] == 0) {
+  if(seq.track_type[data.activeTrack] == 0) {
     // drum track
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
     DBG_LOG(printf("round %i to %i\n", patternMs, resultMs));
@@ -98,31 +97,33 @@ void LiveSequencer::printEvents() {
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
-    const MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeRecordingTrack, data.tracks[data.activeRecordingTrack].layerCount, event, note, velocity };
+    const MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
     switch(newEvent.event) {
     default:
       // ignore all other types
       break;
 
     case midi::NoteOn:
-      notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
+      if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
+        data.notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
+      }
       break;
 
     case midi::NoteOff:
       // check if it has a corresponding NoteOn
-      const auto on = notesOn.find(note);
-      if(on != notesOn.end()) {
+      const auto on = data.notesOn.find(note);
+      if(on != data.notesOn.end()) {
           // if so, insert NoteOn and this NoteOff to pending
           data.pendingEvents.push_back(on->second);
           data.pendingEvents.push_back(newEvent);
-          notesOn.erase(on);
+          data.notesOn.erase(on);
       }
       break;
     }
   }
 
   // forward midi with correct channel
-  const midi::Channel ch = data.tracks[data.activeRecordingTrack].channel;
+  const midi::Channel ch = data.tracks[data.activeTrack].channel;
   switch(event) {
   case midi::NoteOn:
     handleNoteOn(ch, note, velocity, 0);
@@ -143,13 +144,13 @@ void LiveSequencer::clearLastTrackLayer(uint8_t track) {
     data.pendingEvents.clear();
   } else {
     // if already finished sequence (pending have been added), delete highest layer
-    if(data.tracks[data.activeRecordingTrack].layerCount > 0) {
-      data.tracks[data.activeRecordingTrack].layerCount--;
+    if(data.tracks[data.activeTrack].layerCount > 0) {
+      data.tracks[data.activeTrack].layerCount--;
       data.trackLayersChanged = true;
     }
 
     for(auto &e : data.eventsList) {
-       if(e.track == track && e.layer == data.tracks[data.activeRecordingTrack].layerCount) {
+       if(e.track == track && e.layer == data.tracks[data.activeTrack].layerCount) {
         if(e.event == midi::NoteOff) {
           handleNoteOff(data.tracks[e.track].channel, e.note_in, e.note_in_velocity, 0);
         }
@@ -170,31 +171,45 @@ void LiveSequencer::loadNextEvent(int timeMs) {
 
 void LiveSequencer::playNextEvent(void) {
   if(playIterator != data.eventsList.end()) {
-    const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
     //LOG.printf("PLAY: ");
     //printEvent(1, *playIterator);
-    midi::Channel channel = data.tracks[playIterator->track].channel;
-    switch(playIterator->event) {
-    case midi::NoteOn:
-      // handle muted tracks
-      handleNoteOn(channel, playIterator->note_in, data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer) ? 0 : playIterator->note_in_velocity, 0);
-      break;
-    
-    case midi::NoteOff:
-      handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
-      break;
-    
-    default:
-      break;
+    const bool isMuted = data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer);
+    if(isMuted == false) {
+      const midi::Channel channel = data.tracks[playIterator->track].channel;
+
+      switch(playIterator->event) {   
+      case midi::NoteOff: {
+        // erase one instance of this note going off
+        const auto it = data.tracks[playIterator->track].activeNotes[playIterator->layer].find(playIterator->note_in);
+        if(it != data.tracks[playIterator->track].activeNotes[playIterator->layer].end()) {
+          data.tracks[playIterator->track].activeNotes[playIterator->layer].erase(it);
+        } else {
+          // FIXME: noteOn not registered..
+        }
+        handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+        }
+        break;
+
+      case midi::NoteOn:
+        // add active note to layer track set
+        data.tracks[playIterator->track].activeNotes[playIterator->layer].insert(playIterator->note_in);
+        // handle muted tracks
+        handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+        break;
+
+      default:
+        break;
+      }
     }
     if(++playIterator != data.eventsList.end()) {
+      const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
       int timeToNextEvent = timeToMs(playIterator->patternNumber, playIterator->patternMs) - now;
       loadNextEvent(timeToNextEvent);
     }
   }
 }
 
-inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternMs) {
+inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternMs) const {
   return (patternNumber * data.patternLengthMs) + patternMs;
 }
 
@@ -236,8 +251,8 @@ void LiveSequencer::handlePatternBegin(void) {
       data.pendingEvents.clear();
 
       data.eventsList.sort(sortMidiEvent);
-      data.tracks[data.activeRecordingTrack].layerMutes &= ~(1 << data.tracks[data.activeRecordingTrack].layerCount); // set new unmuted
-      data.tracks[data.activeRecordingTrack].layerCount++;
+      data.tracks[data.activeTrack].layerMutes &= ~(1 << data.tracks[data.activeTrack].layerCount); // set new unmuted
+      data.tracks[data.activeTrack].layerCount++;
       data.trackLayersChanged = true;
     }
 
@@ -269,7 +284,7 @@ void selectMs1() {
 }
 
 void LiveSequencer::updateTrackChannels() {
-  for(uint8_t i = 0; i < NUM_SEQ_TRACKS; i++) {
+  for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
     switch(seq.track_type[i]) {
     case 0:

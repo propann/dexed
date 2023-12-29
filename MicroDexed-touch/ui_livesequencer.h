@@ -14,6 +14,9 @@ typedef void (*SetupFn)( void*);
 
 class LiveSequencer;
 
+static constexpr int LIVESEQUENCER_NUM_TRACKS = 6;
+static constexpr int LIVESEQUENCER_NUM_LAYERS = 4;
+
 class UI_LiveSequencer {
 
 public:
