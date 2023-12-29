@@ -283,6 +283,14 @@ void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
+void LiveSequencer::handleLayerMuteChanged(uint8_t track, uint8_t layer, bool isMuted) {
+  if(isMuted == true) {
+    for(auto note : data.tracks[track].activeNotes[layer]) {
+      handleNoteOff(data.tracks[track].channel, note, 0, 0);
+    }
+  }
+}
+
 void LiveSequencer::updateTrackChannels() {
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;

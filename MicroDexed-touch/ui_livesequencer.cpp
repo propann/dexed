@@ -77,40 +77,42 @@ void handle_touchscreen_live_sequencer(void) {
     buttonsChanged = true;
   }
 
-  for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
-    int x = i * 9;
+  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+    int x = track * 9;
     bool pressed = check_button_on_grid(x, 5);
     if(pressed) {
-      if(i == liveSeqData->activeTrack) {
+      if(track == liveSeqData->activeTrack) {
         if(liveSeqData->isRecording) {
-          liveSeqPtr->clearLastTrackLayer(i);
+          liveSeqPtr->clearLastTrackLayer(track);
         } else {
           // open instrument settings
-          if(liveSeqData->tracks[i].screenSetupFn != nullptr) {
+          if(liveSeqData->tracks[track].screenSetupFn != nullptr) {
             void (*f)();
-            f = (SetupFn)liveSeqData->tracks[i].screenSetupFn;
+            f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
             f();
           }
           LCDML.FUNC_setGBAToLastFunc();
-          LCDML.OTHER_jumpToFunc(liveSeqData->tracks[i].screen);
+          LCDML.OTHER_jumpToFunc(liveSeqData->tracks[track].screen);
         }
       } else {
-        liveSeqData->activeTrack = i;
-        DBG_LOG(printf("rec track now is %i\n", i + 1));
+        liveSeqData->activeTrack = track;
+        DBG_LOG(printf("rec track now is %i\n", track + 1));
       }
       
       buttonsChanged = true;
     }
 
-    for(int y = 0; y < liveSeqData->tracks[i].layerCount; y++) {
-      bool pressed = check_button_on_grid(x, 10 + y * 5);
+    for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
+      const bool pressed = check_button_on_grid(x, 10 + layer * 5);
       if(pressed) {
-        uint8_t layerMask = (1 << y);
-        if(liveSeqData->tracks[i].layerMutes & layerMask) {
-          liveSeqData->tracks[i].layerMutes &= ~layerMask;
+        uint8_t layerMask = (1 << layer);
+        const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
+        if(isMuted) {
+          liveSeqData->tracks[track].layerMutes &= ~layerMask;
         } else {
-          liveSeqData->tracks[i].layerMutes |= layerMask;
+          liveSeqData->tracks[track].layerMutes |= layerMask;
         }
+        liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
         buttonsChanged = true;
       }
     }
@@ -134,7 +136,7 @@ void handle_touchscreen_live_sequencer(void) {
     } else {
       float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
       float progressTotal = (liveSeqData->patternCount * liveSeqData->patternLengthMs + liveSeqData->patternTimer) / float(liveSeqData->numberOfBars * liveSeqData->patternLengthMs);
-      display.fillRect(115, 5, progressPattern * 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(115, 5, progressPattern * 100, 5, barPhases[0] ? MIDDLEGREEN : COLOR_BACKGROUND);
       display.fillRect(115, 10, progressTotal * 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
   }

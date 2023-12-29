@@ -61,6 +61,7 @@ public:
   void handleStart(void);
   void handleStop(void);
   void init(void);
+  void handleLayerMuteChanged(uint8_t track, uint8_t layer, bool isMuted);
 
 private:
   void updateTrackChannels();
