@@ -157,7 +157,7 @@ void LiveSequencer::clearLastTrackLayer(uint8_t track) {
       }
     }
     // play noteOff for active notes
-    for(auto &note : data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].channel]){
+    for(auto &note : data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].layerCount]){
       handleNoteOff(data.tracks[data.activeTrack].channel, note, 0, 0);
     }
     data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].layerCount].clear();
