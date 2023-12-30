@@ -114,7 +114,9 @@ void handle_touchscreen_live_sequencer(void) {
     }
 
     guiFlags.drawLayerButtons |= liveSeqData->trackLayersChanged;
+    guiFlags.drawLayerButtons |= runningChanged;
     liveSeqData->trackLayersChanged = false;
+
 
     for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
       const bool pressed = check_button_on_grid(x, 10 + layer * 5);
@@ -190,7 +192,7 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
         const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
         const int xStart = (x + button_size_x) * CHAR_width_small - 3;
         const int yStart = (10 + layer * 5) * CHAR_height_small;
-        const int yFill = (numNotesOn * 5);
+        const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
         display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, isMuted ? GREY2 : DX_DARKCYAN);
         display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
       }
