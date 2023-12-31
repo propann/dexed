@@ -146,24 +146,26 @@ void LiveSequencer::clearTrackLayer(uint8_t track, uint8_t layer) {
     data.pendingEvents.clear();
   } else {
     // if already finished sequence (pending have been added), delete highest layer
-    if(layer < data.tracks[data.activeTrack].layerCount) {
+    if(layer < data.tracks[track].layerCount) {
       // play noteOff for active layer notes
-      for(auto &note : data.tracks[data.activeTrack].activeNotes[layer]){
-        handleNoteOff(data.tracks[data.activeTrack].channel, note, 0, 0);
+      for(auto &note : data.tracks[track].activeNotes[layer]){
+        handleNoteOff(data.tracks[track].channel, note, 0, 0);
       }
-      data.tracks[data.activeTrack].activeNotes[layer].clear();
+      data.tracks[track].activeNotes[layer].clear();
 
       // mark layer notes as invalid and shift layer numbers
       for(auto &e : data.eventsList) {
-        if(e.track == track && e.layer == layer) {
-          e.event = midi::InvalidType; // delete later
-        }
-        if(e.layer > layer) {
-          e.layer--;
+        if(e.track == track) {
+          if(e.layer == layer) {
+            e.event = midi::InvalidType; // delete later
+          }
+          if(e.layer > layer) {
+            e.layer--;
+          }
         }
       }
     }
-    data.tracks[data.activeTrack].layerCount--;
+    data.tracks[track].layerCount--;
     data.trackLayersChanged = true;
   }
 }

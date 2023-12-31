@@ -24,6 +24,9 @@ bool barPhases[2] = { 0 };
 
 LiveSequencer *liveSeqPtr;
 LiveSequencer::LiveSeqData *liveSeqData;
+uint8_t guiCounter = 0;
+bool blinkPhase = 0;
+bool enableLayerDelete = false;
 
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqPtr = sequencer;
@@ -56,6 +59,7 @@ void UI_func_livesequencer(uint8_t param)
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
     guiFlags.drawLayerButtons |= liveSeqData->trackLayersChanged;
+    guiFlags.drawTrackButtons |= liveSeqData->trackLayersChanged;
     liveSeqData->trackLayersChanged = false;
     drawGUI(guiFlags);
   }
@@ -102,7 +106,12 @@ void handle_touchscreen_live_sequencer(void) {
       if(pressed) {
         if(track == liveSeqData->activeTrack) {
           if(liveSeqData->isRecording) {
-            //
+            if(liveSeqData->pendingEvents.size()) {
+              liveSeqPtr->clearTrackLayer(track, 255); // pending events
+            } else {
+              enableLayerDelete = !enableLayerDelete;
+              guiFlags.drawLayerButtons = true;
+            }
           } else {
             // open instrument settings
             if(liveSeqData->tracks[track].screenSetupFn != nullptr) {
@@ -115,6 +124,8 @@ void handle_touchscreen_live_sequencer(void) {
           }
         } else {
           liveSeqData->activeTrack = track;
+          enableLayerDelete = false;
+          guiFlags.drawLayerButtons = true;
           DBG_LOG(printf("rec track now is %i\n", track + 1));
         }
         guiFlags.drawTrackButtons = true;
@@ -123,7 +134,7 @@ void handle_touchscreen_live_sequencer(void) {
       for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
         const bool pressed = check_button_on_grid(x, 10 + layer * 5);
         if(pressed) {
-          if(liveSeqData->isRecording) {
+          if(enableLayerDelete && liveSeqData->isRecording && (track == liveSeqData->activeTrack)) {
             liveSeqPtr->clearTrackLayer(track, layer);
           } else {
             uint8_t layerMask = (1 << layer);
@@ -147,6 +158,8 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
   if(guiFlags.drawTopButtons) {
     draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
     draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
+    draw_button_on_grid(36, 0, "ABC", "", 1);
+    draw_button_on_grid(45, 0, "DSR", "", 3);
   }
 
   uint16_t patCount = 0;
@@ -158,45 +171,59 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
     if(liveSeqData->patternBeginFlag) {
       liveSeqData->patternBeginFlag = false;
 
-      display.fillRect(115, 5, 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(110, 5, 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       barPhases[0] = !barPhases[0];
       if(liveSeqData->patternCount == 0) {
-        display.fillRect(115, 10, 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+        display.fillRect(110, 10, 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
         barPhases[1] = !barPhases[1];
       }
     } else {
       float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
       float progressTotal = (liveSeqData->patternCount * liveSeqData->patternLengthMs + liveSeqData->patternTimer) / float(liveSeqData->numberOfBars * liveSeqData->patternLengthMs);
-      display.fillRect(115, 5, progressPattern * 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-      display.fillRect(115, 10, progressTotal * 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+      display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
     
     // print time
-    display.setCursor(115, 20);
+    display.setCursor(110, 20);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.printf("%i.%04i", patCount, timeMs);
   }
 
+  uint8_t trackButtonRecColor = 2; // red, or blinking
+  if(liveSeqData->pendingEvents.size()) {
+    if(++guiCounter == 8) {
+      guiCounter = 0;
+      trackButtonRecColor = (liveSeqData->pendingEvents.size() && blinkPhase) ? 1 : 2;
+      guiFlags.drawTrackButtons = true;
+      blinkPhase = !blinkPhase;
+    }
+  } else {
+    guiCounter = 0;
+    blinkPhase = 0;
+    trackButtonRecColor = 2;
+  }
   char temp_char[4];
   for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     const int x = track * 9;
     if(guiFlags.drawTrackButtons) {
-      draw_button_on_grid(x, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? 2 : 3) : (liveSeqData->tracks[track].layerMutes ? 0 : 1));
+      draw_button_on_grid(x, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : (liveSeqData->tracks[track].layerMutes ? 0 : 1));
     }
 
     int printLayers = liveSeqData->isRunning ? liveSeqData->tracks[track].layerCount : 0;
+    bool layerDeleteActive = (liveSeqData->activeTrack == track) && enableLayerDelete;
     // layer button
     for(int layer = 0; layer < printLayers; layer++) {
       const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
       if(guiFlags.drawLayerButtons) {
-        draw_button_on_grid(x, 10 + layer * 5, "LAYER", itoa(layer + 1, temp_char, 10), isMuted ? 0 : 1);
+        draw_button_on_grid(x, 10 + layer * 5, "LAYER", itoa(layer + 1, temp_char, 10), layerDeleteActive ? 2 : (isMuted ? 0 : 1));
       }
       const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
       const int xStart = (x + button_size_x) * CHAR_width_small - 3;
       const int yStart = (10 + layer * 5) * CHAR_height_small;
       const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
-      display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, isMuted ? GREY2 : DX_DARKCYAN);
+      display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerDeleteActive ? RED : (isMuted ? GREY2 : DX_DARKCYAN));
       display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
     }
     if(guiFlags.drawLayerButtons) {
