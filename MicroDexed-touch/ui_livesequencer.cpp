@@ -14,6 +14,8 @@ extern void handleStart();
 extern void handleStop();
 extern Realtime_Scope scope;
 
+extern int numTouchPoints;
+
 static constexpr int BUTTON_HEIGHT = CHAR_height_small * button_size_y;
 static constexpr int BUTTON_WIDTH = CHAR_width_small * button_size_x;
 
@@ -32,7 +34,6 @@ struct GuiUpdateFlags {
   bool drawTopButtons;
   bool drawTrackButtons;
   bool drawLayerButtons;
-  bool drawFastElements;
 } guiFlags = { false };
 
 void drawGUI(GuiUpdateFlags &guiFlags);
@@ -47,12 +48,16 @@ void UI_func_livesequencer(uint8_t param)
 
     barPhases[0] = 0;
     barPhases[1] = 0;
-    GuiUpdateFlags init = { true, true, true, true };
+    GuiUpdateFlags init = { true, true, true };
     drawGUI(init);
+    // setup function
+    LCDML.FUNC_setLoopInterval(25); // 40Hz gui refresh
   }
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
-    
+    guiFlags.drawLayerButtons |= liveSeqData->trackLayersChanged;
+    liveSeqData->trackLayersChanged = false;
+    drawGUI(guiFlags);
   }
   
   // ****** STABLE END *********
@@ -63,78 +68,75 @@ void UI_func_livesequencer(uint8_t param)
 }
 
 void handle_touchscreen_live_sequencer(void) {
-  bool runningPressed = check_button_on_grid(0, 0);
   bool runningChanged = (runningHere != liveSeqData->isRunning);
-  guiFlags.drawFastElements = true; // TODO: reduce to gui fps
+  guiFlags.drawLayerButtons |= runningChanged;
 
-  //scope.draw_scope(220, -20, 90); // rly?
-  if (runningPressed) {
-    if(runningHere) {
-      handleStop();
-    } else {
-      handleStart();
-    }
-  }
-  if(runningChanged) {
-    runningHere = liveSeqData->isRunning;
-  }
-  if(runningPressed || runningChanged) {
-    guiFlags.drawTopButtons = true;
-  }
+  if((numTouchPoints > 0) || runningChanged) {
+    bool runningPressed = check_button_on_grid(0, 0);
 
-  bool recPressed = check_button_on_grid(9, 0);
-  if(recPressed) {
-    liveSeqData->isRecording = !liveSeqData->isRecording;
-    guiFlags.drawTopButtons = true;
-    guiFlags.drawTrackButtons = true;
-  }
-
-  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-    int x = track * 9;
-    bool pressed = check_button_on_grid(x, 5);
-    if(pressed) {
-      if(track == liveSeqData->activeTrack) {
-        if(liveSeqData->isRecording) {
-          liveSeqPtr->clearLastTrackLayer(track);
-        } else {
-          // open instrument settings
-          if(liveSeqData->tracks[track].screenSetupFn != nullptr) {
-            void (*f)();
-            f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
-            f();
-          }
-          LCDML.FUNC_setGBAToLastFunc();
-          LCDML.OTHER_jumpToFunc(liveSeqData->tracks[track].screen);
-        }
+    //scope.draw_scope(220, -20, 90); // rly?
+    if (runningPressed) {
+      if(runningHere) {
+        handleStop();
       } else {
-        liveSeqData->activeTrack = track;
-        DBG_LOG(printf("rec track now is %i\n", track + 1));
+        handleStart();
       }
+    }
+    if(runningChanged) {
+      runningHere = liveSeqData->isRunning;
+    }
+    if(runningPressed || runningChanged) {
+      guiFlags.drawTopButtons = true;
+    }
+
+    bool recPressed = check_button_on_grid(9, 0);
+    if(recPressed) {
+      liveSeqData->isRecording = !liveSeqData->isRecording;
+      guiFlags.drawTopButtons = true;
       guiFlags.drawTrackButtons = true;
     }
 
-    guiFlags.drawLayerButtons |= liveSeqData->trackLayersChanged;
-    guiFlags.drawLayerButtons |= runningChanged;
-    liveSeqData->trackLayersChanged = false;
-
-
-    for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
-      const bool pressed = check_button_on_grid(x, 10 + layer * 5);
+    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+      int x = track * 9;
+      bool pressed = check_button_on_grid(x, 5);
       if(pressed) {
-        uint8_t layerMask = (1 << layer);
-        const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
-        if(isMuted) {
-          liveSeqData->tracks[track].layerMutes &= ~layerMask;
+        if(track == liveSeqData->activeTrack) {
+          if(liveSeqData->isRecording) {
+            liveSeqPtr->clearLastTrackLayer(track);
+          } else {
+            // open instrument settings
+            if(liveSeqData->tracks[track].screenSetupFn != nullptr) {
+              void (*f)();
+              f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
+              f();
+            }
+            LCDML.FUNC_setGBAToLastFunc();
+            LCDML.OTHER_jumpToFunc(liveSeqData->tracks[track].screen);
+          }
         } else {
-          liveSeqData->tracks[track].layerMutes |= layerMask;
+          liveSeqData->activeTrack = track;
+          DBG_LOG(printf("rec track now is %i\n", track + 1));
         }
-        liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
-        guiFlags.drawLayerButtons = true;
+        guiFlags.drawTrackButtons = true;
+      }
+
+      for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
+        const bool pressed = check_button_on_grid(x, 10 + layer * 5);
+        if(pressed) {
+          uint8_t layerMask = (1 << layer);
+          const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
+          if(isMuted) {
+            liveSeqData->tracks[track].layerMutes &= ~layerMask;
+          } else {
+            liveSeqData->tracks[track].layerMutes |= layerMask;
+          }
+          liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
+          guiFlags.drawLayerButtons = true;
+          guiFlags.drawTrackButtons = true;
+        }
       }
     }
   }
-
-  drawGUI(guiFlags);
 }
 
 void drawGUI(GuiUpdateFlags &guiFlags) {
@@ -143,30 +145,28 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
     draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
   }
 
-  if(guiFlags.drawFastElements) {
-    uint16_t patCount = 0;
-    uint16_t timeMs = 0;
-    if(runningHere) {
-      patCount = liveSeqData->patternCount;
-      timeMs = liveSeqData->patternTimer;
-      
-      if(liveSeqData->patternBeginFlag) {
-        liveSeqData->patternBeginFlag = false;
+  uint16_t patCount = 0;
+  uint16_t timeMs = 0;
+  if(runningHere) {
+    patCount = liveSeqData->patternCount;
+    timeMs = liveSeqData->patternTimer;
+    
+    if(liveSeqData->patternBeginFlag) {
+      liveSeqData->patternBeginFlag = false;
 
-        display.fillRect(115, 5, 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-        barPhases[0] = !barPhases[0];
-        if(liveSeqData->patternCount == 0) {
-          display.fillRect(115, 10, 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
-          barPhases[1] = !barPhases[1];
-        }
-      } else {
-        float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
-        float progressTotal = (liveSeqData->patternCount * liveSeqData->patternLengthMs + liveSeqData->patternTimer) / float(liveSeqData->numberOfBars * liveSeqData->patternLengthMs);
-        display.fillRect(115, 5, progressPattern * 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-        display.fillRect(115, 10, progressTotal * 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+      display.fillRect(115, 5, 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      barPhases[0] = !barPhases[0];
+      if(liveSeqData->patternCount == 0) {
+        display.fillRect(115, 10, 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+        barPhases[1] = !barPhases[1];
       }
+    } else {
+      float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
+      float progressTotal = (liveSeqData->patternCount * liveSeqData->patternLengthMs + liveSeqData->patternTimer) / float(liveSeqData->numberOfBars * liveSeqData->patternLengthMs);
+      display.fillRect(115, 5, progressPattern * 100, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(115, 10, progressTotal * 100, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
-
+    
     // print time
     display.setCursor(115, 20);
     display.setTextSize(1);
@@ -188,14 +188,12 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
       if(guiFlags.drawLayerButtons) {
         draw_button_on_grid(x, 10 + layer * 5, "LAYER", itoa(layer + 1, temp_char, 10), isMuted ? 0 : 1);
       }
-      if(guiFlags.drawFastElements) {
-        const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
-        const int xStart = (x + button_size_x) * CHAR_width_small - 3;
-        const int yStart = (10 + layer * 5) * CHAR_height_small;
-        const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
-        display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, isMuted ? GREY2 : DX_DARKCYAN);
-        display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
-      }
+      const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
+      const int xStart = (x + button_size_x) * CHAR_width_small - 3;
+      const int yStart = (10 + layer * 5) * CHAR_height_small;
+      const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
+      display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, isMuted ? GREY2 : DX_DARKCYAN);
+      display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
     }
     if(guiFlags.drawLayerButtons) {
       // no button
@@ -207,5 +205,4 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
   guiFlags.drawTopButtons = false;
   guiFlags.drawTrackButtons = false;
   guiFlags.drawLayerButtons = false;
-  guiFlags.drawFastElements = false;
 }
