@@ -102,7 +102,7 @@ void handle_touchscreen_live_sequencer(void) {
       if(pressed) {
         if(track == liveSeqData->activeTrack) {
           if(liveSeqData->isRecording) {
-            liveSeqPtr->clearLastTrackLayer(track);
+            //
           } else {
             // open instrument settings
             if(liveSeqData->tracks[track].screenSetupFn != nullptr) {
@@ -123,14 +123,18 @@ void handle_touchscreen_live_sequencer(void) {
       for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
         const bool pressed = check_button_on_grid(x, 10 + layer * 5);
         if(pressed) {
-          uint8_t layerMask = (1 << layer);
-          const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
-          if(isMuted) {
-            liveSeqData->tracks[track].layerMutes &= ~layerMask;
+          if(liveSeqData->isRecording) {
+            liveSeqPtr->clearTrackLayer(track, layer);
           } else {
-            liveSeqData->tracks[track].layerMutes |= layerMask;
+            uint8_t layerMask = (1 << layer);
+            const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
+            if(isMuted) {
+              liveSeqData->tracks[track].layerMutes &= ~layerMask;
+            } else {
+              liveSeqData->tracks[track].layerMutes |= layerMask;
+            }
+            liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
           }
-          liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
           guiFlags.drawLayerButtons = true;
           guiFlags.drawTrackButtons = true;
         }

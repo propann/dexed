@@ -55,7 +55,7 @@ public:
 
   LiveSequencer();
   LiveSequencer::LiveSeqData* getData(void);
-  void clearLastTrackLayer(uint8_t track);
+  void clearTrackLayer(uint8_t track, uint8_t layer);
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);

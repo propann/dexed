@@ -72,13 +72,13 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
   uint8_t resultNumber = patternNumber;
   uint16_t resultMs = patternMs;
   // first round up an event just at end that was meant to be played at 1
-  if((data.patternLengthMs - patternMs) < halfStep) {
+  /*if((data.patternLengthMs - patternMs) < halfStep) {
     resultNumber++;
     if(resultNumber == data.numberOfBars) {
       resultNumber = 0;
     }
     resultMs = 0;
-  }
+  }*/
   if(seq.track_type[data.activeTrack] == 0) {
     // drum track
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
@@ -114,6 +114,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
       // check if it has a corresponding NoteOn
       const auto on = data.notesOn.find(note);
       if(on != data.notesOn.end()) {
+          timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
           // if so, insert NoteOn and this NoteOff to pending
           data.pendingEvents.push_back(on->second);
           data.pendingEvents.push_back(newEvent);
@@ -139,28 +140,31 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   }
 }
 
-void LiveSequencer::clearLastTrackLayer(uint8_t track) {
+void LiveSequencer::clearTrackLayer(uint8_t track, uint8_t layer) {
   if(data.pendingEvents.size()) {
     // if still in pending sequence, delete pending events
     data.pendingEvents.clear();
   } else {
     // if already finished sequence (pending have been added), delete highest layer
-    if(data.tracks[data.activeTrack].layerCount > 0) {
-      data.tracks[data.activeTrack].layerCount--;
-      data.trackLayersChanged = true;
-    }
+    if(layer < data.tracks[data.activeTrack].layerCount) {
+      // play noteOff for active layer notes
+      for(auto &note : data.tracks[data.activeTrack].activeNotes[layer]){
+        handleNoteOff(data.tracks[data.activeTrack].channel, note, 0, 0);
+      }
+      data.tracks[data.activeTrack].activeNotes[layer].clear();
 
-    // mark all tracklayer events as invalid
-    for(auto &e : data.eventsList) {
-       if(e.track == track && e.layer == data.tracks[data.activeTrack].layerCount) {
-        e.event = midi::InvalidType; // delete later
+      // mark layer notes as invalid and shift layer numbers
+      for(auto &e : data.eventsList) {
+        if(e.track == track && e.layer == layer) {
+          e.event = midi::InvalidType; // delete later
+        }
+        if(e.layer > layer) {
+          e.layer--;
+        }
       }
     }
-    // play noteOff for active notes
-    for(auto &note : data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].layerCount]){
-      handleNoteOff(data.tracks[data.activeTrack].channel, note, 0, 0);
-    }
-    data.tracks[data.activeTrack].activeNotes[data.tracks[data.activeTrack].layerCount].clear();
+    data.tracks[data.activeTrack].layerCount--;
+    data.trackLayersChanged = true;
   }
 }
 
@@ -247,7 +251,6 @@ void LiveSequencer::handlePatternBegin(void) {
     // first insert pending to events and sort
     if(data.pendingEvents.size()) {
       for(auto &e : data.pendingEvents) {
-        timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
         data.eventsList.emplace_back(e);
       }
       data.pendingEvents.clear();
