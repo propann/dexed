@@ -71,6 +71,7 @@ public:
   void init(void);
   void handleLayerMuteChanged(uint8_t track, uint8_t layer, bool isMuted);
   void fillTrackLayer();
+  uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
   void updateTrackChannels(void);
@@ -78,7 +79,6 @@ private:
 
   LiveSeqData data;
   UI_LiveSequencer ui;
-  uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
     return ((a.patternNumber * 5000) + a.patternMs) < ((b.patternNumber * 5000) + b.patternMs); // FIXME: patternLengthMs

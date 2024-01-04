@@ -116,7 +116,7 @@ void handle_touchscreen_live_sequencer(void) {
         if(track == liveSeqData->activeTrack) {
           if(liveSeqData->isRecording) {
             if(liveSeqData->pendingEvents.size()) {
-              liveSeqPtr->trackLayerAction(track, 255, TrackLayerMode::LAYER_DELETE); // pending events
+              liveSeqData->pendingEvents.clear(); // clear pending
             } else {
               if(++trackLayerMode == TrackLayerMode::LAYER_MODE_NUM) {
                 trackLayerMode = TrackLayerMode::LAYER_MUTE;
@@ -193,8 +193,8 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
   if(guiFlags.drawTopButtons) {
     draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
     draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
-    draw_button_on_grid(36, 0, "ABC", "", 1);
-    draw_button_on_grid(45, 0, "DSR", "", 3);
+    draw_button_on_grid(36, 0, "ABC", "", 1); // more to come...
+    draw_button_on_grid(45, 0, "DSR", "", 3); // more to come...
   }
 
   uint16_t patCount = 0;
@@ -224,6 +224,8 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.printf("%i.%04i", patCount, timeMs);
+    //display.setCursor(160, 20);
+    //display.printf("%6i", liveSeqPtr->timeToMs(patCount, timeMs));
   }
 
   uint8_t trackButtonRecColor = 2; // red, or blinking

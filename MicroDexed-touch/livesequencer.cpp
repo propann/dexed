@@ -160,44 +160,45 @@ void LiveSequencer::fillTrackLayer(void) {
 }
 
 void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMode action) {
-  if(data.pendingEvents.size()) {
-    // if still in pending sequence, delete pending events
-    data.pendingEvents.clear();
-  } else {
-    // if already finished sequence (pending have been added), delete highest layer
-    if(layer < data.tracks[track].layerCount) {
-      // play noteOff for active layer notes
-      for(auto &note : data.tracks[track].activeNotes[layer]){
-        handleNoteOff(data.tracks[track].channel, note, 0, 0);
-      }
-      data.tracks[track].activeNotes[layer].clear();
+  if((layer == 0) && (action == TrackLayerMode::LAYER_MERGE_UP)) {
+    return; // avoid merge up top layer
+  }
+  // if already finished sequence (pending have been added), delete highest layer
+  if(layer < data.tracks[track].layerCount) {
+    // play noteOff for active layer notes
+    for(auto &note : data.tracks[track].activeNotes[layer]){
+      handleNoteOff(data.tracks[track].channel, note, 0, 0);
+    }
+    data.tracks[track].activeNotes[layer].clear();
 
-      // mark layer notes as invalid and shift layer numbers
-      for(auto &e : data.eventsList) {
-        if(e.track == track) {
-          if(e.layer == layer) {
-            switch(action) {
-            case TrackLayerMode::LAYER_MERGE_UP:
-              if(e.layer > 0) { // lowest layer cannot be merged up
-                e.layer--;
-              }
-              break;
-            
-            case TrackLayerMode::LAYER_DELETE:
-              e.event = midi::InvalidType; // delete later
-              break;
+    // mark layer notes as invalid and shift layer numbers
+    for(auto &e : data.eventsList) {
+      if(e.track == track) {
+        if(e.layer == layer) {
+          switch(action) {
+          case TrackLayerMode::LAYER_MERGE_UP:
+            if(e.layer > 0) { // lowest layer cannot be merged up
+              e.layer--;
             }
+            break;
+          
+          case TrackLayerMode::LAYER_DELETE:
+            e.event = midi::InvalidType; // delete later
+            break;
+
+          default:
+            break;
           }
-          // both actions above shift upper layers one lower
-          if(e.layer > layer) {
-            e.layer--;
-          }
+        }
+        // both actions above shift upper layers one lower
+        if(e.layer > layer) {
+          e.layer--;
         }
       }
     }
-    data.tracks[track].layerCount--;
-    data.trackLayersChanged = true;
   }
+  data.tracks[track].layerCount--;
+  data.trackLayersChanged = true;
 }
 
 void LiveSequencer::loadNextEvent(int timeMs) {
