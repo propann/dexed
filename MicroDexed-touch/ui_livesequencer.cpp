@@ -220,10 +220,11 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
   }
 
   uint8_t trackButtonRecColor = 2; // red, or blinking
-  if(liveSeqData->pendingEvents.size()) {
+  const bool doBlink = liveSeqData->notesOn.size() || liveSeqData->pendingEvents.size();
+  if(doBlink) {
     if(++guiCounter == 8) {
       guiCounter = 0;
-      trackButtonRecColor = (liveSeqData->pendingEvents.size() && blinkPhase) ? 1 : 2;
+      trackButtonRecColor = blinkPhase ? 1 : 2;
       guiFlags.drawTrackButtons = true;
       blinkPhase = !blinkPhase;
     }
