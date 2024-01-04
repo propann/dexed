@@ -23,7 +23,7 @@ public:
   UI_LiveSequencer(LiveSequencer *sequencer);
 
 private:
-  
+
 };
 
 void UI_func_livesequencer(uint8_t param);

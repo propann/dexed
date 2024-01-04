@@ -71,14 +71,6 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
   const uint16_t halfStep = multiple / 2;
   uint8_t resultNumber = patternNumber;
   uint16_t resultMs = patternMs;
-  // first round up an event just at end that was meant to be played at 1
-  /*if((data.patternLengthMs - patternMs) < halfStep) {
-    resultNumber++;
-    if(resultNumber == data.numberOfBars) {
-      resultNumber = 0;
-    }
-    resultMs = 0;
-  }*/
   if(seq.track_type[data.activeTrack] == 0) {
     // drum track
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
@@ -98,29 +90,35 @@ void LiveSequencer::printEvents() {
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
-    const MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
-    switch(newEvent.event) {
-    default:
-      // ignore all other types
-      break;
+    if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
+      MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
+      switch(newEvent.event) {
+      default:
+        // ignore all other types
+        break;
 
-    case midi::NoteOn:
-      if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
+      case midi::NoteOn:
+        static constexpr int ROUND_UP_MS = 200; 
+        // round up events just at end probably meant to be played at start
+        if(newEvent.patternNumber == (data.numberOfBars - 1) && newEvent.patternMs > (data.patternLengthMs - ROUND_UP_MS)) {
+          newEvent.patternNumber = 0;
+          newEvent.patternMs = 0;
+        }
         data.notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
-      }
-      break;
+        break;
 
-    case midi::NoteOff:
-      // check if it has a corresponding NoteOn
-      const auto on = data.notesOn.find(note);
-      if(on != data.notesOn.end()) {
-          timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
-          // if so, insert NoteOn and this NoteOff to pending
-          data.pendingEvents.push_back(on->second);
-          data.pendingEvents.push_back(newEvent);
-          data.notesOn.erase(on);
+      case midi::NoteOff:
+        // check if it has a corresponding NoteOn
+        const auto on = data.notesOn.find(note);
+        if(on != data.notesOn.end()) {
+            timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
+            // if so, insert NoteOn and this NoteOff to pending
+            data.pendingEvents.push_back(on->second);
+            data.pendingEvents.push_back(newEvent);
+            data.notesOn.erase(on);
+        }
+        break;
       }
-      break;
     }
   }
 
@@ -129,6 +127,11 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   switch(event) {
   case midi::NoteOn:
     handleNoteOn(ch, note, velocity, 0);
+
+    if(data.lastPlayedNote != note) {
+      data.lastPlayedNote = note;
+      data.lastPlayedNoteChanged = true;
+    }
     break;
   
   case midi::NoteOff:
@@ -137,6 +140,22 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   
   default:
     break;
+  }
+}
+
+void LiveSequencer::fillTrackLayer(void) {
+  if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
+    uint16_t msIncrement = data.patternLengthMs / data.fillNotes.number;
+    uint16_t msOffset = data.fillNotes.offset * msIncrement / 8;
+    uint16_t noteLength = msIncrement / 2; // ...
+    for(uint8_t bar = 0; bar < data.numberOfBars; bar++) {
+      for(uint16_t note = 0; note < data.fillNotes.number; note++) {
+        // { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity }
+        data.pendingEvents.push_back(MidiEvent { uint16_t(note * msIncrement + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
+        data.pendingEvents.push_back(MidiEvent { uint16_t(note * msIncrement + noteLength + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
+      }
+    }
+    addPendingNotes();
   }
 }
 
@@ -243,6 +262,35 @@ void LiveSequencer::checkBpmChanged() {
   }
 }
 
+void LiveSequencer::addPendingNotes(void) {
+  // finish active notes at end of all bars
+  for(auto it = data.notesOn.begin(); it != data.notesOn.end();) {
+    if(timeToMs(it->second.patternNumber, it->second.patternMs) != 0) {
+      data.pendingEvents.push_back(it->second);
+      it->second.event = midi::NoteOff;
+      it->second.note_in_velocity = 0;
+      it->second.patternNumber = data.numberOfBars - 1;
+      it->second.patternMs = data.patternLengthMs - 1;
+      data.pendingEvents.push_back(it->second);
+      data.notesOn.erase(it++);
+    } else {
+      ++it; // ignore notesOn at 0.0000, those were round up just before
+    }
+  }
+  // then add all notes to events and sort
+  if(data.pendingEvents.size()) {
+    for(auto &e : data.pendingEvents) {
+      data.eventsList.emplace_back(e);
+    }
+    data.pendingEvents.clear();
+
+    data.eventsList.sort(sortMidiEvent);
+    data.tracks[data.activeTrack].layerMutes &= ~(1 << data.tracks[data.activeTrack].layerCount); // set new unmuted
+    data.tracks[data.activeTrack].layerCount++;
+    data.trackLayersChanged = true;
+  }
+}
+
 void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
   data.patternTimer = 0;
@@ -251,17 +299,7 @@ void LiveSequencer::handlePatternBegin(void) {
     data.patternCount = 0;
     
     // first insert pending to events and sort
-    if(data.pendingEvents.size()) {
-      for(auto &e : data.pendingEvents) {
-        data.eventsList.emplace_back(e);
-      }
-      data.pendingEvents.clear();
-
-      data.eventsList.sort(sortMidiEvent);
-      data.tracks[data.activeTrack].layerMutes &= ~(1 << data.tracks[data.activeTrack].layerCount); // set new unmuted
-      data.tracks[data.activeTrack].layerCount++;
-      data.trackLayersChanged = true;
-    }
+    addPendingNotes();
 
     if(data.eventsList.size() > 0) {
       // remove all invalidated notes

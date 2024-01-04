@@ -35,6 +35,11 @@ public:
     std::unordered_multiset<uint8_t> activeNotes[8];
   };
 
+  struct FillNotes {
+    uint8_t number;
+    uint8_t offset;
+  };
+
   struct LiveSeqData {
     Track tracks[LIVESEQUENCER_NUM_TRACKS];
     bool isRunning = false;
@@ -49,8 +54,11 @@ public:
     std::vector<MidiEvent> pendingEvents;
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
     // those need GUI config
+    FillNotes fillNotes = { 4, 0 };
     int numberOfBars = 4;
     uint16_t quantisizeDenom = 16; // 1/x
+    uint8_t lastPlayedNote = 0;
+    bool lastPlayedNoteChanged = false;
   };
 
   LiveSequencer();
@@ -62,9 +70,11 @@ public:
   void handleStop(void);
   void init(void);
   void handleLayerMuteChanged(uint8_t track, uint8_t layer, bool isMuted);
+  void fillTrackLayer();
 
 private:
-  void updateTrackChannels();
+  void updateTrackChannels(void);
+  void addPendingNotes(void);
 
   LiveSeqData data;
   UI_LiveSequencer ui;

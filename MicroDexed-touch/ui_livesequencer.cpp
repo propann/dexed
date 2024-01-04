@@ -37,6 +37,8 @@ struct GuiUpdateFlags {
   bool drawTopButtons;
   bool drawTrackButtons;
   bool drawLayerButtons;
+  bool drawFillNotes;
+  bool clearBottomArea;
 } guiFlags = { false };
 
 void drawGUI(GuiUpdateFlags &guiFlags);
@@ -51,16 +53,18 @@ void UI_func_livesequencer(uint8_t param)
 
     barPhases[0] = 0;
     barPhases[1] = 0;
-    GuiUpdateFlags init = { true, true, true };
+    GuiUpdateFlags init = { true, true, true, true, true };
     drawGUI(init);
     // setup function
-    LCDML.FUNC_setLoopInterval(25); // 40Hz gui refresh
+    LCDML.FUNC_setLoopInterval(40); // 25Hz gui refresh
   }
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
     guiFlags.drawLayerButtons |= liveSeqData->trackLayersChanged;
     guiFlags.drawTrackButtons |= liveSeqData->trackLayersChanged;
     liveSeqData->trackLayersChanged = false;
+    guiFlags.drawFillNotes |= liveSeqData->lastPlayedNoteChanged;
+    liveSeqData->lastPlayedNoteChanged = false;
     drawGUI(guiFlags);
   }
   
@@ -91,6 +95,7 @@ void handle_touchscreen_live_sequencer(void) {
     }
     if(runningPressed || runningChanged) {
       guiFlags.drawTopButtons = true;
+      guiFlags.clearBottomArea = true;
     }
 
     bool recPressed = check_button_on_grid(9, 0);
@@ -101,8 +106,8 @@ void handle_touchscreen_live_sequencer(void) {
     }
 
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-      int x = track * 9;
-      bool pressed = check_button_on_grid(x, 5);
+      int buttonX = track * 9;
+      bool pressed = check_button_on_grid(buttonX, 5);
       if(pressed) {
         if(track == liveSeqData->activeTrack) {
           if(liveSeqData->isRecording) {
@@ -130,24 +135,47 @@ void handle_touchscreen_live_sequencer(void) {
         }
         guiFlags.drawTrackButtons = true;
       }
-
-      for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
-        const bool pressed = check_button_on_grid(x, 10 + layer * 5);
-        if(pressed) {
-          if(enableLayerDelete && liveSeqData->isRecording && (track == liveSeqData->activeTrack)) {
-            liveSeqPtr->clearTrackLayer(track, layer);
-          } else {
-            uint8_t layerMask = (1 << layer);
-            const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
-            if(isMuted) {
-              liveSeqData->tracks[track].layerMutes &= ~layerMask;
+      if(liveSeqData->isRunning) {
+        for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
+          const bool pressed = check_button_on_grid(buttonX, 10 + layer * 5);
+          if(pressed) {
+            if(enableLayerDelete && liveSeqData->isRecording && (track == liveSeqData->activeTrack)) {
+              liveSeqPtr->clearTrackLayer(track, layer);
             } else {
-              liveSeqData->tracks[track].layerMutes |= layerMask;
+              uint8_t layerMask = (1 << layer);
+              const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
+              if(isMuted) {
+                liveSeqData->tracks[track].layerMutes &= ~layerMask;
+              } else {
+                liveSeqData->tracks[track].layerMutes |= layerMask;
+              }
+              liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
             }
-            liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
+            guiFlags.drawLayerButtons = true;
+            guiFlags.drawTrackButtons = true;
           }
-          guiFlags.drawLayerButtons = true;
-          guiFlags.drawTrackButtons = true;
+        }
+      } else {
+        if(check_button_on_grid(9, 10)) {
+          guiFlags.drawFillNotes = true;
+          // fill number
+          liveSeqData->fillNotes.number *= 2;
+          if(liveSeqData->fillNotes.number > 32) {
+            liveSeqData->fillNotes.number = 4;
+          }
+        }
+        if(check_button_on_grid(18, 10)) {
+          guiFlags.drawFillNotes = true;
+          // fill offset
+          liveSeqData->fillNotes.offset++;
+          if(liveSeqData->fillNotes.offset > 7) {
+            liveSeqData->fillNotes.offset = 0;
+          }
+        }
+        if(check_button_on_grid(0, 10)) {
+          guiFlags.drawFillNotes = true;
+          // fill now
+          liveSeqPtr->fillTrackLayer();
         }
       }
     }
@@ -204,36 +232,55 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
     blinkPhase = 0;
     trackButtonRecColor = 2;
   }
+  
+  const bool showLayers = liveSeqData->isRunning;
+  if(guiFlags.clearBottomArea) {
+    display.fillRect(0, 75, DISPLAY_WIDTH, DISPLAY_HEIGHT - 75, COLOR_BACKGROUND);
+    guiFlags.drawFillNotes = true;
+    guiFlags.drawLayerButtons = true;
+  }
+  
   char temp_char[4];
   for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-    const int x = track * 9;
+    const int buttonX = track * 9;
     if(guiFlags.drawTrackButtons) {
-      draw_button_on_grid(x, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : (liveSeqData->tracks[track].layerMutes ? 0 : 1));
+      draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
     }
 
-    int printLayers = liveSeqData->isRunning ? liveSeqData->tracks[track].layerCount : 0;
-    bool layerDeleteActive = (liveSeqData->activeTrack == track) && enableLayerDelete;
-    // layer button
-    for(int layer = 0; layer < printLayers; layer++) {
-      const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
-      if(guiFlags.drawLayerButtons) {
-        draw_button_on_grid(x, 10 + layer * 5, "LAYER", itoa(layer + 1, temp_char, 10), layerDeleteActive ? 2 : (isMuted ? 0 : 1));
+    if(showLayers) {
+      bool layerDeleteActive = (liveSeqData->activeTrack == track) && enableLayerDelete;
+      // layer button
+      for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
+        const int buttonY = 10 + layer * 5;
+        if(layer < liveSeqData->tracks[track].layerCount) {
+          const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
+          if(guiFlags.drawLayerButtons) {
+            draw_button_on_grid(buttonX, buttonY, "LAYER", itoa(layer + 1, temp_char, 10), layerDeleteActive ? 2 : (isMuted ? 0 : 1));
+          }
+          const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
+          const int xStart = (buttonX + button_size_x) * CHAR_width_small - 3;
+          const int yStart = (10 + layer * 5) * CHAR_height_small;
+          const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
+          display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerDeleteActive ? RED : (isMuted ? GREY2 : DX_DARKCYAN));
+          display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
+        } else {
+          if(guiFlags.drawLayerButtons) {
+            // no button
+            draw_button_on_grid(buttonX, buttonY, "", "", 98); // clear button
+          }
+        }
       }
-      const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
-      const int xStart = (x + button_size_x) * CHAR_width_small - 3;
-      const int yStart = (10 + layer * 5) * CHAR_height_small;
-      const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
-      display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerDeleteActive ? RED : (isMuted ? GREY2 : DX_DARKCYAN));
-      display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
     }
-    if(guiFlags.drawLayerButtons) {
-      // no button
-      for(int noLayer = printLayers; noLayer < LIVESEQUENCER_NUM_LAYERS; noLayer++) {
-        draw_button_on_grid(x, 10 + noLayer * 5, "", "", 98); // clear button
-      }
-    }
+  }
+  if((showLayers == false) && guiFlags.drawFillNotes) {
+    // FILL label
+    draw_button_on_grid(0, 10, "Note", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 2);
+    draw_button_on_grid(9, 10, "Num", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+    draw_button_on_grid(18, 10, "Off", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);
   }
   guiFlags.drawTopButtons = false;
   guiFlags.drawTrackButtons = false;
   guiFlags.drawLayerButtons = false;
+  guiFlags.drawFillNotes = false;
+  guiFlags.clearBottomArea = false;
 }
