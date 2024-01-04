@@ -26,7 +26,8 @@ LiveSequencer *liveSeqPtr;
 LiveSequencer::LiveSeqData *liveSeqData;
 uint8_t guiCounter = 0;
 bool blinkPhase = 0;
-bool enableLayerDelete = false;
+
+uint8_t trackLayerMode = LAYER_MUTE;
 
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqPtr = sequencer;
@@ -96,6 +97,7 @@ void handle_touchscreen_live_sequencer(void) {
     if(runningPressed || runningChanged) {
       guiFlags.drawTopButtons = true;
       guiFlags.clearBottomArea = true;
+      trackLayerMode = TrackLayerMode::LAYER_MUTE;
     }
 
     bool recPressed = check_button_on_grid(9, 0);
@@ -103,6 +105,8 @@ void handle_touchscreen_live_sequencer(void) {
       liveSeqData->isRecording = !liveSeqData->isRecording;
       guiFlags.drawTopButtons = true;
       guiFlags.drawTrackButtons = true;
+      guiFlags.drawLayerButtons = true;
+      trackLayerMode = TrackLayerMode::LAYER_MUTE;
     }
 
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
@@ -112,9 +116,11 @@ void handle_touchscreen_live_sequencer(void) {
         if(track == liveSeqData->activeTrack) {
           if(liveSeqData->isRecording) {
             if(liveSeqData->pendingEvents.size()) {
-              liveSeqPtr->clearTrackLayer(track, 255); // pending events
+              liveSeqPtr->trackLayerAction(track, 255, TrackLayerMode::LAYER_DELETE); // pending events
             } else {
-              enableLayerDelete = !enableLayerDelete;
+              if(++trackLayerMode == TrackLayerMode::LAYER_MODE_NUM) {
+                trackLayerMode = TrackLayerMode::LAYER_MUTE;
+              }
               guiFlags.drawLayerButtons = true;
             }
           } else {
@@ -129,7 +135,7 @@ void handle_touchscreen_live_sequencer(void) {
           }
         } else {
           liveSeqData->activeTrack = track;
-          enableLayerDelete = false;
+          trackLayerMode = TrackLayerMode::LAYER_MUTE;
           guiFlags.drawLayerButtons = true;
           DBG_LOG(printf("rec track now is %i\n", track + 1));
         }
@@ -139,10 +145,11 @@ void handle_touchscreen_live_sequencer(void) {
         for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
           const bool pressed = check_button_on_grid(buttonX, 10 + layer * 5);
           if(pressed) {
-            if(enableLayerDelete && liveSeqData->isRecording && (track == liveSeqData->activeTrack)) {
-              liveSeqPtr->clearTrackLayer(track, layer);
+            if(liveSeqData->isRecording && (trackLayerMode != TrackLayerMode::LAYER_MUTE) && (track == liveSeqData->activeTrack)) {
+              liveSeqPtr->trackLayerAction(track, layer, TrackLayerMode(trackLayerMode));
+              trackLayerMode = TrackLayerMode::LAYER_MUTE;
             } else {
-              uint8_t layerMask = (1 << layer);
+              const uint8_t layerMask = (1 << layer);
               const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
               if(isMuted) {
                 liveSeqData->tracks[track].layerMutes &= ~layerMask;
@@ -249,20 +256,43 @@ void drawGUI(GuiUpdateFlags &guiFlags) {
     }
 
     if(showLayers) {
-      bool layerDeleteActive = (liveSeqData->activeTrack == track) && enableLayerDelete;
+      
+      bool layerModeActive = (liveSeqData->activeTrack == track) && (trackLayerMode != TrackLayerMode::LAYER_MUTE);
       // layer button
       for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
         const int buttonY = 10 + layer * 5;
         if(layer < liveSeqData->tracks[track].layerCount) {
           const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
+          uint16_t layerBgColor = (isMuted ? GREY2 : DX_DARKCYAN);
+          uint8_t layerBgCode = (isMuted ? 0 : 1);
+          std::string label = "LAYER";
+          std::string labelSub = itoa(layer + 1, temp_char, 10);
+          if(layerModeActive) {
+            switch(trackLayerMode) {
+            case TrackLayerMode::LAYER_MERGE_UP:
+              layerBgColor = MIDDLEGREEN;
+              layerBgCode = 3;
+              if(layer > 0) {
+                label = "MERGE";
+                labelSub = "^";
+              }
+              break;
+            case TrackLayerMode::LAYER_DELETE:
+              layerBgColor = RED;
+              layerBgCode = 2;
+              label = "DELETE";
+              labelSub = "x";
+              break;
+            }
+          }
           if(guiFlags.drawLayerButtons) {
-            draw_button_on_grid(buttonX, buttonY, "LAYER", itoa(layer + 1, temp_char, 10), layerDeleteActive ? 2 : (isMuted ? 0 : 1));
+            draw_button_on_grid(buttonX, buttonY, label.c_str(), labelSub.c_str(), layerBgCode);
           }
           const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
           const int xStart = (buttonX + button_size_x) * CHAR_width_small - 3;
           const int yStart = (10 + layer * 5) * CHAR_height_small;
           const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
-          display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerDeleteActive ? RED : (isMuted ? GREY2 : DX_DARKCYAN));
+          display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerBgColor);
           display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
         } else {
           if(guiFlags.drawLayerButtons) {

@@ -159,7 +159,7 @@ void LiveSequencer::fillTrackLayer(void) {
   }
 }
 
-void LiveSequencer::clearTrackLayer(uint8_t track, uint8_t layer) {
+void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMode action) {
   if(data.pendingEvents.size()) {
     // if still in pending sequence, delete pending events
     data.pendingEvents.clear();
@@ -176,8 +176,19 @@ void LiveSequencer::clearTrackLayer(uint8_t track, uint8_t layer) {
       for(auto &e : data.eventsList) {
         if(e.track == track) {
           if(e.layer == layer) {
-            e.event = midi::InvalidType; // delete later
+            switch(action) {
+            case TrackLayerMode::LAYER_MERGE_UP:
+              if(e.layer > 0) { // lowest layer cannot be merged up
+                e.layer--;
+              }
+              break;
+            
+            case TrackLayerMode::LAYER_DELETE:
+              e.event = midi::InvalidType; // delete later
+              break;
+            }
           }
+          // both actions above shift upper layers one lower
           if(e.layer > layer) {
             e.layer--;
           }
