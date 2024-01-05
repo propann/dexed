@@ -96,6 +96,7 @@ private:
   void playNextEvent(void);
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void checkBpmChanged(void);
+  void checkAddMetronome(void);
 };
 
 #endif //LIVESEQUENCER_H

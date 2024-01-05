@@ -261,6 +261,7 @@ void LiveSequencer::init(void) {
   data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
   checkBpmChanged();
   updateTrackChannels();
+  checkAddMetronome();
   liveTimer.begin([this] { playNextEvent(); });
   data.pendingEvents.reserve(50);
 }
@@ -350,6 +351,27 @@ void LiveSequencer::handleLayerMuteChanged(uint8_t track, uint8_t layer, bool is
       handleNoteOff(data.tracks[track].channel, note, 0, 0);
     }
     data.tracks[track].activeNotes[layer].clear();
+  }
+}
+
+void LiveSequencer::checkAddMetronome(void) {
+  // if we have a fresh start, add layers to have some tempo
+  if(data.eventsList.empty()) {
+    for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+      if(data.tracks[i].screen == UI_func_drums) {
+        data.activeTrack = i;
+        data.fillNotes.number = 8;
+        data.fillNotes.offset = 0;
+        data.lastPlayedNote = 54; // hats
+        fillTrackLayer();
+        data.fillNotes.number = 1;
+        data.fillNotes.offset = 0;
+        data.lastPlayedNote = 48; // kick
+        fillTrackLayer();
+        trackLayerAction(i, 1, TrackLayerMode::LAYER_MERGE_UP); // merge them
+        return;
+      }
+    }
   }
 }
 
