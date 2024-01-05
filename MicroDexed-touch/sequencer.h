@@ -330,7 +330,6 @@ typedef struct sequencer_s
     uint8_t pat_chance[NUM_SEQ_PATTERN];
     uint8_t pat_vel_variation[NUM_SEQ_PATTERN];
 
-
 } sequencer_t;
 
 #endif
