@@ -68,16 +68,21 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 }
 
 void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple) {
-  const uint16_t halfStep = multiple / 2;
-  uint8_t resultNumber = patternNumber;
-  uint16_t resultMs = patternMs;
-  if(seq.track_type[data.activeTrack] == 0) {
-    // drum track
+  if(data.patternLengthMs != multiple) {
+    const uint16_t halfStep = multiple / 2;
+    uint8_t resultNumber = patternNumber;
+    uint16_t resultMs = patternMs;
     resultMs = ((patternMs + halfStep) / multiple) * multiple;
-    DBG_LOG(printf("round %i to %i\n", patternMs, resultMs));
+    if(resultMs == data.patternLengthMs) {
+      resultMs = 0;
+      if(++resultNumber == data.numberOfBars) {
+        resultNumber = 0;
+      }
+    }
+    DBG_LOG(printf("round %i.%i to %i.%i\n", patternNumber, patternMs, resultNumber, resultMs));
+    patternNumber = resultNumber;
+    patternMs = resultMs;
   }
-  patternNumber = resultNumber;
-  patternMs = resultMs;
 }
 
 void LiveSequencer::printEvents() {
@@ -111,6 +116,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
         // check if it has a corresponding NoteOn
         const auto on = data.notesOn.find(note);
         if(on != data.notesOn.end()) {
+            const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
             timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
             // if so, insert NoteOn and this NoteOff to pending
             data.pendingEvents.emplace_back(on->second);
@@ -145,9 +151,9 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
 
 void LiveSequencer::fillTrackLayer(void) {
   if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
-    uint16_t msIncrement = data.patternLengthMs / data.fillNotes.number;
-    uint16_t msOffset = data.fillNotes.offset * msIncrement / 8;
-    uint16_t noteLength = msIncrement / 2; // ...
+    const uint16_t msIncrement = data.patternLengthMs / data.fillNotes.number;
+    const uint16_t msOffset = data.fillNotes.offset * msIncrement / 8;
+    const uint16_t noteLength = msIncrement / 2; // ...
     for(uint8_t bar = 0; bar < data.numberOfBars; bar++) {
       for(uint16_t note = 0; note < data.fillNotes.number; note++) {
         // { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity }
@@ -163,37 +169,34 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMod
   if((layer == 0) && (action == TrackLayerMode::LAYER_MERGE_UP)) {
     return; // avoid merge up top layer
   }
-  // if already finished sequence (pending have been added), delete highest layer
-  if(layer < data.tracks[track].layerCount) {
-    // play noteOff for active layer notes
-    for(auto &note : data.tracks[track].activeNotes[layer]){
-      handleNoteOff(data.tracks[track].channel, note, 0, 0);
-    }
-    data.tracks[track].activeNotes[layer].clear();
 
-    // mark layer notes as invalid and shift layer numbers
-    for(auto &e : data.eventsList) {
-      if(e.track == track) {
-        if(e.layer == layer) {
-          switch(action) {
-          case TrackLayerMode::LAYER_MERGE_UP:
-            if(e.layer > 0) { // lowest layer cannot be merged up
-              e.layer--;
-            }
-            break;
-          
-          case TrackLayerMode::LAYER_DELETE:
-            e.event = midi::InvalidType; // delete later
-            break;
+  // play noteOff for active layer notes
+  for(auto &note : data.tracks[track].activeNotes[layer]){
+    handleNoteOff(data.tracks[track].channel, note, 0, 0);
+  }
+  data.tracks[track].activeNotes[layer].clear();
 
-          default:
-            break;
+  for(auto &e : data.eventsList) {
+    if(e.track == track) {
+      if(e.layer == layer) {
+        switch(action) {
+        case TrackLayerMode::LAYER_MERGE_UP:
+          if(e.layer > 0) { // layer 0 must not be shifted up
+            e.layer--;
           }
+          break;
+        
+        case TrackLayerMode::LAYER_DELETE:
+          e.event = midi::InvalidType; // mark layer notes to delete later
+          break;
+
+        default:
+          break;
         }
-        // both actions above shift upper layers one lower
-        if(e.layer > layer) {
-          e.layer--;
-        }
+      }
+      // both actions above shift upper layers one lower
+      if(e.layer > layer) {
+        e.layer--;
       }
     }
   }
@@ -265,9 +268,10 @@ void LiveSequencer::init(void) {
 void LiveSequencer::checkBpmChanged() {
   if(seq.bpm != currentBpm) {
     float resampleFactor =  currentBpm / float(seq.bpm);
-    quantisizeMs = data.patternLengthMs / data.quantisizeDenom;
+    
     currentBpm = seq.bpm;
     for(auto &e : data.eventsList) {
+      const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[e.track].quantisizeDenom;
       e.patternMs *= resampleFactor;
       timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
     }
@@ -352,10 +356,12 @@ void LiveSequencer::handleLayerMuteChanged(uint8_t track, uint8_t layer, bool is
 void LiveSequencer::updateTrackChannels() {
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
+    data.tracks[i].quantisizeDenom = 1; // default: no quantization
     switch(seq.track_type[i]) {
     case 0:
       data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
       data.tracks[i].screen = UI_func_drums;
+      data.tracks[i].quantisizeDenom = 16; // default: drum quantisize to 1/16
       sprintf(data.tracks[i].name, "DRM");
       break;
 
@@ -371,6 +377,7 @@ void LiveSequencer::updateTrackChannels() {
           } else {
             data.tracks[i].screenSetupFn = (SetupFn)selectDexed1;
           }
+          
           sprintf(data.tracks[i].name, "DX%i", seq.instrument[i] + 1);
           break;
 

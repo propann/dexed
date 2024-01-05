@@ -31,7 +31,7 @@ public:
     SetupFn screenSetupFn;
     uint8_t layerCount;
     uint8_t layerMutes;
-    //                      note     // layers
+    uint8_t quantisizeDenom;
     std::unordered_multiset<uint8_t> activeNotes[8];
   };
 
@@ -53,10 +53,8 @@ public:
     std::list<MidiEvent> eventsList;
     std::vector<MidiEvent> pendingEvents;
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
-    // those need GUI config
     FillNotes fillNotes = { 4, 0 };
     int numberOfBars = 4;
-    uint16_t quantisizeDenom = 16; // 1/x
     uint8_t lastPlayedNote = 0;
     bool lastPlayedNoteChanged = false;
   };
@@ -86,7 +84,6 @@ private:
   
   std::list<MidiEvent>::iterator playIterator;
   int currentBpm = 90;
-  uint16_t quantisizeMs = 150;
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
@@ -99,7 +96,6 @@ private:
   void playNextEvent(void);
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void checkBpmChanged(void);
-
 };
 
 #endif //LIVESEQUENCER_H
