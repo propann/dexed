@@ -12,8 +12,8 @@ extern void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char
 extern bool check_button_on_grid(uint8_t x, uint8_t y);
 extern void handleStart();
 extern void handleStop();
-extern Realtime_Scope scope;
 
+extern bool remote_active;
 extern int numTouchPoints;
 
 static constexpr int BUTTON_HEIGHT = CHAR_height_small * button_size_y;
@@ -82,9 +82,7 @@ void handle_touchscreen_live_sequencer(void) {
   guiUpdateFlags |= runningChanged ? drawLayerButtons : 0;
 
   if((numTouchPoints > 0) || runningChanged) {
-    bool runningPressed = check_button_on_grid(0, 0);
-
-    //scope.draw_scope(220, -20, 90); // rly?
+    const bool runningPressed = check_button_on_grid(0, 0);
     if (runningPressed) {
       if(runningHere) {
         handleStop();
@@ -196,6 +194,9 @@ void handle_touchscreen_live_sequencer(void) {
 }
 
 void drawGUI(uint16_t &guiFlags) {
+  if(remote_active) {
+    display.console = true;
+  }
   if(guiFlags & drawTopButtons) {
     draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
     draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
