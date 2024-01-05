@@ -98,7 +98,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
         break;
 
       case midi::NoteOn:
-        static constexpr int ROUND_UP_MS = 200; 
+        static constexpr int ROUND_UP_MS = 100;
         // round up events just at end probably meant to be played at start
         if(newEvent.patternNumber == (data.numberOfBars - 1) && newEvent.patternMs > (data.patternLengthMs - ROUND_UP_MS)) {
           newEvent.patternNumber = 0;
@@ -113,8 +113,8 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
         if(on != data.notesOn.end()) {
             timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
             // if so, insert NoteOn and this NoteOff to pending
-            data.pendingEvents.push_back(on->second);
-            data.pendingEvents.push_back(newEvent);
+            data.pendingEvents.emplace_back(on->second);
+            data.pendingEvents.emplace_back(newEvent);
             data.notesOn.erase(on);
         }
         break;
@@ -151,8 +151,8 @@ void LiveSequencer::fillTrackLayer(void) {
     for(uint8_t bar = 0; bar < data.numberOfBars; bar++) {
       for(uint16_t note = 0; note < data.fillNotes.number; note++) {
         // { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity }
-        data.pendingEvents.push_back(MidiEvent { uint16_t(note * msIncrement + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
-        data.pendingEvents.push_back(MidiEvent { uint16_t(note * msIncrement + noteLength + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
+        data.pendingEvents.emplace_back(MidiEvent { uint16_t(note * msIncrement + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
+        data.pendingEvents.emplace_back(MidiEvent { uint16_t(note * msIncrement + noteLength + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
       }
     }
     addPendingNotes();
@@ -278,12 +278,12 @@ void LiveSequencer::addPendingNotes(void) {
   // finish active notes at end of all bars
   for(auto it = data.notesOn.begin(); it != data.notesOn.end();) {
     if(timeToMs(it->second.patternNumber, it->second.patternMs) != 0) {
-      data.pendingEvents.push_back(it->second);
+      data.pendingEvents.emplace_back(it->second);
       it->second.event = midi::NoteOff;
       it->second.note_in_velocity = 0;
       it->second.patternNumber = data.numberOfBars - 1;
       it->second.patternMs = data.patternLengthMs - 1;
-      data.pendingEvents.push_back(it->second);
+      data.pendingEvents.emplace_back(it->second);
       data.notesOn.erase(it++);
     } else {
       ++it; // ignore notesOn at 0.0000, those were round up just before
