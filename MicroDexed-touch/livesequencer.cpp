@@ -200,6 +200,14 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMod
       }
     }
   }
+  // handle layer mutes. example with layer 2 deleted
+  // old: 0010 1101
+  // new: 0001 0101 -> lower layers stay same, higher layers shifted down by one
+  const uint8_t bitmask = pow(2, layer) - 1;
+  const uint8_t layerMutesLo = data.tracks[track].layerMutes & bitmask;         // 0010 1101 &  0000 0011 = 0000 0001
+  const uint8_t layerMutesHi = (data.tracks[track].layerMutes >> 1) & ~bitmask; // 0001 0110 & ~0000 0011 = 0001 0100
+  data.tracks[track].layerMutes = (layerMutesLo | layerMutesHi);                // 0000 0001 |  0001 0100 = 0001 0101
+
   data.tracks[track].layerCount--;
   data.trackLayersChanged = true;
 }
@@ -300,9 +308,7 @@ void LiveSequencer::addPendingNotes(void) {
       data.eventsList.emplace_back(e);
     }
     data.pendingEvents.clear();
-
     data.eventsList.sort(sortMidiEvent);
-    data.tracks[data.activeTrack].layerMutes &= ~(1 << data.tracks[data.activeTrack].layerCount); // set new unmuted
     data.tracks[data.activeTrack].layerCount++;
     data.trackLayersChanged = true;
   }
