@@ -24,6 +24,18 @@ enum TrackLayerMode {
   LAYER_MODE_NUM
 };
 
+enum PagePattern {
+  PAGE_PATT_LAYERS = 0,
+  PAGE_PATT_SETINGS,
+  PAGE_PATT_NUM
+};
+
+enum PageSong {
+  PAGE_SONG_LAYERS = 0,
+  PAGE_SONG_AUTOMATIONS,
+  PAGE_SONG_NUM
+};
+
 class UI_LiveSequencer {
 
 public:

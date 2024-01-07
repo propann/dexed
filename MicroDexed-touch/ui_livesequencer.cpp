@@ -111,6 +111,20 @@ void handle_touchscreen_live_sequencer(void) {
       guiUpdateFlags |= (drawTopButtons | drawTrackButtons | drawLayerButtons);
     }
 
+    const bool funcPressed = check_button_on_grid(36, 0);
+    if(funcPressed) {
+      if(liveSeqData->isSongMode) {
+        if(++liveSeqData->functionPageIndex == PageSong::PAGE_SONG_NUM) {
+          liveSeqData->functionPageIndex = 0;
+        }
+      } else {
+        if(++liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_NUM) {
+          liveSeqData->functionPageIndex = 0;
+        }
+      }
+      guiUpdateFlags |= (clearBottomArea | drawTopButtons | drawTrackButtons | drawLayerButtons);
+    }
+
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       const int buttonX = track * 9;
       const bool pressed = check_button_on_grid(buttonX, 5);
@@ -206,7 +220,7 @@ void drawGUI(uint16_t &guiFlags) {
   if(guiFlags & drawTopButtons) {
     draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
     draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
-    draw_button_on_grid(36, 0, "FUNC", "1/2", 1); // more to come...
+    draw_button_on_grid(36, 0, "FUNC", "PAGE", 1);
     draw_button_on_grid(45, 0, liveSeqData->isSongMode ? "SONG" : "PATT", "MODE", 3);
   }
 
@@ -246,35 +260,48 @@ void drawGUI(uint16_t &guiFlags) {
   } else {
     display.printf("P %i.%04i  ", patCount, timeMs);
   }
+  char temp_char[4];
+  const bool showSongAutomation = liveSeqData->isSongMode && (liveSeqData->functionPageIndex == PageSong::PAGE_SONG_AUTOMATIONS);
+  const bool showPatternSettings = !liveSeqData->isSongMode && (liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_SETINGS);
 
-  uint8_t trackButtonRecColor = 2; // red, or blinking
-  const bool doBlink = liveSeqData->notesOn.size() || liveSeqData->pendingEvents.size();
-  if(doBlink) {
-    if(++guiCounter == 8) {
-      guiCounter = 0;
-      trackButtonRecColor = blinkPhase ? 1 : 2;
-      guiFlags |= drawTrackButtons;
-      blinkPhase = !blinkPhase;
+  if(showSongAutomation) {
+    // TODO
+  } else if(showPatternSettings) {
+    if(guiFlags & drawQuantisize) {
+      // quantisize
+      for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+        const uint8_t denom = liveSeqData->tracks[track].quantisizeDenom;
+        const std::string text = (denom == 1) ? "NONE" : itoa(denom, temp_char, 10);
+        draw_button_on_grid(track * 9, 10, "QUANT", text.c_str(), (denom == 1) ? 0 : 3);
+      }
     }
   } else {
-    guiCounter = 0;
-    blinkPhase = 0;
-    trackButtonRecColor = 2;
-  }
-  
-  if(guiFlags & clearBottomArea) {
-    display.fillRect(0, 75, DISPLAY_WIDTH, DISPLAY_HEIGHT - 75, COLOR_BACKGROUND);
-    guiFlags |= (drawFillNotes | drawQuantisize | drawLayerButtons);
-  }
-  
-  char temp_char[4];
-  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-    const int buttonX = track * 9;
-    if(guiFlags & drawTrackButtons) {
-      draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), !liveSeqData->isSongMode && (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
+    uint8_t trackButtonRecColor = 2; // red, or blinking
+    const bool doBlink = liveSeqData->notesOn.size() || liveSeqData->pendingEvents.size();
+    if(doBlink) {
+      if(++guiCounter == 8) {
+        guiCounter = 0;
+        trackButtonRecColor = blinkPhase ? 1 : 2;
+        guiFlags |= drawTrackButtons;
+        blinkPhase = !blinkPhase;
+      }
+    } else {
+      guiCounter = 0;
+      blinkPhase = 0;
+      trackButtonRecColor = 2;
     }
+    
+    if(guiFlags & clearBottomArea) {
+      display.fillRect(0, 75, DISPLAY_WIDTH, DISPLAY_HEIGHT - 75, COLOR_BACKGROUND);
+      guiFlags |= (drawFillNotes | drawQuantisize | drawLayerButtons);
+    }
+    
+    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+      const int buttonX = track * 9;
+      if(guiFlags & drawTrackButtons) {
+        draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), !liveSeqData->isSongMode && (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
+      }
 
-    if(runningHere) { // show layers while seq is running
       const bool layerEditActive = !liveSeqData->isSongMode && (liveSeqData->activeTrack == track) && (trackLayerMode != TrackLayerMode::LAYER_MUTE);
       // layer button
       for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
@@ -322,26 +349,17 @@ void drawGUI(uint16_t &guiFlags) {
       }
     }
   }
-  if(runningHere == false) { // show tools while not running
-    if(guiFlags & drawQuantisize) {
-      // quantisize
-      for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-        const uint8_t denom = liveSeqData->tracks[track].quantisizeDenom;
-        const std::string text = (denom == 1) ? "NONE" : itoa(denom, temp_char, 10);
-        draw_button_on_grid(track * 9, 10, "QUANT", text.c_str(), (denom == 1) ? 0 : 3);
-      }
-    }
 
-    /*if(guiFlags & drawFillNotes) {
-      // fill track
-      display.setTextSize(2);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.setCursor(0, 17 * CHAR_height_small);
-      display.printf("FILL");
-      draw_button_on_grid(9, 15, "Note", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 2);
-      draw_button_on_grid(18, 15, "Num", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
-      draw_button_on_grid(27, 15, "Off", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);    
-    }*/
-  }
+  /*if(guiFlags & drawFillNotes) {
+    // fill track
+    display.setTextSize(2);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(0, 17 * CHAR_height_small);
+    display.printf("FILL");
+    draw_button_on_grid(9, 15, "Note", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 2);
+    draw_button_on_grid(18, 15, "Num", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+    draw_button_on_grid(27, 15, "Off", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);    
+  }*/
+  
   guiFlags = 0;
 }
