@@ -49,6 +49,7 @@ void LiveSequencer::handleStop(void) {
 
 void LiveSequencer::handleStart(void) {
   data.patternCount = data.numberOfBars - 1;
+  data.songPatternCount = 0,
   data.isRunning = true;
 }
 
@@ -320,6 +321,7 @@ void LiveSequencer::handlePatternBegin(void) {
 
   if(++data.patternCount == data.numberOfBars) {
     data.patternCount = 0;
+    data.songPatternCount++;
     
     // first insert pending to events and sort
     addPendingNotes();
@@ -357,6 +359,9 @@ void LiveSequencer::handleLayerMuteChanged(uint8_t track, uint8_t layer, bool is
       handleNoteOff(data.tracks[track].channel, note, 0, 0);
     }
     data.tracks[track].activeNotes[layer].clear();
+  }
+  if(data.isSongMode && data.isRecording) {
+    DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
   }
 }
 

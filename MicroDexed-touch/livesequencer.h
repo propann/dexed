@@ -57,6 +57,8 @@ public:
     int numberOfBars = 4;
     uint8_t lastPlayedNote = 0;
     bool lastPlayedNoteChanged = false;
+    bool isSongMode = false;
+    uint8_t songPatternCount = 0;
   };
 
   LiveSequencer();

@@ -105,6 +105,12 @@ void handle_touchscreen_live_sequencer(void) {
       trackLayerMode = TrackLayerMode::LAYER_MUTE;
     }
 
+    const bool modePressed = check_button_on_grid(45, 0);
+    if(modePressed) {
+      liveSeqData->isSongMode = !liveSeqData->isSongMode;
+      guiUpdateFlags |= (drawTopButtons | drawTrackButtons | drawLayerButtons);
+    }
+
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       const int buttonX = track * 9;
       const bool pressed = check_button_on_grid(buttonX, 5);
@@ -200,8 +206,8 @@ void drawGUI(uint16_t &guiFlags) {
   if(guiFlags & drawTopButtons) {
     draw_button_on_grid(0, 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
     draw_button_on_grid(9, 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
-    draw_button_on_grid(36, 0, "MORE", "to", 1); // more to come...
-    draw_button_on_grid(45, 0, "COME", "here", 3); // more to come...
+    draw_button_on_grid(36, 0, "FUNC", "1/2", 1); // more to come...
+    draw_button_on_grid(45, 0, liveSeqData->isSongMode ? "SONG" : "PATT", "MODE", 3);
   }
 
   uint16_t patCount = 0;
@@ -226,13 +232,20 @@ void drawGUI(uint16_t &guiFlags) {
       display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
   }
+
   // print time
   display.setCursor(110, 20);
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.printf("%i.%04i", patCount, timeMs);
-  //display.setCursor(160, 20);
-  //display.printf("%6i", liveSeqPtr->timeToMs(patCount, timeMs));
+  if(liveSeqData->isSongMode) {
+    const uint32_t songMs = (liveSeqData->songPatternCount - 1) * liveSeqData->numberOfBars * liveSeqData->patternLengthMs + patCount * liveSeqData->patternLengthMs + timeMs;
+    const uint32_t minutes = songMs / 60000;
+    const uint32_t seconds = (songMs % 60000) / 1000;
+    const uint32_t millis = songMs % 1000;
+    display.printf("S %i:%02i.%03i", minutes, seconds, millis);
+  } else {
+    display.printf("P %i.%04i  ", patCount, timeMs);
+  }
 
   uint8_t trackButtonRecColor = 2; // red, or blinking
   const bool doBlink = liveSeqData->notesOn.size() || liveSeqData->pendingEvents.size();
@@ -258,18 +271,19 @@ void drawGUI(uint16_t &guiFlags) {
   for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     const int buttonX = track * 9;
     if(guiFlags & drawTrackButtons) {
-      draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
+      draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), !liveSeqData->isSongMode && (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
     }
 
     if(runningHere) { // show layers while seq is running
-      const bool layerEditActive = (liveSeqData->activeTrack == track) && (trackLayerMode != TrackLayerMode::LAYER_MUTE);
+      const bool layerEditActive = !liveSeqData->isSongMode && (liveSeqData->activeTrack == track) && (trackLayerMode != TrackLayerMode::LAYER_MUTE);
       // layer button
       for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
         const int buttonY = 10 + layer * 5;
         if(layer < liveSeqData->tracks[track].layerCount) {
           const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
-          uint16_t layerBgColor = (isMuted ? GREY2 : DX_DARKCYAN);
-          uint8_t layerBgCode = (isMuted ? 0 : 1);
+          const bool isSongRec = (liveSeqData->isSongMode && liveSeqData->isRecording);
+          uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? MIDDLEGREEN : DX_DARKCYAN));
+          uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 3 : 1));
           std::string label = "LAYER";
           std::string labelSub = itoa(layer + 1, temp_char, 10);
           if(layerEditActive) {
