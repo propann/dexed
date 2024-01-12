@@ -228,7 +228,8 @@ void handle_touchscreen_live_sequencer(void) {
                 liveSeqPtr->trackLayerAction(track, layer, TrackLayerMode(trackLayerMode));
                 trackLayerMode = TrackLayerMode::LAYER_MUTE;
               } else {
-                liveSeqPtr->toggleLayerMute(track, layer);
+                const bool isMutedOld =  liveSeqData->tracks[track].layerMutes & (1 << layer);
+                liveSeqPtr->setLayerMuted(track, layer, !isMutedOld);
               }
               guiUpdateFlags |= (drawLayerButtons);
             }
@@ -265,6 +266,14 @@ void handle_touchscreen_live_sequencer(void) {
               liveSeqData->fillNotes.offset = 0;
             }
             guiUpdateFlags |= drawFillNotes;
+          }
+          break;
+
+        case PageSong::PAGE_SONG_AUTOMATIONS:
+          if(check_button_on_grid(0, 10)) {
+            liveSeqData->songAutomations.clear();
+            guiUpdateFlags |= (drawSongAuto | clearBottomArea);
+
           }
           break;
       }
@@ -423,13 +432,15 @@ void drawGUI(uint16_t &guiFlags) {
     }
 
     if(guiFlags & drawSongAuto) {
-      uint8_t y = 80;
+      draw_button_on_grid(0, 10, "Clear", "ALL", 2);
+      uint8_t y = 120;
       uint8_t line = 0;
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display.setTextSize(1);
       for(auto i : liveSeqData->songAutomations) {
         for(auto t : i.second) {
           display.setCursor(0, y + line * CHAR_height_small);
-          display.printf("%02i %04i %s", t.patternNumber, t.patternMs, t.note_in_velocity ? "MUTE" : "UNMUTE");
+          display.printf("%02i %02i %04i %s", i.first, t.patternNumber, t.patternMs, t.note_in_velocity ? "MUTE" : "UNMUTE");
           line++;
         }
       }

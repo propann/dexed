@@ -75,7 +75,7 @@ public:
   void handleStart(void);
   void handleStop(void);
   void init(void);
-  void toggleLayerMute(uint8_t track, uint8_t layer);
+  void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted);
   void fillTrackLayer();
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
