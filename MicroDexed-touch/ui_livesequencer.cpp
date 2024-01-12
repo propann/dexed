@@ -36,6 +36,10 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
+bool isLayerView() {
+  return liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_LAYERS || liveSeqData->functionPageIndex == PageSong::PAGE_SONG_LAYERS;
+}
+
 enum GuiUpdates : uint16_t {
   drawTopButtons    = (1 << 0),
   drawTrackButtons  = (1 << 1),
@@ -68,8 +72,12 @@ void UI_func_livesequencer(uint8_t param) {
   }
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
-    guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
-    guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawFillNotes) : 0;
+    if(isLayerView()) {
+      guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
+    }
+    if(liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_SETINGS) {
+      guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawFillNotes) : 0;
+    }
     liveSeqData->trackLayersChanged = false;
     liveSeqData->lastPlayedNoteChanged = false;
     drawGUI(guiUpdateFlags);
@@ -106,10 +114,6 @@ void applyScreenRedrawGuiFlags() {
       break;
     }
   }
-}
-
-bool isLayerView() {
-  return liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_LAYERS || liveSeqData->functionPageIndex == PageSong::PAGE_SONG_LAYERS;
 }
 
 void handle_touchscreen_live_sequencer(void) {  
