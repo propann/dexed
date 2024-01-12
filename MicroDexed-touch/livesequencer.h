@@ -76,6 +76,7 @@ public:
   void handleStop(void);
   void init(void);
   void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted);
+  void deleteAllAutomations(void);
   void fillTrackLayer();
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 

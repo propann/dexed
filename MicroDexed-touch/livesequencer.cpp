@@ -168,6 +168,19 @@ void LiveSequencer::fillTrackLayer(void) {
   }
 }
 
+void LiveSequencer::deleteAllAutomations(void) {
+  data.songAutomations.clear();
+  for(auto &e : data.eventsList) {
+    if(e.event == midi::ControlChange) {
+      e.event = midi::InvalidType; // mark as invalid
+    }
+  }
+  // TODO: set to state when start was pressed (remember this)
+  for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+    data.tracks[i].layerMutes = 0;
+  }
+}
+
 void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMode action) {
   if((layer == 0) && (action == TrackLayerMode::LAYER_MERGE_UP)) {
     return; // avoid merge up top layer
