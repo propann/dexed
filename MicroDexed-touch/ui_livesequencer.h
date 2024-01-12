@@ -31,7 +31,7 @@ enum PagePattern {
 };
 
 enum PageSong {
-  PAGE_SONG_LAYERS = 0,
+  PAGE_SONG_LAYERS = PAGE_PATT_NUM + 1,
   PAGE_SONG_AUTOMATIONS,
   PAGE_SONG_NUM
 };
