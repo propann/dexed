@@ -35,6 +35,10 @@ public:
     std::unordered_multiset<uint8_t> activeNotes[8];
   };
 
+  enum AutomationType {
+    TYPE_MUTE
+  };
+
   struct FillNotes {
     uint8_t number;
     uint8_t offset;
@@ -53,6 +57,7 @@ public:
     std::list<MidiEvent> eventsList;
     std::vector<MidiEvent> pendingEvents;
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
+    std::unordered_map<uint8_t, std::list<MidiEvent>> songAutomations;
     FillNotes fillNotes = { 4, 0 };
     int numberOfBars = 4;
     uint8_t lastPlayedNote = 0;
@@ -70,7 +75,7 @@ public:
   void handleStart(void);
   void handleStop(void);
   void init(void);
-  void handleLayerMuteChanged(uint8_t track, uint8_t layer, bool isMuted);
+  void toggleLayerMute(uint8_t track, uint8_t layer);
   void fillTrackLayer();
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 

@@ -228,14 +228,7 @@ void handle_touchscreen_live_sequencer(void) {
                 liveSeqPtr->trackLayerAction(track, layer, TrackLayerMode(trackLayerMode));
                 trackLayerMode = TrackLayerMode::LAYER_MUTE;
               } else {
-                const uint8_t layerMask = (1 << layer);
-                const bool isMuted = liveSeqData->tracks[track].layerMutes & layerMask;
-                if(isMuted) {
-                  liveSeqData->tracks[track].layerMutes &= ~layerMask;
-                } else {
-                  liveSeqData->tracks[track].layerMutes |= layerMask;
-                }
-                liveSeqPtr->handleLayerMuteChanged(track, layer, !isMuted);
+                liveSeqPtr->toggleLayerMute(track, layer);
               }
               guiUpdateFlags |= (drawLayerButtons);
             }
@@ -321,7 +314,7 @@ void drawGUI(uint16_t &guiFlags) {
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if(liveSeqData->isSongMode) {
-    const uint32_t songMs = (liveSeqData->songPatternCount - 1) * liveSeqData->numberOfBars * liveSeqData->patternLengthMs + patCount * liveSeqData->patternLengthMs + timeMs;
+    const uint32_t songMs = liveSeqData->songPatternCount * liveSeqData->patternLengthMs + timeMs;
     const uint32_t minutes = songMs / 60000;
     const uint32_t seconds = (songMs % 60000) / 1000;
     const uint32_t millis = songMs % 1000;
@@ -329,6 +322,9 @@ void drawGUI(uint16_t &guiFlags) {
   } else {
     display.printf("P %i.%04i   ", patCount, timeMs);
   }
+  display.setCursor(190, 20);
+  display.printf("%02i", liveSeqData->songPatternCount);
+
   char temp_char[4];
 
   uint8_t trackButtonRecColor = 2; // red, or blinking
@@ -405,30 +401,39 @@ void drawGUI(uint16_t &guiFlags) {
         }
       }
     }
-  }
-
-  if(guiFlags & drawQuantisize) {
-    // quantisize
-    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-      const uint8_t denom = liveSeqData->tracks[track].quantisizeDenom;
-      const std::string text = (denom == 1) ? "NONE" : itoa(denom, temp_char, 10);
-      draw_button_on_grid(track * 9, 10, "QUANT", text.c_str(), (denom == 1) ? 0 : 3);
+  } else {
+    if(guiFlags & drawQuantisize) {
+      // quantisize
+      for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+        const uint8_t denom = liveSeqData->tracks[track].quantisizeDenom;
+        const std::string text = (denom == 1) ? "NONE" : itoa(denom, temp_char, 10);
+        draw_button_on_grid(track * 9, 10, "QUANT", text.c_str(), (denom == 1) ? 0 : 3);
+      }
     }
-  }
-  
-  if(guiFlags & drawFillNotes) {
-    // fill track
-    display.setTextSize(2);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(0, 17 * CHAR_height_small);
-    display.printf("FILL");
-    draw_button_on_grid(9, 15, "Note", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 2);
-    draw_button_on_grid(18, 15, "Num", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
-    draw_button_on_grid(27, 15, "Off", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);    
-  }
+    
+    if(guiFlags & drawFillNotes) {
+      // fill track
+      display.setTextSize(2);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.setCursor(0, 17 * CHAR_height_small);
+      display.printf("FILL");
+      draw_button_on_grid(9, 15, "Note", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 2);
+      draw_button_on_grid(18, 15, "Num", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+      draw_button_on_grid(27, 15, "Off", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);    
+    }
 
-  if(guiFlags & drawSongAuto) {
-    draw_button_on_grid(9, 15, "SONG", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 2);
+    if(guiFlags & drawSongAuto) {
+      uint8_t y = 80;
+      uint8_t line = 0;
+      display.setTextSize(1);
+      for(auto i : liveSeqData->songAutomations) {
+        for(auto t : i.second) {
+          display.setCursor(0, y + line * CHAR_height_small);
+          display.printf("%02i %04i %s", t.patternNumber, t.patternMs, t.note_in_velocity ? "MUTE" : "UNMUTE");
+          line++;
+        }
+      }
+    }
   }
   
   guiFlags = 0;

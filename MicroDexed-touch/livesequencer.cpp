@@ -34,6 +34,8 @@ const std::string LiveSequencer::getName(midi::MidiType event) const {
     return "NoteOn";
   case midi::NoteOff:
     return "NoteOff";
+  case midi::ControlChange:
+    return "Automation";
   case midi::InvalidType:
     return "Invalid";
   default:
@@ -49,7 +51,7 @@ void LiveSequencer::handleStop(void) {
 
 void LiveSequencer::handleStart(void) {
   data.patternCount = data.numberOfBars - 1;
-  data.songPatternCount = 0,
+  data.songPatternCount = 255,
   data.isRunning = true;
 }
 
@@ -227,37 +229,50 @@ void LiveSequencer::playNextEvent(void) {
     //LOG.printf("PLAY: ");
     //printEvent(1, *playIterator);
     const bool isMuted = data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer);
-    if(isMuted == false) {
-      const midi::Channel channel = data.tracks[playIterator->track].channel;
+    const midi::Channel channel = data.tracks[playIterator->track].channel;
 
-      switch(playIterator->event) {   
-      case midi::NoteOff: {
+    switch(playIterator->event) {   
+    case midi::ControlChange:
+      if(data.isRecording == false) {
+        switch(playIterator->note_in) {
+        case AutomationType::TYPE_MUTE:
+          DBG_LOG(printf("mute %s\n", playIterator->note_in_velocity ? "MUTE" : "UNMUTE"));
+          toggleLayerMute(playIterator->track, playIterator->layer);
+          data.trackLayersChanged = true;
+          break;
+        }
+      }
+      break;
+    case midi::NoteOff: 
+      if(isMuted == false) {
         // erase one instance of this note going off
         const auto it = data.tracks[playIterator->track].activeNotes[playIterator->layer].find(playIterator->note_in);
         if(it != data.tracks[playIterator->track].activeNotes[playIterator->layer].end()) {
           data.tracks[playIterator->track].activeNotes[playIterator->layer].erase(it);
         }
         handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
-        }
-        break;
+      }
+      break;
 
-      case midi::NoteOn:
+    case midi::NoteOn:
+      if(isMuted == false) {
         // add active note to layer track set
         data.tracks[playIterator->track].activeNotes[playIterator->layer].insert(playIterator->note_in);
         // handle muted tracks
         handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
-        break;
-
-      default:
-        break;
       }
-    }
-    if(++playIterator != data.eventsList.end()) {
-      const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
-      int timeToNextEvent = timeToMs(playIterator->patternNumber, playIterator->patternMs) - now;
-      loadNextEvent(timeToNextEvent);
+      break;
+
+    default:
+      break;
     }
   }
+  if(++playIterator != data.eventsList.end()) {
+    const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
+    int timeToNextEvent = timeToMs(playIterator->patternNumber, playIterator->patternMs) - now;
+    loadNextEvent(timeToNextEvent);
+  }
+  
 }
 
 inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternMs) const {
@@ -319,9 +334,18 @@ void LiveSequencer::handlePatternBegin(void) {
   // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
   data.patternTimer = 0;
 
+  if(data.isSongMode && data.isRecording == false) {
+    for(auto &e : data.songAutomations[data.songPatternCount]) {
+      MidiEvent m = e;
+      m.patternNumber = e.patternNumber % data.numberOfBars;
+      data.eventsList.emplace_back(m);
+      DBG_LOG(printf("add auto %i.%i: %s", m.patternNumber, m.patternMs, m.note_in_velocity ? "MUTE" : "UNMUTE"));
+    }
+    data.eventsList.sort(sortMidiEvent);
+  }
+
   if(++data.patternCount == data.numberOfBars) {
     data.patternCount = 0;
-    data.songPatternCount++;
     
     // first insert pending to events and sort
     addPendingNotes();
@@ -329,6 +353,7 @@ void LiveSequencer::handlePatternBegin(void) {
     if(data.eventsList.size() > 0) {
       // remove all invalidated notes
       data.eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
+
       printEvents();
       playIterator = data.eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
@@ -336,6 +361,8 @@ void LiveSequencer::handlePatternBegin(void) {
   }
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;
+  data.songPatternCount++;
+
 }
 
 void selectDexed0() {
@@ -353,15 +380,22 @@ void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
-void LiveSequencer::handleLayerMuteChanged(uint8_t track, uint8_t layer, bool isMuted) {
-  if(isMuted == true) {
+void LiveSequencer::toggleLayerMute(uint8_t track, uint8_t layer) {
+  const bool isMutedOld = data.tracks[track].layerMutes & (1 << layer);
+  if(isMutedOld == true) {
+    data.tracks[track].layerMutes &= ~(1 << layer);
     for(auto note : data.tracks[track].activeNotes[layer]) {
       handleNoteOff(data.tracks[track].channel, note, 0, 0);
     }
     data.tracks[track].activeNotes[layer].clear();
+  } else {
+    data.tracks[track].layerMutes |= (1 << layer);
   }
   if(data.isSongMode && data.isRecording) {
-    DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
+    MidiEvent e = { uint16_t(data.patternTimer), data.songPatternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, !isMutedOld };
+    data.songAutomations[data.songPatternCount].emplace_back(e);
+
+    DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", !isMutedOld, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
   }
 }
 
