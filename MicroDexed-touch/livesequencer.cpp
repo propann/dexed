@@ -170,6 +170,20 @@ void LiveSequencer::fillTrackLayer(void) {
   }
 }
 
+void LiveSequencer::changeNumberOfBars(uint8_t num) {
+  if(num != data.numberOfBars) {
+    data.pendingEvents.clear();
+    data.eventsList.clear();
+    deleteAllAutomations();
+    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+      data.tracks[track].layerCount = 0;
+      data.tracks[track].layerMutes = 0;
+    }
+    data.numberOfBars = num;
+    init();
+  }
+}
+
 void LiveSequencer::deleteAllAutomations(void) {
   data.songAutomations.clear();
   for(auto &e : data.eventsList) {

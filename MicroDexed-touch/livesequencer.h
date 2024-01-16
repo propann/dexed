@@ -59,7 +59,7 @@ public:
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
     std::unordered_map<uint8_t, std::list<MidiEvent>> songAutomations;
     FillNotes fillNotes = { 4, 0 };
-    int numberOfBars = 4;
+    uint8_t numberOfBars = 4;
     uint8_t lastPlayedNote = 0;
     bool lastPlayedNoteChanged = false;
     bool isSongMode = false;
@@ -76,6 +76,7 @@ public:
   void handleStop(void);
   void init(void);
   void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted);
+  void changeNumberOfBars(uint8_t num);
   void deleteAllAutomations(void);
   void fillTrackLayer();
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
