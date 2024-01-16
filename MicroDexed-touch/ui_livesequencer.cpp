@@ -356,7 +356,7 @@ void drawGUI(uint16_t &guiFlags) {
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       const int buttonX = track * 9;
       if(guiFlags & drawTrackButtons) {
-        draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), !liveSeqData->isSongMode && (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
+        draw_button_on_grid(buttonX, 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? ((liveSeqData->isSongMode == false) && liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
       }
       const bool layerEditActive = !liveSeqData->isSongMode && (liveSeqData->activeTrack == track) && (trackLayerMode != TrackLayerMode::LAYER_MUTE);
       // layer button
@@ -364,8 +364,8 @@ void drawGUI(uint16_t &guiFlags) {
         const int buttonY = 10 + layer * 5;
         if(layer < liveSeqData->tracks[track].layerCount) {
           const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
-          uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? MIDDLEGREEN : DX_DARKCYAN));
-          uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 3 : 1));
+          uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
+          uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 2 : 1));
           std::string label = "LAYER";
           std::string labelSub = itoa(layer + 1, temp_char, 10);
           if(layerEditActive) {

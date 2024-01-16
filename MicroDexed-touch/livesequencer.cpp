@@ -97,36 +97,38 @@ void LiveSequencer::printEvents() {
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  if(data.isRecording && data.isRunning) {
-    if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
-      MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
-      switch(newEvent.event) {
-      default:
-        // ignore all other types
-        break;
+  if(data.isRecording) {
+    if((data.isSongMode == false) && data.isRunning) { // for now only record notes in pattern mode
+      if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
+        MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
+        switch(newEvent.event) {
+        default:
+          // ignore all other types
+          break;
 
-      case midi::NoteOn:
-        static constexpr int ROUND_UP_MS = 100;
-        // round up events just at end probably meant to be played at start
-        if(newEvent.patternNumber == (data.numberOfBars - 1) && newEvent.patternMs > (data.patternLengthMs - ROUND_UP_MS)) {
-          newEvent.patternNumber = 0;
-          newEvent.patternMs = 0;
-        }
-        data.notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
-        break;
+        case midi::NoteOn:
+          static constexpr int ROUND_UP_MS = 100;
+          // round up events just at end probably meant to be played at start
+          if(newEvent.patternNumber == (data.numberOfBars - 1) && newEvent.patternMs > (data.patternLengthMs - ROUND_UP_MS)) {
+            newEvent.patternNumber = 0;
+            newEvent.patternMs = 0;
+          }
+          data.notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
+          break;
 
-      case midi::NoteOff:
-        // check if it has a corresponding NoteOn
-        const auto on = data.notesOn.find(note);
-        if(on != data.notesOn.end()) {
-            const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
-            timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
-            // if so, insert NoteOn and this NoteOff to pending
-            data.pendingEvents.emplace_back(on->second);
-            data.pendingEvents.emplace_back(newEvent);
-            data.notesOn.erase(on);
+        case midi::NoteOff:
+          // check if it has a corresponding NoteOn
+          const auto on = data.notesOn.find(note);
+          if(on != data.notesOn.end()) {
+              const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
+              timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
+              // if so, insert NoteOn and this NoteOff to pending
+              data.pendingEvents.emplace_back(on->second);
+              data.pendingEvents.emplace_back(newEvent);
+              data.notesOn.erase(on);
+          }
+          break;
         }
-        break;
       }
     }
   }
@@ -255,6 +257,7 @@ void LiveSequencer::playNextEvent(void) {
           break;
         }
       }
+      playIterator->event = midi::InvalidType; // mark to delete after execution
       break;
     case midi::NoteOff: 
       if(isMuted == false) {
@@ -312,6 +315,11 @@ void LiveSequencer::checkBpmChanged() {
       e.patternMs *= resampleFactor;
       timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
     }
+    for(auto &e : data.songAutomations) {
+      for(auto &a : e.second) {
+        a.patternMs *= resampleFactor;
+      }
+    }
   }
 }
 
@@ -343,7 +351,6 @@ void LiveSequencer::addPendingNotes(void) {
 }
 
 void LiveSequencer::handlePatternBegin(void) {
-  // seq.tempo_ms = 60000000 / seq.bpm / 4; // rly?
   data.patternTimer = 0;
 
   if(++data.patternCount == data.numberOfBars) {
@@ -354,7 +361,7 @@ void LiveSequencer::handlePatternBegin(void) {
 
     if(data.eventsList.size() > 0) {
       // remove all invalidated notes
-      data.eventsList.remove_if([](MidiEvent &e){ return (e.event == midi::InvalidType) || (e.event == midi::ControlChange); });
+      data.eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
 
       if(data.isSongMode && data.isRecording == false) {
         for(auto &e : data.songAutomations[data.songPatternCount]) {
@@ -373,13 +380,12 @@ void LiveSequencer::handlePatternBegin(void) {
   }
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;
-  
-
 }
 
 void selectDexed0() {
   selected_instance_id = 0;
 }
+
 void selectDexed1() {
   selected_instance_id = 1;
 }
