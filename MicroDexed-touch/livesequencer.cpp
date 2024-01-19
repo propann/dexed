@@ -57,12 +57,13 @@ const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource sourc
 void LiveSequencer::handleStop(void) {
   playIterator = data.eventsList.end();
   allNotesOff();
+  data.songPatternCount = 0;
   data.isRunning = false;
 }
 
 void LiveSequencer::handleStart(void) {
   data.patternCount = data.numberOfBars - 1;
-  data.songPatternCount = 0xFF,
+  data.songPatternCount = 0xFF, // FIXME dirty 
   data.isRunning = true;
   if(data.isSongMode) {
     // when using std::map for songEvents, simply use std::prev(map.end())->first
@@ -404,12 +405,18 @@ void LiveSequencer::handlePatternBegin(void) {
 
   if(++data.patternCount == data.numberOfBars) {
     data.patternCount = 0;
-
+    data.songPatternCount++;
+    
     if(data.isSongMode) {
-      data.songPatternCount++;
-      if((data.isRecording == false) && (data.songPatternCount > data.lastSongEventPattern)) {
-        DBG_LOG(printf("song ended. restart from beginning...\n"));
-        data.songPatternCount = 0;
+      if(data.isRecording) {
+        if(data.songPatternCount == 0) {
+          // TODO: when starting to record song, record all track mutes (if not already done...)
+        }
+      } else {
+        if(data.songPatternCount > data.lastSongEventPattern) {
+          DBG_LOG(printf("song ended. restart from beginning...\n"));
+          data.songPatternCount = 0;
+        }
       }
     } else {
       // first insert pending EVENT_PATT events to events and sort

@@ -354,7 +354,7 @@ void drawGUI(uint16_t &guiFlags) {
       display.printf("%02i", liveSeqData->songPatternCount);
     }
   } else {
-    display.printf("%02i", 0);
+    display.printf("  ");
   }
 
   char temp_char[4];
