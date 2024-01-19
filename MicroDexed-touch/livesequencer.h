@@ -64,7 +64,8 @@ public:
     std::list<MidiEvent> eventsList;
     std::vector<MidiEvent> pendingEvents;
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
-    std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents;
+    std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
+    uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     FillNotes fillNotes = { 4, 0 };
     uint8_t numberOfBars = 4;
     uint8_t lastPlayedNote = 0;

@@ -62,8 +62,16 @@ void LiveSequencer::handleStop(void) {
 
 void LiveSequencer::handleStart(void) {
   data.patternCount = data.numberOfBars - 1;
-  data.songPatternCount = 255,
+  data.songPatternCount = 0xFF,
   data.isRunning = true;
+  if(data.isSongMode) {
+    // when using std::map for songEvents, simply use std::prev(map.end())->first
+    for(uint i = 0; i < data.songEvents.size(); i++) {
+      if(data.songEvents[i].size()) {
+        data.lastSongEventPattern = i;
+      }
+    }
+  }
 }
 
 void LiveSequencer::allNotesOff(void) {
@@ -109,10 +117,19 @@ void LiveSequencer::printEvents() {
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
+    const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
     const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
+    // TODO: do not use "data.tracks[data.activeTrack].layerCount" as layer but use current song layer!!
     MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
     if(data.isSongMode) {
         // in song mode, simply add event without rounding and checking
+        if(newEvent.event == midi::NoteOn) {
+          timeQuantization(newEvent.patternNumber, newEvent.patternMs, quantisizeMs);
+        }
+        if(data.songPatternCount > data.lastSongEventPattern) {
+          data.lastSongEventPattern = data.songPatternCount;
+          DBG_LOG(printf("song increased to %i patterns...\n", data.lastSongEventPattern));
+        }
         data.songEvents[data.songPatternCount].emplace_back(newEvent);
     } else {
       if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
@@ -135,7 +152,6 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
           // check if it has a corresponding NoteOn
           const auto on = data.notesOn.find(note);
           if(on != data.notesOn.end()) {
-              const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
               timeQuantization(on->second.patternNumber, on->second.patternMs, quantisizeMs);
               // if so, insert NoteOn and this NoteOff to pending
               data.pendingEvents.emplace_back(on->second);
@@ -201,6 +217,8 @@ void LiveSequencer::changeNumberOfBars(uint8_t num) {
 
 void LiveSequencer::deleteAllSongEvents(void) {
   data.songEvents.clear();
+  data.lastSongEventPattern = 0;
+
   for(auto &e : data.eventsList) {
     if(e.source == EVENT_SONG) {
       e.event = midi::InvalidType; // mark as invalid
@@ -386,16 +404,24 @@ void LiveSequencer::handlePatternBegin(void) {
 
   if(++data.patternCount == data.numberOfBars) {
     data.patternCount = 0;
-    data.songPatternCount++;
-    // first insert pending EVENT_PATT events to events and sort
-    addPendingNotes();
-    
+
+    if(data.isSongMode) {
+      data.songPatternCount++;
+      if((data.isRecording == false) && (data.songPatternCount > data.lastSongEventPattern)) {
+        DBG_LOG(printf("song ended. restart from beginning...\n"));
+        data.songPatternCount = 0;
+      }
+    } else {
+      // first insert pending EVENT_PATT events to events and sort
+      addPendingNotes();
+    }
+
     if(data.eventsList.size() > 0) {
       // remove all invalidated notes
       data.eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
 
       // for song mode, add song events for this pattern
-      if(data.isSongMode && data.isRecording == false) {
+      if(data.isSongMode) {
         for(auto &e : data.songEvents[data.songPatternCount]) {
           MidiEvent m = e;
           m.patternNumber = e.patternNumber % data.numberOfBars;

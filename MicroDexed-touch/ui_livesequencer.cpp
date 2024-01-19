@@ -349,7 +349,13 @@ void drawGUI(uint16_t &guiFlags) {
     display.printf("P %i.%04i   ", patCount, timeMs);
   }
   display.setCursor(190, 20);
-  display.printf("%02i", liveSeqData->songPatternCount);
+  if(liveSeqData->isSongMode) {
+    if(liveSeqData->songPatternCount != 0xFF) {
+      display.printf("%02i", liveSeqData->songPatternCount);
+    }
+  } else {
+    display.printf("%02i", 0);
+  }
 
   char temp_char[4];
 
