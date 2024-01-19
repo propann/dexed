@@ -28,7 +28,7 @@ LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
   return &data;
 }
 
-const std::string LiveSequencer::getName(midi::MidiType event) const {
+const std::string LiveSequencer::getEventName(midi::MidiType event) const {
   switch(event) {
   case midi::NoteOn:
     return "NoteOn";
@@ -40,6 +40,17 @@ const std::string LiveSequencer::getName(midi::MidiType event) const {
     return "Invalid";
   default:
     return "None";
+  }
+}
+
+const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource source) const {
+  switch(source) {
+  case EVENT_PATTERN:
+    return "PATT";
+  case EVENT_SONG:
+    return "SONG";
+  default:
+    return "NONE";
   }
 }
 
@@ -67,7 +78,7 @@ void LiveSequencer::allNotesOff(void) {
 }
 
 void LiveSequencer::printEvent(int i, MidiEvent e) {
-  DBG_LOG(printf("[%i]: %i:%04i, (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, e.track, e.layer, getName(e.event).c_str(), e.note_in, e.note_in_velocity));
+  DBG_LOG(printf("[%i]: %i:%04i {%s} (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, getEventSource(e.source).c_str(), e.track, e.layer, getEventName(e.event).c_str(), e.note_in, e.note_in_velocity));
 }
 
 void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple) {
@@ -97,10 +108,14 @@ void LiveSequencer::printEvents() {
 }
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  if(data.isRecording) {
-    if((data.isSongMode == false) && data.isRunning) { // for now only record notes in pattern mode
-      if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
-        MidiEvent newEvent = { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
+  if(data.isRecording && data.isRunning) {
+    const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
+    MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
+    if(data.isSongMode) {
+        // in song mode, simply add event without rounding and checking
+        data.songEvents[data.songPatternCount].emplace_back(newEvent);
+    } else {
+      if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
         switch(newEvent.event) {
         default:
           // ignore all other types
@@ -162,8 +177,8 @@ void LiveSequencer::fillTrackLayer(void) {
     for(uint8_t bar = 0; bar < data.numberOfBars; bar++) {
       for(uint16_t note = 0; note < data.fillNotes.number; note++) {
         // { uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity }
-        data.pendingEvents.emplace_back(MidiEvent { uint16_t(note * msIncrement + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
-        data.pendingEvents.emplace_back(MidiEvent { uint16_t(note * msIncrement + noteLength + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
+        data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, uint16_t(note * msIncrement + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
+        data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, uint16_t(note * msIncrement + noteLength + msOffset), bar, data.activeTrack, data.tracks[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
       }
     }
     addPendingNotes();
@@ -174,7 +189,7 @@ void LiveSequencer::changeNumberOfBars(uint8_t num) {
   if(num != data.numberOfBars) {
     data.pendingEvents.clear();
     data.eventsList.clear();
-    deleteAllAutomations();
+    deleteAllSongEvents();
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerCount = 0;
       data.tracks[track].layerMutes = 0;
@@ -184,10 +199,10 @@ void LiveSequencer::changeNumberOfBars(uint8_t num) {
   }
 }
 
-void LiveSequencer::deleteAllAutomations(void) {
-  data.songAutomations.clear();
+void LiveSequencer::deleteAllSongEvents(void) {
+  data.songEvents.clear();
   for(auto &e : data.eventsList) {
-    if(e.event == midi::ControlChange) {
+    if(e.source == EVENT_SONG) {
       e.event = midi::InvalidType; // mark as invalid
     }
   }
@@ -271,7 +286,6 @@ void LiveSequencer::playNextEvent(void) {
           break;
         }
       }
-      playIterator->event = midi::InvalidType; // mark to delete after execution
       break;
     case midi::NoteOff: 
       if(isMuted == false) {
@@ -295,6 +309,9 @@ void LiveSequencer::playNextEvent(void) {
 
     default:
       break;
+    }
+    if(playIterator->source == EVENT_SONG) {
+      playIterator->event = midi::InvalidType; // mark song events to delete after execution
     }
     if(++playIterator != data.eventsList.end()) {
       const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
@@ -329,7 +346,7 @@ void LiveSequencer::checkBpmChanged() {
       e.patternMs *= resampleFactor;
       timeQuantization(e.patternNumber, e.patternMs, quantisizeMs);
     }
-    for(auto &e : data.songAutomations) {
+    for(auto &e : data.songEvents) {
       for(auto &a : e.second) {
         a.patternMs *= resampleFactor;
       }
@@ -370,15 +387,16 @@ void LiveSequencer::handlePatternBegin(void) {
   if(++data.patternCount == data.numberOfBars) {
     data.patternCount = 0;
     data.songPatternCount++;
-    // first insert pending to events and sort
+    // first insert pending EVENT_PATT events to events and sort
     addPendingNotes();
-
+    
     if(data.eventsList.size() > 0) {
       // remove all invalidated notes
       data.eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
 
+      // for song mode, add song events for this pattern
       if(data.isSongMode && data.isRecording == false) {
-        for(auto &e : data.songAutomations[data.songPatternCount]) {
+        for(auto &e : data.songEvents[data.songPatternCount]) {
           MidiEvent m = e;
           m.patternNumber = e.patternNumber % data.numberOfBars;
           data.eventsList.emplace_back(m);
@@ -423,8 +441,8 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted) {
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
   if(data.isSongMode && data.isRecording) {
-    MidiEvent e = { uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
-    data.songAutomations[data.songPatternCount].emplace_back(e);
+    MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
+    data.songEvents[data.songPatternCount].emplace_back(e);
 
     DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
   }

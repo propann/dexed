@@ -14,7 +14,13 @@
 class LiveSequencer {
 
 public:
+  enum EventSource : uint8_t {
+    EVENT_PATTERN,
+    EVENT_SONG,
+  };
+
   struct MidiEvent {
+    EventSource source;
     uint16_t patternMs;
     uint8_t patternNumber;
     uint8_t track;
@@ -22,6 +28,7 @@ public:
     midi::MidiType event;
     uint8_t note_in;
     uint8_t note_in_velocity;
+
   };
 
   struct Track {
@@ -57,7 +64,7 @@ public:
     std::list<MidiEvent> eventsList;
     std::vector<MidiEvent> pendingEvents;
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
-    std::unordered_map<uint8_t, std::list<MidiEvent>> songAutomations;
+    std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents;
     FillNotes fillNotes = { 4, 0 };
     uint8_t numberOfBars = 4;
     uint8_t lastPlayedNote = 0;
@@ -77,7 +84,7 @@ public:
   void init(void);
   void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted);
   void changeNumberOfBars(uint8_t num);
-  void deleteAllAutomations(void);
+  void deleteAllSongEvents(void);
   void fillTrackLayer();
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
@@ -97,7 +104,8 @@ private:
 
   TeensyTimerTool::OneShotTimer liveTimer;
   
-  const std::string getName(midi::MidiType event) const;
+  const std::string getEventName(midi::MidiType event) const;
+  const std::string getEventSource(LiveSequencer::EventSource source) const;
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);

@@ -291,7 +291,7 @@ void handle_touchscreen_live_sequencer(void) {
 
         case PageSong::PAGE_SONG_AUTOMATIONS:
           if(check_button_on_grid(BUTTON_COLUMNS_X[0], 10)) {
-            liveSeqPtr->deleteAllAutomations();
+            liveSeqPtr->deleteAllSongEvents();
             guiUpdateFlags |= (drawSongAuto | clearBottomArea);
 
           }
@@ -466,10 +466,14 @@ void drawGUI(uint16_t &guiFlags) {
       uint8_t line = 0;
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display.setTextSize(1);
-      for(auto i : liveSeqData->songAutomations) {
+      for(auto i : liveSeqData->songEvents) {
         for(auto t : i.second) {
           display.setCursor(0, y + line * CHAR_height_small);
-          display.printf("%02i %02i %04i %s", i.first, t.patternNumber, t.patternMs, t.note_in_velocity ? "MUTE" : "UNMUTE");
+          if(t.event == midi::ControlChange) {
+            display.printf("%02i %02i %04i %s", i.first, t.patternNumber, t.patternMs, t.note_in_velocity ? "MUTE" : "UNMUTE");
+          } else {
+            display.printf("%02i %02i %04i %s", i.first, t.patternNumber, t.patternMs, t.event == midi::NoteOn ? "NoteOn" : "NoteOff");
+          }
           line++;
         }
       }
