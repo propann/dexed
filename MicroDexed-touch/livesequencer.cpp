@@ -410,10 +410,10 @@ void LiveSequencer::handlePatternBegin(void) {
     data.patternCount = 0;
     data.songPatternCount = 0;
   } else {
-    if(data.patternCount + 1 == data.numberOfBars) {
+    if((data.patternCount + 1) == data.numberOfBars) {
       data.patternCount = 0;
       if(data.isSongMode) {
-        if(data.isRecording == false && data.songPatternCount == data.lastSongEventPattern) {
+        if((data.isRecording == false) && (data.songPatternCount == data.lastSongEventPattern)) {
           DBG_LOG(printf("song ended. restart from beginning...\n"));
           data.songPatternCount = 0;
         } else {
