@@ -55,17 +55,18 @@ const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource sourc
 }
 
 void LiveSequencer::handleStop(void) {
+  data.isRunning = false;
   playIterator = data.eventsList.end();
   allNotesOff();
   data.songPatternCount = data.lastSongEventPattern + 1; // show song length
   data.patternCount = data.numberOfBars; // show num bars
-  data.isRunning = false;
 }
 
 void LiveSequencer::handleStart(void) {
   data.startedFlag = true;
   data.isRunning = true;
   if(data.isSongMode) {
+    data.eventsList.remove_if([](MidiEvent &e){ return e.source == EventSource::EVENT_SONG; });
     // when using std::map for songEvents, simply use std::prev(map.end())->first
     for(uint i = 0; i < data.songEvents.size(); i++) {
       if(data.songEvents[i].size()) {

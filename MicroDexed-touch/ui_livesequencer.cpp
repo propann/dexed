@@ -122,19 +122,18 @@ void applyScreenRedrawGuiFlags() {
 
 void handle_touchscreen_live_sequencer(void) {  
   const bool runningChanged = (runningHere != liveSeqData->isRunning);
-
-  if((numTouchPoints > 0) || runningChanged) {
+  runningHere = liveSeqData->isRunning;
+  
+  if((numTouchPoints > 0)) {
     const bool runningPressed = check_button_on_grid(BUTTON_COLUMNS_X[0], 0);
-    if (runningPressed) {
+    if(runningPressed) {
       if(runningHere) {
         handleStop();
       } else {
         handleStart();
       }
     }
-    if(runningChanged) {
-      runningHere = liveSeqData->isRunning;
-    }
+    
     if(runningPressed || runningChanged) {
       guiUpdateFlags |= (drawTopButtons);
       trackLayerMode = TrackLayerMode::LAYER_MUTE;
@@ -329,7 +328,8 @@ void drawGUI(uint16_t &guiFlags) {
       }
     } else {
       const float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
-      const float progressTotal = (progressPattern + liveSeqData->patternCount) / float(liveSeqData->numberOfBars);
+      // fixme progress >1.0 when stopping
+      const float progressTotal = std::min(1.0, (progressPattern + liveSeqData->patternCount) / float(liveSeqData->numberOfBars));
 
       display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
