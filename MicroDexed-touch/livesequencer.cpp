@@ -125,6 +125,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
     MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
     if(data.isSongMode) {
         // in song mode, simply add event without rounding and checking
+        newEvent.layer = data.songLayerCount;
         if(newEvent.event == midi::NoteOn) {
           timeQuantization(newEvent.patternNumber, newEvent.patternMs, quantisizeMs);
         }
@@ -292,7 +293,7 @@ void LiveSequencer::playNextEvent(void) {
   if(playIterator != data.eventsList.end()) {
     //LOG.printf("PLAY: ");
     //printEvent(1, *playIterator);
-    const bool isMuted = data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer);
+    const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
 
     switch(playIterator->event) {   
@@ -409,6 +410,19 @@ void LiveSequencer::handlePatternBegin(void) {
     data.startedFlag = false;
     data.patternCount = 0;
     data.songPatternCount = 0;
+
+    // store current track mutes for song mode and replace with possibly previously stored ones
+    if(data.isSongMode && data.isRecording) {
+      // delete previous mutes at beginning
+      data.songEvents[0].remove_if([](MidiEvent &e) { return (e.patternMs == 0) && (e.patternNumber == 0) && (e.event == midi::ControlChange) && (e.note_in == TYPE_MUTE); });
+      // store all track mute states
+      for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+        for(uint8_t layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
+          const bool isLayerMuted = data.tracks[track].layerMutes & (1 << layer);
+          setLayerMuted(track, layer, isLayerMuted);
+        }
+      }
+    }
   } else {
     if((data.patternCount + 1) == data.numberOfBars) {
       data.patternCount = 0;
@@ -426,16 +440,14 @@ void LiveSequencer::handlePatternBegin(void) {
   }
 
   if(data.patternCount == 0) {
-    if(data.isSongMode) {
-      // TODO: when starting to record song, record all track mutes (if not already done...)
-    } else {
+    if(data.isSongMode == false) {
       // first insert pending EVENT_PATT events to events and sort
       addPendingNotes();
     }
 
     if(data.eventsList.size() > 0) {
       // remove all invalidated notes
-      data.eventsList.remove_if([](MidiEvent &e){ return e.event == midi::InvalidType; });
+      data.eventsList.remove_if([](MidiEvent &e) { return e.event == midi::InvalidType; });
 
       // for song mode, add song events for this pattern
       if(data.isSongMode) {
@@ -483,7 +495,6 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted) {
   if(data.isSongMode && data.isRecording) {
     MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
     data.songEvents[data.songPatternCount].emplace_back(e);
-
     DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
   }
 }

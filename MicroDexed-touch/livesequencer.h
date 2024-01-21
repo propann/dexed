@@ -73,6 +73,7 @@ public:
     bool isSongMode = false;
     uint8_t songPatternCount = 0;
     uint8_t functionPageIndex = 0; // PagePattern or PageSong
+    uint8_t songLayerCount = 0;
     bool startedFlag = false;
   };
 
