@@ -328,8 +328,9 @@ void drawGUI(uint16_t &guiFlags) {
         barPhases[1] = !barPhases[1];
       }
     } else {
-      float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
-      float progressTotal = (liveSeqData->patternCount * liveSeqData->patternLengthMs + liveSeqData->patternTimer) / float(liveSeqData->numberOfBars * liveSeqData->patternLengthMs);
+      const float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
+      const float progressTotal = (progressPattern + liveSeqData->patternCount) / float(liveSeqData->numberOfBars);
+
       display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
@@ -350,11 +351,9 @@ void drawGUI(uint16_t &guiFlags) {
   }
   display.setCursor(190, 20);
   if(liveSeqData->isSongMode) {
-    if(liveSeqData->songPatternCount != 0xFF) {
       display.printf("%02i", liveSeqData->songPatternCount);
-    }
   } else {
-    display.printf("  ");
+    display.printf("%02i", liveSeqData->patternCount);
   }
 
   char temp_char[4];

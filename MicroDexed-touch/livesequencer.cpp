@@ -57,13 +57,13 @@ const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource sourc
 void LiveSequencer::handleStop(void) {
   playIterator = data.eventsList.end();
   allNotesOff();
-  data.songPatternCount = 0;
+  data.songPatternCount = data.lastSongEventPattern + 1; // show song length
+  data.patternCount = data.numberOfBars; // show num bars
   data.isRunning = false;
 }
 
 void LiveSequencer::handleStart(void) {
-  data.patternCount = data.numberOfBars - 1;
-  data.songPatternCount = 0xFF, // FIXME dirty 
+  data.startedFlag = true;
   data.isRunning = true;
   if(data.isSongMode) {
     // when using std::map for songEvents, simply use std::prev(map.end())->first
@@ -403,21 +403,30 @@ void LiveSequencer::addPendingNotes(void) {
 void LiveSequencer::handlePatternBegin(void) {
   data.patternTimer = 0;
 
-  if(++data.patternCount == data.numberOfBars) {
+  if(data.startedFlag) {
+    // just started, do not increment
+    data.startedFlag = false;
     data.patternCount = 0;
-    data.songPatternCount++;
-    
-    if(data.isSongMode) {
-      if(data.isRecording) {
-        if(data.songPatternCount == 0) {
-          // TODO: when starting to record song, record all track mutes (if not already done...)
-        }
-      } else {
-        if(data.songPatternCount > data.lastSongEventPattern) {
+    data.songPatternCount = 0;
+  } else {
+    if(data.patternCount + 1 == data.numberOfBars) {
+      data.patternCount = 0;
+      if(data.isSongMode) {
+        if(data.isRecording == false && data.songPatternCount == data.lastSongEventPattern) {
           DBG_LOG(printf("song ended. restart from beginning...\n"));
           data.songPatternCount = 0;
+        } else {
+          data.songPatternCount++;
         }
       }
+    } else {
+      data.patternCount++;
+    }
+  }
+
+  if(data.patternCount == 0) {
+    if(data.isSongMode) {
+      // TODO: when starting to record song, record all track mutes (if not already done...)
     } else {
       // first insert pending EVENT_PATT events to events and sort
       addPendingNotes();
