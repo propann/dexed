@@ -440,10 +440,7 @@ void LiveSequencer::handlePatternBegin(void) {
       // for song mode, add song events for this pattern
       if(data.isSongMode) {
         for(auto &e : data.songEvents[data.songPatternCount]) {
-          MidiEvent m = e;
-          m.patternNumber = e.patternNumber % data.numberOfBars;
-          data.eventsList.emplace_back(m);
-          DBG_LOG(printf("add auto %i.%i: %s", m.patternNumber, m.patternMs, m.note_in_velocity ? "MUTE" : "UNMUTE"));
+          data.eventsList.emplace_back(e);
         }
         data.eventsList.sort(sortMidiEvent);
       }

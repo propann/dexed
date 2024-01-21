@@ -124,7 +124,7 @@ void handle_touchscreen_live_sequencer(void) {
   const bool runningChanged = (runningHere != liveSeqData->isRunning);
   runningHere = liveSeqData->isRunning;
   
-  if((numTouchPoints > 0)) {
+  if((numTouchPoints > 0) || runningChanged) {
     const bool runningPressed = check_button_on_grid(BUTTON_COLUMNS_X[0], 0);
     if(runningPressed) {
       if(runningHere) {
@@ -135,8 +135,11 @@ void handle_touchscreen_live_sequencer(void) {
     }
     
     if(runningPressed || runningChanged) {
-      guiUpdateFlags |= (drawTopButtons);
-      trackLayerMode = TrackLayerMode::LAYER_MUTE;
+      guiUpdateFlags |= drawTopButtons;
+      if(trackLayerMode != TrackLayerMode::LAYER_MUTE) {
+        trackLayerMode = TrackLayerMode::LAYER_MUTE;
+        guiUpdateFlags |= drawLayerButtons;
+      }
     }
 
     const bool recPressed = check_button_on_grid(BUTTON_COLUMNS_X[1], 0);
