@@ -2873,7 +2873,7 @@ FLASHMEM void setup_screensaver(void)
   {
     // Enable Screensaver (screensaver menu function, time to activate in ms)
     LCDML.SCREEN_enable(mFunc_screensaver, configuration.sys.screen_saver_start * 60000); // from parameter in minutes
-    //LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
+    // LCDML.SCREEN_enable(mFunc_screensaver, 3000); // quick screensaver test time
   }
 }
 
@@ -3746,6 +3746,7 @@ FLASHMEM uint8_t get_current_cursor_id(void)
 
 uint8_t touchX = 0;
 uint8_t touchY = 0;
+extern void boot_animation();
 
 FLASHMEM void lcdml_menu_control(void)
 {
@@ -16774,6 +16775,9 @@ FLASHMEM void _render_misc_settings()
   setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
 
+  setCursor_textGrid_small(2, 15);
+  display.print(F("SKIP BOOT ANIMATION"));
+
   setCursor_textGrid_small(42, 8);
   display.print(configuration.sys.screen_saver_start);
   setCursor_textGrid_small(42, 9);
@@ -16794,6 +16798,10 @@ FLASHMEM void _render_misc_settings()
   print_formatted_number(configuration.sys.calib_x_max, 4);
   setCursor_textGrid_small(42, 14);
   print_formatted_number(configuration.sys.calib_y_max, 4);
+
+
+  setCursor_textGrid_small(42, 15);
+  display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
 }
 
 FLASHMEM void UI_func_misc_settings(uint8_t param)
@@ -16817,7 +16825,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 9);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 10);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -16868,12 +16876,18 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           configuration.sys.calib_y_max = constrain(configuration.sys.calib_y_max + ENCODER[ENC_R].speed(), 2800, 4000);
           settings_modified = 10;
         }
+        else if (generic_temp_select_menu == menu++)
+        {
+          configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
+          settings_modified = 11;
+        }
+
       }
       else if (LCDML.BT_checkUp())
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 9);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 10);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -16924,6 +16938,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           configuration.sys.calib_y_max = constrain(configuration.sys.calib_y_max - ENCODER[ENC_R].speed(), 2800, 4000);
           settings_modified = 10;
         }
+        else if (generic_temp_select_menu == menu++)
+        {
+          configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
+          settings_modified = 11;
+        }
       }
     }
 
@@ -16939,7 +16958,6 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     {
       ;
     }
-
     // button check end
 
     // Gamepad settings
@@ -16985,13 +17003,17 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     if (settings_modified == 5)
     {
       touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-    }
+  }
 #endif
 
     // UI reverse
     setModeColor(5);
     setCursor_textGrid_small(42, 12);
     display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
+
+    setModeColor(10);
+    setCursor_textGrid_small(42, 15);
+    display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
 
     // Manual Touch Screen Adjustments
     setModeColor(6);
@@ -17029,6 +17051,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       generic_temp_select_menu = 0;
       _render_misc_settings();
     }
+
+
+
+
     else if (settings_modified > 6)
     {
       set_sys_params(); // update Touch Screen Calibration
@@ -17039,7 +17065,8 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       save_sys = SAVE_SYS_MS / 2;
       settings_modified = 0;
     }
-  }
+
+}
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {
@@ -17060,7 +17087,7 @@ FLASHMEM void _setup_rotation_and_encoders(bool init)
     MD_REncoder encoder_tmp = ENCODER[ENC_L];
     ENCODER[ENC_L] = ENCODER[ENC_R];
     ENCODER[ENC_R] = encoder_tmp;
-  }
+}
   else
   {
     if (!init)
@@ -20810,10 +20837,10 @@ FLASHMEM bool check_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_i
 #endif
       return false;
     }
-  }
+    }
   else
     return false;
-}
+  }
 
 FLASHMEM float eraseBytesPerSecond(const unsigned char* id)
 {
@@ -21352,7 +21379,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
   }
   else
     return false;
-}
+  }
 
 FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
@@ -21391,7 +21418,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Added to Favorites..."));
 #endif
-    }
+  }
     else
     { // delete the file, is no longer a favorite
       SD.remove(tmp);
@@ -21404,7 +21431,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-      }
+    }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -21422,7 +21449,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
-    }
+      }
   }
 }
 

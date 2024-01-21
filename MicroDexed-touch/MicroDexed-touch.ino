@@ -747,7 +747,7 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id)
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
 
- Drum_filter[instance_id] = new AudioFilterBiquad();
+  Drum_filter[instance_id] = new AudioFilterBiquad();
   Drum[instance_id]->enableInterpolation(false);
   Drum[instance_id]->setPlaybackRate(1.0);
 
@@ -913,7 +913,7 @@ extern void updateTouchScreen();
 
 extern void sequencer_part2(void);
 
-bool touch_ic_found=false;
+bool touch_ic_found = false;
 
 // // Hook (https://www.pjrc.com/teensy/td_startup.html)
 // extern "C" void startup_late_hook(void);
@@ -977,7 +977,7 @@ void setup()
 
 #if defined GENERIC_DISPLAY
   touch.begin();
-  touch_ic_found=true;
+  touch_ic_found = true;
 #endif
 
 #if defined(PSRAM) && defined(CAPACITIVE_TOUCH_DISPLAY)
@@ -991,7 +991,7 @@ void setup()
 #ifdef DEBUG
     LOG.println("Unable to start touchscreen.");
 #endif
-touch_ic_found=false;
+    touch_ic_found = false;
 
   }
   else
@@ -1000,7 +1000,7 @@ touch_ic_found=false;
 #ifdef DEBUG
     LOG.println("Touchscreen started.");
 #endif
- touch_ic_found=true;
+    touch_ic_found = true;
   }
 #endif
 
@@ -1417,6 +1417,8 @@ touch_ic_found=false;
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     else
     {
+      if (configuration.sys.boot_anim_skip==0)
+         boot_animation();
       // Menu Startup
       switch (configuration.sys.load_at_startup_page)
       {
@@ -4606,6 +4608,7 @@ FLASHMEM void check_configuration_sys(void)
   configuration.sys.display_rotation = constrain(configuration.sys.display_rotation, 0, 3);
   configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation, 0, 3);
   configuration.sys.ui_reverse = constrain(configuration.sys.ui_reverse, false, true);
+  configuration.sys.boot_anim_skip = constrain(configuration.sys.boot_anim_skip, false, true);
 
   setup_screensaver();
 
@@ -4720,6 +4723,7 @@ FLASHMEM void init_configuration(void)
   configuration.sys.display_rotation = DISPLAY_ROTATION_DEFAULT;
   configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
   configuration.sys.ui_reverse = false;
+  configuration.sys.boot_anim_skip = false;
   configuration.sys.screen_saver_start = SCREEN_SAVER_START_DEFAULT;
   configuration.sys.screen_saver_mode = SCREEN_SAVER_MODE_DEFAULT;
   configuration.sys.gamepad_speed = GAMEPAD_SPEED_DEFAULT;
