@@ -980,8 +980,8 @@ void setup()
   touch_ic_found = true;
 #endif
 
-#if defined(PSRAM) && defined(CAPACITIVE_TOUCH_DISPLAY)
-  delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+#if defined(PSRAM)
+  delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM (and with both display types) not booting reliably
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
