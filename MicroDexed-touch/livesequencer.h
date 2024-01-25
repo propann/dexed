@@ -60,6 +60,7 @@ public:
     unsigned long patternLengthMs;
     uint8_t patternCount = 0;
     bool trackLayersChanged = false;
+    bool songLayersChanged = false;
     bool patternBeginFlag = false;
     std::list<MidiEvent> eventsList;
     std::vector<MidiEvent> pendingEvents;
@@ -79,7 +80,8 @@ public:
 
   LiveSequencer();
   LiveSequencer::LiveSeqData* getData(void);
-  void trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMode action);
+  void songLayerAction(uint8_t layer, LayerMode action);
+  void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
   void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
@@ -119,6 +121,7 @@ private:
   void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
+  void performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer);
 };
 
-#endif //LIVESEQUENCER_H
+#endif // LIVESEQUENCER_H

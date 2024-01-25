@@ -17,7 +17,7 @@ class LiveSequencer;
 static constexpr int LIVESEQUENCER_NUM_TRACKS = 6;
 static constexpr int LIVESEQUENCER_NUM_LAYERS = 4;
 
-enum TrackLayerMode {
+enum LayerMode {
   LAYER_MUTE = 0,
   LAYER_MERGE_UP,
   LAYER_DELETE,

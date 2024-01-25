@@ -121,23 +121,25 @@ void LiveSequencer::printEvents() {
 }
 
 void LiveSequencer::onSongStopped(void) {
-  // apply possible existing layer mutes from song recording to not change song start layer mutes at next song recording
-  for(auto &e : data.songEvents[0]) {
-    const bool isSongMuteBegin = (e.patternMs == 0) && (e.patternNumber == 0) && (e.event == midi::ControlChange) && (e.note_in == TYPE_MUTE);
-    if(isSongMuteBegin) {
-      setLayerMuted(e.track, e.layer, e.note_in_velocity);
-    }
-  }
-  
-  // check if we have to increment song recording layer
-  if(data.isRecording) {
-    for(auto &e : data.songEvents) {
-      for(auto &a : e.second) {
+  bool incrementSongLayer = false;
+  for(auto &e : data.songEvents) {
+    e.second.remove_if([](MidiEvent &e) { return (e.event == midi::InvalidType); });
+    for(auto &a : e.second) {
+      const bool isSongMuteBegin = (e.first == 0) && (a.patternMs == 0) && (a.patternNumber == 0) && (a.event == midi::ControlChange) && (a.note_in == TYPE_MUTE);
+      if(isSongMuteBegin) {
+        // apply possible existing layer mutes from song recording to not change song start layer mutes at next song recording
+        setLayerMuted(a.track, a.layer, a.note_in_velocity);
+        data.trackLayersChanged = true;
+      } else {
+        // check if we have to increment song recording layer
         if(a.layer == data.songLayerCount) {
-          data.songLayerCount++;
-          return;
+          incrementSongLayer = true;
         }
       }
+    }
+    if(incrementSongLayer) {
+      data.songLayerCount++;
+      data.songLayersChanged = true;
     }
   }
 }
@@ -258,8 +260,23 @@ void LiveSequencer::deleteAllSongEvents(void) {
   }
 }
 
-void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMode action) {
-  if((layer == 0) && (action == TrackLayerMode::LAYER_MERGE_UP)) {
+void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
+  if((layer == 0) && (action == LayerMode::LAYER_MERGE_UP)) {
+    return; // avoid merge up top layer
+  }
+  for(auto &e : data.songEvents) {
+    for(auto &a : e.second) {
+      if(a.layer == layer) {
+        performLayerAction(action, a, layer);
+      }
+    }
+  }
+  data.songLayerCount--;
+  data.songLayersChanged = true;
+}
+
+void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
+  if((layer == 0) && (action == LayerMode::LAYER_MERGE_UP)) {
     return; // avoid merge up top layer
   }
 
@@ -272,24 +289,7 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMod
   for(auto &e : data.eventsList) {
     if(e.track == track) {
       if(e.layer == layer) {
-        switch(action) {
-        case TrackLayerMode::LAYER_MERGE_UP:
-          if(e.layer > 0) { // layer 0 must not be shifted up
-            e.layer--;
-          }
-          break;
-        
-        case TrackLayerMode::LAYER_DELETE:
-          e.event = midi::InvalidType; // mark layer notes to delete later
-          break;
-
-        default:
-          break;
-        }
-      }
-      // both actions above shift upper layers one lower
-      if(e.layer > layer) {
-        e.layer--;
+        performLayerAction(action, e, layer);
       }
     }
   }
@@ -303,6 +303,29 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, TrackLayerMod
 
   data.tracks[track].layerCount--;
   data.trackLayersChanged = true;
+}
+
+void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
+  switch(action) {
+  case LayerMode::LAYER_MERGE_UP:
+    // layer 0 must not be shifted up
+    if(e.layer > 0) { 
+      e.layer--;
+    }
+    break;
+
+  case LayerMode::LAYER_DELETE:
+    e.event = midi::InvalidType; // mark layer notes to delete later
+    break;
+
+  default:
+    break;
+  }
+  
+  // both actions above shift upper layers one lower
+  if (e.layer > layer) {
+    e.layer--;
+  }
 }
 
 void LiveSequencer::loadNextEvent(int timeMs) {
@@ -440,9 +463,9 @@ void LiveSequencer::handlePatternBegin(void) {
       data.songEvents[0].remove_if([](MidiEvent &e) { return (e.patternMs == 0) && (e.patternNumber == 0) && (e.event == midi::ControlChange) && (e.note_in == TYPE_MUTE); });
       // store all track mute states
       for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-        for(uint8_t layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
+        for(uint8_t layer = 0; layer < data.tracks[track].layerCount; layer++) {
           const bool isLayerMuted = data.tracks[track].layerMutes & (1 << layer);
-          setLayerMuted(track, layer, isLayerMuted);
+          setLayerMuted(track, layer, isLayerMuted, true);
         }
       }
     }
@@ -536,7 +559,7 @@ void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        trackLayerAction(i, 1, TrackLayerMode::LAYER_MERGE_UP); // merge them
+        trackLayerAction(i, 1, LayerMode::LAYER_MERGE_UP); // merge them
         // reset fillNotes to user values
         data.fillNotes.number = 4;
         data.fillNotes.offset = 0;
