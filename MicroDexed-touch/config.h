@@ -635,7 +635,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define SCREEN_SAVER_MODE_DEFAULT 0 //random mode
 #define SCREEN_SAVER_MODE_MIN 0
 #define SCREEN_SAVER_MODE_MAX 5
-//#define SCREEN_SAVER_MODE_MAX 4
+
 
 #define GAMEPAD_SPEED_MIN 60
 #define GAMEPAD_SPEED_MAX 300
@@ -963,6 +963,7 @@ typedef struct sys_s
   uint8_t screen_saver_mode; // 0 = random, modes 1...4 , 99 = off
   uint16_t gamepad_speed;     // milliseconds
   bool ui_reverse;
+  bool boot_anim_skip;
 } sys_t;
 
 typedef struct storage_file_s
