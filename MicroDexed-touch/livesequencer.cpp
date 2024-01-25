@@ -61,7 +61,7 @@ void LiveSequencer::handleStop(void) {
   data.isRunning = false;
   playIterator = data.eventsList.end();
   allNotesOff();
-  data.songPatternCount = data.lastSongEventPattern + 1; // show song length
+  data.songPatternCount = data.lastSongEventPattern; // show song length
   data.patternCount = data.numberOfBars; // show num bars
 }
 
@@ -144,7 +144,7 @@ void LiveSequencer::onSongStopped(void) {
       }
     }
   }
-  if(incrementSongLayer) {
+  if((data.songLayerCount < LIVESEQUENCER_NUM_LAYERS - 1) && incrementSongLayer) {
     data.songLayerCount++;
     data.songLayersChanged = true;
   }
@@ -157,6 +157,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
     // TODO: do not use "data.tracks[data.activeTrack].layerCount" as layer but use current song layer!!
     MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
     if(data.isSongMode) {
+      if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
         // in song mode, simply add event without rounding and checking
         newEvent.layer = data.songLayerCount;
         if(newEvent.event == midi::NoteOn) {
@@ -167,6 +168,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
           DBG_LOG(printf("song increased to %i patterns...\n", data.lastSongEventPattern));
         }
         data.songEvents[data.songPatternCount].emplace_back(newEvent);
+      }
     } else {
       if(data.tracks[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
         switch(newEvent.event) {
@@ -543,9 +545,11 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
   if(recordToSong) {
-    MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
-    data.songEvents[data.songPatternCount].emplace_back(e);
-    DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
+    if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
+      MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
+      data.songEvents[data.songPatternCount].emplace_back(e);
+      DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
+    }
   }
 }
 
