@@ -131,7 +131,7 @@ void handle_touchscreen_live_sequencer(void) {
   runningHere = liveSeqData->isRunning;
   
   if((numTouchPoints > 0) || runningChanged) {
-    const bool runningPressed = check_button_on_grid(BUTTON_COLUMNS_X[0], 0);
+    const bool runningPressed = (numTouchPoints > 0) && check_button_on_grid(BUTTON_COLUMNS_X[0], 0);
     if(runningPressed) {
       if(runningHere) {
         handleStop();
