@@ -1449,6 +1449,9 @@ touch_ic_found=false;
       case 8:
         LCDML.OTHER_jumpToFunc(UI_func_mixer);
         break;
+      case 9:
+        LCDML.OTHER_jumpToFunc(UI_func_livesequencer);
+        break;
       case 50:
         LCDML.OTHER_jumpToFunc(UI_func_information);
         break;

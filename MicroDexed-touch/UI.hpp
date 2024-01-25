@@ -20066,7 +20066,7 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
       if (LCDML.BT_checkDown())
       {
         configuration.sys.load_at_startup_page++;
-        if (configuration.sys.load_at_startup_page > 8)
+        if (configuration.sys.load_at_startup_page > 9)
           configuration.sys.load_at_startup_page = 50; // System Info Page
       }
       else if (LCDML.BT_checkUp())
@@ -20074,7 +20074,7 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
         if (configuration.sys.load_at_startup_page > 0)
         {
           if (configuration.sys.load_at_startup_page == 50) // System Info Page
-            configuration.sys.load_at_startup_page = 8;
+            configuration.sys.load_at_startup_page = 9;
           else
             configuration.sys.load_at_startup_page--;
         }
@@ -20107,6 +20107,8 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
       show(2, 1, 17, "Braids");
     else if (configuration.sys.load_at_startup_page == 8)
       show(2, 1, 17, "Master Mixer");
+    else if (configuration.sys.load_at_startup_page == 9)
+      show(2, 1, 17, "Live Sequencer");
     else if (configuration.sys.load_at_startup_page == 50)
       show(2, 1, 17, "System Info");
   }
