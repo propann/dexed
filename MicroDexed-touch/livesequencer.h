@@ -43,7 +43,8 @@ public:
   };
 
   enum AutomationType {
-    TYPE_MUTE
+    TYPE_MUTE_ON,
+    TYPE_MUTE_OFF
   };
 
   struct FillNotes {
@@ -97,6 +98,7 @@ private:
   void onSongStopped(void);
   void updateTrackChannels(void);
   void addPendingNotes(void);
+  bool isSongMuteBeginEvent(MidiEvent a);
 
   LiveSeqData data;
   UI_LiveSequencer ui;

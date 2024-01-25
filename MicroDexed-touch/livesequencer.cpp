@@ -131,10 +131,11 @@ void LiveSequencer::onSongStopped(void) {
   for(auto &e : data.songEvents) {
     e.second.remove_if([](MidiEvent &e) { return (e.event == midi::InvalidType); });
     for(auto &a : e.second) {
-      const bool isSongMuteBegin = (e.first == 0) && (a.patternMs == 0) && (a.patternNumber == 0) && (a.event == midi::ControlChange) && (a.note_in == TYPE_MUTE);
+      const bool isMute = ((a.event == midi::ControlChange) && (a.note_in_velocity == TYPE_MUTE_ON || a.note_in_velocity == TYPE_MUTE_OFF));
+      const bool isSongMuteBegin = isMute && (e.first == 0) && (a.patternMs == 0) && (a.patternNumber == 0);
       if(isSongMuteBegin) {
         // apply possible existing layer mutes from song recording to not change song start layer mutes at next song recording
-        setLayerMuted(a.track, a.layer, a.note_in_velocity);
+        setLayerMuted(a.track, a.note_in, a.note_in_velocity == TYPE_MUTE_ON);
         data.trackLayersChanged = true;
       } else {
         // check if we have to increment song recording layer
@@ -352,10 +353,11 @@ void LiveSequencer::playNextEvent(void) {
 
     switch(playIterator->event) {   
     case midi::ControlChange:
-      switch(playIterator->note_in) {
-      case AutomationType::TYPE_MUTE:
+      switch(playIterator->note_in_velocity) {
+      case AutomationType::TYPE_MUTE_ON:
+      case AutomationType::TYPE_MUTE_OFF:
         //DBG_LOG(printf("mute %s\n", playIterator->note_in_velocity ? "MUTE" : "UNMUTE"));
-        setLayerMuted(playIterator->track, playIterator->layer, playIterator->note_in_velocity);
+        setLayerMuted(playIterator->track, playIterator->note_in, playIterator->note_in_velocity == AutomationType::TYPE_MUTE_ON);
         data.trackLayersChanged = true;
         break;
       }
@@ -466,7 +468,7 @@ void LiveSequencer::handlePatternBegin(void) {
     // store current track mutes for song mode and replace with possibly previously stored ones
     if(data.isSongMode && data.isRecording) {
       // delete previous mutes at beginning
-      data.songEvents[0].remove_if([](MidiEvent &e) { return (e.patternMs == 0) && (e.patternNumber == 0) && (e.event == midi::ControlChange) && (e.note_in == TYPE_MUTE); });
+      data.songEvents[0].remove_if([](MidiEvent &e) { return (e.patternMs == 0) && (e.patternNumber == 0) && (e.event == midi::ControlChange) && (e.note_in_velocity == TYPE_MUTE_ON || e.note_in_velocity == TYPE_MUTE_OFF); });
       // store all track mute states
       for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
         for(uint8_t layer = 0; layer < data.tracks[track].layerCount; layer++) {
@@ -546,7 +548,8 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
   }
   if(recordToSong) {
     if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
-      MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
+      const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
+      MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
       data.songEvents[data.songPatternCount].emplace_back(e);
       DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
     }
