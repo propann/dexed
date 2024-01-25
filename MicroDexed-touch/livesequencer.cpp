@@ -55,6 +55,9 @@ const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource sourc
 }
 
 void LiveSequencer::handleStop(void) {
+  if(data.isSongMode) {
+    onSongStopped();
+  }
   data.isRunning = false;
   playIterator = data.eventsList.end();
   allNotesOff();
@@ -114,6 +117,28 @@ void LiveSequencer::printEvents() {
   uint i = 0;
   for(auto &e : data.eventsList) {
     printEvent(i++, e);
+  }
+}
+
+void LiveSequencer::onSongStopped(void) {
+  // apply possible existing layer mutes from song recording to not change song start layer mutes at next song recording
+  for(auto &e : data.songEvents[0]) {
+    const bool isSongMuteBegin = (e.patternMs == 0) && (e.patternNumber == 0) && (e.event == midi::ControlChange) && (e.note_in == TYPE_MUTE);
+    if(isSongMuteBegin) {
+      setLayerMuted(e.track, e.layer, e.note_in_velocity);
+    }
+  }
+  
+  // check if we have to increment song recording layer
+  if(data.isRecording) {
+    for(auto &e : data.songEvents) {
+      for(auto &a : e.second) {
+        if(a.layer == data.songLayerCount) {
+          data.songLayerCount++;
+          return;
+        }
+      }
+    }
   }
 }
 
@@ -298,14 +323,12 @@ void LiveSequencer::playNextEvent(void) {
 
     switch(playIterator->event) {   
     case midi::ControlChange:
-      if(data.isRecording == false) {
-        switch(playIterator->note_in) {
-        case AutomationType::TYPE_MUTE:
-          DBG_LOG(printf("mute %s\n", playIterator->note_in_velocity ? "MUTE" : "UNMUTE"));
-          setLayerMuted(playIterator->track, playIterator->layer, playIterator->note_in_velocity);
-          data.trackLayersChanged = true;
-          break;
-        }
+      switch(playIterator->note_in) {
+      case AutomationType::TYPE_MUTE:
+        //DBG_LOG(printf("mute %s\n", playIterator->note_in_velocity ? "MUTE" : "UNMUTE"));
+        setLayerMuted(playIterator->track, playIterator->layer, playIterator->note_in_velocity);
+        data.trackLayersChanged = true;
+        break;
       }
       break;
     case midi::NoteOff: 
@@ -482,7 +505,7 @@ void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
-void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted) {
+void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
   if(isMuted) {
     data.tracks[track].layerMutes |= (1 << layer);
     for(auto note : data.tracks[track].activeNotes[layer]) {
@@ -492,7 +515,7 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted) {
   } else {
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
-  if(data.isSongMode && data.isRecording) {
+  if(recordToSong) {
     MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, layer, midi::MidiType::ControlChange, AutomationType::TYPE_MUTE, isMuted };
     data.songEvents[data.songPatternCount].emplace_back(e);
     DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
@@ -514,6 +537,9 @@ void LiveSequencer::checkAddMetronome(void) {
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
         trackLayerAction(i, 1, TrackLayerMode::LAYER_MERGE_UP); // merge them
+        // reset fillNotes to user values
+        data.fillNotes.number = 4;
+        data.fillNotes.offset = 0;
         return;
       }
     }

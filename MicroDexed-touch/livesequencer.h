@@ -66,7 +66,7 @@ public:
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
     std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
-    FillNotes fillNotes = { 4, 0 };
+    FillNotes fillNotes = { 4, 0 }; // user default
     uint8_t numberOfBars = 4;
     uint8_t lastPlayedNote = 0;
     bool lastPlayedNoteChanged = false;
@@ -85,13 +85,14 @@ public:
   void handleStart(void);
   void handleStop(void);
   void init(void);
-  void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted);
+  void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong = false);
   void changeNumberOfBars(uint8_t num);
   void deleteAllSongEvents(void);
   void fillTrackLayer();
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
+  void onSongStopped(void);
   void updateTrackChannels(void);
   void addPendingNotes(void);
 
