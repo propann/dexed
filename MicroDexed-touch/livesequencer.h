@@ -15,8 +15,8 @@ class LiveSequencer {
 
 public:
   enum EventSource : uint8_t {
-    EVENT_PATTERN,
-    EVENT_SONG,
+    EVENT_SONG = 0,
+    EVENT_PATTERN = 1
   };
 
   struct MidiEvent {
@@ -102,7 +102,8 @@ private:
   UI_LiveSequencer ui;
 
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
-    return ((a.patternNumber * 5000) + a.patternMs) < ((b.patternNumber * 5000) + b.patternMs); // FIXME: patternLengthMs
+    // + a.source is a hack to sort song events before pattern events if the have same time
+    return ((a.patternNumber * 5000) + a.patternMs + a.source) < ((b.patternNumber * 5000) + b.patternMs + b.source); // FIXME: patternLengthMs
   }
   
   std::list<MidiEvent>::iterator playIterator;

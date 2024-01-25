@@ -113,10 +113,16 @@ void LiveSequencer::timeQuantization(uint8_t &patternNumber, uint16_t &patternMs
 }
 
 void LiveSequencer::printEvents() {
-  DBG_LOG(printf("--- %i events (%i bytes with one be %i bytes)\n", data.eventsList.size(), data.eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent)));
+  DBG_LOG(printf("--- %i pattern events (%i bytes with one be %i bytes)\n", data.eventsList.size(), data.eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent)));
   uint i = 0;
   for(auto &e : data.eventsList) {
     printEvent(i++, e);
+  }
+  DBG_LOG(printf("--- song events on %i layers until pattern %i\n", data.songLayerCount, data.lastSongEventPattern));
+  for(int i = 0; i <= data.lastSongEventPattern; i++) {
+    for(auto &e : data.songEvents[i]) {
+      printEvent(i++, e);
+    }
   }
 }
 
@@ -137,10 +143,10 @@ void LiveSequencer::onSongStopped(void) {
         }
       }
     }
-    if(incrementSongLayer) {
-      data.songLayerCount++;
-      data.songLayersChanged = true;
-    }
+  }
+  if(incrementSongLayer) {
+    data.songLayerCount++;
+    data.songLayersChanged = true;
   }
 }
 
@@ -266,9 +272,7 @@ void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
   }
   for(auto &e : data.songEvents) {
     for(auto &a : e.second) {
-      if(a.layer == layer) {
-        performLayerAction(action, a, layer);
-      }
+      performLayerAction(action, a, layer);
     }
   }
   data.songLayerCount--;
@@ -288,9 +292,7 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode act
 
   for(auto &e : data.eventsList) {
     if(e.track == track) {
-      if(e.layer == layer) {
-        performLayerAction(action, e, layer);
-      }
+      performLayerAction(action, e, layer);
     }
   }
   // handle layer mutes. example with layer 2 deleted
@@ -306,20 +308,22 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode act
 }
 
 void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
-  switch(action) {
-  case LayerMode::LAYER_MERGE_UP:
-    // layer 0 must not be shifted up
-    if(e.layer > 0) { 
-      e.layer--;
+  if(e.layer == layer) {
+    switch(action) {
+    case LayerMode::LAYER_MERGE_UP:
+      // layer 0 must not be shifted up
+      if(e.layer > 0) { 
+        e.layer--;
+      }
+      break;
+
+    case LayerMode::LAYER_DELETE:
+      e.event = midi::InvalidType; // mark layer notes to delete later
+      break;
+
+    default:
+      break;
     }
-    break;
-
-  case LayerMode::LAYER_DELETE:
-    e.event = midi::InvalidType; // mark layer notes to delete later
-    break;
-
-  default:
-    break;
   }
   
   // both actions above shift upper layers one lower

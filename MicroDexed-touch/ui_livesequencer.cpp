@@ -153,7 +153,7 @@ void handle_touchscreen_live_sequencer(void) {
       liveSeqData->isRecording = !liveSeqData->isRecording;
       guiUpdateFlags |= (drawTopButtons | drawTrackButtons);
       trackLayerMode = LayerMode::LAYER_MUTE;
-      
+
       if(isLayerView()) {
         guiUpdateFlags |= drawLayerButtons;
       }
@@ -228,7 +228,7 @@ void handle_touchscreen_live_sequencer(void) {
                 trackLayerMode = LayerMode::LAYER_MUTE;
               } else {
                 const bool isMutedOld =  liveSeqData->tracks[track].layerMutes & (1 << layer);
-                const bool recordMuteToSong = liveSeqData->isSongMode && liveSeqData->isRecording;
+                const bool recordMuteToSong = liveSeqData->isSongMode && liveSeqData->isRecording && liveSeqData->isRunning;
                 liveSeqPtr->setLayerMuted(track, layer, !isMutedOld, recordMuteToSong);
               }
               guiUpdateFlags |= (drawLayerButtons);
