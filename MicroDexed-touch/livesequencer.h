@@ -36,10 +36,13 @@ public:
     char name[4];
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
-    uint8_t layerCount;
-    uint8_t layerMutes;
-    uint8_t quantisizeDenom;
     std::unordered_multiset<uint8_t> activeNotes[LIVESEQUENCER_NUM_LAYERS];
+    uint8_t layerCount; // to be populated once after loading performance...
+  };
+
+  struct TrackSettings {
+    uint8_t quantisizeDenom;
+    uint8_t layerMutes;
   };
 
   enum AutomationType {
@@ -54,12 +57,13 @@ public:
 
   struct LiveSeqData {
     // non - volatile
-    Track tracks[LIVESEQUENCER_NUM_TRACKS];
+    TrackSettings trackSettings[LIVESEQUENCER_NUM_TRACKS];
     std::list<MidiEvent> eventsList;
     std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
     uint8_t numberOfBars = 4;
 
     // volatile
+    Track tracks[LIVESEQUENCER_NUM_TRACKS];
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     uint8_t currentPattern = 0;
     FillNotes fillNotes = { 4, 0 }; // user default

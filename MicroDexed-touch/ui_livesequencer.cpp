@@ -226,7 +226,7 @@ void handle_touchscreen_live_sequencer(void) {
                 liveSeqPtr->trackLayerAction(track, layer, LayerMode(trackLayerMode));
                 trackLayerMode = LayerMode::LAYER_MUTE;
               } else {
-                const bool isMutedOld =  liveSeqData->tracks[track].layerMutes & (1 << layer);
+                const bool isMutedOld =  liveSeqData->trackSettings[track].layerMutes & (1 << layer);
                 const bool recordMuteToSong = liveSeqData->isSongMode && liveSeqData->isRecording && liveSeqData->isRunning;
                 liveSeqPtr->setLayerMuted(track, layer, !isMutedOld, recordMuteToSong);
               }
@@ -238,9 +238,9 @@ void handle_touchscreen_live_sequencer(void) {
         case PagePattern::PAGE_PATT_SETINGS:
           for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
             if(check_button_on_grid(BUTTON_COLUMNS_X[track], 10)) {
-              liveSeqData->tracks[track].quantisizeDenom *= 2;
-              if(liveSeqData->tracks[track].quantisizeDenom > 32) {
-                liveSeqData->tracks[track].quantisizeDenom = 1;
+              liveSeqData->trackSettings[track].quantisizeDenom *= 2;
+              if(liveSeqData->trackSettings[track].quantisizeDenom > 32) {
+                liveSeqData->trackSettings[track].quantisizeDenom = 1;
               }
               guiUpdateFlags |= drawQuantisize;
             }
@@ -401,7 +401,7 @@ void drawGUI(uint16_t &guiFlags) {
         for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
           const int buttonY = 10 + layer * 5;
           if (layer < liveSeqData->tracks[track].layerCount) {
-            const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
+            const bool isMuted = liveSeqData->trackSettings[track].layerMutes & (1 << layer);
             uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
             uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 2 : 1));
             if(layerEditActive) {
@@ -433,7 +433,7 @@ void drawGUI(uint16_t &guiFlags) {
     if(guiFlags & drawQuantisize) {
       // quantisize
       for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-        const uint8_t denom = liveSeqData->tracks[track].quantisizeDenom;
+        const uint8_t denom = liveSeqData->trackSettings[track].quantisizeDenom;
         const std::string text = (denom == 1) ? "NONE" : itoa(denom, temp_char, 10);
         draw_button_on_grid(BUTTON_COLUMNS_X[track], 10, "QUANT", text.c_str(), (denom == 1) ? 1 : 3);
       }

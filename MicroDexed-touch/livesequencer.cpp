@@ -159,7 +159,7 @@ void LiveSequencer::onSongStopped(void) {
 
 void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
-    const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
+    const uint16_t quantisizeMs = data.patternLengthMs / data.trackSettings[data.activeTrack].quantisizeDenom;
     const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
     MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
     if(data.isSongMode) {
@@ -255,7 +255,7 @@ void LiveSequencer::changeNumberOfBars(uint8_t num) {
     deleteAllSongEvents();
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerCount = 0;
-      data.tracks[track].layerMutes = 0;
+      data.trackSettings[track].layerMutes = 0;
     }
     data.numberOfBars = num;
     init();
@@ -273,7 +273,7 @@ void LiveSequencer::deleteAllSongEvents(void) {
   }
   // TODO: set to state when start was pressed (remember this)
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
-    data.tracks[i].layerMutes = 0;
+    data.trackSettings[i].layerMutes = 0;
   }
 }
 
@@ -310,9 +310,9 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode act
   // old: 0010 1101
   // new: 0001 0101 -> lower layers stay same, higher layers shifted down by one
   const uint8_t bitmask = pow(2, layer) - 1;
-  const uint8_t layerMutesLo = data.tracks[track].layerMutes & bitmask;         // 0010 1101 &  0000 0011 = 0000 0001
-  const uint8_t layerMutesHi = (data.tracks[track].layerMutes >> 1) & ~bitmask; // 0001 0110 & ~0000 0011 = 0001 0100
-  data.tracks[track].layerMutes = (layerMutesLo | layerMutesHi);                // 0000 0001 |  0001 0100 = 0001 0101
+  const uint8_t layerMutesLo = data.trackSettings[track].layerMutes & bitmask;         // 0010 1101 &  0000 0011 = 0000 0001
+  const uint8_t layerMutesHi = (data.trackSettings[track].layerMutes >> 1) & ~bitmask; // 0001 0110 & ~0000 0011 = 0001 0100
+  data.trackSettings[track].layerMutes = (layerMutesLo | layerMutesHi);                // 0000 0001 |  0001 0100 = 0001 0101
 
   data.tracks[track].layerCount--;
   data.trackLayersChanged = true;
@@ -356,7 +356,7 @@ void LiveSequencer::playNextEvent(void) {
   if(playIterator != data.eventsList.end()) {
     //LOG.printf("PLAY: ");
     //printEvent(1, *playIterator);
-    const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
+    const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.trackSettings[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
 
     switch(playIterator->event) {   
@@ -479,7 +479,7 @@ void LiveSequencer::handlePatternBegin(void) {
       // store all track mute states
       for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
         for(uint8_t layer = 0; layer < data.tracks[track].layerCount; layer++) {
-          const bool isLayerMuted = data.tracks[track].layerMutes & (1 << layer);
+          const bool isLayerMuted = data.trackSettings[track].layerMutes & (1 << layer);
           setLayerMuted(track, layer, isLayerMuted, true);
         }
       }
@@ -545,13 +545,13 @@ void selectMs1() {
 
 void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
   if(isMuted) {
-    data.tracks[track].layerMutes |= (1 << layer);
+    data.trackSettings[track].layerMutes |= (1 << layer);
     for(auto note : data.tracks[track].activeNotes[layer]) {
       handleNoteOff(data.tracks[track].channel, note, 0, 0);
     }
     data.tracks[track].activeNotes[layer].clear();
   } else {
-    data.tracks[track].layerMutes &= ~(1 << layer);
+    data.trackSettings[track].layerMutes &= ~(1 << layer);
   }
   if(recordToSong) {
     if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
@@ -590,12 +590,12 @@ void LiveSequencer::checkAddMetronome(void) {
 void LiveSequencer::updateTrackChannels() {
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
-    data.tracks[i].quantisizeDenom = 1; // default: no quantization
+    data.trackSettings[i].quantisizeDenom = 1; // default: no quantization
     switch(seq.track_type[i]) {
     case 0:
       data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
       data.tracks[i].screen = UI_func_drums;
-      data.tracks[i].quantisizeDenom = 16; // default: drum quantisize to 1/16
+      data.trackSettings[i].quantisizeDenom = 16; // default: drum quantisize to 1/16
       sprintf(data.tracks[i].name, "DRM");
       break;
 
