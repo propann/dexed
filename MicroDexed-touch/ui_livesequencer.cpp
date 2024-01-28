@@ -42,7 +42,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
 }
 
 bool isLayerView() {
-  return liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_LAYERS || liveSeqData->functionPageIndex == PageSong::PAGE_SONG_LAYERS;
+  return liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS || liveSeqData->currentPageIndex == PageSong::PAGE_SONG_LAYERS;
 }
 
 enum GuiUpdates : uint16_t {
@@ -84,7 +84,7 @@ void UI_func_livesequencer(uint8_t param) {
     guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
     guiUpdateFlags |= liveSeqData->songLayersChanged ? (drawSongAuto) : 0;
 
-    if(liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_SETINGS) {
+    if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_SETINGS) {
       guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawFillNotes) : 0;
     }
     liveSeqData->songLayersChanged = false;
@@ -103,7 +103,7 @@ void UI_func_livesequencer(uint8_t param) {
 void applyScreenRedrawGuiFlags() {
   guiUpdateFlags |= (clearBottomArea | drawTopButtons | drawTrackButtons);
   if(liveSeqData->isSongMode) {
-    switch(liveSeqData->functionPageIndex) {
+    switch(liveSeqData->currentPageIndex) {
     case PageSong::PAGE_SONG_LAYERS:
       guiUpdateFlags |= drawLayerButtons;
       break;
@@ -114,7 +114,7 @@ void applyScreenRedrawGuiFlags() {
       break;
     }
   } else {
-    switch(liveSeqData->functionPageIndex) {
+    switch(liveSeqData->currentPageIndex) {
     case PagePattern::PAGE_PATT_LAYERS:
       guiUpdateFlags |= drawLayerButtons;
       break;
@@ -163,20 +163,20 @@ void handle_touchscreen_live_sequencer(void) {
     if(modePressed) {
       liveSeqData->isSongMode = !liveSeqData->isSongMode;
       if(liveSeqData->isSongMode) {
-        liveSeqData->functionPageIndex = PageSong::PAGE_SONG_LAYERS;
+        liveSeqData->currentPageIndex = PageSong::PAGE_SONG_LAYERS;
       } else {
-        liveSeqData->functionPageIndex = PagePattern::PAGE_PATT_LAYERS;
+        liveSeqData->currentPageIndex = PagePattern::PAGE_PATT_LAYERS;
       }
       applyScreenRedrawGuiFlags();
     }
 
     const bool funcPressed = check_button_on_grid(BUTTON_COLUMNS_X[4], 0);
     if(funcPressed) {
-      liveSeqData->functionPageIndex++;
-      if(liveSeqData->isSongMode && liveSeqData->functionPageIndex == PageSong::PAGE_SONG_NUM) {
-        liveSeqData->functionPageIndex = PageSong::PAGE_SONG_LAYERS;
-      } else if(liveSeqData->isSongMode == false && liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_NUM) {
-        liveSeqData->functionPageIndex = PagePattern::PAGE_PATT_LAYERS;
+      liveSeqData->currentPageIndex++;
+      if(liveSeqData->isSongMode && liveSeqData->currentPageIndex == PageSong::PAGE_SONG_NUM) {
+        liveSeqData->currentPageIndex = PageSong::PAGE_SONG_LAYERS;
+      } else if(liveSeqData->isSongMode == false && liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_NUM) {
+        liveSeqData->currentPageIndex = PagePattern::PAGE_PATT_LAYERS;
       }
       applyScreenRedrawGuiFlags();
     }
@@ -194,7 +194,7 @@ void handle_touchscreen_live_sequencer(void) {
               if(++trackLayerMode == LayerMode::LAYER_MODE_NUM) {
                 trackLayerMode = LayerMode::LAYER_MUTE;
               }
-              if(liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_LAYERS) {
+              if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS) {
                 guiUpdateFlags |= drawLayerButtons;
               }
             }
@@ -210,13 +210,13 @@ void handle_touchscreen_live_sequencer(void) {
         } else {
           liveSeqData->activeTrack = track;
           trackLayerMode = LayerMode::LAYER_MUTE;
-          if(liveSeqData->functionPageIndex == PagePattern::PAGE_PATT_LAYERS) {
+          if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS) {
             guiUpdateFlags |= drawLayerButtons;
           }
           DBG_LOG(printf("rec track now is %i\n", track + 1));
         }
       }
-      switch(liveSeqData->functionPageIndex) {
+      switch(liveSeqData->currentPageIndex) {
         case PageSong::PAGE_SONG_LAYERS:
         case PagePattern::PAGE_PATT_LAYERS:
           for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
@@ -325,7 +325,7 @@ void drawGUI(uint16_t &guiFlags) {
   uint16_t patCount = 0;
   uint16_t timeMs = 0;
   if(runningHere) {
-    patCount = liveSeqData->patternCount;
+    patCount = liveSeqData->currentPattern;
     timeMs = liveSeqData->patternTimer;
     
     if(liveSeqData->patternBeginFlag) {
@@ -333,14 +333,14 @@ void drawGUI(uint16_t &guiFlags) {
 
       display.fillRect(110, 5, 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       barPhases[0] = !barPhases[0];
-      if(liveSeqData->patternCount == 0) {
+      if(liveSeqData->currentPattern == 0) {
         display.fillRect(110, 10, 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
         barPhases[1] = !barPhases[1];
       }
     } else {
       const float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
       // fixme progress >1.0 when stopping
-      const float progressTotal = std::min(1.0f, (progressPattern + liveSeqData->patternCount) / float(liveSeqData->numberOfBars));
+      const float progressTotal = std::min(1.0f, (progressPattern + liveSeqData->currentPattern) / float(liveSeqData->numberOfBars));
 
       display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
@@ -352,7 +352,7 @@ void drawGUI(uint16_t &guiFlags) {
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   if(liveSeqData->isSongMode) {
-    const uint32_t songMs = (liveSeqData->songPatternCount * liveSeqData->numberOfBars + liveSeqData->patternCount) * liveSeqData->patternLengthMs + timeMs;
+    const uint32_t songMs = (liveSeqData->songPatternCount * liveSeqData->numberOfBars + liveSeqData->currentPattern) * liveSeqData->patternLengthMs + timeMs;
     const uint32_t minutes = songMs / 60000;
     const uint32_t seconds = (songMs % 60000) / 1000;
     const uint32_t millis = songMs % 1000;
@@ -364,7 +364,7 @@ void drawGUI(uint16_t &guiFlags) {
   if(liveSeqData->isSongMode) {
       display.printf("%02i", liveSeqData->songPatternCount);
   } else {
-    display.printf("%02i", liveSeqData->patternCount);
+    display.printf("%02i", liveSeqData->currentPattern);
   }
 
   char temp_char[4];

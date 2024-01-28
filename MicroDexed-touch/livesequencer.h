@@ -39,7 +39,7 @@ public:
     uint8_t layerCount;
     uint8_t layerMutes;
     uint8_t quantisizeDenom;
-    std::unordered_multiset<uint8_t> activeNotes[8];
+    std::unordered_multiset<uint8_t> activeNotes[LIVESEQUENCER_NUM_LAYERS];
   };
 
   enum AutomationType {
@@ -53,30 +53,33 @@ public:
   };
 
   struct LiveSeqData {
+    // non - volatile
     Track tracks[LIVESEQUENCER_NUM_TRACKS];
-    bool isRunning = false;
-    bool isRecording = false;
+    std::list<MidiEvent> eventsList;
+    std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
+    uint8_t numberOfBars = 4;
+
+    // volatile
+    uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
+    uint8_t currentPattern = 0;
+    FillNotes fillNotes = { 4, 0 }; // user default
+    unsigned long patternLengthMs;
     uint8_t activeTrack = 0;
     elapsedMillis patternTimer;
-    unsigned long patternLengthMs;
-    uint8_t patternCount = 0;
+    std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
+    std::vector<MidiEvent> pendingEvents;
+    uint8_t songPatternCount = 0;
+    uint8_t currentPageIndex = 0; // PagePattern or PageSong
+    uint8_t songLayerCount = 0;
+    uint8_t lastPlayedNote = 0;
     bool trackLayersChanged = false;
     bool songLayersChanged = false;
     bool patternBeginFlag = false;
-    std::list<MidiEvent> eventsList;
-    std::vector<MidiEvent> pendingEvents;
-    std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
-    std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
-    uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
-    FillNotes fillNotes = { 4, 0 }; // user default
-    uint8_t numberOfBars = 4;
-    uint8_t lastPlayedNote = 0;
+    bool startedFlag = false;
+    bool isRunning = false;
+    bool isRecording = false;
     bool lastPlayedNoteChanged = false;
     bool isSongMode = false;
-    uint8_t songPatternCount = 0;
-    uint8_t functionPageIndex = 0; // PagePattern or PageSong
-    uint8_t songLayerCount = 0;
-    bool startedFlag = false;
   };
 
   LiveSequencer();

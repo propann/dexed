@@ -62,7 +62,7 @@ void LiveSequencer::handleStop(void) {
   playIterator = data.eventsList.end();
   allNotesOff();
   data.songPatternCount = data.lastSongEventPattern; // show song length
-  data.patternCount = data.numberOfBars; // show num bars
+  data.currentPattern = data.numberOfBars; // show num bars
 }
 
 void LiveSequencer::handleStart(void) {
@@ -161,7 +161,7 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   if(data.isRecording && data.isRunning) {
     const uint16_t quantisizeMs = data.patternLengthMs / data.tracks[data.activeTrack].quantisizeDenom;
     const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
-    MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.patternCount, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
+    MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.tracks[data.activeTrack].layerCount, event, note, velocity };
     if(data.isSongMode) {
       if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
         // in song mode, simply add event, no rounding and checking needed
@@ -397,7 +397,7 @@ void LiveSequencer::playNextEvent(void) {
       playIterator->event = midi::InvalidType; // mark song events to delete after execution
     }
     if(++playIterator != data.eventsList.end()) {
-      const unsigned long now = ((data.patternCount * data.patternLengthMs) + data.patternTimer);
+      const unsigned long now = ((data.currentPattern * data.patternLengthMs) + data.patternTimer);
       int timeToNextEvent = timeToMs(playIterator->patternNumber, playIterator->patternMs) - now;
       loadNextEvent(timeToNextEvent);
     }
@@ -469,7 +469,7 @@ void LiveSequencer::handlePatternBegin(void) {
   if(data.startedFlag) {
     // just started, do not increment
     data.startedFlag = false;
-    data.patternCount = 0;
+    data.currentPattern = 0;
     data.songPatternCount = 0;
 
     // store current track mutes for song mode and replace with possibly previously stored ones
@@ -485,8 +485,8 @@ void LiveSequencer::handlePatternBegin(void) {
       }
     }
   } else {
-    if((data.patternCount + 1) == data.numberOfBars) {
-      data.patternCount = 0;
+    if((data.currentPattern + 1) == data.numberOfBars) {
+      data.currentPattern = 0;
       if(data.isSongMode) {
         if((data.isRecording == false) && (data.songPatternCount == data.lastSongEventPattern)) {
           DBG_LOG(printf("song ended. restart from beginning...\n"));
@@ -496,11 +496,11 @@ void LiveSequencer::handlePatternBegin(void) {
         }
       }
     } else {
-      data.patternCount++;
+      data.currentPattern++;
     }
   }
 
-  if(data.patternCount == 0) {
+  if(data.currentPattern == 0) {
     if(data.isSongMode == false) {
       // first insert pending EVENT_PATT events to events and sort
       addPendingNotes();
@@ -523,7 +523,7 @@ void LiveSequencer::handlePatternBegin(void) {
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-  DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.patternCount + 1, data.numberOfBars, currentBpm, data.patternLengthMs, data.eventsList.size()));
+  DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;
 }
 
@@ -556,9 +556,9 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
   if(recordToSong) {
     if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
       const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
-      MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.patternCount, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
+      MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.currentPattern, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
       data.songEvents[data.songPatternCount].emplace_back(e);
-      DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.patternCount, data.patternTimer), data.songPatternCount));
+      DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.currentPattern, data.patternTimer), data.songPatternCount));
     }
   }
 }
