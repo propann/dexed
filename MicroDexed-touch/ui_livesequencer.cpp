@@ -54,6 +54,7 @@ enum GuiUpdates : uint16_t {
   clearBottomArea   = (1 << 5),
   drawSongAuto      = (1 << 6),
   drawPattLength    = (1 << 7),
+  drawActiveNotes   = (1 << 8),
   updateAll         = 0xFFFF
 };
 uint16_t guiUpdateFlags = 0;
@@ -83,6 +84,7 @@ void UI_func_livesequencer(uint8_t param) {
   if (LCDML.FUNC_loop()) {
     guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
     guiUpdateFlags |= liveSeqData->songLayersChanged ? (drawSongAuto) : 0;
+    guiUpdateFlags |= (liveSeqData->isRunning || liveSeqData->stoppedFlag) ? (drawActiveNotes) : 0;
 
     if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_SETINGS) {
       guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawFillNotes) : 0;
@@ -90,6 +92,7 @@ void UI_func_livesequencer(uint8_t param) {
     liveSeqData->songLayersChanged = false;
     liveSeqData->trackLayersChanged = false;
     liveSeqData->lastPlayedNoteChanged = false;
+    liveSeqData->stoppedFlag = false;
     drawGUI(guiUpdateFlags);
   }
   
@@ -411,14 +414,16 @@ void drawGUI(uint16_t &guiFlags) {
             if(guiFlags & drawLayerButtons) {
               drawLayerButton(trackLayerMode, layer, layerEditActive, layerBgCode, BUTTON_COLUMNS_X[track], buttonY);
             }
-            // always draw notes when layers visible
-            const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
-            const int xStart = (BUTTON_COLUMNS_X[track] + button_size_x) * CHAR_width_small - 3;
-            const int yStart = (10 + layer * 5) * CHAR_height_small;
-            const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
-            display.console = true;
-            display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerBgColor);
-            display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
+            if(guiFlags & drawActiveNotes) {
+              // always draw notes when layers visible
+              const int numNotesOn = liveSeqData->tracks[track].activeNotes[layer].size();
+              const int xStart = (BUTTON_COLUMNS_X[track] + button_size_x) * CHAR_width_small - 3;
+              const int yStart = (10 + layer * 5) * CHAR_height_small;
+              const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
+              display.console = true;
+              display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerBgColor);
+              display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
+            }
           } else {
             if (guiFlags & drawLayerButtons) {
               // clear button

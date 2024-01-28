@@ -63,6 +63,7 @@ void LiveSequencer::handleStop(void) {
   allNotesOff();
   data.songPatternCount = data.lastSongEventPattern; // show song length
   data.currentPattern = data.numberOfBars; // show num bars
+  data.stoppedFlag = true;
 }
 
 void LiveSequencer::handleStart(void) {

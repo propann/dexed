@@ -80,6 +80,7 @@ public:
     bool songLayersChanged = false;
     bool patternBeginFlag = false;
     bool startedFlag = false;
+    bool stoppedFlag = false;
     bool isRunning = false;
     bool isRecording = false;
     bool lastPlayedNoteChanged = false;
