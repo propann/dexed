@@ -315,13 +315,14 @@ void handle_touchscreen_live_sequencer(void) {
 }
 
 void drawGUI(uint16_t &guiFlags) {
+  const bool isLayerViewActive = isLayerView();
   if(remote_active) {
     display.console = true;
   }
   if(guiFlags & drawTopButtons) {
     draw_button_on_grid(BUTTON_COLUMNS_X[0], 0, (runningHere ? "STOP" : "START"), "", runningHere ? 2 : 0);
     draw_button_on_grid(BUTTON_COLUMNS_X[1], 0, "REC", "", liveSeqData->isRecording ? 2 : 0);
-    draw_button_on_grid(BUTTON_COLUMNS_X[4], 0, isLayerView() ? "LAYERS" : "TOOLS", "VIEW", 1);
+    draw_button_on_grid(BUTTON_COLUMNS_X[4], 0, isLayerViewActive ? "LAYERS" : "TOOLS", "VIEW", 1);
     draw_button_on_grid(BUTTON_COLUMNS_X[5], 0, liveSeqData->isSongMode ? "SONG" : "PATT", "MODE", 3);
   }
 
@@ -388,17 +389,17 @@ void drawGUI(uint16_t &guiFlags) {
   }
   
   if(guiFlags & clearBottomArea) {
-    const uint16_t bgColor = isLayerView() ? COLOR_BACKGROUND : GREY2; // gray for tools
+    const uint16_t bgColor = isLayerViewActive ? COLOR_BACKGROUND : GREY2; // gray for tools
     display.fillRect(0, 76, DISPLAY_WIDTH, DISPLAY_HEIGHT - 75, bgColor);
     DBG_LOG(printf("clear bottom\n"));
   }
-  if(isLayerView() || (guiUpdateFlags & drawTrackButtons)) {
+  if(isLayerViewActive || (guiUpdateFlags & drawTrackButtons)) {
     const bool isSongRec = (liveSeqData->isSongMode && liveSeqData->isRecording);
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       if(guiFlags & drawTrackButtons) {
         draw_button_on_grid(BUTTON_COLUMNS_X[track], 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? ((liveSeqData->isSongMode == false) && liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
       }
-      if(isLayerView()) {
+      if(isLayerViewActive) {
         const bool layerEditActive = !liveSeqData->isSongMode && (liveSeqData->activeTrack == track) && (trackLayerMode != LayerMode::LAYER_MUTE);
         // layer button
         for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
@@ -434,7 +435,7 @@ void drawGUI(uint16_t &guiFlags) {
       }
     }
   } 
-  if(isLayerView() == false) {
+  if(isLayerViewActive == false) {
     if(guiFlags & drawQuantisize) {
       // quantisize
       for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
