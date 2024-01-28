@@ -341,7 +341,7 @@ void drawGUI(uint16_t &guiFlags) {
     } else {
       const float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
       // fixme progress >1.0 when stopping
-      const float progressTotal = std::min(1.0, (progressPattern + liveSeqData->patternCount) / float(liveSeqData->numberOfBars));
+      const float progressTotal = std::min(1.0f, (progressPattern + liveSeqData->patternCount) / float(liveSeqData->numberOfBars));
 
       display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
@@ -417,6 +417,7 @@ void drawGUI(uint16_t &guiFlags) {
             const int xStart = (BUTTON_COLUMNS_X[track] + button_size_x) * CHAR_width_small - 3;
             const int yStart = (10 + layer * 5) * CHAR_height_small;
             const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
+            display.console = true;
             display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerBgColor);
             display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
           } else {

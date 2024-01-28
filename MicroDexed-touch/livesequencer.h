@@ -115,13 +115,14 @@ private:
   
   const std::string getEventName(midi::MidiType event) const;
   const std::string getEventSource(LiveSequencer::EventSource source) const;
+  bool isEventMute(const MidiEvent e) const;
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
   void allNotesOff(void);
   
   void playNextEvent(void);
-  void timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
+  bool timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
   void performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer);
