@@ -201,9 +201,8 @@ void handle_touchscreen_live_sequencer(void) {
           } else {
             // open instrument settings
             if(liveSeqData->tracks[track].screenSetupFn != nullptr) {
-              void (*f)();
-              f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
-              f();
+              SetupFn f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
+              f(0);
             }
             LCDML.FUNC_setGBAToLastFunc();
             LCDML.OTHER_jumpToFunc(liveSeqData->tracks[track].screen);

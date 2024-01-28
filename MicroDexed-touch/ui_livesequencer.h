@@ -10,7 +10,7 @@
 #define DBG_LOG(s)
 #endif
 
-typedef void (*SetupFn)( void*);
+typedef void (*SetupFn)(void*);
 
 class LiveSequencer;
 
