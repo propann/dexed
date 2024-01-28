@@ -38,6 +38,10 @@ void applyScreenRedrawGuiFlags();
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqPtr = sequencer;
   liveSeqData = sequencer->getData();
+  
+}
+
+void UI_LiveSequencer::init(void) {
   numberOfBarsTemp = liveSeqData->numberOfBars;
 }
 

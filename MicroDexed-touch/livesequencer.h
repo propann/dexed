@@ -28,7 +28,6 @@ public:
     midi::MidiType event;
     uint8_t note_in;
     uint8_t note_in_velocity;
-
   };
 
   struct Track {
@@ -85,6 +84,7 @@ public:
     bool isRecording = false;
     bool lastPlayedNoteChanged = false;
     bool isSongMode = false;
+    int currentBpm = 90;
   };
 
   LiveSequencer();
@@ -104,7 +104,7 @@ public:
 
 private:
   void onSongStopped(void);
-  void updateTrackChannels(void);
+  void updateTrackChannels(bool initial = false);
   void addPendingNotes(void);
   bool isSongMuteBeginEvent(MidiEvent a);
 
@@ -117,8 +117,6 @@ private:
   }
   
   std::list<MidiEvent>::iterator playIterator;
-  int currentBpm = 90;
-
   TeensyTimerTool::OneShotTimer liveTimer;
   
   const std::string getEventName(midi::MidiType event) const;

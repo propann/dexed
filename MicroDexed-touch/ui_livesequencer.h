@@ -40,6 +40,7 @@ class UI_LiveSequencer {
 
 public:
   UI_LiveSequencer(LiveSequencer *sequencer);
+  void init(void);
 
 private:
 

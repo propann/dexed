@@ -22,6 +22,7 @@ extern uint8_t selected_instance_id; // dexed
 
 LiveSequencer::LiveSequencer() :
   ui(this) {
+  updateTrackChannels(true);
 }
 
 LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
@@ -342,6 +343,9 @@ void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEven
   if (e.layer > layer) {
     e.layer--;
   }
+  if(data.isRunning == false) {
+    data.eventsList.remove_if([](MidiEvent &e) { return e.event == midi::InvalidType; });
+  }
 }
 
 void LiveSequencer::loadNextEvent(int timeMs) {
@@ -409,21 +413,30 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
   return (patternNumber * data.patternLengthMs) + patternMs;
 }
 
-//void LiveSequencer::init(int bpm, std::vector<MidiEvent> loadedEvents) {
 void LiveSequencer::init(void) {
-  //events = loadedEvents;
   data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
   checkBpmChanged();
   updateTrackChannels();
   checkAddMetronome();
+  for(const MidiEvent e : data.eventsList) {
+    if(e.source == EVENT_PATTERN) {
+      if(e.layer >= data.tracks[e.track].layerCount) {
+        DBG_LOG(printf("track %i now has %i layers\n", e.track, e.layer));
+        data.tracks[e.track].layerCount = e.layer + 1;
+      }
+    }
+  }
+  DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
+  printEvents();
   liveTimer.begin([this] { playNextEvent(); });
   data.pendingEvents.reserve(50);
+  ui.init();
 }
 
 void LiveSequencer::checkBpmChanged() {
-  if(seq.bpm != currentBpm) {
-    float resampleFactor =  currentBpm / float(seq.bpm);
-    currentBpm = seq.bpm;
+  if(seq.bpm != data.currentBpm) {
+    float resampleFactor =  data.currentBpm / float(seq.bpm);
+    data.currentBpm = seq.bpm;
     // resample pattern events
     for(auto &e : data.eventsList) {
       e.patternMs *= resampleFactor;
@@ -524,7 +537,7 @@ void LiveSequencer::handlePatternBegin(void) {
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-  DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, currentBpm, data.patternLengthMs, data.eventsList.size()));
+  DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;
 }
 
@@ -588,15 +601,19 @@ void LiveSequencer::checkAddMetronome(void) {
   }
 }
 
-void LiveSequencer::updateTrackChannels() {
+void LiveSequencer::updateTrackChannels(bool initial) {
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
-    data.trackSettings[i].quantisizeDenom = 1; // default: no quantization
+    if(initial) {
+      data.trackSettings[i].quantisizeDenom = 1; // default: no quantization
+    }
     switch(seq.track_type[i]) {
     case 0:
       data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
       data.tracks[i].screen = UI_func_drums;
-      data.trackSettings[i].quantisizeDenom = 16; // default: drum quantisize to 1/16
+      if(initial) {
+        data.trackSettings[i].quantisizeDenom = 16; // default: drum quantisize to 1/16
+      }
       sprintf(data.tracks[i].name, "DRM");
       break;
 
