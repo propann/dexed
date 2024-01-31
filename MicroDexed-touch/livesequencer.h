@@ -36,10 +36,10 @@ public:
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
     std::unordered_multiset<uint8_t> activeNotes[LIVESEQUENCER_NUM_LAYERS];
-    uint8_t layerCount; // to be populated once after loading performance...
   };
 
   struct TrackSettings {
+    uint8_t layerCount;
     uint8_t quantisizeDenom;
     uint8_t layerMutes;
   };

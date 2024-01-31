@@ -226,7 +226,7 @@ void handle_touchscreen_live_sequencer(void) {
       switch(liveSeqData->currentPageIndex) {
         case PageSong::PAGE_SONG_LAYERS:
         case PagePattern::PAGE_PATT_LAYERS:
-          for(int layer = 0; layer < liveSeqData->tracks[track].layerCount; layer++) {
+          for(int layer = 0; layer < liveSeqData->trackSettings[track].layerCount; layer++) {
             const bool pressed = check_button_on_grid(BUTTON_COLUMNS_X[track], 10 + layer * 5);
             if(pressed) {
               if(liveSeqData->isRecording && (trackLayerMode != LayerMode::LAYER_MUTE) && (track == liveSeqData->activeTrack)) {
@@ -408,7 +408,7 @@ void drawGUI(uint16_t &guiFlags) {
         // layer button
         for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
           const int buttonY = 10 + layer * 5;
-          if (layer < liveSeqData->tracks[track].layerCount) {
+          if (layer < liveSeqData->trackSettings[track].layerCount) {
             const bool isMuted = liveSeqData->trackSettings[track].layerMutes & (1 << layer);
             uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
             uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 2 : 1));

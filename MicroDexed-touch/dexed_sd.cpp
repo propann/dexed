@@ -1564,6 +1564,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       data_json["num_tracks"] = LIVESEQUENCER_NUM_TRACKS;
       data_json["num_layers"] = LIVESEQUENCER_NUM_LAYERS;
       for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+        data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
         data_json["layer_mutes"][i] = data->trackSettings[i].layerMutes;
       }
@@ -1674,6 +1675,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
         } 
 #endif
         for(int i = 0; i < num_tracks; i++) {
+          data->trackSettings[i].layerCount = data_json["layer_count"][i];
           data->trackSettings[i].quantisizeDenom = data_json["quant_denom"][i];
           data->trackSettings[i].layerMutes = data_json["layer_mutes"][i];
         }
