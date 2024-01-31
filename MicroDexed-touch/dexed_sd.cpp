@@ -1562,6 +1562,48 @@ FLASHMEM void deserializeJSONToEvent(JsonObject &o, LiveSequencer::MidiEvent &e)
   e.note_in_velocity = o["note_in_velocity"];
 }
 
+void writeChunk(const char* filename, int chunkNumber, const int &NUM_EVENTS_PER_FILE, uint16_t numEvents, std::list<LiveSequencer::MidiEvent>::iterator &it) {
+  SD.remove(filename);
+  json = SD.open(filename, FILE_WRITE);
+  if (json) {
+    const uint16_t eventsWritten = chunkNumber * NUM_EVENTS_PER_FILE;
+    const uint16_t numChunkEvents = min(numEvents - eventsWritten, NUM_EVENTS_PER_FILE);
+    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+    doc["number_of_events"] = numChunkEvents;
+    // Serial.printf("has %i events\n", numChunkEvents);
+    for (uint16_t i = 0; i < numChunkEvents; i++) {
+      JsonObject o = doc.createNestedObject(i);
+      serializeEventToJSON(o, it++);
+    }
+    serializeJsonPretty(doc, json);
+    serializeJsonPretty(doc, Serial);
+    json.close();
+  }
+}
+
+void readChunk(const char *filename, std::list<LiveSequencer::MidiEvent> &list) {
+  if (SD.exists(filename)) {
+    // Serial.printf("success\n", c, filename);
+    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+    json = SD.open(filename, FILE_READ);
+    doc.clear();
+    deserializeJson(doc, json);
+    json.close();
+
+    serializeJsonPretty(doc, Serial);
+
+    uint16_t eventsNumber = doc["number_of_events"];
+    // Serial.printf("has %i events:\n", eventsNumber);
+
+    for (uint16_t i = 0; i < eventsNumber; i++) {
+      LiveSequencer::MidiEvent e;
+      JsonObject o = doc[String(i)];
+      deserializeJSONToEvent(o, e);
+      list.emplace_back(e);
+    }
+  }
+}
+
 FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
 {
   if (sd_card > 0) {
@@ -1578,6 +1620,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
     uint16_t numPatternChunks = 0;
+    uint8_t lastSongPattern = 0;
     LiveSequencer::LiveSeqData *data = liveSeq.getData();
 
     static constexpr int NUM_EVENTS_PER_FILE = 50; // never change this!
@@ -1594,6 +1637,8 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       }
 
       data_json["num_pattern_events"] = numPatternEvents;
+      lastSongPattern = data->songPatternCount;
+      data_json["last_song_pattern"] = lastSongPattern;
       data_json["chunk_size"] = NUM_EVENTS_PER_FILE;
       numPatternChunks = ceil(numPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
       
@@ -1602,61 +1647,23 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
     }
 
     std::list<LiveSequencer::MidiEvent>::iterator it = data->eventsList.begin();
-    for(int c = 0; c < numPatternChunks; c++) {
-      Serial.printf("save chunk %i:\n", c);
-      snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%02i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, c);
-      SD.remove(filename);
-      json = SD.open(filename, FILE_WRITE);
-      if(json) {
-        const uint16_t eventsWritten = c * NUM_EVENTS_PER_FILE;
-        const uint16_t numChunkEvents = min(numPatternEvents - eventsWritten, NUM_EVENTS_PER_FILE);
-        StaticJsonDocument<JSON_BUFFER_SIZE> doc;
-        doc["number_of_events"] = numChunkEvents;
-        Serial.printf("has %i events\n", numChunkEvents);
-        for(uint16_t i = 0; i < numChunkEvents; i++) {
-          JsonObject o = doc.createNestedObject(i);
-          serializeEventToJSON(o, it++);
-        }
-        serializeJsonPretty(doc, json);
-        serializeJsonPretty(doc, Serial);
-        json.close();
-      }
+    for(int chunkNumber = 0; chunkNumber < numPatternChunks; chunkNumber++) {
+      Serial.printf("save chunk %i:\n", chunkNumber);
+      snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, chunkNumber);
+      writeChunk(filename, chunkNumber, NUM_EVENTS_PER_FILE, numPatternEvents, it);
     }
 
-    /*uint index = 0;
-    //LOG.printf("save num: %i\n", numPatternEvents);
-    for(const LiveSequencer::MidiEvent e : data->eventsList) {
-      data_json["pattern_event"][index]["source"] = e.source;
-      data_json["pattern_event"][index]["patternMs"] = e.patternMs;
-      data_json["pattern_event"][index]["patternNumber"] = e.patternNumber;
-      data_json["pattern_event"][index]["track"] = e.track;
-      data_json["pattern_event"][index]["layer"] = e.layer;
-      data_json["pattern_event"][index]["event"] = e.event;
-      data_json["pattern_event"][index]["note_in"] = e.note_in;
-      data_json["pattern_event"][index]["note_in_velocity"] = e.note_in_velocity;
-      index++;
-    }*/
+    for(uint8_t songPattern = 0; songPattern < lastSongPattern; songPattern++) {
+      std::list<LiveSequencer::MidiEvent> songPatternEvents = data->songEvents[songPattern];
+      const uint16_t numSongPatternEvents = songPatternEvents.size();
+      const uint16_t numSongPatternChunks = ceil(numSongPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
+      std::list<LiveSequencer::MidiEvent>::iterator it = songPatternEvents.begin();
 
-    /*const uint8_t numSongPatterns = data->songPatternCount;
-    data_json["num_song_patterns"] = numSongPatterns;
-
-    for(uint8_t p = 0; p < data->songPatternCount; p++) {
-      uint index = 0;
-      uint16_t numSongPatternEvents = data->songEvents[p].size();
-      data_json["num_song_pattern_events"][p] = numSongPatternEvents;
-
-      for(const LiveSequencer::MidiEvent e : data->songEvents[p]) {
-        data_json["song_event"][p][index]["source"] = e.source;
-        data_json["song_event"][p][index]["patternMs"] = e.patternMs;
-        data_json["song_event"][p][index]["patternNumber"] = e.patternNumber;
-        data_json["song_event"][p][index]["track"] = e.track;
-        data_json["song_event"][p][index]["layer"] = e.layer;
-        data_json["song_event"][p][index]["event"] = e.event;
-        data_json["song_event"][p][index]["note_in"] = e.note_in;
-        data_json["song_event"][p][index]["note_in_velocity"] = e.note_in_velocity;
-        index++;
+      for(int chunkNumber = 0; chunkNumber < numSongPatternChunks; chunkNumber++) {
+        snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
+        writeChunk(filename, chunkNumber, NUM_EVENTS_PER_FILE, numSongPatternEvents, it);
       }
-    }*/
+    }
   }
 
   AudioInterrupts();
@@ -1667,6 +1674,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
 
 FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 {
+  //return;
   AudioNoInterrupts();
 
   if (sd_card > 0) {
@@ -1707,29 +1715,10 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
         if(numPatternChunks > 0) {
           data->eventsList.clear();
 
-          for(int c = 0; c < numPatternChunks; c++) {
-            snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%02i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, c);
+          for(int patternChunk = 0; patternChunk < numPatternChunks; patternChunk++) {
+            snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, patternChunk);
             //Serial.printf("load chunk %i from file %s...", c, filename);
-            if (SD.exists(filename)) {
-              //Serial.printf("success\n", c, filename);
-
-              json = SD.open(filename, FILE_READ);
-              doc.clear();
-              deserializeJson(doc, json);
-              json.close();
-
-              serializeJsonPretty(doc, Serial);
-
-              uint16_t eventsNumber = doc["number_of_events"];
-              //Serial.printf("has %i events:\n", eventsNumber);
-
-              for(uint16_t i = 0; i < eventsNumber; i++) {
-                LiveSequencer::MidiEvent e;
-                JsonObject o = doc[String(i)];
-                deserializeJSONToEvent(o, e);
-                data->eventsList.emplace_back(e);
-              }
-            }
+            readChunk(filename, data->eventsList);
           }
         }
 
