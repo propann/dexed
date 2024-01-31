@@ -1639,6 +1639,10 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       data_json["num_pattern_events"] = numPatternEvents;
       lastSongPattern = data->songPatternCount;
       data_json["last_song_pattern"] = lastSongPattern;
+      for(int i = 0; i <= lastSongPattern; i++) {
+        // write num song pattern events per song pattern
+        data_json["song_pattern_events"][i] = data->songEvents[i].size();
+      }
       data_json["chunk_size"] = NUM_EVENTS_PER_FILE;
       numPatternChunks = ceil(numPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
       
@@ -1658,7 +1662,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       const uint16_t numSongPatternEvents = songPatternEvents.size();
       const uint16_t numSongPatternChunks = ceil(numSongPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
       std::list<LiveSequencer::MidiEvent>::iterator it = songPatternEvents.begin();
-
+      
       for(int chunkNumber = 0; chunkNumber < numSongPatternChunks; chunkNumber++) {
         snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
         writeChunk(filename, chunkNumber, NUM_EVENTS_PER_FILE, numSongPatternEvents, it);
@@ -1690,10 +1694,12 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
       json = SD.open(filename, FILE_READ);
       if (json) {
         LiveSequencer::LiveSeqData *data = liveSeq.getData();
-        int numPatternEvents = 0;
+        uint16_t numPatternEvents = 0;
         int numPatternChunks = 0;
-        int chunksize = 0;
+        uint16_t chunksize = 0;
+        uint8_t lastSongPattern = 0;
         StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+        std::vector<int> numSongPatternEvents;
         {
           doc.clear();
           deserializeJson(doc, json);
@@ -1708,6 +1714,11 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           }
 
           numPatternEvents = doc["num_pattern_events"];
+          lastSongPattern = doc["last_song_pattern"];
+          for(int i = 0; i <= lastSongPattern; i++) {
+            int num = doc["song_pattern_events"][i];
+            numSongPatternEvents.push_back(num);
+          }
           chunksize = doc["chunk_size"];
           numPatternChunks = ceil(numPatternEvents / float(chunksize)); // 50 events per file
         }
@@ -1722,26 +1733,18 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           }
         }
 
-        //LOG.printf("load num: %i\n", numPatternEvents);
- 
-        /*const uint8_t numSongPatterns = data_json["num_song_patterns"];
-        for(uint16_t p = 0; p < numSongPatterns; p++) {
-          uint16_t numSongPatternEvents = data_json["num_song_pattern_events"][p];
-          uint index = 0;
-          for(uint16_t pe = 0; pe < numSongPatternEvents; pe++) {
-            LiveSequencer::MidiEvent e;
-            e.source = data_json["song_event"][p][index]["source"];
-            e.patternMs = data_json["song_event"][p][index]["patternMs"];
-            e.patternNumber = data_json["song_event"][p][index]["patternNumber"];
-            e.track = data_json["song_event"][p][index]["track"];
-            e.layer = data_json["song_event"][p][index]["layer"];
-            e.event = data_json["song_event"][p][index]["event"];
-            e.note_in = data_json["song_event"][p][index]["note_in"];
-            e.note_in_velocity = data_json["song_event"][p][index]["note_in_velocity"];
-            data->songEvents[p].emplace_back(e);
-            index++;
+        if(lastSongPattern > 0) {
+          data->songEvents.clear();
+          for(uint8_t songPattern = 0; songPattern < lastSongPattern; songPattern++) {
+            // read numSongPatternEvents per song pattern
+            const uint16_t numSongPatternChunks = ceil(numSongPatternEvents[songPattern] / float(chunksize)); // 50 events per file
+
+            for(int chunkNumber = 0; chunkNumber < numSongPatternChunks; chunkNumber++) {
+              snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
+              readChunk(filename, data->songEvents[songPattern]);
+            }
           }
-        }*/
+        }
 
         data->currentBpm = seq.bpm;
 
