@@ -1540,10 +1540,31 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number)
   return (false);
 }
 
+FLASHMEM void serializeEventToJSON(JsonObject &o, std::list<LiveSequencer::MidiEvent>::iterator it) {
+  o["source"] = it->source;
+  o["patternMs"] = it->patternMs;
+  o["patternNumber"] = it->patternNumber;
+  o["track"] = it->track;
+  o["layer"] = it->layer;
+  o["event"] = it->event;
+  o["note_in"] = it->note_in;
+  o["note_in_velocity"] = it->note_in_velocity;
+}
+
+FLASHMEM void deserializeJSONToEvent(JsonObject &o, LiveSequencer::MidiEvent &e) {
+  e.source = o["source"];
+  e.patternMs = o["patternMs"];
+  e.patternNumber = o["patternNumber"];
+  e.track = o["track"];
+  e.layer = o["layer"];
+  e.event = o["event"];
+  e.note_in = o["note_in"];
+  e.note_in_velocity = o["note_in_velocity"];
+}
+
 FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
 {
-  if (sd_card > 0)
-  {
+  if (sd_card > 0) {
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME);
 
@@ -1556,147 +1577,165 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
     AudioNoInterrupts();
     SD.remove(filename);
     json = SD.open(filename, FILE_WRITE);
-    if (json)
-    {
-      LiveSequencer::LiveSeqData *data = liveSeq.getData();
-      StaticJsonDocument<JSON_BUFFER_SIZE_BIG> data_json;
+    uint16_t numPatternChunks = 0;
+    LiveSequencer::LiveSeqData *data = liveSeq.getData();
+
+    static constexpr int NUM_EVENTS_PER_FILE = 50; // never change this!
+    uint16_t numPatternEvents = data->eventsList.size();
+
+    if (json) {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["num_bars"] = data->numberOfBars;
       data_json["num_tracks"] = LIVESEQUENCER_NUM_TRACKS;
-      data_json["num_layers"] = LIVESEQUENCER_NUM_LAYERS;
       for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
         data_json["layer_mutes"][i] = data->trackSettings[i].layerMutes;
       }
-      uint16_t numPatternEvents = data->eventsList.size();
+
       data_json["num_pattern_events"] = numPatternEvents;
-      uint index = 0;
-      //LOG.printf("save num: %i\n", numPatternEvents);
-      for(const LiveSequencer::MidiEvent e : data->eventsList) {
-        data_json["pattern_event"][index]["source"] = e.source;
-        data_json["pattern_event"][index]["patternMs"] = e.patternMs;
-        data_json["pattern_event"][index]["patternNumber"] = e.patternNumber;
-        data_json["pattern_event"][index]["track"] = e.track;
-        data_json["pattern_event"][index]["layer"] = e.layer;
-        data_json["pattern_event"][index]["event"] = e.event;
-        data_json["pattern_event"][index]["note_in"] = e.note_in;
-        data_json["pattern_event"][index]["note_in_velocity"] = e.note_in_velocity;
-        index++;
-      }
-
-      const uint8_t numSongPatterns = data->songPatternCount;
-      data_json["num_song_patterns"] = numSongPatterns;
-
-      for(uint8_t p = 0; p < data->songPatternCount; p++) {
-        uint index = 0;
-        uint16_t numSongPatternEvents = data->songEvents[p].size();
-        data_json["num_song_pattern_events"][p] = numSongPatternEvents;
-
-        for(const LiveSequencer::MidiEvent e : data->songEvents[p]) {
-          data_json["song_event"][p][index]["source"] = e.source;
-          data_json["song_event"][p][index]["patternMs"] = e.patternMs;
-          data_json["song_event"][p][index]["patternNumber"] = e.patternNumber;
-          data_json["song_event"][p][index]["track"] = e.track;
-          data_json["song_event"][p][index]["layer"] = e.layer;
-          data_json["song_event"][p][index]["event"] = e.event;
-          data_json["song_event"][p][index]["note_in"] = e.note_in;
-          data_json["song_event"][p][index]["note_in_velocity"] = e.note_in_velocity;
-          index++;
-        }
-      }
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-      LOG.println(F("Write JSON data:"));
-      serializeJsonPretty(data_json, Serial);
-      LOG.println();
-#endif
+      data_json["chunk_size"] = NUM_EVENTS_PER_FILE;
+      numPatternChunks = ceil(numPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
+      
       serializeJsonPretty(data_json, json);
       json.close();
-      AudioInterrupts();
-      return (true);
     }
-    json.close();
-  }
-  else
-  {
-#ifdef DEBUG
-    LOG.print(F("E : Cannot open "));
-    LOG.print(filename);
-    LOG.println(F(" on SD."));
-#endif
+
+    std::list<LiveSequencer::MidiEvent>::iterator it = data->eventsList.begin();
+    for(int c = 0; c < numPatternChunks; c++) {
+      Serial.printf("save chunk %i:\n", c);
+      snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%02i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, c);
+      SD.remove(filename);
+      json = SD.open(filename, FILE_WRITE);
+      if(json) {
+        const uint16_t eventsWritten = c * NUM_EVENTS_PER_FILE;
+        const uint16_t numChunkEvents = min(numPatternEvents - eventsWritten, NUM_EVENTS_PER_FILE);
+        StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+        doc["number_of_events"] = numChunkEvents;
+        Serial.printf("has %i events\n", numChunkEvents);
+        for(uint16_t i = 0; i < numChunkEvents; i++) {
+          JsonObject o = doc.createNestedObject(i);
+          serializeEventToJSON(o, it++);
+        }
+        serializeJsonPretty(doc, json);
+        serializeJsonPretty(doc, Serial);
+        json.close();
+      }
+    }
+
+    /*uint index = 0;
+    //LOG.printf("save num: %i\n", numPatternEvents);
+    for(const LiveSequencer::MidiEvent e : data->eventsList) {
+      data_json["pattern_event"][index]["source"] = e.source;
+      data_json["pattern_event"][index]["patternMs"] = e.patternMs;
+      data_json["pattern_event"][index]["patternNumber"] = e.patternNumber;
+      data_json["pattern_event"][index]["track"] = e.track;
+      data_json["pattern_event"][index]["layer"] = e.layer;
+      data_json["pattern_event"][index]["event"] = e.event;
+      data_json["pattern_event"][index]["note_in"] = e.note_in;
+      data_json["pattern_event"][index]["note_in_velocity"] = e.note_in_velocity;
+      index++;
+    }*/
+
+    /*const uint8_t numSongPatterns = data->songPatternCount;
+    data_json["num_song_patterns"] = numSongPatterns;
+
+    for(uint8_t p = 0; p < data->songPatternCount; p++) {
+      uint index = 0;
+      uint16_t numSongPatternEvents = data->songEvents[p].size();
+      data_json["num_song_pattern_events"][p] = numSongPatternEvents;
+
+      for(const LiveSequencer::MidiEvent e : data->songEvents[p]) {
+        data_json["song_event"][p][index]["source"] = e.source;
+        data_json["song_event"][p][index]["patternMs"] = e.patternMs;
+        data_json["song_event"][p][index]["patternNumber"] = e.patternNumber;
+        data_json["song_event"][p][index]["track"] = e.track;
+        data_json["song_event"][p][index]["layer"] = e.layer;
+        data_json["song_event"][p][index]["event"] = e.event;
+        data_json["song_event"][p][index]["note_in"] = e.note_in;
+        data_json["song_event"][p][index]["note_in_velocity"] = e.note_in_velocity;
+        index++;
+      }
+    }*/
   }
 
   AudioInterrupts();
-  return (false);
+  return (true);
 }
+
+
 
 FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 {
-  if (sd_card > 0)
-  {
+  AudioNoInterrupts();
+
+  if (sd_card > 0) {
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME);
-
-    // first check if file exists...
-    AudioNoInterrupts();
-    if (SD.exists(filename))
-    {
-      // ... and if: load
+    
+    if (SD.exists(filename)) {
 #ifdef DEBUG
       LOG.print(F("Found livesequencer configuration ["));
       LOG.print(filename);
       LOG.println(F("]... loading..."));
 #endif
-      json = SD.open(filename);
-      if (json)
-      {
+      json = SD.open(filename, FILE_READ);
+      if (json) {
         LiveSequencer::LiveSeqData *data = liveSeq.getData();
-        StaticJsonDocument<JSON_BUFFER_SIZE_BIG> data_json;
-        deserializeJson(data_json, json);
+        int numPatternEvents = 0;
+        int numPatternChunks = 0;
+        int chunksize = 0;
+        StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+        {
+          doc.clear();
+          deserializeJson(doc, json);
+          json.close();
+          data->numberOfBars = doc["num_bars"];
+          uint8_t num_tracks = doc["num_tracks"];
 
-        json.close();
-        AudioInterrupts();
+          for(int i = 0; i < num_tracks; i++) {
+            data->trackSettings[i].layerCount = doc["layer_count"][i];
+            data->trackSettings[i].quantisizeDenom = doc["quant_denom"][i];
+            data->trackSettings[i].layerMutes = doc["layer_mutes"][i];
+          }
 
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
-        LOG.println(F("Read JSON data:"));
-        serializeJsonPretty(data_json, Serial);
-        LOG.println();
-#endif
-        data->numberOfBars = data_json["num_bars"];
-        uint8_t num_tracks = data_json["num_tracks"];
-        uint8_t num_layers = data_json["num_layers"];
-
-#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)      
-        if(num_tracks != LIVESEQUENCER_NUM_TRACKS) {
-          LOG.println(F("livesequencer num tracks changed!"));
-        }
-        if(num_layers != LIVESEQUENCER_NUM_LAYERS) {
-          LOG.println(F("livesequencer num layers changed!"));
-        } 
-#endif
-        for(int i = 0; i < num_tracks; i++) {
-          data->trackSettings[i].layerCount = data_json["layer_count"][i];
-          data->trackSettings[i].quantisizeDenom = data_json["quant_denom"][i];
-          data->trackSettings[i].layerMutes = data_json["layer_mutes"][i];
+          numPatternEvents = doc["num_pattern_events"];
+          chunksize = doc["chunk_size"];
+          numPatternChunks = ceil(numPatternEvents / float(chunksize)); // 50 events per file
         }
 
-        const uint16_t numPatternEvents = data_json["num_pattern_events"];
+        if(numPatternChunks > 0) {
+          data->eventsList.clear();
+
+          for(int c = 0; c < numPatternChunks; c++) {
+            snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%02i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, c);
+            //Serial.printf("load chunk %i from file %s...", c, filename);
+            if (SD.exists(filename)) {
+              //Serial.printf("success\n", c, filename);
+
+              json = SD.open(filename, FILE_READ);
+              doc.clear();
+              deserializeJson(doc, json);
+              json.close();
+
+              serializeJsonPretty(doc, Serial);
+
+              uint16_t eventsNumber = doc["number_of_events"];
+              //Serial.printf("has %i events:\n", eventsNumber);
+
+              for(uint16_t i = 0; i < eventsNumber; i++) {
+                LiveSequencer::MidiEvent e;
+                JsonObject o = doc[String(i)];
+                deserializeJSONToEvent(o, e);
+                data->eventsList.emplace_back(e);
+              }
+            }
+          }
+        }
+
         //LOG.printf("load num: %i\n", numPatternEvents);
-        data->eventsList.clear();
-        for(uint index = 0; index < numPatternEvents; index++) {
-          LiveSequencer::MidiEvent e;
-          e.source = data_json["pattern_event"][index]["source"];
-          e.patternMs = data_json["pattern_event"][index]["patternMs"];
-          e.patternNumber = data_json["pattern_event"][index]["patternNumber"];
-          e.track = data_json["pattern_event"][index]["track"];
-          e.layer = data_json["pattern_event"][index]["layer"];
-          e.event = data_json["pattern_event"][index]["event"];
-          e.note_in = data_json["pattern_event"][index]["note_in"];
-          e.note_in_velocity = data_json["pattern_event"][index]["note_in_velocity"];
-          data->eventsList.emplace_back(e);
-        }
-        
-        const uint8_t numSongPatterns = data_json["num_song_patterns"];
+ 
+        /*const uint8_t numSongPatterns = data_json["num_song_patterns"];
         for(uint16_t p = 0; p < numSongPatterns; p++) {
           uint16_t numSongPatternEvents = data_json["num_song_pattern_events"][p];
           uint index = 0;
@@ -1713,11 +1752,12 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             data->songEvents[p].emplace_back(e);
             index++;
           }
-        }
+        }*/
 
         data->currentBpm = seq.bpm;
 
         liveSeq.init();
+        AudioInterrupts();
         return (true);
       }
 #ifdef DEBUG
@@ -1736,7 +1776,8 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 #endif
     }
   }
-  return (false);
+  AudioInterrupts();
+  return (true);
 }
 
 /******************************************************************************

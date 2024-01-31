@@ -739,7 +739,6 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 
 // Buffer-size define for load/save configuration as JSON
 #define JSON_BUFFER_SIZE 12000
-#define JSON_BUFFER_SIZE_BIG 100000 // 500kB 
 
 // Internal configuration structure
 typedef struct dexed_s
