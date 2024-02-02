@@ -85,7 +85,7 @@ public:
     bool lastPlayedNoteChanged = false;
     bool isSongMode = false;
     int currentBpm = 90;
-    uint8_t performance_ID = 0;
+    uint8_t performanceID = 0;
   };
 
   LiveSequencer();

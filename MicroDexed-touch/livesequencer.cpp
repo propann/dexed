@@ -141,8 +141,12 @@ bool LiveSequencer::isEventMute(const MidiEvent e) const {
 
 void LiveSequencer::onSongStopped(void) {
   bool incrementSongLayer = false;
+  uint8_t lastSongPattern = 0;
   for(auto &e : data.songEvents) {
     e.second.remove_if([](MidiEvent &e) { return (e.event == midi::InvalidType); });
+    if(e.first > lastSongPattern) {
+      lastSongPattern = e.first;
+    }
     for(auto &a : e.second) {
       const bool isSongMuteBegin = isEventMute(a) && (e.first == 0) && (a.patternMs == 0) && (a.patternNumber == 0);
       if(isSongMuteBegin) {
@@ -157,6 +161,7 @@ void LiveSequencer::onSongStopped(void) {
       }
     }
   }
+  data.lastSongEventPattern = lastSongPattern;
   // make more simple!
   if((data.songLayerCount < LIVESEQUENCER_NUM_LAYERS - 1) && incrementSongLayer) {
     data.songLayerCount++;
@@ -178,10 +183,6 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
           if(timeQuantization(newEvent.patternNumber, newEvent.patternMs, quantisizeMs)) {
             patternCount++; // event rounded up to start of next song pattern
           }
-        }
-        if(patternCount > data.lastSongEventPattern) {
-          data.lastSongEventPattern = patternCount;
-          DBG_LOG(printf("song increased to %i patterns...\n", data.lastSongEventPattern));
         }
         data.songEvents[patternCount].emplace_back(newEvent);
       }

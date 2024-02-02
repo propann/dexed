@@ -352,8 +352,8 @@ void handle_touchscreen_live_sequencer(void) {
           LCDML.FUNC_setGBAToLastFunc();
           display.setTextSize(2);
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          DBG_LOG(printf("perf id %i\n", liveSeqData->performance_ID));
-          LCDML.OTHER_jumpToFunc(UI_func_load_performance, liveSeqData->performance_ID);
+          DBG_LOG(printf("perf id %i\n", liveSeqData->performanceID));
+          LCDML.OTHER_jumpToFunc(UI_func_load_performance, liveSeqData->performanceID);
         }
         if(check_button_on_grid(BUTTON_COLUMNS_X[5], 25)) {
           // save
@@ -528,8 +528,8 @@ void drawGUI(uint16_t &guiFlags) {
       } else {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 10, "NO", "LAYERS", 1); // switch modes
       }
-      uint16_t layerBgColor;
-      uint8_t layerBgCode;
+      uint16_t layerBgColor = GREY2;
+      uint8_t layerBgCode = 0;
       handleLayerEditButtonColor(songLayerMode, layerBgColor, layerBgCode);
       for(int songLayer = 0; songLayer < LIVESEQUENCER_NUM_LAYERS; songLayer++) {
         const int buttonY = 10;// + songLayer * 5;
