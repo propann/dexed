@@ -93,6 +93,8 @@ using namespace TeensyTimerTool;
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
 
+#include "livesequencer.h"
+
 elapsedMillis sysinfo_millis;
 elapsedMillis midi_start_delay;
 uint8_t sysinfo_sound_state = 0;
@@ -1449,6 +1451,9 @@ void setup()
       case 8:
         LCDML.OTHER_jumpToFunc(UI_func_mixer);
         break;
+      case 9:
+        LCDML.OTHER_jumpToFunc(UI_func_livesequencer);
+        break;
       case 50:
         LCDML.OTHER_jumpToFunc(UI_func_information);
         break;
@@ -2010,6 +2015,8 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
     handle_touchscreen_mute_matrix();
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_livesequencer))
+    handle_touchscreen_live_sequencer();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
     handle_touchscreen_custom_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
@@ -4234,8 +4241,12 @@ FLASHMEM void dac_unmute(void)
   seq.DAC_mute_state = false;
 }
 
+LiveSequencer liveSeq;
+
+
 void handleStart(void)
 {
+  liveSeq.handleStart();
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
     display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
@@ -4249,6 +4260,7 @@ void handleStart(void)
     //seq.total_played_patterns = 0;//MIDI SLAVE SYNC TEST
 
     seq.step = 0;
+    liveSeq.handlePatternBegin();
     //seq.step=1; //MIDI SLAVE SYNC TEST
     seq.current_song_step = 0;
     seq.arp_note = 0;
@@ -4301,6 +4313,7 @@ void handleStop(void)
 {
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
+    liveSeq.handleStop();
     if (seq.running)
     {
       sequencer_part2();

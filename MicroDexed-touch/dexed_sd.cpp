@@ -164,6 +164,10 @@ File json;
 char filename[CONFIG_FILENAME_LEN];
 const char* sError = "*ERROR*";
 
+#include "livesequencer.h"
+#include "ui_livesequencer.h"
+extern LiveSequencer liveSeq;
+
 /******************************************************************************
    SD BANK/VOICE LOADING
  ******************************************************************************/
@@ -1536,6 +1540,243 @@ FLASHMEM bool save_sd_epiano_json(uint8_t number)
   return (false);
 }
 
+FLASHMEM void serializeEventToJSON(JsonObject &o, std::list<LiveSequencer::MidiEvent>::iterator it) {
+  o["source"] = it->source;
+  o["patternMs"] = it->patternMs;
+  o["patternNumber"] = it->patternNumber;
+  o["track"] = it->track;
+  o["layer"] = it->layer;
+  o["event"] = it->event;
+  o["note_in"] = it->note_in;
+  o["note_in_velocity"] = it->note_in_velocity;
+}
+
+FLASHMEM void deserializeJSONToEvent(JsonObject &o, LiveSequencer::MidiEvent &e) {
+  e.source = o["source"];
+  e.patternMs = o["patternMs"];
+  e.patternNumber = o["patternNumber"];
+  e.track = o["track"];
+  e.layer = o["layer"];
+  e.event = o["event"];
+  e.note_in = o["note_in"];
+  e.note_in_velocity = o["note_in_velocity"];
+}
+
+void writeChunk(const char* filename, int chunkNumber, const int &NUM_EVENTS_PER_FILE, uint16_t numEvents, std::list<LiveSequencer::MidiEvent>::iterator &it) {
+  SD.remove(filename);
+  json = SD.open(filename, FILE_WRITE);
+  if (json) {
+    const uint16_t eventsWritten = chunkNumber * NUM_EVENTS_PER_FILE;
+    const uint16_t numChunkEvents = min(numEvents - eventsWritten, NUM_EVENTS_PER_FILE);
+    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+    doc["number_of_events"] = numChunkEvents;
+    //Serial.printf("save: %i chunk events\n", numChunkEvents);
+    // Serial.printf("has %i events\n", numChunkEvents);
+    for (uint16_t i = 0; i < numChunkEvents; i++) {
+      JsonObject o = doc.createNestedObject(i);
+      serializeEventToJSON(o, it++);
+    }
+    serializeJsonPretty(doc, json);
+    //serializeJsonPretty(doc, Serial);
+    json.close();
+  }
+}
+
+void readChunk(const char *filename, std::list<LiveSequencer::MidiEvent> &list) {
+  if (SD.exists(filename)) {
+    // Serial.printf("success\n", c, filename);
+    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+    json = SD.open(filename, FILE_READ);
+    doc.clear();
+    deserializeJson(doc, json);
+    json.close();
+
+    uint16_t numChunkEvents = doc["number_of_events"];
+    //Serial.printf("load: %i chunk events\n", numChunkEvents);
+
+    for (uint16_t i = 0; i < numChunkEvents; i++) {
+      LiveSequencer::MidiEvent e;
+      JsonObject o = doc[String(i)];
+      deserializeJSONToEvent(o, e);
+      list.emplace_back(e);
+    }
+  }
+}
+
+FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
+{
+  if (sd_card > 0) {
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME);
+
+#ifdef DEBUG
+    LOG.print(F("Saving live sequencer config "));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
+#endif
+    AudioNoInterrupts();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    uint16_t numPatternChunks = 0;
+    uint8_t lastSongPattern = 0;
+    LiveSequencer::LiveSeqData *data = liveSeq.getData();
+
+    static constexpr int NUM_EVENTS_PER_FILE = 50; // never change this!
+    uint16_t numPatternEvents = data->eventsList.size();
+
+    if (json) {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+      data_json["num_bars"] = data->numberOfBars;
+      data_json["num_tracks"] = LIVESEQUENCER_NUM_TRACKS;
+      for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+        data_json["layer_count"][i] = data->trackSettings[i].layerCount;
+        data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
+        data_json["layer_mutes"][i] = data->trackSettings[i].layerMutes;
+      }
+
+      data_json["num_pattern_events"] = numPatternEvents;
+      lastSongPattern = data->songPatternCount;
+      data_json["last_song_pattern"] = lastSongPattern;
+      data_json["song_layer_count"] = data->songLayerCount;
+      for(int i = 0; i <= lastSongPattern; i++) {
+        // write num song pattern events per song pattern
+        data_json["song_pattern_events"][i] = data->songEvents[i].size();
+      }
+      data_json["chunk_size"] = NUM_EVENTS_PER_FILE;
+      numPatternChunks = ceil(numPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
+      
+      serializeJsonPretty(data_json, json);
+      //serializeJsonPretty(data_json, Serial);
+      json.close();
+    }
+
+    // save pattern event chunks
+    //Serial.printf("pattern chunks: %i:\n", numPatternChunks);
+    std::list<LiveSequencer::MidiEvent>::iterator it = data->eventsList.begin();
+    for(int chunkNumber = 0; chunkNumber < numPatternChunks; chunkNumber++) {
+      snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, chunkNumber);
+      writeChunk(filename, chunkNumber, NUM_EVENTS_PER_FILE, numPatternEvents, it);
+    }
+
+    // loop through song patterns
+    for(uint8_t songPattern = 0; songPattern <= lastSongPattern; songPattern++) {
+      std::list<LiveSequencer::MidiEvent> songPatternEvents = data->songEvents[songPattern];
+      const uint16_t numSongPatternEvents = songPatternEvents.size();
+      const uint16_t numSongPatternChunks = ceil(numSongPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
+      //Serial.printf("song pattern %i has %i chunks:\n", songPattern, numSongPatternChunks);
+      // save song pattern event chunks
+      std::list<LiveSequencer::MidiEvent>::iterator it = songPatternEvents.begin();
+      for(int chunkNumber = 0; chunkNumber < numSongPatternChunks; chunkNumber++) {
+        snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
+        writeChunk(filename, chunkNumber, NUM_EVENTS_PER_FILE, numSongPatternEvents, it);
+      }
+    }
+  }
+
+  AudioInterrupts();
+  return (true);
+}
+
+
+
+FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
+{
+  //return;
+  AudioNoInterrupts();
+
+  if (sd_card > 0) {
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME);
+    
+    if (SD.exists(filename)) {
+#ifdef DEBUG
+      LOG.print(F("Found livesequencer configuration ["));
+      LOG.print(filename);
+      LOG.println(F("]... loading..."));
+#endif
+      json = SD.open(filename, FILE_READ);
+      if (json) {
+        LiveSequencer::LiveSeqData *data = liveSeq.getData();
+        uint16_t numPatternEvents = 0;
+        int numPatternChunks = 0;
+        uint16_t chunksize = 0;
+        uint8_t lastSongPattern = 0;
+        StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+        std::vector<int> numSongPatternEvents;
+        {
+          doc.clear();
+          deserializeJson(doc, json);
+          json.close();
+          data->numberOfBars = doc["num_bars"];
+          uint8_t num_tracks = doc["num_tracks"];
+
+          for(int i = 0; i < num_tracks; i++) {
+            data->trackSettings[i].layerCount = doc["layer_count"][i];
+            data->trackSettings[i].quantisizeDenom = doc["quant_denom"][i];
+            data->trackSettings[i].layerMutes = doc["layer_mutes"][i];
+          }
+
+          numPatternEvents = doc["num_pattern_events"];
+          lastSongPattern = doc["last_song_pattern"];
+          data->songLayerCount = doc["song_layer_count"];
+          for(int i = 0; i <= lastSongPattern; i++) {
+            int num = doc["song_pattern_events"][i];
+            numSongPatternEvents.push_back(num);
+          }
+          chunksize = doc["chunk_size"];
+          numPatternChunks = ceil(numPatternEvents / float(chunksize)); // 50 events per file
+        }
+
+        if(numPatternChunks > 0) {
+          data->eventsList.clear();
+
+          // load pattern chunks
+          for(int patternChunk = 0; patternChunk < numPatternChunks; patternChunk++) {
+            snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, patternChunk);
+            //Serial.printf("load chunk %i from file %s...", c, filename);
+            readChunk(filename, data->eventsList);
+          }
+        }
+
+        data->songEvents.clear();
+        for(uint8_t songPattern = 0; songPattern <= lastSongPattern; songPattern++) {
+          // read numSongPatternEvents per song pattern
+          const uint16_t numSongPatternChunks = ceil(numSongPatternEvents[songPattern] / float(chunksize)); // 50 events per file
+
+          for(int chunkNumber = 0; chunkNumber < numSongPatternChunks; chunkNumber++) {
+            snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
+            readChunk(filename, data->songEvents[songPattern]);
+          }
+        }
+        
+        data->currentBpm = seq.bpm;
+        data->performanceID = number;
+        liveSeq.init();
+        
+        AudioInterrupts();
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
+#endif
+    }
+  }
+  AudioInterrupts();
+  return (true);
+}
+
 /******************************************************************************
    SD SYS
  ******************************************************************************/
@@ -2580,6 +2821,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
   save_sd_braids_json(number);
   save_sd_multiband_json(number);
   save_sd_sidechain_json(number);
+  save_sd_livesequencer_json(number);
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -3035,6 +3277,8 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         }
         else
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+        
+        load_sd_livesequencer_json(number); // FIXME: needs seq.bpm
         return (true);
       }
 #ifdef DEBUG

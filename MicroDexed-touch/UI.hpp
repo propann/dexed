@@ -1002,6 +1002,11 @@ FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const ch
       display.setTextColor(COLOR_SYSTEXT, RED);
       display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, RED);
     }
+    else if (color == 3) // button has highlighted color
+    {
+      display.setTextColor(COLOR_SYSTEXT, MIDDLEGREEN);
+      display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, MIDDLEGREEN);
+    }
     display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6);
     display.print(t1);
     if (t2[1] == '\0')
@@ -20088,7 +20093,7 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
       if (LCDML.BT_checkDown())
       {
         configuration.sys.load_at_startup_page++;
-        if (configuration.sys.load_at_startup_page > 8)
+        if (configuration.sys.load_at_startup_page > 9)
           configuration.sys.load_at_startup_page = 50; // System Info Page
       }
       else if (LCDML.BT_checkUp())
@@ -20096,7 +20101,7 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
         if (configuration.sys.load_at_startup_page > 0)
         {
           if (configuration.sys.load_at_startup_page == 50) // System Info Page
-            configuration.sys.load_at_startup_page = 8;
+            configuration.sys.load_at_startup_page = 9;
           else
             configuration.sys.load_at_startup_page--;
         }
@@ -20129,6 +20134,8 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
       show(2, 1, 17, "Braids");
     else if (configuration.sys.load_at_startup_page == 8)
       show(2, 1, 17, "Master Mixer");
+    else if (configuration.sys.load_at_startup_page == 9)
+      show(2, 1, 17, "Live Sequencer");
     else if (configuration.sys.load_at_startup_page == 50)
       show(2, 1, 17, "System Info");
   }

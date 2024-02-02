@@ -28,8 +28,6 @@
 #include "synth_dexed.h"
 #include "ILI9341_t3n.h"
 
-#include <MIDI.h>
-
 extern ILI9341_t3n display;
 extern LCDMenuLib2 LCDML;
 extern bool remote_active;
@@ -76,6 +74,9 @@ extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern multisample_s msp[NUM_MULTISAMPLES];
+
+#include "livesequencer.h"
+extern LiveSequencer liveSeq;
 
 void seq_live_recording(void)
 {
@@ -202,6 +203,7 @@ void handle_pattern_end_in_song_mode()
   if (seq.step > 15 - seq.pattern_len_dec)  // change to vari length
   {
     seq.step = 0;
+    liveSeq.handlePatternBegin();
     //seq.total_played_patterns++;//MIDI SLAVE SYNC TEST
     if (seq.play_mode == false) // play mode = full song
     {

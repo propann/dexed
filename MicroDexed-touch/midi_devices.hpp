@@ -125,10 +125,14 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #define MIDI_BY_USB_HOST "MIDI_USB_HOST"
 #define MIDI_BY_USB "USB_MIDI"
 
+#include "livesequencer.h"
+
+extern LiveSequencer liveSeq;
 //void handle_pitchbend((byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event));
 
 void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event)
 {
+  liveSeq.handleMidiEvent(event, inData1, inData2);
 #ifdef DEBUG
   char text[10];
 #endif

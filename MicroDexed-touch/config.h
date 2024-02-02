@@ -330,6 +330,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define BRAIDS_CONFIG_NAME "braids"
 #define MULTIBAND_CONFIG_NAME "multiband"
 #define SIDECHAIN_CONFIG_NAME "sc"
+#define LIVESEQUENCER_CONFIG_NAME "liveseq"
 
 #define MAX_PERF_MOD 30
 
