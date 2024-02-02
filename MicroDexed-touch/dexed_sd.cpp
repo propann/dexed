@@ -1640,6 +1640,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       data_json["num_pattern_events"] = numPatternEvents;
       lastSongPattern = data->songPatternCount;
       data_json["last_song_pattern"] = lastSongPattern;
+      data_json["song_layer_count"] = data->songLayerCount;
       for(int i = 0; i <= lastSongPattern; i++) {
         // write num song pattern events per song pattern
         data_json["song_pattern_events"][i] = data->songEvents[i].size();
@@ -1720,6 +1721,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 
           numPatternEvents = doc["num_pattern_events"];
           lastSongPattern = doc["last_song_pattern"];
+          data->songLayerCount = doc["song_layer_count"];
           for(int i = 0; i <= lastSongPattern; i++) {
             int num = doc["song_pattern_events"][i];
             numSongPatternEvents.push_back(num);

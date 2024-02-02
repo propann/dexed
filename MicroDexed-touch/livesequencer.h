@@ -100,6 +100,7 @@ public:
   void changeNumberOfBars(uint8_t num);
   void deleteAllSongEvents(void);
   void fillTrackLayer();
+  void deleteLiveSequencerData(void);
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:

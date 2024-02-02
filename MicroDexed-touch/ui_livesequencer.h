@@ -19,7 +19,7 @@ static constexpr int LIVESEQUENCER_NUM_LAYERS = 4;
 
 enum LayerMode {
   LAYER_MUTE = 0,
-  LAYER_MERGE_UP,
+  LAYER_MERGE,
   LAYER_DELETE,
   LAYER_MODE_NUM
 };
@@ -32,7 +32,7 @@ enum PagePattern {
 
 enum PageSong {
   PAGE_SONG_LAYERS = PAGE_PATT_NUM + 1,
-  PAGE_SONG_AUTOMATIONS,
+  PAGE_SONG_SETTINGS,
   PAGE_SONG_NUM
 };
 

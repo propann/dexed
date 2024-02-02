@@ -157,6 +157,7 @@ void LiveSequencer::onSongStopped(void) {
       }
     }
   }
+  // make more simple!
   if((data.songLayerCount < LIVESEQUENCER_NUM_LAYERS - 1) && incrementSongLayer) {
     data.songLayerCount++;
     data.songLayersChanged = true;
@@ -256,21 +257,27 @@ void LiveSequencer::fillTrackLayer(void) {
 
 void LiveSequencer::changeNumberOfBars(uint8_t num) {
   if(num != data.numberOfBars) {
-    data.pendingEvents.clear();
-    data.eventsList.clear();
-    deleteAllSongEvents();
-    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-      data.trackSettings[track].layerCount = 0;
-      data.trackSettings[track].layerMutes = 0;
-    }
     data.numberOfBars = num;
-    init();
+    deleteLiveSequencerData();
   }
+}
+
+void LiveSequencer::deleteLiveSequencerData(void) {
+  data.pendingEvents.clear();
+  data.eventsList.clear();
+  deleteAllSongEvents();
+  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+    data.trackSettings[track].layerCount = 0;
+    data.trackSettings[track].layerMutes = 0;
+  }
+  data.trackLayersChanged = true;
+  init();
 }
 
 void LiveSequencer::deleteAllSongEvents(void) {
   data.songEvents.clear();
   data.lastSongEventPattern = 0;
+  data.songLayerCount = 0;
 
   for(auto &e : data.eventsList) {
     if(e.source == EVENT_SONG) {
@@ -281,10 +288,11 @@ void LiveSequencer::deleteAllSongEvents(void) {
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.trackSettings[i].layerMutes = 0;
   }
+  data.songLayersChanged = true;
 }
 
 void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
-  if((layer == 0) && (action == LayerMode::LAYER_MERGE_UP)) {
+  if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
   for(auto &e : data.songEvents) {
@@ -297,7 +305,7 @@ void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
 }
 
 void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
-  if((layer == 0) && (action == LayerMode::LAYER_MERGE_UP)) {
+  if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
 
@@ -328,7 +336,7 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode act
 void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
   if(e.layer == layer) {
     switch(action) {
-    case LayerMode::LAYER_MERGE_UP:
+    case LayerMode::LAYER_MERGE:
       // layer 0 must not be shifted up
       if(e.layer > 0) { 
         e.layer--;
@@ -585,7 +593,7 @@ void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        trackLayerAction(i, 1, LayerMode::LAYER_MERGE_UP); // merge them
+        trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them
         // reset fillNotes to user values
         data.fillNotes.number = 4;
         data.fillNotes.offset = 0;
