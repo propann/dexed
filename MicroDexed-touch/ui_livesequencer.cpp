@@ -396,9 +396,7 @@ void drawGUI(uint16_t &guiFlags) {
       }
     } else {
       const float progressPattern = liveSeqData->patternTimer / float(liveSeqData->patternLengthMs);
-      // fixme progress >1.0 when stopping
       const float progressTotal = std::min(1.0f, (progressPattern + liveSeqData->currentPattern) / float(liveSeqData->numberOfBars));
-
       display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
@@ -443,6 +441,7 @@ void drawGUI(uint16_t &guiFlags) {
   
   if(guiFlags & clearBottomArea) {
     const uint16_t bgColor = isLayerViewActive ? COLOR_BACKGROUND : GREY2; // gray for tools
+    display.console = true;
     display.fillRect(0, 76, DISPLAY_WIDTH, DISPLAY_HEIGHT - 75, bgColor);
     DBG_LOG(printf("clear bottom\n"));
   }
@@ -481,6 +480,7 @@ void drawGUI(uint16_t &guiFlags) {
           } else {
             if (guiFlags & drawLayerButtons) {
               // clear button
+              display.console = true;
               display.fillRect(BUTTON_COLUMNS_X[track] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
             }
           }
@@ -537,6 +537,7 @@ void drawGUI(uint16_t &guiFlags) {
           drawLayerButton(liveSeqData->isSongMode, songLayerMode, songLayer, true, layerBgCode, BUTTON_COLUMNS_X[2 + songLayer], buttonY);
         } else {
           // clear button
+          display.console = true;
           display.fillRect(BUTTON_COLUMNS_X[2 + songLayer] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY2);
         }
       }
