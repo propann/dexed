@@ -13,6 +13,9 @@ extern bool check_button_on_grid(uint8_t x, uint8_t y);
 extern void handleStart();
 extern void handleStop();
 
+extern void UI_func_load_performance(uint8_t param);
+extern void UI_func_save_performance(uint8_t param);
+
 extern bool remote_active;
 extern int numTouchPoints;
 
@@ -39,7 +42,6 @@ void applyScreenRedrawGuiFlags();
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqPtr = sequencer;
   liveSeqData = sequencer->getData();
-  
 }
 
 void UI_LiveSequencer::init(void) {
@@ -90,7 +92,7 @@ void UI_func_livesequencer(uint8_t param) {
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
     guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
-    guiUpdateFlags |= liveSeqData->songLayersChanged ? (drawSongSettings) : 0;
+    guiUpdateFlags |= (liveSeqData->songLayersChanged && liveSeqData->isSongMode) ? (drawSongSettings) : 0;
     guiUpdateFlags |= (liveSeqData->isRunning || liveSeqData->stoppedFlag) ? (drawActiveNotes) : 0;
 
     if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_SETINGS) {
@@ -119,7 +121,6 @@ void applyScreenRedrawGuiFlags() {
       break;
 
     case PageSong::PAGE_SONG_SETTINGS:
-      // todo
       guiUpdateFlags |= drawSongSettings | drawDeleteSong;
       break;
     }
@@ -201,10 +202,11 @@ void handle_touchscreen_live_sequencer(void) {
             if(liveSeqData->pendingEvents.size()) {
               liveSeqData->pendingEvents.clear(); // clear pending
             } else {
-              if(++trackLayerMode == LayerMode::LAYER_MODE_NUM) {
-                trackLayerMode = LayerMode::LAYER_MUTE;
-              }
+              // track layer actions only for pattern mode
               if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS) {
+                if(++trackLayerMode == LayerMode::LAYER_MODE_NUM) {
+                  trackLayerMode = LayerMode::LAYER_MUTE;
+                }
                 guiUpdateFlags |= drawLayerButtons;
               }
             }
@@ -345,6 +347,21 @@ void handle_touchscreen_live_sequencer(void) {
             }
           }
         }
+        if(check_button_on_grid(BUTTON_COLUMNS_X[4], 25)) {
+          // load
+          LCDML.FUNC_setGBAToLastFunc();
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          DBG_LOG(printf("perf id %i\n", liveSeqData->performance_ID));
+          LCDML.OTHER_jumpToFunc(UI_func_load_performance, liveSeqData->performance_ID);
+        }
+        if(check_button_on_grid(BUTTON_COLUMNS_X[5], 25)) {
+          // save
+          LCDML.FUNC_setGBAToLastFunc();
+          display.setTextSize(2);
+          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          LCDML.OTHER_jumpToFunc(UI_func_save_performance); // FIXME: should have current id selected
+        }
       }
     }
   }
@@ -433,7 +450,7 @@ void drawGUI(uint16_t &guiFlags) {
     const bool isSongRec = (liveSeqData->isSongMode && liveSeqData->isRecording);
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       if(guiFlags & drawTrackButtons) {
-        draw_button_on_grid(BUTTON_COLUMNS_X[track], 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? ((liveSeqData->isSongMode == false) && liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
+        draw_button_on_grid(BUTTON_COLUMNS_X[track], 5, liveSeqData->tracks[track].name, itoa(track + 1, temp_char, 10), (track == liveSeqData->activeTrack) ? (liveSeqData->isRecording ? trackButtonRecColor : 3) : 1);
       }
       if(isLayerViewActive) {
         const bool layerEditActive = !liveSeqData->isSongMode && (liveSeqData->activeTrack == track) && (trackLayerMode != LayerMode::LAYER_MUTE);
@@ -481,8 +498,6 @@ void drawGUI(uint16_t &guiFlags) {
       }
     }
 
-
-    
     if(guiFlags & drawFillNotes) {
       // fill track
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "FILL", "NOTES", 0); // label only
@@ -530,9 +545,11 @@ void drawGUI(uint16_t &guiFlags) {
     if(guiFlags & (drawDeleteSong | drawDeleteAll)) {
       const bool isDeleteAll = guiFlags & drawDeleteAll;
       // delete all livesequencer event data
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 25, "DELETE", isDeleteAll ? "ALL" : "SONG", 0); // label only
-      draw_button_on_grid(BUTTON_COLUMNS_X[1], 25, "DELETE", "NOW", 1);
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 25, "ACTIONS", "", 0); // label only
+      draw_button_on_grid(BUTTON_COLUMNS_X[1], 25, "DELETE", isDeleteAll ? "ALL" : "SONG", 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[2], 25, deleteConfirming ? "DO IT" : "", deleteConfirming ? "!" : "", deleteConfirming ? 2 : 0);
+      draw_button_on_grid(BUTTON_COLUMNS_X[4], 25, "LOAD", "PERF", 1);
+      draw_button_on_grid(BUTTON_COLUMNS_X[5], 25, "SAVE", "PERF", 1);
     }
   }
   

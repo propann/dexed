@@ -1753,8 +1753,9 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
         }
         
         data->currentBpm = seq.bpm;
-
+        data->performanceID = number;
         liveSeq.init();
+        
         AudioInterrupts();
         return (true);
       }

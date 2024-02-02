@@ -580,8 +580,9 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
 }
 
 void LiveSequencer::checkAddMetronome(void) {
-  // if we have a fresh start, add layers to have some tempo
+  // always assure we have a drum track with some tempo to begin
   if(data.eventsList.empty()) {
+    const uint8_t activeTrack = data.activeTrack;
     for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
       if(data.tracks[i].screen == UI_func_drums) {
         data.activeTrack = i;
@@ -600,6 +601,7 @@ void LiveSequencer::checkAddMetronome(void) {
         return;
       }
     }
+    data.activeTrack = activeTrack;
   }
 }
 
