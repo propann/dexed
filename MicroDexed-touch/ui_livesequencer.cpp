@@ -440,7 +440,7 @@ void drawGUI(uint16_t &guiFlags) {
   }
   
   if(guiFlags & clearBottomArea) {
-    const uint16_t bgColor = isLayerViewActive ? COLOR_BACKGROUND : GREY2; // gray for tools
+    const uint16_t bgColor = isLayerViewActive ? COLOR_BACKGROUND : GREY3; // gray for tools
     display.console = true;
     display.fillRect(0, 76, DISPLAY_WIDTH, DISPLAY_HEIGHT - 75, bgColor);
     DBG_LOG(printf("clear bottom\n"));
@@ -500,7 +500,7 @@ void drawGUI(uint16_t &guiFlags) {
 
     if(guiFlags & drawFillNotes) {
       // fill track
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "FILL", "NOTES", 0); // label only
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "FILL", "NOTES", 97); // label only
       draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 0); // label only
       draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "NUM", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
       draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);
@@ -509,16 +509,16 @@ void drawGUI(uint16_t &guiFlags) {
 
     if(guiFlags & drawPattLength) {
       // number of bars for one pattern
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 0); // label only
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
       draw_button_on_grid(BUTTON_COLUMNS_X[1], 20, "LENGTH", itoa(numberOfBarsTemp, temp_char, 10), 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[2], 20, "APPLY", "NOW", (liveSeqData->numberOfBars == numberOfBarsTemp) ? 1 : 2);
       
       display.setTextSize(1);
-      display.setTextColor((liveSeqData->numberOfBars == numberOfBarsTemp) ? COLOR_SYSTEXT : RED, GREY2);
+      display.setTextColor((liveSeqData->numberOfBars == numberOfBarsTemp) ? GREY2 : RED, GREY3);
       display.setCursor(165, 165);
-      display.printf("Changing pattern length");
+      display.printf("CHANGING PATTERN LENGTH");
       display.setCursor(165, 175);
-      display.printf("will delete all data!");
+      display.printf("WILL DELETE ALL DATA!");
     }
 
     if(guiFlags & drawSongSettings) {
@@ -546,7 +546,7 @@ void drawGUI(uint16_t &guiFlags) {
     if(guiFlags & (drawDeleteSong | drawDeleteAll)) {
       const bool isDeleteAll = guiFlags & drawDeleteAll;
       // delete all livesequencer event data
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 25, "ACTIONS", "", 0); // label only
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 25, "ACTIONS", "", 97); // label only
       draw_button_on_grid(BUTTON_COLUMNS_X[1], 25, "DELETE", isDeleteAll ? "ALL" : "SONG", 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[2], 25, deleteConfirming ? "DO IT" : "", deleteConfirming ? "!" : "", deleteConfirming ? 2 : 0);
       draw_button_on_grid(BUTTON_COLUMNS_X[4], 25, "LOAD", "PERF", 1);

@@ -984,6 +984,15 @@ FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const ch
   {
     display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
   }
+  else if (color == 97) // special case, no touch button but text only, aligned / matching the button grid (used in live sequencer)
+  {
+    display.setTextColor(COLOR_SYSTEXT, GREY3);
+    display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6);
+    display.print(t1);
+    display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 10 + CHAR_height_small);
+    display.print(t2);
+    display.setTextSize(1);
+  }
   else
   {
     display.setTextSize(1);
