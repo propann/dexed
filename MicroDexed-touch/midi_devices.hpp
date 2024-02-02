@@ -132,7 +132,7 @@ extern LiveSequencer liveSeq;
 
 void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event)
 {
-liveSeq.handleMidiEvent(event, inData1, inData2);
+  liveSeq.handleMidiEvent(event, inData1, inData2);
 #ifdef DEBUG
   char text[10];
 #endif

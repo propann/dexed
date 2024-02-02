@@ -65,8 +65,8 @@ bool save_sd_sys_json(void);
 bool load_sd_performance_json(uint8_t p);
 bool save_sd_performance_json(uint8_t p);
 
-// bool load_sd_seq_json(uint8_t p);
-// bool save_sd_seq_json(uint8_t p);
+//bool load_sd_seq_json(uint8_t p);
+//bool save_sd_seq_json(uint8_t p);
 
 bool load_sd_multisample_presets_json(uint8_t p);
 bool save_sd_multisample_presets_json(uint8_t p);

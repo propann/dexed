@@ -1570,7 +1570,7 @@ void writeChunk(const char* filename, int chunkNumber, const int &NUM_EVENTS_PER
     const uint16_t numChunkEvents = min(numEvents - eventsWritten, NUM_EVENTS_PER_FILE);
     StaticJsonDocument<JSON_BUFFER_SIZE> doc;
     doc["number_of_events"] = numChunkEvents;
-    Serial.printf("save: %i chunk events\n", numChunkEvents);
+    //Serial.printf("save: %i chunk events\n", numChunkEvents);
     // Serial.printf("has %i events\n", numChunkEvents);
     for (uint16_t i = 0; i < numChunkEvents; i++) {
       JsonObject o = doc.createNestedObject(i);
@@ -1591,10 +1591,8 @@ void readChunk(const char *filename, std::list<LiveSequencer::MidiEvent> &list) 
     deserializeJson(doc, json);
     json.close();
 
-    serializeJsonPretty(doc, Serial);
-
     uint16_t numChunkEvents = doc["number_of_events"];
-    Serial.printf("load: %i chunk events\n", numChunkEvents);
+    //Serial.printf("load: %i chunk events\n", numChunkEvents);
 
     for (uint16_t i = 0; i < numChunkEvents; i++) {
       LiveSequencer::MidiEvent e;
@@ -1649,12 +1647,12 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       numPatternChunks = ceil(numPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
       
       serializeJsonPretty(data_json, json);
-      serializeJsonPretty(data_json, Serial);
+      //serializeJsonPretty(data_json, Serial);
       json.close();
     }
 
     // save pattern event chunks
-    Serial.printf("pattern chunks: %i:\n", numPatternChunks);
+    //Serial.printf("pattern chunks: %i:\n", numPatternChunks);
     std::list<LiveSequencer::MidiEvent>::iterator it = data->eventsList.begin();
     for(int chunkNumber = 0; chunkNumber < numPatternChunks; chunkNumber++) {
       snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, chunkNumber);
@@ -1666,7 +1664,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       std::list<LiveSequencer::MidiEvent> songPatternEvents = data->songEvents[songPattern];
       const uint16_t numSongPatternEvents = songPatternEvents.size();
       const uint16_t numSongPatternChunks = ceil(numSongPatternEvents / float(NUM_EVENTS_PER_FILE)); // 50 events per file
-      Serial.printf("song pattern %i has %i chunks:\n", songPattern, numSongPatternChunks);
+      //Serial.printf("song pattern %i has %i chunks:\n", songPattern, numSongPatternChunks);
       // save song pattern event chunks
       std::list<LiveSequencer::MidiEvent>::iterator it = songPatternEvents.begin();
       for(int chunkNumber = 0; chunkNumber < numSongPatternChunks; chunkNumber++) {

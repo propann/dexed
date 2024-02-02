@@ -146,7 +146,8 @@ FLASHMEM void updateTouchScreen() {
         break;
       }
 #endif
-    } else {
+    }
+    else {
       isButtonTouched = false;
     }
   }
