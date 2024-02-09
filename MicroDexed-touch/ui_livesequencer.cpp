@@ -238,7 +238,7 @@ void handle_touchscreen_live_sequencer(void) {
                 liveSeqPtr->trackLayerAction(track, layer, LayerMode(trackLayerMode));
                 trackLayerMode = LayerMode::LAYER_MUTE;
               } else {
-                const bool isMutedOld =  liveSeqData->trackSettings[track].layerMutes & (1 << layer);
+                const bool isMutedOld =  liveSeqData->tracks[track].layerMutes & (1 << layer);
                 const bool recordMuteToSong = liveSeqData->isSongMode && liveSeqData->isRecording && liveSeqData->isRunning;
                 liveSeqPtr->setLayerMuted(track, layer, !isMutedOld, recordMuteToSong);
               }
@@ -457,7 +457,7 @@ void drawGUI(uint16_t &guiFlags) {
         for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
           const int buttonY = 10 + layer * 5;
           if (layer < liveSeqData->trackSettings[track].layerCount) {
-            const bool isMuted = liveSeqData->trackSettings[track].layerMutes & (1 << layer);
+            const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
             uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
             uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 2 : 1));
             if(layerEditActive) {

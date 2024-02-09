@@ -33,6 +33,7 @@ public:
   struct Track {
     midi::Channel channel;
     char name[4];
+    uint8_t layerMutes;
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
     std::unordered_multiset<uint8_t> activeNotes[LIVESEQUENCER_NUM_LAYERS];
@@ -41,7 +42,7 @@ public:
   struct TrackSettings {
     uint8_t layerCount;
     uint8_t quantisizeDenom;
-    uint8_t layerMutes;
+    uint8_t songStartLayerMutes;
   };
 
   enum AutomationType {
@@ -125,7 +126,6 @@ private:
   
   const std::string getEventName(midi::MidiType event) const;
   const std::string getEventSource(LiveSequencer::EventSource source) const;
-  bool isEventMute(const MidiEvent e) const;
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
