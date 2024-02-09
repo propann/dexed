@@ -2,9 +2,7 @@
 #include "LCDMenuLib2.h"
 #include "ILI9341_t3n.h"
 #include "sequencer.h"
-
 #include "livesequencer.h"
-#include "scope.h"
 
 extern LCDMenuLib2 LCDML;
 extern ILI9341_t3n display;
@@ -64,7 +62,6 @@ enum GuiUpdates : uint16_t {
   drawActiveNotes   = (1 << 8),
   drawDeleteAll     = (1 << 9),
   drawDeleteSong    = (1 << 10),
-  updateAll         = 0xFFFF
 };
 uint16_t guiUpdateFlags = 0;
 

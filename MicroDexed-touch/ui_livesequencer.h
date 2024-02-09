@@ -41,9 +41,6 @@ class UI_LiveSequencer {
 public:
   UI_LiveSequencer(LiveSequencer *sequencer);
   void init(void);
-
-private:
-
 };
 
 void UI_func_livesequencer(uint8_t param);

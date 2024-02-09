@@ -364,8 +364,6 @@ void LiveSequencer::loadNextEvent(int timeMs) {
 
 void LiveSequencer::playNextEvent(void) {
   if(playIterator != data.eventsList.end()) {
-    //LOG.printf("PLAY: ");
-    //printEvent(1, *playIterator);
     const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
 

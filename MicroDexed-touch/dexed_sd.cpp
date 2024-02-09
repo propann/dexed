@@ -1745,12 +1745,10 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
             readChunk(filename, data->songEvents[songPattern]);
           }
-        }
-        
+        }        
         data->currentBpm = seq.bpm;
         data->performanceID = number;
         data->songPatternCount = lastSongPattern;
-        
         liveSeq.init();
         
         AudioInterrupts();
