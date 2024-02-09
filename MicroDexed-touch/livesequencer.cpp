@@ -149,7 +149,10 @@ void LiveSequencer::onSongStopped(void) {
   }
   
   refreshSongLength();
-  // reapply current saved song start track mutes
+  applySongStartLayerMutes();
+}
+
+void LiveSequencer::applySongStartLayerMutes(void) {
   if(data.songLayerCount > 0) {
     for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerMutes = data.trackSettings[track].songStartLayerMutes;
@@ -486,18 +489,22 @@ void LiveSequencer::handlePatternBegin(void) {
     // just started, do not increment
     data.currentPattern = 0;
     data.songPatternCount = 0;
-    // store current track mutes for song mode and replace with possibly previously stored ones
-    if(data.isSongMode && data.isRecording) {
 
-      // save current song start layer mutes
-      for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-        for(uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
-          data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
-          const bool isLayerMuted = data.trackSettings[track].songStartLayerMutes & (1 << layer);
-          setLayerMuted(track, layer, isLayerMuted);
+    if(data.isSongMode) {
+      if(data.isRecording) {
+        // save current song start layer mutes
+        for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+          for(uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
+            data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
+            const bool isLayerMuted = data.trackSettings[track].songStartLayerMutes & (1 << layer);
+            setLayerMuted(track, layer, isLayerMuted);
+          }
         }
+      } else {
+        // load previously saved song start layer mutes
+        applySongStartLayerMutes();
       }
-    }    
+    }   
   } else {
     if((data.currentPattern + 1) == data.numberOfBars) {
       data.currentPattern = 0;

@@ -1680,7 +1680,6 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
 
 FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 {
-  //return;
   AudioNoInterrupts();
 
   if (sd_card > 0) {
@@ -1750,7 +1749,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
         
         data->currentBpm = seq.bpm;
         data->performanceID = number;
-        data->songPatternCount = lastSongPattern; // show song length
+        data->songPatternCount = lastSongPattern;
         
         liveSeq.init();
         

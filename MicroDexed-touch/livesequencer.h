@@ -112,6 +112,7 @@ private:
   void addPendingNotes(void);
   bool isSongMuteBeginEvent(MidiEvent a);
   void refreshSongLength(void);
+  void applySongStartLayerMutes(void);
 
   LiveSeqData data;
   UI_LiveSequencer ui;
