@@ -73,9 +73,7 @@ void LiveSequencer::handleStart(void) {
   data.startedFlag = true;
   data.isRunning = true;
   data.recordedToSong = false;
-  if(data.isSongMode) {
-    data.eventsList.remove_if([](MidiEvent &e){ return e.source == EventSource::EVENT_SONG; });
-  }
+  data.eventsList.remove_if([](MidiEvent &e){ return e.source == EventSource::EVENT_SONG; });
 }
 
 void LiveSequencer::allNotesOff(void) {
