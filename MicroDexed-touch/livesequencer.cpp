@@ -487,15 +487,10 @@ void LiveSequencer::handlePatternBegin(void) {
     data.currentPattern = 0;
     data.songPatternCount = 0;
 
-    if(data.isSongMode) {
-      if(data.isRecording) {
-        // save current song start layer mutes
-        for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
-          data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
-        }
-      } else {
-        // load previously saved song start layer mutes
-        applySongStartLayerMutes();
+    if(data.isSongMode && data.isRecording) {
+      // save current song start layer mutes
+      for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+        data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
       }
     }   
   } else {
@@ -530,6 +525,10 @@ void LiveSequencer::handlePatternBegin(void) {
           data.eventsList.emplace_back(e);
         }
         data.eventsList.sort(sortMidiEvent);
+        if(data.songPatternCount == 0) {
+          // load previously saved song start layer mutes
+          applySongStartLayerMutes();
+        }
       }
 
       printEvents();
