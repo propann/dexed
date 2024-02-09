@@ -2,9 +2,7 @@
 #include "LCDMenuLib2.h"
 #include "ILI9341_t3n.h"
 #include "sequencer.h"
-
 #include "livesequencer.h"
-#include "scope.h"
 
 extern LCDMenuLib2 LCDML;
 extern ILI9341_t3n display;
@@ -64,7 +62,6 @@ enum GuiUpdates : uint16_t {
   drawActiveNotes   = (1 << 8),
   drawDeleteAll     = (1 << 9),
   drawDeleteSong    = (1 << 10),
-  updateAll         = 0xFFFF
 };
 uint16_t guiUpdateFlags = 0;
 
@@ -238,7 +235,7 @@ void handle_touchscreen_live_sequencer(void) {
                 liveSeqPtr->trackLayerAction(track, layer, LayerMode(trackLayerMode));
                 trackLayerMode = LayerMode::LAYER_MUTE;
               } else {
-                const bool isMutedOld =  liveSeqData->trackSettings[track].layerMutes & (1 << layer);
+                const bool isMutedOld =  liveSeqData->tracks[track].layerMutes & (1 << layer);
                 const bool recordMuteToSong = liveSeqData->isSongMode && liveSeqData->isRecording && liveSeqData->isRunning;
                 liveSeqPtr->setLayerMuted(track, layer, !isMutedOld, recordMuteToSong);
               }
@@ -457,7 +454,7 @@ void drawGUI(uint16_t &guiFlags) {
         for(int layer = 0; layer < LIVESEQUENCER_NUM_LAYERS; layer++) {
           const int buttonY = 10 + layer * 5;
           if (layer < liveSeqData->trackSettings[track].layerCount) {
-            const bool isMuted = liveSeqData->trackSettings[track].layerMutes & (1 << layer);
+            const bool isMuted = liveSeqData->tracks[track].layerMutes & (1 << layer);
             uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
             uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 2 : 1));
             if(layerEditActive) {
@@ -522,7 +519,7 @@ void drawGUI(uint16_t &guiFlags) {
     }
 
     if(guiFlags & drawSongSettings) {
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 10, "SONG", "LAYERS", 0); // label only
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 10, "SONG", "LAYERS", 97); // label only
       if(liveSeqData->songLayerCount > 0) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 10, "LAYER", "ACTION", 2); // switch modes
       } else {
@@ -532,13 +529,13 @@ void drawGUI(uint16_t &guiFlags) {
       uint8_t layerBgCode = 0;
       handleLayerEditButtonColor(songLayerMode, layerBgColor, layerBgCode);
       for(int songLayer = 0; songLayer < LIVESEQUENCER_NUM_LAYERS; songLayer++) {
-        const int buttonY = 10;// + songLayer * 5;
+        const uint8_t buttonY = 10;
         if(songLayer < liveSeqData->songLayerCount) {
           drawLayerButton(liveSeqData->isSongMode, songLayerMode, songLayer, true, layerBgCode, BUTTON_COLUMNS_X[2 + songLayer], buttonY);
         } else {
           // clear button
           display.console = true;
-          display.fillRect(BUTTON_COLUMNS_X[2 + songLayer] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY2);
+          display.fillRect(BUTTON_COLUMNS_X[2 + songLayer] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY3);
         }
       }
     }
@@ -548,7 +545,13 @@ void drawGUI(uint16_t &guiFlags) {
       // delete all livesequencer event data
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 25, "ACTIONS", "", 97); // label only
       draw_button_on_grid(BUTTON_COLUMNS_X[1], 25, "DELETE", isDeleteAll ? "ALL" : "SONG", 1);
-      draw_button_on_grid(BUTTON_COLUMNS_X[2], 25, deleteConfirming ? "DO IT" : "", deleteConfirming ? "!" : "", deleteConfirming ? 2 : 0);
+      if(deleteConfirming) {
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 25, "DO IT", "!", 2);
+      } else {
+        // clear button
+        display.console = true;
+        display.fillRect(BUTTON_COLUMNS_X[2] * CHAR_width_small, 25 * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY3);
+      }
       draw_button_on_grid(BUTTON_COLUMNS_X[4], 25, "LOAD", "PERF", 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[5], 25, "SAVE", "PERF", 1);
     }

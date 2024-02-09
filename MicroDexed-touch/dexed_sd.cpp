@@ -834,7 +834,7 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
           data_json["vol_max"][i] = get_sample_vol_max(i);
           data_json["vol_min"][i] = get_sample_vol_min(i);
           data_json["reverb_send"][i] = get_sample_reverb_send(i);
-           data_json["f_mode"][i] = get_sample_filter_mode(i);
+          data_json["f_mode"][i] = get_sample_filter_mode(i);
           data_json["f_freq"][i] = get_sample_filter_freq(i);
           data_json["f_q"][i] = get_sample_filter_q(i);
 
@@ -1632,11 +1632,11 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
-        data_json["layer_mutes"][i] = data->trackSettings[i].layerMutes;
+        data_json["layer_mutes"][i] = data->trackSettings[i].songStartLayerMutes;
       }
 
       data_json["num_pattern_events"] = numPatternEvents;
-      lastSongPattern = data->songPatternCount;
+      lastSongPattern = data->lastSongEventPattern;
       data_json["last_song_pattern"] = lastSongPattern;
       data_json["song_layer_count"] = data->songLayerCount;
       for(int i = 0; i <= lastSongPattern; i++) {
@@ -1678,11 +1678,8 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
   return (true);
 }
 
-
-
 FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 {
-  //return;
   AudioNoInterrupts();
 
   if (sd_card > 0) {
@@ -1714,7 +1711,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           for(int i = 0; i < num_tracks; i++) {
             data->trackSettings[i].layerCount = doc["layer_count"][i];
             data->trackSettings[i].quantisizeDenom = doc["quant_denom"][i];
-            data->trackSettings[i].layerMutes = doc["layer_mutes"][i];
+            data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
           }
 
           numPatternEvents = doc["num_pattern_events"];
@@ -1748,10 +1745,10 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_song%03i_%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, songPattern, chunkNumber);
             readChunk(filename, data->songEvents[songPattern]);
           }
-        }
-        
+        }        
         data->currentBpm = seq.bpm;
         data->performanceID = number;
+        data->songPatternCount = lastSongPattern;
         liveSeq.init();
         
         AudioInterrupts();
