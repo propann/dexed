@@ -84,6 +84,7 @@ public:
     bool isRecording = false;
     bool lastPlayedNoteChanged = false;
     bool isSongMode = false;
+    bool recordedToSong = false;
     int currentBpm = 90;
     uint8_t performanceID = 0;
   };
@@ -109,6 +110,7 @@ private:
   void updateTrackChannels(bool initial = false);
   void addPendingNotes(void);
   bool isSongMuteBeginEvent(MidiEvent a);
+  void refreshSongLength(void);
 
   LiveSeqData data;
   UI_LiveSequencer ui;

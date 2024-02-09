@@ -522,7 +522,7 @@ void drawGUI(uint16_t &guiFlags) {
     }
 
     if(guiFlags & drawSongSettings) {
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 10, "SONG", "LAYERS", 0); // label only
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 10, "SONG", "LAYERS", 97); // label only
       if(liveSeqData->songLayerCount > 0) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 10, "LAYER", "ACTION", 2); // switch modes
       } else {
@@ -532,13 +532,13 @@ void drawGUI(uint16_t &guiFlags) {
       uint8_t layerBgCode = 0;
       handleLayerEditButtonColor(songLayerMode, layerBgColor, layerBgCode);
       for(int songLayer = 0; songLayer < LIVESEQUENCER_NUM_LAYERS; songLayer++) {
-        const int buttonY = 10;// + songLayer * 5;
+        const uint8_t buttonY = 10;
         if(songLayer < liveSeqData->songLayerCount) {
           drawLayerButton(liveSeqData->isSongMode, songLayerMode, songLayer, true, layerBgCode, BUTTON_COLUMNS_X[2 + songLayer], buttonY);
         } else {
           // clear button
           display.console = true;
-          display.fillRect(BUTTON_COLUMNS_X[2 + songLayer] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY2);
+          display.fillRect(BUTTON_COLUMNS_X[2 + songLayer] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY3);
         }
       }
     }
@@ -548,7 +548,13 @@ void drawGUI(uint16_t &guiFlags) {
       // delete all livesequencer event data
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 25, "ACTIONS", "", 97); // label only
       draw_button_on_grid(BUTTON_COLUMNS_X[1], 25, "DELETE", isDeleteAll ? "ALL" : "SONG", 1);
-      draw_button_on_grid(BUTTON_COLUMNS_X[2], 25, deleteConfirming ? "DO IT" : "", deleteConfirming ? "!" : "", deleteConfirming ? 2 : 0);
+      if(deleteConfirming) {
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 25, "DO IT", "!", 2);
+      } else {
+        // clear button
+        display.console = true;
+        display.fillRect(BUTTON_COLUMNS_X[2] * CHAR_width_small, 25 * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY3);
+      }
       draw_button_on_grid(BUTTON_COLUMNS_X[4], 25, "LOAD", "PERF", 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[5], 25, "SAVE", "PERF", 1);
     }

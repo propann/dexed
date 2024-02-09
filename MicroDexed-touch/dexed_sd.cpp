@@ -1636,7 +1636,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       }
 
       data_json["num_pattern_events"] = numPatternEvents;
-      lastSongPattern = data->songPatternCount;
+      lastSongPattern = data->lastSongEventPattern;
       data_json["last_song_pattern"] = lastSongPattern;
       data_json["song_layer_count"] = data->songLayerCount;
       for(int i = 0; i <= lastSongPattern; i++) {
@@ -1677,8 +1677,6 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
   AudioInterrupts();
   return (true);
 }
-
-
 
 FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 {
@@ -1752,6 +1750,8 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
         
         data->currentBpm = seq.bpm;
         data->performanceID = number;
+        data->songPatternCount = lastSongPattern; // show song length
+
         liveSeq.init();
         
         AudioInterrupts();
