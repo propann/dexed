@@ -420,7 +420,7 @@ void LiveSequencer::init(void) {
   data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
   checkBpmChanged();
   updateTrackChannels();
-  checkAddMetronome();
+  // checkAddMetronome();  11/02/2024 taken out for the moment because it causes a lot of issues for playing (only) old sequencer (metronome pattern plays when not having used the live sequencer and also when not have entered the page of live sequencer)
   DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
   printEvents();
   liveTimer.begin([this] { playNextEvent(); });
