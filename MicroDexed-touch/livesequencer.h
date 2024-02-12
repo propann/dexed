@@ -99,6 +99,7 @@ public:
   void handleStart(void);
   void handleStop(void);
   void init(void);
+  void onGuiInit(void);
   void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong = false);
   void changeNumberOfBars(uint8_t num);
   void deleteAllSongEvents(void);

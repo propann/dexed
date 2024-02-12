@@ -42,10 +42,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
-void UI_LiveSequencer::init(void) {
-  numberOfBarsTemp = liveSeqData->numberOfBars;
-}
-
 bool isLayerView() {
   return liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS || liveSeqData->currentPageIndex == PageSong::PAGE_SONG_LAYERS;
 }
@@ -76,7 +72,8 @@ void UI_func_livesequencer(uint8_t param) {
   if (LCDML.FUNC_setup()) {
 
     display.fillScreen(COLOR_BACKGROUND);
-    liveSeqPtr->init();
+    numberOfBarsTemp = liveSeqData->numberOfBars;
+    liveSeqPtr->onGuiInit();
 
     barPhases[0] = 0;
     barPhases[1] = 0;
