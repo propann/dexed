@@ -1632,6 +1632,10 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       for(int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
+        // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
+        if(data->songLayerCount == 0) {
+          data->trackSettings[i].songStartLayerMutes = data->tracks[i].layerMutes;
+        }
         data_json["layer_mutes"][i] = data->trackSettings[i].songStartLayerMutes;
       }
 
@@ -1682,10 +1686,11 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 {
   AudioNoInterrupts();
 
+  liveSeq.deleteLiveSequencerData();
+
   if (sd_card > 0) {
     number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
     snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME);
-    
     if (SD.exists(filename)) {
 #ifdef DEBUG
       LOG.print(F("Found livesequencer configuration ["));
@@ -1712,6 +1717,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             data->trackSettings[i].layerCount = doc["layer_count"][i];
             data->trackSettings[i].quantisizeDenom = doc["quant_denom"][i];
             data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
+            data->tracks[i].layerMutes = data->trackSettings[i].songStartLayerMutes;
           }
 
           numPatternEvents = doc["num_pattern_events"];
@@ -1726,8 +1732,6 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
         }
 
         if(numPatternChunks > 0) {
-          data->eventsList.clear();
-
           // load pattern chunks
           for(int patternChunk = 0; patternChunk < numPatternChunks; patternChunk++) {
             snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s_pattern%03i.json"), PERFORMANCE_CONFIG_PATH, number, LIVESEQUENCER_CONFIG_NAME, patternChunk);
@@ -1736,7 +1740,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           }
         }
 
-        data->songEvents.clear();
+        
         for(uint8_t songPattern = 0; songPattern <= lastSongPattern; songPattern++) {
           // read numSongPatternEvents per song pattern
           const uint16_t numSongPatternChunks = ceil(numSongPatternEvents[songPattern] / float(chunksize)); // 50 events per file
