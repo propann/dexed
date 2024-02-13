@@ -1278,6 +1278,7 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
             configuration.fx.delay_time[i] = 0;
           configuration.fx.delay_level_global[i] = data_json["delay_level_global"][i];
         }
+
         configuration.fx.delay1_to_delay2 = data_json["delay1_to_delay2"];
         configuration.fx.delay2_to_delay1 = data_json["delay2_to_delay1"];
         configuration.fx.reverb_roomsize = data_json["reverb_roomsize"];
@@ -1292,6 +1293,8 @@ FLASHMEM bool load_sd_fx_json(uint8_t number)
         configuration.fx.ep_chorus_depth = data_json["ep_chorus_depth"];
         configuration.fx.ep_chorus_level = data_json["ep_chorus_level"];
         configuration.fx.ep_reverb_send = data_json["ep_reverb_send"];
+        configuration.fx.ep_delay_send_1 = data_json["ep_delay1"];
+        configuration.fx.ep_delay_send_2 = data_json["ep_delay2"];
 
         check_configuration_fx();
         set_fx_params();
@@ -1375,6 +1378,8 @@ FLASHMEM bool save_sd_fx_json(uint8_t number)
       data_json["ep_chorus_depth"] = configuration.fx.ep_chorus_depth;
       data_json["ep_chorus_level"] = configuration.fx.ep_chorus_level;
       data_json["ep_reverb_send"] = configuration.fx.ep_reverb_send;
+      data_json["ep_delay1"] = configuration.fx.ep_delay_send_1;
+      data_json["ep_delay2"] = configuration.fx.ep_delay_send_2;
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
       LOG.println(F("Write JSON data:"));
@@ -2858,6 +2863,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       data_json["arp_length"] = seq.arp_length;
       data_json["arp_volume_fade"] = seq.arp_volume_fade;
       data_json["arp_style"] = seq.arp_style;
+      data_json["arp_num_notes_max"] = seq.arp_num_notes_max;
       data_json["seq_chord_vel"] = seq.chord_vel;
       data_json["seq_transpose"] = seq.transpose;
       data_json["chord_key_ammount"] = seq.chord_key_ammount;
@@ -3236,6 +3242,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.arp_length = data_json["arp_length"];
         seq.arp_volume_fade = data_json["arp_volume_fade"];
         seq.arp_style = data_json["arp_style"];
+        seq.arp_num_notes_max = data_json["arp_num_notes_max"];
         seq.chord_vel = data_json["seq_chord_vel"];
         seq.transpose = data_json["seq_transpose"];
         seq.chord_key_ammount = data_json["chord_key_ammount"];

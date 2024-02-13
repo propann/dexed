@@ -10253,23 +10253,23 @@ void update_selective_values_epiano()
   {
     setModeColor(19);
     setCursor_textGrid_small(34, 15);
-    print_formatted_number(configuration.epiano.delay_send_1, 3);
+    print_formatted_number(configuration.fx.ep_delay_send_1, 3);
   }
   if (generic_temp_select_menu == 19 && seq.edit_state)
   {
-    global_delay_in_mixer[0]->gain(5, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-    global_delay_in_mixer[0]->gain(6, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+    global_delay_in_mixer[0]->gain(5, mapfloat(configuration.fx.ep_delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+    global_delay_in_mixer[0]->gain(6, mapfloat(configuration.fx.ep_delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
   }
   if (menu_item_check(20))
   {
     setCursor_textGrid_small(38, 15);
     setModeColor(20);
-    print_formatted_number(configuration.epiano.delay_send_2, 3);
+    print_formatted_number(configuration.fx.ep_delay_send_2, 3);
   }
   if (generic_temp_select_menu == 20 && seq.edit_state)
   {
-    global_delay_in_mixer[1]->gain(5, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-    global_delay_in_mixer[1]->gain(6, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+    global_delay_in_mixer[1]->gain(5, mapfloat(configuration.fx.ep_delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+    global_delay_in_mixer[1]->gain(6, mapfloat(configuration.fx.ep_delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
   }
   if (menu_item_check(21))
     print_small_intbar(34, 17, configuration.fx.ep_reverb_send, 21, 1, 0);
@@ -10396,11 +10396,11 @@ void UI_func_epiano(uint8_t param)
         }
         else if (generic_temp_select_menu == 19)
         {
-          configuration.epiano.delay_send_1 = calc_val[state_dir](configuration.epiano.delay_send_1, ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+          configuration.fx.ep_delay_send_1 = calc_val[state_dir](configuration.fx.ep_delay_send_1, ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
         }
         else if (generic_temp_select_menu == 20)
         {
-          configuration.epiano.delay_send_2 = calc_val[state_dir](configuration.epiano.delay_send_2, ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+          configuration.fx.ep_delay_send_2 = calc_val[state_dir](configuration.fx.ep_delay_send_2, ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
         }
         else if (generic_temp_select_menu == 21)
         {
@@ -12988,7 +12988,7 @@ void update_selective_values_master_effects()
   if (menu_item_check(8))
     print_small_intbar(6, 14, configuration.fx.delay_level[0], 8, 1, 0);
   if (menu_item_check(9))
-    print_small_intbar(6, 15, configuration.epiano.delay_send_1, 9, 1, 0);
+    print_small_intbar(6, 15, configuration.fx.ep_delay_send_1, 9, 1, 0);
   if (menu_item_check(10))
     print_small_intbar(6, 16, microsynth[0].delay_send[0], 10, 1, 0);
   if (menu_item_check(11))
@@ -13024,7 +13024,7 @@ void update_selective_values_master_effects()
   if (menu_item_check(22))
     print_small_intbar(22, 14, configuration.fx.delay_level[1], 22, 1, 0);
   if (menu_item_check(23))
-    print_small_intbar(22, 15, configuration.epiano.delay_send_2, 23, 1, 0);
+    print_small_intbar(22, 15, configuration.fx.ep_delay_send_2, 23, 1, 0);
   if (menu_item_check(24))
     print_small_intbar(22, 16, microsynth[0].delay_send[1], 24, 1, 0);
   if (menu_item_check(25))
@@ -13224,15 +13224,15 @@ void UI_func_master_effects(uint8_t param)
         { // epiano delay level
           if (LCDML.BT_checkDown())
           {
-            configuration.epiano.delay_send_1 = constrain(configuration.epiano.delay_send_1 + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            configuration.fx.ep_delay_send_1 = constrain(configuration.fx.ep_delay_send_1 + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
           }
           else if (LCDML.BT_checkUp())
           {
-            configuration.epiano.delay_send_1 = constrain(configuration.epiano.delay_send_1 - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            configuration.fx.ep_delay_send_1 = constrain(configuration.fx.ep_delay_send_1 - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
           }
-          global_delay_in_mixer[0]->gain(5, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          global_delay_in_mixer[0]->gain(6, mapfloat(configuration.epiano.delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(6, 15, configuration.epiano.delay_send_1, 9, 1, 0);
+          global_delay_in_mixer[0]->gain(5, mapfloat(configuration.fx.ep_delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+          global_delay_in_mixer[0]->gain(6, mapfloat(configuration.fx.ep_delay_send_1, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+          print_small_intbar(6, 15, configuration.fx.ep_delay_send_1, 9, 1, 0);
         }
         else if (generic_temp_select_menu == 10)
         { // microsynth 1 delay1 level
@@ -13383,15 +13383,15 @@ void UI_func_master_effects(uint8_t param)
         { // ep send
           if (LCDML.BT_checkDown())
           {
-            configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            configuration.fx.ep_delay_send_2 = constrain(configuration.fx.ep_delay_send_2 + ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
           }
           else if (LCDML.BT_checkUp())
           {
-            configuration.epiano.delay_send_2 = constrain(configuration.epiano.delay_send_2 - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
+            configuration.fx.ep_delay_send_2 = constrain(configuration.fx.ep_delay_send_2 - ENCODER[ENC_R].speed(), DELAY_LEVEL_MIN, DELAY_LEVEL_MAX);
           }
-          global_delay_in_mixer[1]->gain(5, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          global_delay_in_mixer[1]->gain(6, mapfloat(configuration.epiano.delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
-          print_small_intbar(22, 15, configuration.epiano.delay_send_2, 23, 1, 0);
+          global_delay_in_mixer[1]->gain(5, mapfloat(configuration.fx.ep_delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+          global_delay_in_mixer[1]->gain(6, mapfloat(configuration.fx.ep_delay_send_2, DELAY_LEVEL_MIN, DELAY_LEVEL_MAX, 0.0, 1.0));
+          print_small_intbar(22, 15, configuration.fx.ep_delay_send_2, 23, 1, 0);
         }
         else if (generic_temp_select_menu == 24)
         { // microsynth 1 delay2 level

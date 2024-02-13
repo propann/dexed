@@ -817,6 +817,8 @@ typedef struct fx_s
   uint8_t ep_chorus_depth;
   uint8_t ep_chorus_level;
   uint8_t ep_reverb_send;
+  uint8_t ep_delay_send_1;
+  uint8_t ep_delay_send_2;
 } fx_t;
 
 typedef struct epiano_s
@@ -839,8 +841,6 @@ typedef struct epiano_s
   uint8_t sound_intensity;
   uint8_t pan;
   uint8_t midi_channel;
-  uint8_t delay_send_1;
-  uint8_t delay_send_2;
 } epiano_t;
 
 typedef struct microsynth_s
