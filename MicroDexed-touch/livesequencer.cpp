@@ -428,6 +428,7 @@ void LiveSequencer::init(void) {
 }
 
 void LiveSequencer::onGuiInit(void) {
+  init();
   checkAddMetronome();
 }
 
