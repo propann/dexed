@@ -6115,6 +6115,121 @@ FLASHMEM void draw_scrollbar_custom_mappings()
   print_custom_mappings();
 }
 
+uint16_t get_overview_factor(unsigned long filelength)
+{
+  uint16_t overview_factor = 0;
+  overview_factor = (filelength / 140);
+  if (overview_factor % 2 != 0)
+    overview_factor = overview_factor - 1;
+  return overview_factor;
+}
+
+
+#if defined(COMPILE_FOR_FLASH)
+void draw_waveform_overview_in_drums_page_step2(uint8_t overview_buffer[], int end_zoomed_x_position, unsigned long filelength)
+{
+  uint8_t xspace = 0;
+  uint32_t current_pos = 0;
+  int oldy = 50;
+  uint8_t x_offset = 174;
+  uint16_t overview_factor = 0;
+  display.console = true;
+  display.fillRect(x_offset, 14, DISPLAY_WIDTH - x_offset - 11, 38, GREY4);
+
+  while (xspace < 133) // draw overview
+  {
+    display.drawLine(x_offset + 1 + (xspace - 1), oldy - 16, x_offset + 1 + xspace, overview_buffer[xspace] - 16, COLOR_SYSTEXT);
+    oldy = overview_buffer[xspace];
+    xspace = xspace + 1;
+    current_pos = current_pos + overview_factor;
+  }
+}
+#endif
+
+
+#if defined(COMPILE_FOR_FLASH)
+void draw_waveform_overview_in_drums_page_step1(int samplenumber)
+{
+  display.console = true;
+  uint8_t overview_buffer[142];
+  uint16_t xspace = 1;
+  short samplevalue = 0;
+  uint32_t current_pos = 0;
+  int end_zoomed_x_position = 0;
+  uint16_t overview_factor = 0;
+  char filename[26];
+  uint32_t filesize;
+
+  SerialFlash.opendir();
+  if (samplenumber > 0)
+  {
+    for (int f = 0; f < samplenumber; f++)
+    {
+      if (SerialFlash.readdir(filename, sizeof(filename), filesize))
+        ;
+      else
+        break;
+    }
+  }
+  SerialFlashFile f = SerialFlash.open(filename);
+  unsigned long filelength = f.size();
+
+  f.seek(44);
+  char buf[256];
+  overview_factor = get_overview_factor(filelength);
+
+  end_zoomed_x_position = current_pos;
+  //draw_end_marking(xspace);
+  xspace = 0;
+  current_pos = 0;
+  while (xspace < 140) // generate overview
+  {
+    f.read(buf, 256);
+    samplevalue = ((buf[1] * 256) + buf[0]);
+    overview_buffer[xspace] = samplevalue / 1800 + 50;
+    xspace = xspace + 1;
+    current_pos = current_pos + overview_factor;
+    f.seek(44 + current_pos);
+  }
+  draw_waveform_overview_in_drums_page_step2(overview_buffer, end_zoomed_x_position, filelength);
+
+  f.close();
+
+  // else if (fm.sample_source == 0) // SD
+  // {
+  //   File f;
+  //   File myDir = SD.open("/DRUMS");
+  //   for (uint16_t i = 0; i < samplenumber; i++)
+  //   {
+  //     f.close();
+  //     f = myDir.openNextFile();
+  //     // if (! f)  break;
+  //   }
+  //   unsigned long filelength = f.size();
+  //   f.seek(44);
+  //   char buf[256];
+  //   overview_factor = get_overview_factor(filelength);
+  //   end_zoomed_x_position = current_pos;
+  //   //draw_end_marking(xspace);
+  //   xspace = 0;
+  //   current_pos = 0;
+  //   while (xspace < 140) // generate overview
+  //   {
+  //     f.read(buf, 256);
+  //     samplevalue = ((buf[1] * 256) + buf[0]);
+  //     overview_buffer[xspace] = samplevalue / 1800 + 50;
+  //     xspace = xspace + 1;
+  //     current_pos = current_pos + overview_factor;
+  //     f.seek(44 + current_pos);
+  //   }
+  //   draw_waveform_overview_in_drums_page_step2(overview_buffer, end_zoomed_x_position, filelength);
+  //   f.close();
+  //   myDir.close();
+  // }
+
+}
+#endif
+
 FLASHMEM void UI_func_custom_mappings(uint8_t param)
 {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -6460,18 +6575,21 @@ void UI_func_drums(uint8_t param)
 
     if (generic_temp_select_menu == 0 || generic_temp_select_menu == 6)
     {
-      if (generic_temp_select_menu == 0 ){
-      ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
-      #if defined(COMPILE_FOR_FLASH)
- UI_draw_waveform_preview_sample(activesample);
- #endif
+      if (generic_temp_select_menu == 0) {
+        ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
+#if defined(COMPILE_FOR_FLASH)
+        if (seq.running == false)
+        {
+          draw_waveform_overview_in_drums_page_step1(activesample);
+        }
+#endif
 
       }
 
       display.setTextSize(1);
       setCursor_textGrid_small(20, 9);
-if (seq.edit_state ==0)
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      if (seq.edit_state == 0)
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
       if (drum_config[activesample].filter_mode == 0)
         display.print("OFF     ");
@@ -7047,8 +7165,9 @@ void seq_printVelGraphBar_single_step(uint8_t step, int color)
   }
 }
 
+
 // #if defined(COMPILE_FOR_PROGMEM)
-// void UI_draw_waveform_large(int samplenumber) // for progmem
+// void draw_waveform_overview_in_sample_editor_step1(int samplenumber) // for progmem
 // {
 //   int xspace = 0;
 //   int i = 4;
@@ -7114,7 +7233,7 @@ void draw_end_marking(uint16_t xspace)
   }
 }
 
-void draw_overview(uint8_t overview_buffer[], int end_zoomed_x_position, unsigned long filelength)
+FLASHMEM void draw_waveform_overview_in_sample_editor_step2(uint8_t overview_buffer[], int end_zoomed_x_position, unsigned long filelength)
 {
   if (wave_editor_skip_redraw_overview == false)
   {
@@ -7146,37 +7265,7 @@ void draw_overview(uint8_t overview_buffer[], int end_zoomed_x_position, unsigne
   }
 }
 
-#if defined(COMPILE_FOR_FLASH)
-void draw_waveform_overview_in_drum_page(uint8_t overview_buffer[], int end_zoomed_x_position, unsigned long filelength)
-{
-    uint8_t xspace = 0;
-    uint32_t current_pos = 0;
-    int oldy = 50;
-    uint8_t x_offset=174;
-    uint16_t overview_factor = 0;
-    display.console = true;
-      display.fillRect(x_offset, 14, DISPLAY_WIDTH - x_offset - 11, 38, GREY4);
-
-    while (xspace < 133) // draw overview
-    {
-      display.drawLine(x_offset + 1+(xspace - 1), oldy-16, x_offset +1+ xspace, overview_buffer[xspace]-16, COLOR_SYSTEXT);
-      oldy = overview_buffer[xspace];
-      xspace = xspace + 1;
-      current_pos = current_pos + overview_factor;
-    }
-}
-#endif
-
-uint16_t get_overview_factor(unsigned long filelength)
-{
-  uint16_t overview_factor = 0;
-  overview_factor = (filelength / 140);
-  if (overview_factor % 2 != 0)
-    overview_factor = overview_factor - 1;
-  return overview_factor;
-}
-
-void sample_editor_update_file_counts()
+FLASHMEM void sample_editor_update_file_counts()
 {
   if (fm.sample_source == 1) // source = FLASH
   {
@@ -7202,7 +7291,7 @@ void sample_editor_update_file_counts()
   }
 }
 
-void print_available_loop_options()
+FLASHMEM void print_available_loop_options()
 {
   if (fm.sample_source == 2 || fm.sample_source == 3)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -7216,94 +7305,8 @@ void print_available_loop_options()
   display.print(F("LOOP TYPE:"));
 }
 
-void UI_draw_waveform_preview_sample(int samplenumber)
-{
-  display.console = true;
-  uint8_t overview_buffer[142];
-  uint16_t xspace = 1;
-  short samplevalue = 0;
-  uint32_t current_pos = 0;
-  int end_zoomed_x_position = 0;
-  uint16_t overview_factor = 0;
-  char filename[26];
-  uint32_t filesize;
 
-    SerialFlash.opendir();
-    if (samplenumber > 0)
-    {
-      for (int f = 0; f < samplenumber; f++)
-      {
-        if (SerialFlash.readdir(filename, sizeof(filename), filesize))
-          ;
-        else
-          break;
-      }
-    }
-    SerialFlashFile f = SerialFlash.open(filename);
-    unsigned long filelength = f.size();
-    
-    f.seek(44);
-    char buf[256];
-    overview_factor = get_overview_factor(filelength);
-
-    end_zoomed_x_position = current_pos;
-    //draw_end_marking(xspace);
-    xspace = 0;
-    current_pos = 0;
-    while (xspace < 140) // generate overview
-    {
-      f.read(buf, 256);
-      samplevalue = ((buf[1] * 256) + buf[0]);
-      overview_buffer[xspace] = samplevalue / 1800 + 50;
-      xspace = xspace + 1;
-      current_pos = current_pos + overview_factor;
-      f.seek(44 + current_pos);
-    }
-    draw_overview(overview_buffer, end_zoomed_x_position, filelength);
-
-    f.close();
-  
-  // else if (fm.sample_source == 0) // SD
-  // {
-  //   File f;
-  //   File myDir = SD.open("/DRUMS");
-  //   for (uint16_t i = 0; i < samplenumber; i++)
-  //   {
-  //     f.close();
-  //     f = myDir.openNextFile();
-  //     // if (! f)  break;
-  //   }
-
-  //   unsigned long filelength = f.size();
-    
-  //   f.seek(44);
-  //   char buf[256];
-  //   overview_factor = get_overview_factor(filelength);
-
-
-  //   end_zoomed_x_position = current_pos;
-  //   //draw_end_marking(xspace);
-  //   xspace = 0;
-  //   current_pos = 0;
-  //   while (xspace < 140) // generate overview
-  //   {
-  //     f.read(buf, 256);
-  //     samplevalue = ((buf[1] * 256) + buf[0]);
-  //     overview_buffer[xspace] = samplevalue / 1800 + 50;
-  //     xspace = xspace + 1;
-  //     current_pos = current_pos + overview_factor;
-  //     f.seek(44 + current_pos);
-  //   }
-  //   draw_waveform_overview_in_drum_page(overview_buffer, end_zoomed_x_position, filelength);
-
-  //   f.close();
-  //   myDir.close();
-  // }
-
-}
-
-
-void UI_draw_waveform_large(int samplenumber)
+FLASHMEM void draw_waveform_overview_in_sample_editor_step1(int samplenumber)
 {
   display.console = true;
   uint8_t overview_buffer[142];
@@ -7378,7 +7381,7 @@ void UI_draw_waveform_large(int samplenumber)
       current_pos = current_pos + overview_factor;
       f.seek(44 + current_pos);
     }
-    draw_overview(overview_buffer, end_zoomed_x_position, filelength);
+   draw_waveform_overview_in_sample_editor_step2 (overview_buffer, end_zoomed_x_position, filelength);
 
     f.close();
   }
@@ -7432,7 +7435,7 @@ void UI_draw_waveform_large(int samplenumber)
       current_pos = current_pos + overview_factor;
       f.seek(44 + current_pos);
     }
-    draw_overview(overview_buffer, end_zoomed_x_position, filelength);
+    draw_waveform_overview_in_sample_editor_step2(overview_buffer, end_zoomed_x_position, filelength);
 
     f.close();
     myDir.close();
@@ -7494,7 +7497,7 @@ void UI_draw_waveform_large(int samplenumber)
         current_pos = current_pos + overview_factor;
         f.seek(44 + current_pos);
       }
-      draw_overview(overview_buffer, end_zoomed_x_position, filelength);
+    draw_waveform_overview_in_sample_editor_step2(overview_buffer, end_zoomed_x_position, filelength);
     }
 
     f.close();
@@ -7502,7 +7505,7 @@ void UI_draw_waveform_large(int samplenumber)
 }
 
 
-void UI_func_sample_editor(uint8_t param)
+FLASHMEM void UI_func_sample_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -7688,9 +7691,9 @@ void UI_func_sample_editor(uint8_t param)
     if (menuhelper_redraw)
     {
       if (fm.sample_source > 1 && fm.sample_source < 4) // MSP
-        UI_draw_waveform_large(temp_int); //array starts with 0, not 1
+        draw_waveform_overview_in_sample_editor_step1(temp_int); //array starts with 0, not 1
       else
-        UI_draw_waveform_large(temp_int + 1);
+        draw_waveform_overview_in_sample_editor_step1(temp_int + 1);
 
       menuhelper_redraw = false;
     }

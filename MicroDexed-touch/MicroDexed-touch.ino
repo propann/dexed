@@ -1419,8 +1419,8 @@ void setup()
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     else
     {
-      if (configuration.sys.boot_anim_skip==0)
-         boot_animation();
+      if (configuration.sys.boot_anim_skip == 0)
+        boot_animation();
       // Menu Startup
       switch (configuration.sys.load_at_startup_page)
       {
@@ -4270,6 +4270,11 @@ void handleStart(void)
     mb_set_compressor();
     mb_set_master();
 
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
+    {
+      display.fillRect(174, 14, DISPLAY_WIDTH - 174 - 11, 38, COLOR_BACKGROUND);
+    }
+
     if (seq.loop_start == 99) // no loop start set, start at step 0
       seq.current_song_step = 0;
     else
@@ -4328,7 +4333,11 @@ void handleStop(void)
 
       sequencer_timer.stop();
 
-      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
+      if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
+      {
+        display.fillRect(174, 14, DISPLAY_WIDTH - 174 - 11, 38, COLOR_BACKGROUND);
+      }
+      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song))
       {
         clear_song_playhead();
         sub_song_print_tracknumbers();
