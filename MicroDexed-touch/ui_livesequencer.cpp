@@ -42,10 +42,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
-bool isLayerView() {
-  return liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS || liveSeqData->currentPageIndex == PageSong::PAGE_SONG_LAYERS;
-}
-
 enum GuiUpdates : uint16_t {
   drawTopButtons    = (1 << 0),
   drawTrackButtons  = (1 << 1),
@@ -60,6 +56,8 @@ enum GuiUpdates : uint16_t {
   drawDeleteSong    = (1 << 10),
   drawSongQuant     = (1 << 11)
 };
+
+bool isLayerViewActive = false;
 uint16_t guiUpdateFlags = 0;
 uint8_t fillNotesSteps[] = { 4, 6, 8, 12, 16, 24, 32 };
 
@@ -129,6 +127,7 @@ void applyScreenRedrawGuiFlags() {
       break;
     }
   }
+  isLayerViewActive = (liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS) || (liveSeqData->currentPageIndex == PageSong::PAGE_SONG_LAYERS);
 }
 
 void handle_touchscreen_live_sequencer(void) {  
@@ -159,7 +158,7 @@ void handle_touchscreen_live_sequencer(void) {
       guiUpdateFlags |= (drawTopButtons | drawTrackButtons);
       trackLayerMode = LayerMode::LAYER_MUTE;
 
-      if(isLayerView()) {
+      if(isLayerViewActive) {
         guiUpdateFlags |= drawLayerButtons;
       }
     }
@@ -323,7 +322,7 @@ void handle_touchscreen_live_sequencer(void) {
           
           break;
       }
-      if(isLayerView() == false) {
+      if(isLayerViewActive == false) {
         // common for PATTERN and SONG
         if(check_button_on_grid(BUTTON_COLUMNS_X[1], 25)) {
           // delete confirm
@@ -364,7 +363,6 @@ void handle_touchscreen_live_sequencer(void) {
 }
 
 void drawGUI(uint16_t &guiFlags) {
-  const bool isLayerViewActive = isLayerView();
   if(remote_active) {
     display.console = true;
   }
