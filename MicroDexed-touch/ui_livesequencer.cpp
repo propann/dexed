@@ -312,13 +312,6 @@ void handle_touchscreen_live_sequencer(void) {
               }
             }
           }
-          if(check_button_on_grid(BUTTON_COLUMNS_X[0], 10)) {
-            // song layer mode
-            if(++songLayerMode == LayerMode::LAYER_MODE_NUM) {
-              songLayerMode = LayerMode::LAYER_MUTE;
-            }
-            guiUpdateFlags |= drawSongSettings;
-          }
           break;
       }
       if(isLayerView() == false) {

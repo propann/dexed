@@ -568,8 +568,14 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
     if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
       data.recordedToSong = true;
       const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
+      
       MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.currentPattern, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
-      data.songEvents[data.songPatternCount].emplace_back(e);
+      const uint16_t quantisizeMs = data.patternLengthMs / data.trackSettings[track].quantisizeDenom;
+      uint8_t patternCount = data.songPatternCount;
+      if(timeQuantization(e.patternNumber, e.patternMs, quantisizeMs)) {
+        patternCount++; // event rounded up to start of next song pattern
+      }
+      data.songEvents[patternCount].emplace_back(e);
       DBG_LOG(printf("record muted %i at %i of song pattern count %i\n", isMuted, timeToMs(data.currentPattern, data.patternTimer), data.songPatternCount));
     }
   }
