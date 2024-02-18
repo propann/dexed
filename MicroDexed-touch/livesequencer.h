@@ -135,7 +135,7 @@ private:
   void allNotesOff(void);
   
   void playNextEvent(void);
-  bool timeQuantization(uint8_t &patternNumber, uint16_t &patternMs, uint16_t multiple);
+  bool timeQuantization(MidiEvent &e, uint8_t denom);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
   void performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer);
