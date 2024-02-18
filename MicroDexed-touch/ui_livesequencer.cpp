@@ -260,7 +260,7 @@ void handle_touchscreen_live_sequencer(void) {
               case 12: liveSeqData->fillNotes.number = 16; break;
               case 16: liveSeqData->fillNotes.number = 24; break;
               case 24: liveSeqData->fillNotes.number = 32; break;
-              case 32: liveSeqData->fillNotes.number =  8; break;
+              case 32: liveSeqData->fillNotes.number =  4; break;
             }
             guiUpdateFlags |= drawFillNotes;
           }
