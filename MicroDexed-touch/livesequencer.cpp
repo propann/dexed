@@ -94,7 +94,7 @@ void LiveSequencer::printEvent(int i, MidiEvent e) {
 bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
   bool overflow = false; // overflow if event rounded to start of next pattern
   
-  if(denom != 1) {
+  if(denom > 1) {
     const uint16_t quantisizeMs = data.patternLengthMs / denom;
     const uint16_t halfStep = quantisizeMs / 2;
     uint8_t resultNumber = e.patternNumber;
