@@ -570,7 +570,7 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
       const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
       
       MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.currentPattern, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
-      const uint16_t quantisizeMs = data.patternLengthMs / data.trackSettings[track].quantisizeDenom;
+      const uint16_t quantisizeMs = data.patternLengthMs / data.songMuteQuantisizeDenom;
       uint8_t patternCount = data.songPatternCount;
       if(timeQuantization(e.patternNumber, e.patternMs, quantisizeMs)) {
         patternCount++; // event rounded up to start of next song pattern

@@ -88,6 +88,7 @@ public:
     bool recordedToSong = false;
     int currentBpm = 90;
     uint8_t performanceID = 0;
+    uint8_t songMuteQuantisizeDenom = 1;
   };
 
   LiveSequencer();

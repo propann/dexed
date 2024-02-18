@@ -58,9 +58,9 @@ enum GuiUpdates : uint16_t {
   drawActiveNotes   = (1 << 8),
   drawDeleteAll     = (1 << 9),
   drawDeleteSong    = (1 << 10),
+  drawSongQuant     = (1 << 11)
 };
 uint16_t guiUpdateFlags = 0;
-
 uint8_t fillNotesSteps[] = { 4, 6, 8, 12, 16, 24, 32 };
 
 void drawGUI(uint16_t &guiFlags);
@@ -115,7 +115,7 @@ void applyScreenRedrawGuiFlags() {
       break;
 
     case PageSong::PAGE_SONG_SETTINGS:
-      guiUpdateFlags |= drawSongSettings | drawDeleteSong;
+      guiUpdateFlags |= drawSongSettings | drawDeleteSong | drawSongQuant;
       break;
     }
   } else {
@@ -312,6 +312,15 @@ void handle_touchscreen_live_sequencer(void) {
               }
             }
           }
+          // song mute quantisize denom
+          if(check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) { 
+            liveSeqData->songMuteQuantisizeDenom *= 2;
+              if(liveSeqData->songMuteQuantisizeDenom > 8) {
+                liveSeqData->songMuteQuantisizeDenom = 1;
+              }
+              guiUpdateFlags |= drawSongQuant;
+          }
+          
           break;
       }
       if(isLayerView() == false) {
@@ -528,6 +537,12 @@ void drawGUI(uint16_t &guiFlags) {
           display.fillRect(BUTTON_COLUMNS_X[2 + songLayer] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY3);
         }
       }
+    }
+
+    if(guiFlags & drawSongQuant) {
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "MUTE", "QUANT", 97); // label only
+      const std::string text = (liveSeqData->songMuteQuantisizeDenom == 1) ? "NONE" : itoa(liveSeqData->songMuteQuantisizeDenom, temp_char, 10);
+      draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "QUANT", text.c_str(), (liveSeqData->songMuteQuantisizeDenom == 1) ? 1 : 3);
     }
 
     if(guiFlags & (drawDeleteSong | drawDeleteAll)) {
