@@ -32,8 +32,6 @@ typedef struct dexed_live_mod_s
 typedef struct ts_s
 {
   bool finished_calibration = false;
-  uint16_t temp_col_hue = 1;
-  uint8_t temp_col_sat = 240, temp_col_bright = 240;
   uint8_t virtual_keyboard_octave = 3;
   uint8_t virtual_keyboard_instrument = 1; // 1 = dexed0  2=dexed1  3=microsynth0  4=microsynth1   5=epiano  6=drums 7=braids, 8- pitched samples
   uint8_t virtual_keyboard_midi_channel = 1;
