@@ -314,10 +314,10 @@ void handle_touchscreen_live_sequencer(void) {
           // song mute quantisize denom
           if(check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) { 
             liveSeqData->songMuteQuantisizeDenom *= 2;
-              if(liveSeqData->songMuteQuantisizeDenom > 8) {
-                liveSeqData->songMuteQuantisizeDenom = 1;
-              }
-              guiUpdateFlags |= drawSongQuant;
+            if(liveSeqData->songMuteQuantisizeDenom > 8) {
+              liveSeqData->songMuteQuantisizeDenom = 1;
+            }
+            guiUpdateFlags |= drawSongQuant;
           }
           
           break;
