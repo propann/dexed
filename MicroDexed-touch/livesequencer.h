@@ -10,13 +10,15 @@
 #include "LCDMenuLib2_typedef.h"
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 
 class LiveSequencer {
 
 public:
   enum EventSource : uint8_t {
     EVENT_SONG = 0,
-    EVENT_PATTERN = 1
+    EVENT_PATTERN = 1,
+    EVENT_ARP = 2
   };
 
   struct MidiEvent {
@@ -51,8 +53,26 @@ public:
   };
 
   struct FillNotes {
+    EventSource source;
     uint8_t number;
     uint8_t offset;
+  };
+
+  enum ArpMode {
+    ARP_DOWN,
+    ARP_UP,
+    ARP_DOWNUP,
+    ARP_UPDOWN,
+    ARP_RANDOM
+  };
+
+  struct ArpSettings {
+    uint8_t amount; // 0, 1, 2, ... per bar
+    ArpMode mode;
+    uint8_t length;
+    bool latch;
+    std::list<uint8_t> arpNotes;
+    std::list<uint8_t>::iterator arpIt;
   };
 
   struct LiveSeqData {
@@ -64,9 +84,10 @@ public:
 
     // volatile
     Track tracks[LIVESEQUENCER_NUM_TRACKS];
+    ArpSettings arpSettings;
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     uint8_t currentPattern = 0;
-    FillNotes fillNotes = { 4, 0 }; // user default
+    FillNotes fillNotes = { EVENT_PATTERN, 4, 0 }; // user default
     unsigned long patternLengthMs;
     uint8_t activeTrack = 0;
     elapsedMillis patternTimer;

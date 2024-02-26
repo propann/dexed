@@ -20,6 +20,8 @@ extern void UI_func_braids(uint8_t param);
 extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
+std::set<uint8_t> pressedArpKeys;
+
 LiveSequencer::LiveSequencer() :
   ui(this) {
   updateTrackChannels(true);
@@ -50,6 +52,8 @@ const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource sourc
     return "PATT";
   case EVENT_SONG:
     return "SONG";
+  case EVENT_ARP:
+    return "ARP";
   default:
     return "NONE";
   }
@@ -107,7 +111,7 @@ bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
         overflow = true;
       }
     }
-    DBG_LOG(printf("round %i.%i to %i.%i\n", patternNumber, patternMs, resultNumber, resultMs));
+    DBG_LOG(printf("round %i.%i to %i.%i\n", e.patternNumber, e.patternMs, resultNumber, resultMs));
     e.patternNumber = resultNumber;
     e.patternMs = resultMs;
   }
@@ -214,23 +218,38 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
   }
 
   // forward midi with correct channel
-  const midi::Channel ch = data.tracks[data.activeTrack].channel;
-  switch(event) {
-  case midi::NoteOn:
-    handleNoteOn(ch, note, velocity, 0);
+  const bool arpActive = data.arpSettings.amount > 0;
+  if(arpActive) {
+    switch(event) {
+    case midi::NoteOn:
+      pressedArpKeys.insert(note);
+      break;
 
-    if(data.lastPlayedNote != note) {
-      data.lastPlayedNote = note;
-      data.lastPlayedNoteChanged = true;
+      case midi::NoteOff:
+      pressedArpKeys.erase(note);
+    
+    default:
+      break;
     }
-    break;
-  
-  case midi::NoteOff:
-    handleNoteOff(ch, note, velocity, 0);
-    break;
-  
-  default:
-    break;
+  } else {
+    const midi::Channel ch = data.tracks[data.activeTrack].channel;
+    switch(event) {
+    case midi::NoteOn:
+      handleNoteOn(ch, note, velocity, 0);
+
+      if(data.lastPlayedNote != note) {
+        data.lastPlayedNote = note;
+        data.lastPlayedNoteChanged = true;
+      }
+      break;
+    
+    case midi::NoteOff:
+      handleNoteOff(ch, note, velocity, 0);
+      break;
+    
+    default:
+      break;
+    }
   }
 }
 
@@ -243,11 +262,14 @@ void LiveSequencer::fillTrackLayer(void) {
       for(uint16_t note = 0; note < data.fillNotes.number; note++) {
         const uint16_t noteOnTime = round(note * msIncrement) + msOffset;
         const uint16_t noteOffTime = noteOnTime + noteLength;
-        data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, noteOnTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
-        data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, noteOffTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
+        data.pendingEvents.emplace_back(MidiEvent { data.fillNotes.source, noteOnTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
+        data.pendingEvents.emplace_back(MidiEvent { data.fillNotes.source, noteOffTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
       }
     }
     addPendingNotes();
+    if(data.fillNotes.source == EVENT_ARP) {
+      data.trackSettings[data.activeTrack].layerCount--;
+    }
   }
 }
 
@@ -367,6 +389,23 @@ void LiveSequencer::playNextEvent(void) {
   if(playIterator != data.eventsList.end()) {
     const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
+
+    if(playIterator->source == EVENT_ARP) {
+      playIterator->note_in = *data.arpSettings.arpIt;
+      switch(playIterator->event) {
+      case midi::NoteOn:
+        break;
+
+      case midi::NoteOff:
+        if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+          data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+        }
+        break;
+
+      default:
+        break;
+      }
+    }
 
     switch(playIterator->event) {   
     case midi::ControlChange:
@@ -491,7 +530,22 @@ void LiveSequencer::handlePatternBegin(void) {
       for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
         data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
       }
-    }   
+    } 
+
+
+    data.arpSettings.amount = 16;
+
+    if(pressedArpKeys.size()) {
+      data.eventsList.remove_if([](MidiEvent &e) { return e.source == EventSource::EVENT_ARP; });
+      
+      data.arpSettings.mode = ArpMode::ARP_DOWN;
+
+      data.fillNotes.number = data.arpSettings.amount;
+      data.fillNotes.source = EventSource::EVENT_ARP;
+      data.fillNotes.offset = 0;
+      fillTrackLayer(); // have ARP times in eventList
+    }
+
   } else {
     if((data.currentPattern + 1) == data.numberOfBars) {
       data.currentPattern = 0;
@@ -506,6 +560,21 @@ void LiveSequencer::handlePatternBegin(void) {
     } else {
       data.currentPattern++;
     }
+  }
+
+  if(pressedArpKeys.size()) {
+    data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());;
+    switch(data.arpSettings.mode) {
+    case ArpMode::ARP_DOWN:
+      data.arpSettings.arpNotes.sort(std::less<int>());
+      data.arpSettings.mode = ArpMode::ARP_UP;
+      break;
+    case ArpMode::ARP_UP:
+      data.arpSettings.arpNotes.sort(std::greater<int>());
+      data.arpSettings.mode = ArpMode::ARP_DOWN;
+      break;
+    }
+    data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
   }
 
   if(data.currentPattern == 0) {
@@ -530,11 +599,16 @@ void LiveSequencer::handlePatternBegin(void) {
         }
       }
 
+      
+
       printEvents();
       playIterator = data.eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
+
+  
+
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;
 }
@@ -589,10 +663,12 @@ void LiveSequencer::checkAddMetronome(void) {
         data.activeTrack = i;
         data.fillNotes.number = 8;
         data.fillNotes.offset = 0;
+        data.fillNotes.source = EVENT_PATTERN;
         data.lastPlayedNote = 54; // hats
         fillTrackLayer();
         data.fillNotes.number = 1;
         data.fillNotes.offset = 0;
+        data.fillNotes.source = EVENT_PATTERN;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
         trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them
