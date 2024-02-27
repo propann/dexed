@@ -391,19 +391,52 @@ void LiveSequencer::playNextEvent(void) {
     const midi::Channel channel = data.tracks[playIterator->track].channel;
 
     if(playIterator->source == EVENT_ARP) {
-      playIterator->note_in = *data.arpSettings.arpIt;
-      switch(playIterator->event) {
-      case midi::NoteOn:
-        break;
+      if(data.arpSettings.arpNotes.size()) {
+        playIterator->note_in = *data.arpSettings.arpIt;
+        playIterator->track = data.activeTrack; // TODO: finish active notes on previous channel
+        
+        switch(playIterator->event) {
+        case midi::NoteOn:
+          break;
 
-      case midi::NoteOff:
-        if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-          data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+        case midi::NoteOff:
+          if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+
+            // make better!
+            bool increment = false;
+            switch(data.arpSettings.mode) {
+            case ArpMode::ARP_DOWNUP:
+            increment = true;
+            data.arpSettings.reverse = !data.arpSettings.reverse;
+            if(data.arpSettings.reverse) {
+              data.arpSettings.arpNotes.sort(std::greater<uint8_t>());
+            } else {
+              data.arpSettings.arpNotes.sort(std::less<uint8_t>());
+            }
+            
+            break;
+            case ArpMode::ARP_UPDOWN:
+            increment = true;
+            data.arpSettings.reverse = !data.arpSettings.reverse;
+            if(data.arpSettings.reverse == false) {
+              data.arpSettings.arpNotes.sort(std::greater<uint8_t>());
+            } else {
+              data.arpSettings.arpNotes.sort(std::less<uint8_t>());
+            }
+            break;
+
+            }
+            data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+            if(increment) {
+              data.arpSettings.arpIt++;
+            }
+
+          }
+          break;
+
+        default:
+          break;
         }
-        break;
-
-      default:
-        break;
       }
     }
 
@@ -470,9 +503,21 @@ void LiveSequencer::init(void) {
 void LiveSequencer::onGuiInit(void) {
   init();
   checkAddMetronome();
+
+  fillArpEvents();
 }
 
-void LiveSequencer::checkBpmChanged() {
+void LiveSequencer::fillArpEvents() {
+  data.eventsList.remove_if([](MidiEvent &e) { return e.source == EventSource::EVENT_ARP; });
+  data.arpSettings.amount = 16;
+  data.arpSettings.mode = ArpMode::ARP_DOWNUP;
+  data.fillNotes.number = data.arpSettings.amount;
+  data.fillNotes.source = EventSource::EVENT_ARP;
+  data.fillNotes.offset = 0;
+  fillTrackLayer(); // have ARP times in eventList
+}
+
+void LiveSequencer::checkBpmChanged(void) {
   if(seq.bpm != data.currentBpm) {
     float resampleFactor =  data.currentBpm / float(seq.bpm);
     data.currentBpm = seq.bpm;
@@ -530,22 +575,7 @@ void LiveSequencer::handlePatternBegin(void) {
       for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
         data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
       }
-    } 
-
-
-    data.arpSettings.amount = 16;
-
-    if(pressedArpKeys.size()) {
-      data.eventsList.remove_if([](MidiEvent &e) { return e.source == EventSource::EVENT_ARP; });
-      
-      data.arpSettings.mode = ArpMode::ARP_DOWN;
-
-      data.fillNotes.number = data.arpSettings.amount;
-      data.fillNotes.source = EventSource::EVENT_ARP;
-      data.fillNotes.offset = 0;
-      fillTrackLayer(); // have ARP times in eventList
     }
-
   } else {
     if((data.currentPattern + 1) == data.numberOfBars) {
       data.currentPattern = 0;
@@ -566,21 +596,25 @@ void LiveSequencer::handlePatternBegin(void) {
     data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());;
     switch(data.arpSettings.mode) {
     case ArpMode::ARP_DOWN:
-      data.arpSettings.arpNotes.sort(std::less<int>());
-      data.arpSettings.mode = ArpMode::ARP_UP;
+    case ArpMode::ARP_DOWNUP:
+      data.arpSettings.arpNotes.sort(std::less<uint8_t>());
+      //data.arpSettings.mode = ArpMode::ARP_UP;
       break;
     case ArpMode::ARP_UP:
-      data.arpSettings.arpNotes.sort(std::greater<int>());
-      data.arpSettings.mode = ArpMode::ARP_DOWN;
+    case ArpMode::ARP_UPDOWN:
+      data.arpSettings.arpNotes.sort(std::greater<uint8_t>());
+      //data.arpSettings.mode = ArpMode::ARP_DOWN;
       break;
     }
     data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+    data.arpSettings.reverse = false;
   }
 
   if(data.currentPattern == 0) {
     if(data.isSongMode == false) {
       // first insert pending EVENT_PATT events to events and sort
       addPendingNotes();
+      fillArpEvents();
     }
 
     if(data.eventsList.size() > 0) {
@@ -599,15 +633,11 @@ void LiveSequencer::handlePatternBegin(void) {
         }
       }
 
-      
-
       printEvents();
       playIterator = data.eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
-
-  
 
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;

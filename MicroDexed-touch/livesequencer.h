@@ -73,6 +73,8 @@ public:
     bool latch;
     std::list<uint8_t> arpNotes;
     std::list<uint8_t>::iterator arpIt;
+
+    bool reverse;
   };
 
   struct LiveSeqData {
@@ -130,6 +132,7 @@ public:
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
+  void fillArpEvents();
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);
   void addPendingNotes(void);
