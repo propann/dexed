@@ -71,10 +71,8 @@ public:
     ArpMode mode;
     uint8_t length;
     bool latch;
-    std::list<uint8_t> arpNotes;
-    std::list<uint8_t>::iterator arpIt;
-
-    bool reverse;
+    std::vector<uint8_t> arpNotes;
+    std::vector<uint8_t>::iterator arpIt;
   };
 
   struct LiveSeqData {

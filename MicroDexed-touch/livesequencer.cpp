@@ -400,37 +400,23 @@ void LiveSequencer::playNextEvent(void) {
           break;
 
         case midi::NoteOff:
-          if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-
-            // make better!
-            bool increment = false;
-            switch(data.arpSettings.mode) {
-            case ArpMode::ARP_DOWNUP:
-            increment = true;
-            data.arpSettings.reverse = !data.arpSettings.reverse;
-            if(data.arpSettings.reverse) {
-              data.arpSettings.arpNotes.sort(std::greater<uint8_t>());
-            } else {
-              data.arpSettings.arpNotes.sort(std::less<uint8_t>());
+          if(data.arpSettings.arpNotes.size() > 1) {
+            if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+              data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+              // make better!
+              switch(data.arpSettings.mode) {
+              case ArpMode::ARP_DOWNUP:
+              case ArpMode::ARP_UPDOWN:
+                std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                data.arpSettings.arpIt++;
+                break;
+              case ArpMode::ARP_RANDOM:
+                std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                break;
+              default:
+                break;
+              }
             }
-            
-            break;
-            case ArpMode::ARP_UPDOWN:
-            increment = true;
-            data.arpSettings.reverse = !data.arpSettings.reverse;
-            if(data.arpSettings.reverse == false) {
-              data.arpSettings.arpNotes.sort(std::greater<uint8_t>());
-            } else {
-              data.arpSettings.arpNotes.sort(std::less<uint8_t>());
-            }
-            break;
-
-            }
-            data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-            if(increment) {
-              data.arpSettings.arpIt++;
-            }
-
           }
           break;
 
@@ -503,7 +489,6 @@ void LiveSequencer::init(void) {
 void LiveSequencer::onGuiInit(void) {
   init();
   checkAddMetronome();
-
   fillArpEvents();
 }
 
@@ -597,17 +582,16 @@ void LiveSequencer::handlePatternBegin(void) {
     switch(data.arpSettings.mode) {
     case ArpMode::ARP_DOWN:
     case ArpMode::ARP_DOWNUP:
-      data.arpSettings.arpNotes.sort(std::less<uint8_t>());
-      //data.arpSettings.mode = ArpMode::ARP_UP;
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
       break;
     case ArpMode::ARP_UP:
     case ArpMode::ARP_UPDOWN:
-      data.arpSettings.arpNotes.sort(std::greater<uint8_t>());
-      //data.arpSettings.mode = ArpMode::ARP_DOWN;
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
+      break;
+    default:
       break;
     }
     data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-    data.arpSettings.reverse = false;
   }
 
   if(data.currentPattern == 0) {
