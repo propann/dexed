@@ -2,6 +2,7 @@
 #include "config.h"
 #include "sequencer.h"
 #include <algorithm>
+#include "TeensyTimerTool.h"
 
 extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
@@ -21,6 +22,10 @@ extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
 std::set<uint8_t> pressedArpKeys;
+
+using namespace TeensyTimerTool;
+OneShotTimer arpTimer(TCK);
+OneShotTimer liveTimer(TCK);
 
 LiveSequencer::LiveSequencer() :
   ui(this) {
@@ -52,8 +57,6 @@ const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource sourc
     return "PATT";
   case EVENT_SONG:
     return "SONG";
-  case EVENT_ARP:
-    return "ARP";
   default:
     return "NONE";
   }
@@ -267,9 +270,6 @@ void LiveSequencer::fillTrackLayer(void) {
       }
     }
     addPendingNotes();
-    if(data.fillNotes.source == EVENT_ARP) {
-      data.trackSettings[data.activeTrack].layerCount--;
-    }
   }
 }
 
@@ -390,42 +390,6 @@ void LiveSequencer::playNextEvent(void) {
     const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
 
-    if(playIterator->source == EVENT_ARP) {
-      if(data.arpSettings.arpNotes.size()) {
-        playIterator->note_in = *data.arpSettings.arpIt;
-        playIterator->track = data.activeTrack; // TODO: finish active notes on previous channel
-        
-        switch(playIterator->event) {
-        case midi::NoteOn:
-          break;
-
-        case midi::NoteOff:
-          if(data.arpSettings.arpNotes.size() > 1) {
-            if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-              data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-              // make better!
-              switch(data.arpSettings.mode) {
-              case ArpMode::ARP_DOWNUP:
-              case ArpMode::ARP_UPDOWN:
-                std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-                data.arpSettings.arpIt++;
-                break;
-              case ArpMode::ARP_RANDOM:
-                std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-                break;
-              default:
-                break;
-              }
-            }
-          }
-          break;
-
-        default:
-          break;
-        }
-      }
-    }
-
     switch(playIterator->event) {   
     case midi::ControlChange:
       switch(playIterator->note_in_velocity) {
@@ -475,6 +439,58 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
   return (patternNumber * data.patternLengthMs) + patternMs;
 }
 
+void LiveSequencer::playNextArpNote(void) {
+  if(data.arpSettings.arpNotes.size()) {
+    bool arpsPending = true;
+
+    const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
+    const int arpOnMs = (arpIntervalMs * data.arpSettings.length);
+    const int arpOffMs = arpIntervalMs - arpOnMs;
+    int delayToNextArpEventMs = 0;
+
+    const uint8_t currentNote = *data.arpSettings.arpIt;
+    if(data.arpSettings.currentNote.event == midi::NoteOn) {
+      // finish current note
+      if(data.arpSettings.arpNotes.size() > 1) {
+        if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+          data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+          switch(data.arpSettings.mode) {
+          case ArpMode::ARP_DOWNUP:
+          case ArpMode::ARP_UPDOWN:
+            std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+            data.arpSettings.arpIt++;
+            break;
+          case ArpMode::ARP_RANDOM:
+            std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+            break;
+          default:
+            break;
+          }
+        }
+      }
+      const midi::Channel channel = data.tracks[data.arpSettings.currentNote.track].channel;
+      handleNoteOff(channel, currentNote, 0, 0);
+      data.arpSettings.currentNote.event = midi::NoteOff;
+      if(++data.arpSettings.arpCount > data.arpSettings.amount) {
+        arpsPending = false;
+      }
+      delayToNextArpEventMs = arpOffMs;
+    } else {
+      // start next note
+      data.arpSettings.currentNote.event = midi::NoteOn;
+      data.arpSettings.currentNote.track = data.activeTrack;
+      const midi::Channel channel = data.tracks[data.activeTrack].channel;
+      handleNoteOn(channel, currentNote, 127, 0);
+      delayToNextArpEventMs = arpOnMs;
+    }
+    
+    if(arpsPending) {
+      //DBG_LOG(printf("count: %i\tpatLen: %ims\tamount: %i: %ims\n", data.arpSettings.arpCount, data.patternLengthMs, data.arpSettings.amount, timeMs));
+      arpTimer.trigger(delayToNextArpEventMs * 1000);
+    }
+  }
+}
+
 void LiveSequencer::init(void) {
   data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
   checkBpmChanged();
@@ -482,6 +498,7 @@ void LiveSequencer::init(void) {
   DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
   printEvents();
   liveTimer.begin([this] { playNextEvent(); });
+  arpTimer.begin([this] { playNextArpNote(); });
   data.pendingEvents.reserve(50);
   refreshSongLength();
 }
@@ -489,17 +506,10 @@ void LiveSequencer::init(void) {
 void LiveSequencer::onGuiInit(void) {
   init();
   checkAddMetronome();
-  fillArpEvents();
-}
 
-void LiveSequencer::fillArpEvents() {
-  data.eventsList.remove_if([](MidiEvent &e) { return e.source == EventSource::EVENT_ARP; });
   data.arpSettings.amount = 16;
+  data.arpSettings.length = 0.5; // 50%
   data.arpSettings.mode = ArpMode::ARP_DOWNUP;
-  data.fillNotes.number = data.arpSettings.amount;
-  data.fillNotes.source = EventSource::EVENT_ARP;
-  data.fillNotes.offset = 0;
-  fillTrackLayer(); // have ARP times in eventList
 }
 
 void LiveSequencer::checkBpmChanged(void) {
@@ -598,7 +608,6 @@ void LiveSequencer::handlePatternBegin(void) {
     if(data.isSongMode == false) {
       // first insert pending EVENT_PATT events to events and sort
       addPendingNotes();
-      fillArpEvents();
     }
 
     if(data.eventsList.size() > 0) {
@@ -622,6 +631,9 @@ void LiveSequencer::handlePatternBegin(void) {
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
   }
+  data.arpSettings.arpCount = 0;
+  data.arpSettings.currentNote.event = midi::NoteOff;
+  playNextArpNote();
 
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
   data.patternBeginFlag = true;

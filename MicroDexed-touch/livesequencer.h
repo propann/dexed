@@ -5,7 +5,6 @@
 #include <vector>
 #include <list>
 #include "MIDI.h"
-#include "TeensyTimerTool.h"
 #include "ui_livesequencer.h"
 #include "LCDMenuLib2_typedef.h"
 #include <unordered_map>
@@ -18,7 +17,6 @@ public:
   enum EventSource : uint8_t {
     EVENT_SONG = 0,
     EVENT_PATTERN = 1,
-    EVENT_ARP = 2
   };
 
   struct MidiEvent {
@@ -69,10 +67,13 @@ public:
   struct ArpSettings {
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
-    uint8_t length;
+    float length; // 0.0 - 1.0 pulse width
     bool latch;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
+
+    uint8_t arpCount;
+    MidiEvent currentNote;
   };
 
   struct LiveSeqData {
@@ -130,7 +131,6 @@ public:
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
-  void fillArpEvents();
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);
   void addPendingNotes(void);
@@ -146,9 +146,7 @@ private:
     return ((a.patternNumber * 5000) + a.patternMs + a.source) < ((b.patternNumber * 5000) + b.patternMs + b.source); // FIXME: patternLengthMs
   }
   
-  std::list<MidiEvent>::iterator playIterator;
-  TeensyTimerTool::OneShotTimer liveTimer;
-  
+  std::list<MidiEvent>::iterator playIterator;  
   const std::string getEventName(midi::MidiType event) const;
   const std::string getEventSource(LiveSequencer::EventSource source) const;
   void printEvent(int i, MidiEvent e);
@@ -157,6 +155,7 @@ private:
   void allNotesOff(void);
   
   void playNextEvent(void);
+  void playNextArpNote(void);
   bool timeQuantization(MidiEvent &e, uint8_t denom);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
