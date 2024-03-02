@@ -438,6 +438,25 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
   return (patternNumber * data.patternLengthMs) + patternMs;
 }
 
+void LiveSequencer::checkLoadNewArpNotes(void) {
+  if(pressedArpKeys.size()) {
+    data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());;
+    switch(data.arpSettings.mode) {
+    case ArpMode::ARP_DOWN:
+    case ArpMode::ARP_DOWNUP:
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
+      break;
+    case ArpMode::ARP_UP:
+    case ArpMode::ARP_UPDOWN:
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
+      break;
+    default:
+      break;
+    }
+    data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+  }
+}
+
 void LiveSequencer::playNextArpNote(void) {
   if(data.arpSettings.arpNotes.size()) {
     bool arpsPending = true;
@@ -452,6 +471,7 @@ void LiveSequencer::playNextArpNote(void) {
       // finish current note
       if(data.arpSettings.arpNotes.size() > 1) {
         if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+          checkLoadNewArpNotes();
           data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
           switch(data.arpSettings.mode) {
           case ArpMode::ARP_DOWNUP:
@@ -507,7 +527,7 @@ void LiveSequencer::onGuiInit(void) {
   checkAddMetronome();
 
   data.arpSettings.amount = 16;
-  data.arpSettings.length = 0.5; // 50%
+  data.arpSettings.length = 0.2;
   data.arpSettings.mode = ArpMode::ARP_DOWNUP;
 }
 
@@ -586,22 +606,7 @@ void LiveSequencer::handlePatternBegin(void) {
     }
   }
 
-  if(pressedArpKeys.size()) {
-    data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());;
-    switch(data.arpSettings.mode) {
-    case ArpMode::ARP_DOWN:
-    case ArpMode::ARP_DOWNUP:
-      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
-      break;
-    case ArpMode::ARP_UP:
-    case ArpMode::ARP_UPDOWN:
-      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
-      break;
-    default:
-      break;
-    }
-    data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-  }
+  checkLoadNewArpNotes();
 
   if(data.currentPattern == 0) {
     if(data.isSongMode == false) {

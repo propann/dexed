@@ -131,6 +131,7 @@ public:
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
+  void checkLoadNewArpNotes(void);
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);
   void addPendingNotes(void);
