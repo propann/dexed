@@ -68,7 +68,6 @@ void LiveSequencer::handleStop(void) {
   if(data.isSongMode) {
     onSongStopped();
   }
-  
   playIterator = data.eventsList.end();
   allNotesOff();
   data.songPatternCount = data.lastSongEventPattern; // show song length
@@ -471,7 +470,7 @@ void LiveSequencer::playNextArpNote(void) {
       const midi::Channel channel = data.tracks[data.arpSettings.currentNote.track].channel;
       handleNoteOff(channel, currentNote, 0, 0);
       data.arpSettings.currentNote.event = midi::NoteOff;
-      if(++data.arpSettings.arpCount > data.arpSettings.amount) {
+      if((++data.arpSettings.arpCount > data.arpSettings.amount) || (data.isRunning == false)) {
         arpsPending = false;
       }
       delayToNextArpEventMs = arpOffMs;
