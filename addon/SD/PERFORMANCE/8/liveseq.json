@@ -1,0 +1,35 @@
+{
+  "num_bars": 4,
+  "num_tracks": 6,
+  "layer_count": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "quant_denom": [
+    16,
+    16,
+    16,
+    16,
+    16,
+    16
+  ],
+  "layer_mutes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "num_pattern_events": 0,
+  "last_song_pattern": 0,
+  "song_layer_count": 0,
+  "song_pattern_events": [
+    0
+  ],
+  "chunk_size": 50
+}

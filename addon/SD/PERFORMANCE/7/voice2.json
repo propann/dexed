@@ -1,11 +1,12 @@
 {
+  "pool": 0,
   "bank": 91,
   "voice": 27,
   "lowest_note": 21,
   "highest_note": 108,
   "transpose": 24,
   "tune": 100,
-  "sound_intensity": 97,
+  "sound_intensity": 92,
   "pan": 15,
   "polyphony": 16,
   "velocity_level": 100,

@@ -14,16 +14,20 @@
   "filter_osc_speed": 154,
   "filter_osc_resonance": 0,
   "noise_vol": 56,
-  "noise_decay": 0,
+  "noise_decay": 49,
   "filter_noise_freq_from": 4900,
   "filter_noise_freq_to": 0,
+  "filter_noise_mode": 0,
   "filter_noise_speed": 72,
   "pwm_from": 555,
   "pwm_to": 85,
   "pwm_speed": 4,
   "rev_send": 0,
   "chorus_send": 0,
-  "delay_send": 0,
+  "delay_send_1": 0,
+  "delay_send_2": 0,
   "midi_channel": 3,
-  "pan": 22
+  "pan": 22,
+  "vel_mod_filter_osc": 0,
+  "vel_mod_filter_noise": 0
 }

@@ -1,4 +1,5 @@
 {
+  "pool": 0,
   "bank": 32,
   "voice": 16,
   "lowest_note": 21,
