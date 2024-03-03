@@ -61,7 +61,8 @@ public:
     ARP_UP,
     ARP_DOWNUP,
     ARP_UPDOWN,
-    ARP_RANDOM
+    ARP_RANDOM,
+    ARP_CHORD
   };
 
   struct ArpSettings {
