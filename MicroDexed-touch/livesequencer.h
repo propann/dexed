@@ -66,6 +66,11 @@ public:
     ARP_CHORD
   };
 
+  struct ArpNote {
+    bool isNoteOn;
+    uint8_t track;
+  };
+
   struct ArpSettings {
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
@@ -76,7 +81,7 @@ public:
     std::vector<uint8_t>::iterator arpIt;
 
     uint8_t arpCount;
-    MidiEvent currentNote;
+    ArpNote currentNote;
   };
 
   struct LiveSeqData {
