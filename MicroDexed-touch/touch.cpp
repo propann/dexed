@@ -86,6 +86,7 @@ extern void mb_set_mutes();
 extern void mb_set_master();
 extern void mb_set_compressor();
 extern uint8_t last_menu_depth;
+extern uint8_t drum_midi_channel;
 
 ts_t ts;                         // touch screen
 fm_t fm;                         // file manager
@@ -370,7 +371,7 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
   else if (ts.virtual_keyboard_instrument == 6)
   {
     display.print(F("DRUMS   "));
-    ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
+    ts.virtual_keyboard_midi_channel = drum_midi_channel;
   }
   else if (ts.virtual_keyboard_instrument == 7)
   {
@@ -384,7 +385,7 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
 
     show_no_grid(18 * CHAR_height_small + 1, 20 * CHAR_width_small, 7, find_long_drum_name_from_note(ts.virtual_keyboard_instrument - 8 + 210));
 
-    ts.virtual_keyboard_midi_channel = DRUM_MIDI_CHANNEL;
+    ts.virtual_keyboard_midi_channel = drum_midi_channel;
   }
 }
 

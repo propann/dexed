@@ -3255,7 +3255,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.euclidean_offset = data_json["euclidean_offset"];
         if (data_json["drum_midi_channel"] > 0) //do not set to onmi when it was never saved before. Better to use the default channel in this case.
           drum_midi_channel = data_json["drum_midi_channel"];
-
         AudioNoInterrupts();
         for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
         {
@@ -3269,7 +3268,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
           load_sd_voice(configuration.dexed[instance_id].pool, configuration.dexed[instance_id].bank, configuration.dexed[instance_id].voice, instance_id);
           MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
           MicroDexed[instance_id]->panic();
-      }
+        }
 
         load_sd_fx_json(configuration.sys.performance_number); //loaded here since bpm must be loaded first
         AudioInterrupts();
@@ -3367,7 +3366,7 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
     LOG.println(F("E : SysEx start byte not found."));
 #endif
     return (false);
-}
+  }
   if (sysex.read() != 0x67) // check sysex vendor is unofficial SYSEX-ID for MicroDexed
   {
 #ifdef DEBUG
@@ -3686,7 +3685,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
       LOG.println(F("remove old multisample file"));
 #endif
       SD.remove(filename);
-  }
+    }
     json = SD.open(filename, FILE_WRITE);
     if (json)
     {
@@ -3738,7 +3737,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
       LOG.print(filename);
       LOG.println(F(" on SD."));
 #endif
-}
+    }
     AudioInterrupts();
     json.close();
   }
@@ -3823,7 +3822,7 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
       LOG.print(filename);
       LOG.println(F(" available."));
 #endif
-      }
+    }
   }
   return (false);
 }

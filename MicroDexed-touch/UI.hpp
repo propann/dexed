@@ -6050,7 +6050,7 @@ FLASHMEM void print_custom_mapping_drums()
   display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
   display.print(F("["));
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(DRUM_MIDI_CHANNEL);
+  display.print(drum_midi_channel);
   display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
   display.print(F("]        "));
   display.setTextColor(COLOR_ARP, COLOR_BACKGROUND);

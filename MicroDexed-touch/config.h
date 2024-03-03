@@ -140,7 +140,7 @@
 #define NUM_DRUMS 8 // set 0 to disable Drums
 
 // DEFAULT MIDI CHANNEL FOR DRUMSAMPLER
-#define DRUM_MIDI_CHANNEL 10
+#define DEFAULT_DRUM_MIDI_CHANNEL 10
 #define NUM_CUSTOM_MIDI_MAPPINGS 18 // Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
