@@ -264,8 +264,8 @@ void LiveSequencer::fillTrackLayer(void) {
       for(uint16_t note = 0; note < data.fillNotes.number; note++) {
         const uint16_t noteOnTime = round(note * msIncrement) + msOffset;
         const uint16_t noteOffTime = noteOnTime + noteLength;
-        data.pendingEvents.emplace_back(MidiEvent { data.fillNotes.source, noteOnTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
-        data.pendingEvents.emplace_back(MidiEvent { data.fillNotes.source, noteOffTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
+        data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, noteOnTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 } );
+        data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, noteOffTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
       }
     }
     addPendingNotes();
@@ -725,12 +725,10 @@ void LiveSequencer::checkAddMetronome(void) {
         data.activeTrack = i;
         data.fillNotes.number = 8;
         data.fillNotes.offset = 0;
-        data.fillNotes.source = EVENT_PATTERN;
         data.lastPlayedNote = 54; // hats
         fillTrackLayer();
         data.fillNotes.number = 1;
         data.fillNotes.offset = 0;
-        data.fillNotes.source = EVENT_PATTERN;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
         trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them

@@ -273,7 +273,6 @@ void handle_touchscreen_live_sequencer(void) {
           }
           if(check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
             // fill now
-            liveSeqData->fillNotes.source = LiveSequencer::EventSource::EVENT_PATTERN;
             liveSeqPtr->fillTrackLayer();
             guiUpdateFlags |= drawFillNotes;
           }

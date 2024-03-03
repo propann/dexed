@@ -51,7 +51,6 @@ public:
   };
 
   struct FillNotes {
-    EventSource source;
     uint8_t number;
     uint8_t offset;
   };
@@ -92,7 +91,7 @@ public:
     ArpSettings arpSettings;
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     uint8_t currentPattern = 0;
-    FillNotes fillNotes = { EVENT_PATTERN, 4, 0 }; // user default
+    FillNotes fillNotes = { 4, 0 }; // user default
     unsigned long patternLengthMs;
     uint8_t activeTrack = 0;
     elapsedMillis patternTimer;
