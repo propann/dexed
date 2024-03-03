@@ -60,7 +60,9 @@ public:
     ARP_DOWN,
     ARP_UP,
     ARP_DOWNUP,
+    ARP_DOWNUP_P,
     ARP_UPDOWN,
+    ARP_UPDOWN_P,
     ARP_RANDOM,
     ARP_CHORD
   };
@@ -69,6 +71,7 @@ public:
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
     float length; // 0.0 - 1.0 pulse width
+    float swing;
     bool latch;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
