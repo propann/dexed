@@ -107,7 +107,7 @@ void handlePitchBend(byte inChannel, int inPitch);
 void handleControlChange(byte inChannel, byte inData1, byte inData2);
 void handleProgramChange(byte inChannel, byte inProgram);
 void handleAfterTouchPoly(byte inChannel, byte inNumber, byte inVelocity);
-void handleSystemExclusive(byte *data, unsigned len);
+void handleSystemExclusive(byte* data, unsigned len);
 // void handleSystemExclusiveChunk(const byte *data, uint len, bool last);
 void handleTimeCodeQuarterFrame(byte data);
 void handleSongSelect(byte inSong);
@@ -128,11 +128,14 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #include "livesequencer.h"
 
 extern LiveSequencer liveSeq;
+extern bool live_sequencer_on_screen();
+
 //void handle_pitchbend((byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event));
 
-void handle_generic(byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event)
+void handle_generic(byte inChannel, byte inData1, byte inData2, const char* midi_device, midi::MidiType event)
 {
-liveSeq.handleMidiEvent(inChannel, event, inData1, inData2);
+  if (live_sequencer_on_screen())
+    liveSeq.handleMidiEvent(inChannel, event, inData1, inData2);
 #ifdef DEBUG
   char text[10];
 #endif
@@ -305,7 +308,7 @@ liveSeq.handleMidiEvent(inChannel, event, inData1, inData2);
 #endif
 }
 
-void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device)
+void handleSystemExclusive_generic(byte* data, uint len, const char* midi_device)
 {
   handleSystemExclusive(data, len);
 #ifdef DEBUG
@@ -351,7 +354,7 @@ void handleSystemExclusive_generic(byte *data, uint len, const char *midi_device
 #endif
 }
 
-void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::MidiType event)
+void handleSystemCommon_generic(byte inData1, const char* midi_device, midi::MidiType event)
 {
   char text[10];
 
@@ -454,7 +457,7 @@ void handleSystemCommon_generic(byte inData1, const char *midi_device, midi::Mid
 #endif
 }
 
-void handleRealtime_generic(const char *midi_device, midi::MidiType event)
+void handleRealtime_generic(const char* midi_device, midi::MidiType event)
 {
   char text[10];
 
@@ -610,7 +613,7 @@ void handleAfterTouch_MIDI_DEVICE_DIN(byte inChannel, byte inPressure)
 
 void handlePitchBend_MIDI_DEVICE_DIN(byte inChannel, int inPitch)
 {
- handlePitchBend( inChannel, inPitch);
+  handlePitchBend(inChannel, inPitch);
 }
 
 void handleProgramChange_MIDI_DEVICE_DIN(byte inChannel, byte inProgram)
@@ -623,7 +626,7 @@ void handleAfterTouchPoly_MIDI_DEVICE_DIN(byte inChannel, byte inNoteNumber, byt
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_DIN, midi::AfterTouchPoly);
 }
 
-void handleSystemExclusive_MIDI_DEVICE_DIN(byte *data, uint len)
+void handleSystemExclusive_MIDI_DEVICE_DIN(byte* data, uint len)
 {
   handleSystemExclusive_generic(data, len, MIDI_BY_DIN);
 }
@@ -731,7 +734,7 @@ void handleAfterTouch_MIDI_DEVICE_USB_HOST(byte inChannel, byte inPressure)
 
 void handlePitchBend_MIDI_DEVICE_USB_HOST(byte inChannel, int inPitch)
 {
-handlePitchBend( inChannel, inPitch);
+  handlePitchBend(inChannel, inPitch);
 }
 
 void handleProgramChange_MIDI_DEVICE_USB_HOST(byte inChannel, byte inPrg)
@@ -744,7 +747,7 @@ void handleAfterTouchPoly_MIDI_DEVICE_USB_HOST(byte inChannel, byte inNoteNumber
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB_HOST, midi::AfterTouchPoly);
 }
 
-void handleSystemExclusive_MIDI_DEVICE_USB_HOST(byte *data, uint len)
+void handleSystemExclusive_MIDI_DEVICE_USB_HOST(byte* data, uint len)
 {
   handleSystemExclusive_generic(data, len, MIDI_BY_USB_HOST);
 }
@@ -852,7 +855,7 @@ void handleAfterTouch_MIDI_DEVICE_USB(byte inChannel, byte inPressure)
 
 void handlePitchBend_MIDI_DEVICE_USB(byte inChannel, int inPitch)
 {
- handlePitchBend( inChannel, inPitch);
+  handlePitchBend(inChannel, inPitch);
 }
 
 void handleProgramChange_MIDI_DEVICE_USB(byte inChannel, byte inProgram)
@@ -865,7 +868,7 @@ void handleAfterTouchPoly_MIDI_DEVICE_USB(byte inChannel, byte inNoteNumber, byt
   handle_generic(inChannel, inNoteNumber, inVelocity, MIDI_BY_USB, midi::AfterTouchPoly);
 }
 
-void handleSystemExclusive_MIDI_DEVICE_USB(byte *data, uint len)
+void handleSystemExclusive_MIDI_DEVICE_USB(byte* data, uint len)
 {
   handleSystemExclusive_generic(data, len, MIDI_BY_USB);
 }
@@ -1181,7 +1184,7 @@ void check_midi_devices(void)
 #endif
 }
 
-FLASHMEM void send_sysex_voice(uint8_t midi_channel, uint8_t *data)
+FLASHMEM void send_sysex_voice(uint8_t midi_channel, uint8_t* data)
 {
   uint8_t checksum = 0;
   uint8_t vd[161];
@@ -1212,7 +1215,7 @@ FLASHMEM void send_sysex_voice(uint8_t midi_channel, uint8_t *data)
 #endif
 }
 
-FLASHMEM void send_sysex_bank(uint8_t midi_channel, uint8_t *bank_data)
+FLASHMEM void send_sysex_bank(uint8_t midi_channel, uint8_t* bank_data)
 {
 #ifdef MIDI_DEVICE_DIN
   midi_serial.sendSysEx(4104, bank_data); // Send to DIN MIDI
