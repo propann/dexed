@@ -107,7 +107,7 @@ bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
         overflow = true;
       }
     }
-    DBG_LOG(printf("round %i.%i to %i.%i\n", patternNumber, patternMs, resultNumber, resultMs));
+    DBG_LOG(printf("round %i.%i to %i.%i\n", e.patternNumber, e.patternMs, resultNumber, resultMs));
     e.patternNumber = resultNumber;
     e.patternMs = resultMs;
   }
@@ -163,7 +163,7 @@ void LiveSequencer::applySongStartLayerMutes(void) {
   }
 }
 
-void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
+void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isRecording && data.isRunning) {
     const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
     MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocity };
@@ -213,24 +213,29 @@ void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t 
     }
   }
 
-  // forward midi with correct channel
+  // forward incoming midi event to correct channel
+  // ignore events that are mapped directly to instrument channels by DXD
   const midi::Channel ch = data.tracks[data.activeTrack].channel;
-  switch(event) {
-  case midi::NoteOn:
-    handleNoteOn(ch, note, velocity, 0);
+  if(inChannel != ch) {
+    switch(event) {
+    case midi::NoteOn:
+      handleNoteOn(ch, note, velocity, 0);
 
-    if(data.lastPlayedNote != note) {
-      data.lastPlayedNote = note;
-      data.lastPlayedNoteChanged = true;
+      if(data.lastPlayedNote != note) {
+        data.lastPlayedNote = note;
+        data.lastPlayedNoteChanged = true;
+      }
+      break;
+    
+    case midi::NoteOff:
+      handleNoteOff(ch, note, velocity, 0);
+      break;
+    
+    default:
+      break;
     }
-    break;
-  
-  case midi::NoteOff:
-    handleNoteOff(ch, note, velocity, 0);
-    break;
-  
-  default:
-    break;
+  } else {
+    DBG_LOG(printf("LiveSeq: drop event as directly assigned to channel %i\n", inChannel));
   }
 }
 

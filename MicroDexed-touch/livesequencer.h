@@ -95,7 +95,7 @@ public:
   LiveSequencer::LiveSeqData* getData(void);
   void songLayerAction(uint8_t layer, LayerMode action);
   void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
-  void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
+  void handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
   void handleStop(void);
