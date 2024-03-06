@@ -42,6 +42,27 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
+void UI_LiveSequencer::showHowTo(void) {
+  display.fillScreen(COLOR_BACKGROUND);
+  display.setTextSize(2);
+  display.setTextColor(RED);
+  display.setCursor(40, 50);
+  display.printf("ADAPT MIDI MAPPING");
+
+  display.setTextSize(1);
+  display.setTextColor(COLOR_SYSTEXT);
+  display.setCursor(40, 70);
+  display.printf("LiveSequencer forwards midi events");
+  display.setCursor(40, 80);
+  display.printf("to selected instrument and does not work");
+  display.setCursor(40, 90);
+  display.printf("properly with directly mapped channels.");
+  display.setCursor(40, 110);
+  display.printf("Please assign your MIDI input device to");
+  display.setCursor(40, 120);
+  display.printf("an unmapped MIDI channel.");
+}
+
 enum GuiUpdates : uint16_t {
   drawTopButtons    = (1 << 0),
   drawTrackButtons  = (1 << 1),
@@ -60,6 +81,7 @@ enum GuiUpdates : uint16_t {
 bool isLayerViewActive = false;
 uint16_t guiUpdateFlags = 0;
 uint8_t fillNotesSteps[] = { 4, 6, 8, 12, 16, 24, 32 };
+bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
 void drawGUI(uint16_t &guiFlags);
 void handleLayerEditButtonColor(uint8_t layerMode, uint16_t &layerBgColor, uint8_t &layerBgCode);
@@ -68,7 +90,8 @@ void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const 
 void UI_func_livesequencer(uint8_t param) {
   // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
-
+    liveSeqData->isActive = true;
+    stayActive = false;
     display.fillScreen(COLOR_BACKGROUND);
     numberOfBarsTemp = liveSeqData->numberOfBars;
     liveSeqPtr->onGuiInit();
@@ -99,6 +122,11 @@ void UI_func_livesequencer(uint8_t param) {
   
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
+    if(stayActive == false) {
+      liveSeqData->isActive = false;
+    } else {
+      stayActive = false;
+    }
     liveSeqData->isRecording = false;
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -209,6 +237,7 @@ void handle_touchscreen_live_sequencer(void) {
               SetupFn f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
               f(0);
             }
+            stayActive = true; // stay active for screens instrument settings opened in LiveSequencer
             LCDML.FUNC_setGBAToLastFunc();
             LCDML.OTHER_jumpToFunc(liveSeqData->tracks[track].screen);
           }

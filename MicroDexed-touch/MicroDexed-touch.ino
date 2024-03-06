@@ -5479,14 +5479,6 @@ FLASHMEM void check_and_create_directories(void)
 #endif
 }
 
-bool live_sequencer_on_screen()
-{
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_livesequencer))
-    return true;
-  else
-    return false;
-}
-
 /******************************************************************************
   DEBUG HELPER
 ******************************************************************************/

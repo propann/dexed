@@ -63,6 +63,8 @@ public:
     uint8_t numberOfBars = 4;
 
     // volatile
+    bool isActive;
+    std::unordered_set<uint8_t> instrumentChannels;
     Track tracks[LIVESEQUENCER_NUM_TRACKS];
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     uint8_t currentPattern = 0;

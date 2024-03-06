@@ -128,14 +128,12 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #include "livesequencer.h"
 
 extern LiveSequencer liveSeq;
-extern bool live_sequencer_on_screen();
 
 //void handle_pitchbend((byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event));
 
 void handle_generic(byte inChannel, byte inData1, byte inData2, const char* midi_device, midi::MidiType event)
 {
-  if (live_sequencer_on_screen())
-    liveSeq.handleMidiEvent(inChannel, event, inData1, inData2);
+  liveSeq.handleMidiEvent(inChannel, event, inData1, inData2);
 #ifdef DEBUG
   char text[10];
 #endif
