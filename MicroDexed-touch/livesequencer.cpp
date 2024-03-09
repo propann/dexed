@@ -237,7 +237,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
         break;
       }
     } else {
-      ui.showHowTo(inChannel);
+      ui.showDirectMappingWarning(inChannel);
       DBG_LOG(printf("LiveSeq: drop event as directly assigned to an instument\n"));
     }
   } else {

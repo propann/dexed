@@ -13,6 +13,7 @@ extern void handleStop();
 
 extern void UI_func_load_performance(uint8_t param);
 extern void UI_func_save_performance(uint8_t param);
+extern void UI_func_midi_channels(uint8_t param);
 
 extern bool remote_active;
 extern int numTouchPoints;
@@ -43,7 +44,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
-void UI_LiveSequencer::showHowTo(uint8_t inChannel) {
+void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
   static constexpr int LEFTMARGIN = 20;
   if(showingHowTo == false) {
     showingHowTo = true;
@@ -62,9 +63,11 @@ void UI_LiveSequencer::showHowTo(uint8_t inChannel) {
     display.setCursor(LEFTMARGIN, 90);
     display.printf("WORK CORRECTLY WITH DIRECTLY MAPPED CHANNELS.");
     display.setCursor(LEFTMARGIN, 110);
-    display.printf("PLEASE MAP ALL INSTRUMENTS TO A CHANNEL");
+    display.printf("PLEASE MAP ALL INSTRUMENTS TO CHANNELS");
     display.setCursor(LEFTMARGIN, 120);
     display.printf("OTHER THAN THE MIDI INPUT CHANNEL %02i.", inChannel);
+
+    draw_button_on_grid(22, 18, "REMAP", "MIDI", 1);
   }
 }
 
@@ -123,7 +126,9 @@ void UI_func_livesequencer(uint8_t param) {
     liveSeqData->trackLayersChanged = false;
     liveSeqData->lastPlayedNoteChanged = false;
     liveSeqData->stoppedFlag = false;
-    drawGUI(guiUpdateFlags);
+    if(showingHowTo == false) {
+      drawGUI(guiUpdateFlags);
+    }
   }
   
   // ****** STABLE END *********
@@ -165,7 +170,14 @@ void applyScreenRedrawGuiFlags() {
   isLayerViewActive = (liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS) || (liveSeqData->currentPageIndex == PageSong::PAGE_SONG_LAYERS);
 }
 
-void handle_touchscreen_live_sequencer(void) {  
+void handle_touchscreen_live_sequencer(void) {
+  if(showingHowTo) {
+    if(numTouchPoints > 0 && check_button_on_grid(22, 18)) {
+      LCDML.FUNC_setGBAToLastFunc();
+      LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
+    }
+    return;
+  }
   const bool runningChanged = (runningHere != liveSeqData->isRunning);
   runningHere = liveSeqData->isRunning;
   
