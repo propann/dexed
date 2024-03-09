@@ -40,6 +40,7 @@ class UI_LiveSequencer {
 
 public:
   UI_LiveSequencer(LiveSequencer *sequencer);
+  void showDirectMappingWarning(uint8_t inChannel);
 };
 
 void UI_func_livesequencer(uint8_t param);

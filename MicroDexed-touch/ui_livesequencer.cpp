@@ -13,6 +13,7 @@ extern void handleStop();
 
 extern void UI_func_load_performance(uint8_t param);
 extern void UI_func_save_performance(uint8_t param);
+extern void UI_func_midi_channels(uint8_t param);
 
 extern bool remote_active;
 extern int numTouchPoints;
@@ -24,6 +25,7 @@ bool runningHere = false;
 bool barPhases[2] = { 0 };
 uint8_t numberOfBarsTemp = 0;
 bool deleteConfirming = false;
+bool showingHowTo = false;
 
 LiveSequencer *liveSeqPtr;
 LiveSequencer::LiveSeqData *liveSeqData;
@@ -42,6 +44,33 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer *sequencer) {
   liveSeqData = sequencer->getData();
 }
 
+void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
+  static constexpr int LEFTMARGIN = 20;
+  if(showingHowTo == false) {
+    showingHowTo = true;
+    display.fillScreen(COLOR_BACKGROUND);
+    display.setTextSize(2);
+    display.setTextColor(RED);
+    display.setCursor(LEFTMARGIN, 50);
+    display.printf("ADAPT MIDI MAPPING");
+
+    display.setTextSize(1);
+    display.setTextColor(COLOR_SYSTEXT);
+    display.setCursor(LEFTMARGIN, 70);
+    display.printf("LIVESEQUENCER FORWARDS MIDI EVENTS");
+    display.setCursor(LEFTMARGIN, 80);
+    display.printf("TO SELECTED INSTRUMENT CHANNELS AND DOES NOT");
+    display.setCursor(LEFTMARGIN, 90);
+    display.printf("WORK CORRECTLY WITH DIRECTLY MAPPED CHANNELS.");
+    display.setCursor(LEFTMARGIN, 110);
+    display.printf("PLEASE MAP ALL INSTRUMENTS TO CHANNELS");
+    display.setCursor(LEFTMARGIN, 120);
+    display.printf("OTHER THAN THE MIDI INPUT CHANNEL %02i.", inChannel);
+
+    draw_button_on_grid(22, 18, "REMAP", "MIDI", 1);
+  }
+}
+
 enum GuiUpdates : uint16_t {
   drawTopButtons    = (1 << 0),
   drawTrackButtons  = (1 << 1),
@@ -54,12 +83,14 @@ enum GuiUpdates : uint16_t {
   drawActiveNotes   = (1 << 8),
   drawDeleteAll     = (1 << 9),
   drawDeleteSong    = (1 << 10),
-  drawSongQuant     = (1 << 11)
+  drawSongQuant     = (1 << 11),
+  drawTime          = (1 << 12)
 };
 
 bool isLayerViewActive = false;
 uint16_t guiUpdateFlags = 0;
 uint8_t fillNotesSteps[] = { 4, 6, 8, 12, 16, 24, 32 };
+bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
 void drawGUI(uint16_t &guiFlags);
 void handleLayerEditButtonColor(uint8_t layerMode, uint16_t &layerBgColor, uint8_t &layerBgCode);
@@ -68,7 +99,8 @@ void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const 
 void UI_func_livesequencer(uint8_t param) {
   // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
-
+    liveSeqData->isActive = true;
+    stayActive = false;
     display.fillScreen(COLOR_BACKGROUND);
     numberOfBarsTemp = liveSeqData->numberOfBars;
     liveSeqPtr->onGuiInit();
@@ -85,7 +117,7 @@ void UI_func_livesequencer(uint8_t param) {
   if (LCDML.FUNC_loop()) {
     guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
     guiUpdateFlags |= (liveSeqData->songLayersChanged && liveSeqData->isSongMode) ? (drawSongSettings) : 0;
-    guiUpdateFlags |= (liveSeqData->isRunning || liveSeqData->stoppedFlag) ? (drawActiveNotes) : 0;
+    guiUpdateFlags |= (liveSeqData->isRunning || liveSeqData->stoppedFlag) ? (drawActiveNotes | drawTime) : 0;
 
     if(liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_SETINGS) {
       guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawFillNotes) : 0;
@@ -94,18 +126,26 @@ void UI_func_livesequencer(uint8_t param) {
     liveSeqData->trackLayersChanged = false;
     liveSeqData->lastPlayedNoteChanged = false;
     liveSeqData->stoppedFlag = false;
-    drawGUI(guiUpdateFlags);
+    if(showingHowTo == false) {
+      drawGUI(guiUpdateFlags);
+    }
   }
   
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
+    if(stayActive == false) {
+      liveSeqData->isActive = false;
+    } else {
+      stayActive = false;
+    }
     liveSeqData->isRecording = false;
+    showingHowTo = false;
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
 
 void applyScreenRedrawGuiFlags() {
-  guiUpdateFlags |= (clearBottomArea | drawTopButtons | drawTrackButtons);
+  guiUpdateFlags |= (clearBottomArea | drawTopButtons | drawTrackButtons | drawTime);
   if(liveSeqData->isSongMode) {
     switch(liveSeqData->currentPageIndex) {
     case PageSong::PAGE_SONG_LAYERS:
@@ -130,7 +170,14 @@ void applyScreenRedrawGuiFlags() {
   isLayerViewActive = (liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_LAYERS) || (liveSeqData->currentPageIndex == PageSong::PAGE_SONG_LAYERS);
 }
 
-void handle_touchscreen_live_sequencer(void) {  
+void handle_touchscreen_live_sequencer(void) {
+  if(showingHowTo) {
+    if(numTouchPoints > 0 && check_button_on_grid(22, 18)) {
+      LCDML.FUNC_setGBAToLastFunc();
+      LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
+    }
+    return;
+  }
   const bool runningChanged = (runningHere != liveSeqData->isRunning);
   runningHere = liveSeqData->isRunning;
   
@@ -209,6 +256,7 @@ void handle_touchscreen_live_sequencer(void) {
               SetupFn f = (SetupFn)liveSeqData->tracks[track].screenSetupFn;
               f(0);
             }
+            stayActive = true; // stay active for screens instrument settings opened in LiveSequencer
             LCDML.FUNC_setGBAToLastFunc();
             LCDML.OTHER_jumpToFunc(liveSeqData->tracks[track].screen);
           }
@@ -397,23 +445,25 @@ void drawGUI(uint16_t &guiFlags) {
   }
 
   // print time
-  display.setCursor(110, 20);
-  display.setTextSize(1);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  if(liveSeqData->isSongMode) {
-    const uint32_t songMs = (liveSeqData->songPatternCount * liveSeqData->numberOfBars + liveSeqData->currentPattern) * liveSeqData->patternLengthMs + timeMs;
-    const uint32_t minutes = songMs / 60000;
-    const uint32_t seconds = (songMs % 60000) / 1000;
-    const uint32_t millis = songMs % 1000;
-    display.printf("S %i:%02i.%03i", minutes, seconds, millis);
-  } else {
-    display.printf("P %i.%04i   ", patCount, timeMs);
-  }
-  display.setCursor(190, 20);
-  if(liveSeqData->isSongMode) {
-      display.printf("%02i", liveSeqData->songPatternCount);
-  } else {
-    display.printf("%02i", liveSeqData->currentPattern);
+  if(guiFlags & drawTime) {
+    display.setCursor(110, 20);
+    display.setTextSize(1);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    if(liveSeqData->isSongMode) {
+      const uint32_t songMs = (liveSeqData->songPatternCount * liveSeqData->numberOfBars + liveSeqData->currentPattern) * liveSeqData->patternLengthMs + timeMs;
+      const uint32_t minutes = songMs / 60000;
+      const uint32_t seconds = (songMs % 60000) / 1000;
+      const uint32_t millis = songMs % 1000;
+      display.printf("S %i:%02i.%03i", minutes, seconds, millis);
+    } else {
+      display.printf("P %i.%04i   ", patCount, timeMs);
+    }
+    display.setCursor(190, 20);
+    if(liveSeqData->isSongMode) {
+        display.printf("%02i", liveSeqData->songPatternCount);
+    } else {
+      display.printf("%02i", liveSeqData->currentPattern);
+    }
   }
 
   char temp_char[4];

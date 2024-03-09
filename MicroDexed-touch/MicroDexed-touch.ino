@@ -1414,7 +1414,7 @@ void setup()
   {
     LCDML.OTHER_jumpToFunc(UI_func_sd_content_not_found);
   }
-  else
+  else {
     if (count_omni() != 0 || count_midi_channel_duplicates(false) != 0) // startup with midi channel setup page
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     else
@@ -1461,6 +1461,7 @@ void setup()
         LCDML.OTHER_jumpToFunc(UI_func_voice_select); // fallback to voice select
       }
     }
+  }
 }
 
 FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
@@ -4604,6 +4605,9 @@ FLASHMEM void initial_values(bool init)
   }
   check_configuration();
   set_volume(configuration.sys.vol, configuration.sys.mono);
+  mb_set_mutes();
+  mb_set_compressor();
+  mb_set_master();
 
 #ifdef DEBUG
   show_configuration();
@@ -5477,14 +5481,6 @@ FLASHMEM void check_and_create_directories(void)
 #ifdef DEBUG
   LOG.println(F("SD card check end"));
 #endif
-}
-
-bool live_sequencer_on_screen()
-{
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_livesequencer))
-    return true;
-  else
-    return false;
 }
 
 /******************************************************************************

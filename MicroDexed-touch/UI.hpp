@@ -1381,7 +1381,7 @@ bool button[NUM_ENCODER];
 long g_LCDML_CONTROL_button_press_time[NUM_ENCODER] = { 0, 0 };
 bool g_LCDML_CONTROL_button_prev[NUM_ENCODER] = { HIGH, HIGH };
 uint8_t g_LCDML_CONTROL_prev[NUM_ENCODER] = { 0, 0 };
-bool menu_init = true;
+// bool menu_init = true; 
 
 FLASHMEM void fill_up_with_spaces_right_window()
 {
@@ -4467,12 +4467,14 @@ FLASHMEM void lcdml_menu_control(void)
 #endif
         encoderDir[ENC_L].ButtonShort(true);
 
-        if ((LCDML.MENU_getLastActiveFunctionID() == 0xff && LCDML.MENU_getLastCursorPositionID() == 0) || menu_init == true)
-        {
-          LCDML.MENU_goRoot();
-          menu_init = false;
-        }
-        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
+// damster@09.03.2024: commented out as this bugs initial page back behavior 
+//        if ((LCDML.MENU_getLastActiveFunctionID() == 0xff && LCDML.MENU_getLastCursorPositionID() == 0) || menu_init == true)
+//        {
+//          LCDML.MENU_goRoot();
+//          menu_init = false;
+//        }
+//        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
+        if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
         {
           encoderDir[ENC_L].reset();
           encoderDir[ENC_R].reset();
@@ -4482,9 +4484,10 @@ FLASHMEM void lcdml_menu_control(void)
           else
             LCDML.OTHER_setCursorToID(LCDML.MENU_getLastCursorPositionID());
         }
-        else
+        else {
           LCDML.BT_quit();
-        LCDML.SCREEN_resetTimer(); // reset timer on exiting screensaver through back key
+          LCDML.SCREEN_resetTimer(); // reset timer on exiting screensaver through back key
+        }
       }
     }
   }
