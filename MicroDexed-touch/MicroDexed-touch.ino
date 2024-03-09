@@ -1462,9 +1462,6 @@ void setup()
       }
     }
   }
-  mb_set_mutes();
-  mb_set_compressor();
-  mb_set_master();
 }
 
 FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
@@ -4608,6 +4605,9 @@ FLASHMEM void initial_values(bool init)
   }
   check_configuration();
   set_volume(configuration.sys.vol, configuration.sys.mono);
+  mb_set_mutes();
+  mb_set_compressor();
+  mb_set_master();
 
 #ifdef DEBUG
   show_configuration();
