@@ -40,7 +40,7 @@ class UI_LiveSequencer {
 
 public:
   UI_LiveSequencer(LiveSequencer *sequencer);
-  void showHowTo(void);
+  void showHowTo(uint8_t inChannel);
 };
 
 void UI_func_livesequencer(uint8_t param);
