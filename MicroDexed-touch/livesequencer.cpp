@@ -611,10 +611,10 @@ void LiveSequencer::checkAddMetronome(void) {
         // reset fillNotes to user values
         data.fillNotes.number = 4;
         data.fillNotes.offset = 0;
+        data.activeTrack = activeTrack;
         return;
       }
     }
-    data.activeTrack = activeTrack;
   }
 }
 
