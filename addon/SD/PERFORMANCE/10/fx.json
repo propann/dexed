@@ -80,5 +80,7 @@
   "ep_chorus_waveform": 0,
   "ep_chorus_depth": 0,
   "ep_chorus_level": 0,
-  "ep_reverb_send": 0
+  "ep_reverb_send": 0,
+  "ep_delay1": 0,
+  "ep_delay2": 0
 }

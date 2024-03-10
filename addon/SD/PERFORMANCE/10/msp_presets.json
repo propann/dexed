@@ -1,7 +1,7 @@
 [
   {
     "name": "ArtOfDexed",
-    "sound_intensity": 49,
+    "sound_intensity": 23,
     "midi_channel": 1,
     "zones": {
       "filename": [
@@ -45,7 +45,7 @@
         0
       ],
       "playmode": [
-        7,
+        1,
         0,
         0,
         0,
@@ -75,7 +75,7 @@
         20
       ],
       "rev": [
-        40,
+        29,
         50,
         50,
         50,

@@ -1,10 +1,13 @@
 {
   "seq_tempo_ms": 214285,
+  "pattern_len_dec": 0,
+  "swing_steps": 0,
   "seq_bpm": 70,
   "arp_speed": 0,
   "arp_length": 7,
   "arp_volume_fade": 0.013364,
   "arp_style": 0,
+  "arp_num_notes_max": 16,
   "seq_chord_vel": 25,
   "seq_transpose": 0,
   "chord_key_ammount": 5,
@@ -158,5 +161,6 @@
     0,
     0,
     0
-  ]
+  ],
+  "drum_midi_channel": 10
 }

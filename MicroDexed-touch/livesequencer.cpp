@@ -30,6 +30,7 @@ OneShotTimer liveTimer(TCK);
 LiveSequencer::LiveSequencer() :
   ui(this) {
   updateTrackChannels(true);
+  data.isActive = false;
 }
 
 LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
@@ -68,6 +69,7 @@ void LiveSequencer::handleStop(void) {
   if(data.isSongMode) {
     onSongStopped();
   }
+  
   playIterator = data.eventsList.end();
   allNotesOff();
   data.songPatternCount = data.lastSongEventPattern; // show song length
@@ -169,89 +171,99 @@ void LiveSequencer::applySongStartLayerMutes(void) {
   }
 }
 
-void LiveSequencer::handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity) {
-  if(data.isRecording && data.isRunning) {
-    const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
-    MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocity };
-    if(data.isSongMode) {
-      if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
-        // in song mode, simply add event, no rounding and checking needed
-        newEvent.layer = data.songLayerCount; 
-        uint8_t patternCount = data.songPatternCount;
-        if(newEvent.event == midi::NoteOn) {
-          if(timeQuantization(newEvent, data.trackSettings[data.activeTrack].quantisizeDenom)) {
-            patternCount++; // event rounded up to start of next song pattern
+void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity) {
+  if(data.isActive) {
+    if(data.instrumentChannels.count(inChannel) == 0) {
+      if(data.isRecording && data.isRunning) {
+        const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
+        MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocity };
+        if(data.isSongMode) {
+          if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
+            // in song mode, simply add event, no rounding and checking needed
+            newEvent.layer = data.songLayerCount; 
+            uint8_t patternCount = data.songPatternCount;
+            if(newEvent.event == midi::NoteOn) {
+              if(timeQuantization(newEvent, data.trackSettings[data.activeTrack].quantisizeDenom)) {
+                patternCount++; // event rounded up to start of next song pattern
+              }
+            }
+            data.recordedToSong = true;
+            data.songEvents[patternCount].emplace_back(newEvent);
+          }
+        } else {
+          if(data.trackSettings[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
+            switch(newEvent.event) {
+            default:
+              // ignore all other types
+              break;
+
+            case midi::NoteOn:
+              static constexpr int ROUND_UP_MS = 100;
+              // round up events just at end probably meant to be played at start
+              if(newEvent.patternNumber == (data.numberOfBars - 1) && newEvent.patternMs > (data.patternLengthMs - ROUND_UP_MS)) {
+                newEvent.patternNumber = 0;
+                newEvent.patternMs = 0;
+              }
+              data.notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
+              break;
+
+            case midi::NoteOff:
+              // check if it has a corresponding NoteOn
+              const auto on = data.notesOn.find(note);
+              if(on != data.notesOn.end()) {
+                  timeQuantization(on->second, data.trackSettings[data.activeTrack].quantisizeDenom);
+                  // if so, insert NoteOn and this NoteOff to pending
+                  data.pendingEvents.emplace_back(on->second);
+                  data.pendingEvents.emplace_back(newEvent);
+                  data.notesOn.erase(on);
+              }
+              break;
+            }
           }
         }
-        data.recordedToSong = true;
-        data.songEvents[patternCount].emplace_back(newEvent);
+      }
+
+      // forward incoming midi event to correct channel
+      // ignore events directly mapped to an instrument
+      const bool arpActive = data.arpSettings.amount > 0;
+      if(arpActive) {
+        switch(event) {
+        case midi::NoteOn:
+          pressedArpKeys.insert(note);
+          break;
+
+          case midi::NoteOff:
+          pressedArpKeys.erase(note);
+        
+        default:
+          break;
+        }
+      } else {
+	      const midi::Channel ch = data.tracks[data.activeTrack].channel;
+	      switch(event) {
+	      case midi::NoteOn:
+		      handleNoteOn(ch, note, velocity, 0);
+
+          if(data.lastPlayedNote != note) {
+            data.lastPlayedNote = note;
+            data.lastPlayedNoteChanged = true;
+          }
+          break;
+	      
+	      case midi::NoteOff:
+          handleNoteOff(ch, note, velocity, 0);
+          break;
+	      
+	      default:
+		      break;
+	      }
       }
     } else {
-      if(data.trackSettings[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
-        switch(newEvent.event) {
-        default:
-          // ignore all other types
-          break;
-
-        case midi::NoteOn:
-          static constexpr int ROUND_UP_MS = 100;
-          // round up events just at end probably meant to be played at start
-          if(newEvent.patternNumber == (data.numberOfBars - 1) && newEvent.patternMs > (data.patternLengthMs - ROUND_UP_MS)) {
-            newEvent.patternNumber = 0;
-            newEvent.patternMs = 0;
-          }
-          data.notesOn.insert(std::pair<uint8_t, MidiEvent>(note, newEvent));
-          break;
-
-        case midi::NoteOff:
-          // check if it has a corresponding NoteOn
-          const auto on = data.notesOn.find(note);
-          if(on != data.notesOn.end()) {
-              timeQuantization(on->second, data.trackSettings[data.activeTrack].quantisizeDenom);
-              // if so, insert NoteOn and this NoteOff to pending
-              data.pendingEvents.emplace_back(on->second);
-              data.pendingEvents.emplace_back(newEvent);
-              data.notesOn.erase(on);
-          }
-          break;
-        }
-      }
-    }
-  }
-
-  // forward midi with correct channel
-  const bool arpActive = data.arpSettings.amount > 0;
-  if(arpActive) {
-    switch(event) {
-    case midi::NoteOn:
-      pressedArpKeys.insert(note);
-      break;
-
-      case midi::NoteOff:
-      pressedArpKeys.erase(note);
-    
-    default:
-      break;
+      ui.showDirectMappingWarning(inChannel);
+      DBG_LOG(printf("LiveSeq: drop event as directly assigned to an instument\n"));
     }
   } else {
-    const midi::Channel ch = data.tracks[data.activeTrack].channel;
-    switch(event) {
-    case midi::NoteOn:
-      handleNoteOn(ch, note, velocity, 0);
-
-      if(data.lastPlayedNote != note) {
-        data.lastPlayedNote = note;
-        data.lastPlayedNoteChanged = true;
-      }
-      break;
-    
-    case midi::NoteOff:
-      handleNoteOff(ch, note, velocity, 0);
-      break;
-    
-    default:
-      break;
-    }
+    DBG_LOG(printf("LiveSeq: drop event as not active\n"));
   }
 }
 
@@ -544,7 +556,7 @@ void LiveSequencer::init(void) {
   checkBpmChanged();
   updateTrackChannels();
   DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
-  printEvents();
+  //printEvents();
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.pendingEvents.reserve(50);
@@ -619,7 +631,7 @@ void LiveSequencer::handlePatternBegin(void) {
       for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
         data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
       }
-    }
+    }   
   } else {
     if((data.currentPattern + 1) == data.numberOfBars) {
       data.currentPattern = 0;
@@ -659,8 +671,9 @@ void LiveSequencer::handlePatternBegin(void) {
           applySongStartLayerMutes();
         }
       }
-
+#ifdef DEBUG
       printEvents();
+#endif
       playIterator = data.eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
@@ -734,14 +747,15 @@ void LiveSequencer::checkAddMetronome(void) {
         // reset fillNotes to user values
         data.fillNotes.number = 4;
         data.fillNotes.offset = 0;
+        data.activeTrack = activeTrack;
         return;
       }
     }
-    data.activeTrack = activeTrack;
   }
 }
 
 void LiveSequencer::updateTrackChannels(bool initial) {
+  data.instrumentChannels.clear();
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
     if(initial) {
@@ -798,5 +812,6 @@ void LiveSequencer::updateTrackChannels(bool initial) {
       }
       break;
     }
+    data.instrumentChannels.insert(data.tracks[i].channel);
   }
 }

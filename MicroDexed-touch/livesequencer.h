@@ -92,6 +92,8 @@ public:
     uint8_t numberOfBars = 4;
 
     // volatile
+    bool isActive;
+    std::unordered_set<uint8_t> instrumentChannels;
     Track tracks[LIVESEQUENCER_NUM_TRACKS];
     ArpSettings arpSettings;
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
@@ -125,7 +127,7 @@ public:
   LiveSequencer::LiveSeqData* getData(void);
   void songLayerAction(uint8_t layer, LayerMode action);
   void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
-  void handleMidiEvent(midi::MidiType event, uint8_t note, uint8_t velocity);
+  void handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
   void handleStop(void);

@@ -877,7 +877,7 @@ int16_t* ep_delayline_l;
 extern drum_config_t drum_config[NUM_DRUMSET_CONFIG];
 uint8_t drum_counter;
 uint8_t drum_type[NUM_DRUMS];
-uint8_t drum_midi_channel = DRUM_MIDI_CHANNEL;
+uint8_t drum_midi_channel = DEFAULT_DRUM_MIDI_CHANNEL;
 
 extern sequencer_t seq;
 extern void sequencer(void);
@@ -1414,7 +1414,7 @@ void setup()
   {
     LCDML.OTHER_jumpToFunc(UI_func_sd_content_not_found);
   }
-  else
+  else {
     if (count_omni() != 0 || count_midi_channel_duplicates(false) != 0) // startup with midi channel setup page
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     else
@@ -1461,6 +1461,7 @@ void setup()
         LCDML.OTHER_jumpToFunc(UI_func_voice_select); // fallback to voice select
       }
     }
+  }
 }
 
 FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
@@ -2588,7 +2589,7 @@ FLASHMEM void learn_key(byte inChannel, byte inNumber)
 
   if (generic_temp_select_menu == 0)
   { // learn drum mapping
-    if (inChannel == DRUM_MIDI_CHANNEL)
+    if (inChannel == drum_midi_channel)
     {
       for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
       {
@@ -2603,7 +2604,7 @@ FLASHMEM void learn_key(byte inChannel, byte inNumber)
         custom_midi_map[found].in = inNumber;
         custom_midi_map[found].out = drum_config[activesample].midinote;
         custom_midi_map[found].type = 1;
-        custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
+        custom_midi_map[found].channel = drum_midi_channel;
       }
       else
       {
@@ -2621,7 +2622,7 @@ FLASHMEM void learn_key(byte inChannel, byte inNumber)
           custom_midi_map[found].in = inNumber;
           custom_midi_map[found].out = drum_config[activesample].midinote;
           custom_midi_map[found].type = 1;
-          custom_midi_map[found].channel = DRUM_MIDI_CHANNEL;
+          custom_midi_map[found].channel = drum_midi_channel;
         }
         else
           ; // can not be mapped, no empty slot left
@@ -2630,7 +2631,7 @@ FLASHMEM void learn_key(byte inChannel, byte inNumber)
   }
   else // UI MIDI KEY MAP
   {
-    // if (inChannel != DRUM_MIDI_CHANNEL) {
+    // if (inChannel != drum_midi_channel) {
     for (uint8_t c = 0; c < NUM_CUSTOM_MIDI_MAPPINGS; c++)
     {
       if (inNumber == custom_midi_map[c].in && custom_midi_map[c].type == 3)
@@ -2731,7 +2732,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   //     // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
 
   //     if (seq.current_track_type_of_active_pattern == 0)  // drums
-  //       inChannel = DRUM_MIDI_CHANNEL;
+  //       inChannel = drum_midi_channel;
   //     else {
   //       uint8_t trk = 0;
   //       trk = seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)];
@@ -3238,7 +3239,7 @@ void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device)
     //   // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5-20 = MIDI OUT USB, 21-36 MIDI OUT DIN
 
     //   if (seq.current_track_type_of_active_pattern == 0) // drums
-    //     inChannel = DRUM_MIDI_CHANNEL;
+    //     inChannel = drum_midi_channel;
     //   else
     //   {
     //     uint8_t trk = 0;
@@ -4604,6 +4605,9 @@ FLASHMEM void initial_values(bool init)
   }
   check_configuration();
   set_volume(configuration.sys.vol, configuration.sys.mono);
+  mb_set_mutes();
+  mb_set_compressor();
+  mb_set_master();
 
 #ifdef DEBUG
   show_configuration();
