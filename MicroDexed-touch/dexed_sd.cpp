@@ -3496,7 +3496,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
   return (true);
 }
 
-FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
+FLASHMEM bool get_bank_name(uint8_t p, uint8_t b, char* bank_name)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("get bank name for bank [%d]\n"), b);
@@ -3506,9 +3506,9 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
   if (sd_card > 0)
   {
     File sysex_dir;
-    char bankdir[FILENAME_LEN];
+    char bankdir[FILENAME_LEN+4];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -3556,7 +3556,7 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
   return false;
 }
 
-FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
+FLASHMEM bool get_voice_name(uint8_t p, uint8_t b, uint8_t v, char* voice_name)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("get voice name for voice [%d]\n"), v + 1);
@@ -3566,9 +3566,9 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
   if (sd_card > 0)
   {
     File sysex_dir;
-    char bankdir[FILENAME_LEN];
+    char bankdir[FILENAME_LEN+4];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p,b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -3606,7 +3606,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
     char bank_name[BANK_NAME_LEN];
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b, bank_name);
+    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b,p, bank_name);
 #endif
     memset(voice_name, 0, VOICE_NAME_LEN);
     entry.seek(124 + (v * 128));
