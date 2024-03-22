@@ -6499,6 +6499,21 @@ void addDrumParameterEditor_int16_t(const char* name, int16_t limit_min, int16_t
     NULL);
 }
 
+bool drumScreenActive = false;
+void drumChanged(uint8_t drumNote) {
+  if(drumScreenActive) {
+    activesample = constrain(drumNote, 0, NUM_DRUMSET_CONFIG - 1);
+
+    ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
+
+#if defined(COMPILE_FOR_FLASH)
+        if (seq.running == false) {
+          // this makes MDT crash often (press two keys fast one after another)
+          //draw_waveform_overview_in_drums_page_step1(activesample);
+        }
+#endif
+  }
+}
 
 // Create drum UI.
 // The drum UI needs to be redrawn if activesample changes.
@@ -6506,6 +6521,7 @@ void UI_func_drums(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    drumScreenActive = true;
     ui.reset();
     ui.clear(); // just recreate UI without resetting selection / edit mode
 
@@ -6579,37 +6595,34 @@ void UI_func_drums(uint8_t param)
     if (generic_temp_select_menu == 0 || generic_temp_select_menu == 6)
     {
       if (generic_temp_select_menu == 0) {
-        ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
-#if defined(COMPILE_FOR_FLASH)
-        if (seq.running == false)
-        {
-          draw_waveform_overview_in_drums_page_step1(activesample);
-        }
-#endif
-
+        drumChanged(activesample);
       }
 
       display.setTextSize(1);
       setCursor_textGrid_small(20, 9);
-      if (seq.edit_state == 0)
+      if (seq.edit_state == 0) {
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      }
 
-      if (drum_config[activesample].filter_mode == 0)
+      switch(drum_config[activesample].filter_mode) {
+      case 0:
         display.print("OFF     ");
-      else
-        if (drum_config[activesample].filter_mode == 1)
-          display.print("LOWPASS ");
-        else
-          if (drum_config[activesample].filter_mode == 2)
-            display.print("BANDPASS");
-          else
-            if (drum_config[activesample].filter_mode == 3)
-              display.print("HIGHPASS");
+        break;
+      case 1:
+        display.print("LOWPASS ");
+        break;
+      case 2:
+        display.print("BANDPASS");
+        break;
+      case 3:
+        display.print("HIGHPASS");
+        break;
+      }
     }
-
   }
   if (LCDML.FUNC_close()) // ****** CLOSE *********
   {
+    drumScreenActive = false;
     ui.clear();
   }
 }

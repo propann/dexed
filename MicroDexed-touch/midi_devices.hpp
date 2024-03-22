@@ -128,6 +128,7 @@ void MD_sendControlChange(uint8_t channel, uint8_t cc, uint8_t value);
 #include "livesequencer.h"
 
 extern LiveSequencer liveSeq;
+extern void handleNoteOnInput(byte inChannel, byte inNumber, byte inVelocity, byte device);
 
 //void handle_pitchbend((byte inChannel, byte inData1, byte inData2, const char *midi_device, midi::MidiType event));
 
@@ -144,7 +145,7 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char* midi
   case midi::NoteOn:
     seq.note_in = inData1;
     seq.note_in_velocity = inData2;
-    handleNoteOn(inChannel, inData1, inData2, 0);
+    handleNoteOnInput(inChannel, inData1, inData2, 0);
 #ifdef DEBUG
     strcpy(text, "NoteOn");
 #endif
