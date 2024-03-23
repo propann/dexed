@@ -143,7 +143,6 @@ extern uint8_t get_sample_filter_mode(uint8_t sample);
 extern float get_sample_filter_freq(uint8_t sample);
 extern float get_sample_filter_q(uint8_t sample);
 
-extern uint8_t find_drum_number_from_note(uint8_t note);
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
@@ -759,20 +758,16 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
         set_drums_volume(seq.drums_volume);
         for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1; i++)
         {
-          uint8_t drumnumber = 0;
-          drumnumber = find_drum_number_from_note(data_json["note"][i]);
-          if (((int)data_json["note"][i] > 0 && find_drum_number_from_note(data_json["note"][i]) > 0) || (i == 0 && (int)data_json["note"][i] == 210))
-          {
-            set_sample_pitch(drumnumber, data_json["pitch"][i]);
-            set_sample_p_offset(drumnumber, data_json["p_offset"][i]);
-            set_sample_pan(drumnumber, data_json["pan"][i]);
-            set_sample_vol_max(drumnumber, data_json["vol_max"][i]);
-            set_sample_vol_min(drumnumber, data_json["vol_min"][i]);
-            set_sample_reverb_send(drumnumber, data_json["reverb_send"][i]);
-            set_sample_filter_mode(drumnumber, data_json["f_mode"][i]);
-            set_sample_filter_freq(drumnumber, data_json["f_freq"][i]);
-            set_sample_filter_q(drumnumber, data_json["f_q"][i]);
-          }
+          set_sample_note(i, data_json["note"][i]);
+          set_sample_pitch(i, data_json["pitch"][i]);
+          set_sample_p_offset(i, data_json["p_offset"][i]);
+          set_sample_pan(i, data_json["pan"][i]);
+          set_sample_vol_max(i, data_json["vol_max"][i]);
+          set_sample_vol_min(i, data_json["vol_min"][i]);
+          set_sample_reverb_send(i, data_json["reverb_send"][i]);
+          set_sample_filter_mode(i, data_json["f_mode"][i]);
+          set_sample_filter_freq(i, data_json["f_freq"][i]);
+          set_sample_filter_q(i, data_json["f_q"][i]);
         }
         return (true);
       }
