@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "TeensyTimerTool.h"
 
+extern void handleNoteOnInput(byte, byte, byte, byte);
 extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
 extern sequencer_t seq;
@@ -239,24 +240,23 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
           break;
         }
       } else {
-	      const midi::Channel ch = data.tracks[data.activeTrack].channel;
-	      switch(event) {
-	      case midi::NoteOn:
-		      handleNoteOn(ch, note, velocity, 0);
-
+        const midi::Channel ch = data.tracks[data.activeTrack].channel;
+        switch(event) {
+        case midi::NoteOn:
+          handleNoteOnInput(ch, note, velocity, 0);
           if(data.lastPlayedNote != note) {
             data.lastPlayedNote = note;
             data.lastPlayedNoteChanged = true;
           }
           break;
-	      
-	      case midi::NoteOff:
+    
+        case midi::NoteOff:
           handleNoteOff(ch, note, velocity, 0);
           break;
-	      
-	      default:
-		      break;
-	      }
+    
+        default:
+          break;
+        }
       }
     } else {
       ui.showDirectMappingWarning(inChannel);

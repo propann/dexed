@@ -94,6 +94,9 @@ using namespace TeensyTimerTool;
 #include "effect_stereo_panorama.h"
 
 #include "livesequencer.h"
+#include <vector>
+
+std::vector<uint8_t> midiNoteToDrumNote;
 
 elapsedMillis sysinfo_millis;
 elapsedMillis midi_start_delay;
@@ -2720,6 +2723,17 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber)
   print_custom_mappings();
 }
 
+void handleNoteOnInput(byte inChannel, byte inNumber, byte inVelocity, byte device) {
+  // drum played from input selects current drum note if drum screen open
+  if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI) {
+    const uint8_t drumNote = midiNoteToDrumNote[inNumber];
+    drumChanged(drumNote);
+  }
+  // play note
+  handleNoteOn(inChannel, inNumber, inVelocity, device);
+}
+
+
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 {
   wakeScreenFlag = true;
@@ -2990,123 +3004,118 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           }
         }
 
-        for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG; d++)
-        {
-          if (inNumber == drum_config[d].midinote)
-          {
+        const uint8_t d = midiNoteToDrumNote[inNumber];
 
 #ifdef COMPILE_FOR_FLASH
-            char temp_name[26];
+        char temp_name[26];
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
-            char temp_name[26];
+        char temp_name[26];
 #endif
-            uint8_t slot = drum_get_slot(drum_config[d].drum_class);
+        uint8_t slot = drum_get_slot(drum_config[d].drum_class);
 
-            if (slot != 99)
+        if (slot != 99)
+        {
+
+          // if (drum_config[d].filter_mode == 0)
+          //   Drum_filter[slot]->setLowpass(0, 20000, 0.2);
+          // else if (drum_config[d].filter_mode == 1)
+          //   Drum_filter[slot]->setLowpass(0, drum_config[d].filter_freq * 1000, 0.5);
+          // else if (drum_config[d].filter_mode == 2)
+          //   Drum_filter[slot]->setBandpass(0, drum_config[d].filter_freq * 1000, 0.5);
+          // else if (drum_config[d].filter_mode == 3)
+          //   Drum_filter[slot]->setHighpass(0, drum_config[d].filter_freq * 1000, 0.5);
+
+
+          //photodo
+
+          float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
+
+          drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+          drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
+
+          drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
+          drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
+
+
+          if (sidechain_a_active && d == sidechain_a_sample_number)
+            sidechain_trigger_a = true;
+          if (sidechain_b_active && d == sidechain_b_sample_number)
+            sidechain_trigger_b = true;
+
+#ifdef COMPILE_FOR_PROGMEM
+          if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+          {
+#endif
+
+            if (drum_config[d].pitch != 0.0)
             {
+              Drum[slot]->enableInterpolation(true);
+              Drum[slot]->setPlaybackRate(drum_config[d].pitch);
+            }
+            Drum[slot]->setLoopType(loop_type::looptype_none);
+            // test with envelopes for samples
+            //sample_envelope[slot]->noteOn();
 
-              // if (drum_config[d].filter_mode == 0)
-              //   Drum_filter[slot]->setLowpass(0, 20000, 0.2);
-              // else if (drum_config[d].filter_mode == 1)
-              //   Drum_filter[slot]->setLowpass(0, drum_config[d].filter_freq * 1000, 0.5);
-              // else if (drum_config[d].filter_mode == 2)
-              //   Drum_filter[slot]->setBandpass(0, drum_config[d].filter_freq * 1000, 0.5);
-              // else if (drum_config[d].filter_mode == 3)
-              //   Drum_filter[slot]->setHighpass(0, drum_config[d].filter_freq * 1000, 0.5);
-
-
-              //photodo
-
-              float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
-
-              drum_mixer_r.gain(slot, (1.0 - pan) * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-              drum_mixer_l.gain(slot, pan * volume_transform(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max)));
-
-              drum_reverb_send_mixer_r.gain(slot, (1.0 - pan) * volume_transform(drum_config[d].reverb_send));
-              drum_reverb_send_mixer_l.gain(slot, pan * volume_transform(drum_config[d].reverb_send));
-
-
-              if (sidechain_a_active && d == sidechain_a_sample_number)
-                sidechain_trigger_a = true;
-              if (sidechain_b_active && d == sidechain_b_sample_number)
-                sidechain_trigger_b = true;
-
-#ifdef COMPILE_FOR_PROGMEM
-              if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
-              {
-#endif
-
-                if (drum_config[d].pitch != 0.0)
-                {
-                  Drum[slot]->enableInterpolation(true);
-                  Drum[slot]->setPlaybackRate(drum_config[d].pitch);
-                }
-                Drum[slot]->setLoopType(loop_type::looptype_none);
-                // test with envelopes for samples
-                //sample_envelope[slot]->noteOn();
-
-                if (sidechain_a_active && d == sidechain_a_sample_number)
-                  sidechain_trigger_a = true;
-                if (sidechain_b_active && d == sidechain_b_sample_number)
-                  sidechain_trigger_b = true;
+            if (sidechain_a_active && d == sidechain_a_sample_number)
+              sidechain_trigger_a = true;
+            if (sidechain_b_active && d == sidechain_b_sample_number)
+              sidechain_trigger_b = true;
 
 #ifdef COMPILE_FOR_PROGMEM
 
-                Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+            Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 
 #if defined(COMPILE_FOR_FLASH)
-                snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
-                Drum[slot]->playWav(temp_name);
-                // Drum[slot]->playWav("DMpop.wav");  //Test
-                if (sidechain_a_active && d == sidechain_a_sample_number)
-                  sidechain_trigger_a = true;
-                if (sidechain_b_active && d == sidechain_b_sample_number)
-                  sidechain_trigger_b = true;
+            snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
+            Drum[slot]->playWav(temp_name);
+            // Drum[slot]->playWav("DMpop.wav");  //Test
+            if (sidechain_a_active && d == sidechain_a_sample_number)
+              sidechain_trigger_a = true;
+            if (sidechain_b_active && d == sidechain_b_sample_number)
+              sidechain_trigger_b = true;
 #endif
 
 #ifdef COMPILE_FOR_SDCARD
-                strcpy(temp_name, "/DRUMS/");
-                strcat(temp_name, drum_config[d].name);
-                strcat(temp_name, ".wav");
-                // test with envelopes for samples
-                // sample_envelope[slot]->noteOn();
-                Drum[slot]->playWav(temp_name);
+            strcpy(temp_name, "/DRUMS/");
+            strcat(temp_name, drum_config[d].name);
+            strcat(temp_name, ".wav");
+            // test with envelopes for samples
+            // sample_envelope[slot]->noteOn();
+            Drum[slot]->playWav(temp_name);
 #endif
 
-                // #ifdef DEBUG
-                //         char note_name[4];
-                //         getNoteName(note_name, inNumber);
-                //         LOG.print(F("=> Drum["));
-                //         LOG.print(slot, DEC);
-                //         LOG.print(F("]: "));
-                //         LOG.println(note_name);
-                // #endif
+            // #ifdef DEBUG
+            //         char note_name[4];
+            //         getNoteName(note_name, inNumber);
+            //         LOG.print(F("=> Drum["));
+            //         LOG.print(slot, DEC);
+            //         LOG.print(F("]: "));
+            //         LOG.println(note_name);
+            // #endif
 
 #ifdef COMPILE_FOR_PROGMEM
-              }
-#endif
-              // #ifdef DEBUG
-              //                 LOG.print(F("Drum "));
-              //                 LOG.print(drum_config[d].shortname);
-              //                 LOG.print(F(" ["));
-              //                 LOG.print(drum_config[d].name);
-              //                 LOG.print(F("], Slot "));
-              //                 LOG.print(slot);
-              //                 LOG.print(F(": V"));
-              //                 LOG.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
-              //                 LOG.print(F(" P"));
-              //                 LOG.print(drum_config[d].pan, 2);
-              //                 LOG.print(F(" PAN"));
-              //                 LOG.print(pan, 2);
-              //                 LOG.print(F(" RS"));
-              //                 LOG.println(drum_config[d].reverb_send, 2);
-              // #endif
-              break;
-            }
           }
+#endif
+          // #ifdef DEBUG
+          //                 LOG.print(F("Drum "));
+          //                 LOG.print(drum_config[d].shortname);
+          //                 LOG.print(F(" ["));
+          //                 LOG.print(drum_config[d].name);
+          //                 LOG.print(F("], Slot "));
+          //                 LOG.print(slot);
+          //                 LOG.print(F(": V"));
+          //                 LOG.print(mapfloat(inVelocity, 0, 127, drum_config[d].vol_min, drum_config[d].vol_max), 2);
+          //                 LOG.print(F(" P"));
+          //                 LOG.print(drum_config[d].pan, 2);
+          //                 LOG.print(F(" PAN"));
+          //                 LOG.print(pan, 2);
+          //                 LOG.print(F(" RS"));
+          //                 LOG.println(drum_config[d].reverb_send, 2);
+          // #endif
+
         }
       }
 
@@ -4846,6 +4855,12 @@ FLASHMEM void init_configuration(void)
 void set_sample_note(uint8_t sample, uint8_t note)
 {
   drum_config[sample].midinote = note;
+
+  // create look up table to find drum notes from midi notes efficiently
+  if(midiNoteToDrumNote.size() < size_t(note + 1)) {
+    midiNoteToDrumNote.resize(note + 1);
+  }
+  midiNoteToDrumNote[note] = sample;
 }
 
 void set_sample_pitch(uint8_t sample, float playbackspeed)
@@ -4932,20 +4947,6 @@ float get_sample_filter_freq(uint8_t sample)
 float get_sample_filter_q(uint8_t sample)
 {
   return (drum_config[sample].filter_q);
-}
-
-FLASHMEM uint8_t find_drum_number_from_note(uint8_t note)
-{
-  uint8_t number = 0;
-  for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++)
-  {
-    if (note == drum_config[d].midinote)
-    {
-      number = d;
-      break;
-    }
-  }
-  return number;
 }
 
 FLASHMEM void set_fx_params(void)

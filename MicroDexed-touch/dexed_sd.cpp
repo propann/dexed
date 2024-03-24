@@ -143,7 +143,6 @@ extern uint8_t get_sample_filter_mode(uint8_t sample);
 extern float get_sample_filter_freq(uint8_t sample);
 extern float get_sample_filter_q(uint8_t sample);
 
-extern uint8_t find_drum_number_from_note(uint8_t note);
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 
@@ -759,20 +758,16 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
         set_drums_volume(seq.drums_volume);
         for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1; i++)
         {
-          uint8_t drumnumber = 0;
-          drumnumber = find_drum_number_from_note(data_json["note"][i]);
-          if (((int)data_json["note"][i] > 0 && find_drum_number_from_note(data_json["note"][i]) > 0) || (i == 0 && (int)data_json["note"][i] == 210))
-          {
-            set_sample_pitch(drumnumber, data_json["pitch"][i]);
-            set_sample_p_offset(drumnumber, data_json["p_offset"][i]);
-            set_sample_pan(drumnumber, data_json["pan"][i]);
-            set_sample_vol_max(drumnumber, data_json["vol_max"][i]);
-            set_sample_vol_min(drumnumber, data_json["vol_min"][i]);
-            set_sample_reverb_send(drumnumber, data_json["reverb_send"][i]);
-            set_sample_filter_mode(drumnumber, data_json["f_mode"][i]);
-            set_sample_filter_freq(drumnumber, data_json["f_freq"][i]);
-            set_sample_filter_q(drumnumber, data_json["f_q"][i]);
-          }
+          set_sample_note(i, data_json["note"][i]);
+          set_sample_pitch(i, data_json["pitch"][i]);
+          set_sample_p_offset(i, data_json["p_offset"][i]);
+          set_sample_pan(i, data_json["pan"][i]);
+          set_sample_vol_max(i, data_json["vol_max"][i]);
+          set_sample_vol_min(i, data_json["vol_min"][i]);
+          set_sample_reverb_send(i, data_json["reverb_send"][i]);
+          set_sample_filter_mode(i, data_json["f_mode"][i]);
+          set_sample_filter_freq(i, data_json["f_freq"][i]);
+          set_sample_filter_q(i, data_json["f_q"][i]);
         }
         return (true);
       }
@@ -3496,7 +3491,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
   return (true);
 }
 
-FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
+FLASHMEM bool get_bank_name(uint8_t p, uint8_t b, char* bank_name)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("get bank name for bank [%d]\n"), b);
@@ -3506,9 +3501,9 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
   if (sd_card > 0)
   {
     File sysex_dir;
-    char bankdir[FILENAME_LEN];
+    char bankdir[FILENAME_LEN+4];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -3556,7 +3551,7 @@ FLASHMEM bool get_bank_name(uint8_t b, char* bank_name)
   return false;
 }
 
-FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
+FLASHMEM bool get_voice_name(uint8_t p, uint8_t b, uint8_t v, char* voice_name)
 {
 #ifdef DEBUG
   LOG.printf_P(PSTR("get voice name for voice [%d]\n"), v + 1);
@@ -3566,9 +3561,9 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
   if (sd_card > 0)
   {
     File sysex_dir;
-    char bankdir[FILENAME_LEN];
+    char bankdir[FILENAME_LEN+4];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d"), DEXED_CONFIG_PATH, b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p,b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -3606,7 +3601,7 @@ FLASHMEM bool get_voice_name(uint8_t b, uint8_t v, char* voice_name)
     char bank_name[BANK_NAME_LEN];
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b, bank_name);
+    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b,p, bank_name);
 #endif
     memset(voice_name, 0, VOICE_NAME_LEN);
     entry.seek(124 + (v * 128));

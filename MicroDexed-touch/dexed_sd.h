@@ -65,9 +65,6 @@ bool save_sd_sys_json(void);
 bool load_sd_performance_json(uint8_t p);
 bool save_sd_performance_json(uint8_t p);
 
-//bool load_sd_seq_json(uint8_t p);
-//bool save_sd_seq_json(uint8_t p);
-
 bool load_sd_multisample_presets_json(uint8_t p);
 bool save_sd_multisample_presets_json(uint8_t p);
 
@@ -76,8 +73,8 @@ bool check_performance_directory(uint8_t seq_number);
 bool get_sd_data(File sysex, uint8_t format, uint8_t* conf);
 bool write_sd_data(File sysex, uint8_t format, uint8_t *data, uint16_t len);
 
-bool get_bank_name(uint8_t b, char* bank_name);
-bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
+bool get_bank_name(uint8_t p, uint8_t b, char* bank_name);
+bool get_voice_name(uint8_t p,uint8_t b, uint8_t v, char* voice_name);
 
 uint8_t calc_checksum(uint8_t *data, uint16_t len);
 void strip_extension(const char* s, char* target, uint8_t len);

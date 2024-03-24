@@ -255,8 +255,8 @@ extern uint8_t microsynth_selected_instance;
 extern AudioMixer<2> microsynth_mixer_reverb;
 extern void virtual_keyboard_print_current_instrument();
 extern uint8_t find_longest_chain();
-extern bool get_bank_name(uint8_t b, char* bank_name);
-extern bool get_voice_name(uint8_t b, uint8_t v, char* voice_name);
+extern bool get_bank_name(uint8_t p, uint8_t b, char* bank_name);
+extern bool get_voice_name(uint8_t p,uint8_t b, uint8_t v, char* voice_name);
 extern void stop_all_drum_slots();
 extern char noteNames[12][3];
 extern void dac_mute(void);
@@ -6499,6 +6499,21 @@ void addDrumParameterEditor_int16_t(const char* name, int16_t limit_min, int16_t
     NULL);
 }
 
+bool drumScreenActive = false;
+void drumChanged(uint8_t drumNote) {
+  if(drumScreenActive) {
+    activesample = constrain(drumNote, 0, NUM_DRUMSET_CONFIG - 1);
+
+    ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
+
+#if defined(COMPILE_FOR_FLASH)
+        if (seq.running == false) {
+          // this makes MDT crash often (press two keys fast one after another)
+          //draw_waveform_overview_in_drums_page_step1(activesample);
+        }
+#endif
+  }
+}
 
 // Create drum UI.
 // The drum UI needs to be redrawn if activesample changes.
@@ -6506,6 +6521,7 @@ void UI_func_drums(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    drumScreenActive = true;
     ui.reset();
     ui.clear(); // just recreate UI without resetting selection / edit mode
 
@@ -6579,37 +6595,34 @@ void UI_func_drums(uint8_t param)
     if (generic_temp_select_menu == 0 || generic_temp_select_menu == 6)
     {
       if (generic_temp_select_menu == 0) {
-        ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
-#if defined(COMPILE_FOR_FLASH)
-        if (seq.running == false)
-        {
-          draw_waveform_overview_in_drums_page_step1(activesample);
-        }
-#endif
-
+        drumChanged(activesample);
       }
 
       display.setTextSize(1);
       setCursor_textGrid_small(20, 9);
-      if (seq.edit_state == 0)
+      if (seq.edit_state == 0) {
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      }
 
-      if (drum_config[activesample].filter_mode == 0)
+      switch(drum_config[activesample].filter_mode) {
+      case 0:
         display.print("OFF     ");
-      else
-        if (drum_config[activesample].filter_mode == 1)
-          display.print("LOWPASS ");
-        else
-          if (drum_config[activesample].filter_mode == 2)
-            display.print("BANDPASS");
-          else
-            if (drum_config[activesample].filter_mode == 3)
-              display.print("HIGHPASS");
+        break;
+      case 1:
+        display.print("LOWPASS ");
+        break;
+      case 2:
+        display.print("BANDPASS");
+        break;
+      case 3:
+        display.print("HIGHPASS");
+        break;
+      }
     }
-
   }
   if (LCDML.FUNC_close()) // ****** CLOSE *********
   {
+    drumScreenActive = false;
     ui.clear();
   }
 }
@@ -19480,7 +19493,7 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
           configuration.dexed[selected_instance_id].bank = constrain(configuration.dexed[selected_instance_id].bank - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
         // get bank name from sysex on SD
-        get_bank_name(configuration.dexed[selected_instance_id].bank, g_bank_name[selected_instance_id]);
+        get_bank_name(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, g_bank_name[selected_instance_id]);
 
         show(2, 1, 2, configuration.dexed[selected_instance_id].bank);
         show(2, 5, 10, g_bank_name[selected_instance_id]);
@@ -19492,7 +19505,7 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
           configuration.dexed[selected_instance_id].voice = constrain(configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
 
         // get voice name from sysex on SD
-        get_voice_name(configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, g_voice_name[selected_instance_id]);
+        get_voice_name(configuration.dexed[selected_instance_id].pool,configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, g_voice_name[selected_instance_id]);
         MicroDexed[selected_instance_id]->getName(g_voice_name[selected_instance_id]);
 
         show(2, 1, 2, configuration.dexed[selected_instance_id].voice + 1);
@@ -19882,11 +19895,13 @@ FLASHMEM void UI_func_set_multisample_name(uint8_t param)
 
 FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
 {
+  static uint8_t pool_number;
   static uint8_t bank_number;
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
+    pool_number = configuration.dexed[selected_instance_id].pool;
     bank_number = configuration.dexed[selected_instance_id].bank;
     strcpy(tmp_bank_name, g_bank_name[selected_instance_id]);
     setCursor_textGrid(1, 1);
@@ -19910,7 +19925,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
         bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
       }
 
-      get_bank_name(bank_number, tmp_bank_name);
+      get_bank_name(configuration.dexed[selected_instance_id].pool, bank_number, tmp_bank_name);
 #ifdef DEBUG
       LOG.printf_P(PSTR("send bank sysex %d - bank:[%s]\n"), bank_number, tmp_bank_name);
 #endif
@@ -19921,8 +19936,8 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
     {
       if (strcmp("*ERROR*", tmp_bank_name) != 0)
       {
-        char filename[FILENAME_LEN];
-        snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
+        char filename[FILENAME_LEN+4];
+        snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, pool_number, bank_number, tmp_bank_name);
 #ifdef DEBUG
         LOG.print(F("Send bank "));
         LOG.print(filename);
@@ -19984,6 +19999,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
 FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 {
   static uint8_t mode;
+  static uint8_t pool_number;
   static uint8_t bank_number;
   static uint8_t voice_number;
 
@@ -19992,6 +20008,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     mode = 0;
+     pool_number = configuration.dexed[selected_instance_id].pool;
     bank_number = configuration.dexed[selected_instance_id].bank;
     voice_number = configuration.dexed[selected_instance_id].voice;
 
@@ -20021,9 +20038,10 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         else if (LCDML.BT_checkUp() && bank_number > 0)
           bank_number = constrain(bank_number - ENCODER[ENC_R].speed(), 0, MAX_BANKS - 1);
 
-        get_bank_name(bank_number, tmp_bank_name);
+        get_bank_name(pool_number, bank_number, tmp_bank_name);
         show(2, 1, 2, bank_number);
         show(2, 5, 10, tmp_bank_name);
+         get_voice_name(pool_number, bank_number, voice_number, tmp_voice_name);
         break;
       case 1: // Voice selection
         if (LCDML.BT_checkDown() && voice_number < MAX_VOICES - 1)
@@ -20031,7 +20049,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         else if (LCDML.BT_checkUp() && voice_number > 0)
           voice_number = constrain(voice_number - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
 
-        get_voice_name(bank_number, voice_number, tmp_voice_name);
+        get_voice_name(pool_number, bank_number, voice_number, tmp_voice_name);
         MicroDexed[selected_instance_id]->getName(tmp_voice_name);
 
         show(2, 1, 2, voice_number + 1);
@@ -20055,8 +20073,8 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
       case 2:
         if (strcmp("*ERROR*", tmp_bank_name) != 0)
         {
-          char filename[FILENAME_LEN];
-          snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.syx"), DEXED_CONFIG_PATH, bank_number, tmp_bank_name);
+          char filename[FILENAME_LEN+4];
+          snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, pool_number, bank_number, tmp_bank_name);
 #ifdef DEBUG
           LOG.print(F("Send voice "));
           LOG.print(voice_number);
