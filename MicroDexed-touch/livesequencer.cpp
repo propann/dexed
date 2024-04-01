@@ -527,7 +527,7 @@ void LiveSequencer::playNextArpNote(void) {
           handleNoteOff(channel, note, 0, 0);
         }
       }
-      checkLoadNewArpNotes();
+      //checkLoadNewArpNotes();
       const float swingFactor = data.arpSettings.swing / 0.5F; // 0.5 swing is no swing
       if((data.arpSettings.arpCount & 0x01) == 0) {
         // swing: odd beats NoteOn is variable
@@ -567,10 +567,10 @@ void LiveSequencer::onGuiInit(void) {
   init();
   checkAddMetronome();
 
-  data.arpSettings.amount = 8;
+  data.arpSettings.amount = 32;
   data.arpSettings.length = 0.6;
   data.arpSettings.swing = 0.6;
-  data.arpSettings.mode = ArpMode::ARP_RANDOM;
+  data.arpSettings.mode = ArpMode::ARP_DOWNUP;
 }
 
 void LiveSequencer::checkBpmChanged(void) {

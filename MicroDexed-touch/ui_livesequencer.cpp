@@ -3,6 +3,7 @@
 #include "ILI9341_t3n.h"
 #include "sequencer.h"
 #include "livesequencer.h"
+#include "editableValue.h"
 
 extern LCDMenuLib2 LCDML;
 extern ILI9341_t3n display;
@@ -31,6 +32,13 @@ uint8_t numberOfBarsTemp = 0;
 bool deleteConfirming = false;
 bool showingHowTo = false;
 
+enum ShowingTools : uint8_t {
+  TOOL_FILL,
+  TOOL_ARP
+} showingTools = TOOL_FILL;
+
+EditableValue<uint8_t> *fillNum;
+
 LiveSequencer* liveSeqPtr;
 LiveSequencer::LiveSeqData* liveSeqData;
 uint8_t guiCounter = 0;
@@ -46,6 +54,8 @@ void applyScreenRedrawGuiFlags();
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
   liveSeqPtr = sequencer;
   liveSeqData = sequencer->getData();
+
+  fillNum = new EditableValue<uint8_t>(&liveSeqData->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }));
 }
 
 void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
@@ -89,7 +99,7 @@ enum GuiUpdates : uint16_t {
   drawTopButtons = (1 << 0),
   drawTrackButtons = (1 << 1),
   drawLayerButtons = (1 << 2),
-  drawFillNotes = (1 << 3),
+  drawTools = (1 << 3),
   drawQuantisize = (1 << 4),
   clearBottomArea = (1 << 5),
   drawSongSettings = (1 << 6),
@@ -103,7 +113,6 @@ enum GuiUpdates : uint16_t {
 
 bool isLayerViewActive = false;
 uint16_t guiUpdateFlags = 0;
-uint8_t fillNotesSteps[] = { 4, 6, 8, 12, 16, 24, 32 };
 bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
 void drawGUI(uint16_t& guiFlags);
@@ -134,7 +143,7 @@ void UI_func_livesequencer(uint8_t param) {
     guiUpdateFlags |= (liveSeqData->isRunning || liveSeqData->stoppedFlag) ? (drawActiveNotes | drawTime) : 0;
 
     if (liveSeqData->currentPageIndex == PagePattern::PAGE_PATT_SETINGS) {
-      guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawFillNotes) : 0;
+      guiUpdateFlags |= liveSeqData->lastPlayedNoteChanged ? (drawTools) : 0;
     }
     liveSeqData->songLayersChanged = false;
     liveSeqData->trackLayersChanged = false;
@@ -179,7 +188,7 @@ void applyScreenRedrawGuiFlags() {
       break;
 
     case PagePattern::PAGE_PATT_SETINGS:
-      guiUpdateFlags |= (drawFillNotes | drawQuantisize | drawPattLength | drawDeleteAll);
+      guiUpdateFlags |= (drawTools | drawQuantisize | drawPattLength | drawDeleteAll);
       break;
     }
   }
@@ -321,18 +330,24 @@ void handle_touchscreen_live_sequencer(void) {
             guiUpdateFlags |= drawQuantisize;
           }
         }
+        if (check_button_on_grid(BUTTON_COLUMNS_X[0], 15)) {
+          switch (showingTools) {
+          case TOOL_FILL:
+            showingTools = TOOL_ARP;
+            break;
+          
+          case TOOL_ARP:
+            showingTools = TOOL_FILL;
+            break;
+          }
+          guiUpdateFlags |= drawTools;
+        }
+
         if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
           // fill number
-          switch (liveSeqData->fillNotes.number) {
-          case  4: liveSeqData->fillNotes.number = 6; break;
-          case  6: liveSeqData->fillNotes.number = 8; break;
-          case  8: liveSeqData->fillNotes.number = 12; break;
-          case 12: liveSeqData->fillNotes.number = 16; break;
-          case 16: liveSeqData->fillNotes.number = 24; break;
-          case 24: liveSeqData->fillNotes.number = 32; break;
-          case 32: liveSeqData->fillNotes.number = 4; break;
-          }
-          guiUpdateFlags |= drawFillNotes;
+
+          fillNum->next();
+          guiUpdateFlags |= drawTools;
         }
         if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
           // fill offset
@@ -340,12 +355,12 @@ void handle_touchscreen_live_sequencer(void) {
           if (liveSeqData->fillNotes.offset > 7) {
             liveSeqData->fillNotes.offset = 0;
           }
-          guiUpdateFlags |= drawFillNotes;
+          guiUpdateFlags |= drawTools;
         }
         if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
           // fill now
           liveSeqPtr->fillTrackLayer();
-          guiUpdateFlags |= drawFillNotes;
+          guiUpdateFlags |= drawTools;
         }
 
         if (check_button_on_grid(BUTTON_COLUMNS_X[1], 20)) {
@@ -571,13 +586,24 @@ void drawGUI(uint16_t& guiFlags) {
       }
     }
 
-    if (guiFlags & drawFillNotes) {
-      // fill track
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "FILL", "NOTES", 97); // label only
-      draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 0); // label only
-      draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "NUM", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
-      draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);
-      draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "FILL", "NOW", 2);
+    if (guiFlags & drawTools) {
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "TOOL", showingTools == TOOL_FILL ? "FILL" : "ARP", 1);
+
+      if(showingTools == TOOL_FILL) {
+        // fill track
+        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(liveSeqData->lastPlayedNote, temp_char, 10), 0); // label only
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "NUM", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", itoa(liveSeqData->fillNotes.offset, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 97); // spacer
+        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "FILL", "NOW", 2);
+      }
+      if(showingTools == TOOL_ARP) {
+        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+      }
     }
 
     if (guiFlags & drawPattLength) {
