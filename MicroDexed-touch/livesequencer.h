@@ -55,15 +55,16 @@ public:
     uint8_t offset;
   };
 
-  enum ArpMode {
-    ARP_DOWN,
+  enum ArpMode : uint8_t {
+    ARP_DOWN = 0,
     ARP_UP,
     ARP_DOWNUP,
     ARP_DOWNUP_P,
     ARP_UPDOWN,
     ARP_UPDOWN_P,
     ARP_RANDOM,
-    ARP_CHORD
+    ARP_CHORD,
+    ARP_MODENUM
   };
 
   struct ArpNote {
@@ -74,9 +75,9 @@ public:
   struct ArpSettings {
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
-    float length; // 0.0 - 1.0 pulse width
-    float swing;
-    bool latch;
+    uint8_t length; // 0 - 100% pulse width
+    int8_t swing;
+    uint8_t latch;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
 

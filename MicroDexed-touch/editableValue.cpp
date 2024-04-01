@@ -1,17 +1,17 @@
 #include "editableValue.h"
 
 template <class T>
-EditableValue<T>::EditableValue(T* invalue, std::vector<T> invalues) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues) {
+EditableValue<T>::EditableValue(T* invalue, std::vector<T> invalues, T defaultValue) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues) {
   if(values.empty()) {
     values.push_back(0);
   }
   it = values.begin();
-  *value = *it;
+  *value = defaultValue;
 }
 
 template <class T>
-EditableValue<T>::EditableValue(T* invalue, T min, T max, T increment) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
-  *value = min;
+EditableValue<T>::EditableValue(T* invalue, T min, T max, T increment, T defaultValue) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
+  *value = defaultValue;
 }
 
 template <class T>

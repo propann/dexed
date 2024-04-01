@@ -7,8 +7,8 @@
 template<class T> class EditableValue {
 
 public:
-  EditableValue(T* value, std::vector<T> values);
-  EditableValue(T* value, T min, T max, T increment);
+  EditableValue(T* value, std::vector<T> values, T defaultValue);
+  EditableValue(T* value, T min, T max, T increment, T defaultValue);
 
   void next();
 
@@ -28,5 +28,5 @@ private:
 };
 
 template class EditableValue<uint8_t>;
-template class EditableValue<float>;
+template class EditableValue<int8_t>;
 #endif //EDITABLEVALUE_H

@@ -41,7 +41,10 @@ EditableValue<uint8_t> *fillNum;
 EditableValue<uint8_t> *fillOff;
 
 EditableValue<uint8_t> *arpAmount;
-EditableValue<float> *arpLength;
+EditableValue<uint8_t> *arpLength;
+EditableValue<uint8_t> *arpMode;
+EditableValue<int8_t> *arpSwing;
+EditableValue<uint8_t> *arpLatch;
 
 LiveSequencer* liveSeqPtr;
 LiveSequencer::LiveSeqData* liveSeqData;
@@ -59,11 +62,14 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
   liveSeqPtr = sequencer;
   liveSeqData = sequencer->getData();
 
-  fillNum = new EditableValue<uint8_t>(&liveSeqData->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }));
-  fillOff = new EditableValue<uint8_t>(&liveSeqData->fillNotes.offset, 0, 7, 1);
+  fillNum = new EditableValue<uint8_t>(&liveSeqData->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
+  fillOff = new EditableValue<uint8_t>(&liveSeqData->fillNotes.offset, 0, 7, 1, 0);
 
-  arpAmount = new EditableValue<uint8_t>(&liveSeqData->arpSettings.amount, std::vector<uint8_t>({ 0, 4, 6, 8, 12, 16, 24, 32, 64 }));
-  arpLength = new EditableValue<float>(&liveSeqData->arpSettings.length, 0.2, 0.8, 0.1);
+  arpAmount = new EditableValue<uint8_t>(&liveSeqData->arpSettings.amount, std::vector<uint8_t>({ 0, 4, 6, 8, 12, 16, 24, 32, 64 }), 16);
+  arpLength = new EditableValue<uint8_t>(&liveSeqData->arpSettings.length, 20, 80, 10, 50);
+  arpMode = new EditableValue<uint8_t>((uint8_t*)&liveSeqData->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWNUP));
+  arpSwing = new EditableValue<int8_t>(&liveSeqData->arpSettings.swing, -5, 5, 1, 0);
+  arpLatch = new EditableValue<uint8_t>(&liveSeqData->arpSettings.latch, 0, 1, 1, 1);
 }
 
 void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
@@ -373,9 +379,24 @@ void handle_touchscreen_live_sequencer(void) {
             arpAmount->next();
             guiUpdateFlags |= drawTools;
           }
+          if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
+            // arp mode
+            arpMode->next();
+            guiUpdateFlags |= drawTools;
+          }
           if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
             // arp length
             arpLength->next();
+            guiUpdateFlags |= drawTools;
+          }
+          if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
+            // arp swing
+            arpSwing->next();
+            guiUpdateFlags |= drawTools;
+          }
+          if (check_button_on_grid(BUTTON_COLUMNS_X[5], 15)) {
+            // arp latch
+            arpLatch->next();
             guiUpdateFlags |= drawTools;
           }
         }
@@ -616,10 +637,10 @@ void drawGUI(uint16_t& guiFlags) {
       }
       if(showingTools == TOOL_ARP) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", itoa(liveSeqData->arpSettings.amount, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->arpSettings.length * 100, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", itoa(liveSeqData->arpSettings.mode, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->arpSettings.length, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(liveSeqData->arpSettings.swing, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (liveSeqData->arpSettings.latch == 0) ? "OFF" : "ON", 3);
       }
     }
 

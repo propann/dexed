@@ -226,7 +226,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
 
       // forward incoming midi event to correct channel
       // ignore events directly mapped to an instrument
-      const bool arpActive = data.arpSettings.amount > 0;
+      const bool arpActive = data.isRunning && (data.arpSettings.amount > 0);
       if(arpActive) {
         switch(event) {
         case midi::NoteOn:
@@ -476,7 +476,7 @@ void LiveSequencer::playNextArpNote(void) {
     bool arpsPending = true;
 
     const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
-    const int arpOnMs = (arpIntervalMs * data.arpSettings.length);
+    const int arpOnMs = (arpIntervalMs * data.arpSettings.length / 100);
     int arpOffMs = arpIntervalMs - arpOnMs;
     int delayToNextArpEventMs = 0;
 
@@ -500,24 +500,26 @@ void LiveSequencer::playNextArpNote(void) {
       if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
         if(data.arpSettings.arpNotes.size() > 1) {
           if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-            data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-            bool doubleEndNote = false;
-            switch(data.arpSettings.mode) {
-            case ArpMode::ARP_DOWNUP_P:
-            case ArpMode::ARP_UPDOWN_P:
-              doubleEndNote = true;
-            case ArpMode::ARP_DOWNUP:
-            case ArpMode::ARP_UPDOWN:
-              std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-              if(doubleEndNote == false) {
-                data.arpSettings.arpIt++;
+            if(data.arpSettings.latch == 1) {
+              data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+              bool doubleEndNote = false;
+              switch(data.arpSettings.mode) {
+              case ArpMode::ARP_DOWNUP_P:
+              case ArpMode::ARP_UPDOWN_P:
+                doubleEndNote = true;
+              case ArpMode::ARP_DOWNUP:
+              case ArpMode::ARP_UPDOWN:
+                std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                if(doubleEndNote == false) {
+                  data.arpSettings.arpIt++;
+                }
+                break;
+              case ArpMode::ARP_RANDOM:
+                std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                break;
+              default:
+                break;
               }
-              break;
-            case ArpMode::ARP_RANDOM:
-              std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-              break;
-            default:
-              break;
             }
           }
         }
@@ -528,12 +530,12 @@ void LiveSequencer::playNextArpNote(void) {
         }
       }
       //checkLoadNewArpNotes();
-      const float swingFactor = data.arpSettings.swing / 0.5F; // 0.5 swing is no swing
+      const int swingOffset = data.arpSettings.swing * arpOffMs / 6.0; // swing from -5 to +5
       if((data.arpSettings.arpCount & 0x01) == 0) {
         // swing: odd beats NoteOn is variable
-        arpOffMs = round(arpOffMs * swingFactor);
+        arpOffMs = round(arpOffMs + swingOffset);
       } else {
-        arpOffMs = round(arpOffMs / swingFactor);
+        arpOffMs = round(arpOffMs - swingOffset);
       }
       delayToNextArpEventMs = arpOffMs;
 
@@ -566,11 +568,6 @@ void LiveSequencer::init(void) {
 void LiveSequencer::onGuiInit(void) {
   init();
   checkAddMetronome();
-
-  data.arpSettings.amount = 32;
-  data.arpSettings.length = 0.6;
-  data.arpSettings.swing = 0.6;
-  data.arpSettings.mode = ArpMode::ARP_DOWNUP;
 }
 
 void LiveSequencer::checkBpmChanged(void) {
@@ -737,7 +734,7 @@ void LiveSequencer::checkAddMetronome(void) {
         data.activeTrack = i;
         data.fillNotes.number = 8;
         data.fillNotes.offset = 0;
-        data.lastPlayedNote = 54; // hats
+        data.lastPlayedNote = 78; // hats
         fillTrackLayer();
         data.fillNotes.number = 1;
         data.fillNotes.offset = 0;
