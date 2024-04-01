@@ -8,14 +8,25 @@ template<class T> class EditableValue {
 
 public:
   EditableValue(T* value, std::vector<T> values);
+  EditableValue(T* value, T min, T max, T increment);
 
   void next();
 
 private:
-    typename std::vector<T>::iterator it;
-    T* value;
-    std::vector<T> values;
+  enum Mode {
+    MODE_FIXED,
+    MODE_RANGE
+  };
+  Mode mode;
+  typename std::vector<T>::iterator it;
+  T* value;
+  std::vector<T> values;
+
+  T rangeMin;
+  T rangeMax;
+  T rangeIncrement;
 };
 
 template class EditableValue<uint8_t>;
+template class EditableValue<float>;
 #endif //EDITABLEVALUE_H

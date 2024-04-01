@@ -38,6 +38,10 @@ enum ShowingTools : uint8_t {
 } showingTools = TOOL_FILL;
 
 EditableValue<uint8_t> *fillNum;
+EditableValue<uint8_t> *fillOff;
+
+EditableValue<uint8_t> *arpAmount;
+EditableValue<float> *arpLength;
 
 LiveSequencer* liveSeqPtr;
 LiveSequencer::LiveSeqData* liveSeqData;
@@ -56,6 +60,10 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
   liveSeqData = sequencer->getData();
 
   fillNum = new EditableValue<uint8_t>(&liveSeqData->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }));
+  fillOff = new EditableValue<uint8_t>(&liveSeqData->fillNotes.offset, 0, 7, 1);
+
+  arpAmount = new EditableValue<uint8_t>(&liveSeqData->arpSettings.amount, std::vector<uint8_t>({ 0, 4, 6, 8, 12, 16, 24, 32, 64 }));
+  arpLength = new EditableValue<float>(&liveSeqData->arpSettings.length, 0.2, 0.8, 0.1);
 }
 
 void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
@@ -342,25 +350,34 @@ void handle_touchscreen_live_sequencer(void) {
           }
           guiUpdateFlags |= drawTools;
         }
-
-        if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
-          // fill number
-
-          fillNum->next();
-          guiUpdateFlags |= drawTools;
-        }
-        if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
-          // fill offset
-          liveSeqData->fillNotes.offset++;
-          if (liveSeqData->fillNotes.offset > 7) {
-            liveSeqData->fillNotes.offset = 0;
+        if(showingTools == TOOL_FILL) {
+          if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
+            // fill number
+            fillNum->next();
+            guiUpdateFlags |= drawTools;
           }
-          guiUpdateFlags |= drawTools;
+          if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
+            // fill offset
+            fillOff->next();
+            guiUpdateFlags |= drawTools;
+          }
+          if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
+            // fill now
+            liveSeqPtr->fillTrackLayer();
+            guiUpdateFlags |= drawTools;
+          }
         }
-        if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
-          // fill now
-          liveSeqPtr->fillTrackLayer();
-          guiUpdateFlags |= drawTools;
+        if(showingTools == TOOL_ARP) {
+          if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
+            // arp number
+            arpAmount->next();
+            guiUpdateFlags |= drawTools;
+          }
+          if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
+            // arp length
+            arpLength->next();
+            guiUpdateFlags |= drawTools;
+          }
         }
 
         if (check_button_on_grid(BUTTON_COLUMNS_X[1], 20)) {
@@ -598,9 +615,9 @@ void drawGUI(uint16_t& guiFlags) {
         draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "FILL", "NOW", 2);
       }
       if(showingTools == TOOL_ARP) {
-        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", itoa(liveSeqData->arpSettings.amount, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->arpSettings.length * 100, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", itoa(liveSeqData->fillNotes.number, temp_char, 10), 3);
       }
