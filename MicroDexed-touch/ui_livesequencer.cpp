@@ -66,7 +66,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
   fillOff = new EditableValue<uint8_t>(&liveSeqData->fillNotes.offset, 0, 7, 1, 0);
 
   arpAmount = new EditableValue<uint8_t>(&liveSeqData->arpSettings.amount, std::vector<uint8_t>({ 0, 4, 6, 8, 12, 16, 24, 32, 64 }), 16);
-  arpLength = new EditableValue<uint8_t>(&liveSeqData->arpSettings.length, 20, 80, 10, 50);
+  arpLength = new EditableValue<uint8_t>(&liveSeqData->arpSettings.length, 50, 90, 10, 90);
   arpMode = new EditableValue<uint8_t>((uint8_t*)&liveSeqData->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWNUP));
   arpSwing = new EditableValue<int8_t>(&liveSeqData->arpSettings.swing, -5, 5, 1, 0);
   arpLatch = new EditableValue<uint8_t>(&liveSeqData->arpSettings.latch, 0, 1, 1, 1);
@@ -640,7 +640,7 @@ void drawGUI(uint16_t& guiFlags) {
         draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", itoa(liveSeqData->arpSettings.mode, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->arpSettings.length, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(liveSeqData->arpSettings.swing, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (liveSeqData->arpSettings.latch == 0) ? "OFF" : "ON", 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (liveSeqData->arpSettings.latch == 0) ? "NO" : "ON", 3);
       }
     }
 

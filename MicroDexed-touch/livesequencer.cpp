@@ -471,6 +471,8 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
     default:
       break;
     }
+  }
+  if(data.arpSettings.arpNotes.size()) {
     data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
   }
 }
@@ -532,7 +534,7 @@ void LiveSequencer::playNextArpNote(void) {
         }
       }
       //checkLoadNewArpNotes();
-      const int swingOffset = data.arpSettings.swing * arpOffMs / 6.0; // swing from -5 to +5
+      const int swingOffset = data.arpSettings.swing * arpOffMs / 5.1; // swing from -5 to +5
       if((data.arpSettings.arpCount & 0x01) == 0) {
         // swing: odd beats NoteOn is variable
         delayToNextArpEventMs = arpOffMs + swingOffset;
