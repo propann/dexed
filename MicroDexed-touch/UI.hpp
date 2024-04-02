@@ -256,7 +256,7 @@ extern AudioMixer<2> microsynth_mixer_reverb;
 extern void virtual_keyboard_print_current_instrument();
 extern uint8_t find_longest_chain();
 extern bool get_bank_name(uint8_t p, uint8_t b, char* bank_name);
-extern bool get_voice_name(uint8_t p,uint8_t b, uint8_t v, char* voice_name);
+extern bool get_voice_name(uint8_t p, uint8_t b, uint8_t v, char* voice_name);
 extern void stop_all_drum_slots();
 extern char noteNames[12][3];
 extern void dac_mute(void);
@@ -869,6 +869,20 @@ FLASHMEM void print_song_mode_help()
     }
   }
   seq.help_text_needs_refresh = false;
+}
+
+FLASHMEM void print_fav_search_text(bool dir)
+{
+  display.setCursor(11 * CHAR_width_small, 2 * CHAR_height_small + 3);
+  display.setTextSize(2);
+  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+  if (dir == LEFT)
+    display.print(F("<SEARCHING"));
+  else    if (dir == RIGHT)
+    display.print(">SEARCHING");
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
 }
 
 FLASHMEM void sub_song_print_instruments(uint16_t front, uint16_t back)
@@ -4467,13 +4481,13 @@ FLASHMEM void lcdml_menu_control(void)
 #endif
         encoderDir[ENC_L].ButtonShort(true);
 
-// damster@09.03.2024: commented out as this bugs initial page back behavior 
-//        if ((LCDML.MENU_getLastActiveFunctionID() == 0xff && LCDML.MENU_getLastCursorPositionID() == 0) || menu_init == true)
-//        {
-//          LCDML.MENU_goRoot();
-//          menu_init = false;
-//        }
-//        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
+        // damster@09.03.2024: commented out as this bugs initial page back behavior 
+        //        if ((LCDML.MENU_getLastActiveFunctionID() == 0xff && LCDML.MENU_getLastCursorPositionID() == 0) || menu_init == true)
+        //        {
+        //          LCDML.MENU_goRoot();
+        //          menu_init = false;
+        //        }
+        //        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
         if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
         {
           encoderDir[ENC_L].reset();
@@ -6501,16 +6515,16 @@ void addDrumParameterEditor_int16_t(const char* name, int16_t limit_min, int16_t
 
 bool drumScreenActive = false;
 void drumChanged(uint8_t drumNote) {
-  if(drumScreenActive) {
+  if (drumScreenActive) {
     activesample = constrain(drumNote, 0, NUM_DRUMSET_CONFIG - 1);
 
     ui.draw_editors(true);  // hack..not sure how to otherwise update all parameters when scrolling through samples
 
 #if defined(COMPILE_FOR_FLASH)
-        if (seq.running == false) {
-          // this makes MDT crash often (press two keys fast one after another)
-          //draw_waveform_overview_in_drums_page_step1(activesample);
-        }
+    if (seq.running == false) {
+      // this makes MDT crash often (press two keys fast one after another)
+      //draw_waveform_overview_in_drums_page_step1(activesample);
+    }
 #endif
   }
 }
@@ -6604,7 +6618,7 @@ void UI_func_drums(uint8_t param)
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       }
 
-      switch(drum_config[activesample].filter_mode) {
+      switch (drum_config[activesample].filter_mode) {
       case 0:
         display.print("OFF     ");
         break;
@@ -7397,7 +7411,7 @@ FLASHMEM void draw_waveform_overview_in_sample_editor_step1(int samplenumber)
       current_pos = current_pos + overview_factor;
       f.seek(44 + current_pos);
     }
-   draw_waveform_overview_in_sample_editor_step2 (overview_buffer, end_zoomed_x_position, filelength);
+    draw_waveform_overview_in_sample_editor_step2(overview_buffer, end_zoomed_x_position, filelength);
 
     f.close();
   }
@@ -7513,7 +7527,7 @@ FLASHMEM void draw_waveform_overview_in_sample_editor_step1(int samplenumber)
         current_pos = current_pos + overview_factor;
         f.seek(44 + current_pos);
       }
-    draw_waveform_overview_in_sample_editor_step2(overview_buffer, end_zoomed_x_position, filelength);
+      draw_waveform_overview_in_sample_editor_step2(overview_buffer, end_zoomed_x_position, filelength);
     }
 
     f.close();
@@ -18352,6 +18366,26 @@ FLASHMEM void UI_func_smart_filter(uint8_t param)
 
 uint8_t dexed_onscreen_algo = 0;
 
+FLASHMEM void  print_voice_select_fav_search_button()
+{
+  switch (configuration.sys.favorites)
+  {
+  case 0:
+    draw_button_on_grid(45, 11, "ALL", "PRESET", 0);
+    break;
+  case 1:
+    draw_button_on_grid(45, 11, "FAVs.", "ONLY", 0);
+    break;
+  case 2:
+    draw_button_on_grid(45, 11, "NON", "FAVs.", 0);
+    break;
+  case 3:
+    draw_button_on_grid(45, 11, "RND", "NONFAV", 0);
+    break;
+  }
+
+}
+
 FLASHMEM void print_voice_settings_in_dexed_voice_select(bool fullrefresh_text, bool fullrefresh_values)
 {
   char note_name[4];
@@ -18401,19 +18435,20 @@ FLASHMEM void print_voice_settings_in_dexed_voice_select(bool fullrefresh_text, 
       display.drawLine(1, CHAR_height * 5 - 2, DISPLAY_WIDTH - 2, CHAR_height * 5 - 2, GREY4);
       display.drawLine(CHAR_width * 18, 1, CHAR_width * 18, CHAR_height * 5 - 2, GREY4);
     }
-    setCursor_textGrid_small(29, 9);
+    setCursor_textGrid_small(26, 9);
     display.setTextSize(1);
     display.setTextColor(GREY1);
     if (seq.cycle_touch_element != 1)
     {
       display.print(F("ALGORITHM"));
+      print_voice_select_fav_search_button();
       draw_button_on_grid(20, 23, "CLEAR", "MODS", 0);
       draw_button_on_grid(37, 23, "EDIT", "ALGO", 0);
       draw_button_on_grid(45, 23, "EDIT", "VOICE", 0);
 
       if ((dexed_onscreen_algo != MicroDexed[selected_instance_id]->getAlgorithm()))
       {
-        UI_draw_FM_algorithm(MicroDexed[selected_instance_id]->getAlgorithm(), 172, 86);
+        UI_draw_FM_algorithm(MicroDexed[selected_instance_id]->getAlgorithm(), 147, 86);
         dexed_onscreen_algo = MicroDexed[selected_instance_id]->getAlgorithm();
       }
     }
@@ -18580,50 +18615,53 @@ FLASHMEM void UI_update_instance_icons()
 
 FLASHMEM void print_perfmod_lables()
 {
-  char tmp[5];
-  display.setTextSize(1);
-  if (dexed_live_mod.active_button == 1 || dexed_live_mod.active_button == 3)
-    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-  else
-    display.setTextColor(GREY1, GREY2);
-  display.setCursor(5 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
-  snprintf_P(tmp, sizeof(tmp), PSTR("%03d"), dexed_live_mod.attack_mod[selected_instance_id]);
-  display.print(tmp);
-  if (dexed_live_mod.active_button == 2 || dexed_live_mod.active_button == 4)
-    display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
-  else
-    display.setTextColor(GREY1, GREY2);
-  display.setCursor(14 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
-  snprintf_P(tmp, sizeof(tmp), PSTR("%03d"), dexed_live_mod.release_mod[selected_instance_id]);
-  display.print(tmp);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  if (seq.cycle_touch_element != 1) {
+    char tmp[5];
+    display.setTextSize(1);
+    if (dexed_live_mod.active_button == 1 || dexed_live_mod.active_button == 3)
+      display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    else
+      display.setTextColor(GREY1, GREY2);
+    display.setCursor(5 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
+    snprintf_P(tmp, sizeof(tmp), PSTR("%03d"), dexed_live_mod.attack_mod[selected_instance_id]);
+    display.print(tmp);
+    if (dexed_live_mod.active_button == 2 || dexed_live_mod.active_button == 4)
+      display.setTextColor(COLOR_SYSTEXT, DX_DARKCYAN);
+    else
+      display.setTextColor(GREY1, GREY2);
+    display.setCursor(14 * CHAR_width_small + 3, 25 * CHAR_height_small + 2);
+    snprintf_P(tmp, sizeof(tmp), PSTR("%03d"), dexed_live_mod.release_mod[selected_instance_id]);
+    display.print(tmp);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  }
 }
 
 FLASHMEM void print_perfmod_buttons()
 {
   // Performance Modifier Buttons
-
-  if (selected_instance_id == 0)
-  {
-    if (dexed_live_mod.active_button == 1)
-      draw_button_on_grid(2, 23, "ATTACK", "MD", 1);
-    else
-      draw_button_on_grid(2, 23, "ATTACK", "MD", 0);
-    if (dexed_live_mod.active_button == 2)
-      draw_button_on_grid(11, 23, "REL.", "MD", 1);
-    else
-      draw_button_on_grid(11, 23, "REL.", "MD", 0);
-  }
-  else if (selected_instance_id == 1)
-  {
-    if (dexed_live_mod.active_button == 3)
-      draw_button_on_grid(2, 23, "ATTACK", "MD", 1);
-    else
-      draw_button_on_grid(2, 23, "ATTACK", "MD", 0);
-    if (dexed_live_mod.active_button == 4)
-      draw_button_on_grid(11, 23, "REL.", "MD", 1);
-    else
-      draw_button_on_grid(11, 23, "REL.", "MD", 0);
+  if (seq.cycle_touch_element != 1) {
+    if (selected_instance_id == 0)
+    {
+      if (dexed_live_mod.active_button == 1)
+        draw_button_on_grid(2, 23, "ATTACK", "MD", 1);
+      else
+        draw_button_on_grid(2, 23, "ATTACK", "MD", 0);
+      if (dexed_live_mod.active_button == 2)
+        draw_button_on_grid(11, 23, "REL.", "MD", 1);
+      else
+        draw_button_on_grid(11, 23, "REL.", "MD", 0);
+    }
+    else if (selected_instance_id == 1)
+    {
+      if (dexed_live_mod.active_button == 3)
+        draw_button_on_grid(2, 23, "ATTACK", "MD", 1);
+      else
+        draw_button_on_grid(2, 23, "ATTACK", "MD", 0);
+      if (dexed_live_mod.active_button == 4)
+        draw_button_on_grid(11, 23, "REL.", "MD", 1);
+      else
+        draw_button_on_grid(11, 23, "REL.", "MD", 0);
+    }
   }
 }
 
@@ -18717,6 +18755,20 @@ FLASHMEM void UI_func_voice_select_touch_loop()
     print_perfmod_lables();
 }
 
+FLASHMEM void reset_live_modifiers()
+{
+  dexed_live_mod.attack_mod[selected_instance_id] = 0;
+  dexed_live_mod.release_mod[selected_instance_id] = 0;
+
+  for (uint8_t i = 0; i < 6; i++)
+  {
+    MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, dexed_live_mod.orig_attack_values[selected_instance_id][i]);
+    MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, dexed_live_mod.orig_release_values[selected_instance_id][i]);
+  }
+
+
+}
+
 FLASHMEM void UI_func_voice_select_loop()
 {
   static uint8_t menu_voice_select = MENU_VOICE_SOUND;
@@ -18732,9 +18784,7 @@ FLASHMEM void UI_func_voice_select_loop()
     int8_t voice_tmp;
 
     // Reset Performance Modifiers to 0 after every preset change
-
-    dexed_live_mod.attack_mod[selected_instance_id] = 0;
-    dexed_live_mod.release_mod[selected_instance_id] = 0;
+    reset_live_modifiers();
     if (seq.cycle_touch_element != 1)
       print_perfmod_lables();
 
@@ -18922,7 +18972,6 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
             configuration.dexed[selected_instance_id].pool = calc_val[state_dir](configuration.dexed[selected_instance_id].pool, 1, 0, DEXED_POOLS - 1);
             if (load_sd_voice(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id) == false)
               load_sd_voice(configuration.dexed[selected_instance_id].pool, 0, 0, selected_instance_id);
-
           }
         }
         if (generic_temp_select_menu == 1)
@@ -19047,7 +19096,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     if (seq.cycle_touch_element != 1)
     {
       if ((dexed_live_mod.active_button == 0 && dexed_onscreen_algo != MicroDexed[selected_instance_id]->getAlgorithm()))
-        UI_draw_FM_algorithm(MicroDexed[selected_instance_id]->getAlgorithm(), 172, 86);
+        UI_draw_FM_algorithm(MicroDexed[selected_instance_id]->getAlgorithm(), 147, 86);
       dexed_onscreen_algo = MicroDexed[selected_instance_id]->getAlgorithm();
     }
 
@@ -19505,7 +19554,7 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
           configuration.dexed[selected_instance_id].voice = constrain(configuration.dexed[selected_instance_id].voice - ENCODER[ENC_R].speed(), 0, MAX_VOICES - 1);
 
         // get voice name from sysex on SD
-        get_voice_name(configuration.dexed[selected_instance_id].pool,configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, g_voice_name[selected_instance_id]);
+        get_voice_name(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, g_voice_name[selected_instance_id]);
         MicroDexed[selected_instance_id]->getName(g_voice_name[selected_instance_id]);
 
         show(2, 1, 2, configuration.dexed[selected_instance_id].voice + 1);
@@ -19572,12 +19621,12 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
 
           mode = 0xff;
           break;
-        }
+      }
 
         LCDML.FUNC_goBackToMenu();
-      }
     }
   }
+}
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     if (mode < 0xff)
@@ -19723,9 +19772,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             setCursor_textGrid(1, 2);
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
-          }
         }
       }
+    }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -19737,9 +19786,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-    }
-    encoderDir[ENC_R].reset();
   }
+    encoderDir[ENC_R].reset();
+}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -19936,7 +19985,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
     {
       if (strcmp("*ERROR*", tmp_bank_name) != 0)
       {
-        char filename[FILENAME_LEN+4];
+        char filename[FILENAME_LEN + 4];
         snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, pool_number, bank_number, tmp_bank_name);
 #ifdef DEBUG
         LOG.print(F("Send bank "));
@@ -20008,7 +20057,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     mode = 0;
-     pool_number = configuration.dexed[selected_instance_id].pool;
+    pool_number = configuration.dexed[selected_instance_id].pool;
     bank_number = configuration.dexed[selected_instance_id].bank;
     voice_number = configuration.dexed[selected_instance_id].voice;
 
@@ -20041,7 +20090,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         get_bank_name(pool_number, bank_number, tmp_bank_name);
         show(2, 1, 2, bank_number);
         show(2, 5, 10, tmp_bank_name);
-         get_voice_name(pool_number, bank_number, voice_number, tmp_voice_name);
+        get_voice_name(pool_number, bank_number, voice_number, tmp_voice_name);
         break;
       case 1: // Voice selection
         if (LCDML.BT_checkDown() && voice_number < MAX_VOICES - 1)
@@ -20073,7 +20122,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
       case 2:
         if (strcmp("*ERROR*", tmp_bank_name) != 0)
         {
-          char filename[FILENAME_LEN+4];
+          char filename[FILENAME_LEN + 4];
           snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%d/%s.syx"), DEXED_CONFIG_PATH, pool_number, bank_number, tmp_bank_name);
 #ifdef DEBUG
           LOG.print(F("Send voice "));
@@ -20519,7 +20568,7 @@ FLASHMEM uint8_t search_accepted_char(uint8_t c)
 #endif
     if (c == accepted_chars[i])
       return (i);
-  }
+}
   return (0);
 }
 
@@ -20755,11 +20804,7 @@ FLASHMEM void string_trim(char* s)
 FLASHMEM void locate_previous_non_favorite()
 {
   // find prev. non fav in current bank
-  display.setTextSize(2);
-  display.setCursor(11 * CHAR_width_small, 2 * CHAR_height_small);
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  display.print(F("<SEARCHING"));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  print_fav_search_text(LEFT);
   do
   {
     if (configuration.dexed[selected_instance_id].voice == 0)
@@ -20802,11 +20847,7 @@ FLASHMEM void locate_previous_favorite()
 
   if (configuration.dexed[selected_instance_id].voice >= 0 && configuration.dexed[selected_instance_id].bank >= 0)
   {
-    display.setTextSize(2);
-    display.setCursor(11 * CHAR_width_small, 2 * CHAR_height_small);
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    display.print(F("<SEARCHING"));
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    print_fav_search_text(LEFT);
 
     do
     { // first find previous fav in current bank
@@ -20876,11 +20917,8 @@ FLASHMEM void locate_next_favorite()
 
   if (configuration.dexed[selected_instance_id].voice <= 30 && configuration.dexed[selected_instance_id].bank <= MAX_BANKS)
   {
-    display.setCursor(11 * CHAR_width_small, 2 * CHAR_height_small);
-    display.setTextSize(2);
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-    display.print(">SEARCHING");
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    print_fav_search_text(RIGHT);
+
     do
     { // first find next fav in current bank
 
@@ -20935,11 +20973,7 @@ FLASHMEM void locate_next_favorite()
 FLASHMEM void locate_next_non_favorite()
 {
   // find next non-fav in current bank
-  display.setCursor(11 * CHAR_width_small, 2 * CHAR_height_small);
-  display.setTextSize(2);
-  display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
-  display.print(F(">SEARCHING"));
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  print_fav_search_text(RIGHT);
   do
   {
     configuration.dexed[selected_instance_id].voice++;
@@ -21007,7 +21041,7 @@ FLASHMEM bool check_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_i
       LOG.println(F(" - It is not in Favorites."));
 #endif
       return false;
-    }
+}
   }
   else
     return false;
@@ -21546,7 +21580,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
 #ifdef DEBUG
       LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
-    }
+}
   }
   else
     return false;
@@ -21696,7 +21730,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
 
     // recalculate low and high notes for all zones
     calc_low_high(preset_number);
-  }
+    }
   else
   {
 #ifdef DEBUG
@@ -21714,7 +21748,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
   LOG.print(F(" root: "));
   LOG.println(msz[preset_number][zone_number].rootnote);
 #endif
-}
+  }
 #endif
 
 /*************************************************************************
@@ -22151,7 +22185,7 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y)
   display.fillRect(x + 23, y + 25, 93, 41, COLOR_BACKGROUND);
   display.fillRect(x + 2, y + 66, 138, 27, COLOR_BACKGROUND);
 
-  setCursor_textGrid_small(29, 10);
+  setCursor_textGrid_small(33, 10);
   display.setTextSize(1);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   print_formatted_number(algo + 1, 2);
@@ -22453,7 +22487,7 @@ FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16
   if (remote_active)
     display.console = false;
 
-}
+  }
 #endif
 
 #if defined GENERIC_DISPLAY 
@@ -22525,7 +22559,7 @@ FLASHMEM void UI_func_calibrate_touch(uint8_t param)
   {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
-  }
+}
 #endif
 }
 

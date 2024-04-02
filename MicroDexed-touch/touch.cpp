@@ -15,6 +15,9 @@ extern void handleNoteOff_MIDI_DEVICE_DIN(byte inChannel, byte inNumber, byte in
 extern void print_voice_settings_in_dexed_voice_select(bool text, bool values);
 extern void print_voice_settings_in_pattern_editor(int x, int y);
 extern void UI_update_instance_icons();
+extern void print_voice_select_fav_search_button();
+extern void print_perf_modifier_buttons();
+extern void reset_live_modifiers();
 extern LCDMenuLib2 LCDML;
 extern void pattern_editor_menu_0();
 extern void UI_func_test_touchscreen(uint8_t param);
@@ -110,10 +113,10 @@ FLASHMEM void updateTouchScreen() {
   if (remote_touched) {
     numTouchPoints = 1;
   }
-  else {    
+  else {
     // no remote touch, so update to check for real touch
     numTouchPoints = touch.touched();
-    if(numTouchPoints > 0) {
+    if (numTouchPoints > 0) {
 #if defined GENERIC_DISPLAY
       if (ts.finished_calibration)
       {
@@ -127,7 +130,7 @@ FLASHMEM void updateTouchScreen() {
         ts.p = touch.getPoint();
         ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
         ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
-      }
+  }
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -147,12 +150,12 @@ FLASHMEM void updateTouchScreen() {
         break;
       }
 #endif
-    }
+}
     else {
       isButtonTouched = false;
     }
   }
-  
+
   wakeScreenFlag |= (numTouchPoints > 0);
 }
 
@@ -396,9 +399,10 @@ FLASHMEM void print_virtual_keyboard_octave()
   uint8_t indexes[2] = { 0, 7 };
   for (int i = 0; i < 2; i++)
   {
-    if(ts.virtual_keyboard_state_white & (1 << indexes[i])) {
+    if (ts.virtual_keyboard_state_white & (1 << indexes[i])) {
       display.setTextColor(COLOR_SYSTEXT, RED);
-    } else {
+    }
+    else {
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     }
     display.setCursor(1 + indexes[i] * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE) + KEY_LABEL_OFFSET, VIRT_KEYB_YPOS + 57.75);
@@ -496,7 +500,7 @@ FLASHMEM void handleVirtualKeyboardKeys()
       ts.virtual_keyboard_state_white &= ~(1 << x);
       virtual_keyboard_key_off_white(x);
     }
-    if(isKeyPress || isKeyRelease) {
+    if (isKeyPress || isKeyRelease) {
       print_virtual_keyboard_octave();
     }
   }
@@ -564,7 +568,7 @@ FLASHMEM void virtual_keyboard()
     display.fillRect(1 + x * (KEY_WIDTH_WHITE + KEY_SPACING_WHITE), VIRT_KEYB_YPOS, KEY_WIDTH_WHITE, KEY_HEIGHT_WHITE, COLOR_SYSTEXT); // WHITE key
     display.console = false;
   }
-  
+
   print_virtual_keyboard_octave();
 
   // draw black keys
@@ -639,6 +643,11 @@ FLASHMEM void touch_check_all_keyboard_buttons()
 
 extern uint8_t dexed_onscreen_algo;
 
+FLASHMEM void print_perf_modifier_buttons() {
+  print_perfmod_buttons();
+  print_perfmod_lables();
+}
+
 FLASHMEM void handle_touchscreen_voice_select()
 {
 
@@ -673,69 +682,87 @@ FLASHMEM void handle_touchscreen_voice_select()
     {
       save_favorite(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
     }
-    if (seq.cycle_touch_element != 1)
-    {
-      if (selected_instance_id == 0)
+    else
+      if (check_button_on_grid(45, 11)) //toggle fav. preset search modes
       {
-        if (check_button_on_grid(2, 25))
-        {
-          if (dexed_live_mod.active_button != 1)
-            dexed_live_mod.active_button = 1;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-        else if (check_button_on_grid(11, 25))
-        {
-          if (dexed_live_mod.active_button != 2)
-            dexed_live_mod.active_button = 2;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-        else if (check_button_on_grid(45, 23))
-          LCDML.OTHER_jumpToFunc(UI_func_voice_editor);
-      }
-      else if (selected_instance_id == 1)
-      {
-        if (check_button_on_grid(2, 25))
-        {
-          if (dexed_live_mod.active_button != 3)
-            dexed_live_mod.active_button = 3;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-        else if (check_button_on_grid(11, 25))
-        {
-          if (dexed_live_mod.active_button != 4)
-            dexed_live_mod.active_button = 4;
-          else
-            dexed_live_mod.active_button = 0;
-        }
-        else if (check_button_on_grid(45, 23))
-          LCDML.OTHER_jumpToFunc(UI_func_voice_editor);
+        configuration.sys.favorites++;
+        if (configuration.sys.favorites > 3)
+          configuration.sys.favorites = 0;
+        print_voice_select_fav_search_button();
       }
       else
-        dexed_live_mod.active_button = 0;
 
-      if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 5)
-      {
-        helptext_r("< > CHANGE MODIFIER VALUE");
-        display.setCursor(0, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2);
-        print_empty_spaces(38);
-        display.setCursor(9 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 1);
-        print_empty_spaces(9);
-        display.setCursor(CHAR_width_small * 38 + 2, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2);
-        display.print(F(" PUSH TO RETURN"));
-      }
-      else
-      {
-        print_voice_select_default_help();
-      }
+        if (seq.cycle_touch_element != 1)
+        {
+          if (check_button_on_grid(20, 23)) {
+            reset_live_modifiers();
+            print_perf_modifier_buttons();
+          }
+          else
+            if (selected_instance_id == 0)
+            {
+              if (check_button_on_grid(2, 23))
+              {
+                if (dexed_live_mod.active_button != 1)
+                  dexed_live_mod.active_button = 1;
+                else
+                  dexed_live_mod.active_button = 0;
+                print_perf_modifier_buttons();
+              }
+              else if (check_button_on_grid(11, 23))
+              {
+                if (dexed_live_mod.active_button != 2)
+                  dexed_live_mod.active_button = 2;
+                else
+                  dexed_live_mod.active_button = 0;
+                print_perf_modifier_buttons();
+              }
+              else if (check_button_on_grid(45, 23))
+                LCDML.OTHER_jumpToFunc(UI_func_voice_editor);
+            }
+            else if (selected_instance_id == 1)
+            {
+              if (check_button_on_grid(2, 23))
+              {
+                if (dexed_live_mod.active_button != 3)
+                  dexed_live_mod.active_button = 3;
+                else
+                  dexed_live_mod.active_button = 0;
+                print_perf_modifier_buttons();
+              }
+              else if (check_button_on_grid(11, 23))
+              {
+                if (dexed_live_mod.active_button != 4)
+                  dexed_live_mod.active_button = 4;
+                else
+                  dexed_live_mod.active_button = 0;
+                print_perf_modifier_buttons();
+              }
+              else if (check_button_on_grid(45, 23))
+                LCDML.OTHER_jumpToFunc(UI_func_voice_editor);
+            }
+            else
+              dexed_live_mod.active_button = 0;
 
-      print_voice_settings_in_dexed_voice_select(false, true);
+          if (dexed_live_mod.active_button > 0 && dexed_live_mod.active_button < 5)
+          {
+            helptext_r("< > CHANGE MODIFIER VALUE");
+            display.setCursor(0, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2);
+            print_empty_spaces(38);
+            display.setCursor(9 * CHAR_width_small, DISPLAY_HEIGHT - CHAR_height_small * 1);
+            print_empty_spaces(9);
+            display.setCursor(CHAR_width_small * 38 + 2, DISPLAY_HEIGHT - (CHAR_height_small * 2) - 2);
+            display.print(F(" PUSH TO RETURN"));
+          }
+          else
+          {
+            print_voice_select_default_help();
+          }
 
-      print_perfmod_buttons();
-      print_perfmod_lables();
-    }
+          print_voice_settings_in_dexed_voice_select(false, true);
+
+
+        }
 
     if (seq.cycle_touch_element == 1)
     {
