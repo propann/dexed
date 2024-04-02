@@ -546,7 +546,7 @@ void drawGUI(uint16_t& guiFlags) {
     }
   }
 
-  char temp_char[4];
+  char temp_char[6];
 
   uint8_t trackButtonRecColor = 2; // red, or blinking
   const bool doBlink = liveSeqData->notesOn.size() || liveSeqData->pendingEvents.size();
@@ -637,7 +637,8 @@ void drawGUI(uint16_t& guiFlags) {
       }
       if(showingTools == TOOL_ARP) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", itoa(liveSeqData->arpSettings.amount, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", itoa(liveSeqData->arpSettings.mode, temp_char, 10), 3);
+        getArpModeName(liveSeqData->arpSettings.mode, temp_char);
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", temp_char, 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(liveSeqData->arpSettings.length, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(liveSeqData->arpSettings.swing, temp_char, 10), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (liveSeqData->arpSettings.latch == 0) ? "NO" : "ON", 3);
@@ -707,6 +708,35 @@ void drawGUI(uint16_t& guiFlags) {
   }
 
   guiFlags = 0;
+}
+
+void getArpModeName(uint8_t mode, char* buf) {
+  switch (mode) {
+  case LiveSequencer::ArpMode::ARP_CHORD:
+    sprintf(buf, "CHRD");
+    break;
+  case LiveSequencer::ArpMode::ARP_DOWN:
+    sprintf(buf, "DOWN");
+    break;
+  case LiveSequencer::ArpMode::ARP_DOWNUP:
+    sprintf(buf, "DNUP");
+    break;
+  case LiveSequencer::ArpMode::ARP_DOWNUP_P:
+    sprintf(buf, "DNUP+");
+    break;
+  case LiveSequencer::ArpMode::ARP_RANDOM:
+    sprintf(buf, "RAND");
+    break;
+  case LiveSequencer::ArpMode::ARP_UP:
+    sprintf(buf, "UP");
+    break;
+  case LiveSequencer::ArpMode::ARP_UPDOWN:
+    sprintf(buf, "UPDN");
+    break;
+  case LiveSequencer::ArpMode::ARP_UPDOWN_P:
+    sprintf(buf, "UPDN+");
+    break;
+  }
 }
 
 void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, uint8_t layerBgCode, uint8_t gridX, uint8_t gridY) {

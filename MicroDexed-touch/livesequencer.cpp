@@ -76,6 +76,7 @@ void LiveSequencer::handleStop(void) {
   data.songPatternCount = data.lastSongEventPattern; // show song length
   data.currentPattern = data.numberOfBars; // show num bars
   data.stoppedFlag = true;
+  data.arpSettings.arpNotes.clear();
 }
 
 void LiveSequencer::handleStart(void) {

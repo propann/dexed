@@ -45,5 +45,7 @@ public:
 
 void UI_func_livesequencer(uint8_t param);
 void handle_touchscreen_live_sequencer(void);
+void getArpModeName(uint8_t mode, char* buf);
+
 
 #endif //UI_LIVESEQUENCER_H

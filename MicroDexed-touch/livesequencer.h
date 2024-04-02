@@ -161,6 +161,7 @@ private:
   std::list<MidiEvent>::iterator playIterator;  
   const std::string getEventName(midi::MidiType event) const;
   const std::string getEventSource(LiveSequencer::EventSource source) const;
+
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
