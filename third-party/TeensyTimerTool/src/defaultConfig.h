@@ -61,7 +61,7 @@ namespace TeensyTimerTool
 // TCK
     constexpr unsigned NR_OF_TCK_TIMERS = 20; // How many TCK timers shall be available
 
-    #define YIELD_TYPE  YIELD_STANDARD        // Select the required yield strategy from the list below
+    #define YIELD_TYPE  YIELD_NONE            // Select the required yield strategy from the list below
                                               // YIELD_NONE:      lib doesn't touch yield. Make sure to call TeensyTimerTool::tick as often as possible
                                               // YIELD_STANDARD:  uses the standard yield function and adds a call to TeensyTimerTool::tick(). Lots of overhead in yield...
                                               // YIELD_OPTIMIZED: generate an optimized yield which only calls TeensyTimerTool::Tick()  (recommended if you don't use SerialEvents)

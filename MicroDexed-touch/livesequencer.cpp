@@ -25,6 +25,7 @@ extern uint8_t selected_instance_id; // dexed
 std::set<uint8_t> pressedArpKeys;
 
 using namespace TeensyTimerTool;
+PeriodicTimer tickTimer(GPT2);
 OneShotTimer arpTimer(TCK);
 OneShotTimer liveTimer(TCK);
 
@@ -80,6 +81,7 @@ void LiveSequencer::handleStop(void) {
 }
 
 void LiveSequencer::handleStart(void) {
+  tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
   data.startedFlag = true;
   data.isRunning = true;
   data.recordedToSong = false;
@@ -491,6 +493,8 @@ void LiveSequencer::playNextArpNote(void) {
 
     if(data.arpSettings.currentNote.isNoteOn == false) {
       // start next note
+      data.arpSettings.arpCount++;
+
       data.arpSettings.currentNote.track = data.activeTrack;
       const midi::Channel channel = data.tracks[data.activeTrack].channel;
       if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
@@ -535,7 +539,7 @@ void LiveSequencer::playNextArpNote(void) {
         }
       }
       //checkLoadNewArpNotes();
-      const int swingOffset = data.arpSettings.swing * arpOffMs / 5.1; // swing from -5 to +5
+      const int swingOffset = roundf(data.arpSettings.swing * arpOffMs / 6.0); // swing from -5 to +5
       if((data.arpSettings.arpCount & 0x01) == 0) {
         // swing: odd beats NoteOn is variable
         delayToNextArpEventMs = arpOffMs + swingOffset;
@@ -543,7 +547,7 @@ void LiveSequencer::playNextArpNote(void) {
         delayToNextArpEventMs = arpOffMs - swingOffset;
       }
 
-      if((++data.arpSettings.arpCount > data.arpSettings.amount) || (data.isRunning == false)) {
+      if((data.arpSettings.arpCount == data.arpSettings.amount) || (data.isRunning == false)) {
         arpsPending = false;
       }
     }
