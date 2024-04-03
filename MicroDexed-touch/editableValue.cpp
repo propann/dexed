@@ -1,11 +1,15 @@
 #include "editableValue.h"
+#include <algorithm>
 
 template <class T>
 EditableValue<T>::EditableValue(T* invalue, std::vector<T> invalues, T defaultValue) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues) {
   if(values.empty()) {
     values.push_back(0);
   }
-  it = values.begin();
+  it = std::find(values.begin(), values.end(), defaultValue);
+  if(it == values.end()) {
+      it = values.begin();
+  }
   *value = defaultValue;
 }
 
