@@ -70,6 +70,7 @@ public:
   struct ArpNote {
     bool isNoteOn;
     uint8_t track;
+    std::list<uint8_t> notes;
   };
 
   struct ArpSettings {
