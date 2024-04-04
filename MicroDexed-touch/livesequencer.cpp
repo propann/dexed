@@ -25,9 +25,9 @@ extern uint8_t selected_instance_id; // dexed
 std::set<uint8_t> pressedArpKeys;
 
 using namespace TeensyTimerTool;
-PeriodicTimer tickTimer(GPT2);
-OneShotTimer arpTimer(TCK);
-OneShotTimer liveTimer(TCK);
+PeriodicTimer tickTimer(TMR1);  // only 16bit needed
+OneShotTimer arpTimer(TCK);     // one tick timer of 20
+OneShotTimer liveTimer(TCK);    // one tick timer of 20
 
 LiveSequencer::LiveSequencer() :
   ui(this) {
@@ -82,6 +82,8 @@ void LiveSequencer::handleStop(void) {
 
 void LiveSequencer::handleStart(void) {
   tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
+  liveTimer.begin([this] { playNextEvent(); });
+  arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
   data.isRunning = true;
   data.recordedToSong = false;
@@ -567,8 +569,6 @@ void LiveSequencer::init(void) {
   updateTrackChannels();
   DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
   //printEvents();
-  liveTimer.begin([this] { playNextEvent(); });
-  arpTimer.begin([this] { playNextArpNote(); });
   data.pendingEvents.reserve(50);
   refreshSongLength();
 }
