@@ -1043,6 +1043,12 @@ enum fm_modes
   FM_PLAY_SAMPLE
 };
 
+enum fav_search_direction
+{
+  LEFT,
+  RIGHT
+};
+
 #ifndef _MAPFLOAT
 #define _MAPFLOAT
 inline float mapfloat(float val, float in_min, float in_max, float out_min, float out_max)
