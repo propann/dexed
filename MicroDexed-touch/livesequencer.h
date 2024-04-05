@@ -68,7 +68,6 @@ public:
   };
 
   struct ArpNote {
-    bool isNoteOn;
     uint8_t track;
     std::list<uint8_t> notes;
   };
@@ -81,9 +80,7 @@ public:
     uint8_t latch;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
-
     uint8_t arpCount;
-    ArpNote currentNote;
   };
 
   struct LiveSeqData {
