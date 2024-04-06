@@ -68,6 +68,7 @@ public:
   };
 
   struct ArpNote {
+    midi::MidiType type;
     uint8_t track;
     std::list<uint8_t> notes;
   };

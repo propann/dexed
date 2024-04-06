@@ -478,52 +478,20 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
     default:
       break;
     }
-  }
-  if(data.arpSettings.arpNotes.size()) {
-    data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+    if(data.arpSettings.arpNotes.size()) {
+      data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+    }
   }
 }
 
 void LiveSequencer::playNextArpNote(void) {
   if(data.arpSettings.arpNotes.size()) {
-
     const uint16_t nowMs = uint16_t(data.patternTimer);
-    const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
-    const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
-    uint16_t nextArpEventTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
-    const bool startNewNote = arpsPending && (nowMs >= nextArpEventTimeMs);
-
-    uint16_t delayToNextArpEventMs = arpIntervalMs;
-
     // finish elapsed active note(s)
     for(auto &n : activeArps) {
-      if(nowMs >= n.first) {
+      if((n.second.type == midi::MidiType::NoteOff) && (nowMs >= n.first)) {
         const midi::Channel channel = data.tracks[n.second.track].channel;
-        if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
-          if(data.arpSettings.arpNotes.size() > 1) {
-            if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-              data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-              bool doubleEndNote = false;
-              switch(data.arpSettings.mode) {
-              case ArpMode::ARP_DOWNUP_P:
-              case ArpMode::ARP_UPDOWN_P:
-                doubleEndNote = true;
-              case ArpMode::ARP_DOWNUP:
-              case ArpMode::ARP_UPDOWN:
-                std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-                if(doubleEndNote == false) {
-                  data.arpSettings.arpIt++;
-                }
-                break;
-              case ArpMode::ARP_RANDOM:
-                std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-                break;
-              default:
-                break;
-              }
-            }
-          }
-        }
+
         for(auto &p : n.second.notes) {
           handleNoteOff(channel, p, 0, 0);
         }
@@ -532,49 +500,85 @@ void LiveSequencer::playNextArpNote(void) {
         activeArps.erase(n.first);
       }
     }
-
+    const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
+    const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
+    uint16_t delayToNextArpEventMs = arpIntervalMs;
     if(arpsPending) {
+      uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
+
       // load timer for next noteOn
       const int swingOffset = roundf(data.arpSettings.swing * arpIntervalMs / 6.0); // swing from -5 to +5
-      if((data.arpSettings.arpCount & 0x01) == 0) {
+      if(data.arpSettings.arpCount & 0x01) {
         // swing: odd beats NoteOn is variable
-        nextArpEventTimeMs += swingOffset;
-      } else {
-        nextArpEventTimeMs -= swingOffset;
+        nextArpEventOnTimeMs += swingOffset;
       }
-      delayToNextArpEventMs = (nextArpEventTimeMs - nowMs) % data.patternLengthMs;
-    }
 
-    if(startNewNote) {
-      data.arpSettings.arpCount++;
+      delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs) % data.patternLengthMs; // nope
+      const bool startNewNote = (nowMs >= nextArpEventOnTimeMs);
 
-      // start next note
-      ArpNote newArp;
-      newArp.track = data.activeTrack;
+      if(startNewNote) {
 
-      if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
-        const uint8_t currentNote = *data.arpSettings.arpIt;
-        newArp.notes.emplace_back(currentNote);
-      } else {
-        for(uint8_t note : data.arpSettings.arpNotes) {
-          newArp.notes.emplace_back(note);
+        // start next note
+        data.arpSettings.arpCount++;
+        ArpNote newArp;
+        newArp.track = data.activeTrack;
+
+        if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
+          const uint8_t currentNote = *data.arpSettings.arpIt;
+          newArp.notes.emplace_back(currentNote);
+
+          if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
+            if(data.arpSettings.arpNotes.size() > 1) {
+              if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+                data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+                bool doubleEndNote = false;
+                switch(data.arpSettings.mode) {
+                case ArpMode::ARP_DOWNUP_P:
+                case ArpMode::ARP_UPDOWN_P:
+                  doubleEndNote = true;
+                case ArpMode::ARP_DOWNUP:
+                case ArpMode::ARP_UPDOWN:
+                  std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                  if(doubleEndNote == false) {
+                    data.arpSettings.arpIt++;
+                  }
+                  break;
+                case ArpMode::ARP_RANDOM:
+                  std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                  break;
+                default:
+                  break;
+                }
+              }
+            }
+          }
+        } else {
+          for(uint8_t note : data.arpSettings.arpNotes) {
+            newArp.notes.emplace_back(note);
+          }
+        }
+        const midi::Channel channel = data.tracks[data.activeTrack].channel;
+        for(auto &n : newArp.notes) {
+          handleNoteOn(channel, n, 127, 0);
+        }
+
+        // load started arp off event
+        const uint16_t arpOnDurationMs = (arpIntervalMs * data.arpSettings.length / 100);
+        const uint16_t arpOffTime = (nowMs + arpOnDurationMs) % data.patternLengthMs;
+        DBG_LOG(printf("arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
+        newArp.type = midi::MidiType::NoteOff;
+        activeArps.emplace(arpOffTime, newArp);
+
+        delayToNextArpEventMs = arpOnDurationMs;
+        if(activeArps.size()) {
+          DBG_LOG(printf("arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
+          delayToNextArpEventMs = std::min(delayToNextArpEventMs, activeArps.begin()->first);
         }
       }
-      const midi::Channel channel = data.tracks[data.activeTrack].channel;
-      for(auto &n : newArp.notes) {
-        handleNoteOn(channel, n, 127, 0);
-      }
-
-      const uint16_t arpOnDurationMs = (arpIntervalMs * data.arpSettings.length / 100);
-      const uint16_t arpOffTime = (nowMs + arpOnDurationMs) % data.patternLengthMs;
-      DBG_LOG(printf("arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
-
-      activeArps.emplace(arpOffTime, newArp);
-      delayToNextArpEventMs = arpOnDurationMs;
     }
 
-    if(arpsPending) {
-      DBG_LOG(printf("trigger in %ims\n", delayToNextArpEventMs));
+    if(arpsPending || activeArps.size()) {
+      DBG_LOG(printf("trigger again in %ims\n", delayToNextArpEventMs));
       arpTimer.trigger(delayToNextArpEventMs * 1000);
     }
   }
