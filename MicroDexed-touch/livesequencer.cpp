@@ -486,20 +486,19 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
 
 void LiveSequencer::playNextArpNote(void) {
   // finish and erase elapsed notes
-  for(auto it = activeArps.begin(); it != activeArps.end();) {
-    if((it->offDelay == 0 || data.arpSettings.arpNotes.empty())) {
-      const midi::Channel channel = data.tracks[it->track].channel;
+  if(activeArps.size()) {
+    ArpNote first = activeArps.front();
+    if(first.offDelay == 0) {
+      const midi::Channel channel = data.tracks[first.track].channel;
 
-      for(auto &p : it->notes) {
+      for(auto &p : first.notes) {
         handleNoteOff(channel, p, 0, 0);
       }
       //DBG_LOG(printf("off and remove time %i\n", it->offDelay));
-      it = activeArps.erase(it);
-    } else {
-      ++it;
+      activeArps.pop_front();
     }
   }
-
+  
   if(data.arpSettings.arpNotes.size()) { 
     const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
     const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
@@ -549,8 +548,7 @@ void LiveSequencer::playNextArpNote(void) {
           handleNoteOn(channel, n, 127, 0);
         }
 
-        const uint16_t arpOnDurationMs = (arpIntervalMs * data.arpSettings.length / 100);
-        newArp.offDelay = arpOnDurationMs;
+        newArp.offDelay = (arpIntervalMs * data.arpSettings.length / 100);
         activeArps.push_back(newArp);
       }
     }
@@ -577,7 +575,7 @@ void LiveSequencer::playNextArpNote(void) {
     if(arpsPending) {
       // we will call us again, subtract time until then
       for(auto &n : activeArps) {
-        n.offDelay -= delayToNextArpEventMs;
+        n.offDelay -= std::min(delayToNextArpEventMs, n.offDelay);
       }
 
       DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextArpEventMs));
@@ -586,7 +584,7 @@ void LiveSequencer::playNextArpNote(void) {
     } else {
       // next pattern start will call us, subtract time until then
       for(auto &n : activeArps) {
-        n.offDelay -= uint16_t(data.patternLengthMs - nowMs);
+        n.offDelay -= std::min(uint16_t(data.patternLengthMs - nowMs), n.offDelay);
       }
     }
   }
