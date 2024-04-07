@@ -74,6 +74,7 @@ public:
   };
 
   struct ArpSettings {
+    bool startNewNote;
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
     uint8_t length; // 0 - 100% pulse width

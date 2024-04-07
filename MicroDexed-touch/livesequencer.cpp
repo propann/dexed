@@ -510,19 +510,7 @@ void LiveSequencer::playNextArpNote(void) {
     const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
     uint16_t delayToNextArpEventMs = arpIntervalMs;
     if(arpsPending) {
-      uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
-
-      // load timer for next noteOn
-      const int swingOffset = roundf(data.arpSettings.swing * arpIntervalMs / 10.0); // swing from -5 to +5
-      if(data.arpSettings.arpCount & 0x01) {
-        // swing: odd beats NoteOn is variable
-        nextArpEventOnTimeMs += swingOffset;
-      }
-
-      delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
-      const bool startNewNote = (nowMs >= nextArpEventOnTimeMs);
-
-      if(startNewNote) {
+      if(data.arpSettings.startNewNote) {
         // start next note
         data.arpSettings.arpCount++;
         ArpNote newArp;
@@ -572,17 +560,26 @@ void LiveSequencer::playNextArpNote(void) {
         DBG_LOG(printf("@%i:\tnew arp on, turn off in %ims\n", nowMs, arpOnDurationMs));
         newArp.offDelay = arpOnDurationMs;
         activeArps.push_back(newArp);
-        delayToNextArpEventMs += arpIntervalMs;
-        
         //DBG_LOG(printf("new arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
       }
     }
-    if(activeArps.size()) {
-      delayToNextArpEventMs = std::min(delayToNextArpEventMs, activeArps.front().offDelay);
+    uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
+
+    // load timer for next noteOn
+    const int swingOffset = roundf(data.arpSettings.swing * arpIntervalMs / 10.0); // swing from -5 to +5
+    if(data.arpSettings.arpCount & 0x01) {
+      // swing: odd beats NoteOn is variable
+      nextArpEventOnTimeMs += swingOffset;
+    }
+
+    delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
+    data.arpSettings.startNewNote = true;
+
+    if(activeArps.size() && activeArps.front().offDelay < delayToNextArpEventMs) {
+      delayToNextArpEventMs = activeArps.front().offDelay;
+      data.arpSettings.startNewNote = false;
     }
     DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
-
-    
 
     if(arpsPending) {
       for(auto &n : activeArps) {
