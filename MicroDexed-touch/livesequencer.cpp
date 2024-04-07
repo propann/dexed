@@ -487,13 +487,13 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
 void LiveSequencer::playNextArpNote(void) {
   // finish and erase elapsed notes
   for(auto it = activeArps.begin(); it != activeArps.end();) {
-    if((it->offDelay <= 0 || data.arpSettings.arpNotes.empty())) {
+    if((it->offDelay == 0 || data.arpSettings.arpNotes.empty())) {
       const midi::Channel channel = data.tracks[it->track].channel;
 
       for(auto &p : it->notes) {
         handleNoteOff(channel, p, 0, 0);
       }
-      DBG_LOG(printf("@%i:\toff and remove time %i\n", it->offDelay));
+      //DBG_LOG(printf("off and remove time %i\n", it->offDelay));
       it = activeArps.erase(it);
     } else {
       ++it;
@@ -564,7 +564,7 @@ void LiveSequencer::playNextArpNote(void) {
     }
 
     const uint16_t nowMs = uint16_t(data.patternTimer);
-    int16_t delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
+    uint16_t delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
     data.arpSettings.startNewNote = true;
 
     if(activeArps.size() && (activeArps.front().offDelay < delayToNextArpEventMs)) {
@@ -572,17 +572,16 @@ void LiveSequencer::playNextArpNote(void) {
       delayToNextArpEventMs = activeArps.front().offDelay;
       data.arpSettings.startNewNote = false;
     }
-    DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
+    //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
     if(arpsPending) {
-      delayToNextArpEventMs = std::max(int16_t(0), delayToNextArpEventMs);
-
       // we will call us again, subtract time until then
       for(auto &n : activeArps) {
         n.offDelay -= delayToNextArpEventMs;
       }
 
-      DBG_LOG(printf("@%i:\ttrigger again in %ims\n", delayToNextArpEventMs));
+      DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextArpEventMs));
+      
       arpTimer.trigger(delayToNextArpEventMs * 1000);
     } else {
       // next pattern start will call us, subtract time until then
@@ -660,6 +659,8 @@ void LiveSequencer::handlePatternBegin(void) {
     // just started, do not increment
     data.currentPattern = 0;
     data.songPatternCount = 0;
+
+    data.arpSettings.startNewNote = true;
 
     if(data.isSongMode && data.isRecording) {
       // save current song start layer mutes
