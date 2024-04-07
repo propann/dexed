@@ -572,7 +572,7 @@ void LiveSequencer::playNextArpNote(void) {
         DBG_LOG(printf("@%i:\tnew arp on, turn off in %ims\n", nowMs, arpOnDurationMs));
         newArp.offDelay = arpOnDurationMs;
         activeArps.push_back(newArp);
-        delayToNextArpEventMs += arpIntervalMs - ;
+        delayToNextArpEventMs += arpIntervalMs;
         
         //DBG_LOG(printf("new arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
       }
