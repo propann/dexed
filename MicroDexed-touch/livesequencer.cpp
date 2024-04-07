@@ -484,13 +484,9 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
   }
 }
 
-
-
-
 void LiveSequencer::playNextArpNote(void) {
-  const uint16_t nowMs = uint16_t(data.patternTimer);
-
   if(data.arpSettings.arpNotes.size()) {
+    // finish and erase elapsed notes
     for(auto it = activeArps.begin(); it != activeArps.end();) {
       if(it->offDelay <= 0) {
         const midi::Channel channel = data.tracks[it->track].channel;
@@ -498,7 +494,6 @@ void LiveSequencer::playNextArpNote(void) {
         for(auto &p : it->notes) {
           handleNoteOff(channel, p, 0, 0);
         }
-        // remove active event
         DBG_LOG(printf("@%i:\toff and remove time %i\n", it->offDelay));
         it = activeArps.erase(it);
       } else {
@@ -555,12 +550,9 @@ void LiveSequencer::playNextArpNote(void) {
           handleNoteOn(channel, n, 127, 0);
         }
 
-        // load started arp off event
         const uint16_t arpOnDurationMs = (arpIntervalMs * data.arpSettings.length / 100);
-        DBG_LOG(printf("@%i:\tnew arp on, turn off in %ims\n", nowMs, arpOnDurationMs));
         newArp.offDelay = arpOnDurationMs;
         activeArps.push_back(newArp);
-        //DBG_LOG(printf("new arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
       }
     }
     uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
@@ -572,16 +564,19 @@ void LiveSequencer::playNextArpNote(void) {
       nextArpEventOnTimeMs += swingOffset;
     }
 
+    const uint16_t nowMs = uint16_t(data.patternTimer);
     delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
     data.arpSettings.startNewNote = true;
 
     if(activeArps.size() && activeArps.front().offDelay < delayToNextArpEventMs) {
+      // next call will be a finishing note
       delayToNextArpEventMs = activeArps.front().offDelay;
       data.arpSettings.startNewNote = false;
     }
     DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
     if(arpsPending) {
+      // we will call us again, subtract time until then
       for(auto &n : activeArps) {
         n.offDelay -= delayToNextArpEventMs;
       }
@@ -589,6 +584,7 @@ void LiveSequencer::playNextArpNote(void) {
       DBG_LOG(printf("@%i:\ttrigger again in %ims\n", delayToNextArpEventMs));
       arpTimer.trigger(delayToNextArpEventMs * 1000);
     } else {
+      // next pattern start will call us, subtract time until then
       for(auto &n : activeArps) {
         n.offDelay -= uint16_t(data.patternLengthMs - nowMs);
       }
