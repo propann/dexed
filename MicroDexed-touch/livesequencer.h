@@ -68,6 +68,7 @@ public:
   };
 
   struct ArpNote {
+    int16_t offDelay;
     uint8_t track;
     std::list<uint8_t> notes;
   };

@@ -24,7 +24,7 @@ extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
 std::set<uint8_t> pressedArpKeys;
-std::map<uint16_t, LiveSequencer::ArpNote> activeArps;
+std::list<LiveSequencer::ArpNote> activeArps;
 
 using namespace TeensyTimerTool;
 PeriodicTimer tickTimer(TMR1);  // only 16bit needed
@@ -484,22 +484,28 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
   }
 }
 
-void LiveSequencer::playNextArpNote(void) {
-  if(data.arpSettings.arpNotes.size()) {
-    const uint16_t nowMs = uint16_t(data.patternTimer);
-    // finish elapsed active note(s)
-    for(auto &n : activeArps) {
-      if(nowMs >= n.first) {
-        const midi::Channel channel = data.tracks[n.second.track].channel;
 
-        for(auto &p : n.second.notes) {
+
+
+void LiveSequencer::playNextArpNote(void) {
+  const uint16_t nowMs = uint16_t(data.patternTimer);
+
+  if(data.arpSettings.arpNotes.size()) {
+    for(auto it = activeArps.begin(); it != activeArps.end();) {
+      if(it->offDelay <= 0) {
+        const midi::Channel channel = data.tracks[it->track].channel;
+
+        for(auto &p : it->notes) {
           handleNoteOff(channel, p, 0, 0);
         }
         // remove active event
-        DBG_LOG(printf("@%i:\toff and remove time %i\n", nowMs, n.first));
-        activeArps.erase(n.first);
+        DBG_LOG(printf("@%i:\toff and remove time %i\n", it->offDelay));
+        it = activeArps.erase(it);
+      } else {
+        ++it;
       }
     }
+
     const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
     const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
     uint16_t delayToNextArpEventMs = arpIntervalMs;
@@ -507,7 +513,7 @@ void LiveSequencer::playNextArpNote(void) {
       uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
 
       // load timer for next noteOn
-      const int swingOffset = roundf(data.arpSettings.swing * arpIntervalMs / 6.0); // swing from -5 to +5
+      const int swingOffset = roundf(data.arpSettings.swing * arpIntervalMs / 10.0); // swing from -5 to +5
       if(data.arpSettings.arpCount & 0x01) {
         // swing: odd beats NoteOn is variable
         nextArpEventOnTimeMs += swingOffset;
@@ -563,18 +569,32 @@ void LiveSequencer::playNextArpNote(void) {
 
         // load started arp off event
         const uint16_t arpOnDurationMs = (arpIntervalMs * data.arpSettings.length / 100);
-        const uint16_t arpOffTime = (nowMs + arpOnDurationMs) % data.patternLengthMs;
-        DBG_LOG(printf("@%i:\tnew arp on, turn off in %ims at %i\n", nowMs, arpOnDurationMs, arpOffTime));
-        activeArps.emplace(arpOffTime, newArp);
-        const uint16_t nextArpOffTime = activeArps.begin()->first; // could be this off or a previous off for length > 100%
-        delayToNextArpEventMs = std::min(arpOnDurationMs, uint16_t((data.patternLengthMs - nowMs) + nextArpOffTime));
+        DBG_LOG(printf("@%i:\tnew arp on, turn off in %ims\n", nowMs, arpOnDurationMs));
+        newArp.offDelay = arpOnDurationMs;
+        activeArps.push_back(newArp);
+        delayToNextArpEventMs += arpIntervalMs - ;
+        
         //DBG_LOG(printf("new arp on, turn off in %ims at %i\n", arpOnDurationMs, arpOffTime));
       }
     }
+    if(activeArps.size()) {
+      delayToNextArpEventMs = std::min(delayToNextArpEventMs, activeArps.front().offDelay);
+    }
+    DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
-    if(arpsPending || activeArps.size()) {
+    
+
+    if(arpsPending) {
+      for(auto &n : activeArps) {
+        n.offDelay -= delayToNextArpEventMs;
+      }
+
       DBG_LOG(printf("@%i:\ttrigger again in %ims\n", delayToNextArpEventMs));
       arpTimer.trigger(delayToNextArpEventMs * 1000);
+    } else {
+      for(auto &n : activeArps) {
+        n.offDelay -= uint16_t(data.patternLengthMs - nowMs);
+      }
     }
   }
 }
