@@ -26,6 +26,7 @@ extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 extern void helptext_l(const char* str);
 
+
 bool runningHere = false;
 bool barPhases[2] = { 0 };
 uint8_t numberOfBarsTemp = 0;
@@ -41,10 +42,12 @@ EditableValue<uint8_t> *fillNum;
 EditableValue<uint8_t> *fillOff;
 
 EditableValue<uint8_t> *arpAmount;
-EditableValue<uint8_t> *arpLength;
+EditableValue<uint16_t> *arpLength;
 EditableValue<uint8_t> *arpMode;
 EditableValue<int8_t> *arpSwing;
 EditableValue<uint8_t> *arpLatch;
+
+EditableValueBase *currentValue;
 
 LiveSequencer* liveSeqPtr;
 LiveSequencer::LiveSeqData* liveSeqData;
@@ -66,7 +69,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
   fillOff = new EditableValue<uint8_t>(&liveSeqData->fillNotes.offset, 0, 7, 1, 0);
 
   arpAmount = new EditableValue<uint8_t>(&liveSeqData->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 2);
-  arpLength = new EditableValue<uint8_t>(&liveSeqData->arpSettings.length, 50, 200, 25, 75);
+  arpLength = new EditableValue<uint16_t>(&liveSeqData->arpSettings.length, 50, 300, 5, 100);
   arpMode = new EditableValue<uint8_t>((uint8_t*)&liveSeqData->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN));
   arpSwing = new EditableValue<int8_t>(&liveSeqData->arpSettings.swing, -5, 5, 1, 0);
   arpLatch = new EditableValue<uint8_t>(&liveSeqData->arpSettings.latch, 0, 1, 1, 1);
@@ -152,6 +155,21 @@ void UI_func_livesequencer(uint8_t param) {
   }
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
+    if(LCDML.BT_checkDown()) {
+      DBG_LOG(printf("down!\n"));
+      if(currentValue != nullptr) {
+        currentValue->next();
+        guiUpdateFlags |= drawTools;
+      }
+    }
+    if(LCDML.BT_checkUp()) {
+      DBG_LOG(printf("up!\n"));
+      if(currentValue != nullptr) {
+        currentValue->previous();
+        guiUpdateFlags |= drawTools;
+      }
+    }
+
     guiUpdateFlags |= liveSeqData->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
     guiUpdateFlags |= (liveSeqData->songLayersChanged && liveSeqData->isSongMode) ? (drawSongSettings) : 0;
     guiUpdateFlags |= (liveSeqData->isRunning || liveSeqData->stoppedFlag) ? (drawActiveNotes | drawTime) : 0;
@@ -359,12 +377,12 @@ void handle_touchscreen_live_sequencer(void) {
         if(showingTools == TOOL_FILL) {
           if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
             // fill number
-            fillNum->next();
+            currentValue = fillNum->pressed();
             guiUpdateFlags |= drawTools;
           }
           if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
             // fill offset
-            fillOff->next();
+            currentValue = fillOff->pressed();
             guiUpdateFlags |= drawTools;
           }
           if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
@@ -376,27 +394,27 @@ void handle_touchscreen_live_sequencer(void) {
         if(showingTools == TOOL_ARP) {
           if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
             // arp number
-            arpAmount->next();
+            currentValue = arpAmount->pressed();
             guiUpdateFlags |= drawTools;
           }
           if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
             // arp mode
-            arpMode->next();
+            currentValue = arpMode->pressed();
             guiUpdateFlags |= drawTools;
           }
           if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
             // arp length
-            arpLength->next();
+            currentValue = arpLength->pressed();
             guiUpdateFlags |= drawTools;
           }
           if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
             // arp swing
-            arpSwing->next();
+            currentValue = arpSwing->pressed();
             guiUpdateFlags |= drawTools;
           }
           if (check_button_on_grid(BUTTON_COLUMNS_X[5], 15)) {
             // arp latch
-            arpLatch->next();
+            currentValue = arpLatch->pressed();
             guiUpdateFlags |= drawTools;
           }
         }

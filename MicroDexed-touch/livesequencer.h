@@ -77,9 +77,9 @@ public:
     bool startNewNote;
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
-    uint8_t length; // 0 - 100% pulse width
+    uint16_t length; // >100% pulse width possible
     int8_t swing;
-    uint8_t latch;
+    uint8_t latch; // keep notes or drop them
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
     uint8_t arpCount;

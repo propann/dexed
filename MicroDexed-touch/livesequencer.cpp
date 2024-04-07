@@ -485,25 +485,24 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
 }
 
 void LiveSequencer::playNextArpNote(void) {
-  if(data.arpSettings.arpNotes.size()) {
-    // finish and erase elapsed notes
-    for(auto it = activeArps.begin(); it != activeArps.end();) {
-      if(it->offDelay <= 0) {
-        const midi::Channel channel = data.tracks[it->track].channel;
+  // finish and erase elapsed notes
+  for(auto it = activeArps.begin(); it != activeArps.end();) {
+    if((it->offDelay <= 0 || data.arpSettings.arpNotes.empty())) {
+      const midi::Channel channel = data.tracks[it->track].channel;
 
-        for(auto &p : it->notes) {
-          handleNoteOff(channel, p, 0, 0);
-        }
-        DBG_LOG(printf("@%i:\toff and remove time %i\n", it->offDelay));
-        it = activeArps.erase(it);
-      } else {
-        ++it;
+      for(auto &p : it->notes) {
+        handleNoteOff(channel, p, 0, 0);
       }
+      DBG_LOG(printf("@%i:\toff and remove time %i\n", it->offDelay));
+      it = activeArps.erase(it);
+    } else {
+      ++it;
     }
+  }
 
+  if(data.arpSettings.arpNotes.size()) { 
     const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
     const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
-    uint16_t delayToNextArpEventMs = arpIntervalMs;
     if(arpsPending) {
       if(data.arpSettings.startNewNote) {
         // start next note
@@ -565,10 +564,10 @@ void LiveSequencer::playNextArpNote(void) {
     }
 
     const uint16_t nowMs = uint16_t(data.patternTimer);
-    delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
+    int16_t delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
     data.arpSettings.startNewNote = true;
 
-    if(activeArps.size() && activeArps.front().offDelay < delayToNextArpEventMs) {
+    if(activeArps.size() && (activeArps.front().offDelay < delayToNextArpEventMs)) {
       // next call will be a finishing note
       delayToNextArpEventMs = activeArps.front().offDelay;
       data.arpSettings.startNewNote = false;
@@ -576,6 +575,8 @@ void LiveSequencer::playNextArpNote(void) {
     DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
     if(arpsPending) {
+      delayToNextArpEventMs = std::max(int16_t(0), delayToNextArpEventMs);
+
       // we will call us again, subtract time until then
       for(auto &n : activeArps) {
         n.offDelay -= delayToNextArpEventMs;

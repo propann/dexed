@@ -19,7 +19,7 @@ EditableValue<T>::EditableValue(T* invalue, T min, T max, T increment, T default
 }
 
 template <class T>
-void EditableValue<T>::next() {
+EditableValueBase* EditableValue<T>::pressed() {
   T result = *value;
   switch(mode) {
   case MODE_FIXED:
@@ -38,6 +38,49 @@ void EditableValue<T>::next() {
     break;
   }
   *value = result;
+  return this;
+}
+
+template <class T>
+bool EditableValue<T>::next() {
+  T result = *value;
+  switch(mode) {
+  case MODE_FIXED:
+    if(++it == values.end()) {
+      --it;
+    }
+    result = *it;
+    break;
+  case MODE_RANGE:
+    if(result + rangeIncrement <= rangeMax) {
+      result += rangeIncrement;
+    }
+    break;
+  }
+  const bool changed = (*value != result);
+  *value = result;
+  return changed;
+}
+
+template <class T>
+bool EditableValue<T>::previous() {
+  T result = *value;
+  switch(mode) {
+  case MODE_FIXED:
+    if(it != values.begin()) {
+      --it;
+    }
+    result = *it;
+    break;
+  case MODE_RANGE:
+    if(result - rangeIncrement >= rangeMin) {
+      result -= rangeIncrement;
+    }
+    break;
+  }
+  const bool changed = (*value != result);
+  *value = result;
+  return changed;
 }
 
 

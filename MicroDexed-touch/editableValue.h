@@ -4,13 +4,22 @@
 #include <stdio.h>
 #include <vector>
 
-template<class T> class EditableValue {
+class EditableValueBase {
+public:
+  virtual EditableValueBase* pressed() = 0;
+  virtual bool next() = 0;
+  virtual bool previous() = 0;
+};
+
+template<class T> class EditableValue : EditableValueBase {
 
 public:
   EditableValue(T* value, std::vector<T> values, T defaultValue);
   EditableValue(T* value, T min, T max, T increment, T defaultValue);
 
-  void next();
+  EditableValueBase* pressed();
+  bool next();
+  bool previous();
 
 private:
   enum Mode {
@@ -26,7 +35,7 @@ private:
   T rangeMax;
   T rangeIncrement;
 };
-
+template class EditableValue<uint16_t>;
 template class EditableValue<uint8_t>;
 template class EditableValue<int8_t>;
 #endif //EDITABLEVALUE_H
