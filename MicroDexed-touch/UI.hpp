@@ -18760,13 +18760,6 @@ FLASHMEM void reset_live_modifiers()
   dexed_live_mod.attack_mod[selected_instance_id] = 0;
   dexed_live_mod.release_mod[selected_instance_id] = 0;
 
-  for (uint8_t i = 0; i < 6; i++)
-  {
-    MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, dexed_live_mod.orig_attack_values[selected_instance_id][i]);
-    MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, dexed_live_mod.orig_release_values[selected_instance_id][i]);
-  }
-
-
 }
 
 FLASHMEM void UI_func_voice_select_loop()
