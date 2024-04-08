@@ -74,6 +74,7 @@ public:
   };
 
   struct ArpSettings {
+    uint16_t delayToNextArpOnMs;
     bool startNewNote;
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;

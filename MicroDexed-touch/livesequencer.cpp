@@ -498,7 +498,7 @@ void LiveSequencer::playNextArpNote(void) {
       activeArps.pop_front();
     }
   }
-  
+  const uint16_t nowMs = uint16_t(data.patternTimer);
   if(data.arpSettings.arpNotes.size()) { 
     const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
     const bool arpsPending = data.arpSettings.arpCount < data.arpSettings.amount;
@@ -550,40 +550,43 @@ void LiveSequencer::playNextArpNote(void) {
 
         newArp.offDelay = (arpIntervalMs * data.arpSettings.length / 100);
         activeArps.push_back(newArp);
+
+        // calc time to next noteOn
+        uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
+        if(data.arpSettings.arpCount & 0x01) {
+          // swing: odd beats NoteOn is variable
+          nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 15.0); // swing from -5 to +5;
+        }
+        data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);    
       }
     }
-    uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
+  }
+  
+  data.arpSettings.startNewNote = true;
+  uint16_t delayToNextTimerCall = data.arpSettings.delayToNextArpOnMs;
 
-    // load timer for next noteOn
-    if(data.arpSettings.arpCount & 0x01) {
-      // swing: odd beats NoteOn is variable
-      nextArpEventOnTimeMs += roundf(data.arpSettings.swing * arpIntervalMs / 10.0); // swing from -5 to +5;
-    }
+  if(activeArps.size() && (activeArps.front().offDelay < data.arpSettings.delayToNextArpOnMs)) {
+    // next call will be a finishing note
+    delayToNextTimerCall = activeArps.front().offDelay;
+    data.arpSettings.startNewNote = false;
+  }
+  const uint16_t delayToNextPatternStart = uint16_t(data.patternLengthMs - nowMs);
+  const bool nextIsPatternStart = (delayToNextTimerCall > delayToNextPatternStart);
 
-    const uint16_t nowMs = uint16_t(data.patternTimer);
-    uint16_t delayToNextArpEventMs = (nextArpEventOnTimeMs - nowMs);
-    data.arpSettings.startNewNote = true;
+  if(nextIsPatternStart) {
+    delayToNextTimerCall = delayToNextPatternStart;
+  }
 
-    if(activeArps.size() && (activeArps.front().offDelay < delayToNextArpEventMs)) {
-      // next call will be a finishing note
-      delayToNextArpEventMs = activeArps.front().offDelay;
-      data.arpSettings.startNewNote = false;
-    }
-    const uint16_t delayToNextPatternStart = uint16_t(data.patternLengthMs - nowMs);
-    if(delayToNextArpEventMs > delayToNextPatternStart) {
-      delayToNextArpEventMs = delayToNextPatternStart;
-    }
+  for(auto &n : activeArps) {
+    n.offDelay -= delayToNextTimerCall;
+  }
+  data.arpSettings.delayToNextArpOnMs -= delayToNextTimerCall;
 
-    //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
+  //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
-    for(auto &n : activeArps) {
-      n.offDelay -= std::min(delayToNextArpEventMs, n.offDelay);
-    }
-
-    if(arpsPending) {
-      DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextArpEventMs));
-      arpTimer.trigger(delayToNextArpEventMs * 1000);
-    }
+  if(nextIsPatternStart == false) {
+    DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
+    arpTimer.trigger(delayToNextTimerCall * 1000);
   }
 }
 
