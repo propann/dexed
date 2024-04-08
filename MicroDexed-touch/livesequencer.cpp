@@ -484,18 +484,24 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
   }
 }
 
+void LiveSequencer::printActiveArps(void) {
+  for(ArpNote &n : activeArps) {
+    DBG_LOG(printf("%i\n", n.offDelay));
+  }
+}
+
 void LiveSequencer::playNextArpNote(void) {
   // finish and erase elapsed notes
-  if(activeArps.size()) {
-    ArpNote first = activeArps.front();
-    if(first.offDelay == 0) {
-      const midi::Channel channel = data.tracks[first.track].channel;
-
-      for(auto &p : first.notes) {
+  for(auto it = activeArps.begin(); it != activeArps.end();) {
+    if((it->offDelay == 0)) {
+      const midi::Channel channel = data.tracks[it->track].channel;
+      for(auto &p : it->notes) {
         handleNoteOff(channel, p, 0, 0);
       }
       //DBG_LOG(printf("off and remove time %i\n", it->offDelay));
-      activeArps.pop_front();
+      it = activeArps.erase(it);
+    } else {
+      ++it;
     }
   }
   const uint16_t nowMs = uint16_t(data.patternTimer);
@@ -560,6 +566,8 @@ void LiveSequencer::playNextArpNote(void) {
         data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);    
       }
     }
+  } else {
+    data.arpSettings.delayToNextArpOnMs = 0xFFFF;
   }
   
   data.arpSettings.startNewNote = true;
@@ -578,13 +586,13 @@ void LiveSequencer::playNextArpNote(void) {
   }
 
   for(auto &n : activeArps) {
-    n.offDelay -= delayToNextTimerCall;
+    n.offDelay -= std::min(delayToNextTimerCall, n.offDelay);
   }
-  data.arpSettings.delayToNextArpOnMs -= delayToNextTimerCall;
+  data.arpSettings.delayToNextArpOnMs -= std::min(delayToNextTimerCall, data.arpSettings.delayToNextArpOnMs);
 
   //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
-  if(nextIsPatternStart == false) {
+  if((activeArps.size() || data.arpSettings.startNewNote == true) && nextIsPatternStart == false) {
     DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
     arpTimer.trigger(delayToNextTimerCall * 1000);
   }
@@ -650,7 +658,9 @@ void LiveSequencer::addPendingNotes(void) {
 }
 
 void LiveSequencer::handlePatternBegin(void) {
-  data.patternTimer = 0; 
+  data.patternTimer = 0;
+
+  printActiveArps();
 
   if(data.startedFlag) {
     data.startedFlag = false;
