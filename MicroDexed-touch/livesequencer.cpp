@@ -569,9 +569,11 @@ void LiveSequencer::playNextArpNote(void) {
       delayToNextArpEventMs = activeArps.front().offDelay;
       data.arpSettings.startNewNote = false;
     }
-    if(arpsPending == false) {
-      delayToNextArpEventMs = uint16_t(data.patternLengthMs - nowMs);
+    const uint16_t delayToNextPatternStart = uint16_t(data.patternLengthMs - nowMs);
+    if(delayToNextArpEventMs > delayToNextPatternStart) {
+      delayToNextArpEventMs = delayToNextPatternStart;
     }
+
     //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
 
     for(auto &n : activeArps) {
