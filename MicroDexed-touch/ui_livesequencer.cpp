@@ -71,7 +71,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
   arpAmount = new EditableValue<uint8_t>(&liveSeqData->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8);
   arpLength = new EditableValue<uint16_t>(&liveSeqData->arpSettings.length, 50, 500, 10, 150);
   arpMode = new EditableValue<uint8_t>((uint8_t*)&liveSeqData->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN));
-  arpSwing = new EditableValue<int8_t>(&liveSeqData->arpSettings.swing, -10, 10, 1, 0);
+  arpSwing = new EditableValue<int8_t>(&liveSeqData->arpSettings.swing, -8, 8, 1, 0);
   arpLatch = new EditableValue<uint8_t>(&liveSeqData->arpSettings.latch, 0, 1, 1, 1);
 }
 

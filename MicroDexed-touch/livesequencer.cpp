@@ -565,7 +565,7 @@ void LiveSequencer::playNextArpNote(void) {
       uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
       if(data.arpSettings.arpCount & 0x01) {
         // swing: odd beats NoteOn is variable
-        nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 15.0); // swing from -10 to +10;
+        nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 16.0); // swing from -8 to +8;
       }
       data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);    
     }
