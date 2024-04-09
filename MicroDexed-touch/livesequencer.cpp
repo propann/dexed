@@ -492,23 +492,19 @@ void LiveSequencer::printActiveArps(void) {
 
 void LiveSequencer::playNextArpNote(void) {
   // finish and erase elapsed notes
-  for(auto it = activeArps.begin(); it != activeArps.end();) {
+  for(auto it = activeArps.begin(); it != activeArps.end(); it++) {
     if((it->offDelay == 0)) {
       const midi::Channel channel = data.tracks[it->track].channel;
       for(auto &p : it->notes) {
         handleNoteOff(channel, p, 0, 0);
       }
-      //DBG_LOG(printf("off and remove time %i\n", it->offDelay));
       it = activeArps.erase(it);
-    } else {
-      ++it;
     }
   }
   const uint8_t arpAmount = data.arpSettings.amount;
   const uint16_t nowMs = uint16_t(data.patternTimer);
   if(data.arpSettings.arpNotes.size() && arpAmount > 0) { 
     if(data.arpSettings.startNewNote) {
-      // start next note
       ArpNote newArp;
       newArp.track = data.activeTrack;
 
@@ -516,28 +512,26 @@ void LiveSequencer::playNextArpNote(void) {
         const uint8_t currentNote = *data.arpSettings.arpIt;
         newArp.notes.emplace_back(currentNote);
 
-        if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
-          if(data.arpSettings.arpNotes.size() > 1) {
-            if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-              data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-              bool doubleEndNote = false;
-              switch(data.arpSettings.mode) {
-              case ArpMode::ARP_DOWNUP_P:
-              case ArpMode::ARP_UPDOWN_P:
-                doubleEndNote = true;
-              case ArpMode::ARP_DOWNUP:
-              case ArpMode::ARP_UPDOWN:
-                std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-                if(doubleEndNote == false) {
-                  data.arpSettings.arpIt++;
-                }
-                break;
-              case ArpMode::ARP_RANDOM:
-                std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-                break;
-              default:
-                break;
+        if(data.arpSettings.arpNotes.size() > 1) {
+          if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+            data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+            bool doubleEndNote = false;
+            switch(data.arpSettings.mode) {
+            case ArpMode::ARP_DOWNUP_P:
+            case ArpMode::ARP_UPDOWN_P:
+              doubleEndNote = true;
+            case ArpMode::ARP_DOWNUP:
+            case ArpMode::ARP_UPDOWN:
+              std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+              if(doubleEndNote == false) {
+                data.arpSettings.arpIt++;
               }
+              break;
+            case ArpMode::ARP_RANDOM:
+              std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+              break;
+            default:
+              break;
             }
           }
         }
@@ -550,11 +544,10 @@ void LiveSequencer::playNextArpNote(void) {
       for(auto &n : newArp.notes) {
         handleNoteOn(channel, n, 127, 0);
       }
-      
       if(data.arpSettings.currentAmount != arpAmount) {
         // adapt arpCount to changed amount
         data.arpSettings.currentAmount = arpAmount;
-        data.arpSettings.arpCount = nowMs / round(data.patternLengthMs / float(arpAmount));
+        data.arpSettings.arpCount = nowMs / (data.patternLengthMs / arpAmount);
       }
       data.arpSettings.arpCount++;
       const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
@@ -592,8 +585,6 @@ void LiveSequencer::playNextArpNote(void) {
     n.offDelay -= std::min(delayToNextTimerCall, n.offDelay);
   }
   data.arpSettings.delayToNextArpOnMs -= std::min(delayToNextTimerCall, data.arpSettings.delayToNextArpOnMs);
-
-  //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
   if((activeArps.size() || data.arpSettings.startNewNote == true) && nextIsPatternStart == false) {
     DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
     arpTimer.trigger(delayToNextTimerCall * 1000);
