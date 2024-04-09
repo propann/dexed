@@ -77,6 +77,7 @@ public:
     uint16_t delayToNextArpOnMs;
     bool startNewNote;
     uint8_t amount; // 0, 1, 2, ... per bar
+    uint8_t currentAmount;
     ArpMode mode;
     uint16_t length; // >100% pulse width possible
     int8_t swing;

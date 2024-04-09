@@ -504,12 +504,11 @@ void LiveSequencer::playNextArpNote(void) {
       ++it;
     }
   }
+  const uint8_t arpAmount = data.arpSettings.amount;
   const uint16_t nowMs = uint16_t(data.patternTimer);
-  if(data.arpSettings.arpNotes.size() && data.arpSettings.amount > 0) { 
+  if(data.arpSettings.arpNotes.size() && arpAmount > 0) { 
     if(data.arpSettings.startNewNote) {
-      const float arpIntervalMs = data.patternLengthMs / float(data.arpSettings.amount);
       // start next note
-      data.arpSettings.arpCount++;
       ArpNote newArp;
       newArp.track = data.activeTrack;
 
@@ -551,15 +550,22 @@ void LiveSequencer::playNextArpNote(void) {
       for(auto &n : newArp.notes) {
         handleNoteOn(channel, n, 127, 0);
       }
-
-      newArp.offDelay = (arpIntervalMs * data.arpSettings.length / 100);
-      activeArps.push_back(newArp);
+      
+      if(data.arpSettings.currentAmount != arpAmount) {
+        // adapt arpCount to changed amount
+        data.arpSettings.currentAmount = arpAmount;
+        data.arpSettings.arpCount = nowMs / round(data.patternLengthMs / float(arpAmount));
+      }
+      data.arpSettings.arpCount++;
+      const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
+      newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
+      activeArps.push_back(newArp); // assume newArp.offDelay is biggest - not a big problem if not
 
       // calc time to next noteOn
       uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
       if(data.arpSettings.arpCount & 0x01) {
         // swing: odd beats NoteOn is variable
-        nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 15.0); // swing from -5 to +5;
+        nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 15.0); // swing from -10 to +10;
       }
       data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);    
     }
@@ -588,7 +594,6 @@ void LiveSequencer::playNextArpNote(void) {
   data.arpSettings.delayToNextArpOnMs -= std::min(delayToNextTimerCall, data.arpSettings.delayToNextArpOnMs);
 
   //DBG_LOG(printf("@%i:\tnext arp event in %ims\n", delayToNextArpEventMs));
-
   if((activeArps.size() || data.arpSettings.startNewNote == true) && nextIsPatternStart == false) {
     DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
     arpTimer.trigger(delayToNextTimerCall * 1000);
