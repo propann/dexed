@@ -512,7 +512,8 @@ void LiveSequencer::playNextArpNote(void) {
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
   if(data.arpSettings.startNewNote) {
-    const bool checkLoad = ((data.arpSettings.arpCount * LOAD_PER_BAR) % arpAmount) == 0;
+    data.arpSettings.arpIndex = nowMs / (data.patternLengthMs / arpAmount);
+    const bool checkLoad = ((data.arpSettings.arpIndex * LOAD_PER_BAR) % arpAmount) == 0;
     if(checkLoad) {
       checkLoadNewArpNotes();
     }
@@ -560,15 +561,14 @@ void LiveSequencer::playNextArpNote(void) {
         handleNoteOn(channel, n, 127, 0);
       }
 
-      data.arpSettings.arpCount = nowMs / (data.patternLengthMs / arpAmount);
-      data.arpSettings.arpCount++;
+      data.arpSettings.arpIndex++;
       const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
       newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
       activeArps.push_back(newArp); // assume newArp.offDelay is biggest - not a big problem if not
 
       // calc time to next noteOn
-      uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpCount * arpIntervalMs);
-      if(data.arpSettings.arpCount & 0x01) {
+      uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpIndex * arpIntervalMs);
+      if(data.arpSettings.arpIndex & 0x01) {
         // swing: odd beats NoteOn is variable
         nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 16.0); // swing from -8 to +8;
       }
@@ -725,7 +725,6 @@ void LiveSequencer::handlePatternBegin(void) {
     }
   }
   // restart arp on pattern start
-  data.arpSettings.arpCount = 0;
   playNextArpNote();
 
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
