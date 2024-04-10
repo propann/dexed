@@ -512,9 +512,8 @@ void LiveSequencer::playNextArpNote(void) {
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
   if(data.arpSettings.startNewNote) {
-    data.arpSettings.arpIndex = nowMs / (data.patternLengthMs / arpAmount);
-    const bool checkLoad = ((data.arpSettings.arpIndex * LOAD_PER_BAR) % arpAmount) == 0;
-    if(checkLoad) {
+    uint8_t arpIndex = nowMs / (data.patternLengthMs / arpAmount);
+    if(((arpIndex * LOAD_PER_BAR) % arpAmount) == 0) { // check if reload pressed keys
       checkLoadNewArpNotes();
     }
 
@@ -525,8 +524,7 @@ void LiveSequencer::playNextArpNote(void) {
       newArp.track = data.activeTrack;
 
       if(data.arpSettings.mode != ArpMode::ARP_CHORD) {
-        const uint8_t currentNote = *data.arpSettings.arpIt;
-        newArp.notes.emplace_back(currentNote);
+        newArp.notes.emplace_back(*data.arpSettings.arpIt);
 
         if(data.arpSettings.arpNotes.size() > 1) {
           if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
@@ -561,14 +559,13 @@ void LiveSequencer::playNextArpNote(void) {
         handleNoteOn(channel, n, 127, 0);
       }
 
-      data.arpSettings.arpIndex++;
       const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
       newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
       activeArps.push_back(newArp); // assume newArp.offDelay is biggest - not a big problem if not
 
-      // calc time to next noteOn
-      uint16_t nextArpEventOnTimeMs = uint16_t(data.arpSettings.arpIndex * arpIntervalMs);
-      if(data.arpSettings.arpIndex & 0x01) {
+      // calc time to next noteOn with incremented
+      uint16_t nextArpEventOnTimeMs = uint16_t(++arpIndex * arpIntervalMs);
+      if(arpIndex & 0x01) {
         // swing: odd beats NoteOn is variable
         nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 16.0); // swing from -8 to +8;
       }

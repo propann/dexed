@@ -84,7 +84,6 @@ public:
     bool keysChanged;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
-    uint8_t arpIndex;
   };
 
   struct LiveSeqData {
