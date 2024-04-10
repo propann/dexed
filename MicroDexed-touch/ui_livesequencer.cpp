@@ -156,14 +156,12 @@ void UI_func_livesequencer(uint8_t param) {
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
     if(LCDML.BT_checkDown()) {
-      DBG_LOG(printf("down!\n"));
       if(currentValue != nullptr) {
         currentValue->next();
         guiUpdateFlags |= drawTools;
       }
     }
     if(LCDML.BT_checkUp()) {
-      DBG_LOG(printf("up!\n"));
       if(currentValue != nullptr) {
         currentValue->previous();
         guiUpdateFlags |= drawTools;

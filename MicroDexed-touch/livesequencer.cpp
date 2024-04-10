@@ -496,22 +496,16 @@ void LiveSequencer::printActiveArps(void) {
   }
 }
 
+bool sortedArpNote(LiveSequencer::ArpNote &n1, LiveSequencer::ArpNote &n2) {
+    return (n1.offDelay < n2.offDelay); 
+} 
+
 void LiveSequencer::playNextArpNote(void) {
-  // finish and erase elapsed notes
-  for(auto it = activeArps.begin(); it != activeArps.end(); it++) {
-    if((it->offDelay == 0)) {
-      const midi::Channel channel = data.tracks[it->track].channel;
-      for(auto &p : it->notes) {
-        handleNoteOff(channel, p, 0, 0);
-      }
-      it = activeArps.erase(it);
-    }
-  }
   static constexpr uint8_t LOAD_PER_BAR = 4; // 4 is quite tricky for now
   const uint8_t arpAmount = data.arpSettings.amount;
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
-  if(data.arpSettings.startNewNote) {
+  if(data.arpSettings.delayToNextArpOnMs == 0) {
     uint8_t arpIndex = nowMs / (data.patternLengthMs / arpAmount);
     if(((arpIndex * LOAD_PER_BAR) % arpAmount) == 0) { // check if reload pressed keys
       checkLoadNewArpNotes();
@@ -561,7 +555,8 @@ void LiveSequencer::playNextArpNote(void) {
 
       const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
       newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
-      activeArps.push_back(newArp); // assume newArp.offDelay is biggest - not a big problem if not
+      activeArps.emplace_back(newArp);
+      activeArps.sort(sortedArpNote);
 
       // calc time to next noteOn with incremented
       uint16_t nextArpEventOnTimeMs = uint16_t(++arpIndex * arpIntervalMs);
@@ -571,15 +566,24 @@ void LiveSequencer::playNextArpNote(void) {
       }
       data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);
     }
+  } else {
+    // finish and erase elapsed note
+    for(auto it = activeArps.begin(); it != activeArps.end(); it++) {
+      if(it->offDelay == 0) {
+        const midi::Channel channel = data.tracks[it->track].channel;
+        for(auto &p : it->notes) {
+          handleNoteOff(channel, p, 0, 0);
+        }
+        activeArps.erase(it);
+        it = activeArps.end(); // abort loop
+      }
+    }
   }
-  
-  data.arpSettings.startNewNote = true;
   uint16_t delayToNextTimerCall = data.arpSettings.delayToNextArpOnMs;
 
   if(activeArps.size() && (activeArps.front().offDelay < data.arpSettings.delayToNextArpOnMs)) {
     // next call will be a finishing note
     delayToNextTimerCall = activeArps.front().offDelay;
-    data.arpSettings.startNewNote = false;
   }
   const uint16_t delayToNextPatternStart = uint16_t(data.patternLengthMs - nowMs);
   const bool nextIsPatternStart = (delayToNextTimerCall > delayToNextPatternStart);
@@ -589,11 +593,14 @@ void LiveSequencer::playNextArpNote(void) {
   }
 
   for(auto &n : activeArps) {
-    n.offDelay -= std::min(delayToNextTimerCall, n.offDelay); // handle unordered offDelays
+    n.offDelay -= std::min(delayToNextTimerCall, n.offDelay);
   }
   data.arpSettings.delayToNextArpOnMs -= std::min(delayToNextTimerCall, data.arpSettings.delayToNextArpOnMs);
-  if((activeArps.size() || data.arpSettings.startNewNote == true) && nextIsPatternStart == false) {
-    DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
+  if(nextIsPatternStart == false) {
+    //DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
+    if(delayToNextTimerCall == 0) {
+      delayToNextTimerCall = 1;
+    }
     arpTimer.trigger(delayToNextTimerCall * 1000);
   }
 }
@@ -660,8 +667,6 @@ void LiveSequencer::addPendingNotes(void) {
 void LiveSequencer::handlePatternBegin(void) {
   data.patternTimer = 0;
 
-  printActiveArps();
-
   if(data.startedFlag) {
     data.startedFlag = false;
     // just started, do not increment
@@ -669,7 +674,7 @@ void LiveSequencer::handlePatternBegin(void) {
     data.songPatternCount = 0;
 
     activeArps.clear();
-    data.arpSettings.startNewNote = true;
+    data.arpSettings.delayToNextArpOnMs = 0;
 
     if(data.isSongMode && data.isRecording) {
       // save current song start layer mutes
