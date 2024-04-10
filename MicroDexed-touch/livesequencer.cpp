@@ -559,11 +559,8 @@ void LiveSequencer::playNextArpNote(void) {
       for(auto &n : newArp.notes) {
         handleNoteOn(channel, n, 127, 0);
       }
-      if(data.arpSettings.currentAmount != arpAmount) {
-        // adapt arpCount to changed amount
-        data.arpSettings.currentAmount = arpAmount;
-        data.arpSettings.arpCount = nowMs / (data.patternLengthMs / arpAmount);
-      }
+
+      data.arpSettings.arpCount = nowMs / (data.patternLengthMs / arpAmount);
       data.arpSettings.arpCount++;
       const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
       newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
