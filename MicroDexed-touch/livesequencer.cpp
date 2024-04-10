@@ -599,9 +599,11 @@ void LiveSequencer::playNextArpNote(void) {
   if(nextIsPatternStart == false) {
     //DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
     if(delayToNextTimerCall == 0) {
-      delayToNextTimerCall = 1;
+      playNextArpNote();
+    } else {
+      arpTimer.trigger(delayToNextTimerCall * 1000);
     }
-    arpTimer.trigger(delayToNextTimerCall * 1000);
+    
   }
 }
 
