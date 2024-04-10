@@ -506,7 +506,8 @@ void LiveSequencer::playNextArpNote(void) {
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
   if(data.arpSettings.delayToNextArpOnMs == 0) {
-    uint8_t arpIndex = nowMs / (data.patternLengthMs / arpAmount);
+    const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
+    uint8_t arpIndex = (nowMs + (arpIntervalMs / 2)) / arpIntervalMs;
     if(((arpIndex * LOAD_PER_BAR) % arpAmount) == 0) { // check if reload pressed keys
       checkLoadNewArpNotes();
     }
@@ -553,7 +554,7 @@ void LiveSequencer::playNextArpNote(void) {
         handleNoteOn(channel, n, 127, 0);
       }
 
-      const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
+      
       newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
       activeArps.emplace_back(newArp);
       activeArps.sort(sortedArpNote);
@@ -562,7 +563,7 @@ void LiveSequencer::playNextArpNote(void) {
       uint16_t nextArpEventOnTimeMs = uint16_t(++arpIndex * arpIntervalMs);
       if(arpIndex & 0x01) {
         // swing: odd beats NoteOn is variable
-        nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 16.0); // swing from -8 to +8;
+        nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 20.0); // swing from -8 to +8;
       }
       data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);
     }
