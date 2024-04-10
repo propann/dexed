@@ -82,6 +82,7 @@ public:
     uint16_t length; // >100% pulse width possible
     int8_t swing;
     uint8_t latch; // keep notes or drop them
+    bool keysChanged;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
     uint8_t arpCount;

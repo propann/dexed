@@ -24,7 +24,6 @@ extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
 std::set<uint8_t> pressedArpKeys;
-std::set<uint8_t> activeArpKeys;
 std::list<LiveSequencer::ArpNote> activeArps;
 
 using namespace TeensyTimerTool;
@@ -239,11 +238,12 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
         switch(event) {
         case midi::NoteOn:
           pressedArpKeys.insert(note);
-          activeArpKeys.insert(note);
+          data.arpSettings.keysChanged = true;
           break;
 
         case midi::NoteOff:
           pressedArpKeys.erase(note);
+          data.arpSettings.keysChanged = true;
           break;
           
         default:
@@ -462,33 +462,31 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
 }
 
 void LiveSequencer::checkLoadNewArpNotes(void) {
-  if(data.arpSettings.latch == 0) {
-    data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());
+  bool reloadArps = false;
+  if(data.arpSettings.latch) {
+    reloadArps = data.arpSettings.keysChanged && pressedArpKeys.size();
   } else {
-    if(activeArpKeys.size()) {
-      data.arpSettings.arpNotes.assign(activeArpKeys.begin(), activeArpKeys.end());
-    }
+    reloadArps = data.arpSettings.keysChanged;
   }
+  data.arpSettings.keysChanged = false;
 
-  if(activeArpKeys.size()) {
-    if(data.arpSettings.arpNotes.size()) {
-      switch(data.arpSettings.mode) {
-      case ArpMode::ARP_DOWN:
-      case ArpMode::ARP_DOWNUP:
-      case ArpMode::ARP_DOWNUP_P:
-        std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
-        break;
-      case ArpMode::ARP_UP:
-      case ArpMode::ARP_UPDOWN:
-      case ArpMode::ARP_UPDOWN_P:
-        std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
-        break;
-      default:
-        break;
-      }
-      data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+  if(reloadArps) {
+    data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());
+    switch(data.arpSettings.mode) {
+    case ArpMode::ARP_DOWN:
+    case ArpMode::ARP_DOWNUP:
+    case ArpMode::ARP_DOWNUP_P:
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
+      break;
+    case ArpMode::ARP_UP:
+    case ArpMode::ARP_UPDOWN:
+    case ArpMode::ARP_UPDOWN_P:
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
+      break;
+    default:
+      break;
     }
-    activeArpKeys.clear();
+    data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
   }
 }
 
@@ -509,7 +507,7 @@ void LiveSequencer::playNextArpNote(void) {
       it = activeArps.erase(it);
     }
   }
-  static constexpr uint8_t LOAD_PER_BAR = 4; // 4 is quite tricky for now
+  static constexpr uint8_t LOAD_PER_BAR = 2; // 4 is quite tricky for now
   const uint8_t arpAmount = data.arpSettings.amount;
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
@@ -577,7 +575,7 @@ void LiveSequencer::playNextArpNote(void) {
         // swing: odd beats NoteOn is variable
         nextArpEventOnTimeMs += round(data.arpSettings.swing * arpIntervalMs / 16.0); // swing from -8 to +8;
       }
-      data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);    
+      data.arpSettings.delayToNextArpOnMs = (nextArpEventOnTimeMs - nowMs);
     }
   }
   
