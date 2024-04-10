@@ -466,7 +466,7 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
   if(data.arpSettings.latch) {
     reloadArps = data.arpSettings.keysChanged && pressedArpKeys.size();
   } else {
-    reloadArps = data.arpSettings.keysChanged;
+    reloadArps = data.arpSettings.keysChanged; // TODO: maybe immediadely stop playing with no latch?
   }
   data.arpSettings.keysChanged = false;
 
@@ -507,7 +507,7 @@ void LiveSequencer::playNextArpNote(void) {
       it = activeArps.erase(it);
     }
   }
-  static constexpr uint8_t LOAD_PER_BAR = 2; // 4 is quite tricky for now
+  static constexpr uint8_t LOAD_PER_BAR = 4; // 4 is quite tricky for now
   const uint8_t arpAmount = data.arpSettings.amount;
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
