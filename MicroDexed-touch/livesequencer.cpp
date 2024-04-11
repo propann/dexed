@@ -489,12 +489,6 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
   }
 }
 
-void LiveSequencer::printActiveArps(void) {
-  for(ArpNote &n : activeArps) {
-    DBG_LOG(printf("%i\n", n.offDelay));
-  }
-}
-
 bool sortedArpNote(LiveSequencer::ArpNote &n1, LiveSequencer::ArpNote &n2) {
     return (n1.offDelay < n2.offDelay); 
 } 
@@ -603,7 +597,6 @@ void LiveSequencer::playNextArpNote(void) {
     } else {
       arpTimer.trigger(delayToNextTimerCall * 1000);
     }
-    
   }
 }
 
