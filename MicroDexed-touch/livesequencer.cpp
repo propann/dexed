@@ -93,7 +93,7 @@ void LiveSequencer::handleStart(void) {
 }
 
 void LiveSequencer::allNotesOff(void) {
-  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+  for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     for(uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
       for(auto note : data.tracks[track].activeNotes[layer]) {
         handleNoteOff(data.tracks[track].channel, note, 0, 0);
@@ -172,7 +172,7 @@ void LiveSequencer::onSongStopped(void) {
 
 void LiveSequencer::applySongStartLayerMutes(void) {
   if(data.songLayerCount > 0) {
-    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+    for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerMutes = data.trackSettings[track].songStartLayerMutes;
     }
     data.trackLayersChanged = true;
@@ -186,7 +186,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
         const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
         MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocity };
         if(data.isSongMode) {
-          if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
+          if(data.songLayerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
             // in song mode, simply add event, no rounding and checking needed
             newEvent.layer = data.songLayerCount; 
             uint8_t patternCount = data.songPatternCount;
@@ -199,7 +199,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
             data.songEvents[patternCount].emplace_back(newEvent);
           }
         } else {
-          if(data.trackSettings[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
+          if(data.trackSettings[data.activeTrack].layerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {    
             switch(newEvent.event) {
             default:
               // ignore all other types
@@ -249,7 +249,6 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
         default:
           break;
         }
-        
       } else {
         const midi::Channel ch = data.tracks[data.activeTrack].channel;
         switch(event) {
@@ -279,7 +278,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
 }
 
 void LiveSequencer::fillTrackLayer(void) {
-  if(data.trackSettings[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
+  if(data.trackSettings[data.activeTrack].layerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
     const float msIncrement = data.patternLengthMs / float(data.fillNotes.number);
     const uint8_t msOffset = round(data.fillNotes.offset * msIncrement / 8.0f);
     const uint16_t noteLength = round(msIncrement / 2.0f); // ...
@@ -306,7 +305,7 @@ void LiveSequencer::deleteLiveSequencerData(void) {
   data.pendingEvents.clear();
   data.eventsList.clear();
   deleteAllSongEvents();
-  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+  for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     data.trackSettings[track].layerCount = 0;
     data.tracks[track].layerMutes = 0;
   }
@@ -324,14 +323,14 @@ void LiveSequencer::deleteAllSongEvents(void) {
       e.event = midi::InvalidType; // mark as invalid
     }
   }
-  for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+  for(uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     data.trackSettings[track].songStartLayerMutes = 0;
   }
   data.songLayersChanged = true;
 }
 
-void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
-  if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
+void LiveSequencer::songLayerAction(uint8_t layer, UI_LiveSequencer::LayerMode action) {
+  if((layer == 0) && (action == UI_LiveSequencer::LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
   for(auto &e : data.songEvents) {
@@ -344,8 +343,8 @@ void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
   data.songLayersChanged = true;
 }
 
-void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
-  if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
+void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, UI_LiveSequencer::LayerMode action) {
+  if((layer == 0) && (action == UI_LiveSequencer::LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
 
@@ -373,17 +372,17 @@ void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode act
   data.trackLayersChanged = true;
 }
 
-void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
+void LiveSequencer::performLayerAction(UI_LiveSequencer::LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
   if(e.layer == layer) {
     switch(action) {
-    case LayerMode::LAYER_MERGE:
+    case UI_LiveSequencer::LayerMode::LAYER_MERGE:
       // layer 0 must not be shifted up
       if(e.layer > 0) { 
         e.layer--;
       }
       break;
 
-    case LayerMode::LAYER_DELETE:
+    case UI_LiveSequencer::LayerMode::LAYER_DELETE:
       e.event = midi::InvalidType; // mark layer notes to delete later
       break;
 
@@ -502,10 +501,10 @@ bool sortedArpNote(LiveSequencer::ArpNote &n1, LiveSequencer::ArpNote &n2) {
 
 void LiveSequencer::playNextArpNote(void) {
   static constexpr uint8_t LOAD_PER_BAR = 4; // 4 is quite tricky for now
-  const uint8_t arpAmount = data.arpSettings.amount;
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
   if(data.arpSettings.delayToNextArpOnMs == 0) {
+    const uint8_t arpAmount = data.arpSettings.amount;
     const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
     uint8_t arpIndex = (nowMs + (arpIntervalMs / 2)) / arpIntervalMs;
     if(((arpIndex * LOAD_PER_BAR) % arpAmount) == 0) { // check if reload pressed keys
@@ -681,7 +680,7 @@ void LiveSequencer::handlePatternBegin(void) {
 
     if(data.isSongMode && data.isRecording) {
       // save current song start layer mutes
-      for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+      for(uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
         data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
       }
     }   
@@ -763,7 +762,7 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
   if(recordToSong) {
-    if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
+    if(data.songLayerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
       data.recordedToSong = true;
       const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
       MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.currentPattern, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
@@ -781,7 +780,7 @@ void LiveSequencer::checkAddMetronome(void) {
   // always assure we have a drum track with some tempo to begin
   if(data.eventsList.empty()) {
     const uint8_t activeTrack = data.activeTrack;
-    for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+    for(uint8_t i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
       if(data.tracks[i].screen == UI_func_drums) {
         data.activeTrack = i;
         data.fillNotes.number = 8;
@@ -792,7 +791,7 @@ void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them
+        trackLayerAction(i, 1, UI_LiveSequencer::LayerMode::LAYER_MERGE); // merge them
         // reset fillNotes to user values
         data.fillNotes.number = 4;
         data.fillNotes.offset = 0;
@@ -805,7 +804,7 @@ void LiveSequencer::checkAddMetronome(void) {
 
 void LiveSequencer::updateTrackChannels(bool initial) {
   data.instrumentChannels.clear();
-  for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+  for(uint8_t i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
     if(initial) {
       data.trackSettings[i].quantisizeDenom = 1; // default: no quantization

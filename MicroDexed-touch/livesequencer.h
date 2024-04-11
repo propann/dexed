@@ -14,6 +14,9 @@
 class LiveSequencer {
 
 public:
+  static constexpr int LIVESEQUENCER_NUM_TRACKS = 6;
+  static constexpr int LIVESEQUENCER_NUM_LAYERS = 4;
+
   enum EventSource : uint8_t {
     EVENT_SONG = 0,
     EVENT_PATTERN = 1,
@@ -36,7 +39,7 @@ public:
     uint8_t layerMutes;
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
-    std::unordered_multiset<uint8_t> activeNotes[LIVESEQUENCER_NUM_LAYERS];
+    std::unordered_multiset<uint8_t> activeNotes[LiveSequencer::LIVESEQUENCER_NUM_LAYERS];
   };
 
   struct TrackSettings {
@@ -87,7 +90,7 @@ public:
 
   struct LiveSeqData {
     // non - volatile
-    TrackSettings trackSettings[LIVESEQUENCER_NUM_TRACKS];
+    TrackSettings trackSettings[LiveSequencer::LIVESEQUENCER_NUM_TRACKS];
     std::list<MidiEvent> eventsList;
     std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
     uint8_t numberOfBars = 4;
@@ -95,7 +98,7 @@ public:
     // volatile
     bool isActive;
     std::unordered_set<uint8_t> instrumentChannels;
-    Track tracks[LIVESEQUENCER_NUM_TRACKS];
+    Track tracks[LiveSequencer::LIVESEQUENCER_NUM_TRACKS];
     ArpSettings arpSettings;
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     uint8_t currentPattern = 0;
@@ -126,8 +129,8 @@ public:
 
   LiveSequencer();
   LiveSequencer::LiveSeqData* getData(void);
-  void songLayerAction(uint8_t layer, LayerMode action);
-  void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
+  void songLayerAction(uint8_t layer, UI_LiveSequencer::LayerMode action);
+  void trackLayerAction(uint8_t track, uint8_t layer, UI_LiveSequencer::LayerMode action);
   void handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
@@ -142,18 +145,17 @@ public:
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
+  LiveSeqData data;
+  UI_LiveSequencer ui;
+
   void printActiveArps(void);
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);
   void addPendingNotes(void);
-  bool isSongMuteBeginEvent(MidiEvent a);
   void refreshSongLength(void);
   void applySongStartLayerMutes(void);
-
-  LiveSeqData data;
-  UI_LiveSequencer ui;
-
+  
   static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
     // + a.source is a hack to sort song events before pattern events if the have same time
     return ((a.patternNumber * 5000) + a.patternMs + a.source) < ((b.patternNumber * 5000) + b.patternMs + b.source); // FIXME: patternLengthMs
@@ -173,7 +175,7 @@ private:
   bool timeQuantization(MidiEvent &e, uint8_t denom);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
-  void performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer);
+  void performLayerAction(UI_LiveSequencer::LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer);
 };
 
 #endif // LIVESEQUENCER_H

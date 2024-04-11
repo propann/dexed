@@ -1628,8 +1628,8 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
     if (json) {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["num_bars"] = data->numberOfBars;
-      data_json["num_tracks"] = LIVESEQUENCER_NUM_TRACKS;
-      for (int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+      data_json["num_tracks"] = LiveSequencer::LIVESEQUENCER_NUM_TRACKS;
+      for (int i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
         // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
