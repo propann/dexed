@@ -608,12 +608,12 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "FILL", "NOW", 2);
       }
       if(showingTools == TOOL_ARP) {
-        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), (arpAmount->getValue() == 0) ? 1 : 3);
         getArpModeName(data->arpSettings.mode, temp_char);
         draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", temp_char, 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", arpLength->toString(), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", arpSwing->toString(), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (data->arpSettings.latch == 0) ? "-" : "ON", 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", arpSwing->toString(), (arpSwing->getValue() == 0) ? 1 : 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (arpLatch->getValue() == 0) ? "-" : "ON", (arpLatch->getValue() == 0) ? 1 : 3);
       }
     }
 

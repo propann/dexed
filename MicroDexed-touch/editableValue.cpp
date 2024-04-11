@@ -24,6 +24,11 @@ char* EditableValue<T>::toString(void) {
 }
 
 template <class T>
+T EditableValue<T>::getValue(void) {
+  return *value;
+}
+
+template <class T>
 EditableValueBase* EditableValue<T>::pressed() {
   T result = *value;
   switch(mode) {

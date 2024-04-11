@@ -18,9 +18,10 @@ public:
   EditableValue(T* value, T min, T max, T increment, T defaultValue);
 
   EditableValueBase* pressed();
-  bool next();
-  bool previous();
+  bool next(void);
+  bool previous(void);
   char* toString(void);
+  T getValue(void);
 
 private:
   char charBuffer[6];
