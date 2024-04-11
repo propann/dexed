@@ -19,6 +19,11 @@ EditableValue<T>::EditableValue(T* invalue, T min, T max, T increment, T default
 }
 
 template <class T>
+char* EditableValue<T>::toString(void) {
+  return itoa(*value, charBuffer, 10);
+}
+
+template <class T>
 EditableValueBase* EditableValue<T>::pressed() {
   T result = *value;
   switch(mode) {

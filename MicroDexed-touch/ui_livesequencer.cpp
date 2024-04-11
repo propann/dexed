@@ -111,14 +111,16 @@ void UI_LiveSequencer::processLCDM(void) {
   if (LCDML.FUNC_loop()) {
     if(LCDML.BT_checkDown()) {
       if(currentValue != nullptr) {
-        currentValue->next();
-        guiUpdateFlags |= drawTools;
+        if(currentValue->next()) {
+          guiUpdateFlags |= drawTools;
+        }
       }
     }
     if(LCDML.BT_checkUp()) {
       if(currentValue != nullptr) {
-        currentValue->previous();
-        guiUpdateFlags |= drawTools;
+        if(currentValue->previous()) {
+          guiUpdateFlags |= drawTools;
+        }
       }
     }
 
@@ -600,18 +602,18 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       if(showingTools == TOOL_FILL) {
         // fill track
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(data->lastPlayedNote, temp_char, 10), 0); // label only
-        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "NUM", itoa(data->fillNotes.number, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", itoa(data->fillNotes.offset, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "NUM", fillNum->toString(), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", fillOff->toString(), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 97); // spacer
         draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "FILL", "NOW", 2);
       }
       if(showingTools == TOOL_ARP) {
-        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", itoa(data->arpSettings.amount, temp_char, 10), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), 3);
         getArpModeName(data->arpSettings.mode, temp_char);
         draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", temp_char, 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", itoa(data->arpSettings.length, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", itoa(data->arpSettings.swing, temp_char, 10), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (data->arpSettings.latch == 0) ? "NO" : "ON", 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", arpLength->toString(), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", arpSwing->toString(), 3);
+        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (data->arpSettings.latch == 0) ? "-" : "ON", 3);
       }
     }
 

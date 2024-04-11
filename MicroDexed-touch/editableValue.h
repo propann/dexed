@@ -20,8 +20,10 @@ public:
   EditableValueBase* pressed();
   bool next();
   bool previous();
+  char* toString(void);
 
 private:
+  char charBuffer[6];
   enum Mode {
     MODE_FIXED,
     MODE_RANGE
