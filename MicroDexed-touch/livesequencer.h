@@ -79,7 +79,9 @@ public:
   struct ArpSettings {
     uint16_t delayToNextArpOnMs;
     uint8_t amount; // 0, 1, 2, ... per bar
+    uint8_t octaves;
     ArpMode mode;
+    uint8_t loadPerBar;
     uint8_t noteRepeat;
     uint8_t noteRepeatCount;
     uint16_t length; // >100% pulse width possible

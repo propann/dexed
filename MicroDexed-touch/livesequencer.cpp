@@ -486,10 +486,9 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
       break;
     }
     const uint8_t numNotes = data.arpSettings.arpNotes.size();
-    const uint8_t octaveSpan = 3;
-    for(uint oct = 1; oct < octaveSpan; oct++) {
-      for(uint i = 0; i < numNotes; i++) {
-        data.arpSettings.arpNotes.emplace_back(data.arpSettings.arpNotes[i] + (oct * 12));
+    for(uint octave = 1; octave < data.arpSettings.octaves; octave++) {
+      for(uint number = 0; number < numNotes; number++) {
+        data.arpSettings.arpNotes.emplace_back(data.arpSettings.arpNotes[number] + (octave * 12));
       }
     }
     
@@ -502,19 +501,19 @@ bool sortedArpNote(LiveSequencer::ArpNote &n1, LiveSequencer::ArpNote &n2) {
 } 
 
 void LiveSequencer::playNextArpNote(void) {
-  static constexpr uint8_t LOAD_PER_BAR = 4; // 4 is quite tricky for now
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
   if(data.arpSettings.delayToNextArpOnMs == 0) {
     const uint8_t arpAmount = data.arpSettings.amount;
+    const uint8_t loadPerBar = data.arpSettings.loadPerBar;
     const float arpIntervalMs = data.patternLengthMs / float(arpAmount);
     uint8_t arpIndex = (nowMs + (arpIntervalMs / 2)) / arpIntervalMs;
-    if(((arpIndex * LOAD_PER_BAR) % arpAmount) == 0) { // check if reload pressed keys
+    if(((arpIndex * loadPerBar) % arpAmount) == 0) { // check if reload pressed keys
       checkLoadNewArpNotes();
     }
 
     if(data.arpSettings.arpNotes.empty() || arpAmount == 0) {
-      data.arpSettings.delayToNextArpOnMs = data.patternLengthMs / LOAD_PER_BAR; // bypass loading timer until next pattern start
+      data.arpSettings.delayToNextArpOnMs = data.patternLengthMs / loadPerBar; // bypass loading timer until next pattern start
     } else {
       ArpNote newArp; // play a new note...
       newArp.track = data.activeTrack;
@@ -680,7 +679,9 @@ void LiveSequencer::handlePatternBegin(void) {
     data.songPatternCount = 0;
 
     activeArps.clear();
-    data.arpSettings.noteRepeat = 1;
+    data.arpSettings.loadPerBar = 2;  // TODO add gui
+    data.arpSettings.noteRepeat = 1;  // TODO add gui
+    data.arpSettings.octaves = 2;     // TODO add gui
     data.arpSettings.noteRepeatCount = 0;
     data.arpSettings.delayToNextArpOnMs = 0;
 
