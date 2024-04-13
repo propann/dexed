@@ -515,25 +515,28 @@ void LiveSequencer::playNextArpNote(void) {
         newArp.notes.emplace_back(*data.arpSettings.arpIt);
 
         if(data.arpSettings.arpNotes.size() > 1) {
-          if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
-            data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
-            bool doubleEndNote = false;
-            switch(data.arpSettings.mode) {
-            case ArpMode::ARP_DOWNUP_P:
-            case ArpMode::ARP_UPDOWN_P:
-              doubleEndNote = true;
-            case ArpMode::ARP_DOWNUP:
-            case ArpMode::ARP_UPDOWN:
-              std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-              if(doubleEndNote == false) {
-                data.arpSettings.arpIt++;
+          if(++data.arpSettings.noteRepeatCount >= data.arpSettings.noteRepeat) {
+            data.arpSettings.noteRepeatCount = 0;
+            if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
+              data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+              bool doubleEndNote = false;
+              switch(data.arpSettings.mode) {
+              case ArpMode::ARP_DOWNUP_P:
+              case ArpMode::ARP_UPDOWN_P:
+                doubleEndNote = true;
+              case ArpMode::ARP_DOWNUP:
+              case ArpMode::ARP_UPDOWN:
+                std::reverse(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                if(doubleEndNote == false) {
+                  data.arpSettings.arpIt++;
+                }
+                break;
+              case ArpMode::ARP_RANDOM:
+                std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+                break;
+              default:
+                break;
               }
-              break;
-            case ArpMode::ARP_RANDOM:
-              std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
-              break;
-            default:
-              break;
             }
           }
         }
@@ -669,6 +672,8 @@ void LiveSequencer::handlePatternBegin(void) {
     data.songPatternCount = 0;
 
     activeArps.clear();
+    data.arpSettings.noteRepeat = 4;
+    data.arpSettings.noteRepeatCount = 0;
     data.arpSettings.delayToNextArpOnMs = 0;
 
     if(data.isSongMode && data.isRecording) {

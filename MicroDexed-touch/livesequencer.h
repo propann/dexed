@@ -80,6 +80,8 @@ public:
     uint16_t delayToNextArpOnMs;
     uint8_t amount; // 0, 1, 2, ... per bar
     ArpMode mode;
+    uint8_t noteRepeat;
+    uint8_t noteRepeatCount;
     uint16_t length; // >100% pulse width possible
     int8_t swing;
     uint8_t latch; // keep notes or drop them
