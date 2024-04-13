@@ -485,6 +485,14 @@ void LiveSequencer::checkLoadNewArpNotes(void) {
     default:
       break;
     }
+    const uint8_t numNotes = data.arpSettings.arpNotes.size();
+    const uint8_t octaveSpan = 3;
+    for(uint oct = 1; oct < octaveSpan; oct++) {
+      for(uint i = 0; i < numNotes; i++) {
+        data.arpSettings.arpNotes.emplace_back(data.arpSettings.arpNotes[i] + (oct * 12));
+      }
+    }
+    
     data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
   }
 }
@@ -672,7 +680,7 @@ void LiveSequencer::handlePatternBegin(void) {
     data.songPatternCount = 0;
 
     activeArps.clear();
-    data.arpSettings.noteRepeat = 4;
+    data.arpSettings.noteRepeat = 1;
     data.arpSettings.noteRepeatCount = 0;
     data.arpSettings.delayToNextArpOnMs = 0;
 
