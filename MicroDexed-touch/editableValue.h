@@ -14,8 +14,8 @@ public:
 template<class T> class EditableValue : EditableValueBase {
 
 public:
-  EditableValue(T* value, std::vector<T> values, T defaultValue);
-  EditableValue(T* value, T min, T max, T increment, T defaultValue);
+  EditableValue(T &value, std::vector<T> values, T defaultValue);
+  EditableValue(T &value, T min, T max, T increment, T defaultValue);
 
   EditableValueBase* pressed();
   bool next(void);
@@ -31,7 +31,7 @@ private:
   };
   Mode mode;
   typename std::vector<T>::iterator it;
-  T* value;
+  T &value;
   std::vector<T> values;
 
   T rangeMin;

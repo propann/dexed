@@ -2,7 +2,7 @@
 #include <algorithm>
 
 template <class T>
-EditableValue<T>::EditableValue(T* invalue, std::vector<T> invalues, T defaultValue) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues) {
+EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultValue) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues) {
   if(values.empty()) {
     values.push_back(0);
   }
@@ -10,27 +10,27 @@ EditableValue<T>::EditableValue(T* invalue, std::vector<T> invalues, T defaultVa
   if(it == values.end()) {
       it = values.begin();
   }
-  *value = defaultValue;
+  value = defaultValue;
 }
 
 template <class T>
-EditableValue<T>::EditableValue(T* invalue, T min, T max, T increment, T defaultValue) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
-  *value = defaultValue;
+EditableValue<T>::EditableValue(T &invalue, T min, T max, T increment, T defaultValue) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
+  value = defaultValue;
 }
 
 template <class T>
 char* EditableValue<T>::toString(void) {
-  return itoa(*value, charBuffer, 10);
+  return itoa(value, charBuffer, 10);
 }
 
 template <class T>
 T EditableValue<T>::getValue(void) {
-  return *value;
+  return value;
 }
 
 template <class T>
 EditableValueBase* EditableValue<T>::pressed() {
-  T result = *value;
+  T result = value;
   switch(mode) {
   case MODE_FIXED:
     it++;
@@ -47,13 +47,13 @@ EditableValueBase* EditableValue<T>::pressed() {
     }
     break;
   }
-  *value = result;
+  value = result;
   return this;
 }
 
 template <class T>
 bool EditableValue<T>::next() {
-  T result = *value;
+  T result = value;
   switch(mode) {
   case MODE_FIXED:
     if(++it == values.end()) {
@@ -67,14 +67,14 @@ bool EditableValue<T>::next() {
     }
     break;
   }
-  const bool changed = (*value != result);
-  *value = result;
+  const bool changed = (value != result);
+  value = result;
   return changed;
 }
 
 template <class T>
 bool EditableValue<T>::previous() {
-  T result = *value;
+  T result = value;
   switch(mode) {
   case MODE_FIXED:
     if(it != values.begin()) {
@@ -88,8 +88,8 @@ bool EditableValue<T>::previous() {
     }
     break;
   }
-  const bool changed = (*value != result);
-  *value = result;
+  const bool changed = (value != result);
+  value = result;
   return changed;
 }
 
