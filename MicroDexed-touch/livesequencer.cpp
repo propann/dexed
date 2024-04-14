@@ -522,8 +522,8 @@ void LiveSequencer::playNextArpNote(void) {
         newArp.notes.emplace_back(*data.arpSettings.arpIt);
 
         if(data.arpSettings.arpNotes.size() > 1) {
-          if(++data.arpSettings.noteRepeatCount >= data.arpSettings.noteRepeat) {
-            data.arpSettings.noteRepeatCount = 0;
+          if(++data.arpSettings.notePlayCount > data.arpSettings.noteRepeat) {
+            data.arpSettings.notePlayCount = 0;
             if(++data.arpSettings.arpIt == data.arpSettings.arpNotes.end()) {
               data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
               bool doubleEndNote = false;
@@ -682,7 +682,8 @@ void LiveSequencer::handlePatternBegin(void) {
     data.arpSettings.loadPerBar = 2;  // TODO add gui
     data.arpSettings.noteRepeat = 1;  // TODO add gui
     data.arpSettings.octaves = 2;     // TODO add gui
-    data.arpSettings.noteRepeatCount = 0;
+
+    data.arpSettings.notePlayCount = 0;
     data.arpSettings.delayToNextArpOnMs = 0;
 
     if(data.isSongMode && data.isRecording) {

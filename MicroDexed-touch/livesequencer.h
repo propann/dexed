@@ -83,7 +83,7 @@ public:
     ArpMode mode;
     uint8_t loadPerBar;
     uint8_t noteRepeat;
-    uint8_t noteRepeatCount;
+    uint8_t notePlayCount;
     uint16_t length; // >100% pulse width possible
     int8_t swing;
     uint8_t latch; // keep notes or drop them

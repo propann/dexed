@@ -30,9 +30,8 @@ static constexpr uint8_t BUTTON_COLUMNS_X[LiveSequencer::LIVESEQUENCER_NUM_TRACK
 UI_LiveSequencer* instance;
 LiveSequencer::LiveSeqData *data;
 
-UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) {
+UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
   instance = this;
-  liveSeqPtr = sequencer;
   data = sequencer->getData();
   
   fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
