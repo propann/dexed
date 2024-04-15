@@ -35,6 +35,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   data = sequencer->getData();
 
   songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
+  numBarsTemp = new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4);
   
   fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
   fillOff = new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0);
@@ -376,10 +377,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
 
         if (check_button_on_grid(BUTTON_COLUMNS_X[1], 20)) {
           // number of bars cycle through
-          numberOfBarsTemp *= 2;
-          if (numberOfBarsTemp > 8) {
-            numberOfBarsTemp = 1;
-          }
+          currentValue = numBarsTemp->pressed();
           guiUpdateFlags |= drawPattLength;
         }
         if (check_button_on_grid(BUTTON_COLUMNS_X[2], 20)) {
@@ -618,7 +616,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     if (guiFlags & drawPattLength) {
       // number of bars for one pattern
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
-      draw_button_on_grid(BUTTON_COLUMNS_X[1], 20, "LENGTH", itoa(numberOfBarsTemp, temp_char, 10), 1);
+      draw_button_on_grid(BUTTON_COLUMNS_X[1], 20, "LENGTH", numBarsTemp->toString(), 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[2], 20, "APPLY", "NOW", (data->numberOfBars == numberOfBarsTemp) ? 1 : 2);
 
       display.setTextSize(1);

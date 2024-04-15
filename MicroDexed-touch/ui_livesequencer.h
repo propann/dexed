@@ -48,6 +48,7 @@ private:
   EditableValue<int8_t> *arpSwing;
   EditableValue<uint8_t> *arpLatch;
   EditableValue<uint8_t> *songMuteQuant;
+  EditableValue<uint8_t> *numBarsTemp;
   EditableValueBase *currentValue;
 
   LiveSequencer* liveSeqPtr;
