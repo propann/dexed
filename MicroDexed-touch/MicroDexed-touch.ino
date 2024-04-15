@@ -823,9 +823,6 @@ elapsedMillis cpu_mem_millis;
 #endif
 uint32_t cpumax = 0;
 
-elapsedMillis sidechain_a_millis;
-elapsedMillis sidechain_b_millis;
-
 bool sidechain_a_active = false;
 bool sidechain_b_active = false;
 
@@ -985,9 +982,13 @@ void setup()
   touch_ic_found = true;
 #endif
 
-#if defined(PSRAM)
-  delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM (and with both display types) not booting reliably
-#endif
+//#if defined(PSRAM)
+ // delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+ // 2024/4/14
+ // However it is reported that it is not necessary with 16MB psram and even making boot problems
+ // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT
+ // will disable delay, until any non-working combination is reported
+//#endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
   if (!touch.begin(40))
@@ -1630,7 +1631,6 @@ uint8_t sc_seq_step_displayed;
 
 void update_sidechain()
 {
-
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sidechain))
   {
     display.setTextSize(1);
@@ -1640,7 +1640,6 @@ void update_sidechain()
     {
       display.print(F("T"));
       sc_seq_step_displayed = seq.step;
-      sidechain_a_millis = 0;
     }
     else if (sc_seq_step_displayed != seq.step)
     {
@@ -1713,76 +1712,78 @@ void update_sidechain()
     sidechain_trigger_a = false;
   }
 
-  if (seq.running && sc_dexed1_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_dexed1_target_a != 0)
+  if (seq.running && control_rate > CONTROL_RATE_MS)
   {
+    if (sc_dexed1_current < VOL_MAX_FLOAT && sc_dexed1_target_a != 0)
+    {
+      sc_dexed1_current = sc_dexed1_current + (float)0.002 * sidechain_a_speed;
 
-    sc_dexed1_current = sc_dexed1_current + (float)0.002 * sidechain_a_speed;
+      if (sc_dexed1_current >= VOL_MAX_FLOAT)
+        sc_dexed1_current = VOL_MAX_FLOAT;
 
-    if (sc_dexed1_current >= VOL_MAX_FLOAT)
-      sc_dexed1_current = VOL_MAX_FLOAT;
+      master_mixer_r.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
+    }
 
-    master_mixer_r.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
-    master_mixer_l.gain(MASTER_MIX_CH_DEXED1, sc_dexed1_current);
-  }
+    if (sc_dexed2_current < VOL_MAX_FLOAT && sc_dexed2_target_a != 0)
+    {
 
-  if (seq.running && sc_dexed2_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_dexed2_target_a != 0)
-  {
+      sc_dexed2_current = sc_dexed2_current + (float)0.002 * sidechain_a_speed;
 
-    sc_dexed2_current = sc_dexed2_current + (float)0.002 * sidechain_a_speed;
+      if (sc_dexed2_current >= VOL_MAX_FLOAT)
+        sc_dexed2_current = VOL_MAX_FLOAT;
 
-    if (sc_dexed2_current >= VOL_MAX_FLOAT)
-      sc_dexed2_current = VOL_MAX_FLOAT;
+      master_mixer_r.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
+    }
 
-    master_mixer_r.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
-    master_mixer_l.gain(MASTER_MIX_CH_DEXED2, sc_dexed2_current);
-  }
+    if (seq.running && sc_braids_current < VOL_MAX_FLOAT && sc_braids_target_a != 0)
+    {
 
-  if (seq.running && sc_braids_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_braids_target_a != 0)
-  {
+      sc_braids_current = sc_braids_current + (float)0.002 * sidechain_a_speed;
 
-    sc_braids_current = sc_braids_current + (float)0.002 * sidechain_a_speed;
+      if (sc_braids_current >= VOL_MAX_FLOAT)
+        sc_braids_current = VOL_MAX_FLOAT;
 
-    if (sc_braids_current >= VOL_MAX_FLOAT)
-      sc_braids_current = VOL_MAX_FLOAT;
+      master_mixer_r.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
+      master_mixer_l.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
+    }
 
-    master_mixer_r.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
-    master_mixer_l.gain(MASTER_MIX_CH_BRAIDS, sc_braids_current);
-  }
+    if (sc_delay_a_current < VOL_MAX_FLOAT && sc_delay_a_target_a != 0)
+    {
 
-  if (seq.running && sc_delay_a_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_delay_a_target_a != 0)
-  {
+      sc_delay_a_current = sc_delay_a_current + (float)0.002 * sidechain_a_speed;
 
-    sc_delay_a_current = sc_delay_a_current + (float)0.002 * sidechain_a_speed;
+      if (sc_delay_a_current >= VOL_MAX_FLOAT)
+        sc_delay_a_current = VOL_MAX_FLOAT;
 
-    if (sc_delay_a_current >= VOL_MAX_FLOAT)
-      sc_delay_a_current = VOL_MAX_FLOAT;
+      master_mixer_r.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
+    }
 
-    master_mixer_r.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
-    master_mixer_l.gain(MASTER_MIX_CH_DELAY1, sc_delay_a_current);
-  }
+    if (sc_delay_b_current < VOL_MAX_FLOAT && sc_delay_b_target_a != 0)
+    {
 
-  if (seq.running && sc_delay_b_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_delay_b_target_a != 0)
-  {
+      sc_delay_b_current = sc_delay_b_current + (float)0.002 * sidechain_b_speed;
 
-    sc_delay_b_current = sc_delay_b_current + (float)0.002 * sidechain_b_speed;
+      if (sc_delay_b_current >= VOL_MAX_FLOAT)
+        sc_delay_b_current = VOL_MAX_FLOAT;
 
-    if (sc_delay_b_current >= VOL_MAX_FLOAT)
-      sc_delay_b_current = VOL_MAX_FLOAT;
+      master_mixer_r.gain(MASTER_MIX_CH_DELAY2, sc_delay_b_current);
+      master_mixer_l.gain(MASTER_MIX_CH_DELAY2, sc_delay_b_current);
+    }
 
-    master_mixer_r.gain(MASTER_MIX_CH_DELAY2, sc_delay_b_current);
-    master_mixer_l.gain(MASTER_MIX_CH_DELAY2, sc_delay_b_current);
-  }
+    if (sc_reverb_current < VOL_MAX_FLOAT && sc_reverb_target_a != 0)
+    {
 
-  if (seq.running && sc_reverb_current < VOL_MAX_FLOAT && control_rate > CONTROL_RATE_MS && sc_reverb_target_a != 0)
-  {
+      sc_reverb_current = sc_reverb_current + (float)0.002 * sidechain_a_speed;
 
-    sc_reverb_current = sc_reverb_current + (float)0.002 * sidechain_a_speed;
+      if (sc_reverb_current >= VOL_MAX_FLOAT)
+        sc_reverb_current = VOL_MAX_FLOAT;
 
-    if (sc_reverb_current >= VOL_MAX_FLOAT)
-      sc_reverb_current = VOL_MAX_FLOAT;
-
-    master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
-    master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+      master_mixer_r.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+      master_mixer_l.gain(MASTER_MIX_CH_REVERB, sc_reverb_current);
+    }
   }
 
   if (control_rate > CONTROL_RATE_MS && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sidechain))
@@ -1917,10 +1918,6 @@ bool current_page_has_touch_back_button = false;
 
 void loop()
 {
-
-  // force extra event responses per loop()
-   // for (int i=0;i<20;i++)
-   //   yield();
 
  // Serial read (commands from web remote)
   incomingSerialByte = 0;
@@ -2237,7 +2234,7 @@ void loop()
   {
     if (sidechain_a_active || sidechain_b_active)
       ;
-    // update_sidechain();  //work in progress
+    //update_sidechain();  //work in progress
   }
 
   if (control_rate > CONTROL_RATE_MS)
@@ -4857,7 +4854,7 @@ void set_sample_note(uint8_t sample, uint8_t note)
   drum_config[sample].midinote = note;
 
   // create look up table to find drum notes from midi notes efficiently
-  if(midiNoteToDrumNote.size() < size_t(note + 1)) {
+  if (midiNoteToDrumNote.size() < size_t(note + 1)) {
     midiNoteToDrumNote.resize(note + 1);
   }
   midiNoteToDrumNote[note] = sample;

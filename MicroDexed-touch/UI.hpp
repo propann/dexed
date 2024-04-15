@@ -66,11 +66,6 @@ uint8_t sysinfo_old_voice;
 uint8_t sysinfo_old_transpose;
 int sample_editor_scale_end;
 
-// extern int glow_x;
-// extern  int glow_y;
-// extern int glow_value;
-// extern uint8_t glow_type;
-
 // sidechains
 extern uint8_t sidechain_a_sample_number;
 extern uint8_t sidechain_b_sample_number;
@@ -17802,7 +17797,9 @@ void print_sidechain_static_texts()
 
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   setCursor_textGrid_small(21, 6);
-  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+  //snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000- sidechain_a_speed *10);
+
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(displayname);
   setCursor_textGrid_small(26, 6);
@@ -17810,7 +17807,8 @@ void print_sidechain_static_texts()
   display.print("MS");
 
   setCursor_textGrid_small(43, 6);
-  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+ // snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000- sidechain_b_speed *10);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(displayname);
   setCursor_textGrid_small(48, 6);
@@ -17849,7 +17847,8 @@ void print_sidechain_editor_values()
 
     print_small_intbar(11, 6, sidechain_a_speed, 2, 1, 1); // sidechain a speed
     setCursor_textGrid_small(21, 6);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+  //  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+     snprintf_P(displayname, sizeof(displayname), PSTR("%04d"),1000- sidechain_a_speed *10);
     display.print(displayname);
   }
   if (menu_item_check(3))
@@ -17924,7 +17923,8 @@ void print_sidechain_editor_values()
   {
     print_small_intbar(33, 6, sidechain_b_speed, 16, 1, 1); // sidechain b speed
     setCursor_textGrid_small(43, 6);
-    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+   // snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+     snprintf_P(displayname, sizeof(displayname), PSTR("%04d"),1000- sidechain_b_speed*10 );
     display.print(displayname);
   }
 
@@ -18060,16 +18060,16 @@ FLASHMEM void UI_func_sidechain(uint8_t param)
           if (generic_temp_select_menu == 1) // sidechain a sample
           {
             if (LCDML.BT_checkDown())
-              sidechain_a_sample_number = constrain(sidechain_a_sample_number + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain_a_sample_number = constrain(sidechain_a_sample_number + 1, 0, NUM_DRUMSET_CONFIG - 1);
             else if (LCDML.BT_checkUp())
-              sidechain_a_sample_number = constrain(sidechain_a_sample_number - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain_a_sample_number = constrain(sidechain_a_sample_number - 1, 0, NUM_DRUMSET_CONFIG - 1);
           }
           else if (generic_temp_select_menu == 15) // sidechain b sample
           {
             if (LCDML.BT_checkDown())
-              sidechain_b_sample_number = constrain(sidechain_b_sample_number + ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain_b_sample_number = constrain(sidechain_b_sample_number + 1, 0, NUM_DRUMSET_CONFIG - 1);
             else if (LCDML.BT_checkUp())
-              sidechain_b_sample_number = constrain(sidechain_b_sample_number - ENCODER[ENC_R].speed(), 0, NUM_DRUMSET_CONFIG - 1);
+              sidechain_b_sample_number = constrain(sidechain_b_sample_number - 1, 0, NUM_DRUMSET_CONFIG - 1);
           }
 
         if (generic_temp_select_menu == 2) // sidechain a speed
@@ -18759,13 +18759,6 @@ FLASHMEM void reset_live_modifiers()
 {
   dexed_live_mod.attack_mod[selected_instance_id] = 0;
   dexed_live_mod.release_mod[selected_instance_id] = 0;
-
-  for (uint8_t i = 0; i < 6; i++)
-  {
-    MicroDexed[selected_instance_id]->setOPRate(i, ATTACK, dexed_live_mod.orig_attack_values[selected_instance_id][i]);
-    MicroDexed[selected_instance_id]->setOPRate(i, RELEASE, dexed_live_mod.orig_release_values[selected_instance_id][i]);
-  }
-
 
 }
 
