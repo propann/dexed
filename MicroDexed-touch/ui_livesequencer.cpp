@@ -114,14 +114,14 @@ void UI_LiveSequencer::processLCDM(void) {
     if(LCDML.BT_checkDown()) {
       if(currentValue != nullptr) {
         if(currentValue->next()) {
-          guiUpdateFlags |= drawTools;
+          guiUpdateFlags |= drawTools | drawPattLength; // FIXME
         }
       }
     }
     if(LCDML.BT_checkUp()) {
       if(currentValue != nullptr) {
         if(currentValue->previous()) {
-          guiUpdateFlags |= drawTools;
+          guiUpdateFlags |= drawTools | drawPattLength; // FIXME
         }
       }
     }
