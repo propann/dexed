@@ -33,6 +33,8 @@ LiveSequencer::LiveSeqData *data;
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
   instance = this;
   data = sequencer->getData();
+
+  songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
   
   fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
   fillOff = new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0);
@@ -408,10 +410,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
         // song mute quantisize denom
         if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
-          data->songMuteQuantisizeDenom *= 2;
-          if (data->songMuteQuantisizeDenom > 8) {
-            data->songMuteQuantisizeDenom = 1;
-          }
+          currentValue = songMuteQuant->pressed();
           guiUpdateFlags |= drawSongQuant;
         }
 
@@ -656,8 +655,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
     if (guiFlags & drawSongQuant) {
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "MUTE", "QUANT", 97); // label only
-      const std::string text = (data->songMuteQuantisizeDenom == 1) ? "NONE" : itoa(data->songMuteQuantisizeDenom, temp_char, 10);
-      draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "QUANT", text.c_str(), (data->songMuteQuantisizeDenom == 1) ? 1 : 3);
+      draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "QUANT", songMuteQuant->toString(), (songMuteQuant->getValue() == 1) ? 1 : 3);
     }
 
     if (guiFlags & (drawDeleteSong | drawDeleteAll)) {
