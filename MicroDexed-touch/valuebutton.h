@@ -1,0 +1,21 @@
+#ifndef VALUEBUTTON_H
+#define VALUEBUTTON_H
+
+#include <stdio.h>
+#include <string>
+#include <functional>
+#include "editableValue.h"
+#include "touchbutton.h"
+
+template<class T> class ValueButton : public TouchButton {
+public:
+  EditableValue<T> *v;
+  ValueButton(int16_t x_coord, int16_t y_coord, EditableValue<T> *value, std::function<void(TouchButton*)> draw, std::function<void(void)> clicked);
+  
+private:
+  
+};
+
+template class ValueButton<uint8_t>;
+
+#endif //VALUEBUTTON_H

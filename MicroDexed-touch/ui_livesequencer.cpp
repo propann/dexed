@@ -35,7 +35,8 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   data = sequencer->getData();
 
   songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
-  applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20, [ this ] (TouchButton *b) {
+  applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20,
+  [ this ] (TouchButton *b) {
     const bool isSame = (data->numberOfBars == numberOfBarsTemp);
     draw_button_on_grid(b->x, b->y, "APPLY", "NOW", isSame ? 1 : 2);
     display.setTextSize(1);
