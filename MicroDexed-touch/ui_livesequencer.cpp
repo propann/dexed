@@ -36,21 +36,27 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
 
   songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
   applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20, [ this ] (TouchButton *b) {
-    draw_button_on_grid(b->x, b->y, "APPLY", "NOW", (data->numberOfBars == numberOfBarsTemp) ? 1 : 2);
+    const bool isSame = (data->numberOfBars == numberOfBarsTemp);
+    draw_button_on_grid(b->x, b->y, "APPLY", "NOW", isSame ? 1 : 2);
+    display.setTextSize(1);
+    display.setTextColor(isSame ? GREY2 : RED, GREY3);
+    display.setCursor(165, 165);
+    display.printf("CHANGING PATTERN LENGTH");
+    display.setCursor(165, 175);
+    display.printf("WILL DELETE ALL DATA!");
   },
-  [](){});
+  [ this ](){
+    if(data->numberOfBars != numberOfBarsTemp) {
+      handleStop();
+      liveSeqPtr->changeNumberOfBars(numberOfBarsTemp);
+    }
+  });
 
   buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), 
   [ this] (TouchButton *b) {
     draw_button_on_grid(b->x, b->y, "LENGTH", buttonPatternLength->v->toString(), 1);
   },
   [ this ]() {
-    display.setTextSize(1);
-    display.setTextColor((data->numberOfBars == numberOfBarsTemp) ? GREY2 : RED, GREY3);
-    display.setCursor(165, 165);
-    display.printf("CHANGING PATTERN LENGTH");
-    display.setCursor(165, 175);
-    display.printf("WILL DELETE ALL DATA!");
     applyPatternLength->drawNow();
   });
   
@@ -400,15 +406,6 @@ void UI_LiveSequencer::handleTouchscreen(void) {
 
         buttonPatternLength->processPressed();
         applyPatternLength->processPressed();
-
-        if (check_button_on_grid(BUTTON_COLUMNS_X[2], 20)) {
-          // apply changed number of bars
-          if (numberOfBarsTemp != data->numberOfBars) {
-            handleStop();
-            liveSeqPtr->changeNumberOfBars(numberOfBarsTemp);
-            guiUpdateFlags |= drawPattLength;
-          }
-        }
         break;
 
       case PageSong::PAGE_SONG_SETTINGS:
