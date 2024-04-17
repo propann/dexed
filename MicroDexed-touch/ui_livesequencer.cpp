@@ -48,6 +48,12 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     draw_button_on_grid(b->x, b->y, "LENGTH", numBarsTemp->toString(), 1);
   },
   [ this ]() {
+    display.setTextSize(1);
+    display.setTextColor((data->numberOfBars == numberOfBarsTemp) ? GREY2 : RED, GREY3);
+    display.setCursor(165, 165);
+    display.printf("CHANGING PATTERN LENGTH");
+    display.setCursor(165, 175);
+    display.printf("WILL DELETE ALL DATA!");
     applyPatternLength->drawNow();
   });
   
@@ -638,12 +644,6 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
       buttonPatternLength->drawNow();
       applyPatternLength->drawNow();
-      display.setTextSize(1);
-      display.setTextColor((data->numberOfBars == numberOfBarsTemp) ? GREY2 : RED, GREY3);
-      display.setCursor(165, 165);
-      display.printf("CHANGING PATTERN LENGTH");
-      display.setCursor(165, 175);
-      display.printf("WILL DELETE ALL DATA!");
     }
 
     if (guiFlags & drawSongSettings) {
