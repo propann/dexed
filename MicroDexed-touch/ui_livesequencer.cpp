@@ -30,12 +30,22 @@ static constexpr uint8_t BUTTON_COLUMNS_X[LiveSequencer::LIVESEQUENCER_NUM_TRACK
 UI_LiveSequencer* instance;
 LiveSequencer::LiveSeqData *data;
 
+
+
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
   instance = this;
   data = sequencer->getData();
 
   songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
   numBarsTemp = new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4);
+
+  buttonPatternLength = new TouchButton(BUTTON_COLUMNS_X[1], 20, [ this ]() {
+    // number of bars cycle through
+    currentValue = numBarsTemp->pressed();
+    guiUpdateFlags |= drawPattLength;
+  });
+
+  vbPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4));
   
   fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
   fillOff = new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0);
@@ -45,6 +55,8 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   arpMode = new EditableValue<uint8_t>((uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN));
   arpSwing = new EditableValue<int8_t>(data->arpSettings.swing, -8, 8, 1, 0);
   arpLatch = new EditableValue<uint8_t>(data->arpSettings.latch, 0, 1, 1, 1);
+
+  initialized = true;
 }
 
 void UI_func_livesequencer(uint8_t param) {
@@ -184,8 +196,12 @@ void UI_LiveSequencer::applyScreenRedrawGuiFlags(void) {
 }
 
 void UI_LiveSequencer::handleTouchscreen(void) {
+  if(initialized == false) {
+    return;
+  }
+  bool pressedChanged = (numTouchPoints != numPressedOld);
   if (showingHowTo) {
-    if (numTouchPoints > 0 && check_button_on_grid(42,22)) {
+    if (check_button_on_grid(42,22)) {
       LCDML.FUNC_setGBAToLastFunc();
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     }
@@ -194,8 +210,8 @@ void UI_LiveSequencer::handleTouchscreen(void) {
   const bool runningChanged = (runningHere != data->isRunning);
   runningHere = data->isRunning;
 
-  if ((numTouchPoints > 0) || runningChanged) {
-    const bool runningPressed = (numTouchPoints > 0) && check_button_on_grid(BUTTON_COLUMNS_X[0], 0);
+  if (pressedChanged || runningChanged) {
+    const bool runningPressed = check_button_on_grid(BUTTON_COLUMNS_X[0], 0);
     if (runningPressed) {
       if (runningHere) {
         handleStop();
@@ -375,11 +391,8 @@ void UI_LiveSequencer::handleTouchscreen(void) {
           }
         }
 
-        if (check_button_on_grid(BUTTON_COLUMNS_X[1], 20)) {
-          // number of bars cycle through
-          currentValue = numBarsTemp->pressed();
-          guiUpdateFlags |= drawPattLength;
-        }
+        buttonPatternLength->processPressed();
+
         if (check_button_on_grid(BUTTON_COLUMNS_X[2], 20)) {
           // apply changed number of bars
           if (numberOfBarsTemp != data->numberOfBars) {
@@ -452,7 +465,9 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
       }
     }
+    numPressedOld = numTouchPoints;
   }
+
 }
 
 void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
@@ -616,7 +631,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     if (guiFlags & drawPattLength) {
       // number of bars for one pattern
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
-      draw_button_on_grid(BUTTON_COLUMNS_X[1], 20, "LENGTH", numBarsTemp->toString(), 1);
+      buttonPatternLength->draw("LENGTH", numBarsTemp->toString(), 1);
       draw_button_on_grid(BUTTON_COLUMNS_X[2], 20, "APPLY", "NOW", (data->numberOfBars == numberOfBarsTemp) ? 1 : 2);
 
       display.setTextSize(1);

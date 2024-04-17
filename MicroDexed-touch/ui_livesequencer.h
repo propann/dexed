@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include "editableValue.h"
+#include "touchbutton.h"
+#include "valuebutton.h"
 
 #ifdef DEBUG
 #define DBG_LOG(s) LOG.s
@@ -29,6 +31,8 @@ public:
   };
 
 private:
+  int numPressedOld = 0;
+  bool initialized = false;
   bool runningHere = false;
   bool barPhases[2] = { 0 };
   uint8_t numberOfBarsTemp = 0;
@@ -50,6 +54,10 @@ private:
   EditableValue<uint8_t> *songMuteQuant;
   EditableValue<uint8_t> *numBarsTemp;
   EditableValueBase *currentValue;
+
+  TouchButton *buttonPatternLength;
+
+  ValueButton<uint8_t> *vbPatternLength;
 
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;
