@@ -30,8 +30,6 @@ static constexpr uint8_t BUTTON_COLUMNS_X[LiveSequencer::LIVESEQUENCER_NUM_TRACK
 UI_LiveSequencer* instance;
 LiveSequencer::LiveSeqData *data;
 
-
-
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
   instance = this;
   data = sequencer->getData();
@@ -39,13 +37,9 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
   numBarsTemp = new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4);
 
-  buttonPatternLength = new TouchButton(BUTTON_COLUMNS_X[1], 20, [ this ]() {
-    // number of bars cycle through
-    currentValue = numBarsTemp->pressed();
+  buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), [ this ]() {
     guiUpdateFlags |= drawPattLength;
   });
-
-  vbPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4));
   
   fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
   fillOff = new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0);

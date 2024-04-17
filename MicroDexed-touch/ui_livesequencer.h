@@ -55,9 +55,7 @@ private:
   EditableValue<uint8_t> *numBarsTemp;
   EditableValueBase *currentValue;
 
-  TouchButton *buttonPatternLength;
-
-  ValueButton<uint8_t> *vbPatternLength;
+  ValueButton<uint8_t> *buttonPatternLength;
 
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;
