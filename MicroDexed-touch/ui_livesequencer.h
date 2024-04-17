@@ -56,6 +56,7 @@ private:
   EditableValueBase *currentValue;
 
   ValueButton<uint8_t> *buttonPatternLength;
+  TouchButton *applyPatternLength;
 
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;

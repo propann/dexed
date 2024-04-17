@@ -37,8 +37,18 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantisizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1);
   numBarsTemp = new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4);
 
-  buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), [ this ]() {
-    guiUpdateFlags |= drawPattLength;
+  //draw_button_on_grid(BUTTON_COLUMNS_X[2], 20, "APPLY", "NOW", (data->numberOfBars == numberOfBarsTemp) ? 1 : 2);
+  applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20, [ this ] (TouchButton *b) {
+    draw_button_on_grid(b->x, b->y, "APPLY", "NOW", (data->numberOfBars == numberOfBarsTemp) ? 1 : 2);
+  },
+  [](){});
+
+  buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), 
+  [ this] (TouchButton *b) {
+    draw_button_on_grid(b->x, b->y, "LENGTH", numBarsTemp->toString(), 1);
+  },
+  [ this ]() {
+    applyPatternLength->drawNow();
   });
   
   fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
@@ -386,6 +396,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
 
         buttonPatternLength->processPressed();
+        applyPatternLength->processPressed();
 
         if (check_button_on_grid(BUTTON_COLUMNS_X[2], 20)) {
           // apply changed number of bars
@@ -625,9 +636,8 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     if (guiFlags & drawPattLength) {
       // number of bars for one pattern
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
-      buttonPatternLength->draw("LENGTH", numBarsTemp->toString(), 1);
-      draw_button_on_grid(BUTTON_COLUMNS_X[2], 20, "APPLY", "NOW", (data->numberOfBars == numberOfBarsTemp) ? 1 : 2);
-
+      buttonPatternLength->drawNow();
+      applyPatternLength->drawNow();
       display.setTextSize(1);
       display.setTextColor((data->numberOfBars == numberOfBarsTemp) ? GREY2 : RED, GREY3);
       display.setCursor(165, 165);
