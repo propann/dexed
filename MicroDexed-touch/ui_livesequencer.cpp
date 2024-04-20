@@ -54,7 +54,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   });
 
   buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), 
-  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+  [ ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
     b->draw("LENGTH", v->toString(), 1);
   },
   [ this ]() { // clickedHandler
@@ -78,21 +78,21 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     guiUpdateFlags |= drawTools;
   });
 
-  buttonFillNum = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16), 
-  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+  buttonsFillTool.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16), 
+  [ ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
     b->draw("NUM", v->toString(), 3);
-  });
-  buttonFillOff = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[3], 15, new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0), 
-  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+  }));
+  buttonsFillTool.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[3], 15, new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0), 
+  [ ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
     b->draw("OFF", v->toString(), 3);
-  });
-  buttonFillNow = new TouchButton(BUTTON_COLUMNS_X[5], 15,
-  [ this ](TouchButton *b) { // drawHandler
+  }));
+  buttonsFillTool.push_back(new TouchButton(BUTTON_COLUMNS_X[5], 15,
+  [ ](TouchButton *b) { // drawHandler
     b->draw("FILL", "NOW", 2);
   },
   [ this ]() { // clickedHandler
     liveSeqPtr->fillTrackLayer();
-  });
+  }));
   
   arpAmount = new EditableValue<uint8_t>(data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8);
   arpLength = new EditableValue<uint16_t>(data->arpSettings.length, 50, 500, 10, 150);
@@ -375,9 +375,9 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
         buttonToggleTools->processPressed();
         if(showingTools == TOOL_FILL) {
-          buttonFillNum->processPressed();
-          buttonFillOff->processPressed();
-          buttonFillNow->processPressed();
+          for(TouchButton *b : buttonsFillTool) {
+            b->processPressed();
+          }
         }
         if(showingTools == TOOL_ARP) {
           if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
@@ -621,10 +621,10 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       if(showingTools == TOOL_FILL) {
         // fill track
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(data->lastPlayedNote, temp_char, 10), 0); // label only
-        buttonFillNum->drawNow();
-        buttonFillOff->drawNow();
+        for(TouchButton *b : buttonsFillTool) {
+          b->drawNow();
+        }
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 98); // spacer
-        buttonFillNow->drawNow();
       }
       if(showingTools == TOOL_ARP) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), (arpAmount->getValue() == 0) ? 1 : 3);

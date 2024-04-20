@@ -50,10 +50,7 @@ private:
   TouchButton *buttonToggleTools;
 
   std::vector<TouchButton*> buttonsFillTool;
-  ValueButton<uint8_t> *buttonFillNum;
-  ValueButton<uint8_t> *buttonFillOff;
-  TouchButton *buttonFillNow;
-
+  
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;
   bool blinkPhase = 0;
