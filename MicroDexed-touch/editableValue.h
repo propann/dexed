@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <vector>
+#include <functional>
 
 class EditableValueBase {
 public:
@@ -14,8 +15,8 @@ public:
 template<class T> class EditableValue : EditableValueBase {
 
 public:
-  EditableValue(T &value, std::vector<T> values, T defaultValue);
-  EditableValue(T &value, T min, T max, T increment, T defaultValue);
+  EditableValue(T &value, std::vector<T> values, T defaultValue, std::function<void(void)> changed = [](){});
+  EditableValue(T &value, T min, T max, T increment, T defaultValue, std::function<void(void)> changed = [](){});
 
   EditableValueBase* pressed();
   bool next(void);
@@ -38,6 +39,8 @@ private:
   T rangeMin;
   T rangeMax;
   T rangeIncrement;
+
+  std::function<void()> changedHandler{};
 };
 template class EditableValue<uint16_t>;
 template class EditableValue<uint8_t>;

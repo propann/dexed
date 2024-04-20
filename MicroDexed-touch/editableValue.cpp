@@ -2,7 +2,7 @@
 #include <algorithm>
 
 template <class T>
-EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultValue) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues) {
+EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(void)> changed) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues), changedHandler{changed} {
   if(values.empty()) {
     values.push_back(0);
   }
@@ -11,7 +11,7 @@ EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultVa
 }
 
 template <class T>
-EditableValue<T>::EditableValue(T &invalue, T min, T max, T increment, T defaultValue) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
+EditableValue<T>::EditableValue(T &invalue, T min, T max, T increment, T defaultValue, std::function<void(void)> changed) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment), changedHandler{changed} {
   value = defaultValue;
 }
 
@@ -46,6 +46,7 @@ EditableValueBase* EditableValue<T>::pressed() {
     break;
   }
   value = result;
+  changedHandler();
   return this;
 }
 
@@ -67,6 +68,9 @@ bool EditableValue<T>::next() {
     break;
   }
   const bool changed = (value != result);
+  if(changed) {
+    changedHandler();
+  }
   value = result;
   return changed;
 }
@@ -89,6 +93,9 @@ bool EditableValue<T>::previous() {
     break;
   }
   const bool changed = (value != result);
+  if(changed) {
+    changedHandler();
+  }
   value = result;
   return changed;
 }

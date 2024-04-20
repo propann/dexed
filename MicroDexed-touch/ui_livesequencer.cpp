@@ -54,10 +54,8 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   });
 
   buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), 
-  [ ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
     b->draw("LENGTH", v->toString(), 1);
-  },
-  [ this ]() { // clickedHandler
     applyPatternLength->drawNow();
   });
 
