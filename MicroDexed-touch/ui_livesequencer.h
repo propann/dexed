@@ -43,7 +43,6 @@ private:
   uint16_t guiUpdateFlags = 0;
   bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
-  EditableValue<uint8_t> *fillNum;
   EditableValue<uint8_t> *fillOff;
 
   EditableValue<uint8_t> *arpAmount;
@@ -56,6 +55,8 @@ private:
 
   ValueButton<uint8_t> *buttonPatternLength;
   TouchButton *applyPatternLength;
+
+  ValueButton<uint8_t> *buttonFillNum;
 
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;

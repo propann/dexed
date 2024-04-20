@@ -38,7 +38,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20,
   [ this ] (TouchButton *b) { // drawHandler
     const bool isSame = (data->numberOfBars == numberOfBarsTemp);
-    draw_button_on_grid(b->x, b->y, "APPLY", "NOW", isSame ? 1 : 2);
+    b->draw("APPLY", "NOW", isSame ? 1 : 2);
     display.setTextSize(1);
     display.setTextColor(isSame ? GREY2 : RED, GREY3);
     display.setCursor(165, 165);
@@ -55,13 +55,17 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
 
   buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), 
   [ this ] (TouchButton *b) { // drawHandler
-    draw_button_on_grid(b->x, b->y, "LENGTH", buttonPatternLength->v->toString(), 1);
+    b->draw("LENGTH", buttonPatternLength->v->toString(), 1);
   },
   [ this ]() { // clickedHandler
     applyPatternLength->drawNow();
   });
+
+  buttonFillNum = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16), 
+  [ this ] (TouchButton *b) { // drawHandler
+    b->draw("NUM", buttonFillNum->v->toString(), 3);
+  });
   
-  fillNum = new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16);
   fillOff = new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0);
 
   arpAmount = new EditableValue<uint8_t>(data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8);
@@ -361,11 +365,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
           guiUpdateFlags |= drawTools;
         }
         if(showingTools == TOOL_FILL) {
-          if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
-            // fill number
-            currentValue = fillNum->pressed();
-            guiUpdateFlags |= drawTools;
-          }
+          buttonFillNum->processPressed();
           if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
             // fill offset
             currentValue = fillOff->pressed();
@@ -619,7 +619,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       if(showingTools == TOOL_FILL) {
         // fill track
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(data->lastPlayedNote, temp_char, 10), 0); // label only
-        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "NUM", fillNum->toString(), 3);
+        buttonFillNum->drawNow();
         draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", fillOff->toString(), 3);
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 97); // spacer
         draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "FILL", "NOW", 2);

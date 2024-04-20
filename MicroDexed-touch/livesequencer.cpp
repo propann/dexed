@@ -680,8 +680,8 @@ void LiveSequencer::handlePatternBegin(void) {
 
     activeArps.clear();
     data.arpSettings.loadPerBar = 2;  // TODO add gui
-    data.arpSettings.noteRepeat = 1;  // TODO add gui
-    data.arpSettings.octaves = 2;     // TODO add gui
+    data.arpSettings.noteRepeat = 0;  // TODO add gui
+    data.arpSettings.octaves = 1;     // TODO add gui
 
     data.arpSettings.notePlayCount = 0;
     data.arpSettings.delayToNextArpOnMs = 0;

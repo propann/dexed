@@ -16,13 +16,13 @@ public:
   TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(void)> clicked);
   void processPressed();
   void drawNow();
-  int16_t x;
-  int16_t y;
+  void draw(std::string label, std::string sub, uint8_t color);
 
 private:
+  int16_t x;
+  int16_t y;
   std::function<void(TouchButton*)> drawHandler{};
   std::function<void(void)> clickedHandler{};
-  
   PressedState pressedState;
 };
 

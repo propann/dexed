@@ -17,6 +17,10 @@ void TouchButton::drawNow() {
   drawHandler(this);
 }
 
+void TouchButton::draw(std::string label, std::string sub, uint8_t color) {
+  draw_button_on_grid(x, y, label.c_str(), sub.c_str(), color);
+}
+
 void TouchButton::processPressed() {
   const bool isInArea = numTouchPoints && (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small);
 
