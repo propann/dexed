@@ -65,9 +65,18 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ this ] (TouchButton *b) { // drawHandler
     b->draw("NUM", buttonFillNum->v->toString(), 3);
   });
+  buttonFillOff = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[3], 15, new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0), 
+  [ this ] (TouchButton *b) { // drawHandler
+    b->draw("OFF", buttonFillOff->v->toString(), 3);
+  });
+  buttonFillNow = new TouchButton(BUTTON_COLUMNS_X[5], 15,
+  [ this ](TouchButton *b) { // drawHandler
+    b->draw("FILL", "NOW", 2);
+  },
+  [ this ]() { // clickedHandler
+    liveSeqPtr->fillTrackLayer();
+  });
   
-  fillOff = new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0);
-
   arpAmount = new EditableValue<uint8_t>(data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8);
   arpLength = new EditableValue<uint16_t>(data->arpSettings.length, 50, 500, 10, 150);
   arpMode = new EditableValue<uint8_t>((uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN));
@@ -361,16 +370,8 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
         if(showingTools == TOOL_FILL) {
           buttonFillNum->processPressed();
-          if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
-            // fill offset
-            currentValue = fillOff->pressed();
-            guiUpdateFlags |= drawTools;
-          }
-          if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
-            // fill now
-            liveSeqPtr->fillTrackLayer();
-            guiUpdateFlags |= drawTools;
-          }
+          buttonFillOff->processPressed();
+          buttonFillNow->processPressed();
         }
         if(showingTools == TOOL_ARP) {
           if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
@@ -615,9 +616,9 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         // fill track
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(data->lastPlayedNote, temp_char, 10), 0); // label only
         buttonFillNum->drawNow();
-        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "OFF", fillOff->toString(), 3);
+        buttonFillOff->drawNow();
+        buttonFillNow->drawNow();
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 97); // spacer
-        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "FILL", "NOW", 2);
       }
       if(showingTools == TOOL_ARP) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), (arpAmount->getValue() == 0) ? 1 : 3);
