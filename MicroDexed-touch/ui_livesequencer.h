@@ -49,6 +49,7 @@ private:
 
   TouchButton *buttonToggleTools;
 
+  std::vector<TouchButton*> buttonsFillTool;
   ValueButton<uint8_t> *buttonFillNum;
   ValueButton<uint8_t> *buttonFillOff;
   TouchButton *buttonFillNow;

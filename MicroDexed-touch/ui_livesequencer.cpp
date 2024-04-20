@@ -54,8 +54,8 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   });
 
   buttonPatternLength = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 20, new EditableValue<uint8_t>(numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4), 
-  [ this ] (TouchButton *b) { // drawHandler
-    b->draw("LENGTH", buttonPatternLength->v->toString(), 1);
+  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+    b->draw("LENGTH", v->toString(), 1);
   },
   [ this ]() { // clickedHandler
     applyPatternLength->drawNow();
@@ -79,12 +79,12 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   });
 
   buttonFillNum = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16), 
-  [ this ] (TouchButton *b) { // drawHandler
-    b->draw("NUM", buttonFillNum->v->toString(), 3);
+  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+    b->draw("NUM", v->toString(), 3);
   });
   buttonFillOff = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[3], 15, new EditableValue<uint8_t>(data->fillNotes.offset, 0, 7, 1, 0), 
-  [ this ] (TouchButton *b) { // drawHandler
-    b->draw("OFF", buttonFillOff->v->toString(), 3);
+  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+    b->draw("OFF", v->toString(), 3);
   });
   buttonFillNow = new TouchButton(BUTTON_COLUMNS_X[5], 15,
   [ this ](TouchButton *b) { // drawHandler

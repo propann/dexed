@@ -10,7 +10,7 @@
 template<class T> class ValueButton : public TouchButton {
 public:
   EditableValue<T> *v;
-  ValueButton(int16_t x_coord, int16_t y_coord, EditableValue<T> *value, std::function<void(TouchButton*)> draw, std::function<void(void)> clicked = 0);
+  ValueButton(int16_t x_coord, int16_t y_coord, EditableValue<T> *value, std::function<void(TouchButton*, EditableValue<T>*)> draw, std::function<void(void)> clicked = 0);
   
 private:
   
