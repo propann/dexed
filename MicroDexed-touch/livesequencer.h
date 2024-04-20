@@ -152,7 +152,9 @@ private:
   LiveSeqData data;
   UI_LiveSequencer ui;
 
-  void printActiveArps(void);
+  std::set<uint8_t> pressedArpKeys;
+  std::list<LiveSequencer::ArpNote> activeArps;
+
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);

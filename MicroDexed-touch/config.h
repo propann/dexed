@@ -30,6 +30,12 @@
 #include "midinotes.h"
 #include "teensy_board_detection.h"
 
+#ifdef DEBUG
+#define DBG_LOG(s) LOG.s
+#else
+#define DBG_LOG(s)
+#endif
+
 // If you want to test the system with Linux and without any keyboard and/or audio equipment, you can do the following:
 // 1. In Arduino-IDE enable "Tools->USB-Type->Serial + MIDI + Audio"
 // 2. Build the firmware with "MIDI_DEVICE_USB" enabled in config.h.

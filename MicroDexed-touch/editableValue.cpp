@@ -8,7 +8,7 @@ EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultVa
   }
   it = std::find(values.begin(), values.end(), defaultValue);
   if(it == values.end()) {
-      it = values.begin();
+    it = values.begin();
   }
   value = defaultValue;
 }

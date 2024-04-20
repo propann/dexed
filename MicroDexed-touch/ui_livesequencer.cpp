@@ -73,8 +73,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   arpMode = new EditableValue<uint8_t>((uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN));
   arpSwing = new EditableValue<int8_t>(data->arpSettings.swing, -8, 8, 1, 0);
   arpLatch = new EditableValue<uint8_t>(data->arpSettings.latch, 0, 1, 1, 1);
-
-  initialized = true;
 }
 
 void UI_func_livesequencer(uint8_t param) {
@@ -214,9 +212,6 @@ void UI_LiveSequencer::applyScreenRedrawGuiFlags(void) {
 }
 
 void UI_LiveSequencer::handleTouchscreen(void) {
-  if(initialized == false) {
-    return;
-  }
   bool pressedChanged = (numTouchPoints != numPressedOld);
   if (showingHowTo) {
     if (check_button_on_grid(42,22)) {

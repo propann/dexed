@@ -23,9 +23,6 @@ extern void UI_func_braids(uint8_t param);
 extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
-std::set<uint8_t> pressedArpKeys;
-std::list<LiveSequencer::ArpNote> activeArps;
-
 using namespace TeensyTimerTool;
 PeriodicTimer tickTimer(TMR1);  // only 16bit needed
 OneShotTimer arpTimer(TCK);     // one tick timer of 20
@@ -788,6 +785,10 @@ void LiveSequencer::checkAddMetronome(void) {
   // always assure we have a drum track with some tempo to begin
   if(data.eventsList.empty()) {
     const uint8_t activeTrack = data.activeTrack;
+
+    uint8_t fillNumOld = data.fillNotes.number;
+    uint8_t fillOffOld = data.fillNotes.offset;
+
     for(uint8_t i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
       if(data.tracks[i].screen == UI_func_drums) {
         data.activeTrack = i;
@@ -801,8 +802,8 @@ void LiveSequencer::checkAddMetronome(void) {
         fillTrackLayer();
         trackLayerAction(i, 1, UI_LiveSequencer::LayerMode::LAYER_MERGE); // merge them
         // reset fillNotes to user values
-        data.fillNotes.number = 4;
-        data.fillNotes.offset = 0;
+        data.fillNotes.number = fillNumOld;
+        data.fillNotes.offset = fillOffOld;
         data.activeTrack = activeTrack;
         return;
       }

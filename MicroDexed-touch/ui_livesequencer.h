@@ -6,12 +6,6 @@
 #include "touchbutton.h"
 #include "valuebutton.h"
 
-#ifdef DEBUG
-#define DBG_LOG(s) LOG.s
-#else
-#define DBG_LOG(s)
-#endif
-
 typedef void (*SetupFn)(void*);
 
 class LiveSequencer;
@@ -32,7 +26,6 @@ public:
 
 private:
   int numPressedOld = 0;
-  bool initialized = false;
   bool runningHere = false;
   bool barPhases[2] = { 0 };
   uint8_t numberOfBarsTemp = 0;
