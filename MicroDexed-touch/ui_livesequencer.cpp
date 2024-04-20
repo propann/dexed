@@ -93,12 +93,30 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ this ]() { // clickedHandler
     liveSeqPtr->fillTrackLayer();
   }));
-  
-  arpAmount = new EditableValue<uint8_t>(data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8);
-  arpLength = new EditableValue<uint16_t>(data->arpSettings.length, 50, 500, 10, 150);
-  arpMode = new EditableValue<uint8_t>((uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN));
-  arpSwing = new EditableValue<int8_t>(data->arpSettings.swing, -8, 8, 1, 0);
-  arpLatch = new EditableValue<uint8_t>(data->arpSettings.latch, 0, 1, 1, 1);
+
+  // ARP
+  buttonsArp.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 15, new EditableValue<uint8_t>(data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8),
+  [ ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+    b->draw("NUM", v->toString(), v->getValue() == 0 ? 1 : 3);
+  }));
+  buttonsArp.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, new EditableValue<uint8_t>((uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN)),
+  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+    char arpMode[6];
+    getArpModeName(data->arpSettings.mode, arpMode);
+    b->draw("MODE", arpMode, 3);
+  }));
+  buttonsArp.push_back(new ValueButton<uint16_t>(BUTTON_COLUMNS_X[3], 15, new EditableValue<uint16_t>(data->arpSettings.length, 50, 500, 10, 150),
+  [ ] (TouchButton *b, EditableValue<uint16_t> *v) { // drawHandler
+    b->draw("LEN", v->toString(), v->getValue() == 0 ? 1 : 3);
+  }));
+  buttonsArp.push_back(new ValueButton<int8_t>(BUTTON_COLUMNS_X[4], 15, new EditableValue<int8_t>(data->arpSettings.swing, -8, 8, 1, 0),
+  [ ] (TouchButton *b, EditableValue<int8_t> *v) { // drawHandler
+    b->draw("SWING", v->toString(), 3);
+  }));
+  buttonsArp.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[5], 15, new EditableValue<uint8_t>(data->arpSettings.latch, 0, 1, 1, 1),
+  [ ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
+    b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", 3);
+  }));
 }
 
 void UI_func_livesequencer(uint8_t param) {
@@ -380,30 +398,8 @@ void UI_LiveSequencer::handleTouchscreen(void) {
           }
         }
         if(showingTools == TOOL_ARP) {
-          if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
-            // arp number
-            currentValue = arpAmount->pressed();
-            guiUpdateFlags |= drawTools;
-          }
-          if (check_button_on_grid(BUTTON_COLUMNS_X[2], 15)) {
-            // arp mode
-            currentValue = arpMode->pressed();
-            guiUpdateFlags |= drawTools;
-          }
-          if (check_button_on_grid(BUTTON_COLUMNS_X[3], 15)) {
-            // arp length
-            currentValue = arpLength->pressed();
-            guiUpdateFlags |= drawTools;
-          }
-          if (check_button_on_grid(BUTTON_COLUMNS_X[4], 15)) {
-            // arp swing
-            currentValue = arpSwing->pressed();
-            guiUpdateFlags |= drawTools;
-          }
-          if (check_button_on_grid(BUTTON_COLUMNS_X[5], 15)) {
-            // arp latch
-            currentValue = arpLatch->pressed();
-            guiUpdateFlags |= drawTools;
+          for(TouchButton *b : buttonsArp) {
+            b->processPressed();
           }
         }
 
@@ -627,12 +623,9 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 98); // spacer
       }
       if(showingTools == TOOL_ARP) {
-        draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), (arpAmount->getValue() == 0) ? 1 : 3);
-        getArpModeName(data->arpSettings.mode, temp_char);
-        draw_button_on_grid(BUTTON_COLUMNS_X[2], 15, "MODE", temp_char, 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[3], 15, "LEN", arpLength->toString(), 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "SWING", arpSwing->toString(), (arpSwing->getValue() == 0) ? 1 : 3);
-        draw_button_on_grid(BUTTON_COLUMNS_X[5], 15, "LATCH", (arpLatch->getValue() == 0) ? "-" : "ON", (arpLatch->getValue() == 0) ? 1 : 3);
+        for(TouchButton *b : buttonsArp) {
+          b->drawNow();
+        }
       }
     }
 

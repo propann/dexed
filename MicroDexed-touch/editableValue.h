@@ -24,6 +24,7 @@ public:
   T getValue(void);
 
 private:
+  void updateIterator(void);
   char charBuffer[6];
   enum Mode {
     MODE_FIXED,

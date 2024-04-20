@@ -36,11 +36,6 @@ private:
   uint16_t guiUpdateFlags = 0;
   bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
-  EditableValue<uint8_t> *arpAmount;
-  EditableValue<uint16_t> *arpLength;
-  EditableValue<uint8_t> *arpMode;
-  EditableValue<int8_t> *arpSwing;
-  EditableValue<uint8_t> *arpLatch;
   EditableValue<uint8_t> *songMuteQuant;
   EditableValueBase *currentValue;
 
@@ -50,7 +45,8 @@ private:
   TouchButton *buttonToggleTools;
 
   std::vector<TouchButton*> buttonsFillTool;
-  
+  std::vector<TouchButton*> buttonsArp;
+
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;
   bool blinkPhase = 0;

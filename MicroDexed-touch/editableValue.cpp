@@ -6,11 +6,8 @@ EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultVa
   if(values.empty()) {
     values.push_back(0);
   }
-  it = std::find(values.begin(), values.end(), defaultValue);
-  if(it == values.end()) {
-    it = values.begin();
-  }
   value = defaultValue;
+  updateIterator();
 }
 
 template <class T>
@@ -30,6 +27,7 @@ T EditableValue<T>::getValue(void) {
 
 template <class T>
 EditableValueBase* EditableValue<T>::pressed() {
+  updateIterator();
   T result = value;
   switch(mode) {
   case MODE_FIXED:
@@ -53,6 +51,7 @@ EditableValueBase* EditableValue<T>::pressed() {
 
 template <class T>
 bool EditableValue<T>::next() {
+  updateIterator();
   T result = value;
   switch(mode) {
   case MODE_FIXED:
@@ -74,6 +73,7 @@ bool EditableValue<T>::next() {
 
 template <class T>
 bool EditableValue<T>::previous() {
+  updateIterator();
   T result = value;
   switch(mode) {
   case MODE_FIXED:
@@ -91,6 +91,14 @@ bool EditableValue<T>::previous() {
   const bool changed = (value != result);
   value = result;
   return changed;
+}
+
+template <class T>
+void EditableValue<T>::updateIterator(void) {
+  it = std::find(values.begin(), values.end(), value);
+  if(it == values.end()) {
+    it = values.begin();
+  }
 }
 
 

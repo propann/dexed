@@ -15,7 +15,7 @@ public:
 private:
   
 };
-
+template class ValueButton<uint16_t>;
 template class ValueButton<uint8_t>;
-
+template class ValueButton<int8_t>;
 #endif //VALUEBUTTON_H
