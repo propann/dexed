@@ -61,6 +61,23 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     applyPatternLength->drawNow();
   });
 
+  buttonToggleTools = new TouchButton(BUTTON_COLUMNS_X[0], 15,
+  [ this ](TouchButton *b) { // drawHandler
+    b->draw("TOOL", showingTools == TOOL_FILL ? "FILL" : "ARP", 1);
+  },
+  [ this ]() { // clickedHandler
+    switch (showingTools) {
+    case TOOL_FILL:
+      showingTools = TOOL_ARP;
+      break;
+    
+    case TOOL_ARP:
+      showingTools = TOOL_FILL;
+      break;
+    }
+    guiUpdateFlags |= drawTools;
+  });
+
   buttonFillNum = new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, new EditableValue<uint8_t>(data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16), 
   [ this ] (TouchButton *b) { // drawHandler
     b->draw("NUM", buttonFillNum->v->toString(), 3);
@@ -356,18 +373,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
             guiUpdateFlags |= drawQuantisize;
           }
         }
-        if (check_button_on_grid(BUTTON_COLUMNS_X[0], 15)) {
-          switch (showingTools) {
-          case TOOL_FILL:
-            showingTools = TOOL_ARP;
-            break;
-          
-          case TOOL_ARP:
-            showingTools = TOOL_FILL;
-            break;
-          }
-          guiUpdateFlags |= drawTools;
-        }
+        buttonToggleTools->processPressed();
         if(showingTools == TOOL_FILL) {
           buttonFillNum->processPressed();
           buttonFillOff->processPressed();
@@ -610,15 +616,15 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     }
 
     if (guiFlags & drawTools) {
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "TOOL", showingTools == TOOL_FILL ? "FILL" : "ARP", 1);
+      buttonToggleTools->drawNow();
 
       if(showingTools == TOOL_FILL) {
         // fill track
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NOTE", itoa(data->lastPlayedNote, temp_char, 10), 0); // label only
         buttonFillNum->drawNow();
         buttonFillOff->drawNow();
+        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 98); // spacer
         buttonFillNow->drawNow();
-        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 97); // spacer
       }
       if(showingTools == TOOL_ARP) {
         draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "NUM", arpAmount->toString(), (arpAmount->getValue() == 0) ? 1 : 3);

@@ -47,6 +47,8 @@ private:
   ValueButton<uint8_t> *buttonPatternLength;
   TouchButton *applyPatternLength;
 
+  TouchButton *buttonToggleTools;
+
   ValueButton<uint8_t> *buttonFillNum;
   ValueButton<uint8_t> *buttonFillOff;
   TouchButton *buttonFillNow;
