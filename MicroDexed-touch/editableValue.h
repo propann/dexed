@@ -12,7 +12,7 @@ public:
   virtual bool previous() = 0;
 };
 
-template<class T> class EditableValue : EditableValueBase {
+template<class T> class EditableValue : public EditableValueBase {
 
 public:
   EditableValue(T &value, std::vector<T> values, T defaultValue, std::function<void(void)> changed = [](){});

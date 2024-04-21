@@ -60,10 +60,10 @@ bool EditableValue<T>::next() {
     break;
   }
   const bool changed = (value != result);
+  value = result;
   if(changed) {
     changedHandler();
   }
-  value = result;
   return changed;
 }
 
@@ -85,10 +85,10 @@ bool EditableValue<T>::previous() {
     break;
   }
   const bool changed = (value != result);
+  value = result;
   if(changed) {
     changedHandler();
   }
-  value = result;
   return changed;
 }
 
