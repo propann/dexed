@@ -9,7 +9,10 @@ ValueButton<T>::ValueButton(int16_t x_coord, int16_t y_coord, T &invalue, std::v
   [ this ]() { // clicked handler
     v.cycle();
   }),
-  v(invalue, invalues, defaultValue)
+  v(invalue, invalues, defaultValue,
+  [ this, draw ]() { // draw handler
+    draw(this, &v);
+  })
 {
 }
 
@@ -22,6 +25,9 @@ ValueButton<T>::ValueButton(int16_t x_coord, int16_t y_coord, T &invalue, T min,
   [ this ]() { // clicked handler
     v.cycle();
   }),
-  v(invalue, min, max, increment, defaultValue)
+  v(invalue, min, max, increment, defaultValue,
+  [ this, draw ]() { // draw handler
+    draw(this, &v);
+  })
 {
 }
