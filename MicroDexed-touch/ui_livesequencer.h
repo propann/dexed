@@ -89,7 +89,7 @@ private:
 
   void applyScreenRedrawGuiFlags(void);
   void drawGUI(uint16_t& guiFlags);
-  void getArpModeName(uint8_t mode, char* buf);
+  static std::string getArpModeName(uint8_t mode);
   void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, uint8_t layerBgCode, uint8_t gridX, uint8_t gridY);
   void handleLayerEditButtonColor(uint8_t layerMode, uint16_t& layerBgColor, uint8_t& layerBgCode);
 };

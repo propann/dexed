@@ -102,10 +102,8 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     currentValue = v;
   }));
   buttonsArp.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, (uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
-  [ this ] (TouchButton *b, EditableValue<uint8_t> *v) { // drawHandler
-    char arpMode[6];
-    getArpModeName(v->getValue(), arpMode);
-    b->draw("MODE", arpMode, 3);
+  [ this ] (auto *b, auto *v) { // drawHandler
+    b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), 3);
     currentValue = v;
   }));
   buttonsArp.push_back(new ValueButton<uint16_t>(BUTTON_COLUMNS_X[3], 15, data->arpSettings.length, 50, 500, 10, 150,
@@ -198,6 +196,9 @@ void UI_LiveSequencer::processLCDM(void) {
       if(currentValue != nullptr) {
         currentValue->previous();
       }
+    }
+    if(LCDML.BT_checkEnter()) {
+      DBG_LOG(printf("enter!\n"));
     }
 
     guiUpdateFlags |= data->trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
@@ -688,32 +689,26 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   guiFlags = 0;
 }
 
-void UI_LiveSequencer::getArpModeName(uint8_t mode, char* buf) {
+std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   switch (mode) {
   case LiveSequencer::ArpMode::ARP_CHORD:
-    sprintf(buf, "CHRD");
-    break;
+    return "CHRD";
   case LiveSequencer::ArpMode::ARP_DOWN:
-    sprintf(buf, "DOWN");
-    break;
+    return "DOWN";
   case LiveSequencer::ArpMode::ARP_DOWNUP:
-    sprintf(buf, "DNUP");
-    break;
+    return "DNUP";
   case LiveSequencer::ArpMode::ARP_DOWNUP_P:
-    sprintf(buf, "DNUP+");
-    break;
+    return "DNUP+";
   case LiveSequencer::ArpMode::ARP_RANDOM:
-    sprintf(buf, "RAND");
-    break;
+    return "RAND";
   case LiveSequencer::ArpMode::ARP_UP:
-    sprintf(buf, "UP");
-    break;
+    return "UP";
   case LiveSequencer::ArpMode::ARP_UPDOWN:
-    sprintf(buf, "UPDN");
-    break;
+    return "UPDN";
   case LiveSequencer::ArpMode::ARP_UPDOWN_P:
-    sprintf(buf, "UPDN+");
-    break;
+    return "UPDN+";
+  default:
+    return "NONE";
   }
 }
 
