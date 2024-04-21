@@ -108,11 +108,11 @@ bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
   bool overflow = false; // overflow if event rounded to start of next pattern
   
   if(denom > 1) {
-    const uint16_t quantisizeMs = data.patternLengthMs / denom;
-    const uint16_t halfStep = quantisizeMs / 2;
+    const uint16_t quantizeMs = data.patternLengthMs / denom;
+    const uint16_t halfStep = quantizeMs / 2;
     uint8_t resultNumber = e.patternNumber;
     uint16_t resultMs = e.patternMs;
-    resultMs = ((e.patternMs + halfStep) / quantisizeMs) * quantisizeMs;
+    resultMs = ((e.patternMs + halfStep) / quantizeMs) * quantizeMs;
     if(resultMs == data.patternLengthMs) {
       resultMs = 0;
       if(++resultNumber == data.numberOfBars) {
@@ -188,7 +188,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
             newEvent.layer = data.songLayerCount; 
             uint8_t patternCount = data.songPatternCount;
             if(newEvent.event == midi::NoteOn) {
-              if(timeQuantization(newEvent, data.trackSettings[data.activeTrack].quantisizeDenom)) {
+              if(timeQuantization(newEvent, data.trackSettings[data.activeTrack].quantizeDenom)) {
                 patternCount++; // event rounded up to start of next song pattern
               }
             }
@@ -216,7 +216,7 @@ void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uin
               // check if it has a corresponding NoteOn
               const auto on = data.notesOn.find(note);
               if(on != data.notesOn.end()) {
-                  timeQuantization(on->second, data.trackSettings[data.activeTrack].quantisizeDenom);
+                  timeQuantization(on->second, data.trackSettings[data.activeTrack].quantizeDenom);
                   // if so, insert NoteOn and this NoteOff to pending
                   data.pendingEvents.emplace_back(on->second);
                   data.pendingEvents.emplace_back(newEvent);
@@ -772,7 +772,7 @@ void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bo
       const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
       MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.currentPattern, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
       uint8_t patternCount = data.songPatternCount;
-      if(timeQuantization(e, data.songMuteQuantisizeDenom)) {
+      if(timeQuantization(e, data.songMuteQuantizeDenom)) {
         patternCount++; // event rounded up to start of next song pattern
       }
       data.songEvents[patternCount].emplace_back(e);
@@ -816,14 +816,14 @@ void LiveSequencer::updateTrackChannels(bool initial) {
   for(uint8_t i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
     if(initial) {
-      data.trackSettings[i].quantisizeDenom = 1; // default: no quantization
+      data.trackSettings[i].quantizeDenom = 1; // default: no quantization
     }
     switch(seq.track_type[i]) {
     case 0:
       data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
       data.tracks[i].screen = UI_func_drums;
       if(initial) {
-        data.trackSettings[i].quantisizeDenom = 16; // default: drum quantisize to 1/16
+        data.trackSettings[i].quantizeDenom = 16; // default: drum quantize to 1/16
       }
       sprintf(data.tracks[i].name, "DRM");
       break;

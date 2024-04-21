@@ -44,6 +44,7 @@ private:
 
   TouchButton *buttonToggleTools;
 
+  std::vector<TouchButton*> buttonsPattQuant;
   std::vector<TouchButton*> buttonsFillTool;
   std::vector<TouchButton*> buttonsArp;
 
@@ -76,7 +77,7 @@ private:
     drawTrackButtons = (1 << 1),
     drawLayerButtons = (1 << 2),
     drawTools = (1 << 3),
-    drawQuantisize = (1 << 4),
+    drawQuantize = (1 << 4),
     clearBottomArea = (1 << 5),
     drawSongSettings = (1 << 6),
     drawPattLength = (1 << 7),

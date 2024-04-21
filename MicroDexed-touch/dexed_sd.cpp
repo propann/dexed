@@ -1631,7 +1631,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       data_json["num_tracks"] = LiveSequencer::LIVESEQUENCER_NUM_TRACKS;
       for (int i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
-        data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
+        data_json["quant_denom"][i] = data->trackSettings[i].quantizeDenom;
         // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
         if (data->songLayerCount == 0) {
           data->trackSettings[i].songStartLayerMutes = data->tracks[i].layerMutes;
@@ -1715,7 +1715,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 
           for (int i = 0; i < num_tracks; i++) {
             data->trackSettings[i].layerCount = doc["layer_count"][i];
-            data->trackSettings[i].quantisizeDenom = doc["quant_denom"][i];
+            data->trackSettings[i].quantizeDenom = doc["quant_denom"][i];
             data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
             data->tracks[i].layerMutes = data->trackSettings[i].songStartLayerMutes;
           }

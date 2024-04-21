@@ -44,7 +44,7 @@ public:
 
   struct TrackSettings {
     uint8_t layerCount;
-    uint8_t quantisizeDenom;
+    uint8_t quantizeDenom;
     uint8_t songStartLayerMutes;
   };
 
@@ -128,7 +128,7 @@ public:
     bool recordedToSong = false;
     int currentBpm = 90;
     uint8_t performanceID = 0;
-    uint8_t songMuteQuantisizeDenom = 1;
+    uint8_t songMuteQuantizeDenom = 1;
   };
 
   LiveSequencer();
