@@ -77,6 +77,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     guiUpdateFlags |= drawTools;
   });
 
+  // FILL TOOL
   buttonsFillTool.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[2], 15, data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16, 
   [ this ] (auto *b, auto *v) { // drawHandler
     b->draw("NUM", v->toString(), 3);
@@ -95,7 +96,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     liveSeqPtr->fillTrackLayer();
   }));
 
-  // ARP
+  // ARP TOOL
   buttonsArp.push_back(new ValueButton<uint8_t>(BUTTON_COLUMNS_X[1], 15, data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8,
   [ this ] (auto *b, auto *v) { // drawHandler
     b->draw("NUM", v->toString(), v->getValue() == 0 ? 1 : 3);
@@ -694,7 +695,7 @@ std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   case LiveSequencer::ArpMode::ARP_CHORD:
     return "CHRD";
   case LiveSequencer::ArpMode::ARP_DOWN:
-    return "DOWN";
+    return "DN";
   case LiveSequencer::ArpMode::ARP_DOWNUP:
     return "DNUP";
   case LiveSequencer::ArpMode::ARP_DOWNUP_P:
