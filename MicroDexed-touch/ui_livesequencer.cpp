@@ -423,7 +423,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
         // song mute quantisize denom
         if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
-          currentValue = songMuteQuant->pressed();
+          currentValue = songMuteQuant->cycle();
           guiUpdateFlags |= drawSongQuant;
         }
 

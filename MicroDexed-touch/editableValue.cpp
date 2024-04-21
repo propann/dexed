@@ -26,27 +26,19 @@ T EditableValue<T>::getValue(void) {
 }
 
 template <class T>
-EditableValueBase* EditableValue<T>::pressed() {
-  updateIterator();
-  T result = value;
-  switch(mode) {
-  case MODE_FIXED:
-    it++;
-    if(it == values.end()) {
-        it = values.begin();
+EditableValueBase* EditableValue<T>::cycle() {
+  if(next() == false) {
+    switch(mode) {
+    case MODE_FIXED:
+      it = values.begin();
+      value = *it;
+      break;
+    case MODE_RANGE:
+      value = rangeMin;
+      break;
     }
-    result = *it;
-    break;
-  case MODE_RANGE:
-    if(result + rangeIncrement > rangeMax) {
-      result = rangeMin;
-    } else {
-      result += rangeIncrement;
-    }
-    break;
+    changedHandler();
   }
-  value = result;
-  changedHandler();
   return this;
 }
 

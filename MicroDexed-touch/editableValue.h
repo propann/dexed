@@ -7,7 +7,7 @@
 
 class EditableValueBase {
 public:
-  virtual EditableValueBase* pressed() = 0;
+  virtual EditableValueBase* cycle() = 0;
   virtual bool next() = 0;
   virtual bool previous() = 0;
 };
@@ -18,7 +18,7 @@ public:
   EditableValue(T &value, std::vector<T> values, T defaultValue, std::function<void(void)> changed = [](){});
   EditableValue(T &value, T min, T max, T increment, T defaultValue, std::function<void(void)> changed = [](){});
 
-  EditableValueBase* pressed();
+  EditableValueBase* cycle();
   bool next(void);
   bool previous(void);
   char* toString(void);
