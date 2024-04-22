@@ -29,7 +29,6 @@ void TouchButton::processPressed() {
     if(isInArea) {
       pressedState = PRESSED;
       clickedHandler();
-      drawHandler(this);
     }
     break;
 
