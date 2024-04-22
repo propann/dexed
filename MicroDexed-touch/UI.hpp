@@ -624,6 +624,7 @@ void draw_volmeters_multiband_compressor();
 uint8_t x_pos_menu_header_layer[8];
 uint8_t x_pos_previous_menu_header;
 uint8_t last_menu_depth = 99;
+uint8_t prev_menu_item = 0;    // avoid screen flicker at start / end of menu items
 
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
@@ -4357,6 +4358,26 @@ FLASHMEM void lcdml_menu_control(void)
         { // do nothing
           ;
         }
+
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+        {
+          if (seq.menu == 18)
+          {
+            seq.menu_status = 1;
+            LCDML.OTHER_jumpToFunc(UI_func_seq_vel_editor);
+          }
+          else
+          {
+            seq.menu_status = 0;
+            seq.menu = constrain(seq.menu + 1, 0, 18);
+          }
+
+        }
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+        {
+          prev_menu_item = seq.menu;
+          seq.menu = constrain(seq.menu + 1, 0, 17);
+        }
         else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
           LCDML.OTHER_jumpToFunc(UI_func_volume);
       }
@@ -4447,6 +4468,36 @@ FLASHMEM void lcdml_menu_control(void)
         else if (ui.handlesLeftEncoder())
         { // do nothing
           ;
+        }
+
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+        {
+          if (seq.menu == 0 && seq.quicknav_song_to_pattern_jump == true)
+          {
+            // go back to song-transpose when previously navigated in from song edit
+            seq.help_text_needs_refresh = true;
+            seq.edit_state = true;
+            seq.quicknav_pattern_to_song_jump = true;
+            seq.quicknav_song_to_pattern_jump = false;
+            LCDML.OTHER_jumpToFunc(UI_func_song);
+          }
+          else
+            seq.menu = constrain(seq.menu - 1, 0, 18);
+
+        }
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+        {
+          if (seq.menu == 0)
+          {
+            seq.menu_status = 2;
+            LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+          }
+          else
+          {
+            seq.menu_status = 0;
+            seq.menu = constrain(seq.menu - 1, 0, 17);
+          }
+
         }
         else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -7926,7 +7977,6 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
 void UI_func_seq_vel_editor(uint8_t param)
 {
   char tmp[5];
-  uint8_t prev_item = 0;    // avoid screen flicker at start / end of menu items
   uint8_t prev_option = 99; // avoid screen flicker at start / end of menu options
   if (LCDML.FUNC_setup())   // ****** SETUP *********
   {
@@ -7972,7 +8022,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         if (LCDML.BT_checkDown())
         {
-          prev_item = seq.menu;
+          prev_menu_item = seq.menu;
           seq.menu = constrain(seq.menu + 1, 0, 17);
         }
         else if (LCDML.BT_checkUp())
@@ -8335,7 +8385,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       }
     }
 
-    if (seq.menu == 17 && prev_item != 17 && prev_option != seq.note_editor_view) // edit content type of pattern
+    if (seq.menu == 17 && prev_menu_item != 17 && prev_option != seq.note_editor_view) // edit content type of pattern
     {
       if (seq.active_function != 1)
       {
