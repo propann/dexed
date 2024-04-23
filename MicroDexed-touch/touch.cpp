@@ -130,7 +130,7 @@ FLASHMEM void updateTouchScreen() {
         ts.p = touch.getPoint();
         ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
         ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
-  }
+      }
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -150,7 +150,7 @@ FLASHMEM void updateTouchScreen() {
         break;
       }
 #endif
-}
+    }
     else {
       isButtonTouched = false;
     }
@@ -303,7 +303,8 @@ FLASHMEM void print_current_chord()
 FLASHMEM void virtual_keyboard_print_velocity_bar()
 {
   // velocity bar disabled
-  if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.step_recording == false && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.step_recording == false && seq.cycle_touch_element == 1))
+  if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.step_recording == false && seq.cycle_touch_element == 1) ||
+    (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.step_recording == false && seq.cycle_touch_element == 1))
   {
     display.console = 1;
     display.fillRect(1, 10 * CHAR_height_small, DISPLAY_WIDTH, 32, COLOR_BACKGROUND);
@@ -630,15 +631,18 @@ FLASHMEM void touch_button_inst_down()
 
 FLASHMEM void touch_check_all_keyboard_buttons()
 {
-  if (check_button_on_grid(1, 16))
-    touch_button_oct_down();
-  else if (check_button_on_grid(45, 16))
-    touch_button_oct_up();
 
-  if (check_button_on_grid(9, 16) && ((seq.cycle_touch_element == 1) || ts.keyb_in_menu_activated))
-    touch_button_inst_down();
-  else if (check_button_on_grid(37, 16) && ((seq.cycle_touch_element == 1) || ts.keyb_in_menu_activated))
-    touch_button_inst_up();
+  if (seq.cycle_touch_element == 1 || ts.keyb_in_menu_activated)
+  {
+    if (check_button_on_grid(1, 16))
+      touch_button_oct_down();
+    else if (check_button_on_grid(45, 16))
+      touch_button_oct_up();
+    else  if (check_button_on_grid(9, 16))
+      touch_button_inst_down();
+    else if (check_button_on_grid(37, 16))
+      touch_button_inst_up();
+  }
 }
 
 extern uint8_t dexed_onscreen_algo;
@@ -800,30 +804,33 @@ FLASHMEM void handle_touchscreen_pattern_editor()
 {
   if (numTouchPoints > 0)
   {
-    if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
+    if (seq.cycle_touch_element == 1)
     {
-      if (ts.p.y > 6 * CHAR_height_small && ts.p.y < 12 * CHAR_height_small + 20 && ts.p.x < 230)
+      if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) ||
+        (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)))
       {
-        ts.p.x = ts.p.x / 1.4;
-        if (ts.p.x - 22 < 22)
-          ts.p.x = 22;
-        if (ts.p.x > 127 + 22)
-          ts.p.x = 127 + 22;
-        ts.virtual_keyboard_velocity = ts.p.x - 22;
-        virtual_keyboard_print_velocity_bar();
-        update_step_rec_buttons();
+        if (ts.p.y > 7 * CHAR_height_small && ts.p.y < 12 * CHAR_height_small + 20 && ts.p.x < 230)
+        {
+          ts.virtual_keyboard_velocity = ts.p.x - 70;
+          if (ts.p.x - 70 < 1)
+            ts.virtual_keyboard_velocity = 0;
+          else
+            if (ts.virtual_keyboard_velocity > 127)
+              ts.virtual_keyboard_velocity = 127;
+          virtual_keyboard_print_velocity_bar();
+        }
       }
-    }
-    if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) && seq.cycle_touch_element == 1))
-    {
-
-      if (check_button_on_grid(45, 10) && seq.step_recording)
+      if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) ||
+        (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor)))
       {
-        seq.auto_advance_step++;
-        if (seq.auto_advance_step > 2)
-          seq.auto_advance_step = 0;
+        if (check_button_on_grid(45, 10) && seq.step_recording)
+        {
+          seq.auto_advance_step++;
+          if (seq.auto_advance_step > 2)
+            seq.auto_advance_step = 0;
+          update_step_rec_buttons();
+        }
       }
-      update_step_rec_buttons();
     }
     if (check_button_on_grid(36, 1) && seq.running == false)
     {
@@ -849,65 +856,68 @@ FLASHMEM void handle_touchscreen_pattern_editor()
         draw_button_on_grid(45, 1, back_text, "TO SEQ", 0);
         display.fillRect(216, CHAR_height_small * 6, 95, CHAR_height_small * 6 + 1, COLOR_BACKGROUND);
         display.fillRect(0, CHAR_height_small * 10 + 1, 195, CHAR_height_small * 2 + 1, COLOR_BACKGROUND);
+        update_step_rec_buttons();
         virtual_keyboard();
         virtual_keyboard_print_buttons();
         virtual_keyboard_print_current_instrument();
       }
     }
-    else if (check_button_on_grid(36, 16) && seq.cycle_touch_element != 1) // toggle seq. playmode song/pattern only
+    if (seq.cycle_touch_element != 1)
     {
-      if (seq.play_mode)
-        seq.play_mode = false;
-      else
-        seq.play_mode = true;
-
-      if (seq.play_mode == false) // is in full song more
+      if (check_button_on_grid(36, 16)) // toggle seq. playmode song/pattern only
       {
-        draw_button_on_grid(36, 16, "PLAYNG", "SONG", 0);
-        seq.hunt_pattern = false;
-        draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
-      }
-      else // play only current pattern
-        draw_button_on_grid(36, 16, "LOOP", "PATT", 2);
-    }
-    else if (check_button_on_grid(45, 22) && seq.cycle_touch_element != 1) // hunt pattern
-    {
-      if (seq.hunt_pattern)
-        seq.hunt_pattern = false;
-      else
-        seq.hunt_pattern = true;
-
-      if (seq.hunt_pattern == false)
-        draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
-      else // play only current pattern
-        draw_button_on_grid(45, 22, "HUNT", "PATT", 2);
-    }
-    else if (check_button_on_grid(36, 22) && seq.cycle_touch_element != 1) // jump song editor
-    {
-      LCDML.OTHER_jumpToFunc(UI_func_song);
-    }
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element != 1)
-      if (check_button_on_grid(45, 16)) // jump pattern editor functions
-      {
-
-        if (seq.content_type[seq.active_pattern] == 0)
-        {
-          draw_button_on_grid(45, 16, "JUMP", "TOOLS", 2);
-          activesample = NUM_DRUMSET_CONFIG;
-          seq.menu = 0;
-          seq.active_function = 0;
-          pattern_editor_menu_0();
-        }
+        if (seq.play_mode)
+          seq.play_mode = false;
         else
-        {
-          draw_button_on_grid(45, 16, "JUMP", "TOOLS", 2);
-          temp_int = 111;
-          seq.menu = 0;
-          seq.active_function = 0;
-          pattern_editor_menu_0();
-        }
-      }
+          seq.play_mode = true;
 
+        if (seq.play_mode == false) // is in full song more
+        {
+          draw_button_on_grid(36, 16, "PLAYNG", "SONG", 0);
+          seq.hunt_pattern = false;
+          draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
+        }
+        else // play only current pattern
+          draw_button_on_grid(36, 16, "LOOP", "PATT", 2);
+      }
+      else if (check_button_on_grid(45, 22)) // hunt pattern
+      {
+        if (seq.hunt_pattern)
+          seq.hunt_pattern = false;
+        else
+          seq.hunt_pattern = true;
+
+        if (seq.hunt_pattern == false)
+          draw_button_on_grid(45, 22, "HUNT", "PATT", 0);
+        else // play only current pattern
+          draw_button_on_grid(45, 22, "HUNT", "PATT", 2);
+      }
+      else if (check_button_on_grid(36, 22) && seq.cycle_touch_element != 1) // jump song editor
+      {
+        LCDML.OTHER_jumpToFunc(UI_func_song);
+      }
+      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) && seq.cycle_touch_element != 1)
+        if (check_button_on_grid(45, 16)) // jump pattern editor functions
+        {
+
+          if (seq.content_type[seq.active_pattern] == 0)
+          {
+            draw_button_on_grid(45, 16, "JUMP", "TOOLS", 2);
+            activesample = NUM_DRUMSET_CONFIG;
+            seq.menu = 0;
+            seq.active_function = 0;
+            pattern_editor_menu_0();
+          }
+          else
+          {
+            draw_button_on_grid(45, 16, "JUMP", "TOOLS", 2);
+            temp_int = 111;
+            seq.menu = 0;
+            seq.active_function = 0;
+            pattern_editor_menu_0();
+          }
+        }
+    }
     if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
