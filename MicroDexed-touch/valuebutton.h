@@ -9,8 +9,8 @@
 
 template<class T> class ValueButton : public TouchButton {
 public:
-  ValueButton(int16_t x_coord, int16_t y_coord, T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
-  ValueButton(int16_t x_coord, int16_t y_coord, T &invalue, T min, T max, T increment, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
+  ValueButton(EditableValueBase **active, int16_t x_coord, int16_t y_coord, T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
+  ValueButton(EditableValueBase **active, int16_t x_coord, int16_t y_coord, T &invalue, T min, T max, T increment, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
 
 private:
   EditableValue<T> v;
