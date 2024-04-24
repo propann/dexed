@@ -6704,26 +6704,26 @@ extern void set_sample_pitch(uint8_t sample, float playbackspeed);
 
 FLASHMEM void pattern_editor_play_current_step(uint8_t step)
 {
-  if (seq.running == false && seq.note_data[seq.active_pattern][step] > 0 && step <16)
+  if (seq.running == false && seq.note_data[seq.active_pattern][step] > 0 && step < 16)
   {
-      if (seq.content_type[seq.active_pattern] == 0)
-      { // Drumtrack
+    if (seq.content_type[seq.active_pattern] == 0)
+    { // Drumtrack
 
-        if (seq.vel[seq.active_pattern][step] > 209) // it is a pitched sample
-        {
-          // Drum[slot]->setPlaybackRate( pow (2, (inNote - 72) / 12.00) * drum_config[sample].pitch ); get_sample_vol_max(sample)
-          set_sample_pitch(seq.vel[seq.active_pattern][step] - 210, (float)pow(2, (seq.note_data[seq.active_pattern][step] - 72) / 12.00) * get_sample_p_offset(seq.vel[seq.active_pattern][step] - 210));
-          handleNoteOn(drum_midi_channel, seq.vel[seq.active_pattern][step], 90, 0);
-        }
-        else // else play normal drum sample
-          handleNoteOn(drum_midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
-      }
-      else  // is not a sample, preview note with epiano by default
+      if (seq.vel[seq.active_pattern][step] > 209) // it is a pitched sample
       {
-        handleNoteOn(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
-       //delay(20);
-      handleNoteOff(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], 0, 0);
+        // Drum[slot]->setPlaybackRate( pow (2, (inNote - 72) / 12.00) * drum_config[sample].pitch ); get_sample_vol_max(sample)
+        set_sample_pitch(seq.vel[seq.active_pattern][step] - 210, (float)pow(2, (seq.note_data[seq.active_pattern][step] - 72) / 12.00) * get_sample_p_offset(seq.vel[seq.active_pattern][step] - 210));
+        handleNoteOn(drum_midi_channel, seq.vel[seq.active_pattern][step], 90, 0);
       }
+      else // else play normal drum sample
+        handleNoteOn(drum_midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
+    }
+    else  // is not a sample, preview note with epiano by default
+    {
+      handleNoteOn(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
+      //delay(20);
+      handleNoteOff(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], 0, 0);
+    }
   }
 }
 
@@ -9567,6 +9567,10 @@ void UI_func_seq_pattern_editor(uint8_t param)
             activesample = constrain(activesample + 1, 0, NUM_DRUMSET_CONFIG + 5);
           else if (LCDML.BT_checkUp())
             activesample = constrain(activesample - 1, 0, NUM_DRUMSET_CONFIG + 5);
+
+          if (seq.running == false && activesample < NUM_DRUMSET_CONFIG - 1) {
+            handleNoteOn(drum_midi_channel, drum_config[activesample].midinote, 90, 0);
+          }
         }
       }
       else // is in Instrument Mode
@@ -9678,7 +9682,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
                   seq.note_data[seq.active_pattern][seq.menu - 3] = temp_int;
                 else
                   seq.note_data[seq.active_pattern][seq.menu - 3] = 12; // else insert C2
-                   pattern_editor_play_current_step(seq.menu - 3);
+                pattern_editor_play_current_step(seq.menu - 3);
               }
               else
               { // step is an other sample, replace with selected pitched sample
@@ -9699,7 +9703,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
                 {
                   seq.note_data[seq.active_pattern][seq.menu - 3] = drum_config[activesample].midinote;
                   seq.vel[seq.active_pattern][seq.menu - 3] = 120;
-                   pattern_editor_play_current_step(seq.menu - 3); 
+                  pattern_editor_play_current_step(seq.menu - 3);
                 }
               }
           }
@@ -9725,7 +9729,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
                   seq.vel[seq.active_pattern][seq.menu - 3] = 200;
                 else // normal note
                   seq.vel[seq.active_pattern][seq.menu - 3] = 120;
-                  pattern_editor_play_current_step(seq.menu - 3);
+                pattern_editor_play_current_step(seq.menu - 3);
               }
             }
           }
