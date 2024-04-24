@@ -13,16 +13,19 @@ public:
     LONGPRESSED,
   };
 
-  TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(void)> clicked);
+  TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked);
   void processPressed();
   void drawNow();
-  void draw(std::string label, std::string sub, uint8_t color);
+  void draw(std::string label, std::string sub, uint16_t color);
+  void setSelected(bool selected);
 
 private:
+  bool isSelected = false;;
+
   int16_t x;
   int16_t y;
   std::function<void(TouchButton*)> drawHandler{};
-  std::function<void(void)> clickedHandler{};
+  std::function<void(TouchButton*)> clickedHandler{};
   PressedState pressedState;
 };
 

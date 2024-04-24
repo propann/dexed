@@ -46,7 +46,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     display.setCursor(165, 175);
     display.printf("WILL DELETE ALL DATA!");
   },
-  [ this ](){ // clickedHandler
+  [ this ](auto *b){ // clickedHandler
     if(data->numberOfBars != numberOfBarsTemp) {
       handleStop();
       liveSeqPtr->changeNumberOfBars(numberOfBarsTemp);
@@ -63,7 +63,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ this ](auto *b) { // drawHandler
     b->draw("TOOL", showingTools == TOOL_FILL ? "FILL" : "ARP", 1);
   },
-  [ this ]() { // clickedHandler
+  [ this ](auto *b) { // clickedHandler
     switch (showingTools) {
     case TOOL_FILL:
       showingTools = TOOL_ARP;
@@ -98,7 +98,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ ](auto *b) { // drawHandler
     b->draw("FILL", "NOW", 2);
   },
-  [ this ]() { // clickedHandler
+  [ this ](auto *b) { // clickedHandler
     liveSeqPtr->fillTrackLayer();
   }));
 
@@ -106,7 +106,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   buttonsArp.push_back(new ValueButton<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 15, data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8,
   [ this ] (auto *b, auto *v) { // drawHandler
     b->draw("NUM", v->toString(), v->getValue() == 0 ? 1 : 3);
-    DBG_LOG(printf("outer act is %i\n", currentValue));
   }));
   buttonsArp.push_back(new ValueButton<uint8_t>(&currentValue, BUTTON_COLUMNS_X[2], 15, (uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
   [ this ] (auto *b, auto *v) { // drawHandler
@@ -191,13 +190,13 @@ void UI_LiveSequencer::processLCDM(void) {
   // ****** LOOP *********
   if (LCDML.FUNC_loop()) {
     if(LCDML.BT_checkDown()) {
-      if(currentValue != nullptr) {
-        currentValue->next();
+      if(currentValue.valueBase != nullptr) {
+        currentValue.valueBase->next();
       }
     }
     if(LCDML.BT_checkUp()) {
-      if(currentValue != nullptr) {
-        currentValue->previous();
+      if(currentValue.valueBase != nullptr) {
+        currentValue.valueBase->previous();
       }
     }
     if(LCDML.BT_checkEnter()) {
@@ -425,7 +424,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         }
         // song mute quantize denom
         if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
-          currentValue = songMuteQuant->cycle();
+          currentValue.valueBase = songMuteQuant->cycle();
           guiUpdateFlags |= drawSongQuant;
         }
 

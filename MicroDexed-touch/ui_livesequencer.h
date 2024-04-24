@@ -37,7 +37,7 @@ private:
   bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
   EditableValue<uint8_t> *songMuteQuant;
-  EditableValueBase *currentValue;
+  ActiveValue currentValue;
 
   ValueButton<uint8_t> *buttonPatternLength;
   TouchButton *applyPatternLength;

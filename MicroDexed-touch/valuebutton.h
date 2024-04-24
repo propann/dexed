@@ -7,10 +7,15 @@
 #include "editableValue.h"
 #include "touchbutton.h"
 
+struct ActiveValue {
+  EditableValueBase *valueBase;
+  TouchButton *button;
+};
+
 template<class T> class ValueButton : public TouchButton {
 public:
-  ValueButton(EditableValueBase **active, int16_t x_coord, int16_t y_coord, T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
-  ValueButton(EditableValueBase **active, int16_t x_coord, int16_t y_coord, T &invalue, T min, T max, T increment, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
+  ValueButton(ActiveValue *active, int16_t x_coord, int16_t y_coord, T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
+  ValueButton(ActiveValue *active, int16_t x_coord, int16_t y_coord, T &invalue, T min, T max, T increment, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw);
 
 private:
   EditableValue<T> v;
