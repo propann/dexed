@@ -37,7 +37,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20,
   [ this ] (auto *b) { // drawHandler
     const bool isSame = (data->numberOfBars == numberOfBarsTemp);
-    b->draw("APPLY", "NOW", isSame ? 1 : 2);
+    b->draw("APPLY", "NOW", isSame ? TouchButton::COLOR_ACTIVE : TouchButton::COLOR_RED);
     display.setTextSize(1);
     display.setTextColor(isSame ? GREY2 : RED, GREY3);
     display.setCursor(165, 165);
@@ -54,18 +54,18 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
 
   buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 15, data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), v->getValue() == 1 ? 1 : 3);
+    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::COLOR_ACTIVE : TouchButton::COLOR_HIGHLIGHTED);
   }));
 
   buttonPatternLength = new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 20, numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("LENGTH", v->toString(), 1);
+    b->draw("LENGTH", v->toString(), TouchButton::COLOR_ACTIVE);
     applyPatternLength->drawNow();
   });
 
   buttonToggleTools = new TouchButton(BUTTON_COLUMNS_X[0], 15,
   [ this ](auto *b) { // drawHandler
-    b->draw("TOOL", showingTools == TOOL_FILL ? "FILL" : "ARP", 1);
+    b->draw("TOOL", showingTools == TOOL_FILL ? "FILL" : "ARP", TouchButton::COLOR_ACTIVE);
   },
   [ this ](auto *b) { // clickedHandler
     switch (showingTools) {
@@ -84,22 +84,22 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     buttonsPattQuant.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[track], 10, data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
     [ this ] (auto *b, auto *v) { // drawHandler
-      b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), v->getValue() == 1 ? 1 : 3);
+      b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::COLOR_ACTIVE : TouchButton::COLOR_HIGHLIGHTED);
     }));
   }
 
   // FILL TOOL
   buttonsFillTool.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[2], 15, data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16, 
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("NUM", v->toString(), 3);
+    b->draw("NUM", v->toString(), TouchButton::COLOR_HIGHLIGHTED);
   }));
   buttonsFillTool.push_back(new ValueButtonRange<uint8_t>(&currentValue, BUTTON_COLUMNS_X[3], 15, data->fillNotes.offset, 0, 7, 1, 0, 
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("OFF", v->toString(), 3);
+    b->draw("OFF", v->toString(), TouchButton::COLOR_HIGHLIGHTED);
   }));
   buttonsFillTool.push_back(new TouchButton(BUTTON_COLUMNS_X[5], 15,
   [ ](auto *b) { // drawHandler
-    b->draw("FILL", "NOW", 2);
+    b->draw("FILL", "NOW", TouchButton::COLOR_RED);
   },
   [ this ](auto *b) { // clickedHandler
     liveSeqPtr->fillTrackLayer();
@@ -108,23 +108,23 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   // ARP TOOL
   buttonsArp.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 15, data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8,
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("NUM", v->toString(), v->getValue() == 0 ? 1 : 3);
+    b->draw("NUM", v->toString(), (v->getValue() == 0) ? TouchButton::COLOR_ACTIVE : TouchButton::COLOR_HIGHLIGHTED);
   }));
   buttonsArp.push_back(new ValueButtonRange<uint8_t>(&currentValue, BUTTON_COLUMNS_X[2], 15, (uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), 3);
+    b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), TouchButton::COLOR_HIGHLIGHTED);
   }));
   buttonsArp.push_back(new ValueButtonRange<uint16_t>(&currentValue, BUTTON_COLUMNS_X[3], 15, data->arpSettings.length, 50, 500, 10, 150,
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("LEN", v->toString(), v->getValue() == 0 ? 1 : 3);
+    b->draw("LEN", v->toString(), v->getValue() == 0 ? TouchButton::COLOR_ACTIVE : TouchButton::COLOR_HIGHLIGHTED);
   }));
   buttonsArp.push_back(new ValueButtonRange<int8_t>(&currentValue, BUTTON_COLUMNS_X[4], 15, data->arpSettings.swing, -8, 8, 1, 0,
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("SWING", v->toString(), 3);
+    b->draw("SWING", v->toString(), TouchButton::COLOR_HIGHLIGHTED);
   }));
   buttonsArp.push_back(new ValueButtonRange<uint8_t>(&currentValue, BUTTON_COLUMNS_X[5], 15, data->arpSettings.latch, 0, 1, 1, 1,
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", 3);
+    b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", TouchButton::COLOR_HIGHLIGHTED);
   }));
 }
 

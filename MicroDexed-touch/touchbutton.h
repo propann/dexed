@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string>
 #include <functional>
+#include "config.h"
 
 class TouchButton {
 public:
@@ -13,14 +14,37 @@ public:
     LONGPRESSED,
   };
 
+  enum ButtonColor {
+    COLOR_NORMAL = 0,
+    COLOR_ACTIVE = 1,
+    COLOR_RED = 2,
+    COLOR_HIGHLIGHTED = 3,
+    COLOR_NUM = 4
+  };
+
+
   TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked);
   void processPressed();
   void drawNow();
-  void draw(std::string label, std::string sub, uint16_t color);
+  void draw(const std::string label, const std::string sub, ButtonColor colors);
   void setSelected(bool selected);
 
 private:
-  bool isSelected = false;;
+
+  struct ColorCombo {
+    uint16_t text;
+    uint16_t bg;
+  };
+
+  void drawButton(uint8_t x, uint8_t y, const std::string label, const std::string sub, ColorCombo colors);
+  bool isSelected = false;
+
+  const ColorCombo colorMap[COLOR_NUM] = {
+    { GREY1, GREY2 },               // COLOR_NORMAL
+    { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
+    { COLOR_SYSTEXT, RED },         // COLOR_RED
+    { COLOR_SYSTEXT, MIDDLEGREEN }  // COLOR_HIGHLIGHTED
+  };
 
   int16_t x;
   int16_t y;
