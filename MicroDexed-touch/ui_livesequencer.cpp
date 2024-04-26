@@ -616,7 +616,9 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         for(auto *b : buttonsFillTool) {
           b->drawNow();
         }
-        draw_button_on_grid(BUTTON_COLUMNS_X[4], 15, "", "", 98); // spacer
+        // clear spacer
+        display.console = true;
+        display.fillRect(BUTTON_COLUMNS_X[4] * CHAR_width_small, 15 * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, GREY3);
       }
       if(showingTools == TOOL_ARP) {
         for(auto *b : buttonsArp) {
