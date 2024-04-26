@@ -38,13 +38,11 @@ private:
 
   ActiveValue currentValue;
 
-  ValueButton<uint8_t> *buttonPatternLength;
   TouchButton *applyPatternLength;
-
   TouchButton *buttonToggleTools;
 
   std::vector<TouchButton*> buttonsSongTools;
-  std::vector<TouchButton*> buttonsPattQuant;
+  std::vector<TouchButton*> buttonsPattTools;
   std::vector<TouchButton*> buttonsFillTool;
   std::vector<TouchButton*> buttonsArp;
 
@@ -77,10 +75,9 @@ private:
     drawTrackButtons = (1 << 1),
     drawLayerButtons = (1 << 2),
     drawTools = (1 << 3),
-    drawQuantize = (1 << 4),
+    drawPatternTools = (1 << 4),
     clearBottomArea = (1 << 5),
     drawSongSettings = (1 << 6),
-    drawPattLength = (1 << 7),
     drawActiveNotes = (1 << 8),
     drawDeleteAll = (1 << 9),
     drawDeleteSong = (1 << 10),

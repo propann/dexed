@@ -34,7 +34,14 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   instance = this;
   data = sequencer->getData();
 
-  applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20,
+
+
+  buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 15, data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
+  [ this ] (auto *b, auto *v) { // drawHandler
+    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
+  }));
+
+  TouchButton *applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20,
   [ this ] (auto *b) { // drawHandler
     const bool isSame = (data->numberOfBars == numberOfBarsTemp);
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_RED);
@@ -52,16 +59,12 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     }
   });
 
-  buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 15, data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
-  [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
-  }));
-
-  buttonPatternLength = new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 20, numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
-  [ this ] (auto *b, auto *v) { // drawHandler
+  buttonsPattTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 20, numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
+  [ applyPatternLength ] (auto *b, auto *v) { // drawHandler
     b->draw("LENGTH", v->toString(), TouchButton::BUTTON_ACTIVE);
     applyPatternLength->drawNow();
-  });
+  }));
+  buttonsPattTools.push_back(applyPatternLength);
 
   buttonToggleTools = new TouchButton(BUTTON_COLUMNS_X[0], 15,
   [ this ](auto *b) { // drawHandler
@@ -82,7 +85,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
 
   // quantize
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
-    buttonsPattQuant.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[track], 10, data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
+    buttonsPattTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[track], 10, data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
     [ this ] (auto *b, auto *v) { // drawHandler
       b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
     }));
@@ -256,7 +259,7 @@ void UI_LiveSequencer::applyScreenRedrawGuiFlags(void) {
       break;
 
     case PagePattern::PAGE_PATT_SETINGS:
-      guiUpdateFlags |= (drawTools | drawQuantize | drawPattLength | drawDeleteAll);
+      guiUpdateFlags |= (drawTools | drawPatternTools | drawDeleteAll);
       break;
     }
   }
@@ -390,7 +393,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         break;
 
       case PagePattern::PAGE_PATT_SETINGS:
-        for(auto *b : buttonsPattQuant) {
+        for(auto *b : buttonsPattTools) {
           b->processPressed();
         }
         buttonToggleTools->processPressed();
@@ -404,9 +407,6 @@ void UI_LiveSequencer::handleTouchscreen(void) {
             b->processPressed();
           }
         }
-
-        buttonPatternLength->processPressed();
-        applyPatternLength->processPressed();
         break;
 
       case PageSong::PAGE_SONG_SETTINGS:
@@ -602,8 +602,12 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     }
   }
   if (isLayerViewActive == false) {
-    if (guiFlags & drawQuantize) {
-      for(auto *b : buttonsPattQuant) {
+    if (guiFlags & drawPatternTools) {
+
+      // number of bars for one pattern
+      draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
+
+      for(auto *b : buttonsPattTools) {
         b->drawNow();
       }
     }
@@ -625,13 +629,6 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
           b->drawNow();
         }
       }
-    }
-
-    if (guiFlags & drawPattLength) {
-      // number of bars for one pattern
-      draw_button_on_grid(BUTTON_COLUMNS_X[0], 20, "PATTERN", "LENGTH", 97); // label only
-      buttonPatternLength->drawNow();
-      applyPatternLength->drawNow();
     }
 
     if (guiFlags & drawSongSettings) {
