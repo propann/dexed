@@ -15,11 +15,12 @@ public:
   };
 
   enum ButtonColor {
-    COLOR_NORMAL = 0,
-    COLOR_ACTIVE = 1,
-    COLOR_RED = 2,
-    COLOR_HIGHLIGHTED = 3,
-    COLOR_NUM = 4
+    BUTTON_NORMAL = 0,
+    BUTTON_ACTIVE = 1,
+    BUTTON_RED = 2,
+    BUTTON_HIGHLIGHTED = 3,
+    BUTTON_BACKGROUND = 4,
+    BUTTONCOLOR_NUM = 5
   };
 
 
@@ -39,7 +40,7 @@ private:
   void drawButton(uint8_t x, uint8_t y, const std::string label, const std::string sub, ColorCombo colors);
   bool isSelected = false;
 
-  const ColorCombo colorMap[COLOR_NUM] = {
+  const ColorCombo colorMap[BUTTONCOLOR_NUM] = {
     { GREY1, GREY2 },               // COLOR_NORMAL
     { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
     { COLOR_SYSTEXT, RED },         // COLOR_RED
