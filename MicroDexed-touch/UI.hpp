@@ -275,6 +275,10 @@ extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
 extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
+extern void update_step_rec_buttons();
+extern void virtual_keyboard_print_current_instrument();
+extern void virtual_keyboard_print_velocity_bar();
+extern void update_latch_button();
 
 #if defined(COMPILE_FOR_FLASH)
 void UI_draw_waveform_preview_sample(int samplenumber);
@@ -386,6 +390,7 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
+extern void virtual_keyboard_smart_preselect_mode();
 
 bool remote_console_keystate_select;
 bool remote_console_keystate_a;
@@ -1033,12 +1038,12 @@ FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const ch
     }
     display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6);
     display.print(t1);
-    if (t2[1] == '\0')
+    if (t2[1] == '\0' && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))// big numbers for mute matrix
     {
       display.setCursor((x + 2) * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6 + CHAR_height_small);
       display.setTextSize(2);
     }
-    else if (t2[0] >= '1' && t2[0] < '9')
+    else if (t2[0] >= '1' && t2[0] < '9' && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))  // big numbers for mute matrix
     {
       display.setCursor((x + 2) * CHAR_width_small - 4, y * CHAR_height_small + 6 + CHAR_height_small);
       display.setTextSize(2);
@@ -2061,6 +2066,32 @@ void calc_chain_endline()
       chain_endline = y;
       break;
     }
+  }
+}
+
+uint8_t chain_warning_number_buffer;
+
+FLASHMEM void empty_chain_warning_text_in_song_page()
+{
+  if (chain_warning_number_buffer != seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos])
+  {
+    if (seq.chain[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][0] == 99)
+    {
+      char tmptxt[5];
+      display.setCursor(13 * CHAR_width_small, 29 * CHAR_height_small);
+      display.setTextSize(1);
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("CHAIN "));
+      snprintf_P(tmptxt, sizeof(tmptxt), PSTR("[%02d]"), seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]);
+      display.print(tmptxt);
+      display.print(F(" IS EMPTY"));
+    }
+    else
+    {
+      display.console = true;
+      display.fillRect(13 * CHAR_width_small, 29 * CHAR_height_small, 113, 7, COLOR_BACKGROUND);
+    }
+    chain_warning_number_buffer = seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos];
   }
 }
 
@@ -6721,7 +6752,7 @@ FLASHMEM void pattern_editor_play_current_step(uint8_t step)
     else  // is not a sample, preview note with epiano by default
     {
       handleNoteOn(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
-      //delay(20);
+
       handleNoteOff(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], 0, 0);
     }
   }
@@ -8056,10 +8087,8 @@ void UI_func_seq_vel_editor(uint8_t param)
         }
         else if (LCDML.BT_checkUp())
         {
-
           if (seq.menu == 0)
           {
-
             seq.menu_status = 2;
             LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
           }
@@ -8080,6 +8109,10 @@ void UI_func_seq_vel_editor(uint8_t param)
           seq.active_pattern = constrain(seq.active_pattern + 1, 0, NUM_SEQ_PATTERN - 1);
         else if (LCDML.BT_checkUp())
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
+        display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+        print_content_type();
+        virtual_keyboard_smart_preselect_mode();
+        update_latch_button();
       }
     }
     else if (seq.active_function == 0 && seq.menu > 0 && seq.menu < 17)
@@ -8133,6 +8166,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         else if (LCDML.BT_checkUp())
           seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] - 1, 0, 2);
 
+        seq_printAllSeqSteps();
         if (seq.content_type[seq.active_pattern] == 0)
           seq.note_editor_view = 0;
         else
@@ -8194,7 +8228,9 @@ void UI_func_seq_vel_editor(uint8_t param)
         if (seq.note_editor_view != 0)
         {
           seq.note_editor_view = 0;
-          border3_clear();
+          if (seq.cycle_touch_element == 0) // touch keyboard is off
+            border3_clear();
+
           print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
         }
         else
@@ -8205,7 +8241,8 @@ void UI_func_seq_vel_editor(uint8_t param)
         if (seq.note_editor_view != 1)
         {
           seq.note_editor_view = 1;
-          border3_clear();
+          if (seq.cycle_touch_element == 0) // touch keyboard is off
+            border3_clear();
           if (seq.cycle_touch_element != 1)
             print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
         }
@@ -8470,6 +8507,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextSize(2);
       print_edit_mode();
     }
+    virtual_keyboard_smart_preselect_mode();
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -9266,6 +9304,9 @@ void seq_pattern_editor_update_dynamic_elements()
     virtual_keyboard_print_buttons();
     draw_button_on_grid(45, 1, "BACK", "TO SEQ", 0);
     virtual_keyboard();
+    update_step_rec_buttons();
+    virtual_keyboard_print_current_instrument();
+    virtual_keyboard_print_velocity_bar();
   }
   display.setTextSize(2);
 }
@@ -9475,6 +9516,11 @@ void pattern_editor_menu_0()
   }
 }
 
+FLASHMEM void play_sample_on_virtual_drumpads(uint8_t note)
+{
+  handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, drum_config[note - 14].midinote, ts.virtual_keyboard_velocity);
+}
+
 void UI_func_seq_pattern_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -9595,6 +9641,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
 
         display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
         print_content_type();
+        virtual_keyboard_smart_preselect_mode();
+        update_latch_button();
       }
     }
     if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -9810,12 +9858,11 @@ void UI_func_seq_pattern_editor(uint8_t param)
         show(0, 1, 9, basename(drum_config[activesample].name));
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print("  ");
-        if (seq.note_editor_view != 0)
+        if (seq.note_editor_view != 0 && seq.cycle_touch_element != 1)
         {
           seq.note_editor_view = 0;
           border3_clear();
-          if (seq.cycle_touch_element != 1)
-            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
         }
         else
         {
@@ -9825,33 +9872,30 @@ void UI_func_seq_pattern_editor(uint8_t param)
       }
       else
       {
-        if (seq.cycle_touch_element == 0)
+        // Print note buffer when switching track and track is an instrument track
+        setCursor_textGrid(0, 0);
+        display.print(" ");
+        display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
+        display.print(noteNames[temp_int % 12][0]);
+        if (noteNames[temp_int % 12][1] != '\0')
         {
-          // Print note buffer when switching track and track is an instrument track
-          setCursor_textGrid(0, 0);
-          display.print(" ");
-          display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-          display.print(noteNames[temp_int % 12][0]);
-          if (noteNames[temp_int % 12][1] != '\0')
-          {
-            display.print(noteNames[temp_int % 12][1]);
-          }
-          display.print((temp_int / 12) - 1);
-          display.print(F("       "));
-          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          display.print(noteNames[temp_int % 12][1]);
+        }
+        display.print((temp_int / 12) - 1);
+        display.print(F("       "));
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-          if (seq.note_editor_view != 1)
-          {
-            seq.note_editor_view = 1;
-            border3_clear();
-            if (seq.cycle_touch_element != 1)
-              print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
-          }
-          else
-          {
-            if (seq.cycle_touch_element != 1)
-              print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
-          }
+        if (seq.note_editor_view != 1 && seq.cycle_touch_element != 1)
+        {
+          seq.note_editor_view = 1;
+          border3_clear();
+          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
+
+        }
+        else
+        {
+          if (seq.cycle_touch_element != 1)
+            print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
         }
       }
       display.setTextSize(2);
@@ -10136,6 +10180,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
           display.setTextSize(2);
         }
     }
+    virtual_keyboard_smart_preselect_mode();
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -10956,7 +11001,7 @@ void UI_func_microsynth(uint8_t param)
     // setup function
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
-
+    virtual_keyboard_smart_preselect_mode();
     if (seq.cycle_touch_element != 1)
     {
       draw_button_on_grid(45, 1, "", "", 99); // print keyboard icon
@@ -11088,6 +11133,7 @@ void UI_func_microsynth(uint8_t param)
       else
         microsynth_selected_instance = 0;
       update_microsynth_instance_icons();
+      virtual_keyboard_smart_preselect_mode();
       menuhelper_redraw = true;
       generic_full_draw_required = true;
     }
@@ -11919,6 +11965,7 @@ FLASHMEM void UI_func_song(uint8_t param)
       print_song_mode_help();
       seq.help_text_needs_refresh = false;
     }
+
     if (seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] != song_previous_displayed_chain)
     {
       //current displayed chain has changed
@@ -11929,6 +11976,7 @@ FLASHMEM void UI_func_song(uint8_t param)
       // LOG.print(F(" to "));
       // LOG.print(seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]);
 #endif
+
       song_page_full_draw_chain_complete = false;
       song_page_full_draw_transpose_complete = false;
       song_previous_displayed_chain = seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos];
@@ -11943,6 +11991,7 @@ FLASHMEM void UI_func_song(uint8_t param)
     print_chain_matrix_in_song_page();
     print_chain_steps_in_song_page();
     print_transpose_in_song_page();
+    empty_chain_warning_text_in_song_page();
 
     //DEBUG
         // display.setTextColor(COLOR_SYSTEXT, DARKGREEN);
@@ -15168,6 +15217,7 @@ FLASHMEM void UI_func_braids(uint8_t param)
     // setup function
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+    virtual_keyboard_smart_preselect_mode();
     seq.cycle_touch_element = 1;
     virtual_keyboard();
     virtual_keyboard_print_buttons();
@@ -18797,6 +18847,31 @@ FLASHMEM void print_perfmod_buttons()
   }
 }
 
+FLASHMEM void print_drumpads()
+{
+  uint8_t offset = 14;
+  if (seq.cycle_touch_element == 1) {
+    char tmp[14];
+    char tmp2[14];
+    for (uint8_t x = 0; x < 6; x++)
+    {
+      snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + ts.virtual_keyboard_octave * 12 - offset].name);
+      snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + ts.virtual_keyboard_octave * 12 - offset].name[6]);
+      if (x + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+        draw_button_on_grid(x * 9 + 1, 21, tmp, tmp2, 1);
+      else
+        draw_button_on_grid(x * 9 + 1, 21, "", "", 1);
+
+      snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name);
+      snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name[6]);
+      if (x + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+        draw_button_on_grid(x * 9 + 1, 26, tmp, tmp2, 1);
+      else
+        draw_button_on_grid(x * 9 + 1, 26, "", "", 1);
+    }
+  }
+}
+
 FLASHMEM void print_voice_select_default_help()
 {
   if (seq.cycle_touch_element != 1)
@@ -19031,6 +19106,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     dexed_onscreen_algo = 88; // dummy value to force draw on screen init
     display.fillScreen(COLOR_BACKGROUND);
     border0();
+    virtual_keyboard_smart_preselect_mode();
     ts.fav_buttton_state = 0; //clear touch button state when starting page
     seq.cycle_touch_element = 0;
     if (LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume) && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
@@ -19169,7 +19245,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed() && dexed_live_mod.active_button != 99)
     {
       toggle_dexed_instance_in_voice_select();
-
+      virtual_keyboard_smart_preselect_mode();
       draw_favorite_icon(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
     }
     else if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -22684,7 +22760,7 @@ FLASHMEM void UI_func_calibrate_touch(uint8_t param)
   {
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
-  }
+}
 #endif
 }
 
