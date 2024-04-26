@@ -15,8 +15,8 @@ public:
 template<class T> class EditableValue : public EditableValueBase {
 
 public:
-  EditableValue(T &value, std::vector<T> values, T defaultValue, std::function<void(void)> changed = [](){});
-  EditableValue(T &value, T min, T max, T increment, T defaultValue, std::function<void(void)> changed = [](){});
+  EditableValue(T &value, std::vector<T> values, T defaultValue, std::function<void(EditableValue<T> *v)> changed);
+  EditableValue(T &value, T min, T max, T increment, T defaultValue, std::function<void(EditableValue<T> *v)> changed);
 
   EditableValueBase* cycle();
   bool next(void);
@@ -40,7 +40,7 @@ private:
   T rangeMax;
   T rangeIncrement;
 
-  std::function<void()> changedHandler{};
+  std::function<void(EditableValue *v)> changedHandler{};
 };
 template class EditableValue<uint16_t>;
 template class EditableValue<uint8_t>;
