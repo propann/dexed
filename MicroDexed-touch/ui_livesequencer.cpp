@@ -34,7 +34,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   instance = this;
   data = sequencer->getData();
 
-  songMuteQuant = new EditableValue<uint8_t>(data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1, [](EditableValue<uint8_t>*){});
   applyPatternLength = new TouchButton(BUTTON_COLUMNS_X[2], 20,
   [ this ] (auto *b) { // drawHandler
     const bool isSame = (data->numberOfBars == numberOfBarsTemp);
@@ -52,6 +51,11 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
       liveSeqPtr->changeNumberOfBars(numberOfBarsTemp);
     }
   });
+
+  buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 15, data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
+  [ this ] (auto *b, auto *v) { // drawHandler
+    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), v->getValue() == 1 ? 1 : 3);
+  }));
 
   buttonPatternLength = new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[1], 20, numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
   [ this ] (auto *b, auto *v) { // drawHandler
@@ -80,8 +84,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     buttonsPattQuant.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_COLUMNS_X[track], 10, data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
     [ this ] (auto *b, auto *v) { // drawHandler
-      const std::string text = (v->getValue() == 1) ? "NONE" : v->toString();
-      b->draw("QUANT", text, v->getValue() == 1 ? 1 : 3);
+      b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), v->getValue() == 1 ? 1 : 3);
     }));
   }
 
@@ -423,11 +426,9 @@ void UI_LiveSequencer::handleTouchscreen(void) {
           }
         }
         // song mute quantize denom
-        if (check_button_on_grid(BUTTON_COLUMNS_X[1], 15)) {
-          currentValue.valueBase = songMuteQuant->cycle();
-          guiUpdateFlags |= drawSongQuant;
+        for(auto *b : buttonsSongTools) {
+          b->processPressed();
         }
-
         break;
       }
       if (isLayerViewActive == false) {
@@ -657,7 +658,9 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
     if (guiFlags & drawSongQuant) {
       draw_button_on_grid(BUTTON_COLUMNS_X[0], 15, "MUTE", "QUANT", 97); // label only
-      draw_button_on_grid(BUTTON_COLUMNS_X[1], 15, "QUANT", songMuteQuant->toString(), (songMuteQuant->getValue() == 1) ? 1 : 3);
+      for(auto *b : buttonsSongTools) {
+        b->drawNow();
+      }
     }
 
     if (guiFlags & (drawDeleteSong | drawDeleteAll)) {
