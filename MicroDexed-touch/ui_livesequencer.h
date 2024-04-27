@@ -81,6 +81,9 @@ private:
     drawTime = (1 << 12)
   };
 
+  uint16_t GRID_X[6];
+  uint16_t GRID_Y[6];
+
   bool isModeToolActive(void);
   void redrawScreen(void);
   void drawGUI(uint16_t& guiFlags);

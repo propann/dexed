@@ -26,7 +26,7 @@ static constexpr int BUTTON_HEIGHT = CHAR_height_small * button_size_y;
 static constexpr int BUTTON_WIDTH = CHAR_width_small * button_size_x;
 static constexpr uint8_t BUTTON_OFFSET_X = 0; // not possible to distribute better with button grid
 static constexpr uint8_t BUTTON_OFFSET_Y = 0; // not possible to distribute better with button grid
-static constexpr uint8_t BUTTON_GRID_X[LiveSequencer::LIVESEQUENCER_NUM_TRACKS] = { BUTTON_OFFSET_X, BUTTON_OFFSET_X + 9, BUTTON_OFFSET_X + 18, BUTTON_OFFSET_X + 27, BUTTON_OFFSET_X + 36, BUTTON_OFFSET_X + 45 };
+static constexpr uint8_t BUTTON_GRID_X[6] = { BUTTON_OFFSET_X, BUTTON_OFFSET_X + 9, BUTTON_OFFSET_X + 18, BUTTON_OFFSET_X + 27, BUTTON_OFFSET_X + 36, BUTTON_OFFSET_X + 45 };
 static constexpr uint8_t BUTTON_GRID_Y[6] = { BUTTON_OFFSET_Y, BUTTON_OFFSET_Y + 5, BUTTON_OFFSET_Y + 10, BUTTON_OFFSET_Y + 15, BUTTON_OFFSET_Y + 20, BUTTON_OFFSET_Y + 25 };
 
 UI_LiveSequencer* instance;
@@ -35,6 +35,11 @@ LiveSequencer::LiveSeqData *data;
 UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
   instance = this;
   data = sequencer->getData();
+
+  for(int i = 0; i < 6; i++) {
+    GRID_X[i] = BUTTON_OFFSET_X + (i * 9 * CHAR_width_small);
+    GRID_Y[i] = BUTTON_OFFSET_Y + (i * 5 * CHAR_height_small);
+  }
 
   buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, BUTTON_GRID_X[1], BUTTON_GRID_Y[3], data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
   [ this ] (auto *b, auto *v) { // drawHandler
