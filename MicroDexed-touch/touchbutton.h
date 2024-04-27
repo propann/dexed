@@ -19,12 +19,12 @@ public:
     BUTTON_ACTIVE = 1,
     BUTTON_RED = 2,
     BUTTON_HIGHLIGHTED = 3,
-    BUTTON_BACKGROUND = 4,
+    BUTTON_LABEL = 4,
     BUTTONCOLOR_NUM = 5
   };
 
 
-  TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked);
+  TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){});
   void processPressed();
   void drawNow();
   void draw(const std::string label, const std::string sub, ButtonColor colors);
@@ -44,7 +44,8 @@ private:
     { GREY1, GREY2 },               // COLOR_NORMAL
     { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
     { COLOR_SYSTEXT, RED },         // COLOR_RED
-    { COLOR_SYSTEXT, MIDDLEGREEN }  // COLOR_HIGHLIGHTED
+    { COLOR_SYSTEXT, MIDDLEGREEN }, // COLOR_HIGHLIGHTED
+    { COLOR_SYSTEXT, GREY3 }        // COLOR_LABEL
   };
 
   int16_t x;

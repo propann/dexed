@@ -43,7 +43,10 @@ private:
   std::vector<TouchButton*> buttonsToolSelect;
   std::vector<TouchButton*> buttonsSongTools;
   std::vector<TouchButton*> buttonsPattTools;
-  std::vector<TouchButton*> buttonsArp;
+  std::vector<TouchButton*> buttonsArpTools;
+  std::vector<TouchButton*> buttonsSeqTools;
+
+  TouchButton *lastNoteLabel;
 
   LiveSequencer* liveSeqPtr;
   uint8_t guiCounter = 0;
