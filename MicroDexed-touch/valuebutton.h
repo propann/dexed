@@ -14,18 +14,18 @@ struct ActiveValue {
 
 template<class T> class ValueButton : public TouchButton {
 public:
-  ValueButton(ActiveValue *active, int16_t x_coord, int16_t y_coord, EditableValue<T> *value, std::function<void(TouchButton*, EditableValue<T>*)> draw);
+  ValueButton(ActiveValue *active, uint16_t x_coord, uint16_t y_coord, EditableValue<T> *value, std::function<void(TouchButton*, EditableValue<T>*)> draw);
 };
 
 template<class T> class ValueButtonVector : public ValueButton<T> {
 public:
-  ValueButtonVector(ActiveValue *active, int16_t x_coord, int16_t y_coord, T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw) :
+  ValueButtonVector(ActiveValue *active, uint16_t x_coord, uint16_t y_coord, T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw) :
   ValueButton<T>(active, x_coord, y_coord, new EditableValue<T>(invalue, invalues, defaultValue, [ draw, this ](EditableValue<T> *v) { draw(this, v); }), draw) {}
 };
 
 template<class T> class ValueButtonRange : public ValueButton<T> {
 public:
-  ValueButtonRange(ActiveValue *active, int16_t x_coord, int16_t y_coord, T &invalue, T min, T max, T increment, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw) :
+  ValueButtonRange(ActiveValue *active, uint16_t x_coord, uint16_t y_coord, T &invalue, T min, T max, T increment, T defaultValue, std::function<void(TouchButton*, EditableValue<T>*)> draw) :
   ValueButton<T>(active, x_coord, y_coord, new EditableValue<T>(invalue, min, max, increment, defaultValue, [ draw, this ](EditableValue<T> *v) { draw(this, v); }), draw) {}
 };
 

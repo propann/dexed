@@ -8,7 +8,7 @@ extern ts_t ts;
 extern int numTouchPoints;
 extern bool remote_active;
 
-TouchButton::TouchButton(int16_t x_coord, int16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
+TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
   drawHandler{draw},
   clickedHandler{clicked},
   pressedState(NOT_PRESSED) {
@@ -27,44 +27,51 @@ void TouchButton::setSelected(bool selected) {
 void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {
   drawButton(x, y, label.c_str(), sub.c_str(), colorMap[colors]);
   uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[colors].bg;
-  display.fillRect(x * CHAR_width_small, (y + button_size_y) * CHAR_height_small, button_size_x * CHAR_width_small, 3, barColor);
+  display.fillRect(x, (y + BUTTON_SIZE_Y), BUTTON_SIZE_X, 3, barColor);
 }
 
-void TouchButton::drawButton(uint8_t x, uint8_t y, const std::string label, const std::string sub, ColorCombo colors) {
+static bool isButtonTouched = false;
+bool TouchButton::isPressed(uint16_t x, uint16_t y) {
+  bool result = false;
+  if(numTouchPoints > 0) {
+    if(isButtonTouched == false) {
+      if(ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y)) {
+        result = true;
+        isButtonTouched = true;
+      }
+    }
+  } else {
+    isButtonTouched = false;
+  }
+  return result;
+}
+
+void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ColorCombo colors) {
   if (remote_active) {
     display.console = true;
   }
 
   display.setTextSize(1);
   display.setTextColor(colors.text, colors.bg);
-  display.fillRect(x * CHAR_width_small, y * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, colors.bg);
+  display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, colors.bg);
   
-  display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6);
+  display.setCursor(x + CHAR_width_small / 2, y + 6);
   display.print(label.c_str());
 
-  display.setTextSize((sub.size() > 3) ? 1 : 2);
-
-  switch(sub.size()) {
-  case 1:
-    display.setCursor((x + 2) * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6 + CHAR_height_small);
-    break;
-  case 2:
-    display.setCursor((x + 2) * CHAR_width_small - 4, y * CHAR_height_small + 6 + CHAR_height_small);
-    break;
-  case 3:
-    display.setCursor((x + 2) * CHAR_width_small - 8, y * CHAR_height_small + 6 + CHAR_height_small);
-    break;
-  default:
-    display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 10 + CHAR_height_small);
-    break;
+  const bool bigSub = sub.size() <= 3;
+  display.setTextSize(bigSub ? 2 : 1);
+  if(bigSub) {
+    const uint16_t subLengthPixels = sub.size() * CHAR_width;
+    display.setCursor(x + (BUTTON_SIZE_X - subLengthPixels) / 2, y + 6 + CHAR_height_small);
+  } else {
+    display.setCursor(x + CHAR_width_small / 2, y + 10 + CHAR_height_small);
   }
-
   display.print(sub.c_str());
   display.setTextSize(1); // FIXME
 }
 
 void TouchButton::processPressed() {
-  const bool isInArea = numTouchPoints && (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small);
+  const bool isInArea = numTouchPoints && (ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y));
 
   switch (pressedState) {
   case NOT_PRESSED:
