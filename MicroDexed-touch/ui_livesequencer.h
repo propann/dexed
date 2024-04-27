@@ -39,11 +39,10 @@ private:
   ActiveValue currentValue;
 
   TouchButton *applyPatternLength;
-  TouchButton *buttonToggleTools;
 
+  std::vector<TouchButton*> buttonsToolSelect;
   std::vector<TouchButton*> buttonsSongTools;
   std::vector<TouchButton*> buttonsPattTools;
-  std::vector<TouchButton*> buttonsFillTool;
   std::vector<TouchButton*> buttonsArp;
 
   LiveSequencer* liveSeqPtr;
@@ -53,22 +52,19 @@ private:
   uint8_t trackLayerMode = LAYER_MUTE;
   uint8_t songLayerMode = LAYER_MUTE;
 
-  enum PagePattern {
-    PAGE_PATT_LAYERS = 0,
-    PAGE_PATT_SETINGS,
-    PAGE_PATT_NUM
+  enum Pages {
+    PAGE_PATTERN = 0,
+    PAGE_SONG,
+    PAGE_NUM
   };
 
-  enum PageSong {
-    PAGE_SONG_LAYERS = PAGE_PATT_NUM + 1,
-    PAGE_SONG_SETTINGS,
-    PAGE_SONG_NUM
+  enum Tools {
+    TOOLS_NONE = 0,
+    TOOLS_PATTERN,
+    TOOLS_SONG,
+    TOOLS_ARP,
+    TOOLS_SEQ
   };
-
-  enum ShowingTools : uint8_t {
-    TOOL_FILL,
-    TOOL_ARP
-  } showingTools = TOOL_FILL;
 
   enum GuiUpdates : uint16_t {
     drawTopButtons = (1 << 0),
@@ -85,7 +81,8 @@ private:
     drawTime = (1 << 12)
   };
 
-  void applyScreenRedrawGuiFlags(void);
+  bool isModeToolActive(void);
+  void redrawScreen(void);
   void drawGUI(uint16_t& guiFlags);
   static std::string getArpModeName(uint8_t mode);
   void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, uint8_t layerBgCode, uint8_t gridX, uint8_t gridY);

@@ -113,7 +113,8 @@ public:
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
     std::vector<MidiEvent> pendingEvents;
     uint8_t songPatternCount = 0;
-    uint8_t currentPageIndex = 0; // PagePattern or PageSong
+    uint8_t currentPage = 0; // PagePattern, PageSong or PageTools
+    uint8_t currentTools = 0;
     uint8_t songLayerCount = 0;
     uint8_t lastPlayedNote = 0;
     bool trackLayersChanged = false;
