@@ -74,14 +74,9 @@ private:
     drawTrackButtons = (1 << 1),
     drawLayerButtons = (1 << 2),
     drawTools = (1 << 3),
-    drawPatternTools = (1 << 4),
-    clearBottomArea = (1 << 5),
-    drawSongSettings = (1 << 6),
-    drawActiveNotes = (1 << 8),
-    drawDeleteAll = (1 << 9),
-    drawDeleteSong = (1 << 10),
-    drawSongQuant = (1 << 11),
-    drawTime = (1 << 12)
+    clearBottomArea = (1 << 4),
+    drawActiveNotes = (1 << 5),
+    drawTime = (1 << 6)
   };
 
   uint16_t GRID_X[6];
