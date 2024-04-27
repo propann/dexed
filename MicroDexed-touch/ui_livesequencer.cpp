@@ -42,11 +42,11 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     GRID_Y[i] = BUTTON_OFFSET_Y + (i * 40);
   }
   buttonsSongTools.push_back(new TouchButton(GRID_X[0], GRID_Y[3],
-  [ this ](auto *b) { // drawHandler
+  [ ](auto *b) { // drawHandler
     b->draw("TOOL", (data->isSongMode) ? "MUTE": "QUANT", instance->isModeToolActive() ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   }));
   buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
   }));
 
@@ -60,7 +60,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     guiUpdateFlags |= clearBottomArea | drawTools;
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[1], GRID_Y[2],
-  [ this ](auto *b) { // drawHandler
+  [ ](auto *b) { // drawHandler
     b->draw("TOOL", "ARP", data->currentTools == TOOLS_ARP ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ](auto *b) { // clickedHandler
@@ -68,7 +68,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     guiUpdateFlags |= clearBottomArea | drawTools;
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[2], GRID_Y[2],
-  [ this ](auto *b) { // drawHandler
+  [ ](auto *b) { // drawHandler
     b->draw("TOOL", "SEQ", data->currentTools == TOOLS_SEQ ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ](auto *b) { // clickedHandler
@@ -97,7 +97,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   buttonsSeqTools.push_back(applyPatternLength);
 
   buttonsSeqTools.push_back(new TouchButton(GRID_X[0], GRID_Y[3],
-  [ this ] (auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("PATTERN", "LENGTH", TouchButton::BUTTON_LABEL);
   }));
   buttonsSeqTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
@@ -107,7 +107,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   }));
 
   buttonsSeqTools.push_back(new TouchButton(GRID_X[0], GRID_Y[5],
-  [ this ] (auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("ACTIONS", "", TouchButton::BUTTON_LABEL);
   }));
 
@@ -140,7 +140,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     confirmDelete->drawNow();
   }));
   buttonsSeqTools.push_back(new TouchButton(GRID_X[4], GRID_Y[5],
-  [ this ] (auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("LOAD", "PERF", TouchButton::BUTTON_NORMAL);
   },
   [ this ] (auto *b) { // clickedHandler
@@ -152,10 +152,10 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     LCDML.OTHER_jumpToFunc(UI_func_load_performance, data->performanceID);
   }));
   buttonsSeqTools.push_back(new TouchButton(GRID_X[5], GRID_Y[5],
-  [ this ] (auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("SAVE", "PERF", TouchButton::BUTTON_NORMAL);
   },
-  [ this ] (auto *b) { // clickedHandler
+  [ ] (auto *b) { // clickedHandler
     // save
     LCDML.FUNC_setGBAToLastFunc();
     display.setTextSize(2);
@@ -166,12 +166,12 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   // PATTERN TOOLS
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     buttonsPattTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[track], GRID_Y[3], data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
-    [ this ] (auto *b, auto *v) { // drawHandler
+    [ ] (auto *b, auto *v) { // drawHandler
       b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
     }));
   }
   buttonsPattTools.push_back(new TouchButton(GRID_X[0], GRID_Y[4],
-  [ this ] (auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOTES", TouchButton::BUTTON_LABEL);
   }));
   lastNoteLabel = new TouchButton(GRID_X[1], GRID_Y[4],
@@ -182,11 +182,11 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   buttonsPattTools.push_back(lastNoteLabel);
 
   buttonsPattTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16, 
-  [ this ] (auto *b, auto *v) { // drawHandler
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("NUM", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
   }));
   buttonsPattTools.push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data->fillNotes.offset, 0, 7, 1, 0, 
-  [ this ] (auto *b, auto *v) { // drawHandler
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("OFF", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
   }));
   buttonsPattTools.push_back(new TouchButton(GRID_X[5], GRID_Y[4],
