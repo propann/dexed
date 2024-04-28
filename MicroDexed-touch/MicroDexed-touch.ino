@@ -982,13 +982,13 @@ void setup()
   touch_ic_found = true;
 #endif
 
-//#if defined(PSRAM)
- // delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
- // 2024/4/14
- // However it is reported that it is not necessary with 16MB psram and even making boot problems
- // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT
- // will disable delay, until any non-working combination is reported
-//#endif
+  //#if defined(PSRAM)
+   // delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+   // 2024/4/14
+   // However it is reported that it is not necessary with 16MB psram and even making boot problems
+   // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT
+   // will disable delay, until any non-working combination is reported
+  //#endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
   if (!touch.begin(40))
@@ -1519,11 +1519,24 @@ FLASHMEM void handle_touchscreen_midi_channel_page()
   }
 }
 
-FLASHMEM void sub_step_recording()
+FLASHMEM void sub_step_recording(bool touchinput, uint8_t touchparam)
 {
-  if (seq.running == false)
+  if (seq.running == false && seq.step_recording)
   {
-    if (seq.step_recording && seq.recording == false && seq.note_in > 0 && seq.note_in_velocity > 0)
+    if (touchinput && touchparam == 1) //rest step
+    {
+      seq.note_in = 0;
+      seq.note_in_velocity = 0;
+    }
+    else if (touchinput && touchparam == 2 && seq.content_type[seq.active_pattern] != 0) //latch step
+    {
+      seq.note_in = 130;
+      seq.note_in_velocity = 0;
+    }
+    if ((seq.recording == false && seq.note_in > 0 && seq.note_in_velocity > 0 && touchinput == false) ||
+      (touchinput == true && seq.cycle_touch_element == 1 && touchparam == 1) ||
+      (touchinput == true && seq.cycle_touch_element == 1 && touchparam == 2 && seq.content_type[seq.active_pattern] != 0))
+
     {
       uint8_t cur_step = 0;
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
@@ -1535,26 +1548,44 @@ FLASHMEM void sub_step_recording()
       {
         seq.note_data[seq.active_pattern][cur_step] = seq.note_in;
 
-        if (seq.content_type[seq.active_pattern] == 0 && get_sample_note(activesample) > 209) // pitched sample
+        if (touchparam == 0)
         {
-          seq.vel[seq.active_pattern][cur_step] = get_sample_note(activesample);
+          if (seq.content_type[seq.active_pattern] == 0 && get_sample_note(activesample) > 209 && ts.virtual_keyboard_instrument != 6) // pitched sample
+          {
+            seq.vel[seq.active_pattern][cur_step] = get_sample_note(activesample);
+          }
+          else
+            seq.vel[seq.active_pattern][cur_step] = seq.note_in_velocity;
         }
-        else
-          seq.vel[seq.active_pattern][cur_step] = seq.note_in_velocity;
+
+        else if (touchinput && touchparam == 1)
+        {
+          seq.vel[seq.active_pattern][cur_step] = 0;
+        }
+        else if (touchinput && touchparam == 2)
+        {
+          seq.vel[seq.active_pattern][cur_step] = 0;
+        }
 
         setCursor_textGrid(cur_step, 1);
         display.setTextSize(2);
-        if (seq.vel[seq.active_pattern][cur_step] > 209)
-          display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+
+        if (seq.auto_advance_step == 0)
+          display.setTextColor(COLOR_SYSTEXT, RED);
         else
-          set_pattern_content_type_color(seq.active_pattern);
+        {
+          if (seq.vel[seq.active_pattern][cur_step] > 209)
+            display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+          else
+            set_pattern_content_type_color(seq.active_pattern);
+        }
         display.print(seq_find_shortname(cur_step)[0]);
         seq_printVelGraphBar_single_step(cur_step, GREY1);
         if (seq.cycle_touch_element != 1)
           print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, cur_step);
 
         display.setTextSize(2);
-        display.setTextColor(GREEN, GREY2);
+        display.setTextColor(COLOR_SYSTEXT, RED);
         if (seq.auto_advance_step > 0)
         {
           if (cur_step < 15)
@@ -1585,7 +1616,6 @@ FLASHMEM void sub_step_recording()
           }
         }
       }
-
       seq.note_in = 0;
       seq.note_in_velocity = 0;
     }
@@ -1919,7 +1949,7 @@ bool current_page_has_touch_back_button = false;
 void loop()
 {
 
- // Serial read (commands from web remote)
+  // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0)
   {
@@ -2002,7 +2032,7 @@ void loop()
     if (seq.running)
       scope.draw_scope(216, -9, button_size_x * CHAR_width_small);
     else
-      sub_step_recording();
+      sub_step_recording(false, 0);
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
   {

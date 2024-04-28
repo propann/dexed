@@ -762,7 +762,9 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
           set_sample_pitch(i, data_json["pitch"][i]);
           set_sample_p_offset(i, data_json["p_offset"][i]);
           set_sample_pan(i, data_json["pan"][i]);
-          set_sample_vol_max(i, data_json["vol_max"][i]);
+          if (data_json["vol_max"][i] != 0.00f)
+            set_sample_vol_max(i, data_json["vol_max"][i]);
+          else set_sample_vol_max(i, 1.00f);
           set_sample_vol_min(i, data_json["vol_min"][i]);
           set_sample_reverb_send(i, data_json["reverb_send"][i]);
           set_sample_filter_mode(i, data_json["f_mode"][i]);
@@ -3501,7 +3503,7 @@ FLASHMEM bool get_bank_name(uint8_t p, uint8_t b, char* bank_name)
   if (sd_card > 0)
   {
     File sysex_dir;
-    char bankdir[FILENAME_LEN+4];
+    char bankdir[FILENAME_LEN + 4];
 
     snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
 
@@ -3561,9 +3563,9 @@ FLASHMEM bool get_voice_name(uint8_t p, uint8_t b, uint8_t v, char* voice_name)
   if (sd_card > 0)
   {
     File sysex_dir;
-    char bankdir[FILENAME_LEN+4];
+    char bankdir[FILENAME_LEN + 4];
 
-    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p,b);
+    snprintf_P(bankdir, sizeof(bankdir), PSTR("/%s/%d/%d"), DEXED_CONFIG_PATH, p, b);
 
     AudioNoInterrupts();
     sysex_dir = SD.open(bankdir);
@@ -3601,7 +3603,7 @@ FLASHMEM bool get_voice_name(uint8_t p, uint8_t b, uint8_t v, char* voice_name)
     char bank_name[BANK_NAME_LEN];
     strip_extension(entry.name(), bank_name, BANK_NAME_LEN);
     string_toupper(bank_name);
-    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b,p, bank_name);
+    LOG.printf_P(PSTR("Get voice name from [/%s/%d/%d/%s.syx]\n"), DEXED_CONFIG_PATH, b, p, bank_name);
 #endif
     memset(voice_name, 0, VOICE_NAME_LEN);
     entry.seek(124 + (v * 128));

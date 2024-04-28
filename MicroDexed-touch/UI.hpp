@@ -275,6 +275,10 @@ extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
 extern JoystickController joysticks[];
 extern void microsynth_update_single_setting(uint8_t microsynth_selected_instance);
+extern void update_step_rec_buttons();
+extern void virtual_keyboard_print_current_instrument();
+extern void virtual_keyboard_print_velocity_bar();
+extern void update_latch_button();
 
 #if defined(COMPILE_FOR_FLASH)
 void UI_draw_waveform_preview_sample(int samplenumber);
@@ -386,6 +390,7 @@ extern const float midi_ticks_factor[10];
 extern uint8_t midi_bpm;
 extern elapsedMillis save_sys;
 extern bool save_sys_flag;
+extern void virtual_keyboard_smart_preselect_mode();
 
 bool remote_console_keystate_select;
 bool remote_console_keystate_a;
@@ -624,6 +629,7 @@ void draw_volmeters_multiband_compressor();
 uint8_t x_pos_menu_header_layer[8];
 uint8_t x_pos_previous_menu_header;
 uint8_t last_menu_depth = 99;
+uint8_t prev_menu_item = 0;    // avoid screen flicker at start / end of menu items
 
 // normal menu
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL); // normal root menu element (do not change)
@@ -859,7 +865,7 @@ FLASHMEM void print_song_mode_help()
     }
     else if (seq.edit_state && seq.cycle_touch_element == 8)
     {
-      helptext_l("< CHAIN");
+      helptext_l("CHAIN < > PATTERN EDITOR");
       helptext_r("< > SEL. STEP");
     }
   }
@@ -1032,12 +1038,12 @@ FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const ch
     }
     display.setCursor(x * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6);
     display.print(t1);
-    if (t2[1] == '\0')
+    if (t2[1] == '\0' && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))// big numbers for mute matrix
     {
       display.setCursor((x + 2) * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6 + CHAR_height_small);
       display.setTextSize(2);
     }
-    else if (t2[0] >= '1' && t2[0] < '9')
+    else if (t2[0] >= '1' && t2[0] < '9' && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))  // big numbers for mute matrix
     {
       display.setCursor((x + 2) * CHAR_width_small - 4, y * CHAR_height_small + 6 + CHAR_height_small);
       display.setTextSize(2);
@@ -2063,6 +2069,32 @@ void calc_chain_endline()
   }
 }
 
+uint8_t chain_warning_number_buffer;
+
+FLASHMEM void empty_chain_warning_text_in_song_page()
+{
+  if (chain_warning_number_buffer != seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos])
+  {
+    if (seq.chain[seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]][0] == 99)
+    {
+      char tmptxt[5];
+      display.setCursor(13 * CHAR_width_small, 29 * CHAR_height_small);
+      display.setTextSize(1);
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("CHAIN "));
+      snprintf_P(tmptxt, sizeof(tmptxt), PSTR("[%02d]"), seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]);
+      display.print(tmptxt);
+      display.print(F(" IS EMPTY"));
+    }
+    else
+    {
+      display.console = true;
+      display.fillRect(13 * CHAR_width_small, 29 * CHAR_height_small, 113, 7, COLOR_BACKGROUND);
+    }
+    chain_warning_number_buffer = seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos];
+  }
+}
+
 FLASHMEM void print_chain_steps_in_song_page()
 {
   uint8_t y_start;
@@ -2551,58 +2583,61 @@ FLASHMEM void update_display_functions_while_seq_running()
   // is in UI_func_seq_pattern_editor or is in UI_func_seq_vel_editor
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
-    display.setTextSize(2);
-    if (seq.step == 0)
+    if (seq.menu != 33 && seq.menu != 32 && seq.active_function != 95 && seq.active_function != 97)
     {
-      set_pattern_content_type_color(seq.active_pattern);
-      setCursor_textGrid(14 - seq.pattern_len_dec, 1);
-      display.print(seq_find_shortname(14 - seq.pattern_len_dec)[0]);
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      setCursor_textGrid(15 - seq.pattern_len_dec, 1);
-      display.print(seq_find_shortname(15 - seq.pattern_len_dec)[0]);
-      if (seq.note_editor_view == 0 && seq.cycle_touch_element == 0)
-        print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, 15 - seq.pattern_len_dec);
-    }
-    else if (seq.step == 1)
-    {
-      set_pattern_content_type_color(seq.active_pattern);
-      // setCursor_textGrid(15, 1);
-      setCursor_textGrid(15 - seq.pattern_len_dec, 1);
-      // display.print(seq_find_shortname(15)[0]);
-      display.print(seq_find_shortname(15 - seq.pattern_len_dec)[0]);
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      setCursor_textGrid(0, 1);
-      display.print(seq_find_shortname(0)[0]);
-      if (seq.note_editor_view == 0 && seq.cycle_touch_element == 0)
-        print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, 0);
-    }
-    else
-    {
-      set_pattern_content_type_color(seq.active_pattern);
-      setCursor_textGrid(seq.step - 2, 1);
-      display.print(seq_find_shortname(seq.step - 2)[0]);
-      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-      setCursor_textGrid(seq.step - 1, 1);
-      display.print(seq_find_shortname(seq.step - 1)[0]);
-      if (seq.note_editor_view == 0 && seq.cycle_touch_element == 0)
-        print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, seq.step - 1);
-    }
-    if (seq.menu > 2 && seq.menu < 19 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
-    { // update static cursor while moving cursor running in pattern editor
-      setCursor_textGrid(seq.menu - 3, 1);
       display.setTextSize(2);
-      display.setTextColor(COLOR_SYSTEXT, RED);
-      display.print(seq_find_shortname(seq.menu - 3)[0]);
-    }
-    else if (seq.menu < 16 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
-    { // update static cursor while moving cursor running in vel editor
-      setCursor_textGrid(seq.menu - 1, 1);
-      display.setTextSize(2);
-      display.setTextColor(COLOR_SYSTEXT, RED);
-      display.print(seq_find_shortname(seq.menu - 1)[0]);
-    }
+      if (seq.step == 0)
+      {
+        set_pattern_content_type_color(seq.active_pattern);
+        setCursor_textGrid(14 - seq.pattern_len_dec, 1);
+        display.print(seq_find_shortname(14 - seq.pattern_len_dec)[0]);
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+        setCursor_textGrid(15 - seq.pattern_len_dec, 1);
+        display.print(seq_find_shortname(15 - seq.pattern_len_dec)[0]);
+        if (seq.note_editor_view == 0 && seq.cycle_touch_element == 0)
+          print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, 15 - seq.pattern_len_dec);
+      }
+      else if (seq.step == 1)
+      {
+        set_pattern_content_type_color(seq.active_pattern);
+        // setCursor_textGrid(15, 1);
+        setCursor_textGrid(15 - seq.pattern_len_dec, 1);
+        // display.print(seq_find_shortname(15)[0]);
+        display.print(seq_find_shortname(15 - seq.pattern_len_dec)[0]);
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+        setCursor_textGrid(0, 1);
+        display.print(seq_find_shortname(0)[0]);
+        if (seq.note_editor_view == 0 && seq.cycle_touch_element == 0)
+          print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, 0);
+      }
+      else
+      {
+        set_pattern_content_type_color(seq.active_pattern);
+        setCursor_textGrid(seq.step - 2, 1);
+        display.print(seq_find_shortname(seq.step - 2)[0]);
+        display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+        setCursor_textGrid(seq.step - 1, 1);
+        display.print(seq_find_shortname(seq.step - 1)[0]);
+        if (seq.note_editor_view == 0 && seq.cycle_touch_element == 0)
+          print_track_steps_detailed_only_current_playing_note(0, CHAR_height * 4 + 3, seq.step - 1);
+      }
+      if (seq.menu > 2 && seq.menu < 19 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+      { // update static cursor while moving cursor running in pattern editor
+        setCursor_textGrid(seq.menu - 3, 1);
+        display.setTextSize(2);
+        display.setTextColor(COLOR_SYSTEXT, RED);
+        display.print(seq_find_shortname(seq.menu - 3)[0]);
+      }
+      else if (seq.menu < 16 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+      { // update static cursor while moving cursor running in vel editor
+        setCursor_textGrid(seq.menu - 1, 1);
+        display.setTextSize(2);
+        display.setTextColor(COLOR_SYSTEXT, RED);
+        display.print(seq_find_shortname(seq.menu - 1)[0]);
+      }
 
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    }
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio)) // is in UI of Arpeggiator
   {
@@ -4269,38 +4304,47 @@ FLASHMEM void lcdml_menu_control(void)
       LCDML.BT_down();
       if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_volume))
       {
-        // special case : if is in tracker edit, left ENC controls x axis, right ENC controls y axis
+        // special case : if is in tracker/song edit, left ENC controls x axis, right ENC controls y axis
         if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 0)
         {
-          if (seq.cycle_touch_element < 5 || seq.cycle_touch_element > 9) // is not in song/chain edit
+
+          if (seq.cycle_touch_element == 8) // is in song transpose column - junp to pattern editor
           {
-            if (seq.loop_edit_step < 2) // not in loop edit mode
+            seq.quicknav_song_to_pattern_jump = true;
+            LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+          }
+          else
+            if (seq.cycle_touch_element < 5 || seq.cycle_touch_element > 9) // is not in song/chain edit
             {
-              seq.previous_track = seq.selected_track;
-              seq.cursor_scroll_previous = seq.cursor_scroll;
-              seq.selected_track++;
-              if (seq.loop_edit_step == 1)
+              if (seq.loop_edit_step < 2) // not in loop edit mode
               {
-                seq.loop_edit_step = 0;
-                seq.selected_track = 0;
-                print_song_loop_arrows();
-              }
-              if (seq.selected_track > NUM_SEQ_TRACKS - 1)
-              {
-                seq.loop_edit_step = 1;
-                seq.selected_track = 0;
+                seq.previous_track = seq.selected_track;
+                seq.cursor_scroll_previous = seq.cursor_scroll;
+                seq.selected_track++;
+                if (seq.loop_edit_step == 1)
+                {
+                  seq.loop_edit_step = 0;
+                  seq.selected_track = 0;
+                  print_song_loop_arrows();
+                }
+                if (seq.selected_track > NUM_SEQ_TRACKS - 1)
+                {
+                  seq.loop_edit_step = 1;
+                  seq.selected_track = 0;
+                }
               }
             }
-          }
-          else if (seq.cycle_touch_element == 5) // is in song edit
-          {
-            seq.cycle_touch_element = 6; // switch to chain edit
-          }
-          else if (seq.cycle_touch_element == 6) // is in chain edit
-          {
-            seq.cycle_touch_element = 8; // switch to transpose edit
-          }
+            else if (seq.cycle_touch_element == 5) // is in song edit
+            {
+              seq.cycle_touch_element = 6; // switch to chain edit
+            }
+            else if (seq.cycle_touch_element == 6) // is in chain edit
+            {
+              seq.cycle_touch_element = 8; // switch to transpose edit
+            }
           seq.help_text_needs_refresh = true;
+
+
         }
         else if ((LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 1) || (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_song) && seq.tracktype_or_instrument_assign == 5) ||
           // select track for instrument or select track for tracktype change
@@ -4344,6 +4388,26 @@ FLASHMEM void lcdml_menu_control(void)
         else if (ui.handlesLeftEncoder())
         { // do nothing
           ;
+        }
+
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+        {
+          if (seq.menu == 18)
+          {
+            seq.menu_status = 1;
+            LCDML.OTHER_jumpToFunc(UI_func_seq_vel_editor);
+          }
+          else
+          {
+            seq.menu_status = 0;
+            seq.menu = constrain(seq.menu + 1, 0, 18);
+          }
+
+        }
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+        {
+          prev_menu_item = seq.menu;
+          seq.menu = constrain(seq.menu + 1, 0, 17);
         }
         else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -4435,6 +4499,36 @@ FLASHMEM void lcdml_menu_control(void)
         else if (ui.handlesLeftEncoder())
         { // do nothing
           ;
+        }
+
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor))
+        {
+          if (seq.menu == 0 && seq.quicknav_song_to_pattern_jump == true)
+          {
+            // go back to song-transpose when previously navigated in from song edit
+            seq.help_text_needs_refresh = true;
+            seq.edit_state = true;
+            seq.quicknav_pattern_to_song_jump = true;
+            seq.quicknav_song_to_pattern_jump = false;
+            LCDML.OTHER_jumpToFunc(UI_func_song);
+          }
+          else
+            seq.menu = constrain(seq.menu - 1, 0, 18);
+
+        }
+        else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+        {
+          if (seq.menu == 0)
+          {
+            seq.menu_status = 2;
+            LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+          }
+          else
+          {
+            seq.menu_status = 0;
+            seq.menu = constrain(seq.menu - 1, 0, 17);
+          }
+
         }
         else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
           LCDML.OTHER_jumpToFunc(UI_func_volume);
@@ -6636,6 +6730,34 @@ void UI_func_drums(uint8_t param)
   }
 }
 
+extern float get_sample_p_offset(uint8_t sample);
+extern void set_sample_pitch(uint8_t sample, float playbackspeed);
+
+FLASHMEM void pattern_editor_play_current_step(uint8_t step)
+{
+  if (seq.running == false && seq.note_data[seq.active_pattern][step] > 0 && step < 16)
+  {
+    if (seq.content_type[seq.active_pattern] == 0)
+    { // Drumtrack
+
+      if (seq.vel[seq.active_pattern][step] > 209) // it is a pitched sample
+      {
+        // Drum[slot]->setPlaybackRate( pow (2, (inNote - 72) / 12.00) * drum_config[sample].pitch ); get_sample_vol_max(sample)
+        set_sample_pitch(seq.vel[seq.active_pattern][step] - 210, (float)pow(2, (seq.note_data[seq.active_pattern][step] - 72) / 12.00) * get_sample_p_offset(seq.vel[seq.active_pattern][step] - 210));
+        handleNoteOn(drum_midi_channel, seq.vel[seq.active_pattern][step], 90, 0);
+      }
+      else // else play normal drum sample
+        handleNoteOn(drum_midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
+    }
+    else  // is not a sample, preview note with epiano by default
+    {
+      handleNoteOn(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], seq.vel[seq.active_pattern][step], 0);
+
+      handleNoteOff(configuration.epiano.midi_channel, seq.note_data[seq.active_pattern][step], 0, 0);
+    }
+  }
+}
+
 FLASHMEM void UI_func_seq_settings(uint8_t param)
 {
   char displayname[4] = { 0, 0, 0, 0 };
@@ -7914,7 +8036,6 @@ void print_track_steps_detailed(int xpos, int ypos, uint8_t currentstep, bool in
 void UI_func_seq_vel_editor(uint8_t param)
 {
   char tmp[5];
-  uint8_t prev_item = 0;    // avoid screen flicker at start / end of menu items
   uint8_t prev_option = 99; // avoid screen flicker at start / end of menu options
   if (LCDML.FUNC_setup())   // ****** SETUP *********
   {
@@ -7960,15 +8081,14 @@ void UI_func_seq_vel_editor(uint8_t param)
       {
         if (LCDML.BT_checkDown())
         {
-          prev_item = seq.menu;
+          prev_menu_item = seq.menu;
           seq.menu = constrain(seq.menu + 1, 0, 17);
+          pattern_editor_play_current_step(seq.menu - 1);
         }
         else if (LCDML.BT_checkUp())
         {
-
           if (seq.menu == 0)
           {
-
             seq.menu_status = 2;
             LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
           }
@@ -7976,6 +8096,7 @@ void UI_func_seq_vel_editor(uint8_t param)
           {
             seq.menu_status = 0;
             seq.menu = constrain(seq.menu - 1, 0, 17);
+            pattern_editor_play_current_step(seq.menu - 1);
           }
         }
       }
@@ -7988,6 +8109,10 @@ void UI_func_seq_vel_editor(uint8_t param)
           seq.active_pattern = constrain(seq.active_pattern + 1, 0, NUM_SEQ_PATTERN - 1);
         else if (LCDML.BT_checkUp())
           seq.active_pattern = constrain(seq.active_pattern - 1, 0, NUM_SEQ_PATTERN - 1);
+        display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
+        print_content_type();
+        virtual_keyboard_smart_preselect_mode();
+        update_latch_button();
       }
     }
     else if (seq.active_function == 0 && seq.menu > 0 && seq.menu < 17)
@@ -8041,6 +8166,7 @@ void UI_func_seq_vel_editor(uint8_t param)
         else if (LCDML.BT_checkUp())
           seq.content_type[seq.active_pattern] = constrain(seq.content_type[seq.active_pattern] - 1, 0, 2);
 
+        seq_printAllSeqSteps();
         if (seq.content_type[seq.active_pattern] == 0)
           seq.note_editor_view = 0;
         else
@@ -8102,7 +8228,9 @@ void UI_func_seq_vel_editor(uint8_t param)
         if (seq.note_editor_view != 0)
         {
           seq.note_editor_view = 0;
-          border3_clear();
+          if (seq.cycle_touch_element == 0) // touch keyboard is off
+            border3_clear();
+
           print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
         }
         else
@@ -8113,7 +8241,8 @@ void UI_func_seq_vel_editor(uint8_t param)
         if (seq.note_editor_view != 1)
         {
           seq.note_editor_view = 1;
-          border3_clear();
+          if (seq.cycle_touch_element == 0) // touch keyboard is off
+            border3_clear();
           if (seq.cycle_touch_element != 1)
             print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
         }
@@ -8323,7 +8452,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       }
     }
 
-    if (seq.menu == 17 && prev_item != 17 && prev_option != seq.note_editor_view) // edit content type of pattern
+    if (seq.menu == 17 && prev_menu_item != 17 && prev_option != seq.note_editor_view) // edit content type of pattern
     {
       if (seq.active_function != 1)
       {
@@ -8378,6 +8507,7 @@ void UI_func_seq_vel_editor(uint8_t param)
       display.setTextSize(2);
       print_edit_mode();
     }
+    virtual_keyboard_smart_preselect_mode();
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -8681,9 +8811,11 @@ void seq_sub_pattern_fill()
     {
       seq.active_function = 96;
       seq.menu = 33;
+
     }
     else if (seq.menu == 33 && seq.active_function == 95) // fill pattern every 1/4, 1/8, 1/16 step with active sample/note  step 2
     {
+
       if (seq.content_type[seq.active_pattern] == 0)
       { // Drumtrack
         for (uint8_t i = 0; i < 16; i++)
@@ -8727,9 +8859,9 @@ void seq_sub_pattern_fill()
     }
     else if (seq.menu == 0 && seq.active_function == 0)
     {
-
       if ((seq.content_type[seq.active_pattern] == 0 && activesample == NUM_DRUMSET_CONFIG + 4) || (seq.content_type[seq.active_pattern] > 0 && temp_int == 115))
       { // fill patterns
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         setCursor_textGrid(0, 0);
         display.setTextSize(2);
         display.print(F("Fill Pattern:"));
@@ -8747,14 +8879,18 @@ void seq_sub_pattern_fill()
     display.setTextSize(2);
     display.print(" ");
     setCursor_textGrid(12, 1);
+    display.setTextColor(RED, COLOR_BACKGROUND);
     display.print("[");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     if (seq.temp_active_menu == 0)
       display.print(F(" 1/4"));
     else if (seq.temp_active_menu == 1)
       display.print(F(" 1/8"));
     else if (seq.temp_active_menu == 2)
       display.print(F("1/16"));
+    display.setTextColor(RED, COLOR_BACKGROUND);
     display.print("]");
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
   else if (seq.menu == 32) // editor step 1
   {                        // fill pattern
@@ -8762,10 +8898,17 @@ void seq_sub_pattern_fill()
     { // drum
       setCursor_textGrid(0, 1);
       display.setTextSize(2);
-      display.print("with [");
+
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.print("with ");
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print("[");
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       show(1, 6, 6, basename(drum_config[seq.temp_select_menu].name));
       setCursor_textGrid(12, 1);
+      display.setTextColor(RED, COLOR_BACKGROUND);
       display.print("]");
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(13, 1);
       if (seq.temp_active_menu == 0)
         display.print(F(" 1/4"));
@@ -8778,12 +8921,18 @@ void seq_sub_pattern_fill()
     { // inst
       setCursor_textGrid(0, 1);
       display.setTextSize(2);
-      display.print("with [");
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.print("with ");
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print("[");
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       display.print(noteNames[seq.temp_select_menu % 12]);
       display.print((seq.temp_select_menu / 12) - 1);
       display.print(F("   "));
       setCursor_textGrid(12, 1);
+      display.setTextColor(RED, COLOR_BACKGROUND);
       display.print("]");
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       setCursor_textGrid(13, 1);
       if (seq.temp_active_menu == 0)
         display.print(F(" 1/4"));
@@ -9155,6 +9304,9 @@ void seq_pattern_editor_update_dynamic_elements()
     virtual_keyboard_print_buttons();
     draw_button_on_grid(45, 1, "BACK", "TO SEQ", 0);
     virtual_keyboard();
+    update_step_rec_buttons();
+    virtual_keyboard_print_current_instrument();
+    virtual_keyboard_print_velocity_bar();
   }
   display.setTextSize(2);
 }
@@ -9249,7 +9401,7 @@ void pattern_editor_menu_0()
         else
           display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
-        show(0, 1, 11, basename(drum_config[activesample].name));
+        show(0, 1, 9, basename(drum_config[activesample].name));
         if (seq.active_function != 99)
           display.setTextColor(RED, COLOR_BACKGROUND);
         else
@@ -9364,6 +9516,11 @@ void pattern_editor_menu_0()
   }
 }
 
+FLASHMEM void play_sample_on_virtual_drumpads(uint8_t note)
+{
+  handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, drum_config[note - 14].midinote, ts.virtual_keyboard_velocity);
+}
+
 void UI_func_seq_pattern_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -9426,10 +9583,24 @@ void UI_func_seq_pattern_editor(uint8_t param)
           {
             seq.menu_status = 0;
             seq.menu = constrain(seq.menu + 1, 0, 18);
+            pattern_editor_play_current_step(seq.menu - 3);
           }
         }
         else if (LCDML.BT_checkUp())
-          seq.menu = constrain(seq.menu - 1, 0, 18);
+        {
+          if (seq.menu == 0 && seq.quicknav_song_to_pattern_jump == true)
+          {
+            // go back to song-transpose when previously navigated in from song edit
+            seq.help_text_needs_refresh = true;
+            seq.edit_state = true;
+            seq.quicknav_pattern_to_song_jump = true;
+            seq.quicknav_song_to_pattern_jump = false;
+            LCDML.OTHER_jumpToFunc(UI_func_song);
+          }
+          else
+            seq.menu = constrain(seq.menu - 1, 0, 18);
+          pattern_editor_play_current_step(seq.menu - 3);
+        }
       }
     }
     else if (seq.active_function == 0)
@@ -9442,6 +9613,10 @@ void UI_func_seq_pattern_editor(uint8_t param)
             activesample = constrain(activesample + 1, 0, NUM_DRUMSET_CONFIG + 5);
           else if (LCDML.BT_checkUp())
             activesample = constrain(activesample - 1, 0, NUM_DRUMSET_CONFIG + 5);
+
+          if (seq.running == false && activesample < NUM_DRUMSET_CONFIG - 1) {
+            handleNoteOn(drum_midi_channel, drum_config[activesample].midinote, 90, 0);
+          }
         }
       }
       else // is in Instrument Mode
@@ -9466,6 +9641,8 @@ void UI_func_seq_pattern_editor(uint8_t param)
 
         display.setCursor(11 * CHAR_width_small, CHAR_height * 3 + 3);
         print_content_type();
+        virtual_keyboard_smart_preselect_mode();
+        update_latch_button();
       }
     }
     if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -9553,6 +9730,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
                   seq.note_data[seq.active_pattern][seq.menu - 3] = temp_int;
                 else
                   seq.note_data[seq.active_pattern][seq.menu - 3] = 12; // else insert C2
+                pattern_editor_play_current_step(seq.menu - 3);
               }
               else
               { // step is an other sample, replace with selected pitched sample
@@ -9573,6 +9751,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
                 {
                   seq.note_data[seq.active_pattern][seq.menu - 3] = drum_config[activesample].midinote;
                   seq.vel[seq.active_pattern][seq.menu - 3] = 120;
+                  pattern_editor_play_current_step(seq.menu - 3);
                 }
               }
           }
@@ -9598,6 +9777,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
                   seq.vel[seq.active_pattern][seq.menu - 3] = 200;
                 else // normal note
                   seq.vel[seq.active_pattern][seq.menu - 3] = 120;
+                pattern_editor_play_current_step(seq.menu - 3);
               }
             }
           }
@@ -9678,12 +9858,11 @@ void UI_func_seq_pattern_editor(uint8_t param)
         show(0, 1, 9, basename(drum_config[activesample].name));
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         display.print("  ");
-        if (seq.note_editor_view != 0)
+        if (seq.note_editor_view != 0 && seq.cycle_touch_element != 1)
         {
           seq.note_editor_view = 0;
           border3_clear();
-          if (seq.cycle_touch_element != 1)
-            print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
+          print_track_steps_detailed(0, CHAR_height * 4 + 3, 254, true, true);
         }
         else
         {
@@ -9693,33 +9872,30 @@ void UI_func_seq_pattern_editor(uint8_t param)
       }
       else
       {
-        if (seq.cycle_touch_element == 0)
+        // Print note buffer when switching track and track is an instrument track
+        setCursor_textGrid(0, 0);
+        display.print(" ");
+        display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
+        display.print(noteNames[temp_int % 12][0]);
+        if (noteNames[temp_int % 12][1] != '\0')
         {
-          // Print note buffer when switching track and track is an instrument track
-          setCursor_textGrid(0, 0);
-          display.print(" ");
-          display.setTextColor(COLOR_INSTR, COLOR_BACKGROUND);
-          display.print(noteNames[temp_int % 12][0]);
-          if (noteNames[temp_int % 12][1] != '\0')
-          {
-            display.print(noteNames[temp_int % 12][1]);
-          }
-          display.print((temp_int / 12) - 1);
-          display.print(F("       "));
-          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+          display.print(noteNames[temp_int % 12][1]);
+        }
+        display.print((temp_int / 12) - 1);
+        display.print(F("       "));
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-          if (seq.note_editor_view != 1)
-          {
-            seq.note_editor_view = 1;
-            border3_clear();
-            if (seq.cycle_touch_element != 1)
-              print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
-          }
-          else
-          {
-            if (seq.cycle_touch_element != 1)
-              print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
-          }
+        if (seq.note_editor_view != 1 && seq.cycle_touch_element != 1)
+        {
+          seq.note_editor_view = 1;
+          border3_clear();
+          print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, true);
+
+        }
+        else
+        {
+          if (seq.cycle_touch_element != 1)
+            print_single_pattern_pianoroll_in_pattern_editor(0, DISPLAY_HEIGHT, seq.active_pattern, seq.menu - 3, false);
         }
       }
       display.setTextSize(2);
@@ -10004,6 +10180,7 @@ void UI_func_seq_pattern_editor(uint8_t param)
           display.setTextSize(2);
         }
     }
+    virtual_keyboard_smart_preselect_mode();
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -10824,7 +11001,7 @@ void UI_func_microsynth(uint8_t param)
     // setup function
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
-
+    virtual_keyboard_smart_preselect_mode();
     if (seq.cycle_touch_element != 1)
     {
       draw_button_on_grid(45, 1, "", "", 99); // print keyboard icon
@@ -10956,6 +11133,7 @@ void UI_func_microsynth(uint8_t param)
       else
         microsynth_selected_instance = 0;
       update_microsynth_instance_icons();
+      virtual_keyboard_smart_preselect_mode();
       menuhelper_redraw = true;
       generic_full_draw_required = true;
     }
@@ -11787,6 +11965,7 @@ FLASHMEM void UI_func_song(uint8_t param)
       print_song_mode_help();
       seq.help_text_needs_refresh = false;
     }
+
     if (seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos] != song_previous_displayed_chain)
     {
       //current displayed chain has changed
@@ -11797,6 +11976,7 @@ FLASHMEM void UI_func_song(uint8_t param)
       // LOG.print(F(" to "));
       // LOG.print(seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos]);
 #endif
+
       song_page_full_draw_chain_complete = false;
       song_page_full_draw_transpose_complete = false;
       song_previous_displayed_chain = seq.song[seq.selected_track][seq.cursor_scroll + seq.scrollpos];
@@ -11811,6 +11991,7 @@ FLASHMEM void UI_func_song(uint8_t param)
     print_chain_matrix_in_song_page();
     print_chain_steps_in_song_page();
     print_transpose_in_song_page();
+    empty_chain_warning_text_in_song_page();
 
     //DEBUG
         // display.setTextColor(COLOR_SYSTEXT, DARKGREEN);
@@ -15036,6 +15217,7 @@ FLASHMEM void UI_func_braids(uint8_t param)
     // setup function
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+    virtual_keyboard_smart_preselect_mode();
     seq.cycle_touch_element = 1;
     virtual_keyboard();
     virtual_keyboard_print_buttons();
@@ -17798,7 +17980,7 @@ void print_sidechain_static_texts()
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   setCursor_textGrid_small(21, 6);
   //snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
-    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000- sidechain_a_speed *10);
+  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000 - sidechain_a_speed * 10);
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(displayname);
@@ -17807,8 +17989,8 @@ void print_sidechain_static_texts()
   display.print("MS");
 
   setCursor_textGrid_small(43, 6);
- // snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
-  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000- sidechain_b_speed *10);
+  // snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000 - sidechain_b_speed * 10);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.print(displayname);
   setCursor_textGrid_small(48, 6);
@@ -17847,8 +18029,8 @@ void print_sidechain_editor_values()
 
     print_small_intbar(11, 6, sidechain_a_speed, 2, 1, 1); // sidechain a speed
     setCursor_textGrid_small(21, 6);
-  //  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
-     snprintf_P(displayname, sizeof(displayname), PSTR("%04d"),1000- sidechain_a_speed *10);
+    //  snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_a_speed / 10));
+    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000 - sidechain_a_speed * 10);
     display.print(displayname);
   }
   if (menu_item_check(3))
@@ -17923,8 +18105,8 @@ void print_sidechain_editor_values()
   {
     print_small_intbar(33, 6, sidechain_b_speed, 16, 1, 1); // sidechain b speed
     setCursor_textGrid_small(43, 6);
-   // snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
-     snprintf_P(displayname, sizeof(displayname), PSTR("%04d"),1000- sidechain_b_speed*10 );
+    // snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), (seq.tempo_ms / 1000) * (sidechain_b_speed / 10));
+    snprintf_P(displayname, sizeof(displayname), PSTR("%04d"), 1000 - sidechain_b_speed * 10);
     display.print(displayname);
   }
 
@@ -18665,6 +18847,31 @@ FLASHMEM void print_perfmod_buttons()
   }
 }
 
+FLASHMEM void print_drumpads()
+{
+  uint8_t offset = 14;
+  if (seq.cycle_touch_element == 1) {
+    char tmp[14];
+    char tmp2[14];
+    for (uint8_t x = 0; x < 6; x++)
+    {
+      snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + ts.virtual_keyboard_octave * 12 - offset].name);
+      snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + ts.virtual_keyboard_octave * 12 - offset].name[6]);
+      if (x + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+        draw_button_on_grid(x * 9 + 1, 21, tmp, tmp2, 1);
+      else
+        draw_button_on_grid(x * 9 + 1, 21, "", "", 1);
+
+      snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name);
+      snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name[6]);
+      if (x + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+        draw_button_on_grid(x * 9 + 1, 26, tmp, tmp2, 1);
+      else
+        draw_button_on_grid(x * 9 + 1, 26, "", "", 1);
+    }
+  }
+}
+
 FLASHMEM void print_voice_select_default_help()
 {
   if (seq.cycle_touch_element != 1)
@@ -18899,6 +19106,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     dexed_onscreen_algo = 88; // dummy value to force draw on screen init
     display.fillScreen(COLOR_BACKGROUND);
     border0();
+    virtual_keyboard_smart_preselect_mode();
     ts.fav_buttton_state = 0; //clear touch button state when starting page
     seq.cycle_touch_element = 0;
     if (LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(UI_func_volume) && LCDML.MENU_getLastActiveFunctionID() != LCDML.OTHER_getIDFromFunction(mFunc_screensaver))
@@ -19037,7 +19245,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonPressed() && dexed_live_mod.active_button != 99)
     {
       toggle_dexed_instance_in_voice_select();
-
+      virtual_keyboard_smart_preselect_mode();
       draw_favorite_icon(configuration.dexed[selected_instance_id].pool, configuration.dexed[selected_instance_id].bank, configuration.dexed[selected_instance_id].voice, selected_instance_id);
     }
     else if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -19614,12 +19822,12 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
 
           mode = 0xff;
           break;
-      }
+        }
 
         LCDML.FUNC_goBackToMenu();
+      }
     }
   }
-}
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     if (mode < 0xff)
@@ -19765,9 +19973,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             setCursor_textGrid(1, 2);
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
+          }
         }
       }
-    }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -19779,9 +19987,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-  }
+    }
     encoderDir[ENC_R].reset();
-}
+  }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -20561,7 +20769,7 @@ FLASHMEM uint8_t search_accepted_char(uint8_t c)
 #endif
     if (c == accepted_chars[i])
       return (i);
-}
+  }
   return (0);
 }
 
@@ -21034,7 +21242,7 @@ FLASHMEM bool check_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_i
       LOG.println(F(" - It is not in Favorites."));
 #endif
       return false;
-}
+    }
   }
   else
     return false;
@@ -21573,7 +21781,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
 #ifdef DEBUG
       LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
-}
+    }
   }
   else
     return false;
@@ -21723,7 +21931,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
 
     // recalculate low and high notes for all zones
     calc_low_high(preset_number);
-    }
+  }
   else
   {
 #ifdef DEBUG
@@ -21741,7 +21949,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
   LOG.print(F(" root: "));
   LOG.println(msz[preset_number][zone_number].rootnote);
 #endif
-  }
+}
 #endif
 
 /*************************************************************************
@@ -22480,7 +22688,7 @@ FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16
   if (remote_active)
     display.console = false;
 
-  }
+}
 #endif
 
 #if defined GENERIC_DISPLAY 
