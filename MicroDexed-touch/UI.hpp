@@ -1037,7 +1037,7 @@ FLASHMEM void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const ch
       display.setCursor((x + 2) * CHAR_width_small + CHAR_width_small / 2, y * CHAR_height_small + 6 + CHAR_height_small);
       display.setTextSize(2);
     }
-    else if (t2[2] == '\0' || (t2[0] >= '1' && t2[0] < '9'))
+    else if (t2[0] >= '1' && t2[0] < '9')
     {
       display.setCursor((x + 2) * CHAR_width_small - 4, y * CHAR_height_small + 6 + CHAR_height_small);
       display.setTextSize(2);

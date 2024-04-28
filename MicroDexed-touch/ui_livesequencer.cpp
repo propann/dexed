@@ -616,10 +616,9 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   if (guiFlags & clearBottomArea) {
     const uint16_t bgColor = isLayerViewActive ? COLOR_BACKGROUND : GREY3; // gray for tools
     display.console = true;
-    display.fillRect(0, 77, DISPLAY_WIDTH, DISPLAY_HEIGHT - 77, bgColor);
-    if(isLayerViewActive == false) {
-      display.drawRect(0, 77, DISPLAY_WIDTH, DISPLAY_HEIGHT - 77, GREY1);
-    }
+    display.fillRect(1, 78, DISPLAY_WIDTH - 2, DISPLAY_HEIGHT - 75, bgColor);
+    display.drawRect(0, 77, DISPLAY_WIDTH, DISPLAY_HEIGHT - 77, isLayerViewActive ? bgColor : GREY2);
+
     DBG_LOG(printf("clear bottom\n"));
   }
   if (isLayerViewActive || (guiUpdateFlags & drawTrackButtons)) {
