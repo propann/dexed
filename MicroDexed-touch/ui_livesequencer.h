@@ -58,6 +58,7 @@ private:
   };
 
   enum Tools : uint8_t {
+    TOOLS_NONE = 0,
     TOOLS_PATTERN,
     TOOLS_SONG,
     TOOLS_ARP,

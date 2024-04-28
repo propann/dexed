@@ -347,7 +347,7 @@ void UI_LiveSequencer::processLCDM(void) {
     if((isLayerViewActive == false) && (data->currentTools == TOOLS_PATTERN) && data->lastPlayedNoteChanged) {
       lastNoteLabel->drawNow();
     }
-    
+
     data->songLayersChanged = false;
     data->trackLayersChanged = false;
     data->lastPlayedNoteChanged = false;
@@ -428,7 +428,8 @@ void UI_LiveSequencer::handleTouchscreen(void) {
       const bool newIsSongMode = !data->isSongMode;
       if(data->showingTools == false) {
         data->currentPage = newIsSongMode ? PAGE_SONG : PAGE_PATTERN;
-      } else if (isModeToolActive()) {
+      }
+      if (isModeToolActive()) { // switch pattern / song tools if selected
         data->currentTools = newIsSongMode ? TOOLS_SONG : TOOLS_PATTERN;
       }
       data->isSongMode = newIsSongMode;
@@ -437,6 +438,9 @@ void UI_LiveSequencer::handleTouchscreen(void) {
 
     const bool funcPressed = TouchButton::isPressed(GRID_X[4], GRID_Y[0]);
     if (funcPressed) {
+      if(data->currentTools == TOOLS_NONE) { // init first tool open
+        data->currentTools = data->isSongMode ? TOOLS_SONG : TOOLS_PATTERN;
+      }
       data->showingTools = !data->showingTools;
       redrawScreen();
     }
