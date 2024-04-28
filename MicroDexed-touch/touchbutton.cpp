@@ -63,7 +63,7 @@ void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
 void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {
   drawButton(x, y, label.c_str(), sub.c_str(), colors);
   uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[colors].bg;
-  display.fillRect(x, (y + BUTTON_SIZE_Y), BUTTON_SIZE_X, 3, barColor);
+  display.fillRect(x, (y + BUTTON_SIZE_Y - 2), BUTTON_SIZE_X, 2, barColor);
 }
 
 void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors) {
@@ -77,14 +77,14 @@ void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, co
   display.setTextColor(c.text, c.bg);
   display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, c.bg);
   
-  display.setCursor(x + CHAR_width_small / 2, y + 6);
+  display.setCursor(x + CHAR_width_small / 2, y + 5);
   display.print(label.c_str());
 
   const bool bigSub = sub.size() <= 3;
   display.setTextSize(bigSub ? 2 : 1);
   if(bigSub) {
     const uint16_t subLengthPixels = sub.size() * CHAR_width;
-    display.setCursor(x + (BUTTON_SIZE_X - subLengthPixels) / 2, y + 8 + CHAR_height_small);
+    display.setCursor(x + (BUTTON_SIZE_X - subLengthPixels) / 2, y + 6 + CHAR_height_small);
   } else {
     display.setCursor(x + CHAR_width_small / 2, y + 10 + CHAR_height_small);
   }

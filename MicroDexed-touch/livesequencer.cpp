@@ -551,9 +551,8 @@ void LiveSequencer::playNextArpNote(void) {
       }
       const midi::Channel channel = data.tracks[data.activeTrack].channel;
       for(auto &n : newArp.notes) {
-        handleNoteOn(channel, n, 127, 0);
+        handleNoteOn(channel, n, data.arpSettings.volume, 0);
       }
-
       
       newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
       activeArps.emplace_back(newArp);
