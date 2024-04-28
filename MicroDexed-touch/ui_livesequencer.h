@@ -41,7 +41,6 @@ private:
   TouchButton *applyPatternLength;
 
   std::vector<TouchButton*> buttonsToolSelect;
-  std::vector<TouchButton*> buttonsSongTools;
 
   TouchButton *lastNoteLabel;
 
@@ -74,7 +73,8 @@ private:
     drawTools = (1 << 3),
     clearBottomArea = (1 << 4),
     drawActiveNotes = (1 << 5),
-    drawTime = (1 << 6)
+    drawTime = (1 << 6),
+    drawSongLayers = (1 << 7)
   };
 
   uint16_t GRID_X[6];

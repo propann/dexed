@@ -36,14 +36,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     GRID_X[i] = BUTTON_OFFSET_X + (i * 54);
     GRID_Y[i] = BUTTON_OFFSET_Y + (i * 40);
   }
-  buttonsSongTools.push_back(new TouchButton(GRID_X[0], GRID_Y[3],
-  [ ](auto *b) { // drawHandler
-    b->draw("TOOL", (data->isSongMode) ? "MUTE": "QUANT", instance->isModeToolActive() ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
-  }));
-  buttonsSongTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
-  [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
-  }));
 
   // TOOL MENU
   buttonsToolSelect.push_back(new TouchButton(GRID_X[0], GRID_Y[2],
@@ -190,6 +182,29 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     liveSeqPtr->fillTrackLayer();
   })));
 
+  // SONG TOOLS
+  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new TouchButton(GRID_X[0], GRID_Y[3],
+  [ ](auto *b) { // drawHandler
+    b->draw("MUTE", "QUANT", TouchButton::BUTTON_LABEL);
+  })));
+  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
+  [ ] (auto *b, auto *v) { // drawHandler
+    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
+  })));
+  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new TouchButton(GRID_X[0], GRID_Y[4],
+  [ ](auto *b) { // drawHandler
+    b->draw("SONG", "LAYERS", TouchButton::BUTTON_LABEL);
+  })));
+  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], songLayerMode, std::vector<uint8_t>({ uint8_t(LAYER_MUTE), uint8_t(LAYER_MERGE), uint8_t(LAYER_DELETE) }), uint8_t(LAYER_MUTE),
+  [ this ](auto *b, auto *v) { // drawHandler
+    std::string t1 = (data->songLayerCount == 0) ? "NO" : "LAYER";
+    std::string t2 = (data->songLayerCount == 0) ? "LAYERS" : "ACTION";
+    b->draw(t1, t2, (data->songLayerCount == 0) ? TouchButton::BUTTON_LABEL : TouchButton::BUTTON_ACTIVE);
+    if(data->songLayerCount > 0) {
+      guiUpdateFlags |= drawSongLayers;
+    }
+  })));
+
   // ARP TOOL
   toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[0], GRID_Y[3], data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 0,
   [ this ] (auto *b, auto *v) { // drawHandler
@@ -296,7 +311,6 @@ void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
 void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
-    data->currentTools = TOOLS_PATTERN; // initially...
     data->isActive = true;
     stayActive = false;
     display.fillScreen(COLOR_BACKGROUND);
@@ -333,7 +347,7 @@ void UI_LiveSequencer::processLCDM(void) {
     if((isLayerViewActive == false) && (data->currentTools == TOOLS_PATTERN) && data->lastPlayedNoteChanged) {
       lastNoteLabel->drawNow();
     }
-
+    
     data->songLayersChanged = false;
     data->trackLayersChanged = false;
     data->lastPlayedNoteChanged = false;
@@ -499,23 +513,16 @@ void UI_LiveSequencer::handleTouchscreen(void) {
         // process active tool
         switch(data->currentTools) {
         case TOOLS_SONG:
-          if (TouchButton::isPressed(GRID_X[1], GRID_Y[3])) {
-            // song layer mode
-            if (++songLayerMode == LayerMode::LAYER_MODE_NUM) {
-              songLayerMode = LayerMode::LAYER_MUTE;
-            }
-          }
           if (songLayerMode != LayerMode::LAYER_MUTE) { // song layers can not be muted
             for (uint8_t songLayer = 0; songLayer < data->songLayerCount; songLayer++) {
-              if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[3])) {
+              if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[4])) {
                 liveSeqPtr->songLayerAction(songLayer, LayerMode(songLayerMode));
                 songLayerMode = LayerMode::LAYER_MUTE;
+                TouchButton::clearButton(GRID_X[2 + songLayer], GRID_Y[4], GREY3); // FIXME clear last layer
+                guiUpdateFlags |= drawSongLayers;
+                break;
               }
             }
-          }
-          // song mute quantize denom
-          for(auto *b : buttonsSongTools) {
-            b->processPressed();
           }
           break;
         }
@@ -656,28 +663,14 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       for (auto i = range.first; i != range.second; ++i) {
         i->second->drawNow();
       }
-
-      switch (data->currentTools) {
-
-      case TOOLS_SONG:
-        TouchButton::drawButton(GRID_X[0], GRID_Y[4], "SONG", "LAYERS", TouchButton::BUTTON_LABEL);
-        if (data->songLayerCount > 0) {
-          TouchButton::drawButton(GRID_X[1], GRID_Y[4], "LAYER", "ACTION", TouchButton::BUTTON_HIGHLIGHTED); // switch modes
+    }
+    if(guiFlags & drawSongLayers) {
+      TouchButton::ButtonColor color = TouchButton::BUTTON_NORMAL;
+      handleLayerEditButtonColor(songLayerMode, color);
+      for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
+        if (songLayer < data->songLayerCount) {
+          drawLayerButton(data->isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
         }
-        else {
-          TouchButton::drawButton(GRID_X[1], GRID_Y[4], "NO", "LAYERS", TouchButton::BUTTON_NORMAL); // switch modes
-        }
-        TouchButton::ButtonColor color = TouchButton::BUTTON_NORMAL;
-        handleLayerEditButtonColor(songLayerMode, color);
-        for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
-          if (songLayer < data->songLayerCount) {
-            drawLayerButton(data->isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[3]);
-          }
-        }
-        for(auto *b : buttonsSongTools) {
-          b->drawNow();
-        }
-        break;
       }
     }
   }
