@@ -23,9 +23,6 @@ extern void helptext_l(const char* str);
 static constexpr int BUTTON_HEIGHT = CHAR_height_small * button_size_y;
 static constexpr int BUTTON_WIDTH = CHAR_width_small * button_size_x;
 
-static constexpr uint8_t BUTTON_GRID_X[6] = { 0, 9, 18, 27, 36, 45 };
-static constexpr uint8_t BUTTON_GRID_Y[6] = { 0, 5, 10, 15, 20, 25 };
-
 UI_LiveSequencer* instance;
 LiveSequencer::LiveSeqData *data;
 
@@ -636,8 +633,8 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
             if (guiFlags & drawActiveNotes) {
               // always draw notes when layers visible
               const int numNotesOn = data->tracks[track].activeNotes[layer].size();
-              const int xStart = (BUTTON_GRID_X[track] + button_size_x) * CHAR_width_small - 3;
-              const int yStart = (10 + layer * 5) * CHAR_height_small;
+              const int xStart = GRID_X[track] + BUTTON_WIDTH - 3;
+              const int yStart = GRID_Y[2 + layer];
               const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
               display.console = true;
               display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerBgColor);
