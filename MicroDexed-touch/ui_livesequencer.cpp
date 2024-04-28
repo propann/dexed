@@ -78,15 +78,16 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_RED);
     display.setTextSize(1);
     display.setTextColor(isSame ? GREY2 : RED, GREY3);
-    display.setCursor(165, 165);
+    display.setCursor(GRID_X[3], GRID_Y[3] + 5);
     display.printf("CHANGING PATTERN LENGTH");
-    display.setCursor(165, 175);
+    display.setCursor(GRID_X[3], GRID_Y[3] + 20);
     display.printf("WILL DELETE ALL DATA!");
   },
   [ this ](auto *b){ // clickedHandler
     if(data->numberOfBars != numberOfBarsTemp) {
       handleStop();
       liveSeqPtr->changeNumberOfBars(numberOfBarsTemp);
+      b->drawNow();
     }
   });
   buttonsSeqTools.push_back(applyPatternLength);
@@ -124,6 +125,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
       else {
         liveSeqPtr->deleteLiveSequencerData();
       }
+      b->draw("DELETE", "OK", TouchButton::BUTTON_LABEL);
     }
   });
   buttonsSeqTools.push_back(new TouchButton(GRID_X[1], GRID_Y[5],
@@ -193,9 +195,9 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   }));
 
   // ARP TOOL
-  buttonsArpTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[0], GRID_Y[3], data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8,
+  buttonsArpTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[0], GRID_Y[3], data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 0,
   [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("NUM", v->toString(), (v->getValue() == 0) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("SPEED", (v->getValue() == 0) ? "OFF" : v->toString(), (v->getValue() == 0) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
   }));
   buttonsArpTools.push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->arpSettings.octaves, std::vector<uint8_t>({ 1, 2, 3 }), 1,
   [ this ] (auto *b, auto *v) { // drawHandler

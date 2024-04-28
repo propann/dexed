@@ -84,7 +84,7 @@ void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, co
   display.setTextSize(bigSub ? 2 : 1);
   if(bigSub) {
     const uint16_t subLengthPixels = sub.size() * CHAR_width;
-    display.setCursor(x + (BUTTON_SIZE_X - subLengthPixels) / 2, y + 6 + CHAR_height_small);
+    display.setCursor(x + (BUTTON_SIZE_X - subLengthPixels) / 2, y + 8 + CHAR_height_small);
   } else {
     display.setCursor(x + CHAR_width_small / 2, y + 10 + CHAR_height_small);
   }
