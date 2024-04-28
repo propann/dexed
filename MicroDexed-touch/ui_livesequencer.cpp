@@ -51,24 +51,21 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     b->draw("TOOL", (data->isSongMode) ? "SNG": "PAT", instance->isModeToolActive() ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ](auto *b) { // clickedHandler
-    data->currentTools = (data->isSongMode) ? TOOLS_SONG : TOOLS_PATTERN;
-    guiUpdateFlags |= clearBottomArea | drawTools;
+    instance->selectTools((data->isSongMode) ? TOOLS_SONG : TOOLS_PATTERN);
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[1], GRID_Y[2],
   [ ](auto *b) { // drawHandler
     b->draw("TOOL", "ARP", data->currentTools == TOOLS_ARP ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ](auto *b) { // clickedHandler
-    data->currentTools = TOOLS_ARP;
-    guiUpdateFlags |= clearBottomArea | drawTools;
+    instance->selectTools(TOOLS_ARP);
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[2], GRID_Y[2],
   [ ](auto *b) { // drawHandler
     b->draw("TOOL", "SEQ", data->currentTools == TOOLS_SEQ ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ](auto *b) { // clickedHandler
-    data->currentTools = TOOLS_SEQ;
-    guiUpdateFlags |= clearBottomArea | drawTools;
+    instance->selectTools(TOOLS_SEQ);
   }));
 
   // SEQUENCER TOOLS
@@ -227,6 +224,17 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ this ] (auto *b, auto *v) { // drawHandler
     b->draw("REPEAT", std::string(v->toString()) + "x", TouchButton::BUTTON_HIGHLIGHTED);
   }));
+}
+
+void UI_LiveSequencer::selectTools(Tools tools) {
+  if(data->currentTools != tools) {
+    if(currentValue.button != nullptr) {
+      currentValue.button->setSelected(false);
+    }
+    currentValue.valueBase = nullptr;
+    data->currentTools = tools;
+    guiUpdateFlags |= clearBottomArea | drawTools;
+  }
 }
 
 bool UI_LiveSequencer::isModeToolActive(void) {

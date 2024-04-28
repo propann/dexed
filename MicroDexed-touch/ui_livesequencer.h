@@ -82,6 +82,7 @@ private:
   uint16_t GRID_X[6];
   uint16_t GRID_Y[6];
 
+  void selectTools(Tools tools);
   bool isModeToolActive(void);
   void redrawScreen(void);
   void drawGUI(uint16_t& guiFlags);
