@@ -8,6 +8,19 @@ extern ts_t ts;
 extern int numTouchPoints;
 extern bool remote_active;
 
+struct ColorCombo {
+  uint16_t text;
+  uint16_t bg;
+};
+
+static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
+  { GREY1, GREY2 },               // COLOR_NORMAL
+  { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
+  { COLOR_SYSTEXT, RED },         // COLOR_RED
+  { COLOR_SYSTEXT, MIDDLEGREEN }, // COLOR_HIGHLIGHTED
+  { COLOR_SYSTEXT, GREY3 }        // COLOR_LABEL
+};
+
 TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
   drawHandler{draw},
   clickedHandler{clicked},
@@ -22,12 +35,6 @@ void TouchButton::setSelected(bool selected) {
   isSelected = selected;
   drawHandler(this);
   DBG_LOG(printf("%i is selected: %i\n", x, isSelected));
-}
-
-void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {
-  drawButton(x, y, label.c_str(), sub.c_str(), colorMap[colors]);
-  uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[colors].bg;
-  display.fillRect(x, (y + BUTTON_SIZE_Y), BUTTON_SIZE_X, 3, barColor);
 }
 
 static bool isButtonTouched = false;
@@ -46,14 +53,22 @@ bool TouchButton::isPressed(uint16_t x, uint16_t y) {
   return result;
 }
 
-void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ColorCombo colors) {
+void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {
+  drawButton(x, y, label.c_str(), sub.c_str(), colors);
+  uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[colors].bg;
+  display.fillRect(x, (y + BUTTON_SIZE_Y), BUTTON_SIZE_X, 3, barColor);
+}
+
+void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors) {
   if (remote_active) {
     display.console = true;
   }
 
+  ColorCombo c = colorMap[colors];
+
   display.setTextSize(1);
-  display.setTextColor(colors.text, colors.bg);
-  display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, colors.bg);
+  display.setTextColor(c.text, c.bg);
+  display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, c.bg);
   
   display.setCursor(x + CHAR_width_small / 2, y + 6);
   display.print(label.c_str());

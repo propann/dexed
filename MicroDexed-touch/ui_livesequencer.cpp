@@ -465,7 +465,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
       }
       if(isLayerViewActive) {
         for (int layer = 0; layer < data->trackSettings[track].layerCount; layer++) {
-          const bool pressed = TouchButton::isPressed(GRID_X[track], 10 + layer * 5);
+          const bool pressed = TouchButton::isPressed(GRID_X[track], GRID_Y[2 + layer]);
           if (pressed) {
             if (data->isRecording && (trackLayerMode != LayerMode::LAYER_MUTE) && (track == data->activeTrack)) {
               liveSeqPtr->trackLayerAction(track, layer, LayerMode(trackLayerMode));
@@ -536,10 +536,10 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     display.console = true;
   }
   if (guiFlags & drawTopButtons) {
-    TouchButton::drawButton(GRID_X[0], GRID_Y[0], (runningHere ? "STOP" : "START"), "", runningHere ? COLOR_RED : COLOR_NORMAL);
-    TouchButton::drawButton(GRID_X[1], GRID_Y[0], "REC", "", data->isRecording ? COLOR_RED : COLOR_NORMAL);
-    TouchButton::drawButton(GRID_X[4], GRID_Y[0], isLayerViewActive ? "LAYERS" : "TOOLS", "VIEW", COLOR_NORMAL);
-    TouchButton::drawButton(GRID_X[5], GRID_Y[0], data->isSongMode ? "SONG" : "PATT", "MODE", COLOR_HIGHLIGHTED);
+    TouchButton::drawButton(GRID_X[0], GRID_Y[0], (runningHere ? "STOP" : "START"), "", runningHere ? TouchButton::BUTTON_RED : TouchButton::BUTTON_NORMAL);
+    TouchButton::drawButton(GRID_X[1], GRID_Y[0], "REC", "", data->isRecording ? TouchButton::BUTTON_RED : TouchButton::BUTTON_NORMAL);
+    TouchButton::drawButton(GRID_X[4], GRID_Y[0], isLayerViewActive ? "LAYERS" : "TOOLS", "VIEW", TouchButton::BUTTON_NORMAL);
+    TouchButton::drawButton(GRID_X[5], GRID_Y[0], data->isSongMode ? "SONG" : "PATT", "MODE", TouchButton::BUTTON_HIGHLIGHTED);
   }
 
   uint16_t patCount = 0;
@@ -592,12 +592,12 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
   char temp_char[6];
 
-  ColorCombo trackButtonRecColor = COLOR_HIGHLIGHTED; // red, or blinking
+  TouchButton::ButtonColor trackButtonRecColor = TouchButton::BUTTON_HIGHLIGHTED; // red, or blinking
   const bool doBlink = data->notesOn.size() || data->pendingEvents.size();
   if (doBlink) {
     if (++guiCounter == 8) {
       guiCounter = 0;
-      trackButtonRecColor = blinkPhase ? COLOR_RED : COLOR_HIGHLIGHTED;
+      trackButtonRecColor = blinkPhase ? TouchButton::BUTTON_RED : TouchButton::BUTTON_HIGHLIGHTED;
       guiFlags |= drawTrackButtons;
       blinkPhase = !blinkPhase;
     }
@@ -605,7 +605,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   else {
     guiCounter = 0;
     blinkPhase = 0;
-    trackButtonRecColor = COLOR_RED;
+    trackButtonRecColor = TouchButton::BUTTON_RED;
   }
 
   if (guiFlags & clearBottomArea) {
@@ -618,7 +618,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     const bool isSongRec = (data->isSongMode && data->isRecording);
     for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
       if (guiFlags & drawTrackButtons) {
-        TouchButton::drawButton(GRID_X[track], GRID_Y[1], data->tracks[track].name, itoa(track + 1, temp_char, 10), (track == data->activeTrack) ? (data->isRecording ? trackButtonRecColor : COLOR_HIGHLIGHTED) : COLOR_ACTIVE);
+        TouchButton::drawButton(GRID_X[track], GRID_Y[1], data->tracks[track].name, itoa(track + 1, temp_char, 10), (track == data->activeTrack) ? (data->isRecording ? trackButtonRecColor : TouchButton::BUTTON_HIGHLIGHTED) : TouchButton::BUTTON_ACTIVE);
       }
       if (isLayerViewActive) {
         const bool layerEditActive = !data->isSongMode && (data->activeTrack == track) && (trackLayerMode != LayerMode::LAYER_MUTE);
