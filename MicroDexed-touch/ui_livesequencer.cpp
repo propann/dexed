@@ -111,7 +111,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     if(deleteConfirming) {
       b->draw("DO IT", "!", TouchButton::BUTTON_RED);
     } else {
-      b->draw("", "", TouchButton::BUTTON_LABEL);
+      b->clear(GREY3);
     }
   },
   [ this ] (auto *b) { // clickedHandler
@@ -464,6 +464,8 @@ void UI_LiveSequencer::handleTouchscreen(void) {
           if (pressed) {
             if (data->isRecording && (trackLayerMode != LayerMode::LAYER_MUTE) && (track == data->activeTrack)) {
               liveSeqPtr->trackLayerAction(track, layer, LayerMode(trackLayerMode));
+              // one less layer now
+              TouchButton::clearButton(GRID_X[track], GRID_Y[2 + layer], COLOR_BACKGROUND);
               trackLayerMode = LayerMode::LAYER_MUTE;
             }
             else {
@@ -621,7 +623,6 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         for (int layer = 0; layer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; layer++) {
           if (layer < data->trackSettings[track].layerCount) {
             const bool isMuted = data->tracks[track].layerMutes & (1 << layer);
-            uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
             TouchButton::ButtonColor color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
             if (layerEditActive) {
               // adapt button background if in layer edit mode
@@ -637,14 +638,8 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
               const int yStart = GRID_Y[2 + layer];
               const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
               display.console = true;
-              display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, layerBgColor);
+              display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, TouchButton::getColors(color).bg);
               display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
-            }
-          }
-          else {
-            if (guiFlags & drawLayerButtons) {
-              // clear button
-              //TouchButton::drawButton(GRID_X[track], GRID_Y[2 + layer], "", "", TouchButton::BUTTON_LABEL);
             }
           }
         }

@@ -8,11 +8,6 @@ extern ts_t ts;
 extern int numTouchPoints;
 extern bool remote_active;
 
-struct ColorCombo {
-  uint16_t text;
-  uint16_t bg;
-};
-
 static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { GREY1, GREY2 },               // COLOR_NORMAL
   { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
@@ -51,6 +46,18 @@ bool TouchButton::isPressed(uint16_t x, uint16_t y) {
     isButtonTouched = false;
   }
   return result;
+}
+
+void TouchButton::clear(uint16_t color) {
+  clearButton(x, y, color);
+}
+
+ColorCombo TouchButton::getColors(ButtonColor color) {
+  return colorMap[color];
+}
+
+void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
+  display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, color);
 }
 
 void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {

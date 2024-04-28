@@ -6,6 +6,11 @@
 #include <functional>
 #include "config.h"
 
+struct ColorCombo {
+  uint16_t text;
+  uint16_t bg;
+};
+
 class TouchButton {
 public:
   enum PressedState {
@@ -28,9 +33,12 @@ public:
   void drawNow();
   void draw(const std::string label, const std::string sub, ButtonColor colors);
   void setSelected(bool selected);
+  void clear(uint16_t color);
 
   static void drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors);
   static bool isPressed(uint16_t x, uint16_t y);
+  static ColorCombo getColors(ButtonColor color);
+  static void clearButton(uint16_t x, uint16_t y, uint16_t color);
 
 private:
   bool isSelected = false;
