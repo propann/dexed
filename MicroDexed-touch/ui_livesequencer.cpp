@@ -9,8 +9,6 @@ extern ILI9341_t3n display;
 extern bool remote_active;
 extern int numTouchPoints;
 
-extern bool check_button_on_grid(uint8_t x, uint8_t y);
-extern void draw_button_on_grid(uint8_t x, uint8_t y, const char* t1, const char* t2, uint8_t color);
 extern void handleStart();
 extern void handleStop();
 
@@ -280,7 +278,7 @@ void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
     display.print(F("CHANGE THE MIDI CHANNEL ON YOUR"));
     setCursor_textGrid_small(2, 14);
     display.print(F("EXTERNAL INPUT DEVICE TO AN UNUSED CHANNEL"));
-    draw_button_on_grid(42, 22, "REMAP", "MIDI", 1);
+    TouchButton::drawButton(GRID_X[5], GRID_Y[5], "REMAP", "MIDI", TouchButton::BUTTON_ACTIVE);
     helptext_l(back_text);
   }
 }
@@ -361,7 +359,7 @@ void UI_LiveSequencer::redrawScreen(void) {
 void UI_LiveSequencer::handleTouchscreen(void) {
   bool pressedChanged = (numTouchPoints != numPressedOld);
   if (showingHowTo) {
-    if (check_button_on_grid(42,22)) {
+    if (TouchButton::isPressed(GRID_X[5], GRID_Y[5])) {
       LCDML.FUNC_setGBAToLastFunc();
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     }
@@ -624,17 +622,16 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         const bool layerEditActive = !data->isSongMode && (data->activeTrack == track) && (trackLayerMode != LayerMode::LAYER_MUTE);
         // layer button
         for (int layer = 0; layer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; layer++) {
-          const int buttonY = 10 + layer * 5;
           if (layer < data->trackSettings[track].layerCount) {
             const bool isMuted = data->tracks[track].layerMutes & (1 << layer);
             uint16_t layerBgColor = (isMuted ? GREY2 : (isSongRec ? RED : DX_DARKCYAN));
-            uint8_t layerBgCode = (isMuted ? 0 : (isSongRec ? 2 : 1));
+            TouchButton::ButtonColor color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
             if (layerEditActive) {
               // adapt button background if in layer edit mode
-              handleLayerEditButtonColor(trackLayerMode, layerBgColor, layerBgCode);
+              handleLayerEditButtonColor(trackLayerMode, color);
             }
             if (guiFlags & drawLayerButtons) {
-              drawLayerButton(data->isSongMode, trackLayerMode, layer, layerEditActive, layerBgCode, BUTTON_GRID_X[track], buttonY);
+              drawLayerButton(data->isSongMode, trackLayerMode, layer, layerEditActive, color, GRID_X[track], GRID_Y[2 + layer]);
             }
             if (guiFlags & drawActiveNotes) {
               // always draw notes when layers visible
@@ -650,8 +647,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
           else {
             if (guiFlags & drawLayerButtons) {
               // clear button
-              display.console = true;
-              display.fillRect(BUTTON_GRID_X[track] * CHAR_width_small, buttonY * CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND);
+              //TouchButton::drawButton(GRID_X[track], GRID_Y[2 + layer], "", "", TouchButton::BUTTON_LABEL);
             }
           }
         }
@@ -684,20 +680,18 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         break;
 
       case TOOLS_SONG:
-        draw_button_on_grid(BUTTON_GRID_X[0], BUTTON_GRID_Y[4], "SONG", "LAYERS", 97); // label only
+        TouchButton::drawButton(GRID_X[0], GRID_Y[4], "SONG", "LAYERS", TouchButton::BUTTON_LABEL);
         if (data->songLayerCount > 0) {
-          draw_button_on_grid(BUTTON_GRID_X[1], BUTTON_GRID_Y[4], "LAYER", "ACTION", 2); // switch modes
+          TouchButton::drawButton(GRID_X[1], GRID_Y[4], "LAYER", "ACTION", TouchButton::BUTTON_HIGHLIGHTED); // switch modes
         }
         else {
-          draw_button_on_grid(BUTTON_GRID_X[1], BUTTON_GRID_Y[4], "NO", "LAYERS", 1); // switch modes
+          TouchButton::drawButton(GRID_X[1], GRID_Y[4], "NO", "LAYERS", TouchButton::BUTTON_NORMAL); // switch modes
         }
-        uint16_t layerBgColor = GREY2;
-        uint8_t layerBgCode = 0;
-        handleLayerEditButtonColor(songLayerMode, layerBgColor, layerBgCode);
+        TouchButton::ButtonColor color = TouchButton::BUTTON_NORMAL;
+        handleLayerEditButtonColor(songLayerMode, color);
         for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
-          const uint8_t buttonY = BUTTON_GRID_Y[3];
           if (songLayer < data->songLayerCount) {
-            drawLayerButton(data->isSongMode, songLayerMode, songLayer, true, layerBgCode, BUTTON_GRID_X[2 + songLayer], buttonY);
+            drawLayerButton(data->isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[3]);
           }
         }
         for(auto *b : buttonsSongTools) {
@@ -734,7 +728,7 @@ std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   }
 }
 
-void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, uint8_t layerBgCode, uint8_t gridX, uint8_t gridY) {
+void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::ButtonColor color, uint16_t x, uint16_t y) {
   char temp_char[4];
   std::string label = "LAYER";
   std::string labelSub = itoa(layer + 1, temp_char, 10);
@@ -752,19 +746,17 @@ void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode,
       break;
     }
   }
-  draw_button_on_grid(gridX, gridY, label.c_str(), labelSub.c_str(), layerBgCode);
+  TouchButton::drawButton(x, y, label.c_str(), labelSub.c_str(), color);
 }
 
-void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, uint16_t& layerBgColor, uint8_t& layerBgCode) {
+void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::ButtonColor &color) {
   switch (layerMode) {
   case LayerMode::LAYER_MERGE:
-    layerBgColor = MIDDLEGREEN;
-    layerBgCode = 3;
+    color = TouchButton::BUTTON_HIGHLIGHTED;
     break;
 
   case LayerMode::LAYER_DELETE:
-    layerBgColor = RED;
-    layerBgCode = 2;
+    color = TouchButton::BUTTON_RED;
     break;
   }
 }
