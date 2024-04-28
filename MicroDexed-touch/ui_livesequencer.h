@@ -37,7 +37,6 @@ private:
   bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
   ActiveValue currentValue;
-
   TouchButton *applyPatternLength;
 
   std::vector<TouchButton*> buttonsToolSelect;
@@ -62,7 +61,6 @@ private:
   };
 
   enum Tools {
-    TOOLS_NONE = 0,
     TOOLS_PATTERN,
     TOOLS_SONG,
     TOOLS_ARP,

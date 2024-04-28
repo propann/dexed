@@ -115,6 +115,7 @@ public:
     uint8_t songPatternCount = 0;
     uint8_t currentPage = 0; // PagePattern, PageSong or PageTools
     uint8_t currentTools = 0;
+    bool showingTools = false;
     uint8_t songLayerCount = 0;
     uint8_t lastPlayedNote = 0;
     bool trackLayersChanged = false;

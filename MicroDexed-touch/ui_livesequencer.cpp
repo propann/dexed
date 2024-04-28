@@ -293,6 +293,7 @@ void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
 void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
+    data->currentTools = TOOLS_PATTERN; // initially...
     data->isActive = true;
     stayActive = false;
     display.fillScreen(COLOR_BACKGROUND);
@@ -355,7 +356,7 @@ void UI_LiveSequencer::processLCDM(void) {
 
 void UI_LiveSequencer::redrawScreen(void) {
   guiUpdateFlags |= (clearBottomArea | drawTopButtons | drawTrackButtons | drawTime);
-  isLayerViewActive = data->currentTools == TOOLS_NONE;
+  isLayerViewActive = (data->showingTools == false);
   if(isLayerViewActive) {
     guiUpdateFlags |= drawLayerButtons;
   } else {
@@ -408,23 +409,18 @@ void UI_LiveSequencer::handleTouchscreen(void) {
     const bool modePressed = TouchButton::isPressed(GRID_X[5], GRID_Y[0]);
     if (modePressed) {
       const bool newIsSongMode = !data->isSongMode;
-      if(data->currentTools == TOOLS_NONE) {
+      if(data->showingTools == false) {
         data->currentPage = newIsSongMode ? PAGE_SONG : PAGE_PATTERN;
       } else if (isModeToolActive()) {
         data->currentTools = newIsSongMode ? TOOLS_SONG : TOOLS_PATTERN;
       }
       data->isSongMode = newIsSongMode;
-      
       redrawScreen();
     }
 
     const bool funcPressed = TouchButton::isPressed(GRID_X[4], GRID_Y[0]);
     if (funcPressed) {
-      if(isLayerViewActive) {
-        data->currentTools = data->isSongMode ? TOOLS_SONG : TOOLS_PATTERN;
-      } else {
-        data->currentTools = TOOLS_NONE;
-      }
+      data->showingTools = !data->showingTools;
       redrawScreen();
     }
 
