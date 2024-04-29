@@ -26,7 +26,7 @@ static constexpr int BUTTON_WIDTH = CHAR_width_small * button_size_x;
 UI_LiveSequencer* instance;
 LiveSequencer::LiveSeqData *data;
 
-UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
+PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequencer) {
   instance = this;
   data = sequencer->getData();
   static constexpr uint8_t BUTTON_OFFSET_X = 4; // center in screen
@@ -106,6 +106,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ this ] (auto *b) { // clickedHandler
     // really delete
     if (deleteConfirming) {
+      
       deleteConfirming = false;
       if (data->isSongMode) {
         liveSeqPtr->deleteAllSongEvents();
@@ -116,6 +117,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
       b->draw("DELETE", "OK", TouchButton::BUTTON_LABEL);
     }
   });
+  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, confirmDelete));
   toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[1], GRID_Y[5],
   [ this ] (auto *b) { // drawHandler
     b->draw("DELETE", data->isSongMode ? "SONG" : "ALL", TouchButton::BUTTON_NORMAL);
@@ -133,7 +135,6 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
     LCDML.FUNC_setGBAToLastFunc();
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    DBG_LOG(printf("perf id %i\n", data->performanceID));
     LCDML.OTHER_jumpToFunc(UI_func_load_performance, data->performanceID);
   })));
   toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[5], GRID_Y[5],
@@ -234,7 +235,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   [ this ] (auto *b, auto *v) { // drawHandler
     b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", TouchButton::BUTTON_HIGHLIGHTED);
   })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data->arpSettings.loadPerBar, 1, 2, 4, 2,
+  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data->arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
   [ this ] (auto *b, auto *v) { // drawHandler
     b->draw("SAMPLE", std::string(v->toString()) + "x", TouchButton::BUTTON_HIGHLIGHTED);
   })));
@@ -244,7 +245,7 @@ UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPtr(sequen
   })));
 }
 
-void UI_LiveSequencer::selectTools(Tools tools) {
+PROGMEM void UI_LiveSequencer::selectTools(Tools tools) {
   if(data->currentTools != tools) {
     if(currentValue.button != nullptr) {
       currentValue.button->setSelected(false);
@@ -255,7 +256,7 @@ void UI_LiveSequencer::selectTools(Tools tools) {
   }
 }
 
-bool UI_LiveSequencer::isModeToolActive(void) {
+PROGMEM bool UI_LiveSequencer::isModeToolActive(void) {
   bool result = false;
   result |= (data->currentTools == TOOLS_PATTERN) && (data->isSongMode == false);
   result |= (data->currentTools == TOOLS_SONG) && (data->isSongMode == true);
@@ -263,15 +264,15 @@ bool UI_LiveSequencer::isModeToolActive(void) {
   return result;
 }
 
-void UI_func_livesequencer(uint8_t param) {
+PROGMEM void UI_func_livesequencer(uint8_t param) {
   instance->processLCDM();
 }
 
-void handle_touchscreen_live_sequencer(void) {
+PROGMEM void handle_touchscreen_live_sequencer(void) {
   instance->handleTouchscreen();
 }
 
-void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
+PROGMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
   if (showingHowTo == false) {
     showingHowTo = true;
     display.fillScreen(COLOR_BACKGROUND);
@@ -308,7 +309,7 @@ void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
   }
 }
 
-void UI_LiveSequencer::processLCDM(void) {
+PROGMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
     data->isActive = true;
@@ -371,7 +372,7 @@ void UI_LiveSequencer::processLCDM(void) {
   }
 }
 
-void UI_LiveSequencer::redrawScreen(void) {
+PROGMEM void UI_LiveSequencer::redrawScreen(void) {
   guiUpdateFlags |= (clearBottomArea | drawTopButtons | drawTrackButtons | drawTime);
   isLayerViewActive = (data->showingTools == false);
   if(isLayerViewActive) {
@@ -381,7 +382,7 @@ void UI_LiveSequencer::redrawScreen(void) {
   }
 }
 
-void UI_LiveSequencer::handleTouchscreen(void) {
+PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
   bool pressedChanged = (numTouchPoints != numPressedOld);
   if (showingHowTo) {
     if (TouchButton::isPressed(GRID_X[5], GRID_Y[5])) {
@@ -536,7 +537,7 @@ void UI_LiveSequencer::handleTouchscreen(void) {
   }
 }
 
-void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
+PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   if (remote_active) {
     display.console = true;
   }
@@ -681,7 +682,7 @@ void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   guiFlags = 0;
 }
 
-std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
+PROGMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   switch (mode) {
   case LiveSequencer::ArpMode::ARP_CHORD:
     return "CHRD";
@@ -704,7 +705,7 @@ std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   }
 }
 
-void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::ButtonColor color, uint16_t x, uint16_t y) {
+PROGMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::ButtonColor color, uint16_t x, uint16_t y) {
   char temp_char[4];
   std::string label = "LAYER";
   std::string labelSub = itoa(layer + 1, temp_char, 10);
@@ -725,7 +726,7 @@ void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode,
   TouchButton::drawButton(x, y, label.c_str(), labelSub.c_str(), color);
 }
 
-void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::ButtonColor &color) {
+PROGMEM void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::ButtonColor &color) {
   switch (layerMode) {
   case LayerMode::LAYER_MERGE:
     color = TouchButton::BUTTON_HIGHLIGHTED;
