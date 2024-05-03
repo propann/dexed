@@ -35,7 +35,7 @@ public:
   void processPressed();
   void drawNow();
   void draw(const std::string label, const std::string sub, Color Color);
-  void setSelected(bool isSelected);
+  void setSelected(bool selected);
   void clear(uint16_t color);
 
   static void drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color);
@@ -44,9 +44,7 @@ public:
   static void clearButton(uint16_t x, uint16_t y, uint16_t color);
 
 private:
-  Color currentColors;
-
-  
+  bool isSelected = false;
   uint16_t x;
   uint16_t y;
   std::function<void(TouchButton*)> drawHandler{};

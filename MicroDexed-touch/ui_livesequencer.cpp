@@ -187,13 +187,20 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   [ ](auto *b) { // drawHandler
     b->draw("SONG", "LAYERS", TouchButton::BUTTON_LABEL);
   }));
-  toolsPages[TOOLS_SONG].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], songLayerMode, std::vector<uint8_t>({ uint8_t(LiveSequencer::LAYER_MUTE), uint8_t(LiveSequencer::LAYER_MERGE), uint8_t(LiveSequencer::LAYER_DELETE) }), uint8_t(LiveSequencer::LAYER_MUTE),
-  [ this ](auto *b, auto *v) { // drawHandler
+  toolsPages[TOOLS_SONG].push_back(new TouchButton(GRID_X[1], GRID_Y[4],
+  [ this ](auto *b) { // drawHandler
     std::string t1 = (data.songLayerCount == 0) ? "NO" : "LAYER";
     std::string t2 = (data.songLayerCount == 0) ? "LAYERS" : "ACTION";
     b->draw(t1, t2, (data.songLayerCount == 0) ? TouchButton::BUTTON_LABEL : TouchButton::BUTTON_ACTIVE);
+    guiUpdateFlags |= drawSongLayers;
+    
+  }, [ this ](auto *b) { // clickedHandler
     if(data.songLayerCount > 0) {
+      if(++songLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
+        songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
+      }
       guiUpdateFlags |= drawSongLayers;
+      DBG_LOG(printf("please print\n"));
     }
   }));
 
@@ -474,8 +481,8 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
           if (pressed) {
             if (data.isRecording && (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) && (track == data.activeTrack)) {
               liveSeq.trackLayerAction(track, layer, LiveSequencer::LayerMode(trackLayerMode));
-              // one less layer now
-              TouchButton::clearButton(GRID_X[track], GRID_Y[2 + layer], COLOR_BACKGROUND);
+              // one less layer now, clear last layer button
+              TouchButton::clearButton(GRID_X[track], GRID_Y[2 + data.trackSettings[track].layerCount], COLOR_BACKGROUND);
               trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
             }
             else {
@@ -488,25 +495,24 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
         }
       } else {
         // process TOOLS MENU if tools view active
-        if(isLayerViewActive == false) {
-          for(auto *b : buttonsToolSelect) {
-            b->processPressed();
-          }
-          for(TouchButton *b : toolsPages[currentTools]) {
-            b->processPressed();
-          }
+        for(auto *b : buttonsToolSelect) {
+          b->processPressed();
+        }
+        for(TouchButton *b : toolsPages[currentTools]) {
+          b->processPressed();
+        }
 
-          // 
-          if(currentTools == TOOLS_SONG) {
-            if (songLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) { // song layers can not be muted
-              for (uint8_t songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
-                if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[4])) {
-                  liveSeq.songLayerAction(songLayer, LiveSequencer::LayerMode(songLayerMode));
-                  songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
-                  TouchButton::clearButton(GRID_X[2 + songLayer], GRID_Y[4], GREY3); // FIXME clear last layer
-                  guiUpdateFlags |= drawSongLayers;
-                  break;
-                }
+        // 
+        if(currentTools == TOOLS_SONG) {
+          if (songLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) { // song layers can not be muted
+            for (uint8_t songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
+              if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[4])) {
+                liveSeq.songLayerAction(songLayer, LiveSequencer::LayerMode(songLayerMode));
+                songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
+                TouchButton::clearButton(GRID_X[2 + data.songLayerCount], GRID_Y[4], GREY3);
+                guiUpdateFlags |= drawSongLayers;
+                DBG_LOG(printf("please delete one\n"));
+                break;
               }
             }
           }
@@ -518,9 +524,8 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
 }
 
 PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
-  if (remote_active) {
-    display.console = true;
-  }
+  display.console = true;
+  
   if (guiFlags & drawTopButtons) {
     TouchButton::drawButton(GRID_X[0], GRID_Y[0], (runningHere ? "STOP" : "START"), "", runningHere ? TouchButton::BUTTON_RED : TouchButton::BUTTON_NORMAL);
     TouchButton::drawButton(GRID_X[1], GRID_Y[0], "REC", "", data.isRecording ? TouchButton::BUTTON_RED : TouchButton::BUTTON_NORMAL);
@@ -647,15 +652,14 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       for(TouchButton *b : toolsPages[currentTools]) {
         b->drawNow();
       }
-
-      //
-      if(guiFlags & drawSongLayers) {
-        TouchButton::Color color = TouchButton::BUTTON_NORMAL;
-        handleLayerEditButtonColor(songLayerMode, color);
-        for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
-          if (songLayer < data.songLayerCount) {
-            drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
-          }
+    }
+    if(guiFlags & drawSongLayers) {
+      DBG_LOG(printf("print now\n"));
+      TouchButton::Color color = TouchButton::BUTTON_NORMAL;
+      handleLayerEditButtonColor(songLayerMode, color);
+      for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
+        if (songLayer < data.songLayerCount) {
+          drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
         }
       }
     }
