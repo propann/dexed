@@ -32,7 +32,7 @@ OneShotTimer liveTimer(TCK);    // one tick timer of 20
 UI_LiveSequencer *ui_liveSeq;
 
 PROGMEM LiveSequencer::LiveSequencer() {
-  ui_liveSeq = new UI_LiveSequencer(this, &data);
+  ui_liveSeq = new UI_LiveSequencer(*this, data);
   updateTrackChannels(true);
   data.isActive = false;
 }

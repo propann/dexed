@@ -9,12 +9,15 @@
 
 class UI_LiveSequencer {
 public:
-  UI_LiveSequencer(LiveSequencer *sequencer, LiveSequencer::LiveSeqData *d);
+  UI_LiveSequencer(LiveSequencer &sequencer, LiveSequencer::LiveSeqData &d);
   void showDirectMappingWarning(uint8_t inChannel);
   void processLCDM(void);
   void handleTouchscreen(void);
 
 private:
+  static constexpr int BUTTON_HEIGHT = CHAR_height_small * button_size_y;
+  static constexpr int BUTTON_WIDTH = CHAR_width_small * button_size_x;
+
   int numPressedOld = 0;
   bool runningHere = false;
   bool barPhases[2] = { 0 };
@@ -34,8 +37,8 @@ private:
   TouchButton *lastNoteLabel;
 
   UI_LiveSequencer* instance;
-  LiveSequencer* liveSeqPtr;
-  LiveSequencer::LiveSeqData *data;
+  LiveSequencer& liveSeq;
+  LiveSequencer::LiveSeqData &data;
 
   uint8_t currentPage = 0; // PagePattern, PageSong or PageTools
   uint8_t currentTools = 0;
