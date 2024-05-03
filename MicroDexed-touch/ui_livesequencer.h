@@ -5,24 +5,14 @@
 #include "editableValue.h"
 #include "touchbutton.h"
 #include "valuebutton.h"
-
-typedef void (*SetupFn)(void*);
-
-class LiveSequencer;
+#include "livesequencer.h"
 
 class UI_LiveSequencer {
 public:
-  UI_LiveSequencer(LiveSequencer *sequencer);
+  UI_LiveSequencer(LiveSequencer *sequencer, LiveSequencer::LiveSeqData *d);
   void showDirectMappingWarning(uint8_t inChannel);
   void processLCDM(void);
   void handleTouchscreen(void);
-
-  enum LayerMode {
-    LAYER_MUTE = 0,
-    LAYER_MERGE,
-    LAYER_DELETE,
-    LAYER_MODE_NUM
-  };
 
 private:
   int numPressedOld = 0;
@@ -36,19 +26,26 @@ private:
   uint16_t guiUpdateFlags = 0;
   bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
-  ActiveValue currentValue;
+  ActiveValue currentValue = { nullptr, nullptr };
   TouchButton *applyPatternLength;
 
   std::vector<TouchButton*> buttonsToolSelect;
 
   TouchButton *lastNoteLabel;
 
+  UI_LiveSequencer* instance;
   LiveSequencer* liveSeqPtr;
+  LiveSequencer::LiveSeqData *data;
+
+  uint8_t currentPage = 0; // PagePattern, PageSong or PageTools
+  uint8_t currentTools = 0;
+  bool showingTools = false;
+
   uint8_t guiCounter = 0;
   bool blinkPhase = 0;
   
-  uint8_t trackLayerMode = LAYER_MUTE;
-  uint8_t songLayerMode = LAYER_MUTE;
+  uint8_t trackLayerMode = LiveSequencer::LAYER_MUTE;
+  uint8_t songLayerMode = LiveSequencer::LAYER_MUTE;
 
   enum Pages {
     PAGE_PATTERN = 0,
@@ -88,8 +85,5 @@ private:
   void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::ButtonColor color, uint16_t x, uint16_t y);
   void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::ButtonColor &color);
 };
-
-void UI_func_livesequencer(uint8_t param);
-void handle_touchscreen_live_sequencer(void);
 
 #endif //UI_LIVESEQUENCER_H

@@ -5,11 +5,14 @@
 #include <vector>
 #include <list>
 #include "MIDI.h"
-#include "ui_livesequencer.h"
 #include "LCDMenuLib2_typedef.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
+
+typedef void (*SetupFn)(void*);
+
+class UI_LiveSequencer;
 
 class LiveSequencer {
 
@@ -20,6 +23,13 @@ public:
   enum EventSource : uint8_t {
     EVENT_SONG = 0,
     EVENT_PATTERN = 1,
+  };
+
+  enum LayerMode {
+    LAYER_MUTE = 0,
+    LAYER_MERGE,
+    LAYER_DELETE,
+    LAYER_MODE_NUM
   };
 
   struct MidiEvent {
@@ -114,9 +124,6 @@ public:
     std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
     std::vector<MidiEvent> pendingEvents;
     uint8_t songPatternCount = 0;
-    uint8_t currentPage = 0; // PagePattern, PageSong or PageTools
-    uint8_t currentTools = 0;
-    bool showingTools = false;
     uint8_t songLayerCount = 0;
     uint8_t lastPlayedNote = 0;
     bool trackLayersChanged = false;
@@ -136,8 +143,8 @@ public:
 
   LiveSequencer();
   LiveSequencer::LiveSeqData* getData(void);
-  void songLayerAction(uint8_t layer, UI_LiveSequencer::LayerMode action);
-  void trackLayerAction(uint8_t track, uint8_t layer, UI_LiveSequencer::LayerMode action);
+  void songLayerAction(uint8_t layer, LayerMode action);
+  void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
   void handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void handleStart(void);
@@ -153,7 +160,6 @@ public:
 
 private:
   LiveSeqData data;
-  UI_LiveSequencer ui;
 
   std::set<uint8_t> pressedArpKeys;
   std::list<LiveSequencer::ArpNote> activeArps;
@@ -172,7 +178,7 @@ private:
   
   std::list<MidiEvent>::iterator playIterator;  
   const std::string getEventName(midi::MidiType event) const;
-  const std::string getEventSource(LiveSequencer::EventSource source) const;
+  const std::string getEventSource(EventSource source) const;
 
   void printEvent(int i, MidiEvent e);
   void printEvents();
@@ -184,7 +190,10 @@ private:
   bool timeQuantization(MidiEvent &e, uint8_t denom);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
-  void performLayerAction(UI_LiveSequencer::LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer);
+  void performLayerAction(LayerMode action, MidiEvent &e, uint8_t layer);
 };
+
+void UI_func_livesequencer(uint8_t param);
+void handle_touchscreen_live_sequencer(void);
 
 #endif // LIVESEQUENCER_H

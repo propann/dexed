@@ -3,6 +3,7 @@
 #include "sequencer.h"
 #include <algorithm>
 #include "TeensyTimerTool.h"
+#include "ui_livesequencer.h"
 #include <map>
 
 extern void handleNoteOnInput(byte, byte, byte, byte);
@@ -28,10 +29,20 @@ PeriodicTimer tickTimer(TMR1);  // only 16bit needed
 OneShotTimer arpTimer(TCK);     // one tick timer of 20
 OneShotTimer liveTimer(TCK);    // one tick timer of 20
 
-PROGMEM LiveSequencer::LiveSequencer() :
-  ui(this) {
+UI_LiveSequencer *ui_liveSeq;
+
+PROGMEM LiveSequencer::LiveSequencer() {
+  ui_liveSeq = new UI_LiveSequencer(this, &data);
   updateTrackChannels(true);
   data.isActive = false;
+}
+
+PROGMEM void UI_func_livesequencer(uint8_t param) {
+  ui_liveSeq->processLCDM();
+}
+
+PROGMEM void handle_touchscreen_live_sequencer(void) {
+  ui_liveSeq->handleTouchscreen();
 }
 
 LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
@@ -266,7 +277,7 @@ PROGMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType ev
         }
       }
     } else {
-      ui.showDirectMappingWarning(inChannel);
+      ui_liveSeq->showDirectMappingWarning(inChannel);
       DBG_LOG(printf("LiveSeq: drop event as directly assigned to an instument\n"));
     }
   } else {
@@ -326,8 +337,8 @@ PROGMEM void LiveSequencer::deleteAllSongEvents(void) {
   data.songLayersChanged = true;
 }
 
-PROGMEM void LiveSequencer::songLayerAction(uint8_t layer, UI_LiveSequencer::LayerMode action) {
-  if((layer == 0) && (action == UI_LiveSequencer::LayerMode::LAYER_MERGE)) {
+PROGMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
+  if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
   for(auto &e : data.songEvents) {
@@ -340,8 +351,8 @@ PROGMEM void LiveSequencer::songLayerAction(uint8_t layer, UI_LiveSequencer::Lay
   data.songLayersChanged = true;
 }
 
-PROGMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, UI_LiveSequencer::LayerMode action) {
-  if((layer == 0) && (action == UI_LiveSequencer::LayerMode::LAYER_MERGE)) {
+PROGMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
+  if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
 
@@ -369,17 +380,17 @@ PROGMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, UI_Li
   data.trackLayersChanged = true;
 }
 
-PROGMEM void LiveSequencer::performLayerAction(UI_LiveSequencer::LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
+PROGMEM void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
   if(e.layer == layer) {
     switch(action) {
-    case UI_LiveSequencer::LayerMode::LAYER_MERGE:
+    case LayerMode::LAYER_MERGE:
       // layer 0 must not be shifted up
       if(e.layer > 0) { 
         e.layer--;
       }
       break;
 
-    case UI_LiveSequencer::LayerMode::LAYER_DELETE:
+    case LayerMode::LAYER_DELETE:
       e.event = midi::InvalidType; // mark layer notes to delete later
       break;
 
@@ -795,7 +806,7 @@ PROGMEM void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        trackLayerAction(i, 1, UI_LiveSequencer::LayerMode::LAYER_MERGE); // merge them
+        trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them
         // reset fillNotes to user values
         data.fillNotes.number = fillNumOld;
         data.fillNotes.offset = fillOffOld;
