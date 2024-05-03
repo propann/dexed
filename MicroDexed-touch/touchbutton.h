@@ -28,11 +28,14 @@ public:
     BUTTONCOLOR_NUM = 5
   };
 
+  static constexpr uint16_t BUTTON_SIZE_X = button_size_x * CHAR_width_small;
+  static constexpr uint16_t BUTTON_SIZE_Y = button_size_y * CHAR_height_small;
+
   TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){});
   void processPressed();
   void drawNow();
   void draw(const std::string label, const std::string sub, ButtonColor colors);
-  void setSelected(bool selected);
+  void setSelected(bool isSelected);
   void clear(uint16_t color);
 
   static void drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors);
@@ -41,10 +44,9 @@ public:
   static void clearButton(uint16_t x, uint16_t y, uint16_t color);
 
 private:
-  bool isSelected = false;
+  ButtonColor currentColors;
 
-  static constexpr uint16_t BUTTON_SIZE_X = button_size_x * CHAR_width_small;
-  static constexpr uint16_t BUTTON_SIZE_Y = button_size_y * CHAR_height_small;
+  
   uint16_t x;
   uint16_t y;
   std::function<void(TouchButton*)> drawHandler{};

@@ -624,13 +624,14 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
             }
             if (guiFlags & drawActiveNotes) {
               // always draw notes when layers visible
-              const int numNotesOn = data.tracks[track].activeNotes[layer].size();
-              const int xStart = GRID_X[track] + BUTTON_WIDTH - 3;
-              const int yStart = GRID_Y[2 + layer];
-              const int yFill = std::min(numNotesOn * 5, BUTTON_HEIGHT);
+              const uint16_t barHeight = 5 * data.tracks[track].activeNotes[layer].size();
+              const uint16_t xStart = GRID_X[track] + TouchButton::BUTTON_SIZE_X - 3;
+              const uint16_t yStart = GRID_Y[2 + layer];
+              
+              const uint16_t yFill = std::min(barHeight, TouchButton::BUTTON_SIZE_Y);
               display.console = true;
-              display.fillRect(xStart, yStart, 3, BUTTON_HEIGHT - yFill, TouchButton::getColors(color).bg);
-              display.fillRect(xStart, yStart + (BUTTON_HEIGHT - yFill), 3, yFill, COLOR_SYSTEXT);
+              display.fillRect(xStart, yStart, 3, TouchButton::BUTTON_SIZE_Y - yFill, TouchButton::getColors(color).bg);
+              display.fillRect(xStart, yStart + (TouchButton::BUTTON_SIZE_Y - yFill), 3, yFill, COLOR_SYSTEXT);
             }
           }
         }

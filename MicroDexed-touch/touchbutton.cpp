@@ -26,10 +26,9 @@ void TouchButton::drawNow() {
   drawHandler(this);
 }
 
-void TouchButton::setSelected(bool selected) {
-  isSelected = selected;
-  drawHandler(this);
-  DBG_LOG(printf("%i is selected: %i\n", x, isSelected));
+void TouchButton::setSelected(bool isSelected) {
+  uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[currentColors].bg;
+  display.fillRect(x, (y + BUTTON_SIZE_Y - 2), BUTTON_SIZE_X, 2, barColor);
 }
 
 static bool isButtonTouched = false;
@@ -61,9 +60,8 @@ void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
 }
 
 void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {
+  currentColors = colors;
   drawButton(x, y, label.c_str(), sub.c_str(), colors);
-  uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[colors].bg;
-  display.fillRect(x, (y + BUTTON_SIZE_Y - 2), BUTTON_SIZE_X, 2, barColor);
 }
 
 void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors) {

@@ -15,9 +15,6 @@ public:
   void handleTouchscreen(void);
 
 private:
-  static constexpr int BUTTON_HEIGHT = CHAR_height_small * button_size_y;
-  static constexpr int BUTTON_WIDTH = CHAR_width_small * button_size_x;
-
   int numPressedOld = 0;
   bool runningHere = false;
   bool barPhases[2] = { 0 };
