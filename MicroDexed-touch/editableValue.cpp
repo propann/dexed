@@ -28,7 +28,7 @@ bool EditableValue<T>::checkChanged(T result) {
 
 template <class T>
 void EditableValueVector<T>::updateIterator(void) {
-  it = std::find(valuesVector.begin(), valuesVector.end(), v);
+  it = std::find(valuesVector.begin(), valuesVector.end(), this->value);
   if(it == valuesVector.end()) {
     it = valuesVector.begin();
   }
@@ -36,30 +36,30 @@ void EditableValueVector<T>::updateIterator(void) {
 
 template <class T>
 bool EditableValueRange<T>::previous(void) {
-  changedHandler(this);
-  T result = v;
+  this->changedHandler(this);
+  T result = this->value;
   if(result - rangeIncrement >= rangeMin) {
     result -= rangeIncrement;
   }
-  return checkChanged(result);
+  return this->checkChanged(result);
 }
 
 template <class T>
 bool EditableValueRange<T>::next(void) {
-  T result = v;
+  T result = this->value;
   if(result + rangeIncrement <= rangeMax) {
     result += rangeIncrement;
   }
-  return checkChanged(result);
+  return this->checkChanged(result);
 }
 
 template <class T>
 EditableValueBase* EditableValueRange<T>::cycle(void) {
-  T result = v;
+  T result = this->value;
   if(next() == false) {
-    v = rangeMin;
+    this->value = rangeMin;
   }
-  checkChanged(result);
+  this->checkChanged(result);
   return this;
 }
 
@@ -68,7 +68,7 @@ bool EditableValueVector<T>::previous(void) {
   if(it != valuesVector.begin()) {
     --it;
   }
-  return checkChanged(*it);
+  return this->checkChanged(*it);
 }
 
 template <class T>
@@ -76,7 +76,7 @@ bool EditableValueVector<T>::next(void) {
   if(++it == valuesVector.end()) {
     --it;
   }
-  return checkChanged(*it);
+  return this->checkChanged(*it);
 }
 
 template <class T>
@@ -84,6 +84,6 @@ EditableValueBase* EditableValueVector<T>::cycle(void) {
   if(next() == false) {
     it = valuesVector.begin();
   }
-  checkChanged(*it);
+  this->checkChanged(*it);
   return this;
 }

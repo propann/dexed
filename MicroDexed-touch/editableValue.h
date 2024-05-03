@@ -33,7 +33,7 @@ protected:
 template<class T> class EditableValueRange : public EditableValue<T> {
 public:
   EditableValueRange(T &value, T min, T max, T increment, T defaultValue, std::function<void(EditableValue<T> *v)> changed) :
-  EditableValue<T>(value, defaultValue, changed), rangeMin(min), rangeMax(max), rangeIncrement(increment), v(value) {
+  EditableValue<T>(value, defaultValue, changed), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
   }
   EditableValueBase* cycle(void) override;
   bool next(void) override;
@@ -43,13 +43,12 @@ private:
   T rangeMin;
   T rangeMax;
   T rangeIncrement;
-  T &v;
 };
 
 template<class T> class EditableValueVector : public EditableValue<T> {
 public:
   EditableValueVector(T &value, std::vector<T> values, T defaultValue, std::function<void(EditableValue<T> *v)> changed) :
-  EditableValue<T>(value, defaultValue, changed), valuesVector(values), v(value) {
+  EditableValue<T>(value, defaultValue, changed), valuesVector(values) {
     if(valuesVector.empty()) {
       valuesVector.push_back(0);
     }
@@ -63,7 +62,6 @@ private:
   void updateIterator(void);
   std::vector<T> valuesVector;
   typename std::vector<T>::iterator it;
-  T &v;
 };
 
 template class EditableValue<uint16_t>;
