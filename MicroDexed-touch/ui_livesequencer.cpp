@@ -200,7 +200,6 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
         songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
       }
       guiUpdateFlags |= drawSongLayers;
-      DBG_LOG(printf("please print\n"));
     }
   }));
 
@@ -511,7 +510,6 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
                 songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
                 TouchButton::clearButton(GRID_X[2 + data.songLayerCount], GRID_Y[4], GREY3);
                 guiUpdateFlags |= drawSongLayers;
-                DBG_LOG(printf("please delete one\n"));
                 break;
               }
             }
@@ -654,7 +652,6 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       }
     }
     if(guiFlags & drawSongLayers) {
-      DBG_LOG(printf("print now\n"));
       TouchButton::Color color = TouchButton::BUTTON_NORMAL;
       handleLayerEditButtonColor(songLayerMode, color);
       for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
