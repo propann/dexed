@@ -55,11 +55,10 @@ bool EditableValueRange<T>::next(void) {
 
 template <class T>
 EditableValueBase* EditableValueRange<T>::cycle(void) {
-  T result = this->value;
   if(next() == false) {
-    this->value = rangeMin;
+    this->checkChanged(rangeMin);
   }
-  this->checkChanged(result);
+  
   return this;
 }
 
@@ -83,7 +82,7 @@ template <class T>
 EditableValueBase* EditableValueVector<T>::cycle(void) {
   if(next() == false) {
     it = valuesVector.begin();
+    this->checkChanged(*it);
   }
-  this->checkChanged(*it);
   return this;
 }
