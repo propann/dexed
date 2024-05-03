@@ -39,24 +39,24 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
 
   // TOOL MENU
   buttonsToolSelect.push_back(new TouchButton(GRID_X[0], GRID_Y[2],
-  [ this ](auto *b) { // drawHandler
+  [ this ] (auto *b) { // drawHandler
     b->draw("TOOL", (data->isSongMode) ? "SNG": "PAT", instance->isModeToolActive() ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
-  [ this ](auto *b) { // clickedHandler
+  [ this ] (auto *b) { // clickedHandler
     instance->selectTools((data->isSongMode) ? TOOLS_SONG : TOOLS_PATTERN);
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[1], GRID_Y[2],
   [ ](auto *b) { // drawHandler
     b->draw("TOOL", "ARP", data->currentTools == TOOLS_ARP ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
-  [ this ](auto *b) { // clickedHandler
+  [ this ] (auto *b) { // clickedHandler
     instance->selectTools(TOOLS_ARP);
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[2], GRID_Y[2],
-  [ ](auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("TOOL", "SEQ", data->currentTools == TOOLS_SEQ ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
-  [ this ](auto *b) { // clickedHandler
+  [ this ] (auto *b) { // clickedHandler
     instance->selectTools(TOOLS_SEQ);
   }));
 
@@ -79,21 +79,21 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
       b->drawNow();
     }
   });
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, applyPatternLength));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[0], GRID_Y[3],
+  toolsPages[TOOLS_SEQ].push_back(applyPatternLength);
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[3],
   [ ] (auto *b) { // drawHandler
     b->draw("PATTERN", "LENGTH", TouchButton::BUTTON_LABEL);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], numberOfBarsTemp, std::vector<uint8_t>({ 1, 2, 4, 8 }), 4, 
   [ applyPatternLength ] (auto *b, auto *v) { // drawHandler
     b->draw("LENGTH", v->toString(), TouchButton::BUTTON_ACTIVE);
     applyPatternLength->drawNow();
-  })));
+  }));
 
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[0], GRID_Y[5],
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("ACTIONS", "", TouchButton::BUTTON_LABEL);
-  })));
+  }));
 
   TouchButton *confirmDelete = new TouchButton(GRID_X[2], GRID_Y[5],
   [ this ] (auto *b) { // drawHandler
@@ -106,7 +106,6 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
   [ this ] (auto *b) { // clickedHandler
     // really delete
     if (deleteConfirming) {
-      
       deleteConfirming = false;
       if (data->isSongMode) {
         liveSeqPtr->deleteAllSongEvents();
@@ -117,16 +116,16 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
       b->draw("DELETE", "OK", TouchButton::BUTTON_LABEL);
     }
   });
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, confirmDelete));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[1], GRID_Y[5],
+  toolsPages[TOOLS_SEQ].push_back(confirmDelete);
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[1], GRID_Y[5],
   [ this ] (auto *b) { // drawHandler
     b->draw("DELETE", data->isSongMode ? "SONG" : "ALL", TouchButton::BUTTON_NORMAL);
   },
   [ this, confirmDelete ] (auto *b) { // clickedHandler
     deleteConfirming = !deleteConfirming;
     confirmDelete->drawNow();
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[4], GRID_Y[5],
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[4], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("LOAD", "PERF", TouchButton::BUTTON_NORMAL);
   },
@@ -136,8 +135,8 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     LCDML.OTHER_jumpToFunc(UI_func_load_performance, data->performanceID);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SEQ, new TouchButton(GRID_X[5], GRID_Y[5],
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[5], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("SAVE", "PERF", TouchButton::BUTTON_NORMAL);
   },
@@ -147,56 +146,56 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     LCDML.OTHER_jumpToFunc(UI_func_save_performance); // FIXME: should have current id selected
-  })));
+  }));
 
   // PATTERN TOOLS
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
-    toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_PATTERN, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[track], GRID_Y[3], data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
+    toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[track], GRID_Y[3], data->trackSettings[track].quantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8, 16, 32 }), 4,
     [ ] (auto *b, auto *v) { // drawHandler
       b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
-    })));
+    }));
   }
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_PATTERN, new TouchButton(GRID_X[0], GRID_Y[4],
+  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOTES", TouchButton::BUTTON_LABEL);
-  })));
+  }));
   lastNoteLabel = new TouchButton(GRID_X[1], GRID_Y[4],
   [ this ] (auto *b) { // drawHandler
     char temp_char[4];
     b->draw("NOTE", itoa(data->lastPlayedNote, temp_char, 10), TouchButton::BUTTON_NORMAL);
   });
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_PATTERN, lastNoteLabel));
+  toolsPages[TOOLS_PATTERN].push_back(lastNoteLabel);
 
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_PATTERN, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16, 
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data->fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("NUM", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_PATTERN, new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data->fillNotes.offset, 0, 7, 1, 0, 
+  }));
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data->fillNotes.offset, 0, 7, 1, 0, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("OFF", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_PATTERN, new TouchButton(GRID_X[5], GRID_Y[4],
-  [ ](auto *b) { // drawHandler
+  }));
+  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[4],
+  [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOW", TouchButton::BUTTON_RED);
   },
   [ this ](auto *b) { // clickedHandler
     liveSeqPtr->fillTrackLayer();
-  })));
+  }));
 
   // SONG TOOLS
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new TouchButton(GRID_X[0], GRID_Y[3],
+  toolsPages[TOOLS_SONG].push_back(new TouchButton(GRID_X[0], GRID_Y[3],
   [ ](auto *b) { // drawHandler
     b->draw("MUTE", "QUANT", TouchButton::BUTTON_LABEL);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
+  }));
+  toolsPages[TOOLS_SONG].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new TouchButton(GRID_X[0], GRID_Y[4],
+  }));
+  toolsPages[TOOLS_SONG].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
   [ ](auto *b) { // drawHandler
     b->draw("SONG", "LAYERS", TouchButton::BUTTON_LABEL);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_SONG, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], songLayerMode, std::vector<uint8_t>({ uint8_t(LAYER_MUTE), uint8_t(LAYER_MERGE), uint8_t(LAYER_DELETE) }), uint8_t(LAYER_MUTE),
+  }));
+  toolsPages[TOOLS_SONG].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], songLayerMode, std::vector<uint8_t>({ uint8_t(LAYER_MUTE), uint8_t(LAYER_MERGE), uint8_t(LAYER_DELETE) }), uint8_t(LAYER_MUTE),
   [ this ](auto *b, auto *v) { // drawHandler
     std::string t1 = (data->songLayerCount == 0) ? "NO" : "LAYER";
     std::string t2 = (data->songLayerCount == 0) ? "LAYERS" : "ACTION";
@@ -204,45 +203,45 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer* sequencer) : liveSeqPt
     if(data->songLayerCount > 0) {
       guiUpdateFlags |= drawSongLayers;
     }
-  })));
+  }));
 
   // ARP TOOL
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[0], GRID_Y[3], data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 0,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[0], GRID_Y[3], data->arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 0,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SPEED", (v->getValue() == 0) ? "OFF" : v->toString(), (v->getValue() == 0) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->arpSettings.octaves, std::vector<uint8_t>({ 1, 2, 3 }), 1,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data->arpSettings.octaves, std::vector<uint8_t>({ 1, 2, 3 }), 1,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("OCT", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[3], (uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[3], (uint8_t&)data->arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<uint16_t>(&currentValue, GRID_X[3], GRID_Y[3], data->arpSettings.length, 50, 500, 10, 150,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint16_t>(&currentValue, GRID_X[3], GRID_Y[3], data->arpSettings.length, 50, 500, 10, 150,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("LEN", v->toString(), v->getValue() == 0 ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<int8_t>(&currentValue, GRID_X[4], GRID_Y[3], data->arpSettings.swing, -8, 8, 1, 0,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<int8_t>(&currentValue, GRID_X[4], GRID_Y[3], data->arpSettings.swing, -8, 8, 1, 0,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SWING", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<uint8_t>(&currentValue, GRID_X[5], GRID_Y[3], data->arpSettings.volume, 0, 127, 1, 127,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[5], GRID_Y[3], data->arpSettings.volume, 0, 127, 1, 127,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("VELO", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data->arpSettings.latch, 0, 1, 1, 1,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data->arpSettings.latch, 0, 1, 1, 1,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data->arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data->arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SAMPLE", std::string(v->toString()) + "x", TouchButton::BUTTON_HIGHLIGHTED);
-  })));
-  toolsPages.insert(std::pair<uint8_t, TouchButton*>(TOOLS_ARP, new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data->arpSettings.noteRepeat, 0, 4, 1, 0,
-  [ this ] (auto *b, auto *v) { // drawHandler
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data->arpSettings.noteRepeat, 0, 4, 1, 0,
+  [ ] (auto *b, auto *v) { // drawHandler
     b->draw("REPEAT", std::string(v->toString()) + "x", TouchButton::BUTTON_HIGHLIGHTED);
-  })));
+  }));
 }
 
 PROGMEM void UI_LiveSequencer::selectTools(Tools tools) {
@@ -439,9 +438,9 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
 
     const bool funcPressed = TouchButton::isPressed(GRID_X[4], GRID_Y[0]);
     if (funcPressed) {
-      if(data->currentTools == TOOLS_NONE) { // init first tool open
-        data->currentTools = data->isSongMode ? TOOLS_SONG : TOOLS_PATTERN;
-      }
+      // possible switch to song / pattern tools if mode changed
+      data->currentTools = data->isSongMode && data->currentTools == TOOLS_PATTERN ? TOOLS_SONG : data->currentTools;
+      data->currentTools = !data->isSongMode && data->currentTools == TOOLS_SONG ? TOOLS_PATTERN : data->currentTools;
       data->showingTools = !data->showingTools;
       redrawScreen();
     }
@@ -505,31 +504,29 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
           }
         }
       } else {
-        // process TOOLS MENU
-        for(auto *b : buttonsToolSelect) {
-          b->processPressed();
-        }
+        // process TOOLS MENU if tools view active
+        if(isLayerViewActive == false) {
+          for(auto *b : buttonsToolSelect) {
+            b->processPressed();
+          }
+          for(TouchButton *b : toolsPages[data->currentTools]) {
+            b->processPressed();
+          }
 
-        auto range = toolsPages.equal_range(data->currentTools);
-        for (auto i = range.first; i != range.second; ++i) {
-          i->second->processPressed();
-        }
-
-        // process active tool
-        switch(data->currentTools) {
-        case TOOLS_SONG:
-          if (songLayerMode != LayerMode::LAYER_MUTE) { // song layers can not be muted
-            for (uint8_t songLayer = 0; songLayer < data->songLayerCount; songLayer++) {
-              if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[4])) {
-                liveSeqPtr->songLayerAction(songLayer, LayerMode(songLayerMode));
-                songLayerMode = LayerMode::LAYER_MUTE;
-                TouchButton::clearButton(GRID_X[2 + songLayer], GRID_Y[4], GREY3); // FIXME clear last layer
-                guiUpdateFlags |= drawSongLayers;
-                break;
+          // 
+          if(data->currentTools == TOOLS_SONG) {
+            if (songLayerMode != LayerMode::LAYER_MUTE) { // song layers can not be muted
+              for (uint8_t songLayer = 0; songLayer < data->songLayerCount; songLayer++) {
+                if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[4])) {
+                  liveSeqPtr->songLayerAction(songLayer, LayerMode(songLayerMode));
+                  songLayerMode = LayerMode::LAYER_MUTE;
+                  TouchButton::clearButton(GRID_X[2 + songLayer], GRID_Y[4], GREY3); // FIXME clear last layer
+                  guiUpdateFlags |= drawSongLayers;
+                  break;
+                }
               }
             }
           }
-          break;
         }
       }
     }
@@ -663,17 +660,18 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         b->drawNow();
       }
 
-      auto range = toolsPages.equal_range(data->currentTools);
-      for (auto i = range.first; i != range.second; ++i) {
-        i->second->drawNow();
+      for(TouchButton *b : toolsPages[data->currentTools]) {
+        b->drawNow();
       }
-    }
-    if(guiFlags & drawSongLayers) {
-      TouchButton::ButtonColor color = TouchButton::BUTTON_NORMAL;
-      handleLayerEditButtonColor(songLayerMode, color);
-      for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
-        if (songLayer < data->songLayerCount) {
-          drawLayerButton(data->isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
+
+      //
+      if(guiFlags & drawSongLayers) {
+        TouchButton::ButtonColor color = TouchButton::BUTTON_NORMAL;
+        handleLayerEditButtonColor(songLayerMode, color);
+        for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
+          if (songLayer < data->songLayerCount) {
+            drawLayerButton(data->isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
+          }
         }
       }
     }

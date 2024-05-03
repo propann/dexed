@@ -5,7 +5,6 @@
 #include "editableValue.h"
 #include "touchbutton.h"
 #include "valuebutton.h"
-#include <unordered_map>
 
 typedef void (*SetupFn)(void*);
 
@@ -58,14 +57,14 @@ private:
   };
 
   enum Tools : uint8_t {
-    TOOLS_NONE = 0,
     TOOLS_PATTERN,
     TOOLS_SONG,
     TOOLS_ARP,
-    TOOLS_SEQ
+    TOOLS_SEQ,
+    TOOLS_NUM
   };
 
-  std::unordered_multimap<uint8_t, TouchButton*> toolsPages;
+  std::vector<TouchButton*> toolsPages[TOOLS_NUM];
 
   enum GuiUpdates : uint16_t {
     drawTopButtons = (1 << 0),
