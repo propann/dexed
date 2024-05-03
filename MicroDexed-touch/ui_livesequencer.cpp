@@ -204,41 +204,48 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
 
   // ARP TOOL
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[0], GRID_Y[3], data.arpSettings.amount, std::vector<uint8_t>({ 0, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 0,
-  [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("SPEED", (v->getValue() == 0) ? "OFF" : v->toString(), (v->getValue() == 0) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
+  toolsPages[TOOLS_ARP].push_back(new TouchButton(GRID_X[0], GRID_Y[3],
+  [ this ] (auto *b) { // drawHandler
+    b->draw("ENABLE", (data.arpSettings.enabled == 0) ? "OFF" : "ON", (data.arpSettings.enabled == 0) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
+  }, [ this ] (auto *b) { // clickedHandler
+    data.arpSettings.enabled = !data.arpSettings.enabled;
+    b->drawNow();
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data.arpSettings.octaves, std::vector<uint8_t>({ 1, 2, 3 }), 1,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data.arpSettings.amount, std::vector<uint8_t>({ 1, 2, 4, 6, 8, 12, 16, 24, 32, 64 }), 8,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("OCT", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("SPEED", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[3], (uint8_t&)data.arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[3], data.arpSettings.octaves, std::vector<uint8_t>({ 1, 2, 3, 4 }), 1,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("OCT", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint16_t>(&currentValue, GRID_X[3], GRID_Y[3], data.arpSettings.length, 50, 500, 10, 150,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[3], (uint8_t&)data.arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("LEN", v->toString(), v->getValue() == 0 ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<int8_t>(&currentValue, GRID_X[4], GRID_Y[3], data.arpSettings.swing, -8, 8, 1, 0,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint16_t>(&currentValue, GRID_X[4], GRID_Y[3], data.arpSettings.length, 50, 500, 10, 150,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("SWING", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("LEN", v->toString(), v->getValue() == 0 ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[5], GRID_Y[3], data.arpSettings.volume, 0, 127, 1, 127,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<int8_t>(&currentValue, GRID_X[5], GRID_Y[3], data.arpSettings.swing, -8, 8, 1, 0,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("VELO", v->toString(), TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("SWING", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data.arpSettings.latch, 0, 1, 1, 1,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data.arpSettings.volume, 0, 127, 1, 127,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("VELO", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.latch, 0, 1, 1, 1,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("SAMPLE", std::string(v->toString()) + "x", TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.arpSettings.noteRepeat, 0, 4, 1, 0,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("REPEAT", std::string(v->toString()) + "x", TouchButton::BUTTON_HIGHLIGHTED);
+    b->draw("SAMPLE", std::string(v->toString()) + "x", TouchButton::BUTTON_ACTIVE);
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.arpSettings.noteRepeat, 0, 4, 1, 0,
+  [ ] (auto *b, auto *v) { // drawHandler
+    b->draw("REPEAT", std::string(v->toString()) + "x", TouchButton::BUTTON_ACTIVE);
   }));
 }
 

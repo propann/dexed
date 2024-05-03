@@ -88,7 +88,8 @@ public:
 
   struct ArpSettings {
     uint16_t delayToNextArpOnMs;
-    uint8_t amount; // 0, 1, 2, ... per bar
+    uint8_t enabled;
+    uint8_t amount; // 1, 2, ... per bar
     uint8_t octaves;
     ArpMode mode;
     uint8_t loadPerBar;

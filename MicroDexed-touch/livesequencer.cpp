@@ -241,7 +241,7 @@ PROGMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType ev
 
       // forward incoming midi event to correct channel
       // ignore events directly mapped to an instrument
-      const bool arpActive = data.isRunning && (data.arpSettings.amount > 0);
+      const bool arpActive = data.isRunning && (data.arpSettings.enabled);
       if(arpActive) {
         switch(event) {
         case midi::NoteOn:
@@ -520,7 +520,7 @@ PROGMEM void LiveSequencer::playNextArpNote(void) {
       checkLoadNewArpNotes();
     }
 
-    if(data.arpSettings.arpNotes.empty() || arpAmount == 0) {
+    if(data.arpSettings.arpNotes.empty()) {
       data.arpSettings.delayToNextArpOnMs = data.patternLengthMs / loadPerBar; // bypass loading timer until next pattern start
     } else {
       ArpNote newArp; // play a new note...
@@ -560,14 +560,15 @@ PROGMEM void LiveSequencer::playNextArpNote(void) {
           newArp.notes.emplace_back(note);
         }
       }
-      const midi::Channel channel = data.tracks[data.activeTrack].channel;
-      for(auto &n : newArp.notes) {
-        handleNoteOn(channel, n, data.arpSettings.volume, 0);
+      if(data.arpSettings.enabled) {
+        const midi::Channel channel = data.tracks[data.activeTrack].channel;
+        for(auto &n : newArp.notes) {
+          handleNoteOn(channel, n, data.arpSettings.volume, 0);
+        }        
+        newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
+        activeArps.emplace_back(newArp);
+        activeArps.sort(sortedArpNote);
       }
-      
-      newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
-      activeArps.emplace_back(newArp);
-      activeArps.sort(sortedArpNote);
 
       // calc time to next noteOn with incremented
       uint16_t nextArpEventOnTimeMs = uint16_t(++arpIndex * arpIntervalMs);
