@@ -6,7 +6,6 @@ extern ILI9341_t3n display;
 
 extern ts_t ts;
 extern int numTouchPoints;
-extern bool remote_active;
 
 static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { GREY1, GREY2 },               // COLOR_NORMAL
@@ -28,6 +27,7 @@ void TouchButton::drawNow() {
 
 void TouchButton::setSelected(bool isSelected) {
   uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[currentColors].bg;
+  display.console = true;
   display.fillRect(x, (y + BUTTON_SIZE_Y - 2), BUTTON_SIZE_X, 2, barColor);
 }
 
@@ -51,25 +51,24 @@ void TouchButton::clear(uint16_t color) {
   clearButton(x, y, color);
 }
 
-ColorCombo TouchButton::getColors(ButtonColor color) {
+ColorCombo TouchButton::getColors(Color color) {
   return colorMap[color];
 }
 
 void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
+  display.console = true;
   display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, color);
 }
 
-void TouchButton::draw(const std::string label, const std::string sub, ButtonColor colors) {
-  currentColors = colors;
-  drawButton(x, y, label.c_str(), sub.c_str(), colors);
+void TouchButton::draw(const std::string label, const std::string sub, Color color) {
+  currentColors = color;
+  drawButton(x, y, label.c_str(), sub.c_str(), color);
 }
 
-void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors) {
-  if (remote_active) {
-    display.console = true;
-  }
+void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color) {
+  display.console = true;
 
-  ColorCombo c = colorMap[colors];
+  ColorCombo c = colorMap[color];
 
   display.setTextSize(1);
   display.setTextColor(c.text, c.bg);

@@ -19,7 +19,7 @@ public:
     //LONGPRESSED,
   };
 
-  enum ButtonColor {
+  enum Color {
     BUTTON_NORMAL = 0,
     BUTTON_ACTIVE = 1,
     BUTTON_RED = 2,
@@ -34,17 +34,17 @@ public:
   TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){});
   void processPressed();
   void drawNow();
-  void draw(const std::string label, const std::string sub, ButtonColor colors);
+  void draw(const std::string label, const std::string sub, Color Color);
   void setSelected(bool isSelected);
   void clear(uint16_t color);
 
-  static void drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, ButtonColor colors);
+  static void drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color);
   static bool isPressed(uint16_t x, uint16_t y);
-  static ColorCombo getColors(ButtonColor color);
+  static ColorCombo getColors(Color color);
   static void clearButton(uint16_t x, uint16_t y, uint16_t color);
 
 private:
-  ButtonColor currentColors;
+  Color currentColors;
 
   
   uint16_t x;

@@ -578,7 +578,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
   char temp_char[6];
 
-  TouchButton::ButtonColor trackButtonRecColor = TouchButton::BUTTON_HIGHLIGHTED; // red, or blinking
+  TouchButton::Color trackButtonRecColor = TouchButton::BUTTON_HIGHLIGHTED; // red, or blinking
   const bool doBlink = data.notesOn.size() || data.pendingEvents.size();
   if (doBlink) {
     if (++guiCounter == 8) {
@@ -614,7 +614,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         for (int layer = 0; layer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; layer++) {
           if (layer < data.trackSettings[track].layerCount) {
             const bool isMuted = data.tracks[track].layerMutes & (1 << layer);
-            TouchButton::ButtonColor color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
+            TouchButton::Color color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
             if (layerEditActive) {
               // adapt button background if in layer edit mode
               handleLayerEditButtonColor(trackLayerMode, color);
@@ -650,7 +650,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
       //
       if(guiFlags & drawSongLayers) {
-        TouchButton::ButtonColor color = TouchButton::BUTTON_NORMAL;
+        TouchButton::Color color = TouchButton::BUTTON_NORMAL;
         handleLayerEditButtonColor(songLayerMode, color);
         for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
           if (songLayer < data.songLayerCount) {
@@ -687,7 +687,7 @@ PROGMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   }
 }
 
-PROGMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::ButtonColor color, uint16_t x, uint16_t y) {
+PROGMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::Color color, uint16_t x, uint16_t y) {
   char temp_char[4];
   std::string label = "LAYER";
   std::string labelSub = itoa(layer + 1, temp_char, 10);
@@ -708,7 +708,7 @@ PROGMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t la
   TouchButton::drawButton(x, y, label.c_str(), labelSub.c_str(), color);
 }
 
-PROGMEM void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::ButtonColor &color) {
+PROGMEM void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color) {
   switch (layerMode) {
   case LiveSequencer::LayerMode::LAYER_MERGE:
     color = TouchButton::BUTTON_HIGHLIGHTED;

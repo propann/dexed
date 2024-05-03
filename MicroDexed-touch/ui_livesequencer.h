@@ -82,8 +82,8 @@ private:
   void redrawScreen(void);
   void drawGUI(uint16_t& guiFlags);
   static std::string getArpModeName(uint8_t mode);
-  void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::ButtonColor color, uint16_t x, uint16_t y);
-  void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::ButtonColor &color);
+  void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::Color color, uint16_t x, uint16_t y);
+  void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color);
 };
 
 #endif //UI_LIVESEQUENCER_H
