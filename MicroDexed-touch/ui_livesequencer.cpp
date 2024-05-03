@@ -176,7 +176,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
 
   // SONG TOOLS
   toolsPages[TOOLS_SONG].push_back(new TouchButton(GRID_X[0], GRID_Y[3],
-  [ ](auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("MUTE", "QUANT", TouchButton::BUTTON_LABEL);
   }));
   toolsPages[TOOLS_SONG].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data.songMuteQuantizeDenom, std::vector<uint8_t>({ 1, 2, 4, 8 }), 1,
@@ -184,17 +184,17 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
     b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
   }));
   toolsPages[TOOLS_SONG].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
-  [ ](auto *b) { // drawHandler
+  [ ] (auto *b) { // drawHandler
     b->draw("SONG", "LAYERS", TouchButton::BUTTON_LABEL);
   }));
   toolsPages[TOOLS_SONG].push_back(new TouchButton(GRID_X[1], GRID_Y[4],
-  [ this ](auto *b) { // drawHandler
+  [ this ] (auto *b) { // drawHandler
     std::string t1 = (data.songLayerCount == 0) ? "NO" : "LAYER";
     std::string t2 = (data.songLayerCount == 0) ? "LAYERS" : "ACTION";
     b->draw(t1, t2, (data.songLayerCount == 0) ? TouchButton::BUTTON_LABEL : TouchButton::BUTTON_ACTIVE);
     guiUpdateFlags |= drawSongLayers;
     
-  }, [ this ](auto *b) { // clickedHandler
+  }, [ this ] (auto *b) { // clickedHandler
     if(data.songLayerCount > 0) {
       if(++songLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
         songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
@@ -652,7 +652,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       }
     }
     if(guiFlags & drawSongLayers) {
-      TouchButton::Color color = TouchButton::BUTTON_NORMAL;
+      TouchButton::Color color = TouchButton::BUTTON_ACTIVE;
       handleLayerEditButtonColor(songLayerMode, color);
       for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
         if (songLayer < data.songLayerCount) {
