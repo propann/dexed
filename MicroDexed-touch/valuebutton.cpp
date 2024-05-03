@@ -15,7 +15,6 @@ ValueButton<T>::ValueButton(ActiveValue *active, uint16_t x_coord, uint16_t y_co
         (*active).button->setSelected(false);        
       }
       (*active).valueBase = v;
-      DBG_LOG(printf("selected new\n"));
       (*active).button = b;
       b->setSelected(true);
     }

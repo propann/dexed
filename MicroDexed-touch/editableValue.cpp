@@ -36,7 +36,6 @@ void EditableValueVector<T>::updateIterator(void) {
 
 template <class T>
 bool EditableValueRange<T>::previous(void) {
-  this->changedHandler(this);
   T result = this->value;
   if(result - rangeIncrement >= rangeMin) {
     result -= rangeIncrement;
@@ -58,7 +57,6 @@ EditableValueBase* EditableValueRange<T>::cycle(void) {
   if(next() == false) {
     this->checkChanged(rangeMin);
   }
-  
   return this;
 }
 
