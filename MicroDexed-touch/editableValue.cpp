@@ -2,16 +2,7 @@
 #include <algorithm>
 
 template <class T>
-EditableValue<T>::EditableValue(T &invalue, std::vector<T> invalues, T defaultValue, std::function<void(EditableValue<T> *v)> changed) : mode(EditableValue::MODE_FIXED), value(invalue), values(invalues), changedHandler{changed} {
-  if(values.empty()) {
-    values.push_back(0);
-  }
-  value = defaultValue;
-  updateIterator();
-}
-
-template <class T>
-EditableValue<T>::EditableValue(T &invalue, T min, T max, T increment, T defaultValue, std::function<void(EditableValue<T> *v)> changed) : mode(EditableValue::MODE_RANGE), value(invalue), rangeMin(min), rangeMax(max), rangeIncrement(increment), changedHandler{changed} {
+EditableValue<T>::EditableValue(T &invalue, T defaultValue, std::function<void(EditableValue<T> *v)> changed) : value(invalue), changedHandler{changed} {
   value = defaultValue;
 }
 
@@ -26,78 +17,73 @@ T EditableValue<T>::getValue(void) {
 }
 
 template <class T>
-EditableValueBase* EditableValue<T>::cycle() {
-  if(next() == false) {
-    switch(mode) {
-    case MODE_FIXED:
-      it = values.begin();
-      value = *it;
-      break;
-    case MODE_RANGE:
-      value = rangeMin;
-      break;
-    }
+bool EditableValue<T>::checkChanged(T result) {
+  const bool changed = (value != result);
+  value = result;
+  if(changed) {
     changedHandler(this);
   }
+  return changed;
+}
+
+template <class T>
+void EditableValueVector<T>::updateIterator(void) {
+  it = std::find(valuesVector.begin(), valuesVector.end(), v);
+  if(it == valuesVector.end()) {
+    it = valuesVector.begin();
+  }
+}
+
+template <class T>
+bool EditableValueRange<T>::previous(void) {
+  changedHandler(this);
+  T result = v;
+  if(result - rangeIncrement >= rangeMin) {
+    result -= rangeIncrement;
+  }
+  return checkChanged(result);
+}
+
+template <class T>
+bool EditableValueRange<T>::next(void) {
+  T result = v;
+  if(result + rangeIncrement <= rangeMax) {
+    result += rangeIncrement;
+  }
+  return checkChanged(result);
+}
+
+template <class T>
+EditableValueBase* EditableValueRange<T>::cycle(void) {
+  T result = v;
+  if(next() == false) {
+    v = rangeMin;
+  }
+  checkChanged(result);
   return this;
 }
 
 template <class T>
-bool EditableValue<T>::next() {
-  updateIterator();
-  T result = value;
-  switch(mode) {
-  case MODE_FIXED:
-    if(++it == values.end()) {
-      --it;
-    }
-    result = *it;
-    break;
-  case MODE_RANGE:
-    if(result + rangeIncrement <= rangeMax) {
-      result += rangeIncrement;
-    }
-    break;
+bool EditableValueVector<T>::previous(void) {
+  if(it != valuesVector.begin()) {
+    --it;
   }
-  const bool changed = (value != result);
-  value = result;
-  if(changed) {
-    changedHandler(this);
-  }
-  return changed;
+  return checkChanged(*it);
 }
 
 template <class T>
-bool EditableValue<T>::previous() {
-  updateIterator();
-  T result = value;
-  switch(mode) {
-  case MODE_FIXED:
-    if(it != values.begin()) {
-      --it;
-    }
-    result = *it;
-    break;
-  case MODE_RANGE:
-    if(result - rangeIncrement >= rangeMin) {
-      result -= rangeIncrement;
-    }
-    break;
+bool EditableValueVector<T>::next(void) {
+  if(++it == valuesVector.end()) {
+    --it;
   }
-  const bool changed = (value != result);
-  value = result;
-  if(changed) {
-    changedHandler(this);
-  }
-  return changed;
+  return checkChanged(*it);
 }
 
 template <class T>
-void EditableValue<T>::updateIterator(void) {
-  it = std::find(values.begin(), values.end(), value);
-  if(it == values.end()) {
-    it = values.begin();
+EditableValueBase* EditableValueVector<T>::cycle(void) {
+  if(next() == false) {
+    it = valuesVector.begin();
   }
+  checkChanged(*it);
+  return this;
 }
-
-
