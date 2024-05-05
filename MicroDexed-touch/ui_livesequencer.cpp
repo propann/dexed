@@ -223,7 +223,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("MODE", UI_LiveSequencer::getArpModeName(v->getValue()).c_str(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint16_t>(&currentValue, GRID_X[4], GRID_Y[3], data.arpSettings.length, 50, 500, 10, 150,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint16_t>(&currentValue, GRID_X[4], GRID_Y[3], data.arpSettings.length, 10, 420, 10, 150,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("LEN", v->toString(), v->getValue() == 0 ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_ACTIVE);
   }));
