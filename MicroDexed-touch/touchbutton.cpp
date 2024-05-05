@@ -50,6 +50,11 @@ void TouchButton::clear(uint16_t color) {
   clearButton(x, y, color);
 }
 
+void TouchButton::getCoords(uint16_t &x_coord, uint16_t &y_coord) {
+  x_coord = x;
+  y_coord = y;
+}
+
 ColorCombo TouchButton::getColors(Color color) {
   return colorMap[color];
 }

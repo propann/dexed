@@ -37,6 +37,7 @@ public:
   void draw(const std::string label, const std::string sub, Color Color);
   void setSelected(bool selected);
   void clear(uint16_t color);
+  void getCoords(uint16_t &x_coord, uint16_t &y_coord);
 
   static void drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color);
   static bool isPressed(uint16_t x, uint16_t y);

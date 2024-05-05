@@ -20,6 +20,17 @@ extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 extern void helptext_l(const char* str);
 
+PROGMEM void UI_LiveSequencer::drawToolsBorder(TouchButton *b, bool isSelected) {
+  uint16_t x;
+  uint16_t y;
+  b->getCoords(x, y);
+
+  const uint8_t spacing = 2;
+  display.drawFastVLine(x - spacing, y - spacing, TouchButton::BUTTON_SIZE_Y + spacing, isSelected ? GREY1 : COLOR_BACKGROUND);
+  display.drawFastHLine(x - spacing, y - spacing, TouchButton::BUTTON_SIZE_X + 2 * spacing, isSelected ? GREY1 : COLOR_BACKGROUND);
+  display.drawFastVLine(x + TouchButton::BUTTON_SIZE_X + spacing, y - spacing, TouchButton::BUTTON_SIZE_Y + spacing, isSelected ? GREY1 : COLOR_BACKGROUND);
+}
+
 PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
   static constexpr uint8_t BUTTON_OFFSET_X = 4; // center in screen
   static constexpr uint8_t BUTTON_OFFSET_Y = 4; // center in screen
@@ -35,21 +46,21 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
     b->draw("TOOL", (data.isSongMode) ? "SNG": "PAT", instance->isModeToolActive() ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ] (auto *b) { // clickedHandler
-    instance->selectTools((data.isSongMode) ? TOOLS_SONG : TOOLS_PATTERN);
+    instance->selectTools((data.isSongMode) ? TOOLS_SONG : TOOLS_PATTERN, b);
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[1], GRID_Y[2],
   [ this ] (auto *b) { // drawHandler
     b->draw("TOOL", "ARP", currentTools == TOOLS_ARP ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ] (auto *b) { // clickedHandler
-    instance->selectTools(TOOLS_ARP);
+    instance->selectTools(TOOLS_ARP, b);
   }));
   buttonsToolSelect.push_back(new TouchButton(GRID_X[2], GRID_Y[2],
   [ this ] (auto *b) { // drawHandler
     b->draw("TOOL", "SEQ", currentTools == TOOLS_SEQ ? TouchButton::BUTTON_HIGHLIGHTED : TouchButton::BUTTON_NORMAL);
   },
   [ this ] (auto *b) { // clickedHandler
-    instance->selectTools(TOOLS_SEQ);
+    instance->selectTools(TOOLS_SEQ, b);
   }));
 
   // SEQUENCER TOOLS
@@ -253,14 +264,20 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
 }
 
-PROGMEM void UI_LiveSequencer::selectTools(Tools tools) {
+PROGMEM void UI_LiveSequencer::selectTools(Tools tools, TouchButton *toolsButton) {
   if(currentTools != tools) {
     if(currentValue.button != nullptr) {
       currentValue.button->setSelected(false);
     }
     currentValue.valueBase = nullptr;
     currentTools = tools;
-    guiUpdateFlags |= clearBottomArea | drawTools;
+
+    display.fillRect(1, 120, DISPLAY_WIDTH - 2, DISPLAY_HEIGHT - 75, GREY3);
+    for(TouchButton *b : buttonsToolSelect) {
+      drawToolsBorder(b, b == toolsButton);
+    }
+    
+    guiUpdateFlags |= drawTools;
   }
 }
 

@@ -77,7 +77,8 @@ private:
   uint16_t GRID_X[6];
   uint16_t GRID_Y[6];
 
-  void selectTools(Tools tools);
+  void drawToolsBorder(TouchButton *b, bool isSelected);
+  void selectTools(Tools tools, TouchButton *toolsButton);
   bool isModeToolActive(void);
   void redrawScreen(void);
   void drawGUI(uint16_t& guiFlags);
