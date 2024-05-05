@@ -433,20 +433,29 @@ PROGMEM void LiveSequencer::playNextEvent(void) {
     case midi::NoteOff: 
       if(isMuted == false) {
         // erase one instance of this note going off
-        const auto it = data.tracks[playIterator->track].activeNotes[playIterator->layer].find(playIterator->note_in);
-        if(it != data.tracks[playIterator->track].activeNotes[playIterator->layer].end()) {
-          data.tracks[playIterator->track].activeNotes[playIterator->layer].erase(it);
+        if((data.arpSettings.source - 1) == playIterator->track) {
+          pressedArpKeys.erase(playIterator->note_in);
+          data.arpSettings.keysChanged = true;
+        } else {
+          const auto it = data.tracks[playIterator->track].activeNotes[playIterator->layer].find(playIterator->note_in);
+          if(it != data.tracks[playIterator->track].activeNotes[playIterator->layer].end()) {
+            data.tracks[playIterator->track].activeNotes[playIterator->layer].erase(it);
+          }
+          handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
         }
-        handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
       }
       break;
 
     case midi::NoteOn:
-      if(isMuted == false) {
-        // add active note to layer track set
-        data.tracks[playIterator->track].activeNotes[playIterator->layer].insert(playIterator->note_in);
-        // handle muted tracks
-        handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+      if(isMuted == false) {        
+        if((data.arpSettings.source - 1) == playIterator->track) {
+          pressedArpKeys.insert(playIterator->note_in);
+          data.arpSettings.keysChanged = true;
+        } else {
+          // add active note to layer track set
+          data.tracks[playIterator->track].activeNotes[playIterator->layer].insert(playIterator->note_in);
+          handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+        }
       }
       break;
 
@@ -470,6 +479,7 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
 
 PROGMEM void LiveSequencer::checkLoadNewArpNotes(void) {
   bool reloadArps = false;
+
   if(data.arpSettings.latch) {
     reloadArps = data.arpSettings.keysChanged && pressedArpKeys.size();
   } else {

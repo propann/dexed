@@ -22,7 +22,7 @@ extern void helptext_l(const char* str);
 
 PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
   static constexpr uint8_t BUTTON_OFFSET_X = 4; // center in screen
-  static constexpr uint8_t BUTTON_OFFSET_Y = 2; // center in screen
+  static constexpr uint8_t BUTTON_OFFSET_Y = 4; // center in screen
 
   for(int i = 0; i < 6; i++) {
     GRID_X[i] = BUTTON_OFFSET_X + (i * 54);
@@ -231,19 +231,23 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SWING", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data.arpSettings.volume, 0, 127, 1, 127,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data.arpSettings.source, 0, uint8_t(LiveSequencer::LIVESEQUENCER_NUM_TRACKS), 1, 0,
+  [ ] (auto *b, auto *v) { // drawHandler
+    b->draw("SOURCE", (v->getValue() == 0) ? "KEY" : std::string("TK") + v->toString(), TouchButton::BUTTON_ACTIVE);
+  }));
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.volume, 0, 127, 1, 127,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("VELO", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.latch, 0, 1, 1, 1,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.arpSettings.latch, 0, 1, 1, 1,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("LATCH", v->getValue() == 1 ? "ON" : "-", TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.arpSettings.loadPerBar, std::vector<uint8_t>({ 1, 2, 4 }), 2,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SAMPLE", std::string(v->toString()) + "x", TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.arpSettings.noteRepeat, 0, 4, 1, 0,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[4], GRID_Y[4], data.arpSettings.noteRepeat, 0, 4, 1, 0,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("REPEAT", std::string(v->toString()) + "x", TouchButton::BUTTON_ACTIVE);
   }));

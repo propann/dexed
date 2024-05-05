@@ -91,6 +91,7 @@ public:
     uint8_t enabled;
     uint8_t amount; // 1, 2, ... per bar
     uint8_t octaves;
+    uint8_t source;
     ArpMode mode;
     uint8_t loadPerBar;
     uint8_t noteRepeat;
