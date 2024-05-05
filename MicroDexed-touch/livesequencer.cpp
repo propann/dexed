@@ -433,7 +433,7 @@ PROGMEM void LiveSequencer::playNextEvent(void) {
     case midi::NoteOff: 
       if(isMuted == false) {
         // erase one instance of this note going off
-        if((data.arpSettings.source - 1) == playIterator->track) {
+        if(data.arpSettings.enabled && (data.arpSettings.source - 1) == playIterator->track) {
           pressedArpKeys.erase(playIterator->note_in);
           data.arpSettings.keysChanged = true;
         } else {
@@ -448,7 +448,7 @@ PROGMEM void LiveSequencer::playNextEvent(void) {
 
     case midi::NoteOn:
       if(isMuted == false) {        
-        if((data.arpSettings.source - 1) == playIterator->track) {
+        if(data.arpSettings.enabled && (data.arpSettings.source - 1) == playIterator->track) {
           pressedArpKeys.insert(playIterator->note_in);
           data.arpSettings.keysChanged = true;
         } else {
