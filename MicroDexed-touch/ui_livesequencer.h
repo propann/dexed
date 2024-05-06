@@ -68,7 +68,6 @@ private:
     drawTrackButtons = (1 << 1),
     drawLayerButtons = (1 << 2),
     drawTools = (1 << 3),
-    clearBottomArea = (1 << 4),
     drawActiveNotes = (1 << 5),
     drawTime = (1 << 6),
     drawSongLayers = (1 << 7)
@@ -77,7 +76,7 @@ private:
   uint16_t GRID_X[6];
   uint16_t GRID_Y[6];
 
-  void drawToolsBorder(TouchButton *b, bool isSelected);
+  void clearBottomArea(void);
   void selectTools(Tools tools, TouchButton *toolsButton);
   bool isModeToolActive(void);
   void redrawScreen(void);
