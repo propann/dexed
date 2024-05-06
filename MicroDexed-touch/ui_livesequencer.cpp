@@ -563,24 +563,24 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     if (data.patternBeginFlag) {
       data.patternBeginFlag = false;
 
-      display.fillRect(110, 5, 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(GRID_X[2], 15, 105, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       barPhases[0] = !barPhases[0];
       if (data.currentPattern == 0) {
-        display.fillRect(110, 10, 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+        display.fillRect(GRID_X[2], 20, 105, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
         barPhases[1] = !barPhases[1];
       }
     }
     else {
       const float progressPattern = data.patternTimer / float(data.patternLengthMs);
       const float progressTotal = std::min(1.0f, (progressPattern + data.currentPattern) / float(data.numberOfBars));
-      display.fillRect(110, 5, progressPattern * 90, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-      display.fillRect(110, 10, progressTotal * 90, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+      display.fillRect(GRID_X[2], 15, progressPattern * 105, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(GRID_X[2], 20, progressTotal * 105, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
     }
   }
 
   // print time
   if (guiFlags & drawTime) {
-    display.setCursor(110, 20);
+    display.setCursor(GRID_X[2], 30);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     if (data.isSongMode) {
@@ -593,7 +593,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     else {
       display.printf("P %i.%04i   ", patCount, timeMs);
     }
-    display.setCursor(190, 20);
+    display.setCursor(200, 30);
     if (data.isSongMode) {
       display.printf("%02i", data.songPatternCount);
     }
@@ -642,7 +642,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
             }
             if (guiFlags & drawActiveNotes) {
               // always draw notes when layers visible
-              const uint16_t barHeight = 5 * data.tracks[track].activeNotes[layer].size();
+              const uint16_t barHeight = 6 * data.tracks[track].activeNotes[layer].size();
               const uint16_t xStart = GRID_X[track] + TouchButton::BUTTON_SIZE_X - 3;
               const uint16_t yStart = GRID_Y[2 + layer];
               
@@ -662,7 +662,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       b->drawNow();
     }
     
-    display.fillRect(0, GRID_Y[2] + TouchButton::BUTTON_SIZE_Y, DISPLAY_WIDTH, 2, MIDDLEGREEN);
+    display.fillRect(0, GRID_Y[2] + TouchButton::BUTTON_SIZE_Y, DISPLAY_WIDTH, 4, MIDDLEGREEN);
 
     for(TouchButton *b : toolsPages[currentTools]) {
       b->drawNow();
