@@ -21,13 +21,12 @@ extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 extern void helptext_l(const char* str);
 
 PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
-  static constexpr uint8_t BUTTON_OFFSET_X = 0; // center in screen
-  static constexpr uint8_t BUTTON_OFFSET_Y = 2; // center in screen
   static constexpr uint8_t BUTTON_SPACING = 4;  // center in screen
 
   for(int i = 0; i < 6; i++) {
-    GRID_X[i] = BUTTON_OFFSET_X + i * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
-    GRID_Y[i] = BUTTON_OFFSET_Y + i * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING);
+    const uint8_t OFFSET_Y = (i > 1) ? 4 : 0; // separate areas a bit
+    GRID_X[i] = i * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
+    GRID_Y[i] = i * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING) + OFFSET_Y;
   }
 
   // TOOL MENU
