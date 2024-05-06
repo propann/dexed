@@ -28,8 +28,8 @@ public:
     BUTTONCOLOR_NUM = 5
   };
 
-  static constexpr uint16_t BUTTON_SIZE_X = button_size_x * CHAR_width_small;
-  static constexpr uint16_t BUTTON_SIZE_Y = button_size_y * CHAR_height_small;
+  static constexpr uint16_t BUTTON_SIZE_X = 50;
+  static constexpr uint16_t BUTTON_SIZE_Y = 36;
 
   TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){});
   void processPressed();
