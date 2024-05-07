@@ -553,7 +553,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   static constexpr uint8_t BAR_LENGTH = 105;
   static constexpr uint8_t BAR_HEIGHT = 5;
 
-  if (runningHere) {    
+  if (runningHere) {
     if (data.patternBeginFlag) {
       data.patternBeginFlag = false;
 
@@ -598,17 +598,12 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       display.printf("P %i.%04i   ", patCount, timeMs);
     }
     display.setCursor(200, 30);
-    if (data.isSongMode) {
-      display.printf("%02i", data.songPatternCount);
-    }
-    else {
-      display.printf("%02i", data.currentPattern);
-    }
+    display.printf("%02i", data.isSongMode ? data.songPatternCount : data.currentPattern);
   }
 
-  char temp_char[6];
+  
 
-  TouchButton::Color trackButtonRecColor = TouchButton::BUTTON_HIGHLIGHTED; // red, or blinking
+  TouchButton::Color trackButtonRecColor = TouchButton::BUTTON_RED; // red, or blinking
   const bool doBlink = data.notesOn.size() || data.pendingEvents.size();
   if (doBlink) {
     if (++guiCounter == 8) {
@@ -621,10 +616,10 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   else {
     guiCounter = 0;
     blinkPhase = 0;
-    trackButtonRecColor = TouchButton::BUTTON_RED;
   }
 
   if (isLayerViewActive || (guiUpdateFlags & drawTrackButtons)) {
+    char temp_char[6];
     const bool isSongRec = (data.isSongMode && data.isRecording);
     for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
       if (guiFlags & drawTrackButtons) {
@@ -681,15 +676,13 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       }
     }
   }
-  
-
   guiFlags = 0;
 }
 
 PROGMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   switch (mode) {
   case LiveSequencer::ArpMode::ARP_CHORD:
-    return "CHRD";
+    return "CHORD";
   case LiveSequencer::ArpMode::ARP_DOWN:
     return "DN";
   case LiveSequencer::ArpMode::ARP_DOWNUP:
