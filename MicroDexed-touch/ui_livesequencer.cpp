@@ -217,7 +217,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[3], data.arpSettings.octaves, std::vector<uint8_t>({ 1, 2, 3, 4 }), 1,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("OCT", v->toString(), TouchButton::BUTTON_ACTIVE);
+    b->draw("OCTAVES", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[3], (uint8_t&)data.arpSettings.mode, 0, uint8_t(LiveSequencer::ARP_MODENUM-1), 1, uint8_t(LiveSequencer::ARP_DOWN),
   [ ] (auto *b, auto *v) { // drawHandler
@@ -225,7 +225,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint16_t>(&currentValue, GRID_X[4], GRID_Y[3], data.arpSettings.length, 10, 420, 10, 150,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("LEN", v->toString(), v->getValue() == 0 ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_ACTIVE);
+    b->draw("LENGTH", v->toString(), v->getValue() == 0 ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<int8_t>(&currentValue, GRID_X[5], GRID_Y[3], data.arpSettings.swing, -8, 8, 1, 0,
   [ ] (auto *b, auto *v) { // drawHandler
@@ -237,7 +237,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.volume, 0, 127, 1, 127,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("VELO", v->toString(), TouchButton::BUTTON_ACTIVE);
+    b->draw("VELOCTY", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.arpSettings.latch, 0, 1, 1, 1,
   [ ] (auto *b, auto *v) { // drawHandler
