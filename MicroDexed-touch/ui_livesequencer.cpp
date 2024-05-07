@@ -58,7 +58,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
     const bool isSame = (data.numberOfBars == numberOfBarsTemp);
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_RED);
     display.setTextSize(1);
-    display.setTextColor(isSame ? GREY2 : RED, GREY3);
+    display.setTextColor(isSame ? GREY2 : RED, COLOR_BACKGROUND);
     display.setCursor(GRID_X[3], GRID_Y[3] + 5);
     display.printf("CHANGING PATTERN LENGTH");
     display.setCursor(GRID_X[3], GRID_Y[3] + 20);
@@ -92,7 +92,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
     if(deleteConfirming) {
       b->draw("DO IT", "!", TouchButton::BUTTON_RED);
     } else {
-      b->clear(GREY3);
+      b->clear(COLOR_BACKGROUND);
     }
   },
   [ this ] (auto *b) { // clickedHandler
@@ -374,14 +374,11 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
 }
 
 PROGMEM void UI_LiveSequencer::clearBottomArea(void) {
-  const uint16_t bgColor = isLayerViewActive ? COLOR_BACKGROUND : GREY3; // gray for tools
   display.console = true;
-  display.fillRect(0, 80, DISPLAY_WIDTH, DISPLAY_HEIGHT - 80, bgColor);
-  DBG_LOG(printf("clear bottom\n"));
+  display.fillRect(0, 80, DISPLAY_WIDTH, DISPLAY_HEIGHT - 80, COLOR_BACKGROUND);
 }
 
 PROGMEM void UI_LiveSequencer::redrawScreen(void) {
-  
   guiUpdateFlags |= (drawTopButtons | drawTrackButtons | drawTime);
   isLayerViewActive = (showingTools == false);
   if(isLayerViewActive) {
@@ -393,7 +390,6 @@ PROGMEM void UI_LiveSequencer::redrawScreen(void) {
 }
 
 PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
-  bool pressedChanged = (numTouchPoints != numPressedOld);
   if (showingHowTo) {
     if (TouchButton::isPressed(GRID_X[5], GRID_Y[5])) {
       LCDML.FUNC_setGBAToLastFunc();
@@ -401,9 +397,11 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
     }
     return;
   }
+
   const bool runningChanged = (runningHere != data.isRunning);
   runningHere = data.isRunning;
-
+  bool pressedChanged = (numTouchPoints != numPressedOld);
+  
   if (pressedChanged || runningChanged) {
     const bool runningPressed = TouchButton::isPressed(GRID_X[0], GRID_Y[0]);
     if (runningPressed) {
@@ -523,14 +521,13 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
           b->processPressed();
         }
 
-        // 
         if(currentTools == TOOLS_SONG) {
           if (songLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) { // song layers can not be muted
             for (uint8_t songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
               if (TouchButton::isPressed(GRID_X[2 + songLayer], GRID_Y[4])) {
                 liveSeq.songLayerAction(songLayer, LiveSequencer::LayerMode(songLayerMode));
                 songLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
-                TouchButton::clearButton(GRID_X[2 + data.songLayerCount], GRID_Y[4], GREY3);
+                TouchButton::clearButton(GRID_X[2 + data.songLayerCount], GRID_Y[4], COLOR_BACKGROUND);
                 guiUpdateFlags |= drawSongLayers;
                 break;
               }
@@ -553,32 +550,40 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     TouchButton::drawButton(GRID_X[5], GRID_Y[0], data.isSongMode ? "SONG" : "PATT", "MODE", TouchButton::BUTTON_HIGHLIGHTED);
   }
 
-  uint16_t patCount = 0;
-  uint16_t timeMs = 0;
-  if (runningHere) {
-    patCount = data.currentPattern;
-    timeMs = data.patternTimer;
+  static constexpr uint8_t BAR_LENGTH = 105;
+  static constexpr uint8_t BAR_HEIGHT = 5;
 
+  if (runningHere) {    
     if (data.patternBeginFlag) {
       data.patternBeginFlag = false;
 
-      display.fillRect(GRID_X[2], 15, 105, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      display.fillRect(GRID_X[2], 15, BAR_LENGTH, BAR_HEIGHT, barPhases[0] ? GREEN : COLOR_BACKGROUND);
       barPhases[0] = !barPhases[0];
       if (data.currentPattern == 0) {
-        display.fillRect(GRID_X[2], 20, 105, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+        display.fillRect(GRID_X[2], 20, BAR_LENGTH, BAR_HEIGHT, barPhases[1] ? RED : COLOR_BACKGROUND);
         barPhases[1] = !barPhases[1];
       }
     }
     else {
       const float progressPattern = data.patternTimer / float(data.patternLengthMs);
-      const float progressTotal = std::min(1.0f, (progressPattern + data.currentPattern) / float(data.numberOfBars));
-      display.fillRect(GRID_X[2], 15, progressPattern * 105, 5, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-      display.fillRect(GRID_X[2], 20, progressTotal * 105, 5, barPhases[1] ? RED : COLOR_BACKGROUND);
+      const float progressTotal = (progressPattern + data.currentPattern) / float(data.numberOfBars);
+
+      const uint8_t patternBarLength = progressPattern * BAR_LENGTH;
+      const uint8_t totalBarLength = progressTotal * BAR_LENGTH;
+
+      if(patternBarLength > 0 && patternBarLength <= BAR_LENGTH) {
+        display.fillRect(GRID_X[2], 15, patternBarLength, BAR_HEIGHT, barPhases[0] ? GREEN : COLOR_BACKGROUND);
+      }
+      if(totalBarLength > 0 && totalBarLength <= BAR_LENGTH) {
+        display.fillRect(GRID_X[2], 20, totalBarLength, BAR_HEIGHT, barPhases[1] ? RED : COLOR_BACKGROUND);
+      }
     }
   }
 
   // print time
   if (guiFlags & drawTime) {
+    uint16_t timeMs = data.patternTimer;
+    uint16_t patCount = runningHere ? data.currentPattern : 0;
     display.setCursor(GRID_X[2], 30);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);

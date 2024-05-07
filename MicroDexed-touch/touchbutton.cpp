@@ -9,7 +9,7 @@ extern int numTouchPoints;
 
 static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { GREY1, GREY2 },               // COLOR_NORMAL
-  { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
+  { COLOR_SYSTEXT, 0x03b0 },      // COLOR_ACTIVE
   { COLOR_SYSTEXT, RED },         // COLOR_RED
   { COLOR_SYSTEXT, MIDDLEGREEN }, // COLOR_HIGHLIGHTED
   { COLOR_SYSTEXT, GREY3 }        // COLOR_LABEL
