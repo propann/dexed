@@ -689,7 +689,6 @@ PROGMEM void LiveSequencer::addPendingNotes(void) {
 
 PROGMEM void LiveSequencer::handlePatternBegin(void) {
   data.patternTimer = 0;
-
   if(data.startedFlag) {
     data.startedFlag = false;
     // just started, do not increment

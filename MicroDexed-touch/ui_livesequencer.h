@@ -16,8 +16,8 @@ public:
 
 private:
   struct ProgressBar {
-    bool phase;
-    uint8_t length;  
+    bool currentPhase;
+    uint8_t drawnLength;  
   };
   ProgressBar barPattern;
   ProgressBar barTotal;
@@ -83,7 +83,7 @@ private:
   uint16_t GRID_X[6];
   uint16_t GRID_Y[6];
 
-  static constexpr uint8_t BAR_LENGTH = 105;
+  static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
   static constexpr uint8_t BAR_HEIGHT = 5;
 
   void clearBottomArea(void);

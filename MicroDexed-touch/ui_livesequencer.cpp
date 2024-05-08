@@ -311,10 +311,10 @@ PROGMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
 }
 
 PROGMEM void UI_LiveSequencer::resetProgressBars(void) {
-  barPattern.phase = 1;
-  barPattern.length = 0;
-  barTotal.phase = 1;
-  barTotal.length = 0;
+  barPattern.currentPhase = 1;
+  barPattern.drawnLength = 0;
+  barTotal.currentPhase = 1;
+  barTotal.drawnLength = 0;
 }
 
 PROGMEM void UI_LiveSequencer::processLCDM(void) {
@@ -354,10 +354,6 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
 
     if((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN) && data.lastPlayedNoteChanged) {
       lastNoteLabel->drawNow();
-    }
-
-    if(data.stoppedFlag) {
-      //resetProgressBars();
     }
 
     data.songLayersChanged = false;
@@ -551,25 +547,26 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
 }
 
 PROGMEM void UI_LiveSequencer::drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+  // could be more efficient than drawRect?
   for(uint8_t yloc = y; yloc < (y + h); yloc++) {
     display.drawFastHLine(x, yloc, w, color);
   }
 }
 
 PROGMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y, ProgressBar &bar, const uint16_t color) {
-  const uint8_t totalBarWidth = progress * BAR_LENGTH;
-  uint8_t drawWidth = totalBarWidth - bar.length;
+  const uint8_t totalBarWidth = progress * BAR_WIDTH;
+  uint8_t drawWidth = totalBarWidth - bar.drawnLength;
 
-  if (bar.length > totalBarWidth) {
-    drawBar(GRID_X[2] + bar.length, y, BAR_LENGTH - bar.length, BAR_HEIGHT, bar.phase ? color : COLOR_BACKGROUND);
-    bar.phase = !bar.phase;
-    bar.length = 0;
+  if (bar.drawnLength > totalBarWidth) {
+    drawBar(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : COLOR_BACKGROUND);
+    bar.currentPhase = !bar.currentPhase;
+    bar.drawnLength = 0;
     drawWidth = totalBarWidth;
   }
 
   if (drawWidth > 0) {
-    drawBar(GRID_X[2] + bar.length, y, drawWidth, BAR_HEIGHT, bar.phase ? color : COLOR_BACKGROUND);
-    bar.length = totalBarWidth;
+    drawBar(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : COLOR_BACKGROUND);
+    bar.drawnLength = totalBarWidth;
   }
 }
 
@@ -583,15 +580,16 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     TouchButton::drawButton(GRID_X[5], GRID_Y[0], data.isSongMode ? "SONG" : "PATT", "MODE", TouchButton::BUTTON_HIGHLIGHTED);
   }
 
-  // print time and bars
-  if (guiFlags & drawTime) {
+  if (runningHere) {
     const float progressPattern = data.patternTimer / float(data.patternLengthMs);
     const float progressTotal = (progressPattern + data.currentPattern) / float(data.numberOfBars);
-
     processBar(progressPattern, 15, barPattern, GREEN);
     processBar(progressTotal, 20, barTotal, RED);
+  }
 
-    uint16_t timeMs = data.patternTimer;
+  // print time
+  if (guiFlags & drawTime) {
+    uint16_t timeMs = runningHere ? uint16_t(data.patternTimer) : data.patternLengthMs;
     uint16_t patCount = runningHere ? data.currentPattern : 0;
     display.setCursor(GRID_X[2], 30);
     display.setTextSize(1);
