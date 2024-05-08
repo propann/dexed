@@ -754,7 +754,6 @@ PROGMEM void LiveSequencer::handlePatternBegin(void) {
   playNextArpNote();
 
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
-  data.patternBeginFlag = true;
 }
 
 void selectDexed0() {

@@ -310,6 +310,13 @@ PROGMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
   }
 }
 
+PROGMEM void UI_LiveSequencer::resetProgressBars(void) {
+  barPattern.phase = 1;
+  barPattern.length = 0;
+  barTotal.phase = 1;
+  barTotal.length = 0;
+}
+
 PROGMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
@@ -319,9 +326,8 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
     numberOfBarsTemp = data.numberOfBars;
     liveSeq.onGuiInit();
 
-    barPhases[0] = 0;
-    barPhases[1] = 0;
     guiUpdateFlags = 0;
+    resetProgressBars();
     redrawScreen();
     drawGUI(guiUpdateFlags);
     // setup function
@@ -348,6 +354,10 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
 
     if((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN) && data.lastPlayedNoteChanged) {
       lastNoteLabel->drawNow();
+    }
+
+    if(data.stoppedFlag) {
+      //resetProgressBars();
     }
 
     data.songLayersChanged = false;
@@ -540,6 +550,29 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
   }
 }
 
+PROGMEM void UI_LiveSequencer::drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+  for(uint8_t yloc = y; yloc < (y + h); yloc++) {
+    display.drawFastHLine(x, yloc, w, color);
+  }
+}
+
+PROGMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y, ProgressBar &bar, const uint16_t color) {
+  const uint8_t totalBarWidth = progress * BAR_LENGTH;
+  uint8_t drawWidth = totalBarWidth - bar.length;
+
+  if (bar.length > totalBarWidth) {
+    drawBar(GRID_X[2] + bar.length, y, BAR_LENGTH - bar.length, BAR_HEIGHT, bar.phase ? color : COLOR_BACKGROUND);
+    bar.phase = !bar.phase;
+    bar.length = 0;
+    drawWidth = totalBarWidth;
+  }
+
+  if (drawWidth > 0) {
+    drawBar(GRID_X[2] + bar.length, y, drawWidth, BAR_HEIGHT, bar.phase ? color : COLOR_BACKGROUND);
+    bar.length = totalBarWidth;
+  }
+}
+
 PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   display.console = true;
   
@@ -550,38 +583,14 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     TouchButton::drawButton(GRID_X[5], GRID_Y[0], data.isSongMode ? "SONG" : "PATT", "MODE", TouchButton::BUTTON_HIGHLIGHTED);
   }
 
-  static constexpr uint8_t BAR_LENGTH = 105;
-  static constexpr uint8_t BAR_HEIGHT = 5;
-
-  if (runningHere) {
-    if (data.patternBeginFlag) {
-      data.patternBeginFlag = false;
-
-      display.fillRect(GRID_X[2], 15, BAR_LENGTH, BAR_HEIGHT, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-      barPhases[0] = !barPhases[0];
-      if (data.currentPattern == 0) {
-        display.fillRect(GRID_X[2], 20, BAR_LENGTH, BAR_HEIGHT, barPhases[1] ? RED : COLOR_BACKGROUND);
-        barPhases[1] = !barPhases[1];
-      }
-    }
-    else {
-      const float progressPattern = data.patternTimer / float(data.patternLengthMs);
-      const float progressTotal = (progressPattern + data.currentPattern) / float(data.numberOfBars);
-
-      const uint8_t patternBarLength = progressPattern * BAR_LENGTH;
-      const uint8_t totalBarLength = progressTotal * BAR_LENGTH;
-
-      if(patternBarLength > 0 && patternBarLength <= BAR_LENGTH) {
-        display.fillRect(GRID_X[2], 15, patternBarLength, BAR_HEIGHT, barPhases[0] ? GREEN : COLOR_BACKGROUND);
-      }
-      if(totalBarLength > 0 && totalBarLength <= BAR_LENGTH) {
-        display.fillRect(GRID_X[2], 20, totalBarLength, BAR_HEIGHT, barPhases[1] ? RED : COLOR_BACKGROUND);
-      }
-    }
-  }
-
-  // print time
+  // print time and bars
   if (guiFlags & drawTime) {
+    const float progressPattern = data.patternTimer / float(data.patternLengthMs);
+    const float progressTotal = (progressPattern + data.currentPattern) / float(data.numberOfBars);
+
+    processBar(progressPattern, 15, barPattern, GREEN);
+    processBar(progressTotal, 20, barTotal, RED);
+
     uint16_t timeMs = data.patternTimer;
     uint16_t patCount = runningHere ? data.currentPattern : 0;
     display.setCursor(GRID_X[2], 30);

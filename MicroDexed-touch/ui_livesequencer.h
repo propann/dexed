@@ -15,9 +15,16 @@ public:
   void handleTouchscreen(void);
 
 private:
+  struct ProgressBar {
+    bool phase;
+    uint8_t length;  
+  };
+  ProgressBar barPattern;
+  ProgressBar barTotal;
+
   int numPressedOld = 0;
   bool runningHere = false;
-  bool barPhases[2] = { 0 };
+
   uint8_t numberOfBarsTemp = 0;
   bool deleteConfirming = false;
   bool showingHowTo = false;
@@ -76,14 +83,20 @@ private:
   uint16_t GRID_X[6];
   uint16_t GRID_Y[6];
 
+  static constexpr uint8_t BAR_LENGTH = 105;
+  static constexpr uint8_t BAR_HEIGHT = 5;
+
   void clearBottomArea(void);
   void selectTools(Tools tools, TouchButton *toolsButton);
   bool isModeToolActive(void);
   void redrawScreen(void);
-  void drawGUI(uint16_t& guiFlags);
+  void drawGUI(uint16_t &guiFlags);
+  void processBar(const float progressTotal, const uint16_t y, ProgressBar &bar, const uint16_t color);
   static std::string getArpModeName(uint8_t mode);
   void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::Color color, uint16_t x, uint16_t y);
   void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color);
+  void resetProgressBars(void);
+  void drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 };
 
 #endif //UI_LIVESEQUENCER_H

@@ -130,7 +130,6 @@ public:
     uint8_t lastPlayedNote = 0;
     bool trackLayersChanged = false;
     bool songLayersChanged = false;
-    bool patternBeginFlag = false;
     bool startedFlag = false;
     bool stoppedFlag = false;
     bool isRunning = false;
