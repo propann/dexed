@@ -84,7 +84,7 @@ private:
   uint16_t GRID_Y[6];
 
   static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
-  static constexpr uint8_t BAR_HEIGHT = 5;
+  static constexpr uint8_t BAR_HEIGHT = 4;
 
   void clearBottomArea(void);
   void selectTools(Tools tools, TouchButton *toolsButton);

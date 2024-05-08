@@ -311,9 +311,9 @@ PROGMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
 }
 
 PROGMEM void UI_LiveSequencer::resetProgressBars(void) {
-  barPattern.currentPhase = 1;
+  barPattern.currentPhase = 0;
   barPattern.drawnLength = 0;
-  barTotal.currentPhase = 1;
+  barTotal.currentPhase = 0;
   barTotal.drawnLength = 0;
 }
 
@@ -354,6 +354,10 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
 
     if((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN) && data.lastPlayedNoteChanged) {
       lastNoteLabel->drawNow();
+    }
+
+    if(data.stoppedFlag) {
+      resetProgressBars();
     }
 
     data.songLayersChanged = false;
@@ -580,17 +584,21 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     TouchButton::drawButton(GRID_X[5], GRID_Y[0], data.isSongMode ? "SONG" : "PATT", "MODE", TouchButton::BUTTON_HIGHLIGHTED);
   }
 
-  if (runningHere) {
-    const float progressPattern = data.patternTimer / float(data.patternLengthMs);
+  // print time
+  if (guiFlags & drawTime) {
+    uint16_t timeMs = data.isRunning ? uint16_t(data.patternTimer) : data.patternLengthMs;
+    if(data.isRunning == false) {
+        data.songPatternCount = data.lastSongEventPattern; // show song length
+        data.currentPattern = data.numberOfBars - 1; // show num bars
+    }
+
+    const float progressPattern = timeMs / float(data.patternLengthMs);
     const float progressTotal = (progressPattern + data.currentPattern) / float(data.numberOfBars);
     processBar(progressPattern, 15, barPattern, GREEN);
     processBar(progressTotal, 20, barTotal, RED);
-  }
 
-  // print time
-  if (guiFlags & drawTime) {
-    uint16_t timeMs = runningHere ? uint16_t(data.patternTimer) : data.patternLengthMs;
-    uint16_t patCount = runningHere ? data.currentPattern : 0;
+    
+    uint16_t patCount = data.isRunning ? data.currentPattern : 0;
     display.setCursor(GRID_X[2], 30);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);

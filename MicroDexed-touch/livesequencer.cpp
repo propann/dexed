@@ -84,8 +84,7 @@ PROGMEM void LiveSequencer::handleStop(void) {
   
   playIterator = data.eventsList.end();
   allNotesOff();
-  data.songPatternCount = data.lastSongEventPattern; // show song length
-  data.currentPattern = data.numberOfBars; // show num bars
+
   data.stoppedFlag = true;
   data.arpSettings.arpNotes.clear();
 }
