@@ -3275,16 +3275,15 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         {
           seq.chain_counter[d] = 0;
         }
+        load_sd_livesequencer_json(number); // before handleStart()
+
         if (seq_was_running)
         {
-          // sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
-          // seq.running = true;
           handleStart();
         }
         else
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 
-        load_sd_livesequencer_json(number); // FIXME: needs seq.bpm
         return (true);
       }
 #ifdef DEBUG
