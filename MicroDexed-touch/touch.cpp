@@ -675,12 +675,10 @@ FLASHMEM void virtual_keyboard()
 FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
 {
   bool result = false;
-  if(numTouchPoints > 0) {
-    if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
-      if (isButtonTouched == false) {
-        isButtonTouched = true;
-        result = true;
-      }
+  if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
+    if (isButtonTouched == false) {
+      isButtonTouched = true;
+      result = true;
     }
   }
   return result;
