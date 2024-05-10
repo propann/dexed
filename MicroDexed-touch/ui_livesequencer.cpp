@@ -565,19 +565,26 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
   }
 }
 
+FLASHMEM void UI_LiveSequencer::drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+  // this way it looks good on console and on MDT...
+  for(uint8_t yloc = y; yloc < (y + h); yloc++) {
+    display.drawLine(x, yloc, x + w, yloc, color);
+  }
+}
+
 FLASHMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y, ProgressBar &bar, const uint16_t color) {
   const uint8_t totalBarWidth = progress * BAR_WIDTH;
   uint8_t drawWidth = totalBarWidth - bar.drawnLength;
 
   if (bar.drawnLength > totalBarWidth) {
-    display.fillRect(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
+    drawBar(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
     bar.currentPhase = !bar.currentPhase;
     bar.drawnLength = 0;
     drawWidth = totalBarWidth;
   }
 
   if (drawWidth > 0) {
-    display.fillRect(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
+    drawBar(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
     bar.drawnLength = totalBarWidth;
   }
 }
