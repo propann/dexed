@@ -101,7 +101,7 @@ FLASHMEM void LiveSequencer::onStopped(void) {
 }
 
 FLASHMEM void LiveSequencer::onStarted(void) {
-  tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
+  tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.5ms);
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
