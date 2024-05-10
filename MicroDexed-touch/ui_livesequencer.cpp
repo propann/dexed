@@ -12,6 +12,7 @@ extern int numTouchPoints;
 extern void UI_func_load_performance(uint8_t param);
 extern void UI_func_save_performance(uint8_t param);
 extern void UI_func_midi_channels(uint8_t param);
+extern void UI_func_seq_settings(uint8_t param);
 
 extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
@@ -113,6 +114,17 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   [ this, confirmDelete ] (auto *b) { // clickedHandler
     deleteConfirming = !deleteConfirming;
     confirmDelete->drawNow();
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[3], GRID_Y[5],
+  [ ] (auto *b) { // drawHandler
+    b->draw("SEQ", "SETTING", TouchButton::BUTTON_NORMAL);
+  },
+  [ ] (auto *b) { // clickedHandler
+    // open sequencer settings
+    LCDML.FUNC_setGBAToLastFunc();
+    display.setTextSize(2);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[4], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
