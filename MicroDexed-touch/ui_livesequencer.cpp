@@ -109,7 +109,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   toolsPages[TOOLS_SEQ].push_back(confirmDelete);
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[1], GRID_Y[5],
   [ this ] (auto *b) { // drawHandler
-    b->draw("DELETE", data.isSongMode ? "SONG" : "ALL", TouchButton::BUTTON_NORMAL);
+    b->draw("DELETE", data.isSongMode ? "SONG" : "ALL", TouchButton::BUTTON_ACTIVE);
   },
   [ this, confirmDelete ] (auto *b) { // clickedHandler
     deleteConfirming = !deleteConfirming;
@@ -117,7 +117,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[3], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
-    b->draw("SEQ", "SETTING", TouchButton::BUTTON_NORMAL);
+    b->draw("SEQ", "SETTING", TouchButton::BUTTON_ACTIVE);
   },
   [ ] (auto *b) { // clickedHandler
     // open sequencer settings
@@ -128,7 +128,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[4], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
-    b->draw("LOAD", "PERF", TouchButton::BUTTON_NORMAL);
+    b->draw("LOAD", "PERF", TouchButton::BUTTON_ACTIVE);
   },
   [ this ] (auto *b) { // clickedHandler
     // load
@@ -139,7 +139,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[5], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
-    b->draw("SAVE", "PERF", TouchButton::BUTTON_NORMAL);
+    b->draw("SAVE", "PERF", TouchButton::BUTTON_ACTIVE);
   },
   [ ] (auto *b) { // clickedHandler
     // save
@@ -169,11 +169,11 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
 
   toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.fillNotes.number, std::vector<uint8_t>({ 4, 6, 8, 12, 16, 24, 32 }), 16, 
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("NUM", v->toString(), TouchButton::BUTTON_NORMAL);
+    b->draw("NUM", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.fillNotes.offset, 0, 7, 1, 0, 
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("OFF", v->toString(), TouchButton::BUTTON_NORMAL);
+    b->draw("OFF", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
