@@ -13,6 +13,7 @@ public:
   void showDirectMappingWarning(uint8_t inChannel);
   void processLCDM(void);
   void handleTouchscreen(void);
+  void onStopped(void);
 
 private:
   struct ProgressBar {
@@ -84,7 +85,7 @@ private:
   uint16_t GRID_Y[6];
 
   static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
-  static constexpr uint8_t BAR_HEIGHT = 4;
+  static constexpr uint8_t BAR_HEIGHT = 3;
 
   void clearBottomArea(void);
   void selectTools(Tools tools, TouchButton *toolsButton);

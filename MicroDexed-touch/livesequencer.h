@@ -131,7 +131,6 @@ public:
     bool trackLayersChanged = false;
     bool songLayersChanged = false;
     bool startedFlag = false;
-    bool stoppedFlag = false;
     bool isRunning = false;
     bool isRecording = false;
     bool lastPlayedNoteChanged = false;
@@ -148,10 +147,13 @@ public:
   void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
   void handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
-  void handleStart(void);
-  void handleStop(void);
+  void start(void);
+  void stop(void);
+  void onStarted(void);
+  void onStopped(void);
   void init(void);
   void onGuiInit(void);
+  void onArpSourceChanged(void);
   void setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong = false);
   void changeNumberOfBars(uint8_t num);
   void deleteAllSongEvents(void);

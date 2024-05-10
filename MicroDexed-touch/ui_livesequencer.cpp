@@ -9,9 +9,6 @@ extern ILI9341_t3n display;
 extern bool remote_active;
 extern int numTouchPoints;
 
-extern void handleStart();
-extern void handleStop();
-
 extern void UI_func_load_performance(uint8_t param);
 extern void UI_func_save_performance(uint8_t param);
 extern void UI_func_midi_channels(uint8_t param);
@@ -66,7 +63,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   },
   [ this ] (auto *b){ // clickedHandler
     if(data.numberOfBars != numberOfBarsTemp) {
-      handleStop();
+      liveSeq.stop();
       liveSeq.changeNumberOfBars(numberOfBarsTemp);
       b->drawNow();
     }
@@ -234,6 +231,9 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[0], GRID_Y[4], data.arpSettings.source, 0, uint8_t(LiveSequencer::LIVESEQUENCER_NUM_TRACKS), 1, 0,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SOURCE", (v->getValue() == 0) ? "KEY" : std::string("TK") + v->toString(), TouchButton::BUTTON_ACTIVE);
+  },
+  [ this ] (auto *v) { // changedHandler
+    liveSeq.onArpSourceChanged();
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.volume, 0, 127, 1, 127,
   [ ] (auto *b, auto *v) { // drawHandler
@@ -317,6 +317,14 @@ PROGMEM void UI_LiveSequencer::resetProgressBars(void) {
   barTotal.drawnLength = 0;
 }
 
+PROGMEM void UI_LiveSequencer::onStopped(void) {
+  if(data.isActive) {
+    resetProgressBars();
+    guiUpdateFlags |= (drawActiveNotes | drawTime);
+    drawGUI(guiUpdateFlags);
+  }
+}
+
 PROGMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
@@ -350,20 +358,15 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
     }
 
     guiUpdateFlags |= data.trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
-    guiUpdateFlags |= (data.isRunning || data.stoppedFlag) ? (drawActiveNotes | drawTime) : 0;
+    guiUpdateFlags |= data.isRunning ? (drawActiveNotes | drawTime) : 0;
 
     if((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN) && data.lastPlayedNoteChanged) {
       lastNoteLabel->drawNow();
     }
 
-    if(data.stoppedFlag) {
-      resetProgressBars();
-    }
-
     data.songLayersChanged = false;
     data.trackLayersChanged = false;
     data.lastPlayedNoteChanged = false;
-    data.stoppedFlag = false;
     if (showingHowTo == false) {
       drawGUI(guiUpdateFlags);
     }
@@ -416,10 +419,10 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
     const bool runningPressed = TouchButton::isPressed(GRID_X[0], GRID_Y[0]);
     if (runningPressed) {
       if (runningHere) {
-        handleStop();
+        liveSeq.stop();
       }
       else {
-        handleStart();
+        liveSeq.start();
       }
     }
 
@@ -562,14 +565,14 @@ PROGMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y
   uint8_t drawWidth = totalBarWidth - bar.drawnLength;
 
   if (bar.drawnLength > totalBarWidth) {
-    drawBar(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : COLOR_BACKGROUND);
+    drawBar(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
     bar.currentPhase = !bar.currentPhase;
     bar.drawnLength = 0;
     drawWidth = totalBarWidth;
   }
 
   if (drawWidth > 0) {
-    drawBar(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : COLOR_BACKGROUND);
+    drawBar(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
     bar.drawnLength = totalBarWidth;
   }
 }
@@ -597,7 +600,6 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     processBar(progressPattern, 15, barPattern, GREEN);
     processBar(progressTotal, 20, barTotal, RED);
 
-    
     uint16_t patCount = data.isRunning ? data.currentPattern : 0;
     display.setCursor(GRID_X[2], 30);
     display.setTextSize(1);

@@ -15,23 +15,23 @@ static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { COLOR_SYSTEXT, GREY3 }        // COLOR_LABEL
 };
 
-TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
+PROGMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
   drawHandler{draw},
   clickedHandler{clicked},
   pressedState(NOT_PRESSED) {
 }
 
-void TouchButton::drawNow() {
+PROGMEM void TouchButton::drawNow() {
   drawHandler(this);
 }
 
-void TouchButton::setSelected(bool selected) {
+PROGMEM void TouchButton::setSelected(bool selected) {
   isSelected = selected;
   drawHandler(this);
 }
 
 static bool isButtonTouched = false;
-bool TouchButton::isPressed(uint16_t x, uint16_t y) {
+PROGMEM bool TouchButton::isPressed(uint16_t x, uint16_t y) {
   bool result = false;
   if(numTouchPoints > 0) {
     if(isButtonTouched == false) {
@@ -46,26 +46,26 @@ bool TouchButton::isPressed(uint16_t x, uint16_t y) {
   return result;
 }
 
-void TouchButton::clear(uint16_t color) {
+PROGMEM void TouchButton::clear(uint16_t color) {
   clearButton(x, y, color);
 }
 
-ColorCombo TouchButton::getColors(Color color) {
+PROGMEM ColorCombo TouchButton::getColors(Color color) {
   return colorMap[color];
 }
 
-void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
+PROGMEM void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
   display.console = true;
   display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, color);
 }
 
-void TouchButton::draw(const std::string label, const std::string sub, Color color) {
+PROGMEM void TouchButton::draw(const std::string label, const std::string sub, Color color) {
   drawButton(x, y, label.c_str(), sub.c_str(), color);
   uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[color].bg;
   display.fillRect(x, (y + BUTTON_SIZE_Y - 2), BUTTON_SIZE_X, 2, barColor);
 }
 
-void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color) {
+PROGMEM void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color) {
   display.console = true;
 
   ColorCombo c = colorMap[color];
@@ -89,7 +89,7 @@ void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, co
   display.setTextSize(1); // FIXME
 }
 
-void TouchButton::processPressed() {
+PROGMEM void TouchButton::processPressed() {
   const bool isInArea = numTouchPoints && (ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y));
 
   switch (pressedState) {

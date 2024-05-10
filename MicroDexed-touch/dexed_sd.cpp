@@ -3154,7 +3154,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
     handleStop();
   }
   dac_mute();
-  handleStop();
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   AudioNoInterrupts();
   load_sd_seq_sub_patterns_json(number);

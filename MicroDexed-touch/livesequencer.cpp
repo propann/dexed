@@ -24,6 +24,9 @@ extern void UI_func_braids(uint8_t param);
 extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
 
+extern void handleStart();
+extern void handleStop();
+
 using namespace TeensyTimerTool;
 PeriodicTimer tickTimer(TMR1);  // only 16bit needed
 OneShotTimer arpTimer(TCK);     // one tick timer of 20
@@ -75,7 +78,15 @@ PROGMEM const std::string LiveSequencer::getEventSource(LiveSequencer::EventSour
   }
 }
 
-PROGMEM void LiveSequencer::handleStop(void) {
+PROGMEM void LiveSequencer::start(void) {
+  handleStart();
+}
+
+PROGMEM void LiveSequencer::stop(void) {
+  handleStop();
+}
+
+PROGMEM void LiveSequencer::onStopped(void) {
   data.isRunning = false;
 
   if(data.isSongMode) {
@@ -84,12 +95,12 @@ PROGMEM void LiveSequencer::handleStop(void) {
   
   playIterator = data.eventsList.end();
   allNotesOff();
-
-  data.stoppedFlag = true;
+  ui_liveSeq->onStopped();
+  pressedArpKeys.clear();
   data.arpSettings.arpNotes.clear();
 }
 
-PROGMEM void LiveSequencer::handleStart(void) {
+PROGMEM void LiveSequencer::onStarted(void) {
   tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
@@ -148,6 +159,14 @@ PROGMEM void LiveSequencer::printEvents() {
     for(auto &e : data.songEvents[i]) {
       printEvent(i++, e);
     }
+  }
+}
+
+PROGMEM void LiveSequencer::onArpSourceChanged(void) {
+  // for now the best way to avoid pending notes / arp keys 
+  if(data.isRunning) {
+    stop();
+    start();
   }
 }
 

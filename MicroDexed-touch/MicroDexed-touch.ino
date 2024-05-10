@@ -4283,7 +4283,7 @@ LiveSequencer liveSeq;
 
 void handleStart(void)
 {
-  liveSeq.handleStart();
+  liveSeq.onStarted();
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
     display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
@@ -4355,7 +4355,7 @@ void handleStop(void)
 {
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
-    liveSeq.handleStop();
+    liveSeq.onStopped();
     if (seq.running)
     {
       sequencer_part2();
