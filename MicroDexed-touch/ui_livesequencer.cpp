@@ -220,7 +220,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
     data.arpSettings.enabled = !data.arpSettings.enabled;
     b->drawNow();
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data.arpSettings.amount, { 1, 2, 4, 6, 8, 12, 16, 24, 32, 64 }, 8,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data.arpSettings.amount, { 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64 }, 8,
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("SPEED", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
