@@ -565,26 +565,19 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
   }
 }
 
-FLASHMEM void UI_LiveSequencer::drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
-  // could be more efficient than drawRect?
-  for(uint8_t yloc = y; yloc < (y + h); yloc++) {
-    display.drawFastHLine(x, yloc, w, color);
-  }
-}
-
 FLASHMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y, ProgressBar &bar, const uint16_t color) {
   const uint8_t totalBarWidth = progress * BAR_WIDTH;
   uint8_t drawWidth = totalBarWidth - bar.drawnLength;
 
   if (bar.drawnLength > totalBarWidth) {
-    drawBar(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
+    display.fillRect(GRID_X[2] + bar.drawnLength, y, BAR_WIDTH - bar.drawnLength, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
     bar.currentPhase = !bar.currentPhase;
     bar.drawnLength = 0;
     drawWidth = totalBarWidth;
   }
 
   if (drawWidth > 0) {
-    drawBar(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
+    display.fillRect(GRID_X[2] + bar.drawnLength, y, drawWidth, BAR_HEIGHT, bar.currentPhase ? color : GREY2);
     bar.drawnLength = totalBarWidth;
   }
 }
@@ -609,11 +602,12 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
     const float progressPattern = timeMs / float(data.patternLengthMs);
     const float progressTotal = (progressPattern + data.currentPattern) / float(data.numberOfBars);
+
     processBar(progressPattern, 15, barPattern, GREEN);
     processBar(progressTotal, 20, barTotal, RED);
 
     uint16_t patCount = data.isRunning ? data.currentPattern : 0;
-    display.setCursor(GRID_X[2], 30);
+    display.setCursor(GRID_X[2], 28);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     if (data.isSongMode) {
@@ -626,11 +620,9 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     else {
       display.printf("P %i.%04i   ", patCount, timeMs);
     }
-    display.setCursor(200, 30);
+    display.setCursor(200, 28);
     display.printf("%02i", data.isSongMode ? data.songPatternCount : data.currentPattern);
   }
-
-  
 
   TouchButton::Color trackButtonRecColor = TouchButton::BUTTON_RED; // red, or blinking
   const bool doBlink = data.notesOn.size() || data.pendingEvents.size();
@@ -690,6 +682,7 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       b->drawNow();
     }
     
+    display.console = true;
     display.fillRect(0, GRID_Y[2] + TouchButton::BUTTON_SIZE_Y, DISPLAY_WIDTH, 4, MIDDLEGREEN);
 
     for(TouchButton *b : toolsPages[currentTools]) {

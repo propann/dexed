@@ -97,7 +97,6 @@ private:
   void drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::Color color, uint16_t x, uint16_t y);
   void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color);
   void resetProgressBars(void);
-  void drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 };
 
 #endif //UI_LIVESEQUENCER_H

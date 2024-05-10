@@ -3,16 +3,15 @@
 #include "ILI9341_t3n.h"
 
 extern ILI9341_t3n display;
-
 extern ts_t ts;
 extern int numTouchPoints;
 
 static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { GREY1, GREY2 },               // COLOR_NORMAL
-  { COLOR_SYSTEXT, 0x03b0 },      // COLOR_ACTIVE
+  { COLOR_SYSTEXT, DX_DARKCYAN }, // COLOR_ACTIVE
   { COLOR_SYSTEXT, RED },         // COLOR_RED
   { COLOR_SYSTEXT, MIDDLEGREEN }, // COLOR_HIGHLIGHTED
-  { COLOR_SYSTEXT, GREY3 }        // COLOR_LABEL
+  { COLOR_SYSTEXT, COLOR_BACKGROUND } // COLOR_LABEL
 };
 
 FLASHMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
@@ -62,19 +61,21 @@ FLASHMEM void TouchButton::clearButton(uint16_t x, uint16_t y, uint16_t color) {
 FLASHMEM void TouchButton::draw(const std::string label, const std::string sub, Color color) {
   drawButton(x, y, label.c_str(), sub.c_str(), color);
   uint16_t barColor = isSelected ? COLOR_SYSTEXT : colorMap[color].bg;
+  display.console = true;
   display.fillRect(x, (y + BUTTON_SIZE_Y - 2), BUTTON_SIZE_X, 2, barColor);
 }
 
 FLASHMEM void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string label, const std::string sub, Color color) {
-  display.console = true;
-
   ColorCombo c = colorMap[color];
 
   display.setTextSize(1);
   display.setTextColor(c.text, c.bg);
+
+  display.console = true;
   display.fillRect(x, y, BUTTON_SIZE_X, BUTTON_SIZE_Y, c.bg);
   
   display.setCursor(x + 5, y + 5);
+  display.console = true;
   display.print(label.c_str());
 
   const bool bigSub = sub.size() <= 3;
@@ -85,6 +86,7 @@ FLASHMEM void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string 
   } else {
     display.setCursor(x + 5, y + 20);
   }
+  display.console = true;
   display.print(sub.c_str());
   display.setTextSize(1); // FIXME
 }

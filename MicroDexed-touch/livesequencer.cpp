@@ -164,7 +164,7 @@ FLASHMEM void LiveSequencer::printEvents() {
 
 FLASHMEM void LiveSequencer::onArpSourceChanged(void) {
   // for now the best way to avoid pending notes / arp keys 
-  if(data.isRunning) {
+  if(data.isRunning && data.arpSettings.enabled) {
     stop();
     start();
   }
