@@ -34,17 +34,17 @@ OneShotTimer liveTimer(TCK);    // one tick timer of 20
 
 UI_LiveSequencer *ui_liveSeq;
 
-PROGMEM LiveSequencer::LiveSequencer() {
+FLASHMEM LiveSequencer::LiveSequencer() {
   ui_liveSeq = new UI_LiveSequencer(*this, data);
   updateTrackChannels(true);
   data.isActive = false;
 }
 
-PROGMEM void UI_func_livesequencer(uint8_t param) {
+FLASHMEM void UI_func_livesequencer(uint8_t param) {
   ui_liveSeq->processLCDM();
 }
 
-PROGMEM void handle_touchscreen_live_sequencer(void) {
+FLASHMEM void handle_touchscreen_live_sequencer(void) {
   ui_liveSeq->handleTouchscreen();
 }
 
@@ -52,7 +52,7 @@ LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
   return &data;
 }
 
-PROGMEM const std::string LiveSequencer::getEventName(midi::MidiType event) const {
+FLASHMEM const std::string LiveSequencer::getEventName(midi::MidiType event) const {
   switch(event) {
   case midi::NoteOn:
     return "NoteOn";
@@ -67,7 +67,7 @@ PROGMEM const std::string LiveSequencer::getEventName(midi::MidiType event) cons
   }
 }
 
-PROGMEM const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource source) const {
+FLASHMEM const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource source) const {
   switch(source) {
   case EVENT_PATTERN:
     return "PATT";
@@ -78,15 +78,15 @@ PROGMEM const std::string LiveSequencer::getEventSource(LiveSequencer::EventSour
   }
 }
 
-PROGMEM void LiveSequencer::start(void) {
+FLASHMEM void LiveSequencer::start(void) {
   handleStart();
 }
 
-PROGMEM void LiveSequencer::stop(void) {
+FLASHMEM void LiveSequencer::stop(void) {
   handleStop();
 }
 
-PROGMEM void LiveSequencer::onStopped(void) {
+FLASHMEM void LiveSequencer::onStopped(void) {
   data.isRunning = false;
 
   if(data.isSongMode) {
@@ -100,7 +100,7 @@ PROGMEM void LiveSequencer::onStopped(void) {
   data.arpSettings.arpNotes.clear();
 }
 
-PROGMEM void LiveSequencer::onStarted(void) {
+FLASHMEM void LiveSequencer::onStarted(void) {
   tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
@@ -110,7 +110,7 @@ PROGMEM void LiveSequencer::onStarted(void) {
   data.eventsList.remove_if([](MidiEvent &e){ return e.source == EventSource::EVENT_SONG; });
 }
 
-PROGMEM void LiveSequencer::allNotesOff(void) {
+FLASHMEM void LiveSequencer::allNotesOff(void) {
   for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     for(uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
       for(auto note : data.tracks[track].activeNotes[layer]) {
@@ -121,11 +121,11 @@ PROGMEM void LiveSequencer::allNotesOff(void) {
   }
 }
 
-PROGMEM void LiveSequencer::printEvent(int i, MidiEvent e) {
+FLASHMEM void LiveSequencer::printEvent(int i, MidiEvent e) {
   DBG_LOG(printf("[%i]: %i:%04i {%s} (%i):%i, %s, %i, %i\n", i, e.patternNumber, e.patternMs, getEventSource(e.source).c_str(), e.track, e.layer, getEventName(e.event).c_str(), e.note_in, e.note_in_velocity));
 }
 
-PROGMEM bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
+FLASHMEM bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
   bool overflow = false; // overflow if event rounded to start of next pattern
   
   if(denom > 1) {
@@ -148,7 +148,7 @@ PROGMEM bool LiveSequencer::timeQuantization(MidiEvent &e, uint8_t denom) {
   return overflow;
 }
 
-PROGMEM void LiveSequencer::printEvents() {
+FLASHMEM void LiveSequencer::printEvents() {
   DBG_LOG(printf("--- %i pattern events (%i bytes with one be %i bytes)\n", data.eventsList.size(), data.eventsList.size() * sizeof(MidiEvent), sizeof(MidiEvent)));
   uint i = 0;
   for(auto &e : data.eventsList) {
@@ -162,7 +162,7 @@ PROGMEM void LiveSequencer::printEvents() {
   }
 }
 
-PROGMEM void LiveSequencer::onArpSourceChanged(void) {
+FLASHMEM void LiveSequencer::onArpSourceChanged(void) {
   // for now the best way to avoid pending notes / arp keys 
   if(data.isRunning) {
     stop();
@@ -170,7 +170,7 @@ PROGMEM void LiveSequencer::onArpSourceChanged(void) {
   }
 }
 
-PROGMEM void LiveSequencer::refreshSongLength(void) {
+FLASHMEM void LiveSequencer::refreshSongLength(void) {
   uint8_t lastSongPattern = 0;
   for(auto &e : data.songEvents) {
     // remove all invalidated song events and repopulate song length
@@ -185,7 +185,7 @@ PROGMEM void LiveSequencer::refreshSongLength(void) {
   DBG_LOG(printf("last song pattern: %i\n", lastSongPattern));
 }
 
-PROGMEM void LiveSequencer::onSongStopped(void) {
+FLASHMEM void LiveSequencer::onSongStopped(void) {
   if(data.recordedToSong) {
     data.songLayerCount++;
     data.songLayersChanged = true;
@@ -196,7 +196,7 @@ PROGMEM void LiveSequencer::onSongStopped(void) {
   applySongStartLayerMutes();
 }
 
-PROGMEM void LiveSequencer::applySongStartLayerMutes(void) {
+FLASHMEM void LiveSequencer::applySongStartLayerMutes(void) {
   if(data.songLayerCount > 0) {
     for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerMutes = data.trackSettings[track].songStartLayerMutes;
@@ -205,7 +205,7 @@ PROGMEM void LiveSequencer::applySongStartLayerMutes(void) {
   }
 }
 
-PROGMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity) {
+FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isActive) {
     if(data.instrumentChannels.count(inChannel) == 0) {
       if(data.isRecording && data.isRunning) {
@@ -303,7 +303,7 @@ PROGMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType ev
   }
 }
 
-PROGMEM void LiveSequencer::fillTrackLayer(void) {
+FLASHMEM void LiveSequencer::fillTrackLayer(void) {
   if(data.trackSettings[data.activeTrack].layerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
     const float msIncrement = data.patternLengthMs / float(data.fillNotes.number);
     const uint8_t msOffset = round(data.fillNotes.offset * msIncrement / 8.0f);
@@ -320,14 +320,14 @@ PROGMEM void LiveSequencer::fillTrackLayer(void) {
   }
 }
 
-PROGMEM void LiveSequencer::changeNumberOfBars(uint8_t num) {
+FLASHMEM void LiveSequencer::changeNumberOfBars(uint8_t num) {
   if(num != data.numberOfBars) {
     data.numberOfBars = num;
     deleteLiveSequencerData();
   }
 }
 
-PROGMEM void LiveSequencer::deleteLiveSequencerData(void) {
+FLASHMEM void LiveSequencer::deleteLiveSequencerData(void) {
   data.pendingEvents.clear();
   data.eventsList.clear();
   deleteAllSongEvents();
@@ -339,7 +339,7 @@ PROGMEM void LiveSequencer::deleteLiveSequencerData(void) {
   init();
 }
 
-PROGMEM void LiveSequencer::deleteAllSongEvents(void) {
+FLASHMEM void LiveSequencer::deleteAllSongEvents(void) {
   data.songEvents.clear();
   data.lastSongEventPattern = 0;
   data.songLayerCount = 0;
@@ -355,7 +355,7 @@ PROGMEM void LiveSequencer::deleteAllSongEvents(void) {
   data.songLayersChanged = true;
 }
 
-PROGMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
+FLASHMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
   if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
@@ -369,7 +369,7 @@ PROGMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
   data.songLayersChanged = true;
 }
 
-PROGMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
+FLASHMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
   if((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
     return; // avoid merge up top layer
   }
@@ -398,7 +398,7 @@ PROGMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, Layer
   data.trackLayersChanged = true;
 }
 
-PROGMEM void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
+FLASHMEM void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
   if(e.layer == layer) {
     switch(action) {
     case LayerMode::LAYER_MERGE:
@@ -432,7 +432,7 @@ void LiveSequencer::loadNextEvent(int timeMs) {
   }
 }
 
-PROGMEM void LiveSequencer::playNextEvent(void) {
+FLASHMEM void LiveSequencer::playNextEvent(void) {
   if(playIterator != data.eventsList.end()) {
     const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
@@ -495,7 +495,7 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
   return (patternNumber * data.patternLengthMs) + patternMs;
 }
 
-PROGMEM void LiveSequencer::checkLoadNewArpNotes(void) {
+FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
   bool reloadArps = false;
 
   if(data.arpSettings.latch) {
@@ -536,7 +536,7 @@ bool sortedArpNote(LiveSequencer::ArpNote &n1, LiveSequencer::ArpNote &n2) {
     return (n1.offDelay < n2.offDelay); 
 } 
 
-PROGMEM void LiveSequencer::playNextArpNote(void) {
+FLASHMEM void LiveSequencer::playNextArpNote(void) {
   const uint16_t nowMs = uint16_t(data.patternTimer);
 
   if(data.arpSettings.delayToNextArpOnMs == 0) {
@@ -661,7 +661,7 @@ void LiveSequencer::onGuiInit(void) {
   checkAddMetronome();
 }
 
-PROGMEM void LiveSequencer::checkBpmChanged(void) {
+FLASHMEM void LiveSequencer::checkBpmChanged(void) {
   if(seq.bpm != data.currentBpm) {
     float resampleFactor =  data.currentBpm / float(seq.bpm);
     data.currentBpm = seq.bpm;
@@ -678,7 +678,7 @@ PROGMEM void LiveSequencer::checkBpmChanged(void) {
   }
 }
 
-PROGMEM void LiveSequencer::addPendingNotes(void) {
+FLASHMEM void LiveSequencer::addPendingNotes(void) {
   // finish active notes at end of all bars
   for(auto it = data.notesOn.begin(); it != data.notesOn.end();) {
     if(timeToMs(it->second.patternNumber, it->second.patternMs) != 0) {
@@ -705,7 +705,7 @@ PROGMEM void LiveSequencer::addPendingNotes(void) {
   }
 }
 
-PROGMEM void LiveSequencer::handlePatternBegin(void) {
+FLASHMEM void LiveSequencer::handlePatternBegin(void) {
   data.patternTimer = 0;
   if(data.startedFlag) {
     data.startedFlag = false;
@@ -789,7 +789,7 @@ void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
-PROGMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
+FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
   if(isMuted) {
     data.tracks[track].layerMutes |= (1 << layer);
     for(auto note : data.tracks[track].activeNotes[layer]) {
@@ -814,7 +814,7 @@ PROGMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isM
   }
 }
 
-PROGMEM void LiveSequencer::checkAddMetronome(void) {
+FLASHMEM void LiveSequencer::checkAddMetronome(void) {
   // always assure we have a drum track with some tempo to begin
   if(data.eventsList.empty()) {
     const uint8_t activeTrack = data.activeTrack;
@@ -844,7 +844,7 @@ PROGMEM void LiveSequencer::checkAddMetronome(void) {
   }
 }
 
-PROGMEM void LiveSequencer::updateTrackChannels(bool initial) {
+FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
   data.instrumentChannels.clear();
   for(uint8_t i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;

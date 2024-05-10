@@ -18,7 +18,7 @@ extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 extern void helptext_l(const char* str);
 
-PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
+FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
   static constexpr uint8_t BUTTON_SPACING = 4;  // center in screen
 
   for(int i = 0; i < 6; i++) {
@@ -265,7 +265,7 @@ PROGMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequenc
   }));
 }
 
-PROGMEM void UI_LiveSequencer::selectTools(Tools tools, TouchButton *toolsButton) {
+FLASHMEM void UI_LiveSequencer::selectTools(Tools tools, TouchButton *toolsButton) {
   if(currentTools != tools) {
     if(currentValue.button != nullptr) {
       currentValue.button->setSelected(false);
@@ -278,14 +278,14 @@ PROGMEM void UI_LiveSequencer::selectTools(Tools tools, TouchButton *toolsButton
   }
 }
 
-PROGMEM bool UI_LiveSequencer::isModeToolActive(void) {
+FLASHMEM bool UI_LiveSequencer::isModeToolActive(void) {
   bool result = false;
   result |= (currentTools == TOOLS_PATTERN) && (data.isSongMode == false);
   result |= (currentTools == TOOLS_SONG) && (data.isSongMode == true);
   return result;
 }
 
-PROGMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
+FLASHMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
   if (showingHowTo == false) {
     showingHowTo = true;
     display.fillScreen(COLOR_BACKGROUND);
@@ -322,14 +322,14 @@ PROGMEM void UI_LiveSequencer::showDirectMappingWarning(uint8_t inChannel) {
   }
 }
 
-PROGMEM void UI_LiveSequencer::resetProgressBars(void) {
+FLASHMEM void UI_LiveSequencer::resetProgressBars(void) {
   barPattern.currentPhase = 0;
   barPattern.drawnLength = 0;
   barTotal.currentPhase = 0;
   barTotal.drawnLength = 0;
 }
 
-PROGMEM void UI_LiveSequencer::onStopped(void) {
+FLASHMEM void UI_LiveSequencer::onStopped(void) {
   if(data.isActive) {
     resetProgressBars();
     guiUpdateFlags |= (drawActiveNotes | drawTime);
@@ -337,7 +337,7 @@ PROGMEM void UI_LiveSequencer::onStopped(void) {
   }
 }
 
-PROGMEM void UI_LiveSequencer::processLCDM(void) {
+FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
     data.isActive = true;
@@ -398,12 +398,12 @@ PROGMEM void UI_LiveSequencer::processLCDM(void) {
   }
 }
 
-PROGMEM void UI_LiveSequencer::clearBottomArea(void) {
+FLASHMEM void UI_LiveSequencer::clearBottomArea(void) {
   display.console = true;
   display.fillRect(0, 80, DISPLAY_WIDTH, DISPLAY_HEIGHT - 80, COLOR_BACKGROUND);
 }
 
-PROGMEM void UI_LiveSequencer::redrawScreen(void) {
+FLASHMEM void UI_LiveSequencer::redrawScreen(void) {
   guiUpdateFlags |= (drawTopButtons | drawTrackButtons | drawTime);
   isLayerViewActive = (showingTools == false);
   if(isLayerViewActive) {
@@ -414,7 +414,7 @@ PROGMEM void UI_LiveSequencer::redrawScreen(void) {
   clearBottomArea();
 }
 
-PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
+FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
   if (showingHowTo) {
     if (TouchButton::isPressed(GRID_X[5], GRID_Y[5])) {
       LCDML.FUNC_setGBAToLastFunc();
@@ -565,14 +565,14 @@ PROGMEM void UI_LiveSequencer::handleTouchscreen(void) {
   }
 }
 
-PROGMEM void UI_LiveSequencer::drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+FLASHMEM void UI_LiveSequencer::drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
   // could be more efficient than drawRect?
   for(uint8_t yloc = y; yloc < (y + h); yloc++) {
     display.drawFastHLine(x, yloc, w, color);
   }
 }
 
-PROGMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y, ProgressBar &bar, const uint16_t color) {
+FLASHMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y, ProgressBar &bar, const uint16_t color) {
   const uint8_t totalBarWidth = progress * BAR_WIDTH;
   uint8_t drawWidth = totalBarWidth - bar.drawnLength;
 
@@ -589,7 +589,7 @@ PROGMEM void UI_LiveSequencer::processBar(const float progress, const uint16_t y
   }
 }
 
-PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
+FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   display.console = true;
   
   if (guiFlags & drawTopButtons) {
@@ -708,7 +708,7 @@ PROGMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   guiFlags = 0;
 }
 
-PROGMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
+FLASHMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   switch (mode) {
   case LiveSequencer::ArpMode::ARP_CHORD:
     return "CHORD";
@@ -731,7 +731,7 @@ PROGMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
   }
 }
 
-PROGMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::Color color, uint16_t x, uint16_t y) {
+FLASHMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t layerMode, int layer, const bool layerEditActive, TouchButton::Color color, uint16_t x, uint16_t y) {
   char temp_char[4];
   std::string label = "LAYER";
   std::string labelSub = itoa(layer + 1, temp_char, 10);
@@ -752,7 +752,7 @@ PROGMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t la
   TouchButton::drawButton(x, y, label.c_str(), labelSub.c_str(), color);
 }
 
-PROGMEM void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color) {
+FLASHMEM void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color) {
   switch (layerMode) {
   case LiveSequencer::LayerMode::LAYER_MERGE:
     color = TouchButton::BUTTON_HIGHLIGHTED;
