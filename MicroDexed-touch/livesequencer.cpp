@@ -523,6 +523,9 @@ FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
     }
     
     switch(data.arpSettings.mode) {
+    case ArpMode::ARP_RANDOM:
+      std::random_shuffle(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end());
+      break;
     case ArpMode::ARP_DOWN:
     case ArpMode::ARP_DOWNUP:
     case ArpMode::ARP_DOWNUP_P:
