@@ -638,7 +638,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
     delayToNextTimerCall = activeArps.front().offDelay;
   }
   const uint16_t delayToNextPatternStart = uint16_t(data.patternLengthMs - nowMs);
-  const bool nextIsPatternStart = (delayToNextTimerCall > delayToNextPatternStart);
+  const bool nextIsPatternStart = (delayToNextTimerCall >= delayToNextPatternStart);
 
   if(nextIsPatternStart) {
     delayToNextTimerCall = delayToNextPatternStart;
@@ -784,7 +784,6 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
   if(data.arpSettings.enabled) {
     if(data.arpSettings.arpNotes.size() && data.arpSettings.freerun == false) {
       data.arpSettings.arpSettingsChanged = true; // force reload
-      checkLoadNewArpNotes();
     }
     playNextArpNote();
   }
