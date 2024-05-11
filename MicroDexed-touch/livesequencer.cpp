@@ -559,7 +559,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
 
     if(data.arpSettings.arpNotes.empty()) {
       data.arpSettings.delayToNextArpOnMs = data.patternLengthMs / loadPerBar; // bypass loading timer until next pattern start
-    } else {
+    } else if(arpIndex < arpAmount) {
       ArpNote newArp; // play a new note...
       newArp.track = data.activeTrack;
 
@@ -778,11 +778,13 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
     }
   }
   // restart arp on pattern start
-  if(data.arpSettings.arpNotes.size() && data.arpSettings.freerun == false) {
-    data.arpSettings.arpSettingsChanged = true; // force reload
-    checkLoadNewArpNotes();
+  if(data.arpSettings.enabled) {
+    if(data.arpSettings.arpNotes.size() && data.arpSettings.freerun == false) {
+      data.arpSettings.arpSettingsChanged = true; // force reload
+      checkLoadNewArpNotes();
+    }
+    playNextArpNote();
   }
-  playNextArpNote();
 
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
 }

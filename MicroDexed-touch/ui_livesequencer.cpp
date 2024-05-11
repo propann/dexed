@@ -169,11 +169,11 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
 
   toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.fillNotes.number, { 4, 6, 8, 12, 16, 24, 32 }, 16, 
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("NUM", v->toString(), TouchButton::BUTTON_ACTIVE);
+    b->draw("NUMBER", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.fillNotes.offset, 0, 7, 1, 0, 
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("OFF", v->toString(), TouchButton::BUTTON_ACTIVE);
+    b->draw("OFFSET", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
