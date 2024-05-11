@@ -316,7 +316,9 @@ FLASHMEM void LiveSequencer::fillTrackLayer(void) {
         data.pendingEvents.emplace_back(MidiEvent { EVENT_PATTERN, noteOffTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 } );
       }
     }
-    addPendingNotes();
+    if(data.isRunning == false) {
+      addPendingNotes();
+    }
   }
 }
 
@@ -496,17 +498,30 @@ inline uint32_t LiveSequencer::timeToMs(uint8_t patternNumber, uint16_t patternM
 }
 
 FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
-  bool reloadArps = false;
+  bool reloadArpNotes = false;
 
   if(data.arpSettings.latch) {
-    reloadArps = data.arpSettings.keysChanged && pressedArpKeys.size();
+    reloadArpNotes = data.arpSettings.keysChanged && pressedArpKeys.size();
   } else {
-    reloadArps = data.arpSettings.keysChanged; // TODO: maybe immediadely stop playing with no latch?
+    reloadArpNotes = data.arpSettings.keysChanged; // TODO: maybe immediadely stop playing with no latch?
   }
   data.arpSettings.keysChanged = false;
 
-  if(reloadArps) {
-    data.arpSettings.arpNotes.assign(pressedArpKeys.begin(), pressedArpKeys.end());
+  if(reloadArpNotes) {
+    data.arpSettings.arpNotesIn.assign(pressedArpKeys.begin(), pressedArpKeys.end());
+  }
+
+  if(reloadArpNotes || data.arpSettings.arpSettingsChanged) {
+    data.arpSettings.arpSettingsChanged = false;
+    data.arpSettings.arpNotes.assign(data.arpSettings.arpNotesIn.begin(), data.arpSettings.arpNotesIn.end());
+    const uint8_t numNotes = data.arpSettings.arpNotes.size();
+    
+    for(uint octave = 1; octave < data.arpSettings.octaves; octave++) {
+      for(uint number = 0; number < numNotes; number++) {
+        data.arpSettings.arpNotes.emplace_back(data.arpSettings.arpNotes[number] + (octave * 12));
+      }
+    }
+    
     switch(data.arpSettings.mode) {
     case ArpMode::ARP_DOWN:
     case ArpMode::ARP_DOWNUP:
@@ -520,12 +535,6 @@ FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
       break;
     default:
       break;
-    }
-    const uint8_t numNotes = data.arpSettings.arpNotes.size();
-    for(uint octave = 1; octave < data.arpSettings.octaves; octave++) {
-      for(uint number = 0; number < numNotes; number++) {
-        data.arpSettings.arpNotes.emplace_back(data.arpSettings.arpNotes[number] + (octave * 12));
-      }
     }
     
     data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
@@ -652,7 +661,7 @@ void LiveSequencer::init(void) {
   updateTrackChannels();
   DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
   //printEvents();
-  data.pendingEvents.reserve(50);
+  data.pendingEvents.reserve(200);
   refreshSongLength();
 }
 
@@ -700,6 +709,7 @@ FLASHMEM void LiveSequencer::addPendingNotes(void) {
     }
     data.pendingEvents.clear();
     data.eventsList.sort(sortMidiEvent);
+    setLayerMuted(data.activeTrack, data.trackSettings[data.activeTrack].layerCount, false); // new layer is unmuted
     data.trackSettings[data.activeTrack].layerCount++;
     data.trackLayersChanged = true;
   }
@@ -768,6 +778,10 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
     }
   }
   // restart arp on pattern start
+  if(data.arpSettings.arpNotes.size() && data.arpSettings.freerun == false) {
+    data.arpSettings.arpSettingsChanged = true; // force reload
+    checkLoadNewArpNotes();
+  }
   playNextArpNote();
 
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));

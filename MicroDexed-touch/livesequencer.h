@@ -100,7 +100,10 @@ public:
     uint16_t length; // >100% pulse width possible
     int8_t swing;
     uint8_t latch; // keep notes or drop them
+    uint8_t freerun; // do not restart arp on pattern start
     bool keysChanged;
+    bool arpSettingsChanged;
+    std::vector<uint8_t> arpNotesIn;
     std::vector<uint8_t> arpNotes;
     std::vector<uint8_t>::iterator arpIt;
   };

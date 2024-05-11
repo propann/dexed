@@ -2362,10 +2362,7 @@ void loop()
       display.console = false;
     }
   }
-  else
-  {
-    yield();
-  }
+
   // SAVE-SYS-EVENT-HANDLING
   if (save_sys > SAVE_SYS_MS && save_sys_flag == true)
   {
