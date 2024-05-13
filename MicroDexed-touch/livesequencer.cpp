@@ -101,7 +101,7 @@ FLASHMEM void LiveSequencer::onStopped(void) {
 }
 
 FLASHMEM void LiveSequencer::onStarted(void) {
-  tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.5ms);
+  tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
@@ -574,7 +574,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
 
     if(data.arpSettings.arpNotes.empty()) {
       data.arpSettings.delayToNextArpOnMs = data.patternLengthMs / loadPerBar; // bypass loading timer until next pattern start
-    } else if(arpIndex < arpAmount) {
+    } else {
       ArpNote newArp; // play a new note...
       newArp.track = data.activeTrack;
 
