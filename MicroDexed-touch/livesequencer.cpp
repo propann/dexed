@@ -112,12 +112,16 @@ FLASHMEM void LiveSequencer::onStarted(void) {
 
 FLASHMEM void LiveSequencer::allNotesOff(void) {
   for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
-    for(uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
-      for(auto note : data.tracks[track].activeNotes[layer]) {
-        handleNoteOff(data.tracks[track].channel, note, 0, 0);
-      }
-      data.tracks[track].activeNotes[layer].clear();
+    allTrackNotesOff(track);
+  }
+}
+
+FLASHMEM void LiveSequencer::allTrackNotesOff(const uint8_t track) {
+  for(uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
+    for(auto note : data.tracks[track].activeNotes[layer]) {
+      handleNoteOff(data.tracks[track].channel, note, 0, 0);
     }
+    data.tracks[track].activeNotes[layer].clear();
   }
 }
 
@@ -544,9 +548,17 @@ FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
   }
 }
 
-bool sortedArpNote(LiveSequencer::ArpNote &n1, LiveSequencer::ArpNote &n2) {
+FLASHMEM void LiveSequencer::setArpEnabled(bool enabled) {
+  data.arpSettings.enabled = enabled;
+  if(enabled && data.arpSettings.source != 0) {
+    // finish active pattern notes on arp enable
+    allTrackNotesOff(data.arpSettings.source - 1);
+  }
+}
+
+FLASHMEM bool sortedArpNote(const LiveSequencer::ArpNote &n1, const LiveSequencer::ArpNote &n2) {
     return (n1.offDelay < n2.offDelay); 
-} 
+}
 
 FLASHMEM void LiveSequencer::playNextArpNote(void) {
   const uint16_t nowMs = uint16_t(data.patternTimer);

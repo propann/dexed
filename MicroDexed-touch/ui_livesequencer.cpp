@@ -217,7 +217,7 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   [ this ] (auto *b) { // drawHandler
     b->draw("ENABLE", (data.arpSettings.enabled == 0) ? "OFF" : "ON", (data.arpSettings.enabled == 0) ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_HIGHLIGHTED);
   }, [ this ] (auto *b) { // clickedHandler
-    data.arpSettings.enabled = !data.arpSettings.enabled;
+    liveSeq.setArpEnabled(!data.arpSettings.enabled);
     b->drawNow();
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[1], GRID_Y[3], data.arpSettings.amount, { 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64 }, 8,

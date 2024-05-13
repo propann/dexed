@@ -162,6 +162,7 @@ public:
   void deleteAllSongEvents(void);
   void fillTrackLayer();
   void deleteLiveSequencerData(void);
+  void setArpEnabled(bool enabled);
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
@@ -189,8 +190,8 @@ private:
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
+  void allTrackNotesOff(const uint8_t track);
   void allNotesOff(void);
-  
   void playNextEvent(void);
   void playNextArpNote(void);
   bool timeQuantization(MidiEvent &e, uint8_t denom);
