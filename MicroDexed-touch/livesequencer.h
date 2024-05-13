@@ -95,7 +95,7 @@ public:
     ArpMode mode;
     uint8_t loadPerBar;
     uint8_t noteRepeat;
-    uint8_t volume;
+    uint8_t velocity;
     uint8_t notePlayCount;
     uint16_t length; // >100% pulse width possible
     int8_t swing;
@@ -194,6 +194,8 @@ private:
   void allNotesOff(void);
   void playNextEvent(void);
   void playNextArpNote(void);
+  void playArp(const midi::MidiType type, const ArpNote arp);
+
   bool timeQuantization(MidiEvent &e, uint8_t denom);
   void checkBpmChanged(void);
   void checkAddMetronome(void);

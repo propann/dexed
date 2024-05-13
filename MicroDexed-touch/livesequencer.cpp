@@ -48,7 +48,7 @@ FLASHMEM void handle_touchscreen_live_sequencer(void) {
   ui_liveSeq->handleTouchscreen();
 }
 
-LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
+FLASHMEM LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
   return &data;
 }
 
@@ -429,7 +429,7 @@ FLASHMEM void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer:
   }
 }
 
-void LiveSequencer::loadNextEvent(int timeMs) {
+FLASHMEM void LiveSequencer::loadNextEvent(int timeMs) {
   if(timeMs > 0) {
     //LOG.printf("trigger in %ims\n", timeMs);
     liveTimer.trigger(timeMs * 1000);
@@ -613,10 +613,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
         }
       }
       if(data.arpSettings.enabled) {
-        const midi::Channel channel = data.tracks[data.activeTrack].channel;
-        for(auto &n : newArp.notes) {
-          handleNoteOn(channel, n, data.arpSettings.volume, 0);
-        }        
+        playArp(midi::NoteOn, newArp);
         newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
         activeArps.emplace_back(newArp);
         activeArps.sort(sortedArpNote);
@@ -634,10 +631,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
     // finish and erase elapsed note
     for(auto it = activeArps.begin(); it != activeArps.end(); it++) {
       if(it->offDelay == 0) {
-        const midi::Channel channel = data.tracks[it->track].channel;
-        for(auto &p : it->notes) {
-          handleNoteOff(channel, p, 0, 0);
-        }
+        playArp(midi::NoteOff, *it);
         activeArps.erase(it);
         it = activeArps.end(); // abort loop
       }
@@ -670,7 +664,32 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
   }
 }
 
-void LiveSequencer::init(void) {
+FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote arp) {
+  const midi::Channel channel = data.tracks[data.activeTrack].channel;
+  for(auto &n : arp.notes) {
+    switch(type) {
+    case midi::NoteOn:
+      handleNoteOn(channel, n, data.arpSettings.velocity, 0);
+      break;
+  
+    case midi::NoteOff:
+      handleNoteOff(channel, n, 0, 0);
+      break;
+
+    default:
+      break;
+    }
+    // FIXME: fast arp recording crashes...
+    /*const uint8_t layer = data.trackSettings[data.activeTrack].layerCount;
+    if(data.isRecording && layer < LiveSequencer::LIVESEQUENCER_NUM_LAYERS) {
+      const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
+      const MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, layer, type, n, data.arpSettings.velocity };
+      data.pendingEvents.emplace_back(newEvent);
+    }*/
+  }
+}
+
+FLASHMEM void LiveSequencer::init(void) {
   data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
   checkBpmChanged();
   updateTrackChannels();
@@ -680,7 +699,7 @@ void LiveSequencer::init(void) {
   refreshSongLength();
 }
 
-void LiveSequencer::onGuiInit(void) {
+FLASHMEM void LiveSequencer::onGuiInit(void) {
   init();
   checkAddMetronome();
 }
@@ -803,19 +822,19 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
   DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
 }
 
-void selectDexed0() {
+FLASHMEM void selectDexed0() {
   selected_instance_id = 0;
 }
 
-void selectDexed1() {
+FLASHMEM void selectDexed1() {
   selected_instance_id = 1;
 }
 
-void selectMs0() {
+FLASHMEM void selectMs0() {
   microsynth_selected_instance = 0;
 }
 
-void selectMs1() {
+FLASHMEM void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
