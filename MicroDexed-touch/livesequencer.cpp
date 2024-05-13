@@ -529,12 +529,12 @@ FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
     case ArpMode::ARP_DOWN:
     case ArpMode::ARP_DOWNUP:
     case ArpMode::ARP_DOWNUP_P:
-      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
       break;
     case ArpMode::ARP_UP:
     case ArpMode::ARP_UPDOWN:
     case ArpMode::ARP_UPDOWN_P:
-      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::greater<>());
+      std::sort(data.arpSettings.arpNotes.begin(), data.arpSettings.arpNotes.end(), std::less<>());
       break;
     default:
       break;

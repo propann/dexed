@@ -69,12 +69,12 @@ public:
   };
 
   enum ArpMode : uint8_t {
-    ARP_DOWN = 0,
-    ARP_UP,
-    ARP_DOWNUP,
-    ARP_DOWNUP_P,
+    ARP_UP = 0,
+    ARP_DOWN,
     ARP_UPDOWN,
     ARP_UPDOWN_P,
+    ARP_DOWNUP,
+    ARP_DOWNUP_P,
     ARP_RANDOM,
     ARP_CHORD,
     ARP_MODENUM
