@@ -22138,17 +22138,18 @@ FLASHMEM void splash_draw_reverseD()
 }
 
 FLASHMEM void splash_screen1()
-{
+{ // orig, first mdt logo
   splash_draw_header();
   splash_draw_D();
   splash_draw_reverseD();
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setTextSize(1);
-  display.setCursor(3, 127);
+  display.setCursor(0, 124);
   display.print(F("(c) 2018-2021 H. WIRTZ"));
-  display.setCursor(3, 139);
+  display.setCursor(0, 133);
   display.print(F("(c) 2021-2023 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
-  // splash_draw_X();
+  display.setCursor(0, 142);
+  display.print(F("(c) 2024 H.WIRTZ, M.KOSLOWSKI, D.PERBAL, D.WEBER"));
 }
 
 FLASHMEM void splash_screen2_anim()
@@ -22256,14 +22257,16 @@ FLASHMEM void draw_logo_instant(uint8_t yoffset)
 }
 
 FLASHMEM void splash_screen2()
-{
+{  // modern mdt logo
   display.setTextColor(COLOR_SYSTEXT);
   display.setTextSize(1);
-  display.setCursor(1, 100);
+  display.setCursor(1, 90);
   display.print(F("(c) 2018-2021 H. WIRTZ"));
-  display.setCursor(1, 110);
+  display.setCursor(1, 100);
   display.print(F("(c) 2021-2023 H. WIRTZ, M. KOSLOWSKI, D. PERBAL"));
-  display.setCursor(1 + CHAR_width_small * 4, 130);
+  display.setCursor(1, 110);
+  display.print(F("(c) 2024 H.WIRTZ, M.KOSLOWSKI, D.PERBAL, D.WEBER"));
+  display.setCursor(1 + CHAR_width_small * 4, 128);
   display.setTextColor(GREY2);
   display.print(F("https://codeberg.org/positionhigh/"));
 }
