@@ -1630,10 +1630,10 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
     if (json) {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["num_bars"] = data->numberOfBars;
-      data_json["num_tracks"] = LIVESEQUENCER_NUM_TRACKS;
-      for (int i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+      data_json["num_tracks"] = LiveSequencer::LIVESEQUENCER_NUM_TRACKS;
+      for (int i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
-        data_json["quant_denom"][i] = data->trackSettings[i].quantisizeDenom;
+        data_json["quant_denom"][i] = data->trackSettings[i].quantizeDenom;
         // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
         if (data->songLayerCount == 0) {
           data->trackSettings[i].songStartLayerMutes = data->tracks[i].layerMutes;
@@ -1717,7 +1717,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 
           for (int i = 0; i < num_tracks; i++) {
             data->trackSettings[i].layerCount = doc["layer_count"][i];
-            data->trackSettings[i].quantisizeDenom = doc["quant_denom"][i];
+            data->trackSettings[i].quantizeDenom = doc["quant_denom"][i];
             data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
             data->tracks[i].layerMutes = data->trackSettings[i].songStartLayerMutes;
           }
@@ -3154,7 +3154,6 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
     handleStop();
   }
   dac_mute();
-  handleStop();
   number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
   AudioNoInterrupts();
   load_sd_seq_sub_patterns_json(number);
@@ -3276,16 +3275,15 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         {
           seq.chain_counter[d] = 0;
         }
+        load_sd_livesequencer_json(number); // before handleStart()
+
         if (seq_was_running)
         {
-          // sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
-          // seq.running = true;
           handleStart();
         }
         else
           sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 
-        load_sd_livesequencer_json(number); // FIXME: needs seq.bpm
         return (true);
       }
 #ifdef DEBUG
