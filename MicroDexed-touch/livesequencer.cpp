@@ -545,6 +545,7 @@ FLASHMEM void LiveSequencer::checkLoadNewArpNotes(void) {
     }
     
     data.arpSettings.arpIt = data.arpSettings.arpNotes.begin();
+    data.arpSettings.notePlayCount = 0;
   }
 }
 

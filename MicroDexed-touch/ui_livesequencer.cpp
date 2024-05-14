@@ -474,6 +474,9 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
       currentTools = !data.isSongMode && currentTools == TOOLS_SONG ? TOOLS_PATTERN : currentTools;
       showingTools = !showingTools;
       if(showingTools == false) {
+        if(currentValue.button != nullptr) {
+          currentValue.button->setSelected(false);
+        }
         currentValue.valueBase = nullptr;
       }
       redrawScreen();
