@@ -665,7 +665,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
 }
 
 FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote arp) {
-  const midi::Channel channel = data.tracks[data.activeTrack].channel;
+  const midi::Channel channel = data.tracks[arp.track].channel;
   for(auto &n : arp.notes) {
     switch(type) {
     case midi::NoteOn:
