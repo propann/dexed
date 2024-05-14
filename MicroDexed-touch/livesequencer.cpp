@@ -617,7 +617,6 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
         playArp(midi::NoteOn, newArp);
         newArp.offDelay = (arpIntervalMs * data.arpSettings.length) / 100;
         activeArps.emplace_back(newArp);
-        activeArps.sort(sortedArpNote);
       }
 
       // calc time to next noteOn with incremented
@@ -630,11 +629,12 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
     }
   } else {
     // finish and erase elapsed note
-    for(auto it = activeArps.begin(); it != activeArps.end(); it++) {
+    for(auto it = activeArps.begin(); it != activeArps.end();) {
       if(it->offDelay == 0) {
         playArp(midi::NoteOff, *it);
         activeArps.erase(it);
-        it = activeArps.end(); // abort loop
+      } else {
+        ++it;
       }
     }
   }

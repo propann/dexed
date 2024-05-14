@@ -83,7 +83,7 @@ public:
   struct ArpNote {
     uint16_t offDelay;
     uint8_t track;
-    std::list<uint8_t> notes;
+    std::vector<uint8_t> notes;
   };
 
   struct ArpSettings {
@@ -169,7 +169,7 @@ private:
   LiveSeqData data;
 
   std::set<uint8_t> pressedArpKeys;
-  std::list<LiveSequencer::ArpNote> activeArps;
+  std::vector<LiveSequencer::ArpNote> activeArps;
 
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
