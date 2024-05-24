@@ -18,6 +18,8 @@ extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 extern void helptext_l(const char* str);
 
+bool runningInBackground; // LiveSequencer stays active in instrument settings opened from here
+
 FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
   static constexpr uint8_t BUTTON_SPACING = 4;  // center in screen
 
@@ -26,6 +28,8 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     GRID_X[i] = i * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
     GRID_Y[i] = i * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING) + OFFSET_Y;
   }
+
+  runningInBackground = false;
 
   // TOOL MENU
   buttonsToolSelect.push_back(new TouchButton(GRID_X[0], GRID_Y[2],
@@ -121,10 +125,9 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   },
   [ ] (auto *b) { // clickedHandler
     // open sequencer settings
-    LCDML.FUNC_setGBAToLastFunc();
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
+    openScreen(UI_func_seq_settings);
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[4], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
@@ -132,10 +135,9 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   },
   [ this ] (auto *b) { // clickedHandler
     // load
-    LCDML.FUNC_setGBAToLastFunc();
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    LCDML.OTHER_jumpToFunc(UI_func_load_performance, data.performanceID);
+    openScreen(UI_func_load_performance, data.performanceID);
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[5], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
@@ -143,10 +145,9 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   },
   [ ] (auto *b) { // clickedHandler
     // save
-    LCDML.FUNC_setGBAToLastFunc();
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    LCDML.OTHER_jumpToFunc(UI_func_save_performance); // FIXME: should have current id selected
+    openScreen(UI_func_save_performance); // FIXME: should have current id selected
   }));
 
   // PATTERN TOOLS
@@ -340,7 +341,7 @@ FLASHMEM void UI_LiveSequencer::resetProgressBars(void) {
 }
 
 FLASHMEM void UI_LiveSequencer::onStopped(void) {
-  if(data.isActive) {
+  if(data.isActive && (runningInBackground == false)) {
     resetProgressBars();
     guiUpdateFlags |= (drawActiveNotes | drawTime);
     drawGUI(guiUpdateFlags);
@@ -351,7 +352,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
     data.isActive = true;
-    stayActive = false;
+    runningInBackground = false;
     display.fillScreen(COLOR_BACKGROUND);
     numberOfBarsTemp = data.numberOfBars;
     liveSeq.onGuiInit();
@@ -396,11 +397,8 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
-    if (stayActive == false) {
+    if (runningInBackground == false) {
       data.isActive = false;
-    }
-    else {
-      stayActive = false;
     }
     data.isRecording = false;
     showingHowTo = false;
@@ -424,11 +422,18 @@ FLASHMEM void UI_LiveSequencer::redrawScreen(void) {
   clearBottomArea();
 }
 
+FLASHMEM void UI_LiveSequencer::openScreen(LCDML_FuncPtr_pu8 screen, uint8_t param) {
+  // stay active in background and keep processing midi inputs for screens opened in LiveSequencer
+  runningInBackground = true; 
+  LCDML.FUNC_setGBAToLastFunc();
+  LCDML.OTHER_jumpToFunc(screen, param);
+}
+
 FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
   if (showingHowTo) {
     if (TouchButton::isPressed(GRID_X[5], GRID_Y[5])) {
-      LCDML.FUNC_setGBAToLastFunc();
-      LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
+      openScreen(UI_func_midi_channels);
+      runningInBackground = false; // do not process midi in background
     }
     return;
   }
@@ -521,9 +526,7 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
               SetupFn f = (SetupFn)data.tracks[track].screenSetupFn;
               f(0);
             }
-            stayActive = true; // stay active for screens instrument settings opened in LiveSequencer
-            LCDML.FUNC_setGBAToLastFunc();
-            LCDML.OTHER_jumpToFunc(data.tracks[track].screen);
+            openScreen(data.tracks[track].screen);
           }
         }
         else {

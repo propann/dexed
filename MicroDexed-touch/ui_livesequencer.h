@@ -32,7 +32,6 @@ private:
 
   bool isLayerViewActive = false;
   uint16_t guiUpdateFlags = 0;
-  bool stayActive = false; // LiveSequencer stays active in instrument settings opened from here
 
   ActiveValue currentValue = { nullptr, nullptr };
   TouchButton *applyPatternLength;
@@ -86,6 +85,7 @@ private:
 
   static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
   static constexpr uint8_t BAR_HEIGHT = 3;
+  static void openScreen(LCDML_FuncPtr_pu8 screen, uint8_t p_param = 0);
 
   void clearBottomArea(void);
   void selectTools(Tools tools, TouchButton *toolsButton);
