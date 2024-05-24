@@ -6,24 +6,22 @@
 #include "ui_livesequencer.h"
 #include <map>
 
-extern void handleNoteOnInput(byte, byte, byte, byte);
-extern void handleNoteOn(byte, byte, byte, byte);
-extern void handleNoteOff(byte, byte, byte, byte);
 extern sequencer_t seq;
 extern uint8_t drum_midi_channel;
 extern config_t configuration;
 extern microsynth_t microsynth[2];
 extern braids_t braids_osc;
+extern uint8_t microsynth_selected_instance;
+extern uint8_t selected_instance_id; // dexed
 
+extern void handleNoteOnInput(byte, byte, byte, byte);
+extern void handleNoteOn(byte, byte, byte, byte);
+extern void handleNoteOff(byte, byte, byte, byte);
 extern void UI_func_drums(uint8_t param);
 extern void UI_func_voice_select(uint8_t param);
 extern void UI_func_microsynth(uint8_t param);
 extern void UI_func_epiano(uint8_t param);
 extern void UI_func_braids(uint8_t param);
-
-extern uint8_t microsynth_selected_instance;
-extern uint8_t selected_instance_id; // dexed
-
 extern void handleStart();
 extern void handleStop();
 
@@ -67,7 +65,7 @@ FLASHMEM const std::string LiveSequencer::getEventName(midi::MidiType event) con
   }
 }
 
-FLASHMEM const std::string LiveSequencer::getEventSource(LiveSequencer::EventSource source) const {
+FLASHMEM const std::string LiveSequencer::getEventSource(EventSource source) const {
   switch(source) {
   case EVENT_PATTERN:
     return "PATT";
@@ -101,7 +99,7 @@ FLASHMEM void LiveSequencer::onStopped(void) {
 }
 
 FLASHMEM void LiveSequencer::onStarted(void) {
-  tickTimer.begin([] { TeensyTimerTool::tick(); }, 1ms);
+  tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.1ms);
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
@@ -111,7 +109,7 @@ FLASHMEM void LiveSequencer::onStarted(void) {
 }
 
 FLASHMEM void LiveSequencer::allNotesOff(void) {
-  for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     allTrackNotesOff(track);
   }
 }
@@ -202,7 +200,7 @@ FLASHMEM void LiveSequencer::onSongStopped(void) {
 
 FLASHMEM void LiveSequencer::applySongStartLayerMutes(void) {
   if(data.songLayerCount > 0) {
-    for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+    for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerMutes = data.trackSettings[track].songStartLayerMutes;
     }
     data.trackLayersChanged = true;
@@ -216,7 +214,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
         const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
         MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocity };
         if(data.isSongMode) {
-          if(data.songLayerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
+          if(data.songLayerCount < LIVESEQUENCER_NUM_TRACKS) {
             // in song mode, simply add event, no rounding and checking needed
             newEvent.layer = data.songLayerCount; 
             uint8_t patternCount = data.songPatternCount;
@@ -229,7 +227,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
             data.songEvents[patternCount].emplace_back(newEvent);
           }
         } else {
-          if(data.trackSettings[data.activeTrack].layerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {    
+          if(data.trackSettings[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {    
             switch(newEvent.event) {
             default:
               // ignore all other types
@@ -308,7 +306,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 }
 
 FLASHMEM void LiveSequencer::fillTrackLayer(void) {
-  if(data.trackSettings[data.activeTrack].layerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
+  if(data.trackSettings[data.activeTrack].layerCount < LIVESEQUENCER_NUM_LAYERS) {
     const float msIncrement = data.patternLengthMs / float(data.fillNotes.number);
     const uint8_t msOffset = round(data.fillNotes.offset * msIncrement / 8.0f);
     const uint16_t noteLength = round(msIncrement / 2.0f); // ...
@@ -337,7 +335,7 @@ FLASHMEM void LiveSequencer::deleteLiveSequencerData(void) {
   data.pendingEvents.clear();
   data.eventsList.clear();
   deleteAllSongEvents();
-  for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+  for(int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     data.trackSettings[track].layerCount = 0;
     data.tracks[track].layerMutes = 0;
   }
@@ -355,7 +353,7 @@ FLASHMEM void LiveSequencer::deleteAllSongEvents(void) {
       e.event = midi::InvalidType; // mark as invalid
     }
   }
-  for(uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+  for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     data.trackSettings[track].songStartLayerMutes = 0;
   }
   data.songLayersChanged = true;
@@ -399,12 +397,11 @@ FLASHMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, Laye
   const uint8_t layerMutesLo = data.tracks[track].layerMutes & bitmask;         // 0010 1101 &  0000 0011 = 0000 0001
   const uint8_t layerMutesHi = (data.tracks[track].layerMutes >> 1) & ~bitmask; // 0001 0110 & ~0000 0011 = 0001 0100
   data.tracks[track].layerMutes = (layerMutesLo | layerMutesHi);                // 0000 0001 |  0001 0100 = 0001 0101
-
   data.trackSettings[track].layerCount--;
   data.trackLayersChanged = true;
 }
 
-FLASHMEM void LiveSequencer::performLayerAction(LayerMode action, LiveSequencer::MidiEvent &e, uint8_t layer) {
+FLASHMEM void LiveSequencer::performLayerAction(LayerMode action, MidiEvent &e, uint8_t layer) {
   if(e.layer == layer) {
     switch(action) {
     case LayerMode::LAYER_MERGE:
@@ -682,7 +679,7 @@ FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote ar
     }
     // FIXME: fast arp recording crashes...
     /*const uint8_t layer = data.trackSettings[data.activeTrack].layerCount;
-    if(data.isRecording && layer < LiveSequencer::LIVESEQUENCER_NUM_LAYERS) {
+    if(data.isRecording && layer < LIVESEQUENCER_NUM_LAYERS) {
       const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
       const MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, layer, type, n, data.arpSettings.velocity };
       data.pendingEvents.emplace_back(newEvent);
@@ -752,6 +749,7 @@ FLASHMEM void LiveSequencer::addPendingNotes(void) {
 
 FLASHMEM void LiveSequencer::handlePatternBegin(void) {
   data.patternTimer = 0;
+  
   if(data.startedFlag) {
     data.startedFlag = false;
     // just started, do not increment
@@ -764,7 +762,7 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
 
     if(data.isSongMode && data.isRecording) {
       // save current song start layer mutes
-      for(uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+      for(uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
         data.trackSettings[track].songStartLayerMutes = data.tracks[track].layerMutes;
       }
     }   
@@ -850,7 +848,7 @@ FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool is
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
   if(recordToSong) {
-    if(data.songLayerCount < LiveSequencer::LIVESEQUENCER_NUM_TRACKS) {
+    if(data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
       data.recordedToSong = true;
       const AutomationType type = isMuted ? AutomationType::TYPE_MUTE_ON : AutomationType::TYPE_MUTE_OFF;
       MidiEvent e = { EVENT_SONG, uint16_t(data.patternTimer), data.currentPattern, track, data.songLayerCount, midi::MidiType::ControlChange, layer, type };
@@ -896,7 +894,7 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
 
 FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
   data.instrumentChannels.clear();
-  for(uint8_t i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
+  for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
     if(initial) {
       data.trackSettings[i].quantizeDenom = 1; // default: no quantization

@@ -49,7 +49,7 @@ public:
     uint8_t layerMutes;
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
-    std::unordered_multiset<uint8_t> activeNotes[LiveSequencer::LIVESEQUENCER_NUM_LAYERS];
+    std::unordered_multiset<uint8_t> activeNotes[LIVESEQUENCER_NUM_LAYERS];
   };
 
   struct TrackSettings {
@@ -110,7 +110,7 @@ public:
 
   struct LiveSeqData {
     // non - volatile
-    TrackSettings trackSettings[LiveSequencer::LIVESEQUENCER_NUM_TRACKS];
+    TrackSettings trackSettings[LIVESEQUENCER_NUM_TRACKS];
     std::list<MidiEvent> eventsList;
     std::unordered_map<uint8_t, std::list<MidiEvent>> songEvents; // should use std::map but name clashes with map()..
     uint8_t numberOfBars = 4;
@@ -118,7 +118,7 @@ public:
     // volatile
     bool isActive;
     std::unordered_set<uint8_t> instrumentChannels;
-    Track tracks[LiveSequencer::LIVESEQUENCER_NUM_TRACKS];
+    Track tracks[LIVESEQUENCER_NUM_TRACKS];
     ArpSettings arpSettings;
     uint8_t lastSongEventPattern; // because using unordered map above we need to know last index to be able to know song length (eg. for song loop)
     uint8_t currentPattern = 0;
@@ -126,7 +126,7 @@ public:
     unsigned long patternLengthMs;
     uint8_t activeTrack = 0;
     elapsedMillis patternTimer;
-    std::unordered_map<uint8_t, LiveSequencer::MidiEvent> notesOn;
+    std::unordered_map<uint8_t, MidiEvent> notesOn;
     std::vector<MidiEvent> pendingEvents;
     uint8_t songPatternCount = 0;
     uint8_t songLayerCount = 0;
@@ -167,9 +167,12 @@ public:
 
 private:
   LiveSeqData data;
-
   std::set<uint8_t> pressedArpKeys;
-  std::vector<LiveSequencer::ArpNote> activeArps;
+  std::vector<ArpNote> activeArps;
+  std::list<MidiEvent>::iterator playIterator;
+
+  const std::string getEventName(midi::MidiType event) const;
+  const std::string getEventSource(EventSource source) const;
 
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
@@ -177,16 +180,6 @@ private:
   void addPendingNotes(void);
   void refreshSongLength(void);
   void applySongStartLayerMutes(void);
-  
-  static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
-    // + a.source is a hack to sort song events before pattern events if the have same time
-    return ((a.patternNumber * 5000) + a.patternMs + a.source) < ((b.patternNumber * 5000) + b.patternMs + b.source); // FIXME: patternLengthMs
-  }
-  
-  std::list<MidiEvent>::iterator playIterator;  
-  const std::string getEventName(midi::MidiType event) const;
-  const std::string getEventSource(EventSource source) const;
-
   void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
@@ -195,11 +188,15 @@ private:
   void playNextEvent(void);
   void playNextArpNote(void);
   void playArp(const midi::MidiType type, const ArpNote arp);
-
   bool timeQuantization(MidiEvent &e, uint8_t denom);
   void checkBpmChanged(void);
   void checkAddMetronome(void);
   void performLayerAction(LayerMode action, MidiEvent &e, uint8_t layer);
+
+  static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
+    // + a.source is a hack to sort song events before pattern events if the have same time
+    return ((a.patternNumber * 5000) + a.patternMs + a.source) < ((b.patternNumber * 5000) + b.patternMs + b.source); // FIXME: patternLengthMs
+  }
 };
 
 void UI_func_livesequencer(uint8_t param);
