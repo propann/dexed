@@ -177,6 +177,7 @@ private:
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);
+  void updateInstrumentChannels(void);
   void addPendingNotes(void);
   void refreshSongLength(void);
   void applySongStartLayerMutes(void);

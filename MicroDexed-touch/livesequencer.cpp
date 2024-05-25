@@ -9,7 +9,8 @@
 extern sequencer_t seq;
 extern uint8_t drum_midi_channel;
 extern config_t configuration;
-extern microsynth_t microsynth[2];
+extern microsynth_t microsynth[NUM_MICROSYNTH];
+extern multisample_s msp[NUM_MULTISAMPLES];
 extern braids_t braids_osc;
 extern uint8_t microsynth_selected_instance;
 extern uint8_t selected_instance_id; // dexed
@@ -298,7 +299,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
       }
     } else {
       ui_liveSeq->showDirectMappingWarning(inChannel);
-      DBG_LOG(printf("LiveSeq: drop event as directly assigned to an instument\n"));
+      DBG_LOG(printf("LiveSeq: drop event as directly assigned to an instrument\n"));
     }
   } else {
     DBG_LOG(printf("LiveSeq: drop event as not active\n"));
@@ -893,7 +894,8 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
 }
 
 FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
-  data.instrumentChannels.clear();
+  updateInstrumentChannels();
+
   for(uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
     data.tracks[i].screenSetupFn = nullptr;
     if(initial) {
@@ -950,6 +952,21 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
       }
       break;
     }
-    data.instrumentChannels.insert(data.tracks[i].channel);
   }
+}
+
+FLASHMEM void LiveSequencer::updateInstrumentChannels(void) {
+  data.instrumentChannels.clear();
+  data.instrumentChannels.insert(drum_midi_channel);
+  for(int i = 0; i < NUM_DEXED; i++) {
+    data.instrumentChannels.insert(configuration.dexed[i].midi_channel);
+  }
+  data.instrumentChannels.insert(configuration.epiano.midi_channel);
+  for(int i = 0; i < NUM_MICROSYNTH; i++) {
+    data.instrumentChannels.insert(microsynth[i].midi_channel);
+  }
+  for(int i = 0; i < NUM_MULTISAMPLES; i++) {
+    data.instrumentChannels.insert(msp[i].midi_channel);
+  }
+  data.instrumentChannels.insert(braids_osc.midi_channel);
 }
