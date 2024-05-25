@@ -55,6 +55,7 @@ public:
   struct TrackSettings {
     uint8_t layerCount;
     uint8_t quantizeDenom;
+    uint8_t velocityLevel; // 0: original, 1 - 10: 10-100%
     uint8_t songStartLayerMutes;
   };
 
@@ -177,6 +178,7 @@ private:
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
   void updateTrackChannels(bool initial = false);
+  void updateInstrumentChannels(void);
   void addPendingNotes(void);
   void refreshSongLength(void);
   void applySongStartLayerMutes(void);
