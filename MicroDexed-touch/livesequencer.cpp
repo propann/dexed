@@ -476,7 +476,9 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
         } else {
           // add active note to layer track set
           data.tracks[playIterator->track].activeNotes[playIterator->layer].insert(playIterator->note_in);
-          handleNoteOn(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+          const uint8_t velocitySetting = data.trackSettings[playIterator->track].velocityLevel;
+          const uint8_t velocityActive = (velocitySetting == 0) ? playIterator->note_in_velocity : velocitySetting * 1.27f; // 100% * 1.27 = 127
+          handleNoteOn(channel, playIterator->note_in, velocityActive, 0);
         }
       }
       break;

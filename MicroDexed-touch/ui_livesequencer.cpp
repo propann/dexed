@@ -157,26 +157,32 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
       b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
     }));
   }
-  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
+  for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+    toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[track], GRID_Y[4], data.trackSettings[track].velocityLevel, 0, 100, 5, 0,
+    [ ] (auto *b, auto *v) { // drawHandler
+      b->draw("VELOCTY", (v->getValue() == 0) ? "KEY" : v->toString() + std::string("%"), (v->getValue() == 0) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
+    }));
+  }
+  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOTES", TouchButton::BUTTON_LABEL);
   }));
-  lastNoteLabel = new TouchButton(GRID_X[1], GRID_Y[4],
+  lastNoteLabel = new TouchButton(GRID_X[1], GRID_Y[5],
   [ this ] (auto *b) { // drawHandler
     char temp_char[4];
     b->draw("NOTE", itoa(data.lastPlayedNote, temp_char, 10), TouchButton::BUTTON_NORMAL);
   });
   toolsPages[TOOLS_PATTERN].push_back(lastNoteLabel);
 
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.fillNotes.number, { 4, 6, 8, 12, 16, 24, 32 }, 16, 
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[5], data.fillNotes.number, { 4, 6, 8, 12, 16, 24, 32 }, 16, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("NUMBER", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.fillNotes.offset, 0, 7, 1, 0, 
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[5], data.fillNotes.offset, 0, 7, 1, 0, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("OFFSET", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[4],
+  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOW", TouchButton::BUTTON_RED);
   },
