@@ -211,9 +211,14 @@ FLASHMEM void LiveSequencer::applySongStartLayerMutes(void) {
 FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity) {
   if(data.isActive) {
     if(data.instrumentChannels.count(inChannel) == 0) {
+      // velocity adjustment for keyboard events (live playing or recording)
+      const uint8_t velocitySetting = data.trackSettings[data.activeTrack].velocityLevel;
+      const uint8_t velocityActive = (velocitySetting == 0) ? velocity : velocitySetting * 1.27f; // 100% * 1.27 = 127
+
       if(data.isRecording && data.isRunning) {
         const EventSource source = data.isSongMode ? EVENT_SONG : EVENT_PATTERN;
-        MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocity };
+        
+        MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocityActive };
         if(data.isSongMode) {
           if(data.songLayerCount < LIVESEQUENCER_NUM_TRACKS) {
             // in song mode, simply add event, no rounding and checking needed
@@ -282,7 +287,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
         const midi::Channel ch = data.tracks[data.activeTrack].channel;
         switch(event) {
         case midi::NoteOn:
-          handleNoteOnInput(ch, note, velocity, 0);
+          handleNoteOnInput(ch, note, velocityActive, 0);
           if(data.lastPlayedNote != note) {
             data.lastPlayedNote = note;
             data.lastPlayedNoteChanged = true;
@@ -290,7 +295,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
           break;
     
         case midi::NoteOff:
-          handleNoteOff(ch, note, velocity, 0);
+          handleNoteOff(ch, note, velocityActive, 0);
           break;
     
         default:
@@ -476,6 +481,7 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
         } else {
           // add active note to layer track set
           data.tracks[playIterator->track].activeNotes[playIterator->layer].insert(playIterator->note_in);
+          // velocity adjustment for playing from performance
           const uint8_t velocitySetting = data.trackSettings[playIterator->track].velocityLevel;
           const uint8_t velocityActive = (velocitySetting == 0) ? playIterator->note_in_velocity : velocitySetting * 1.27f; // 100% * 1.27 = 127
           handleNoteOn(channel, playIterator->note_in, velocityActive, 0);
