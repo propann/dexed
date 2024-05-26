@@ -64,6 +64,7 @@ extern void draw_volmeters_mixer();
 extern void draw_volmeters_multiband_compressor();
 extern bool legacy_touch_button_back_page();
 extern bool touch_button_back_page();
+extern void livesequencer_delete_element();
 
 extern uint8_t activesample;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
@@ -1648,6 +1649,27 @@ FLASHMEM void handle_page_with_touch_back_button()
     {
       LCDML.BT_quit();
     }
+  }
+}
+
+
+FLASHMEM void handle_touchscreen_liveseq_editor()
+{
+  if (numTouchPoints > 0)
+  {
+    if (check_button_on_grid(1, 26)) // back button
+      {
+        // LCDML.FUNC_goBackToMenu(); 
+        LCDML.BT_quit();
+      }
+     else  if (check_button_on_grid(17, 26)) // edit
+      { 
+       ;
+      }
+     else  if (check_button_on_grid(28, 26)) // delete
+      {   
+        livesequencer_delete_element();
+      }
   }
 }
 

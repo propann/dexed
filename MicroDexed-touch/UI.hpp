@@ -533,6 +533,7 @@ void UI_func_dexed_controllers(uint8_t param);
 void UI_func_dexed_setup(uint8_t param);
 void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
+void UI_func_liveseq_editor(uint8_t param);
 //void UI_func_midi_sync(uint8_t param);
 void UI_func_master_effects(uint8_t param);
 void UI_func_not_available(uint8_t param);
@@ -13929,6 +13930,196 @@ void sysinfo_reload_prev_voice()
   }
 }
 
+FLASHMEM void liveseq_printEventGrid(int i, LiveSequencer::MidiEvent e) {
+
+  char displayname[4] = { 0, 0, 0, 0 };
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor((CHAR_width_small + e.track * (CHAR_width_small * 9)), CHAR_height_small * 4 + ((CHAR_height_small + 1) * i));
+
+  getNoteName(displayname, e.note_in);
+
+  if (i == 0)
+    display.setTextColor(COLOR_SYSTEXT, RED);
+  else
+    display.setTextColor(COLOR_SYSTEXT, GREY3);
+
+  display.print(displayname);
+
+  display.setCursor(CHAR_width_small * 5 + (e.track * (CHAR_width_small * 9)), CHAR_height_small * 4 + ((CHAR_height_small + 1) * i));
+
+  if (e.note_in_velocity > 0) {
+    if (i == 0)
+      display.setTextColor(COLOR_SYSTEXT, RED);
+    else
+      display.setTextColor(GREY1, GREY3);
+    display.print(e.note_in_velocity);
+  }
+  else {
+    if (i == 0)
+      display.setTextColor(COLOR_SYSTEXT, RED);
+    else
+      display.setTextColor(GREY1, GREY3);
+    display.print("OFF");
+  }
+}
+
+FLASHMEM void liveseq_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
+  display.setTextSize(2);
+  char displayname[4] = { 0, 0, 0, 0 };
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+
+  //track
+  display.setCursor((CHAR_width_small * 1), CHAR_height_small * 23);
+  display.print(e.track + 1);
+
+  //layer
+  display.setCursor((CHAR_width_small * 8), CHAR_height_small * 23);
+  display.print(e.layer + 1);
+
+  //patternNumber
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setCursor((CHAR_width_small * 15), CHAR_height_small * 23);
+  display.print(e.patternNumber + 1);
+
+  //note
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 24, CHAR_height_small * 23);
+  getNoteName(displayname, e.note_in);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(displayname);
+
+  //velocity
+  display.setCursor(CHAR_width_small * 34, CHAR_height_small * 23);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  if (e.note_in_velocity > 0) {
+    print_formatted_number(e.note_in_velocity, 3);
+  }
+  else {
+    display.print("OFF");
+  }
+
+  //patternMs
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor((CHAR_width_small * 44), CHAR_height_small * 23);
+  print_formatted_number(e.patternMs, 4);
+
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setTextSize(1);
+}
+
+int scrollbuffer_liveseq_editor = 999;
+
+FLASHMEM void livesequencer_delete_element()
+{
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // int i = 0;
+  // for (auto& e : data->eventsList)
+  // {
+  //   if (i == temp_int)
+  //     //delete event
+
+  //     i++;
+  // }
+  ;
+}
+
+FLASHMEM void UI_func_liveseq_editor(uint8_t param)
+{
+  int steps=0;
+  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+if (int(data->eventsList.size()) - 1 >=0)
+   steps= int(data->eventsList.size()) - 1;
+ 
+  if (LCDML.FUNC_setup()) // ****** SETUP *********
+  {
+    temp_int = 0;
+    scrollbuffer_liveseq_editor = 999;
+
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small, CHAR_height_small * 0);
+
+    display.setTextSize(1);
+    display.print("LIVESEQUENCER EDITOR");
+
+    display.setCursor(CHAR_width_small, CHAR_height_small * 21);
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.print(F("TRACK  LAYER  PAT.NO.  NOTE      VEL.      PAT.MS"));
+
+    draw_button_on_grid(1, 26, "GO", back_text, 0);
+    draw_button_on_grid(17, 26, "EDIT", "STEP", 1);
+    draw_button_on_grid(28, 26, "DEL", "STEP", 1);
+
+    helptext_r("MOVE Y");
+
+    display.setTextColor(GREEN, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 40, 0);
+    display.print("EVENT");
+    display.setCursor(CHAR_width_small * 49, 0);
+    display.print("/");
+
+    print_formatted_number(steps, 3);
+
+    display.setCursor(CHAR_width_small * 4 - 1, CHAR_height_small * 19);
+
+    for (int x = 0; x < 6; x++)
+    {
+      display.setCursor((CHAR_width_small + x * (CHAR_width_small * 9)), CHAR_height_small * 2);
+      display.setTextColor(GREY1, COLOR_BACKGROUND);
+      display.print("TRACK ");
+
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.print(x + 1);
+    }
+  }
+
+  if (LCDML.FUNC_loop()) // ****** LOOP *********
+  {
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
+    {
+      if (LCDML.BT_checkDown())
+      {
+        temp_int = constrain(temp_int + 1, 0, steps);
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        temp_int = constrain(temp_int - 1, 0,steps);
+      }
+    }
+    if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    {
+      ;
+    }
+    if (scrollbuffer_liveseq_editor != temp_int)
+    {
+      display.setCursor(CHAR_width_small * 46, 0);
+      display.setTextColor(GREEN, COLOR_BACKGROUND);
+      print_formatted_number(temp_int, 3);
+      display.console = true;
+      display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
+      int i = 0;
+      for (auto& e : data->eventsList)
+      {
+        if (temp_int <= i && i < 14 + temp_int)
+          liveseq_printEventGrid(i - temp_int, e);
+        if (i == temp_int)
+          liveseq_printDetailedEvent(temp_int, e);
+        i++;
+      }
+      scrollbuffer_liveseq_editor = temp_int;
+    }
+  }
+  if (LCDML.FUNC_close()) // ****** STABLE END *********
+  {
+    encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
+  }
+}
+
+
 void UI_func_information(uint8_t param)
 {
 
@@ -17358,7 +17549,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     if (settings_modified == 5)
     {
       touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-  }
+    }
 #endif
 
     // UI reverse
@@ -17421,7 +17612,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       settings_modified = 0;
     }
 
-}
+  }
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {
@@ -19822,12 +20013,12 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
 
           mode = 0xff;
           break;
-        }
+      }
 
         LCDML.FUNC_goBackToMenu();
-      }
     }
   }
+}
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     if (mode < 0xff)
@@ -19973,9 +20164,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             setCursor_textGrid(1, 2);
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
-          }
         }
       }
+    }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);

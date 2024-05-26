@@ -910,6 +910,7 @@ extern void handle_touchscreen_sample_editor(void);
 extern void handle_touchscreen_test_touchscreen(void);
 extern void handle_touchscreen_multiband();
 extern void handle_touchscreen_mixer();
+extern void handle_touchscreen_liveseq_editor();;
 extern void handle_page_with_touch_back_button();
 extern void updateTouchScreen();
 
@@ -2066,6 +2067,10 @@ void loop()
     display.console = true;
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_liveseq_editor))
+  {
+    handle_touchscreen_liveseq_editor();
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
