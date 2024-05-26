@@ -4282,7 +4282,6 @@ FLASHMEM void dac_unmute(void)
 
 LiveSequencer liveSeq;
 
-
 void handleStart(void)
 {
   liveSeq.onStarted();
