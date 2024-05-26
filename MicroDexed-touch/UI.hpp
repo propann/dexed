@@ -13930,6 +13930,23 @@ void sysinfo_reload_prev_voice()
   }
 }
 
+int liveseq_editor_steps = 0;
+
+FLASHMEM void print_liveseq_update_steps() {
+  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  if (int(data->eventsList.size()) - 1 >= 0)
+    liveseq_editor_steps = int(data->eventsList.size()) - 1;
+
+  display.setCursor(CHAR_width_small * 46, 0);
+  display.setTextColor(GREEN, COLOR_BACKGROUND);
+  print_formatted_number(temp_int + generic_temp_select_menu + 1, 3);
+
+  display.setTextColor(GREEN, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 50, 0);
+  print_formatted_number(liveseq_editor_steps + 1, 3);
+
+}
+
 FLASHMEM void liveseq_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
 
   char displayname[4] = { 0, 0, 0, 0 };
@@ -13939,19 +13956,10 @@ FLASHMEM void liveseq_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
 
   getNoteName(displayname, e.note_in);
 
-
-  if (i == 0 && e.event != midi::InvalidType)
+  if (i == generic_temp_select_menu && e.event != midi::InvalidType)
   {
     display.setTextColor(COLOR_SYSTEXT, RED);
     display.print(displayname);
-  }
-  else if (i == 0 && e.event == midi::InvalidType) {
-    display.setTextColor(COLOR_SYSTEXT, RED);
-    display.print("DEL");
-  }
-  else if (i != 0 && e.event == midi::InvalidType) {
-    display.setTextColor(RED, GREY3);
-    display.print("DEL");
   }
   else {
     display.setTextColor(COLOR_SYSTEXT, GREY3);
@@ -13960,40 +13968,22 @@ FLASHMEM void liveseq_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
 
   display.setCursor(CHAR_width_small * 5 + (e.track * (CHAR_width_small * 9)), CHAR_height_small * 4 + ((CHAR_height_small + 1) * i));
 
-
-  if (i == 0 && e.event != midi::InvalidType) {
+  if (i == generic_temp_select_menu && e.event != midi::InvalidType) {
     display.setTextColor(COLOR_SYSTEXT, RED);
     if (e.note_in_velocity > 0)
       display.print(e.note_in_velocity);
     else
       display.print("OFF");
   }
-
   else if (e.note_in_velocity > 0 && e.event != midi::InvalidType) {
-
     display.setTextColor(GREY1, GREY3);
     display.print(e.note_in_velocity);
   }
-  else
-  {
-    if (i == 0 && e.note_in == 0 && e.event == midi::InvalidType) {
-      display.setTextColor(COLOR_SYSTEXT, RED);
-      display.print("DEL");
-    }
-
-    else if (e.note_in == 0 && e.event == midi::InvalidType) {
-      display.setTextColor(RED, GREY3);
-      display.print("DEL");
-    }
-
-    else
-    {
-      display.setTextColor(GREY1, GREY3);
-      display.print("OFF");
-    }
+  else {
+    display.setTextColor(GREY1, GREY3);
+    display.print("OFF");
   }
 }
-
 
 FLASHMEM void liveseq_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
   display.setTextSize(2);
@@ -14019,32 +14009,18 @@ FLASHMEM void liveseq_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
   display.setCursor(CHAR_width_small * 24, CHAR_height_small * 23);
   getNoteName(displayname, e.note_in);
 
-  if (e.note_in == 0 && e.event == midi::InvalidType) {
-    display.setTextColor(RED, GREY3);
-    display.print("DEL");
-  }
-  else
-  {
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(displayname);
-  }
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.print(displayname);
+
   //velocity
   display.setCursor(CHAR_width_small * 34, CHAR_height_small * 23);
 
-  if (e.note_in == 0 && e.event == midi::InvalidType) {
-    display.setTextColor(RED, GREY3);
-    display.print("DEL");
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  if (e.note_in_velocity > 0) {
+    print_formatted_number(e.note_in_velocity, 3);
   }
-  else
-  {
-
-    display.setTextColor(GREY1, COLOR_BACKGROUND);
-    if (e.note_in_velocity > 0) {
-      print_formatted_number(e.note_in_velocity, 3);
-    }
-    else {
-      display.print("OFF");
-    }
+  else {
+    display.print("OFF");
   }
   //patternMs
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -14060,12 +14036,16 @@ int scrollbuffer_liveseq_editor = 999;
 FLASHMEM void liveseq_printEventGrid()
 {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
+
+  display.console = true;
+  display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
+
   int i = 0;
   for (auto& e : data->eventsList)
   {
     if (temp_int <= i && i < 14 + temp_int)
       liveseq_printEventGridLine(i - temp_int, e);
-    if (i == temp_int)
+    if (i == temp_int + generic_temp_select_menu)
       liveseq_printDetailedEvent(temp_int, e);
     i++;
   }
@@ -14077,7 +14057,7 @@ FLASHMEM void livesequencer_delete_element()
   int i = 0;
   for (auto& e : data->eventsList)
   {
-    if (i == temp_int) {
+    if (i == temp_int + generic_temp_select_menu) {
       //mark for deleting event
       e.note_in = 0;
       e.note_in_velocity = 0;
@@ -14085,19 +14065,21 @@ FLASHMEM void livesequencer_delete_element()
     }
     i++;
   }
+  liveSeq.cleanEvents();
+
+  print_liveseq_update_steps();
   liveseq_printEventGrid();
 }
 
 FLASHMEM void UI_func_liveseq_editor(uint8_t param)
 {
-  int steps = 0;
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
-  if (int(data->eventsList.size()) - 1 >= 0)
-    steps = int(data->eventsList.size()) - 1;
+
+  print_liveseq_update_steps();
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     temp_int = 0;
+    generic_temp_select_menu = 6;
     scrollbuffer_liveseq_editor = 999;
 
     encoderDir[ENC_R].reset();
@@ -14124,8 +14106,6 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
     display.setCursor(CHAR_width_small * 49, 0);
     display.print("/");
 
-    print_formatted_number(steps, 3);
-
     display.setCursor(CHAR_width_small * 4 - 1, CHAR_height_small * 19);
 
     for (int x = 0; x < 6; x++)
@@ -14145,28 +14125,31 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
-        temp_int = constrain(temp_int + 1, 0, steps);
+        if (generic_temp_select_menu < 13)
+          generic_temp_select_menu = generic_temp_select_menu + 1;
+        else
+          temp_int = constrain(temp_int + 1, 0, liveseq_editor_steps - 13);
       }
       else if (LCDML.BT_checkUp())
       {
-        temp_int = constrain(temp_int - 1, 0, steps);
+
+        if (generic_temp_select_menu > 0)
+          generic_temp_select_menu = generic_temp_select_menu - 1;
+
+        else
+          temp_int = constrain(temp_int - 1, 0, liveseq_editor_steps);
       }
     }
     if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
       ;
     }
-    if (scrollbuffer_liveseq_editor != temp_int)
+    print_liveseq_update_steps();
+
+    if (scrollbuffer_liveseq_editor != temp_int + generic_temp_select_menu)
     {
-      display.setCursor(CHAR_width_small * 46, 0);
-      display.setTextColor(GREEN, COLOR_BACKGROUND);
-      print_formatted_number(temp_int, 3);
-      display.console = true;
-      display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
-
-
       liveseq_printEventGrid();
-      scrollbuffer_liveseq_editor = temp_int;
+      scrollbuffer_liveseq_editor = temp_int + generic_temp_select_menu;
     }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
@@ -14175,7 +14158,6 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
-
 
 void UI_func_information(uint8_t param)
 {

@@ -978,3 +978,20 @@ FLASHMEM void LiveSequencer::updateInstrumentChannels(void) {
   }
   data.instrumentChannels.insert(braids_osc.midi_channel);
 }
+
+FLASHMEM void LiveSequencer::cleanEvents(void) {
+    if(data.eventsList.size() > 0) {
+      // remove all invalidated notes
+      data.eventsList.remove_if([](MidiEvent &e) { return e.event == midi::InvalidType; });
+      // for song mode, add song events for this pattern
+      // if(data.isSongMode) {
+      //   for(auto &e : data.songEvents[data.songPatternCount]) {
+      //     data.eventsList.emplace_back(e);
+      //   }
+        data.eventsList.sort(sortMidiEvent);
+        // if(data.songPatternCount == 0) {
+        //   // load previously saved song start layer mutes
+        //   applySongStartLayerMutes();
+        // }
+      }
+    }

@@ -164,6 +164,7 @@ public:
   void fillTrackLayer();
   void deleteLiveSequencerData(void);
   void setArpEnabled(bool enabled);
+  void cleanEvents(void);
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
 private:
