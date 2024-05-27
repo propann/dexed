@@ -133,7 +133,7 @@ FLASHMEM void updateTouchScreen() {
         ts.p = touch.getPoint();
         ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
         ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
-  }
+      }
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -153,7 +153,7 @@ FLASHMEM void updateTouchScreen() {
         break;
       }
 #endif
-}
+    }
     else {
       isButtonTouched = false;
     }
@@ -1652,24 +1652,43 @@ FLASHMEM void handle_page_with_touch_back_button()
   }
 }
 
+extern void print_liveseq_editor_filter();
+extern void print_liveseq_update_steps();
+extern void liveseq_printEventGrid();
+extern uint8_t liveseq_editor_filter;
+extern int liveseq_pattern_start[5];
 
 FLASHMEM void handle_touchscreen_liveseq_editor()
 {
   if (numTouchPoints > 0)
   {
     if (check_button_on_grid(1, 26)) // back button
-      {
-        // LCDML.FUNC_goBackToMenu(); 
-        LCDML.BT_quit();
-      }
-     else  if (check_button_on_grid(17, 26)) // edit
-      { 
-       ;
-      }
-     else  if (check_button_on_grid(28, 26)) // delete
-      {   
-        livesequencer_delete_element();
-      }
+    {
+      // LCDML.FUNC_goBackToMenu(); 
+      LCDML.BT_quit();
+    }
+    else  if (check_button_on_grid(17, 26)) // edit
+    {
+      ;
+    }
+    else  if (check_button_on_grid(28, 26)) // delete
+    {
+      livesequencer_delete_element();
+    }
+
+    else  if (check_button_on_grid(36, 26)) // track filter
+    {
+      liveseq_editor_filter++;
+      if (liveseq_editor_filter > 3)
+        liveseq_editor_filter = 0;
+      temp_int = liveseq_pattern_start[liveseq_editor_filter] - 1;
+      if (liveseq_editor_filter == 0)
+        temp_int = 0;
+      generic_temp_select_menu = 0;
+      print_liveseq_editor_filter();
+      print_liveseq_update_steps();
+      liveseq_printEventGrid();
+    }
   }
 }
 

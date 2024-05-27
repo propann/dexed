@@ -13931,11 +13931,41 @@ void sysinfo_reload_prev_voice()
 }
 
 int liveseq_editor_steps = 0;
+uint8_t liveseq_editor_filter = 0;
+int liveseq_pattern_start[5];
+
+FLASHMEM void get_liveseq_pattern_starts() {
+  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  int p = 1;
+  int i = 0;
+
+  for (auto& e : data->eventsList)
+  {
+    if (e.patternNumber == p)
+    {
+      liveseq_pattern_start[p] = i + 1;
+      p++;
+    }
+    i++;
+  }
+}
 
 FLASHMEM void print_liveseq_update_steps() {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
   if (int(data->eventsList.size()) - 1 >= 0)
     liveseq_editor_steps = int(data->eventsList.size()) - 1;
+  display.setTextSize(1);
+
+  display.setTextColor(GREY2, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 20, 0);
+  display.print("P1:");
+  display.print(liveseq_pattern_start[0]);
+  display.print(" P2:");
+  display.print(liveseq_pattern_start[1]);
+  display.print(" P3:");
+  display.print(liveseq_pattern_start[2]);
+  display.print(" P4:");
+  display.print(liveseq_pattern_start[3]);
 
   display.setCursor(CHAR_width_small * 46, 0);
   display.setTextColor(GREEN, COLOR_BACKGROUND);
@@ -13944,6 +13974,7 @@ FLASHMEM void print_liveseq_update_steps() {
   display.setTextColor(GREEN, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 50, 0);
   print_formatted_number(liveseq_editor_steps + 1, 3);
+
 
 }
 
@@ -13986,6 +14017,7 @@ FLASHMEM void liveseq_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
 }
 
 FLASHMEM void liveseq_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
+
   display.setTextSize(2);
   char displayname[4] = { 0, 0, 0, 0 };
 
@@ -14037,16 +14069,20 @@ FLASHMEM void liveseq_printEventGrid()
 {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
 
-  display.console = true;
-  display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
-
+  if (generic_temp_select_menu == 0 || generic_temp_select_menu == 13) {
+    display.console = true;
+    display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
+  }
   int i = 0;
+
   for (auto& e : data->eventsList)
   {
     if (temp_int <= i && i < 14 + temp_int)
+    {
       liveseq_printEventGridLine(i - temp_int, e);
-    if (i == temp_int + generic_temp_select_menu)
-      liveseq_printDetailedEvent(temp_int, e);
+      if (temp_int + generic_temp_select_menu == i)
+        liveseq_printDetailedEvent(temp_int, e);
+    }
     i++;
   }
 }
@@ -14066,43 +14102,55 @@ FLASHMEM void livesequencer_delete_element()
     i++;
   }
   liveSeq.cleanEvents();
-
+  display.console = true;
+  display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
   print_liveseq_update_steps();
   liveseq_printEventGrid();
+}
+
+FLASHMEM void print_liveseq_editor_filter() {
+  char buf[4];
+  if (liveseq_editor_filter == 3)
+    draw_button_on_grid(36, 26, "JUMP", "1", 1);
+  else
+    draw_button_on_grid(36, 26, "JUMP", itoa(liveseq_editor_filter + 2, buf, 10), 1);
+  display.console = true;
+  display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
 }
 
 FLASHMEM void UI_func_liveseq_editor(uint8_t param)
 {
 
-  print_liveseq_update_steps();
-
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     temp_int = 0;
+    get_liveseq_pattern_starts();
+
     generic_temp_select_menu = 6;
     scrollbuffer_liveseq_editor = 999;
 
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
+    display.console = true;
+    display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
     display.setTextColor(RED, COLOR_BACKGROUND);
     display.setCursor(CHAR_width_small, CHAR_height_small * 0);
 
     display.setTextSize(1);
-    display.print("LIVESEQUENCER EDITOR");
+    display.print("LIVESEQUENCER EDIT");
 
     display.setCursor(CHAR_width_small, CHAR_height_small * 21);
     display.setTextColor(GREY1, COLOR_BACKGROUND);
     display.print(F("TRACK  LAYER  PAT.NO.  NOTE      VEL.      PAT.MS"));
 
     draw_button_on_grid(1, 26, "GO", back_text, 0);
-    draw_button_on_grid(17, 26, "EDIT", "STEP", 1);
-    draw_button_on_grid(28, 26, "DEL", "STEP", 1);
+    draw_button_on_grid(12, 26, "EDIT", "STEP", 1);
+    draw_button_on_grid(24, 26, "DEL", "STEP", 1);
+    print_liveseq_editor_filter();
 
     helptext_r("MOVE Y");
 
     display.setTextColor(GREEN, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 40, 0);
-    display.print("EVENT");
     display.setCursor(CHAR_width_small * 49, 0);
     display.print("/");
 
