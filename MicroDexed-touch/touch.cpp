@@ -1655,8 +1655,10 @@ FLASHMEM void handle_page_with_touch_back_button()
 extern void print_liveseq_editor_filter();
 extern void print_liveseq_update_steps();
 extern void liveseq_printEventGrid();
+extern void livesequencer_edit_element();
 extern uint8_t liveseq_editor_filter;
 extern int liveseq_pattern_start[5];
+extern uint8_t liveseq_editor_edit_state;
 
 FLASHMEM void handle_touchscreen_liveseq_editor()
 {
@@ -1667,11 +1669,15 @@ FLASHMEM void handle_touchscreen_liveseq_editor()
       // LCDML.FUNC_goBackToMenu(); 
       LCDML.BT_quit();
     }
-    else  if (check_button_on_grid(17, 26)) // edit
+    else  if (check_button_on_grid(13, 26)) // edit
     {
-      ;
+      livesequencer_edit_element();
+    //   if (liveseq_editor_edit_state==0)
+    // draw_button_on_grid(13, 26, "EDIT", "STEP", 1);
+    // else
+    // draw_button_on_grid(13, 26, "EDIT", "STEP", 2);
     }
-    else  if (check_button_on_grid(28, 26)) // delete
+    else  if (check_button_on_grid(24, 26)) // delete
     {
       livesequencer_delete_element();
     }
