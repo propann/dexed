@@ -60,9 +60,9 @@ LCDML_add(20, LCDML_0_8, 2, "Pattern Editor", UI_func_seq_pattern_editor);
 LCDML_add(21, LCDML_0_8, 3, "Vel./Chrd Edit", UI_func_seq_vel_editor);
 LCDML_add(22, LCDML_0_8, 4, "Live Sequencer", UI_func_livesequencer);
 LCDML_add(23, LCDML_0_8, 5, "Live Seq.Edit", UI_func_liveseq_editor);
-LCDML_add(24, LCDML_0_8, 6, "Arpeggio", UI_func_arpeggio);
-LCDML_add(25, LCDML_0_8, 7, "Mute Matrix", UI_func_seq_mute_matrix);
-LCDML_add(26, LCDML_0_8, 8, "PianoRoll", UI_func_seq_pianoroll);
+LCDML_add(24, LCDML_0_8, 6, "PianoRoll Edit", UI_func_seq_pianoroll);
+LCDML_add(25, LCDML_0_8, 7, "Arpeggio", UI_func_arpeggio);
+LCDML_add(26, LCDML_0_8, 8, "Mute Matrix", UI_func_seq_mute_matrix);
 LCDML_add(27, LCDML_0_8, 9, "Tracker", UI_func_seq_tracker);
 LCDML_add(28, LCDML_0_8, 10, "Probabilities", UI_func_seq_probabilities);
 LCDML_add(29, LCDML_0_8, 11, "Smart Filter", UI_func_smart_filter);
@@ -94,17 +94,16 @@ LCDML_add(54, LCDML_0_15, 6, "Startup Perform.", UI_func_startup_performance);
 LCDML_add(55, LCDML_0_15, 7, "Startup Page", UI_func_startup_page);
 LCDML_add(56, LCDML_0_15, 8, "Misc. Settings", UI_func_misc_settings);
 LCDML_add(57, LCDML_0_15, 9, "Map Gamepad", UI_func_map_gamepad);
-LCDML_add(58, LCDML_0_15, 10, "Calibrate Touch", UI_func_calibrate_touch);
-LCDML_add(59, LCDML_0_15, 11, "TEST Touchscreen", UI_func_test_touchscreen);
-LCDML_add(60, LCDML_0_15, 12, "TEST Audio Mute", UI_func_test_mute);
-LCDML_add(61, LCDML_0_15, 13, "TEST PSRAM", UI_func_test_psram);
-LCDML_add(62, LCDML_0_15, 14, "FORMAT FLASH", UI_func_format_flash);
-LCDML_add(63, LCDML_0, 16, "Info", UI_func_information);
+LCDML_add(58, LCDML_0_15, 10, "TEST Touchscreen", UI_func_test_touchscreen);
+LCDML_add(59, LCDML_0_15, 11, "TEST Audio Mute", UI_func_test_mute);
+LCDML_add(60, LCDML_0_15, 12, "TEST PSRAM", UI_func_test_psram);
+LCDML_add(61, LCDML_0_15, 13, "FORMAT FLASH", UI_func_format_flash);
+LCDML_add(62, LCDML_0, 16, "Info", UI_func_information);
 //LCDML_add(62, LCDML_0, 17, "MIDI SYNC", UI_func_midi_sync);
-LCDML_addAdvanced(64, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced(65, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
-LCDML_addAdvanced(66, LCDML_0, 19, COND_hide, "SD_NOT_FOUND", UI_func_sd_content_not_found, 0, _LCDML_TYPE_default);
-#define _LCDML_DISP_cnt 65
+LCDML_addAdvanced(63, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced(64, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
+LCDML_addAdvanced(65, LCDML_0, 19, COND_hide, "SD_NOT_FOUND", UI_func_sd_content_not_found, 0, _LCDML_TYPE_default);
+#define _LCDML_DISP_cnt 64
 #endif
 
 #define SCREENSAVER_INTERVAL_MS 40  // 25Hz refresh rate

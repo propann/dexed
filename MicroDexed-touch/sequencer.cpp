@@ -1185,99 +1185,99 @@ void update_pianoroll()
   }
 }
 
-void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
-{
-  uint8_t notes[64];
-  uint8_t lowest_note = 127;
-  int notes_display_shift = 0;
-  uint8_t last_valid_note = 254;
-  uint8_t patternspacer = 0;
-  uint8_t barspacer = 0;
+// void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
+// {
+//   uint8_t notes[64];
+//   uint8_t lowest_note = 127;
+//   int notes_display_shift = 0;
+//   uint8_t last_valid_note = 254;
+//   uint8_t patternspacer = 0;
+//   uint8_t barspacer = 0;
 
-  int8_t current_chain = 99;
-  int8_t pattern[4] = { 99, 99, 99, 99 };
+//   int8_t current_chain = 99;
+//   int8_t pattern[4] = { 99, 99, 99, 99 };
 
-  current_chain = seq.song[track_number][0]; // so far only step 0 of chain is displayed
+//   current_chain = seq.song[track_number][0]; // so far only step 0 of chain is displayed
 
-  for (uint8_t d = 0; d < 4; d++)
-  {
-    pattern[d] = seq.chain[current_chain][d];
-  }
+//   for (uint8_t d = 0; d < 4; d++)
+//   {
+//     pattern[d] = seq.chain[current_chain][d];
+//   }
 
-  helptext_l("MOVE Y");
-  helptext_r("MOVE X");
+//   helptext_l("MOVE Y");
+//   helptext_r("MOVE X");
 
-  display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
-  display.setCursor(CHAR_width * 2, 0);
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
+//   display.setCursor(CHAR_width * 2, 0);
 
-  display.print("[");
-  display.print(0);
-  display.print("]");
+//   display.print("[");
+//   display.print(0);
+//   display.print("]");
 
-  display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
 
-  display.print(F(" TRK:["));
-  display.print(track_number + 1);
-  display.print("] ");
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(" ");
-  display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
-  display.print(F(" CHAIN: "));
-  display.print(current_chain);
-  display.print(F("  "));
+//   display.print(F(" TRK:["));
+//   display.print(track_number + 1);
+//   display.print("] ");
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+//   display.print(" ");
+//   display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+//   display.print(F(" CHAIN: "));
+//   display.print(current_chain);
+//   display.print(F("  "));
 
-  print_formatted_number(pattern[0], 2);
-  display.write(25);
-  print_formatted_number(pattern[1], 2);
-  display.write(25);
-  print_formatted_number(pattern[2], 2);
-  display.write(25);
-  print_formatted_number(pattern[3], 2);
-  display.print(" ");
+//   print_formatted_number(pattern[0], 2);
+//   display.write(25);
+//   print_formatted_number(pattern[1], 2);
+//   display.write(25);
+//   print_formatted_number(pattern[2], 2);
+//   display.write(25);
+//   print_formatted_number(pattern[3], 2);
+//   display.print(" ");
 
-  //    if (pattern[0] < NUM_SEQ_PATTERN && pattern[1] < NUM_SEQ_PATTERN
-  //        && pattern[2] < NUM_SEQ_PATTERN && pattern[3] < NUM_SEQ_PATTERN)
-  //    {
+//   //    if (pattern[0] < NUM_SEQ_PATTERN && pattern[1] < NUM_SEQ_PATTERN
+//   //        && pattern[2] < NUM_SEQ_PATTERN && pattern[3] < NUM_SEQ_PATTERN)
+//   //    {
 
-  for (uint8_t f = 0; f < 16; f++) // Fill array with complete data from all chain parts of track
-  {
-    notes[f] = seq.note_data[pattern[0]][f];
-    notes[f + 16] = seq.note_data[pattern[1]][f];
-    notes[f + 32] = seq.note_data[pattern[2]][f];
-    notes[f + 48] = seq.note_data[pattern[3]][f];
-  }
-  // find lowest note
-  for (uint8_t f = 0; f < 64; f++)
-  {
-    if (notes[f] < lowest_note && notes[f] > 0)
-    {
-      lowest_note = notes[f];
-    }
-  }
-  if (lowest_note > 120)
-    lowest_note = 24;
-  notes_display_shift = lowest_note % 12;
-  print_keyboard(ypos, lowest_note / 12);
-  for (uint8_t xcount = 0; xcount < 64; xcount++)
-  {
-    if (notes[xcount] > 0)
-    {
-      if (notes[xcount] == 130)
-      {
-        display.fillRect(40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 3, 5, COLOR_PITCHSMP);
-      }
-      else
-      {
-        display.fillRect(40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (notes[xcount] - lowest_note)), 3, 5, GREY1);
-        last_valid_note = notes[xcount];
-      }
-    }
-    if ((xcount + 1) % 16 == 0)
-      patternspacer = patternspacer + 2;
-    if ((xcount + 1) % 4 == 0)
-      barspacer = barspacer + 1;
-  }
-}
+//   for (uint8_t f = 0; f < 16; f++) // Fill array with complete data from all chain parts of track
+//   {
+//     notes[f] = seq.note_data[pattern[0]][f];
+//     notes[f + 16] = seq.note_data[pattern[1]][f];
+//     notes[f + 32] = seq.note_data[pattern[2]][f];
+//     notes[f + 48] = seq.note_data[pattern[3]][f];
+//   }
+//   // find lowest note
+//   for (uint8_t f = 0; f < 64; f++)
+//   {
+//     if (notes[f] < lowest_note && notes[f] > 0)
+//     {
+//       lowest_note = notes[f];
+//     }
+//   }
+//   if (lowest_note > 120)
+//     lowest_note = 24;
+//   notes_display_shift = lowest_note % 12;
+//   print_keyboard(ypos, lowest_note / 12);
+//   for (uint8_t xcount = 0; xcount < 64; xcount++)
+//   {
+//     if (notes[xcount] > 0)
+//     {
+//       if (notes[xcount] == 130)
+//       {
+//         display.fillRect(40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 3, 5, COLOR_PITCHSMP);
+//       }
+//       else
+//       {
+//         display.fillRect(40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (notes[xcount] - lowest_note)), 3, 5, GREY1);
+//         last_valid_note = notes[xcount];
+//       }
+//     }
+//     if ((xcount + 1) % 16 == 0)
+//       patternspacer = patternspacer + 2;
+//     if ((xcount + 1) % 4 == 0)
+//       barspacer = barspacer + 1;
+//   }
+// }
 
 void seq_print_current_note_from_step(uint8_t step)
 {

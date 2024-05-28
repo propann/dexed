@@ -2404,7 +2404,8 @@ void loop()
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
       }
-      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_calibrate_touch))
+      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) ||
+       LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) )
       {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
@@ -2431,7 +2432,8 @@ void loop()
       ui_save_notification_icon = false;
       display.console = false;
     }
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_calibrate_touch))
+    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || 
+    LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
     {
       display.console = true;
       display.fillRect(2 * CHAR_width_small, 25 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
@@ -5160,15 +5162,6 @@ FLASHMEM void set_sys_params(void)
 {
   // set initial volume
   set_volume(configuration.sys.vol, configuration.sys.mono);
-
-#ifdef GENERIC_DISPLAY
-  if (configuration.sys.calib_x_min != configuration.sys.calib_x_max)
-  {
-    TS_Calibration newCalibration = TS_Calibration(configuration.sys.calib_x_min, configuration.sys.calib_y_min, configuration.sys.calib_x_max, configuration.sys.calib_y_max);
-    touch.setCalibration(newCalibration);
-    ts.finished_calibration = true;
-  }
-#endif
 }
 
 /******************************************************************************

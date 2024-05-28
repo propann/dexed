@@ -962,10 +962,6 @@ typedef struct sys_s
   uint8_t load_at_startup_page;
   uint8_t display_rotation;
   uint8_t touch_rotation;
-  uint16_t calib_x_min;
-  uint16_t calib_y_min;
-  uint16_t calib_x_max;
-  uint16_t calib_y_max;
   uint8_t screen_saver_start; // minutes
   uint8_t screen_saver_mode; // 0 = random, modes 1...4 , 99 = off
   uint16_t gamepad_speed;     // milliseconds

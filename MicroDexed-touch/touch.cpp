@@ -120,20 +120,12 @@ FLASHMEM void updateTouchScreen() {
     // no remote touch, so update to check for real touch
     numTouchPoints = touch.touched();
     if (numTouchPoints > 0) {
-#if defined GENERIC_DISPLAY
-      if (ts.finished_calibration)
-      {
-        ts.p = touch.getPixel();
-        // ts.p.x = map(ts.p.x, ts.calib_x_min, ts.calib_x_max, 0, TFT_HEIGHT);
-        // ts.p.y = map(ts.p.y, ts.calib_y_min, ts.calib_y_max, 0, TFT_WIDTH);
-      }
-      else
-      {
+
+#if defined GENERIC_DISPLAY    
         // Scale from ~0->4000 to tft
         ts.p = touch.getPoint();
         ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-        ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
-      }
+        ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH); 
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY

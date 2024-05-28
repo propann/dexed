@@ -227,7 +227,7 @@ extern uint8_t selected_instance_id;
 extern char receive_bank_filename[FILENAME_LEN];
 extern void print_current_chord(void);
 extern void tracker_print_pattern(int xpos, int ypos, uint8_t track_number);
-extern void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number);
+//extern void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number);
 extern void update_pianoroll();
 extern void set_pattern_content_type_color(uint8_t pattern);
 extern void print_formatted_number(uint16_t v, uint8_t l);
@@ -580,7 +580,6 @@ void UI_func_sysex_send_bank(uint8_t param);
 void UI_func_startup_performance(uint8_t param);
 void UI_func_startup_page(uint8_t param);
 void UI_func_map_gamepad(uint8_t param);
-void UI_func_calibrate_touch(uint8_t param);
 void UI_func_favorites(uint8_t param);
 void UI_func_epiano(uint8_t param);
 void UI_update_instance_icons();
@@ -2786,10 +2785,10 @@ FLASHMEM void update_display_functions_while_seq_running()
       }
     }
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pianoroll)) // is in UI of Pianoroll
-  {
-    update_pianoroll();
-  }
+  // else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pianoroll)) // is in UI of Pianoroll
+  // {
+  //   update_pianoroll();
+  // }
 }
 
 uint8_t screensaver_mode_active;
@@ -12021,34 +12020,327 @@ FLASHMEM void UI_func_song(uint8_t param)
   }
 }
 
-void UI_func_seq_pianoroll(uint8_t param)
+// void UI_func_seq_pianoroll(uint8_t param)
+// {
+//   if (LCDML.FUNC_setup()) // ****** SETUP *********
+//   {
+//     // setup function
+//     display.fillScreen(COLOR_BACKGROUND);
+//     encoderDir[ENC_R].reset();
+
+//     display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
+//     display.setTextSize(1);
+//     display.setCursor(0, 0);
+//     display.print("SONG");
+//     display.setCursor(0, CHAR_height / 2);
+//     display.print("STEP");
+//     // display.fillRect(1, 72, DISPLAY_WIDTH, DISPLAY_HEIGHT - 72, COLOR_BACKGROUND);
+//     print_merged_pattern_pianoroll(1 * CHAR_width, DISPLAY_HEIGHT - CHAR_height, seq.active_track);
+//   }
+//   if (LCDML.FUNC_loop()) // ****** LOOP *********
+//   {
+//     if (LCDML.BT_checkDown())
+//     {
+//       seq.active_track = constrain(seq.active_track + ENCODER[ENC_R].speed(), 0, NUM_SEQ_TRACKS - 1);
+//     }
+//     else if (LCDML.BT_checkUp())
+//     {
+//       seq.active_track = constrain(seq.active_track - ENCODER[ENC_R].speed(), 0, NUM_SEQ_TRACKS - 1);
+//     }
+//     print_merged_pattern_pianoroll(1 * CHAR_width, DISPLAY_HEIGHT - CHAR_height, seq.active_track);
+//   }
+//   if (LCDML.FUNC_close()) // ****** STABLE END *********
+//   {
+//     display.fillScreen(COLOR_BACKGROUND);
+//     encoderDir[ENC_R].reset();
+//   }
+// }
+
+void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
 {
+  // uint8_t notes[64];
+  // uint8_t lowest_note = 127;
+  // int notes_display_shift = 0;
+  // uint8_t last_valid_note = 254;
+  // uint8_t patternspacer = 0;
+  // uint8_t barspacer = 0;
+
+  // int8_t current_chain = 99;
+  // int8_t pattern[4] = { 99, 99, 99, 99 };
+
+  // current_chain = seq.song[track_number][0]; // so far only step 0 of chain is displayed
+
+  // for (uint8_t d = 0; d < 4; d++)
+  // {
+  //   pattern[d] = seq.chain[current_chain][d];
+  // }
+
+  // helptext_l("MOVE Y");
+  // helptext_r("MOVE X");
+
+  // display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
+  // display.setCursor(CHAR_width * 2, 0);
+
+  // display.print("[");
+  // display.print(0);
+  // display.print("]");
+
+  // display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+
+  // display.print(F(" TRK:["));
+  // display.print(track_number + 1);
+  // display.print("] ");
+  // display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  // display.print(" ");
+  // display.setTextColor(COLOR_SYSTEXT, COLOR_PITCHSMP);
+  // display.print(F(" CHAIN: "));
+  // display.print(current_chain);
+  // display.print(F("  "));
+
+  // print_formatted_number(pattern[0], 2);
+  // display.write(25);
+  // print_formatted_number(pattern[1], 2);
+  // display.write(25);
+  // print_formatted_number(pattern[2], 2);
+  // display.write(25);
+  // print_formatted_number(pattern[3], 2);
+  // display.print(" ");
+
+  //    if (pattern[0] < NUM_SEQ_PATTERN && pattern[1] < NUM_SEQ_PATTERN
+  //        && pattern[2] < NUM_SEQ_PATTERN && pattern[3] < NUM_SEQ_PATTERN)
+  //    {
+
+  // for (uint8_t f = 0; f < 16; f++) // Fill array with complete data from all chain parts of track
+  // {
+  //   notes[f] = seq.note_data[pattern[0]][f];
+  //   notes[f + 16] = seq.note_data[pattern[1]][f];
+  //   notes[f + 32] = seq.note_data[pattern[2]][f];
+  //   notes[f + 48] = seq.note_data[pattern[3]][f];
+  // }
+  // // find lowest note
+  // for (uint8_t f = 0; f < 64; f++)
+  // {
+  //   if (notes[f] < lowest_note && notes[f] > 0)
+  //   {
+  //     lowest_note = notes[f];
+  //   }
+  // }
+  // if (lowest_note > 120)
+  //   lowest_note = 24;
+  // notes_display_shift = lowest_note % 12;
+  // print_keyboard(ypos, lowest_note / 12);
+  // for (uint8_t xcount = 0; xcount < 64; xcount++)
+  // {
+  //   if (notes[xcount] > 0)
+  //   {
+  //     if (notes[xcount] == 130)
+  //     {
+  //       display.fillRect(40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (last_valid_note - lowest_note)), 3, 5, COLOR_PITCHSMP);
+  //     }
+  //     else
+  //     {
+  //       display.fillRect(40 + patternspacer + barspacer + xcount * 4, ypos - 10 - (8.15 * notes_display_shift) - (8.15 * (notes[xcount] - lowest_note)), 3, 5, GREY1);
+  //       last_valid_note = notes[xcount];
+  //     }
+  //   }
+  //   if ((xcount + 1) % 16 == 0)
+  //     patternspacer = patternspacer + 2;
+  //   if ((xcount + 1) % 4 == 0)
+  //     barspacer = barspacer + 1;
+  // }
+}
+
+void print_keyboard_livesequencer(int ypos, uint8_t octave)
+{
+  uint8_t offset[5] = { 12, 12, 14, 12, 11 }; //+ is up
+  int offcount = 0;
+  uint8_t oct_count = 0;
+  display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+  display.setTextSize(1);
+
+  // draw white keys
+  for (uint8_t y = 0; y < 14; y++)
+  {
+    display.console = true;
+    display.fillRect(0, ypos - CHAR_height - (y * 14), 30, 13, COLOR_SYSTEXT); // pianoroll white key
+    if (y == 0 || y == 7 || y == 14)
+    {
+      display.setCursor(17, ypos - 14 - (y * 14));
+      display.print("C");
+      display.print(octave - 1 + oct_count);
+      oct_count++;
+    }
+  }
+  for (uint8_t y = 0; y < 23; y++)
+  {
+    if (seq.piano[y] == 1)
+    {
+      display.console = true;
+      display.fillRect(0, ypos - (y * 8.15) - offset[offcount], 12, 8, COLOR_BACKGROUND); // BLACK key
+      offcount++;
+      if (offcount == 5)
+        offcount = 0;
+    }
+  }
+  // draw grid
+
+  // for (uint8_t y = 0; y < 24; y++)
+  // {
+  //   patternspacer = 0;
+  //   barspacer = 0;
+  //   for (uint8_t x = 0; x < 64; x++)
+  //   {
+  //     if (seq.piano[y] == 0)                                                                                        // is a white key
+  //       display.fillRect(40 + patternspacer + barspacer + x * 4, ypos + 6 - CHAR_height - (y * 8.15), 3, 6, GREY3); // GRID white key
+  //     else
+  //       display.fillRect(40 + patternspacer + barspacer + x * 4, ypos + 6 - CHAR_height - (y * 8.15), 3, 6, GREY4); // GRID black key
+  //     if ((x + 1) % 16 == 0)
+  //       patternspacer = patternspacer + 2;
+  //     if ((x + 1) % 4 == 0)
+  //       barspacer = barspacer + 1;
+  //   }
+  // }
+}
+
+// void liveseq_clear_all_arrays()
+// {
+//     memset(note_value, 0, sizeof(note_value));
+//    memset(note_patternnumber, 0, sizeof(note_patternnumber));
+//    memset(note_ms, 0, sizeof(note_ms));
+// }
+
+void UI_func_seq_pianoroll(uint8_t param)
+{  // for Livesequencer
+
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    temp_int = 5;
+
     // setup function
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
     display.setTextSize(1);
+
+    print_keyboard_livesequencer(DISPLAY_HEIGHT - CHAR_height, 4);
     display.setCursor(0, 0);
-    display.print("SONG");
-    display.setCursor(0, CHAR_height / 2);
-    display.print("STEP");
-    // display.fillRect(1, 72, DISPLAY_WIDTH, DISPLAY_HEIGHT - 72, COLOR_BACKGROUND);
-    print_merged_pattern_pianoroll(1 * CHAR_width, DISPLAY_HEIGHT - CHAR_height, seq.active_track);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print("LIVESEQ PIANOROLL EDITOR");
+
+    helptext_l(back_text);
+    helptext_r("SELECT TRACK");
+
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
     if (LCDML.BT_checkDown())
     {
-      seq.active_track = constrain(seq.active_track + ENCODER[ENC_R].speed(), 0, NUM_SEQ_TRACKS - 1);
+      temp_int = constrain(temp_int + 1, 0, 5);
     }
     else if (LCDML.BT_checkUp())
     {
-      seq.active_track = constrain(seq.active_track - ENCODER[ENC_R].speed(), 0, NUM_SEQ_TRACKS - 1);
+      temp_int = constrain(temp_int - 1, 0, 5);
     }
-    print_merged_pattern_pianoroll(1 * CHAR_width, DISPLAY_HEIGHT - CHAR_height, seq.active_track);
+
+  }
+  uint8_t xoff = 33;
+  float pat_len = (DISPLAY_WIDTH - xoff) / 4;
+  float xscaler = 33;
+
+  display.fillRect(xoff, CHAR_height + 5, DISPLAY_WIDTH - xoff, DISPLAY_HEIGHT - 2 * CHAR_height, GREY4);
+  display.setCursor(312, 0);
+  display.print(temp_int);
+
+  for (uint8_t j = 0; j < 4; j++)
+  {
+    display.drawLine(xoff + j * pat_len, CHAR_height + 6, xoff + j * pat_len, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY2);
+
+    for (uint8_t k = 1; k < 16; k++)
+      display.drawLine(xoff + j * pat_len + pat_len / 16 * k, CHAR_height + 6, xoff + j * pat_len + pat_len / 16 * k, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY3);
+
+  }
+  display.drawLine(xoff + 4 * pat_len, CHAR_height + 6, xoff + 4 * pat_len, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY2);
+
+  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+
+  // find lowest note
+  uint8_t lowest_note = 127;
+  int notes_display_shift = 0;
+
+  int i = 0;
+  for (auto& e : data->eventsList)
+  {
+    if (e.track == temp_int && e.event == midi::NoteOn)
+      if (e.note_in < lowest_note && e.note_in> 0)
+      {
+        lowest_note = e.note_in;
+      }
+    i++;
+  }
+
+  uint8_t note_value[50];
+  uint8_t note_patternnumber[50][2];
+  uint16_t note_ms[50][2];
+
+  uint16_t count1 = 0, temp1, temp2, temp3;
+
+  if (lowest_note > 120)
+    lowest_note = 24;
+  notes_display_shift = lowest_note % 12;
+  display.console = true;
+  i = 0;
+  for (auto& e : data->eventsList)
+  {
+    if (e.track == temp_int && e.event == midi::NoteOn)
+    {
+      note_value[count1] = e.note_in;
+      note_ms[count1][0] = e.patternMs;
+      note_ms[count1][1] = 9999;
+      note_patternnumber[count1][0] = e.patternNumber;
+      count1++;
+    }
+    i++;
+  }
+
+  i = 0;
+
+  for (auto& e : data->eventsList)
+  {
+    if (e.track == temp_int && e.event == midi::NoteOff)
+    {
+      temp1 = e.note_in;
+      temp2 = e.patternMs;
+      temp3 = e.patternNumber;
+      for (uint8_t j = 0; j < 48; j++)
+      {
+        if (note_value[j] == temp1 && note_ms[j][1] == 9999)
+        {
+          note_ms[j][1] = temp2;
+          note_patternnumber[j][1] = temp3;
+          j = 99;
+        }
+      }
+    }
+
+    i++;
+  }
+
+  for (uint8_t j = 0; j < 48; j++)
+  {
+    if (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note)) >= CHAR_height + 6 &&
+      (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note)) + 5) < DISPLAY_HEIGHT - 1 * CHAR_height - 4)
+    {
+      if (note_ms[j][1] != 9999 && note_value[j] > 0)
+      {
+        display.fillRect(note_patternnumber[j][0] * pat_len + xoff + note_ms[j][0] / xscaler,
+          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note))),
+          (note_patternnumber[j][1] - note_patternnumber[j][0]) * pat_len + (note_ms[j][1] / xscaler - note_ms[j][0] / xscaler), 5, COLOR_SYSTEXT);
+      }
+      else //no note-off for note-on found, draw just note start
+        display.fillRect(note_patternnumber[j][0] * pat_len + xoff + note_ms[j][0] / xscaler,
+          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note))), 5, 5, GREEN);
+    }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -17529,20 +17821,12 @@ FLASHMEM void _render_misc_settings()
   display.print(F("TOUCH SCREEN ROTATION"));
   setCursor_textGrid_small(2, 12);
   display.print(F("REVERSE UI (ENCODERS ON TOP)"));
-  setCursor_textGrid_small(2, 13);
-  display.print(F("TOUCHSCREEN ADJUST    X MIN"));
-  setCursor_textGrid_small(2, 14);
-  display.print(F("TOUCHSCREEN ADJUST    Y MIN"));
-  setCursor_textGrid_small(36, 13);
-  display.print(F("X MAX"));
-  setCursor_textGrid_small(36, 14);
-  display.print(F("Y MAX"));
   setCursor_textGrid_small(42, 7);
   print_formatted_number(configuration.sys.gamepad_speed, 3);
   setCursor_textGrid_small(46, 7);
   display.print(F("ms"));
 
-  setCursor_textGrid_small(2, 15);
+  setCursor_textGrid_small(2, 13);
   display.print(F("SKIP BOOT ANIMATION"));
 
   setCursor_textGrid_small(42, 8);
@@ -17555,19 +17839,7 @@ FLASHMEM void _render_misc_settings()
   display.print(configuration.sys.touch_rotation);
   setCursor_textGrid_small(42, 12);
   display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
-
-  setCursor_textGrid_small(30, 13);
-  print_formatted_number(configuration.sys.calib_x_min, 3);
-  setCursor_textGrid_small(30, 14);
-  print_formatted_number(configuration.sys.calib_y_min, 3);
-
   setCursor_textGrid_small(42, 13);
-  print_formatted_number(configuration.sys.calib_x_max, 4);
-  setCursor_textGrid_small(42, 14);
-  print_formatted_number(configuration.sys.calib_y_max, 4);
-
-
-  setCursor_textGrid_small(42, 15);
   display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
 }
 
@@ -17592,7 +17864,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 10);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 6);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -17625,28 +17897,8 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
         }
         else if (generic_temp_select_menu == menu++)
         {
-          configuration.sys.calib_x_min = constrain(configuration.sys.calib_x_min + ENCODER[ENC_R].speed(), 100, 999);
-          settings_modified = 7;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.calib_x_max = constrain(configuration.sys.calib_x_max + ENCODER[ENC_R].speed(), 2800, 4000);
-          settings_modified = 8;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.calib_y_min = constrain(configuration.sys.calib_y_min + ENCODER[ENC_R].speed(), 100, 999);
-          settings_modified = 9;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.calib_y_max = constrain(configuration.sys.calib_y_max + ENCODER[ENC_R].speed(), 2800, 4000);
-          settings_modified = 10;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
           configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
-          settings_modified = 11;
+          settings_modified = 7;
         }
 
       }
@@ -17654,7 +17906,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 10);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 6);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -17687,28 +17939,8 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
         }
         else if (generic_temp_select_menu == menu++)
         {
-          configuration.sys.calib_x_min = constrain(configuration.sys.calib_x_min - ENCODER[ENC_R].speed(), 100, 999);
-          settings_modified = 7;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.calib_x_max = constrain(configuration.sys.calib_x_max - ENCODER[ENC_R].speed(), 2800, 4000);
-          settings_modified = 8;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.calib_y_min = constrain(configuration.sys.calib_y_min - ENCODER[ENC_R].speed(), 100, 999);
-          settings_modified = 9;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.calib_y_max = constrain(configuration.sys.calib_y_max - ENCODER[ENC_R].speed(), 2800, 4000);
-          settings_modified = 10;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
           configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
-          settings_modified = 11;
+          settings_modified = 7;
         }
       }
     }
@@ -17778,24 +18010,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     setCursor_textGrid_small(42, 12);
     display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
 
-    setModeColor(10);
-    setCursor_textGrid_small(42, 15);
-    display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
-
-    // Manual Touch Screen Adjustments
     setModeColor(6);
-    setCursor_textGrid_small(30, 13);
-    print_formatted_number(configuration.sys.calib_x_min, 3);
-    setModeColor(7);
     setCursor_textGrid_small(42, 13);
-    print_formatted_number(configuration.sys.calib_x_max, 4);
-    setModeColor(8);
-    setCursor_textGrid_small(30, 14);
-    print_formatted_number(configuration.sys.calib_y_min, 3);
-    setModeColor(9);
-    setCursor_textGrid_small(42, 14);
-    print_formatted_number(configuration.sys.calib_y_max, 4);
-    // Manual Touch Screen Adjustments END
+    display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
 
     if (settings_modified == 6)
     {
@@ -17819,12 +18036,9 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       _render_misc_settings();
     }
 
-
-
-
     else if (settings_modified > 6)
     {
-      set_sys_params(); // update Touch Screen Calibration
+      set_sys_params();
     }
     if (settings_modified > 0)
     {
@@ -17833,7 +18047,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       settings_modified = 0;
     }
 
-  }
+    }
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {
@@ -17841,7 +18055,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 FLASHMEM void _setup_rotation_and_encoders(bool init)
 {
@@ -22194,10 +22408,10 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
       LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
     }
-  }
+    }
   else
     return false;
-}
+  }
 
 FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
@@ -22268,8 +22482,8 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
       LOG.println(F("Removed from Favorites..."));
 #endif
     }
-  }
-}
+      }
+    }
 
 FLASHMEM char* basename(const char* filename)
 {
@@ -23067,116 +23281,6 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y)
   default:
     break;
   }
-}
-#if defined GENERIC_DISPLAY 
-FLASHMEM static void calibratePoint(uint16_t x, uint16_t y, uint16_t& vi, uint16_t& vj)
-{
-  if (remote_active)
-    display.console = true;
-  display.drawLine(x - 8, y, x - 8 + 16, y, COLOR_SYSTEXT);
-  if (remote_active)
-    display.console = true;
-  display.drawLine(x, y - 8, x, y - 8 + 16, COLOR_SYSTEXT);
-  if (remote_active)
-    display.console = true;
-
-  display.drawCircle(x, y, 8, COLOR_SYSTEXT);
-  if (remote_active)
-    display.console = false;
-  while (!touch.touched())
-  {
-    delay(10);
-  }
-
-  TS_Point p = touch.getPoint();
-
-  vi = p.x;
-  vj = p.y;
-
-  display.drawLine(x - 8, y, x - 8 + 16, y, COLOR_BACKGROUND);
-  if (remote_active)
-    display.console = true;
-  display.drawLine(x, y - 8, x, y - 8 + 16, COLOR_BACKGROUND);
-  if (remote_active)
-    display.console = true;
-  display.drawCircle(x, y, 8, COLOR_BACKGROUND);
-  if (remote_active)
-    display.console = false;
-
-}
-#endif
-
-#if defined GENERIC_DISPLAY 
-FLASHMEM void calibrate()
-{
-  uint16_t x1, y1, x2, y2;
-  uint16_t vi1, vj1, vi2, vj2;
-  touch.getCalibrationPoints(x1, y1, x2, y2);
-  calibratePoint(x1, y1, vi1, vj1);
-  delay(500);
-  calibratePoint(x2, y2, vi2, vj2);
-  TS_Calibration newCalibration = TS_Calibration(vi1, vj1, vi2, vj2);
-  configuration.sys.calib_x_min = vi1;
-  configuration.sys.calib_y_min = vj1;
-  configuration.sys.calib_x_max = vi2;
-  configuration.sys.calib_y_max = vj2;
-  ts.finished_calibration = true;
-  touch.setCalibration(newCalibration);
-  char buf[30];
-  snprintf(buf, sizeof(buf), "%d,%d,%d,%d", (int)vi1, (int)vj1, (int)vi2, (int)vj2);
-  setCursor_textGrid_small(13, 2);
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print("SET CALIBRATION PARAMS:");
-  setCursor_textGrid_small(13, 4);
-  display.print(buf);
-  display.setTextColor(GREEN, COLOR_BACKGROUND);
-  setCursor_textGrid_small(13, 6);
-  display.print("FINISHED!");
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  setCursor_textGrid_small(13, 11);
-  display.print("PUSH ");
-  display.setTextColor(COLOR_SYSTEXT, RED);
-  display.print("ENC_R");
-  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  display.print(" TO CONTINUE ON");
-  setCursor_textGrid_small(13, 12);
-  display.print(F("TOUCH TESTING PAGE ..     "));
-  helptext_r("TESTING PAGE");
-  save_sys_flag = true;
-  save_sys = SAVE_SYS_MS / 2;
-}
-#endif
-
-FLASHMEM void UI_func_calibrate_touch(uint8_t param)
-{
-#if defined GENERIC_DISPLAY 
-  if (LCDML.FUNC_setup()) // ****** SETUP *********
-  {
-    ts.finished_calibration = false;
-    display.setTextSize(1);
-    display.fillScreen(COLOR_BACKGROUND);
-    setCursor_textGrid_small(13, 11);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.print(F("TOUCH CROSSHAIR POINTS"));
-    setCursor_textGrid_small(13, 12);
-    display.print(F("TO CALIBRATE TOUCHSCREEN"));
-  }
-  if (LCDML.FUNC_loop()) // ****** LOOP *********
-  {
-    if (ts.finished_calibration == false)
-      calibrate();
-    if (LCDML.BT_checkEnter())
-    {
-      if (ts.finished_calibration)
-        LCDML.OTHER_jumpToFunc(UI_func_test_touchscreen);
-    }
-  }
-  if (LCDML.FUNC_close()) // ****** STABLE END *********
-  {
-    display.fillScreen(COLOR_BACKGROUND);
-    encoderDir[ENC_R].reset();
-  }
-#endif
 }
 
 FLASHMEM void _draw_volmeter(int x, int y, uint8_t meter, float height)

@@ -1845,14 +1845,7 @@ FLASHMEM bool load_sd_sys_json(void)
           GAMEPAD_BUTTON_A = data_json["gp_a"];
           GAMEPAD_BUTTON_B = data_json["gp_b"];
         }
-        if (data_json["calib_x_min"] != data_json["calib_x_max"])
-        {
-          configuration.sys.calib_x_min = data_json["calib_x_min"];
-          configuration.sys.calib_y_min = data_json["calib_y_min"];
-          configuration.sys.calib_x_max = data_json["calib_x_max"];
-          configuration.sys.calib_y_max = data_json["calib_y_max"];
-        }
-
+       
         check_configuration_sys();
         set_sys_params();
 
@@ -1923,14 +1916,6 @@ FLASHMEM bool save_sd_sys_json(void)
         data_json["gp_start"] = GAMEPAD_START;
         data_json["gp_a"] = GAMEPAD_BUTTON_A;
         data_json["gp_b"] = GAMEPAD_BUTTON_B;
-      }
-
-      if (configuration.sys.calib_x_min != configuration.sys.calib_x_max)
-      {
-        data_json["calib_x_min"] = configuration.sys.calib_x_min;
-        data_json["calib_y_min"] = configuration.sys.calib_y_min;
-        data_json["calib_x_max"] = configuration.sys.calib_x_max;
-        data_json["calib_y_max"] = configuration.sys.calib_y_max;
       }
 
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
