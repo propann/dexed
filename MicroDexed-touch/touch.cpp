@@ -1650,7 +1650,7 @@ extern void liveseq_printEventGrid();
 extern void livesequencer_edit_element();
 extern uint8_t liveseq_editor_filter;
 extern int liveseq_pattern_start[5];
-extern uint8_t liveseq_editor_edit_state;
+extern uint8_t liveseq_listeditor_state;
 
 FLASHMEM void handle_touchscreen_liveseq_editor()
 {
@@ -1664,13 +1664,10 @@ FLASHMEM void handle_touchscreen_liveseq_editor()
     else  if (check_button_on_grid(13, 26)) // edit
     {
       livesequencer_edit_element();
-    //   if (liveseq_editor_edit_state==0)
-    // draw_button_on_grid(13, 26, "EDIT", "STEP", 1);
-    // else
-    // draw_button_on_grid(13, 26, "EDIT", "STEP", 2);
     }
     else  if (check_button_on_grid(24, 26)) // delete
     {
+      if (seq.edit_state==true)
       livesequencer_delete_element();
     }
 
