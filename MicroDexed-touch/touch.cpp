@@ -64,7 +64,7 @@ extern void draw_volmeters_mixer();
 extern void draw_volmeters_multiband_compressor();
 extern bool legacy_touch_button_back_page();
 extern bool touch_button_back_page();
-extern void livesequencer_delete_element();
+extern void liveseq_listeditor_delete_element();
 
 extern uint8_t activesample;
 extern microsynth_t microsynth[NUM_MICROSYNTH];
@@ -1644,15 +1644,15 @@ FLASHMEM void handle_page_with_touch_back_button()
   }
 }
 
-extern void print_liveseq_editor_filter();
-extern void print_liveseq_update_steps();
-extern void liveseq_printEventGrid();
-extern void livesequencer_edit_element();
-extern uint8_t liveseq_editor_filter;
-extern int liveseq_pattern_start[5];
+extern void print_liveseq_listeditor_filter();
+extern void print_liveseq_listeditor_update_steps();
+extern void liveseq_listeditor_printEventGrid();
+extern void liveseq_listeditor_edit_element();
+extern uint8_t liveseq_listeditor_filter;
+extern int liveseq_listeditor_pattern_start[5];
 extern uint8_t liveseq_listeditor_state;
 
-FLASHMEM void handle_touchscreen_liveseq_editor()
+FLASHMEM void handle_touchscreen_liveseq_listeditor()
 {
   if (numTouchPoints > 0)
   {
@@ -1663,26 +1663,26 @@ FLASHMEM void handle_touchscreen_liveseq_editor()
     }
     else  if (check_button_on_grid(13, 26)) // edit
     {
-      livesequencer_edit_element();
+      liveseq_listeditor_edit_element();
     }
     else  if (check_button_on_grid(24, 26)) // delete
     {
       if (seq.edit_state==true)
-      livesequencer_delete_element();
+      liveseq_listeditor_delete_element();
     }
 
     else  if (check_button_on_grid(36, 26)) // track filter
     {
-      liveseq_editor_filter++;
-      if (liveseq_editor_filter > 3)
-        liveseq_editor_filter = 0;
-      temp_int = liveseq_pattern_start[liveseq_editor_filter] - 1;
-      if (liveseq_editor_filter == 0)
+      liveseq_listeditor_filter++;
+      if (liveseq_listeditor_filter > 3)
+        liveseq_listeditor_filter = 0;
+      temp_int = liveseq_listeditor_pattern_start[liveseq_listeditor_filter] - 1;
+      if (liveseq_listeditor_filter == 0)
         temp_int = 0;
       generic_temp_select_menu = 0;
-      print_liveseq_editor_filter();
-      print_liveseq_update_steps();
-      liveseq_printEventGrid();
+      print_liveseq_listeditor_filter();
+      print_liveseq_listeditor_update_steps();
+      liveseq_listeditor_printEventGrid();
     }
   }
 }

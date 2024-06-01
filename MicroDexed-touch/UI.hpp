@@ -533,7 +533,7 @@ void UI_func_dexed_controllers(uint8_t param);
 void UI_func_dexed_setup(uint8_t param);
 void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
-void UI_func_liveseq_editor(uint8_t param);
+void UI_func_liveseq_listeditor(uint8_t param);
 //void UI_func_midi_sync(uint8_t param);
 void UI_func_master_effects(uint8_t param);
 void UI_func_not_available(uint8_t param);
@@ -551,7 +551,7 @@ void UI_func_clear_patterns(uint8_t param);
 void UI_func_clear_all(uint8_t param);
 void UI_func_seq_settings(uint8_t param);
 void UI_func_seq_tracker(uint8_t param);
-void UI_func_seq_pianoroll(uint8_t param);
+void UI_func_liveseq_pianoroll(uint8_t param);
 void UI_func_arpeggio(uint8_t param);
 void UI_func_seq_mute_matrix(uint8_t param);
 void UI_func_dexed_assign(uint8_t param);
@@ -12186,32 +12186,8 @@ void print_keyboard_livesequencer(int ypos, uint8_t octave)
         offcount = 0;
     }
   }
-  // draw grid
-
-  // for (uint8_t y = 0; y < 24; y++)
-  // {
-  //   patternspacer = 0;
-  //   barspacer = 0;
-  //   for (uint8_t x = 0; x < 64; x++)
-  //   {
-  //     if (seq.piano[y] == 0)                                                                                        // is a white key
-  //       display.fillRect(40 + patternspacer + barspacer + x * 4, ypos + 6 - CHAR_height - (y * 8.15), 3, 6, GREY3); // GRID white key
-  //     else
-  //       display.fillRect(40 + patternspacer + barspacer + x * 4, ypos + 6 - CHAR_height - (y * 8.15), 3, 6, GREY4); // GRID black key
-  //     if ((x + 1) % 16 == 0)
-  //       patternspacer = patternspacer + 2;
-  //     if ((x + 1) % 4 == 0)
-  //       barspacer = barspacer + 1;
-  //   }
-  // }
 }
 
-// void liveseq_clear_all_arrays()
-// {
-//     memset(note_value, 0, sizeof(note_value));
-//    memset(note_patternnumber, 0, sizeof(note_patternnumber));
-//    memset(note_ms, 0, sizeof(note_ms));
-// }
 
 
 FLASHMEM void liveseq_pianoroll_save_changed_element(int in)
@@ -12313,7 +12289,7 @@ FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
   display.setTextSize(1);
 }
 
-void UI_func_seq_pianoroll(uint8_t param)
+void UI_func_liveseq_pianoroll(uint8_t param)
 {  // for Livesequencer
 
   uint16_t listeventnumber[50];
@@ -12468,9 +12444,6 @@ void UI_func_seq_pianoroll(uint8_t param)
   uint8_t lowest_note = 127;
   int notes_display_shift = 0;
 
-
-
-
   int i = 0;
   for (auto& e : data->eventsList)
   {
@@ -12481,8 +12454,6 @@ void UI_func_seq_pianoroll(uint8_t param)
       }
     i++;
   }
-
-
 
   uint16_t count1 = 0, temp1, temp2, temp3;
 
@@ -12571,8 +12542,6 @@ void UI_func_seq_pianoroll(uint8_t param)
   //     i++;
   //   }
 
-
-
   uint8_t from = 0;
   uint8_t to = 48;
 
@@ -12597,7 +12566,6 @@ void UI_func_seq_pianoroll(uint8_t param)
       col = RED;
 
     }
-
     else
       col = COLOR_SYSTEXT;
 
@@ -14504,11 +14472,11 @@ void sysinfo_reload_prev_voice()
   }
 }
 
-int liveseq_editor_steps = 0;
-uint8_t liveseq_editor_filter = 0;
-int liveseq_pattern_start[5];
+int liveseq_listeditor_steps = 0;
+uint8_t liveseq_listeditor_filter = 0;
+int liveseq_listeditor_pattern_start[5];
 
-FLASHMEM void get_liveseq_pattern_starts() {
+FLASHMEM void get_liveseq_listeditor_pattern_starts() {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int p = 1;
   int i = 0;
@@ -14517,29 +14485,29 @@ FLASHMEM void get_liveseq_pattern_starts() {
   {
     if (e.patternNumber == p)
     {
-      liveseq_pattern_start[p] = i + 1;
+      liveseq_listeditor_pattern_start[p] = i + 1;
       p++;
     }
     i++;
   }
 }
 
-FLASHMEM void print_liveseq_update_steps() {
+FLASHMEM void print_liveseq_listeditor_update_steps() {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
   if (int(data->eventsList.size()) - 1 >= 0)
-    liveseq_editor_steps = int(data->eventsList.size()) - 1;
+    liveseq_listeditor_steps = int(data->eventsList.size()) - 1;
   display.setTextSize(1);
 
   display.setTextColor(GREY2, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 20, 0);
   display.print("P1:");
-  display.print(liveseq_pattern_start[0]);
+  display.print(liveseq_listeditor_pattern_start[0]);
   display.print(" P2:");
-  display.print(liveseq_pattern_start[1]);
+  display.print(liveseq_listeditor_pattern_start[1]);
   display.print(" P3:");
-  display.print(liveseq_pattern_start[2]);
+  display.print(liveseq_listeditor_pattern_start[2]);
   display.print(" P4:");
-  display.print(liveseq_pattern_start[3]);
+  display.print(liveseq_listeditor_pattern_start[3]);
 
   display.setCursor(CHAR_width_small * 46, 0);
   display.setTextColor(GREEN, COLOR_BACKGROUND);
@@ -14547,12 +14515,12 @@ FLASHMEM void print_liveseq_update_steps() {
 
   display.setTextColor(GREEN, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 50, 0);
-  print_formatted_number(liveseq_editor_steps + 1, 3);
+  print_formatted_number(liveseq_listeditor_steps + 1, 3);
 
 
 }
 
-FLASHMEM void liveseq_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
+FLASHMEM void liveseq_listeditor_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
 
   char displayname[4] = { 0, 0, 0, 0 };
 
@@ -14602,7 +14570,7 @@ FLASHMEM void liveseq_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
 
 uint8_t liveseq_listeditor_state = 0;
 
-FLASHMEM void liveseq_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
+FLASHMEM void liveseq_listeditor_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
 
   display.setTextSize(2);
   char displayname[4] = { 0, 0, 0, 0 };
@@ -14659,9 +14627,9 @@ FLASHMEM void liveseq_printDetailedEvent(int i, LiveSequencer::MidiEvent e) {
   display.setTextSize(1);
 }
 
-void liveseq_printEventGrid();
+void liveseq_listeditor_printEventGrid();
 
-FLASHMEM void livesequencer_edit_element()
+FLASHMEM void liveseq_listeditor_edit_element()
 {
   liveseq_listeditor_state++;
   if (liveseq_listeditor_state > 3)
@@ -14686,12 +14654,12 @@ FLASHMEM void livesequencer_edit_element()
     helptext_r("EDIT MS");
     draw_button_on_grid(13, 26, "EXIT", "EDIT", 2);
   }
-  liveseq_printEventGrid();
+  liveseq_listeditor_printEventGrid();
 }
 
-int scrollbuffer_liveseq_editor = 999;
+int scrollbuffer_liveseq_listeditor = 999;
 
-FLASHMEM void liveseq_printEventGrid()
+FLASHMEM void liveseq_listeditor_printEventGrid()
 {
   uint8_t search_step = 0;
 
@@ -14743,17 +14711,17 @@ FLASHMEM void liveseq_printEventGrid()
   {
     if (temp_int <= i && i < 14 + temp_int)
     {
-      liveseq_printEventGridLine(i - temp_int, e);
+      liveseq_listeditor_printEventGridLine(i - temp_int, e);
       if (temp_int + generic_temp_select_menu == i)
       {
-        liveseq_printDetailedEvent(temp_int, e);
+        liveseq_listeditor_printDetailedEvent(temp_int, e);
       }
     }
     i++;
   }
 }
 
-FLASHMEM void livesequencer_delete_element()
+FLASHMEM void liveseq_listeditor_delete_element()
 {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
@@ -14779,13 +14747,13 @@ FLASHMEM void livesequencer_delete_element()
   liveSeq.cleanEvents();
   display.console = true;
   display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
-  get_liveseq_pattern_starts();
-  print_liveseq_update_steps();
-  liveseq_printEventGrid();
+  get_liveseq_listeditor_pattern_starts();
+  print_liveseq_listeditor_update_steps();
+  liveseq_listeditor_printEventGrid();
 
 }
 
-FLASHMEM void livesequencer_get_current_values()
+FLASHMEM void liveseq_listeditor_get_current_values()
 {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
@@ -14804,7 +14772,7 @@ FLASHMEM void livesequencer_get_current_values()
   }
 }
 
-FLASHMEM void livesequencer_save_changed_element()
+FLASHMEM void liveseq_listeditor_save_changed_element()
 {
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
@@ -14822,30 +14790,30 @@ FLASHMEM void livesequencer_save_changed_element()
     }
     i++;
   }
-  liveseq_printEventGrid();
+  liveseq_listeditor_printEventGrid();
 }
 
 
-FLASHMEM void print_liveseq_editor_filter() {
+FLASHMEM void print_liveseq_listeditor_filter() {
   char buf[4];
-  if (liveseq_editor_filter == 3)
+  if (liveseq_listeditor_filter == 3)
     draw_button_on_grid(36, 26, "JUMP", "1", 1);
   else
-    draw_button_on_grid(36, 26, "JUMP", itoa(liveseq_editor_filter + 2, buf, 10), 1);
+    draw_button_on_grid(36, 26, "JUMP", itoa(liveseq_listeditor_filter + 2, buf, 10), 1);
   display.console = true;
   display.fillRect(CHAR_width_small, 30, 319 - CHAR_width_small, 130, GREY3);
 }
 
-FLASHMEM void UI_func_liveseq_editor(uint8_t param)
+FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
 {
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     temp_int = 0;
-    get_liveseq_pattern_starts();
+    get_liveseq_listeditor_pattern_starts();
     helptext_r("");  //required
     generic_temp_select_menu = 6;
-    scrollbuffer_liveseq_editor = 999;
+    scrollbuffer_liveseq_listeditor = 999;
 
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
@@ -14868,7 +14836,7 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
       draw_button_on_grid(13, 26, "EDIT", "STEP", 2);
 
     draw_button_on_grid(24, 26, "DEL", "STEP", 1);
-    print_liveseq_editor_filter();
+    print_liveseq_listeditor_filter();
 
     helptext_r("MOVE Y");
 
@@ -14900,7 +14868,7 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
           if (generic_temp_select_menu < 13)
             generic_temp_select_menu = generic_temp_select_menu + 1;
           else
-            temp_int = constrain(temp_int + 1, 0, liveseq_editor_steps - 13);
+            temp_int = constrain(temp_int + 1, 0, liveseq_listeditor_steps - 13);
         }
         else if (LCDML.BT_checkUp())
         {
@@ -14909,13 +14877,13 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
             generic_temp_select_menu = generic_temp_select_menu - 1;
 
           else
-            temp_int = constrain(temp_int - 1, 0, liveseq_editor_steps);
+            temp_int = constrain(temp_int - 1, 0, liveseq_listeditor_steps);
         }
       }
       else
       {  //edit mode is on
 
-        livesequencer_get_current_values();
+        liveseq_listeditor_get_current_values();
 
         if (liveseq_listeditor_state == 1 || liveseq_listeditor_state == 2)
         {
@@ -14946,23 +14914,23 @@ FLASHMEM void UI_func_liveseq_editor(uint8_t param)
     if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
       ;
-      livesequencer_save_changed_element();
+      liveseq_listeditor_save_changed_element();
       liveseq_listeditor_state = 0;
       draw_button_on_grid(13, 26, "EDIT", "STEP", 1);
-      liveseq_printEventGrid();
+      liveseq_listeditor_printEventGrid();
       helptext_r("MOVE Y");
     }
 
     if (liveseq_listeditor_state != 0)
     {
-      livesequencer_save_changed_element();
+      liveseq_listeditor_save_changed_element();
     }
-    print_liveseq_update_steps();
+    print_liveseq_listeditor_update_steps();
 
-    if (scrollbuffer_liveseq_editor != temp_int + generic_temp_select_menu)
+    if (scrollbuffer_liveseq_listeditor != temp_int + generic_temp_select_menu)
     {
-      liveseq_printEventGrid();
-      scrollbuffer_liveseq_editor = temp_int + generic_temp_select_menu;
+      liveseq_listeditor_printEventGrid();
+      scrollbuffer_liveseq_listeditor = temp_int + generic_temp_select_menu;
     }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
