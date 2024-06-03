@@ -12315,10 +12315,10 @@ FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
   display.setTextSize(1);
 }
 
- bool get_current = false;
+bool get_current = false;
 void UI_func_liveseq_pianoroll(uint8_t param)
 {  // for Livesequencer
- 
+
   uint16_t listeventnumber[50];
   uint8_t note_value[50];
   uint8_t note_patternnumber[50][2];
@@ -12506,7 +12506,7 @@ void UI_func_liveseq_pianoroll(uint8_t param)
   i = 0;
 
   bool find_note_off = false;
-uint8_t old_note=0;
+  uint8_t old_note = 0;
 
   for (auto& e : data->eventsList) // catch matching noteOffs
   {
@@ -12527,37 +12527,37 @@ uint8_t old_note=0;
       }
     }
 
-     i++;
+    i++;
   }
 
   i = 0;
 
-//editor
-uint8_t new_note=0;
- for (auto& e : data->eventsList) 
+  //editor
+  uint8_t new_note = 0;
+  for (auto& e : data->eventsList)
   {
     if (generic_menu == 2 && listeventnumber[generic_temp_select_menu] == i)
     {
 
-        //get current value when starting editing so it does not start at zero
-        if (get_current)
-        {
-          liveseq_pianoroll_get_current_values(e);
-          old_note=e.note_in;
-          get_current = false;
-        }
+      //get current value when starting editing so it does not start at zero
+      if (get_current)
+      {
+        liveseq_pianoroll_get_current_values(e);
+        old_note = e.note_in;
+        get_current = false;
+      }
 
-        note_value[generic_temp_select_menu] = temp_uint;
-        // liveseq_pianoroll_save_changed_note_on(e);
-        e.note_in = temp_uint;
-        // liveseq_pianoroll_printDetailedEvent(e);
-        find_note_off = true;
+      note_value[generic_temp_select_menu] = temp_uint;
+      // liveseq_pianoroll_save_changed_note_on(e);
+      e.note_in = temp_uint;
+      // liveseq_pianoroll_printDetailedEvent(e);
+      find_note_off = true;
     }
 
-if ( find_note_off && generic_menu ==2 && e.event == midi::NoteOff && e.note_in == old_note)
+    if (find_note_off && generic_menu == 2 && e.event == midi::NoteOff && e.note_in == old_note)
     {
       e.note_in = temp_uint;
-       //liveseq_pianoroll_save_changed_note_off(e);
+      //liveseq_pianoroll_save_changed_note_off(e);
       find_note_off = false;
     }
 
@@ -12569,11 +12569,11 @@ if ( find_note_off && generic_menu ==2 && e.event == midi::NoteOff && e.note_in 
 
   for (auto& e : data->eventsList)
   {
-   if (generic_menu != 0 && listeventnumber[generic_temp_select_menu] == i)
+    if (generic_menu != 0 && listeventnumber[generic_temp_select_menu] == i)
     {
-        liveseq_pianoroll_printDetailedEvent(e);
+      liveseq_pianoroll_printDetailedEvent(e);
     }
-      i++;
+    i++;
   }
 
   // else if (generic_menu == 3) // edit vel
@@ -22278,6 +22278,7 @@ FLASHMEM void UI_func_format_flash(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    generic_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     helptext_r("FORMAT");
@@ -22296,12 +22297,20 @@ FLASHMEM void UI_func_format_flash(uint8_t param)
 #if (defined COMPILE_FOR_FLASH)
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-#ifdef COMPILE_FOR_FLASH
-    if (LCDML.BT_checkEnter()) // SPI FLASH
+    if (LCDML.BT_checkEnter())
     {
+      generic_menu++;
+    }
+
+    if (generic_menu == 1) //Format FLASH
+    {
+
+      helptext_r("FORMATTING");
+       display.setTextSize(2);
       uint8_t screenline = 0;
       setCursor_textGrid(1, 1);
-      display.print(F("Formatting     "));
+      display.setTextColor(COLOR_BACKGROUND, RED);
+      display.print(F("FORMATTING...  "));
       setCursor_textGrid(1, 2);
       print_empty_spaces(16);
       unsigned char id[5];
@@ -22350,13 +22359,147 @@ FLASHMEM void UI_func_format_flash(uint8_t param)
           display.fillRect(0, 7 * CHAR_height, DISPLAY_WIDTH, DISPLAY_HEIGHT, COLOR_BACKGROUND);
           setCursor_textGrid(1, 2);
           display.setTextColor(GREEN, COLOR_BACKGROUND);
-          display.print(F("done!           "));
+          display.print(F("Done!           "));
           helptext_l(back_text);
           display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
         }
       }
+      generic_menu++;
     }
-#endif
+
+    if (generic_menu == 2)
+    {
+      display.console = true;
+      display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH - CHAR_width_small * 2, CHAR_height_small * 16, COLOR_BACKGROUND);
+
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.setTextSize(2);
+      setCursor_textGrid(1, 1);
+      display.print(F("COPY PRESETS?  "));
+      setCursor_textGrid(1, 2);
+      display.print(F("PUSH TO CONFIRM"));
+      helptext_r("COPY PRESETS TO FLASH");
+      setCursor_textGrid_small(1, 10);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      setCursor_textGrid_small(2, 11);
+      display.print(F("IF YOU HAVE COPIED THE PRESET CONTENT"));
+      setCursor_textGrid_small(2, 12);
+      display.print(F("TO THE SDCARD, YOU CAN NOW COPY THE"));
+      setCursor_textGrid_small(2, 13);
+      display.print(F("SAMPLES FROM /DRUMS TO THE FLASH CHIP"));
+      setCursor_textGrid_small(2, 15);
+      display.setTextColor(RED, COLOR_BACKGROUND);
+      display.print(F("PUSH ENCODER RIGHT TO CONFIRM"));
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    }
+
+    if (generic_menu == 3) //COPY presets
+    {
+      display.console = true;
+      display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH - CHAR_width_small * 2, CHAR_height_small * 16, COLOR_BACKGROUND);
+
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.setTextSize(2);
+      setCursor_textGrid(1, 1);
+      display.print(F("COPY IN PROGRESS"));
+      setCursor_textGrid(1, 2);
+      display.print(F("PLEASE WAIT    "));
+      helptext_r("COPYING");
+      encoderDir[ENC_R].reset();
+      uint8_t screenline = 0;
+
+      File rootdir = SD.open("/DRUMS");
+      while (1)
+      {
+        // open a file from the SD card
+        File f = rootdir.openNextFile();
+        if (!f)
+          break;
+        const char* filename = f.name();
+
+        // filter out the ._ mac files
+        if (strstr(filename, "._") != NULL)
+          continue;
+
+        if (screenline > 10)
+          screenline = 0;
+        setCursor_textGrid_small(2, 6 + screenline);
+
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+        // if (filename[0] != 46 && filename[1] != 95)
+        if (filename[0] != 46)
+        {
+          display.print(filename);
+          fill_up_with_spaces_left_window_filemanager();
+          screenline++;
+        }
+        unsigned long length = f.size();
+        // check if this file is already on the Flash chip
+        if (SerialFlash.exists(filename))
+        {
+          SerialFlashFile ff = SerialFlash.open(filename);
+          if (ff && ff.size() == f.size())
+          {
+            if (compareFiles(f, ff) == true)
+            {
+
+              f.close();
+              ff.close();
+              continue; // advance to next file
+            }
+          }
+          // delete the copy on the Flash chip, if different
+
+          SerialFlash.remove(filename);
+        }
+        // if (filename[0] != 46 && filename[1] != 95)
+        if (filename[0] != 46)
+        {
+          // create the file on the Flash chip and copy data
+          if (SerialFlash.create(filename, length))
+          {
+            SerialFlashFile ff = SerialFlash.open(filename);
+            if (ff)
+            {
+              // copy data loop
+              unsigned long count = 0;
+              display.console = true;
+              while (count < length)
+              {
+                char buf[256];
+                unsigned int n;
+                n = f.read(buf, 256);
+                ff.write(buf, n);
+                count = count + n;
+                if (count % 5120 == 0)
+                  display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, count / (f.size() / (14 * CHAR_width_small)), 8, RED);
+              }
+              ff.close();
+              display.fillRect(CHAR_width_small * 38 - 2, CHAR_height_small * 7, (14 * CHAR_width_small) + 4, 8, COLOR_BACKGROUND);
+              flash_loadDirectory();
+              print_flash_stats();
+              flash_printDirectory();
+            }
+          }
+        }
+        f.close();
+      }
+      rootdir.close();
+      // flash_loadDirectory();
+      print_flash_stats();
+      display.console = true;
+      display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH - CHAR_width_small * 2, CHAR_height_small * 16, COLOR_BACKGROUND);
+       display.setTextSize(2);
+      helptext_r("FINISHED");
+      helptext_l(back_text);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.setTextSize(2);
+      setCursor_textGrid(1, 1);
+      display.print(F("FINISHED!       "));
+      setCursor_textGrid(1, 2);
+      display.print(F("                "));
+
+    }
   }
 #endif
   if (LCDML.FUNC_close()) // ****** STABLE END *********
@@ -22468,7 +22611,7 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 void sub_touchscreen_test_page_init()
 {
@@ -22793,7 +22936,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
 #ifdef DEBUG
       LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
-    }
+  }
   }
   else
     return false;
@@ -22849,7 +22992,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-      }
+    }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -22869,7 +23012,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #endif
     }
   }
-}
+  }
 
 FLASHMEM char* basename(const char* filename)
 {
@@ -22928,7 +23071,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     case 'G':
       offset = 7;
       break;
-    }
+  }
 
     if (root_note[ms.MatchLength - 2 - 1] == '#')
     {
@@ -22943,7 +23086,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
 
     // recalculate low and high notes for all zones
     calc_low_high(preset_number);
-  }
+}
   else
   {
 #ifdef DEBUG
