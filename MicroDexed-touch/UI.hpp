@@ -12022,6 +12022,9 @@ FLASHMEM void UI_func_song(uint8_t param)
 
 // void UI_func_seq_pianoroll(uint8_t param)
 // {
+
+  //for old sequencer
+
 //   if (LCDML.FUNC_setup()) // ****** SETUP *********
 //   {
 //     // setup function
@@ -12057,7 +12060,8 @@ FLASHMEM void UI_func_song(uint8_t param)
 // }
 
 void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
-{
+{  //for old sequencer
+
   // uint8_t notes[64];
   // uint8_t lowest_note = 127;
   // int notes_display_shift = 0;
@@ -12188,45 +12192,57 @@ void print_keyboard_livesequencer(int ypos, uint8_t octave)
   }
 }
 
-
-
-FLASHMEM void liveseq_pianoroll_save_changed_element(int in)
+FLASHMEM void liveseq_pianoroll_save_changed_note_on(LiveSequencer::MidiEvent e)
 {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
-  int i = 0;
-  for (auto& e : data->eventsList)
-  {
-    if (i == in) {
 
-      if (generic_menu == 2) //note
-        e.note_in = temp_uint;
-      else if (generic_menu == 3) //vel
-        e.note_in_velocity = temp_uint;
-      else if (generic_menu == 4) //ms
-        e.patternMs = temp_int16;
+  if (generic_menu == 2 && e.event == midi::NoteOn) //note
+    e.note_in = temp_uint;
+  else if (generic_menu == 3) //vel
+    e.note_in_velocity = temp_uint;
+  else if (generic_menu == 4) //ms
+    e.patternMs = temp_int16;
 
-    }
-    i++;
-  }
+  // if (generic_menu == 2 && i == off && e.event==midi::NoteOff) {
+  //    e.note_in = temp_uint;
+ // }
+
 }
 
-FLASHMEM void liveseq_pianoroll_get_current_values(int in)
+FLASHMEM void liveseq_pianoroll_save_changed_note_off(LiveSequencer::MidiEvent e)
 {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
-  int i = 0;
-  for (auto& e : data->eventsList)
-  {
-    if (i == in) {
+  if (generic_menu == 2 && e.event == midi::NoteOff)
+    e.note_in = temp_uint;
 
-      if (generic_menu == 2) //note
-        temp_uint = e.note_in;
-      else if (generic_menu == 3) //vel
-        temp_uint = e.note_in_velocity;
-      else if (generic_menu == 4) //ms
-        temp_int16 = e.patternMs;
-    }
-    i++;
+}
+
+FLASHMEM void liveseq_pianoroll_get_current_values(LiveSequencer::MidiEvent e)
+{
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // int i = 0;
+  // for (auto& e : data->eventsList)
+  // {
+  //   if (i == in) {
+
+  if (generic_menu == 2) //note
+  {
+    temp_uint = e.note_in;
   }
+  else if (generic_menu == 3) //vel
+    temp_uint = e.note_in_velocity;
+  else if (generic_menu == 4) //ms
+    temp_int16 = e.patternMs;
+
+  // display.setCursor(150, 0);
+  // display.print("IN:");
+  // display.print(e.note_in);
+  // display.print(" ");
+  // display.print("uint:");
+  // display.print(temp_uint);
+  // display.print(" ");
+
+  //   }
+  //   i++;
+  // }
 }
 
 
@@ -12236,7 +12252,17 @@ FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
   char displayname[4] = { 0, 0, 0, 0 };
   display.setTextColor(GREY2, COLOR_BACKGROUND);
 
-  //track
+  //  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  // display.setCursor(1,1);
+  //   display.print("int ");
+  //   display.print(temp_uint);
+  //  display.print(" ");
+  //  display.print("note_in:");
+  //   display.print(e.note_in);
+  //  display.print(" ");
+  //temp_int=e.note_in;
+
+    //track
   display.setCursor((CHAR_width_small * 6), CHAR_height_small * 29);
   display.print("T");
   display.print(e.track + 1);
@@ -12289,15 +12315,15 @@ FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
   display.setTextSize(1);
 }
 
+ bool get_current = false;
 void UI_func_liveseq_pianoroll(uint8_t param)
 {  // for Livesequencer
-
+ 
   uint16_t listeventnumber[50];
   uint8_t note_value[50];
   uint8_t note_patternnumber[50][2];
   uint16_t note_ms[50][2];
 
-  temp_uint = 0;
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     temp_int = 5;
@@ -12348,12 +12374,13 @@ void UI_func_liveseq_pianoroll(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
-        temp_uint = constrain(temp_uint + 1, 0, 127);
+        temp_uint = constrain(temp_uint + 1, 1, 127);
       }
       else if (LCDML.BT_checkUp())
       {
-        temp_uint = constrain(temp_uint - 1, 0, 127);
+        temp_uint = constrain(temp_uint - 1, 1, 127);
       }
+
     }
 
     else if (generic_menu == 3) // edit vel
@@ -12386,14 +12413,12 @@ void UI_func_liveseq_pianoroll(uint8_t param)
       if (generic_menu == 0)
       {
         generic_menu = 1;
-
         helptext_r("SELECT NOTE");
       }
       else  if (generic_menu == 1)
       {
-
         generic_menu = 2;
-        liveseq_pianoroll_get_current_values(listeventnumber[generic_temp_select_menu]);
+        get_current = true;
         helptext_r("EDIT NOTE");
       }
       else  if (generic_menu == 2)
@@ -12457,12 +12482,14 @@ void UI_func_liveseq_pianoroll(uint8_t param)
 
   uint16_t count1 = 0, temp1, temp2, temp3;
 
+
   if (lowest_note > 120)
     lowest_note = 24;
   notes_display_shift = lowest_note % 12;
+
   display.console = true;
   i = 0;
-  for (auto& e : data->eventsList)
+  for (auto& e : data->eventsList) //fill array with all noteOns
   {
     if (e.track == temp_int && e.event == midi::NoteOn)
     {
@@ -12478,13 +12505,17 @@ void UI_func_liveseq_pianoroll(uint8_t param)
 
   i = 0;
 
-  for (auto& e : data->eventsList)
+  bool find_note_off = false;
+uint8_t old_note=0;
+
+  for (auto& e : data->eventsList) // catch matching noteOffs
   {
     if (e.track == temp_int && e.event == midi::NoteOff)
     {
       temp1 = e.note_in;
       temp2 = e.patternMs;
       temp3 = e.patternNumber;
+
       for (uint8_t j = 0; j < 48; j++)
       {
         if (note_value[j] == temp1 && note_ms[j][1] == 9999)
@@ -12496,41 +12527,67 @@ void UI_func_liveseq_pianoroll(uint8_t param)
       }
     }
 
+     i++;
+  }
 
-    if (generic_menu != 0 && listeventnumber[generic_temp_select_menu] == i)
+  i = 0;
+
+//editor
+uint8_t new_note=0;
+ for (auto& e : data->eventsList) 
+  {
+    if (generic_menu == 2 && listeventnumber[generic_temp_select_menu] == i)
     {
-      liveseq_pianoroll_printDetailedEvent(e);
 
+        //get current value when starting editing so it does not start at zero
+        if (get_current)
+        {
+          liveseq_pianoroll_get_current_values(e);
+          old_note=e.note_in;
+          get_current = false;
+        }
 
+        note_value[generic_temp_select_menu] = temp_uint;
+        // liveseq_pianoroll_save_changed_note_on(e);
+        e.note_in = temp_uint;
+        // liveseq_pianoroll_printDetailedEvent(e);
+        find_note_off = true;
     }
+
+if ( find_note_off && generic_menu ==2 && e.event == midi::NoteOff && e.note_in == old_note)
+    {
+      e.note_in = temp_uint;
+       //liveseq_pianoroll_save_changed_note_off(e);
+      find_note_off = false;
+    }
+
     i++;
   }
 
 
+  i = 0;
 
-  if (generic_menu == 2) // edit note
+  for (auto& e : data->eventsList)
   {
-    //  note_value[generic_temp_select_menu]=temp_uint;
-    //   liveseq_pianoroll_save_changed_element(listeventnumber_on);
-
-
-    display.setCursor(280, 0);
-    display.print(temp_uint);
-
+   if (generic_menu != 0 && listeventnumber[generic_temp_select_menu] == i)
+    {
+        liveseq_pianoroll_printDetailedEvent(e);
+    }
+      i++;
   }
 
-  else if (generic_menu == 3) // edit vel
-  {
-    //nothing to do visually, will be saved in next step
+  // else if (generic_menu == 3) // edit vel
+  // {
+  //   //nothing to do visually, will be saved in next step
 
-  }
+  // }
 
-  else if (generic_menu == 4) // edit start time
-  {
+  // else if (generic_menu == 4) // edit start time
+  // {
 
-    note_ms[generic_temp_select_menu][0] = temp_int16;
-    //liveseq_pianoroll_save_changed_element(listeventnumber_on);
-  }
+  //   note_ms[generic_temp_select_menu][0] = temp_int16;
+  //   //  liveseq_pianoroll_save_changed_element(listeventnumber[generic_temp_select_menu],listeventnumber_off);
+  // }
 
 
   // i = 0;
@@ -12564,7 +12621,6 @@ void UI_func_liveseq_pianoroll(uint8_t param)
     if ((generic_menu > 0 && j == generic_temp_select_menu))
     {
       col = RED;
-
     }
     else
       col = COLOR_SYSTEXT;
@@ -14778,7 +14834,7 @@ FLASHMEM void liveseq_listeditor_save_changed_element()
   int i = 0;
   for (auto& e : data->eventsList)
   {
-    if (i == temp_int + generic_temp_select_menu) {
+    if (i == temp_int + generic_temp_select_menu && e.event == midi::NoteOn) {
 
       if (liveseq_listeditor_state == 1) //note
         e.note_in = temp_uint;
@@ -14786,7 +14842,10 @@ FLASHMEM void liveseq_listeditor_save_changed_element()
         e.note_in_velocity = temp_uint;
       else if (liveseq_listeditor_state == 3) //ms
         e.patternMs = temp_int16;
-
+    }
+    if (i == liveseq_edit_noteoff_step && e.event == midi::NoteOff) {
+      if (liveseq_listeditor_state == 1) //note 
+        e.note_in = temp_uint; //change note off according to modfied note on
     }
     i++;
   }
@@ -18135,6 +18194,8 @@ FLASHMEM void _render_misc_settings()
 
   setCursor_textGrid_small(2, 13);
   display.print(F("SKIP BOOT ANIMATION"));
+  setCursor_textGrid_small(2, 14);
+  display.print(F("INVERT COLORS (EXPERIMENTAL)"));
 
   setCursor_textGrid_small(42, 8);
   display.print(configuration.sys.screen_saver_start);
@@ -18148,6 +18209,8 @@ FLASHMEM void _render_misc_settings()
   display.print(configuration.sys.ui_reverse ? F("ON ") : F("OFF"));
   setCursor_textGrid_small(42, 13);
   display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
+  setCursor_textGrid_small(42, 14);
+  display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
 }
 
 FLASHMEM void UI_func_misc_settings(uint8_t param)
@@ -18171,7 +18234,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 6);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 7);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -18207,13 +18270,18 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
           settings_modified = 7;
         }
+        else if (generic_temp_select_menu == menu++)
+        {
+          configuration.sys.invert_colors = !configuration.sys.invert_colors;
+          settings_modified = 8;
+        }
 
       }
       else if (LCDML.BT_checkUp())
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 6);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 7);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -18248,6 +18316,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
         {
           configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
           settings_modified = 7;
+        }
+        else if (generic_temp_select_menu == menu++)
+        {
+          configuration.sys.invert_colors = !configuration.sys.invert_colors;
+          settings_modified = 8;
         }
       }
     }
@@ -18309,7 +18382,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     if (settings_modified == 5)
     {
       touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-    }
+  }
 #endif
 
     // UI reverse
@@ -18320,6 +18393,12 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     setModeColor(6);
     setCursor_textGrid_small(42, 13);
     display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
+    setModeColor(7);
+    setCursor_textGrid_small(42, 14);
+    display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
+
+    if (settings_modified == 8)
+      display.invertDisplay(!configuration.sys.invert_colors);
 
     if (settings_modified == 6)
     {
@@ -18354,7 +18433,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       settings_modified = 0;
     }
 
-  }
+}
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {

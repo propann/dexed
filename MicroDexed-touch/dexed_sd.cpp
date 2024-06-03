@@ -1827,6 +1827,7 @@ FLASHMEM bool load_sd_sys_json(void)
           configuration.sys.touch_rotation = data_json["touch_rotation"];
           configuration.sys.ui_reverse = data_json["ui_reverse"];
           configuration.sys.boot_anim_skip = data_json["boot_anim_skip"];
+          configuration.sys.invert_colors = data_json["invert_colors"];
         }
         if (data_json.containsKey("gp_speed"))
           configuration.sys.gamepad_speed = data_json["gp_speed"];
@@ -1899,6 +1900,7 @@ FLASHMEM bool save_sd_sys_json(void)
       data_json["touch_rotation"] = configuration.sys.touch_rotation;
       data_json["ui_reverse"] = configuration.sys.ui_reverse;
       data_json["boot_anim_skip"] = configuration.sys.boot_anim_skip;
+      data_json["invert_colors"] = configuration.sys.invert_colors;
       data_json["screen_saver_start"] = configuration.sys.screen_saver_start;
       data_json["screen_saver_mode"] = configuration.sys.screen_saver_mode;
       data_json["gp_speed"] = configuration.sys.gamepad_speed;

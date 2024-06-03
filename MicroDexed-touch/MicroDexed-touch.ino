@@ -975,7 +975,8 @@ void setup()
 
   // invert display colors
 #ifdef CAPACITIVE_TOUCH_DISPLAY
-  display.invertDisplay(true);
+  display.invertDisplay(1);
+  //display.invertDisplay(configuration.sys.invert_colors);
 #endif
 
 #if defined GENERIC_DISPLAY
@@ -1413,6 +1414,11 @@ void setup()
   // Setup editor helpers
   calc_val[0] = sum;
   calc_val[1] = sub;
+
+//   // invert display colors
+// #ifdef CAPACITIVE_TOUCH_DISPLAY
+//   display.invertDisplay(!configuration.sys.invert_colors);
+// #endif
 
   //SD CARD PRESET CONTENT NOT FOUND, PROVIDE POSSIBLE SOLUTIONS TO USER
   if (!SD.exists("/DEXED/0/0") || !SD.exists("/DEXED/0/99") || !SD.exists("/PERFORMANCE") || !SD.exists("/DRUMS"))

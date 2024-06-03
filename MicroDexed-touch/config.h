@@ -220,8 +220,18 @@
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
 
-#define COLOR_BACKGROUND 0x0000
-#define COLOR_SYSTEXT 0xFFFF
+ #define COLOR_BACKGROUND 0x0000
+ #define COLOR_SYSTEXT 0xFFFF
+ #define DX_DARKCYAN 0x030D 
+
+// uint16_t COLOR_BACKGROUND =0x0000;
+// uint16_t COLOR_SYSTEXT =0xFFFF;
+// uint16_t DX_DARKCYAN =0x030D;
+
+//#define COLOR_SYSTEXT 0x0000 //inverse
+//#define COLOR_BACKGROUND  0xFFFF  //inverse
+//#define DX_DARKCYAN 0x0698  //inverse
+
 #define COLOR_INSTR 0x7BBD
 #define COLOR_CHORDS 0xE2FA
 #define COLOR_ARP 0xFC80
@@ -240,8 +250,11 @@
 #define GREY2 0x52AA
 #define GREY3 0x2104
 #define GREY4 0x10A2
+
 // #define GREY4 0xC638 //only for UI test
-#define DX_DARKCYAN 0x030D
+
+
+
 
 // Display
 
@@ -967,6 +980,7 @@ typedef struct sys_s
   uint16_t gamepad_speed;     // milliseconds
   bool ui_reverse;
   bool boot_anim_skip;
+  bool invert_colors;
 } sys_t;
 
 typedef struct storage_file_s

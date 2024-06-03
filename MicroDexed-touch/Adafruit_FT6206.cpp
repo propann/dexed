@@ -35,6 +35,7 @@
 #define Wire Wire1
 #endif
 
+
  /**************************************************************************/
  /*!
      @brief  Instantiates a new FT6206 class
