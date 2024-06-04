@@ -172,6 +172,7 @@ public:
     MidiEvent &noteOff;
   };
   std::vector<std::vector<NotePair>> getNotePairs(void);
+  static void printNotePairs(std::vector<std::vector<NotePair>> notePairs);
   static void printEvent(int i, MidiEvent e);
   static const std::string getEventName(midi::MidiType event);
   static const std::string getEventSource(EventSource source);

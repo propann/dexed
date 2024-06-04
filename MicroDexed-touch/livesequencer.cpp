@@ -1017,3 +1017,19 @@ FLASHMEM std::vector<std::vector<LiveSequencer::NotePair>> LiveSequencer::getNot
   }
   return result;
 }
+
+FLASHMEM void LiveSequencer::printNotePairs(std::vector<std::vector<NotePair>> notePairs) {
+  int pattern = 0;
+  for(std::vector<LiveSequencer::NotePair> patternPairs : notePairs) {
+    DBG_LOG(printf("\n***********************\nPAIRS OF PATTERN #%i\n***********************", pattern));
+    int pair = 0;
+
+    for(LiveSequencer::NotePair p : patternPairs) {
+      DBG_LOG(printf("\nON-OFF Pair:\n"));
+      LiveSequencer::printEvent(pair, p.noteOn);
+      LiveSequencer::printEvent(pair, p.noteOff);
+      pair++;
+    }
+    pattern++;
+  }
+}
