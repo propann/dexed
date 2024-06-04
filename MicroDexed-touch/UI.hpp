@@ -12349,8 +12349,8 @@ void UI_func_liveseq_pianoroll(uint8_t param)
 
     std::vector<std::vector<LiveSequencer::NotePair>> notePairs = liveSeq.getNotePairs();
     LiveSequencer::printNotePairs(notePairs);
-    notePairs[0][0].noteOn.note_in++; // now we can edit stored midi events directly through note pair
-    notePairs[0][0].noteOff.note_in++;
+    notePairs[0][0].noteOn.note_in++;   // notePairs[patternNumber][noteNumber]: direct access to stored events in eventsList (here first pair of first pattern)
+    notePairs[0][0].noteOff.note_in++;  // now we can edit stored midi events directly through note pair
     LiveSequencer::printNotePairs(notePairs);
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
