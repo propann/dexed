@@ -12192,58 +12192,17 @@ void print_keyboard_livesequencer(int ypos, uint8_t octave)
   }
 }
 
-FLASHMEM void liveseq_pianoroll_save_changed_note_on(LiveSequencer::MidiEvent e)
-{
+// FLASHMEM void liveseq_pianoroll_save_changed_note_on(LiveSequencer::MidiEvent e)
+// {
 
-  if (generic_menu == 2 && e.event == midi::NoteOn) //note
-    e.note_in = temp_uint;
-  else if (generic_menu == 3) //vel
-    e.note_in_velocity = temp_uint;
-  else if (generic_menu == 4) //ms
-    e.patternMs = temp_int16;
+//   // if (generic_menu == 2 && e.event == midi::NoteOn) //note
+//   //   e.note_in = temp_uint;
 
-  // if (generic_menu == 2 && i == off && e.event==midi::NoteOff) {
-  //    e.note_in = temp_uint;
- // }
-
-}
-
-FLASHMEM void liveseq_pianoroll_save_changed_note_off(LiveSequencer::MidiEvent e)
-{
-  if (generic_menu == 2 && e.event == midi::NoteOff)
-    e.note_in = temp_uint;
-
-}
-
-FLASHMEM void liveseq_pianoroll_get_current_values(LiveSequencer::MidiEvent e)
-{
-  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
-  // int i = 0;
-  // for (auto& e : data->eventsList)
-  // {
-  //   if (i == in) {
-
-  if (generic_menu == 2) //note
-  {
-    temp_uint = e.note_in;
-  }
-  else if (generic_menu == 3) //vel
-    temp_uint = e.note_in_velocity;
-  else if (generic_menu == 4) //ms
-    temp_int16 = e.patternMs;
-
-  // display.setCursor(150, 0);
-  // display.print("IN:");
-  // display.print(e.note_in);
-  // display.print(" ");
-  // display.print("uint:");
-  // display.print(temp_uint);
-  // display.print(" ");
-
-  //   }
-  //   i++;
-  // }
-}
+//   if (generic_menu == 3) //vel
+//     e.note_in_velocity = temp_uint;
+//   else if (generic_menu == 4) //ms
+//     e.patternMs = temp_int16;
+// }
 
 
 FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
@@ -12315,18 +12274,24 @@ FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
   display.setTextSize(1);
 }
 
+#include "livesequencer.h"
+extern LiveSequencer liveSeq;
+
 bool get_current = false;
+
 void UI_func_liveseq_pianoroll(uint8_t param)
 {  // for Livesequencer
-
-  uint16_t listeventnumber[50];
-  uint8_t note_value[50];
-  uint8_t note_patternnumber[50][2];
-  uint16_t note_ms[50][2];
+  uint16_t listeventnumber[60];
+  uint8_t note_value[60];
+  uint8_t note_patternnumber[60][2];
+  uint16_t note_ms[60][2];
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    menuhelper_previous_val = 99;
+    menuhelper_redraw = true;
     temp_int = 5;
+    menuhelper_redraw = true;
     generic_temp_select_menu = 0;
     generic_menu = 0;
     // setup function
@@ -12339,11 +12304,17 @@ void UI_func_liveseq_pianoroll(uint8_t param)
     print_keyboard_livesequencer(DISPLAY_HEIGHT - CHAR_height, 4);
     display.setCursor(0, 0);
     display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print("LIVESEQ GRAPHIC EDITOR");
+    display.print("LIVESEQ EDITOR");
+    display.setTextColor(GREY1, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 29, 0);
+    display.print(F("EVENT"));
+    display.setCursor(CHAR_width_small * 39, 0);
+    display.print(F("/"));
+    display.setCursor(CHAR_width_small * 46, 0);
+    display.print(F("TRACK"));
 
     helptext_l(back_text);
     helptext_r("SELECT TRACK");
-
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
@@ -12351,11 +12322,17 @@ void UI_func_liveseq_pianoroll(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
+        menuhelper_previous_val = temp_int;
         temp_int = constrain(temp_int + 1, 0, 5);
+        if (menuhelper_previous_val != temp_int)
+          menuhelper_redraw = true;
       }
       else if (LCDML.BT_checkUp())
       {
+        menuhelper_previous_val = temp_int;
         temp_int = constrain(temp_int - 1, 0, 5);
+        if (menuhelper_previous_val != temp_int)
+          menuhelper_redraw = true;
       }
     }
     else if (generic_menu == 1) // select note
@@ -12369,7 +12346,6 @@ void UI_func_liveseq_pianoroll(uint8_t param)
         generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 50);
       }
     }
-
     else if (generic_menu == 2) // edit note
     {
       if (LCDML.BT_checkDown())
@@ -12380,9 +12356,7 @@ void UI_func_liveseq_pianoroll(uint8_t param)
       {
         temp_uint = constrain(temp_uint - 1, 1, 127);
       }
-
     }
-
     else if (generic_menu == 3) // edit vel
     {
       if (LCDML.BT_checkDown())
@@ -12394,7 +12368,6 @@ void UI_func_liveseq_pianoroll(uint8_t param)
         temp_uint = constrain(temp_uint - 1, 0, 127);
       }
     }
-
     else if (generic_menu == 4) // edit start time
     {
       if (LCDML.BT_checkDown())
@@ -12406,7 +12379,6 @@ void UI_func_liveseq_pianoroll(uint8_t param)
         temp_int16 = constrain(temp_int16 - ENCODER[ENC_R].speed(), 0, 7000);
       }
     }
-
 
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
@@ -12424,227 +12396,220 @@ void UI_func_liveseq_pianoroll(uint8_t param)
       else  if (generic_menu == 2)
       {
         generic_menu = 3;
+        get_current = true;
         helptext_r("EDIT VEL");
       }
       else  if (generic_menu == 3)
       {
         generic_menu = 4;
+        get_current = true;
         helptext_r("EDIT TIME");
       }
       else  if (generic_menu == 4)
       {
-
         display.console = true;
         display.fillRect(CHAR_width_small * 6, CHAR_height_small * 29, 204, 8, COLOR_BACKGROUND);
         generic_menu = 0;
         helptext_r("SELECT TRACK");
       }
     }
-  }
-  uint8_t xoff = 33;
-  float pat_len = (DISPLAY_WIDTH - xoff) / 4;
-  float xscaler = 33;
 
-  //if (generic_menu==0){
-  display.console = true;
-  display.fillRect(xoff, CHAR_height + 5, DISPLAY_WIDTH - xoff, DISPLAY_HEIGHT - 2 * CHAR_height - 7, GREY4);
-  display.setCursor(312, 0);
-  display.print(temp_int + 1);
+    std::vector<std::vector<LiveSequencer::NotePair>> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
 
-  for (uint8_t j = 0; j < 4; j++)
-  {
-    display.drawLine(xoff + j * pat_len, CHAR_height + 6, xoff + j * pat_len, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY2);
+    uint8_t xoff = 33;
+    float pat_len = (DISPLAY_WIDTH - xoff) / 4;
+    float xscaler = 33;
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 35, 0);
+    print_formatted_number(generic_temp_select_menu + 1, 3);//event number
+    display.setCursor(CHAR_width_small * 52, 0);
+    display.print(temp_int + 1); //track number
 
-    for (uint8_t k = 1; k < 16; k++)
-      display.drawLine(xoff + j * pat_len + pat_len / 16 * k, CHAR_height + 6, xoff + j * pat_len + pat_len / 16 * k, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY3);
 
-  }
-  display.drawLine(xoff + 4 * pat_len, CHAR_height + 6, xoff + 4 * pat_len, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY2);
+    if ((generic_menu == 0 && menuhelper_redraw) || generic_menu == 2 || generic_menu == 4)
+    {
+      menuhelper_redraw = false;
 
-  //}
+      display.console = true;
+      display.fillRect(xoff, CHAR_height + 5, DISPLAY_WIDTH - xoff, DISPLAY_HEIGHT - 2 * CHAR_height - 7, GREY4);
 
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
-
-  // find lowest note
-  uint8_t lowest_note = 127;
-  int notes_display_shift = 0;
-
-  int i = 0;
-  for (auto& e : data->eventsList)
-  {
-    if (e.track == temp_int && e.event == midi::NoteOn)
-      if (e.note_in < lowest_note && e.note_in> 0)
+      for (uint8_t j = 0; j < 4; j++)
       {
-        lowest_note = e.note_in;
+        display.drawLine(xoff + j * pat_len, CHAR_height + 6, xoff + j * pat_len, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY2);
+
+        for (uint8_t k = 1; k < 16; k++)
+          display.drawLine(xoff + j * pat_len + pat_len / 16 * k, CHAR_height + 6, xoff + j * pat_len + pat_len / 16 * k, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY3);
       }
-    i++;
-  }
-
-  uint16_t count1 = 0, temp1, temp2, temp3;
-
-
-  if (lowest_note > 120)
-    lowest_note = 24;
-  notes_display_shift = lowest_note % 12;
-
-  display.console = true;
-  i = 0;
-  for (auto& e : data->eventsList) //fill array with all noteOns
-  {
-    if (e.track == temp_int && e.event == midi::NoteOn)
-    {
-      listeventnumber[count1] = i;
-      note_value[count1] = e.note_in;
-      note_ms[count1][0] = e.patternMs;
-      note_ms[count1][1] = 9999;
-      note_patternnumber[count1][0] = e.patternNumber;
-      count1++;
+      display.drawLine(xoff + 4 * pat_len, CHAR_height + 6, xoff + 4 * pat_len, DISPLAY_HEIGHT - 1 * CHAR_height - 4, GREY2);
     }
-    i++;
-  }
 
-  i = 0;
+    LiveSequencer::LiveSeqData* data = liveSeq.getData();
 
-  bool find_note_off = false;
-  uint8_t old_note = 0;
+    // find lowest note
+    uint8_t lowest_note = 127;
+    int notes_display_shift = 0;
 
-  for (auto& e : data->eventsList) // catch matching noteOffs
-  {
-    if (e.track == temp_int && e.event == midi::NoteOff)
+    int i = 0;
+    for (auto& e : data->eventsList)
     {
-      temp1 = e.note_in;
-      temp2 = e.patternMs;
-      temp3 = e.patternNumber;
-
-      for (uint8_t j = 0; j < 48; j++)
-      {
-        if (note_value[j] == temp1 && note_ms[j][1] == 9999)
+      if (e.track == temp_int && e.event == midi::NoteOn)
+        if (e.note_in < lowest_note && e.note_in> 0)
         {
-          note_ms[j][1] = temp2;
-          note_patternnumber[j][1] = temp3;
-          j = 99;
+          lowest_note = e.note_in;
+        }
+      i++;
+    }
+
+    uint16_t eventcount = 0, temp1, temp2, temp3;
+
+    if (lowest_note > 120)
+      lowest_note = 24;
+    notes_display_shift = lowest_note % 12;
+
+    i = 0;
+    for (auto& e : data->eventsList) //fill array with all noteOns
+    {
+      if (e.track == temp_int && e.event == midi::NoteOn)
+      {
+        listeventnumber[eventcount] = i;
+        note_value[eventcount] = e.note_in;
+        note_ms[eventcount][0] = e.patternMs;
+        note_ms[eventcount][1] = 9999;
+        note_patternnumber[eventcount][0] = e.patternNumber;
+        eventcount++;
+      }
+
+      if (e.track == temp_int && e.event == midi::NoteOff)
+      {
+        temp1 = e.note_in;
+        temp2 = e.patternMs;
+        temp3 = e.patternNumber;
+
+        for (uint8_t j = 0; j < 48; j++)
+        {
+          if (note_value[j] == temp1 && note_ms[j][1] == 9999)
+          {
+            note_ms[j][1] = temp2;
+            note_patternnumber[j][1] = temp3;
+            j = 99;
+          }
         }
       }
+      i++;
     }
 
-    i++;
-  }
-
-  i = 0;
-
-  //editor
-  uint8_t new_note = 0;
-  for (auto& e : data->eventsList)
-  {
-    if (generic_menu == 2 && listeventnumber[generic_temp_select_menu] == i)
+    i = 0;
+    for (auto& e : data->eventsList)  //editor
     {
 
-      //get current value when starting editing so it does not start at zero
-      if (get_current)
+      if (generic_menu == 2 && listeventnumber[generic_temp_select_menu] == i)
       {
-        liveseq_pianoroll_get_current_values(e);
-        old_note = e.note_in;
-        get_current = false;
+        //get current value when starting editing so it does not start at zero
+        if (get_current)
+        {
+          temp_uint = notePairs[0][generic_temp_select_menu].noteOn.note_in;
+          get_current = false;
+        }
+
+        note_value[generic_temp_select_menu] = temp_uint;
+        notePairs[0][generic_temp_select_menu].noteOn.note_in = temp_uint;
+        notePairs[0][generic_temp_select_menu].noteOff.note_in = temp_uint;
+      }
+      else if (generic_menu == 3 && listeventnumber[generic_temp_select_menu] == i) // edit velocity
+      {
+        if (get_current)
+        {
+          temp_uint = e.note_in_velocity;
+          get_current = false;
+        }
+        //nothing to do visually
+        e.note_in_velocity = temp_uint;
       }
 
-      note_value[generic_temp_select_menu] = temp_uint;
-      // liveseq_pianoroll_save_changed_note_on(e);
-      e.note_in = temp_uint;
-      // liveseq_pianoroll_printDetailedEvent(e);
-      find_note_off = true;
-    }
-
-    if (find_note_off && generic_menu == 2 && e.event == midi::NoteOff && e.note_in == old_note)
-    {
-      e.note_in = temp_uint;
-      //liveseq_pianoroll_save_changed_note_off(e);
-      find_note_off = false;
-    }
-
-    i++;
-  }
-
-
-  i = 0;
-
-  for (auto& e : data->eventsList)
-  {
-    if (generic_menu != 0 && listeventnumber[generic_temp_select_menu] == i)
-    {
-      liveseq_pianoroll_printDetailedEvent(e);
-    }
-    i++;
-  }
-
-  // else if (generic_menu == 3) // edit vel
-  // {
-  //   //nothing to do visually, will be saved in next step
-
-  // }
-
-  // else if (generic_menu == 4) // edit start time
-  // {
-
-  //   note_ms[generic_temp_select_menu][0] = temp_int16;
-  //   //  liveseq_pianoroll_save_changed_element(listeventnumber[generic_temp_select_menu],listeventnumber_off);
-  // }
-
-
-  // i = 0;
-
-  //   for (auto& e : data->eventsList)
-  //   {
-  // if (generic_menu != 0 && listeventnumber[generic_temp_select_menu]==i)
-  //        liveseq_pianoroll_printDetailedEvent( generic_temp_select_menu, e);
-  //     i++;
-  //   }
-
-  uint8_t from = 0;
-  uint8_t to = 48;
-
-  // if in edit more, redraw just the current note, +-1 note
-
-  //  if (generic_menu >1)
-  // {
-  // if (generic_temp_select_menu>0)
-  // from=generic_temp_select_menu-1;
-  // else
-  // from =0;
-
-  // to =generic_temp_select_menu+1;
-
-  //}
-
-  for (uint8_t j = from; j < to; j++)
-  {
-    uint16_t col;
-    if ((generic_menu > 0 && j == generic_temp_select_menu))
-    {
-      col = RED;
-    }
-    else
-      col = COLOR_SYSTEXT;
-
-    if (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note)) >= CHAR_height + 6 &&
-      (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note)) + 5) < DISPLAY_HEIGHT - 1 * CHAR_height - 4)
-    {
-      if (note_ms[j][1] != 9999 && note_value[j] > 0)
+      else if (generic_menu == 4 && listeventnumber[generic_temp_select_menu] == i) // edit start time
       {
-        display.console = true;
-        display.fillRect(note_patternnumber[j][0] * pat_len + xoff + note_ms[j][0] / xscaler,
-          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note))),
-          (note_patternnumber[j][1] - note_patternnumber[j][0]) * pat_len + (note_ms[j][1] / xscaler - note_ms[j][0] / xscaler), 5, col);
+        if (get_current)
+        {
+          temp_int16 = e.patternMs;
+          get_current = false;
+        }
+        note_ms[generic_temp_select_menu][0] = temp_int16;
+        e.patternMs = temp_int16;
       }
-      else //no note-off for note-on found, draw just note start
-      {
-        if ((generic_menu == 1 && j == generic_temp_select_menu))
-          col = RED;
-        else
-          col = GREEN;
-        display.console = true;
-        display.fillRect(note_patternnumber[j][0] * pat_len + xoff + note_ms[j][0] / xscaler,
-          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note))), 5, 5, col);
 
+      if (generic_menu != 0 && listeventnumber[generic_temp_select_menu] == i)
+      {
+        liveseq_pianoroll_printDetailedEvent(e);
+      }
+
+
+      i++;
+    }
+
+    if (eventcount < 3)
+      eventcount = 0;
+
+
+    display.setCursor(CHAR_width_small * 41, 0);
+    print_formatted_number(eventcount, 3);
+
+    uint8_t from = 0;
+    uint8_t to = eventcount;
+
+    // if in edit more, redraw just the current note, +-1 note
+
+    //  if (generic_menu >1)
+    // {
+    // if (generic_temp_select_menu>0)
+    // from=generic_temp_select_menu-1;
+    // else
+    // from =0;
+
+    // to =generic_temp_select_menu+1;
+
+    //}
+
+    for (uint8_t j = from; j < to; j++)
+    {
+      uint16_t col;
+      if ((generic_menu > 0 && j == generic_temp_select_menu))
+      {
+        col = RED;
+      }
+      else
+        col = COLOR_SYSTEXT;
+
+      if (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (note_value[j] - lowest_note)) >= CHAR_height + 6)
+
+        //    (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * notePairs[0][j].noteOn.note_in - lowest_note) + 5) < DISPLAY_HEIGHT - 1 * CHAR_height - 4)
+      {
+
+        // display.fillRect(note_patternnumber[j][0] * pat_len + xoff + note_ms[j][0] / xscaler,
+        //              (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (  notePairs[0][j].noteOn.note_in   - lowest_note))),
+        //              (note_patternnumber[j][1] - note_patternnumber[j][0]) * pat_len + (  notePairs[0][j].noteOff.note_in     / xscaler - note_ms[j][0] / xscaler), 5, col);
+
+        if (eventcount > 0 && eventcount < 58)
+        {
+
+          if (note_ms[j][1] != 9999 && notePairs[0][j].noteOn.note_in > 0)
+          {
+            display.console = true;
+            display.fillRect(note_patternnumber[j][0] * pat_len + xoff + note_ms[j][0] / xscaler,
+              (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[0][j].noteOn.note_in - lowest_note))),
+              (note_patternnumber[j][1] - note_patternnumber[j][0]) * pat_len + (note_ms[j][1] / xscaler - note_ms[j][0] / xscaler), 5, col);
+          }
+          else //no note-off for note-on found, draw just note start
+          {
+            if ((generic_menu == 1 && j == generic_temp_select_menu))
+              col = RED;
+            else
+              col = GREEN;
+            display.console = true;
+            display.fillRect(note_patternnumber[j][0] * pat_len + xoff + notePairs[0][j].noteOn.note_in / xscaler,
+              (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[0][j].noteOn.note_in - lowest_note))), 5, 5, col);
+
+          }
+        }
       }
     }
   }
@@ -14972,12 +14937,13 @@ FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
     }
     if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     {
-      ;
-      liveseq_listeditor_save_changed_element();
-      liveseq_listeditor_state = 0;
-      draw_button_on_grid(13, 26, "EDIT", "STEP", 1);
-      liveseq_listeditor_printEventGrid();
-      helptext_r("MOVE Y");
+
+      liveseq_listeditor_edit_element();
+      // liveseq_listeditor_save_changed_element();
+      // liveseq_listeditor_state = 0;
+      // draw_button_on_grid(13, 26, "EDIT", "STEP", 1);
+      // liveseq_listeditor_printEventGrid();
+      // helptext_r("MOVE Y");
     }
 
     if (liveseq_listeditor_state != 0)
@@ -22306,7 +22272,7 @@ FLASHMEM void UI_func_format_flash(uint8_t param)
     {
 
       helptext_r("FORMATTING");
-       display.setTextSize(2);
+      display.setTextSize(2);
       uint8_t screenline = 0;
       setCursor_textGrid(1, 1);
       display.setTextColor(COLOR_BACKGROUND, RED);
@@ -22489,7 +22455,7 @@ FLASHMEM void UI_func_format_flash(uint8_t param)
       print_flash_stats();
       display.console = true;
       display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH - CHAR_width_small * 2, CHAR_height_small * 16, COLOR_BACKGROUND);
-       display.setTextSize(2);
+      display.setTextSize(2);
       helptext_r("FINISHED");
       helptext_l(back_text);
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -22611,7 +22577,7 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-  }
+}
 
 void sub_touchscreen_test_page_init()
 {
@@ -22936,7 +22902,7 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
 #ifdef DEBUG
       LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
-  }
+    }
   }
   else
     return false;
@@ -22992,7 +22958,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-    }
+      }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -23012,7 +22978,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #endif
     }
   }
-  }
+}
 
 FLASHMEM char* basename(const char* filename)
 {
@@ -23071,7 +23037,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     case 'G':
       offset = 7;
       break;
-  }
+    }
 
     if (root_note[ms.MatchLength - 2 - 1] == '#')
     {
@@ -23086,7 +23052,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
 
     // recalculate low and high notes for all zones
     calc_low_high(preset_number);
-}
+  }
   else
   {
 #ifdef DEBUG

@@ -18,6 +18,7 @@ extern uint8_t selected_instance_id; // dexed
 extern void handleNoteOnInput(byte, byte, byte, byte);
 extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
+extern void handleAfterTouch(byte, byte);
 extern void UI_func_drums(uint8_t param);
 extern void UI_func_voice_select(uint8_t param);
 extern void UI_func_microsynth(uint8_t param);
@@ -51,7 +52,7 @@ FLASHMEM LiveSequencer::LiveSeqData* LiveSequencer::getData(void) {
   return &data;
 }
 
-FLASHMEM const std::string LiveSequencer::getEventName(midi::MidiType event) const {
+FLASHMEM const std::string LiveSequencer::getEventName(midi::MidiType event) {
   switch(event) {
   case midi::NoteOn:
     return "NoteOn";
@@ -66,7 +67,7 @@ FLASHMEM const std::string LiveSequencer::getEventName(midi::MidiType event) con
   }
 }
 
-FLASHMEM const std::string LiveSequencer::getEventSource(EventSource source) const {
+FLASHMEM const std::string LiveSequencer::getEventSource(EventSource source) {
   switch(source) {
   case EVENT_PATTERN:
     return "PATT";
@@ -239,6 +240,8 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
               // ignore all other types
               break;
 
+            // TODO: record aftertouch
+
             case midi::NoteOn:
               static constexpr int ROUND_UP_MS = 100;
               // round up events just at end probably meant to be played at start
@@ -286,6 +289,10 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
       } else {
         const midi::Channel ch = data.tracks[data.activeTrack].channel;
         switch(event) {
+        case midi::AfterTouchChannel:
+          handleAfterTouch(ch, note);
+          break;
+
         case midi::NoteOn:
           handleNoteOnInput(ch, note, velocityActive, 0);
           if(data.lastPlayedNote != note) {
@@ -980,10 +987,77 @@ FLASHMEM void LiveSequencer::updateInstrumentChannels(void) {
 }
 
 FLASHMEM void LiveSequencer::cleanEvents(void) {
-    if(data.eventsList.size() > 0) {
-      // remove all invalidated notes
-      data.eventsList.remove_if([](MidiEvent &e) { return e.event == midi::InvalidType; });
-        data.eventsList.sort(sortMidiEvent);
-       
+  if(data.eventsList.size() > 0) {
+    // remove all invalidated notes
+    data.eventsList.remove_if([](MidiEvent &e) { return e.event == midi::InvalidType; });
+    data.eventsList.sort(sortMidiEvent);
+  }
+}
+
+FLASHMEM std::vector<std::vector<LiveSequencer::NotePair>> LiveSequencer::getNotePairs(void) {
+  std::vector<std::vector<LiveSequencer::NotePair>> result;
+  result.resize(data.numberOfBars);
+  for(std::list<MidiEvent>::iterator it = data.eventsList.begin(); it != data.eventsList.end(); it++) {
+    if(it->event == midi::NoteOn) {
+      for(std::list<MidiEvent>::iterator itOff = it; itOff != data.eventsList.end(); itOff++) {
+        const bool sameNote = itOff->note_in == it->note_in;
+        const bool sameTrack = itOff->track == it->track;
+      //  const bool sameLayer = itOff->layer == it->layer;
+        const bool isNoteOff = itOff->event == midi::NoteOff;
+     //   if(sameTrack && sameLayer && sameNote && isNoteOff) {
+          if(sameTrack  && sameNote && isNoteOff) {
+          NotePair p = {
+            .noteOn = *it,
+            .noteOff = *itOff
+          };
+          result[it->patternNumber].emplace_back(p);
+          break;
+        }
       }
     }
+  }
+  return result;
+}
+
+FLASHMEM std::vector<std::vector<LiveSequencer::NotePair>> LiveSequencer::getNotePairsFromTrack(uint8_t trk_filter) {
+  std::vector<std::vector<LiveSequencer::NotePair>> result;
+ // result.resize(data.numberOfBars);
+  result.resize(1);
+  for(std::list<MidiEvent>::iterator it = data.eventsList.begin(); it != data.eventsList.end(); it++) {
+    if(it->event == midi::NoteOn && it->track == trk_filter) {
+      for(std::list<MidiEvent>::iterator itOff = it; itOff != data.eventsList.end(); itOff++) {
+        const bool sameNote = itOff->note_in == it->note_in;
+        const bool sameTrack = itOff->track == it->track;
+      //  const bool sameLayer = itOff->layer == it->layer;
+        const bool isNoteOff = itOff->event == midi::NoteOff;
+     //   if(sameTrack && sameLayer && sameNote && isNoteOff) {
+          if(sameTrack  && sameNote && isNoteOff) {
+          NotePair p = {
+            .noteOn = *it,
+            .noteOff = *itOff
+          };
+         // result[it->patternNumber].emplace_back(p);
+          result[0].emplace_back(p);
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+FLASHMEM void LiveSequencer::printNotePairs(std::vector<std::vector<NotePair>> notePairs) {
+  int pattern = 0;
+  for(std::vector<LiveSequencer::NotePair> patternPairs : notePairs) {
+    DBG_LOG(printf("\n***********************\nPAIRS OF PATTERN #%i\n***********************", pattern));
+    int pair = 0;
+
+    for(LiveSequencer::NotePair p : patternPairs) {
+      DBG_LOG(printf("\nON-OFF Pair:\n"));
+      LiveSequencer::printEvent(pair, p.noteOn);
+      LiveSequencer::printEvent(pair, p.noteOff);
+      pair++;
+    }
+    pattern++;
+  }
+}
