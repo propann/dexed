@@ -12315,6 +12315,9 @@ FLASHMEM void liveseq_pianoroll_printDetailedEvent(LiveSequencer::MidiEvent e) {
   display.setTextSize(1);
 }
 
+#include "livesequencer.h"
+extern LiveSequencer liveSeq;
+
  bool get_current = false;
 void UI_func_liveseq_pianoroll(uint8_t param)
 {  // for Livesequencer
@@ -12344,6 +12347,20 @@ void UI_func_liveseq_pianoroll(uint8_t param)
     helptext_l(back_text);
     helptext_r("SELECT TRACK");
 
+    std::vector<std::vector<LiveSequencer::NotePair>> notePairs = liveSeq.getNotePairs();
+    int pattern = 0;
+    for(std::vector<LiveSequencer::NotePair> patternPairs : notePairs) {
+      DBG_LOG(printf("\n***********************\nPAIRS OF PATTERN #%i\n***********************", pattern));
+      int pair = 0;
+
+      for(LiveSequencer::NotePair p : patternPairs) {
+        DBG_LOG(printf("\nON-OFF Pair:\n"));
+        LiveSequencer::printEvent(pair, p.noteOn);
+        LiveSequencer::printEvent(pair, p.noteOff);
+        pair++;
+      }
+      pattern++;
+    }
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {

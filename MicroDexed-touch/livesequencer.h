@@ -167,14 +167,22 @@ public:
   void cleanEvents(void);
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
+  struct NotePair {
+    MidiEvent &noteOn;
+    MidiEvent &noteOff;
+  };
+  std::vector<std::vector<NotePair>> getNotePairs(void);
+  static void printEvent(int i, MidiEvent e);
+  static const std::string getEventName(midi::MidiType event);
+  static const std::string getEventSource(EventSource source);
+
 private:
   LiveSeqData data;
   std::set<uint8_t> pressedArpKeys;
   std::vector<ArpNote> activeArps;
   std::list<MidiEvent>::iterator playIterator;
 
-  const std::string getEventName(midi::MidiType event) const;
-  const std::string getEventSource(EventSource source) const;
+
 
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);
@@ -183,7 +191,6 @@ private:
   void addPendingNotes(void);
   void refreshSongLength(void);
   void applySongStartLayerMutes(void);
-  void printEvent(int i, MidiEvent e);
   void printEvents();
   void loadNextEvent(int timeMs);
   void allTrackNotesOff(const uint8_t track);
