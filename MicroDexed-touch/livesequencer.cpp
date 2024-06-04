@@ -80,7 +80,6 @@ FLASHMEM const std::string LiveSequencer::getEventSource(EventSource source) {
 
 FLASHMEM void LiveSequencer::start(void) {
   handleStart();
-  getNotePairs();
 }
 
 FLASHMEM void LiveSequencer::stop(void) {
@@ -242,7 +241,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
               break;
 
             // TODO: record aftertouch
-            
+
             case midi::NoteOn:
               static constexpr int ROUND_UP_MS = 100;
               // round up events just at end probably meant to be played at start
