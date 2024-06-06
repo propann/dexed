@@ -1687,10 +1687,11 @@ FLASHMEM void handle_touchscreen_liveseq_listeditor()
   }
 }
 
-extern bool get_current;
+extern bool liveseq_pianoroll_get_current;
 extern void liveseq_pianoroll_draw_graphics();
 extern uint8_t generic_menu;
-extern bool fullrefresh_values_liveseq_pianoroll;
+extern bool liveseq_pianoroll_fullrefresh_values;
+
 FLASHMEM void handle_touchscreen_liveseq_pianoroll()
 {
   if (numTouchPoints > 0)
@@ -1763,9 +1764,9 @@ if (check_button_on_grid(0, 21)) // track
     }
 
       if (generic_menu>0 && generic_menu < 6)
-         get_current = true;
+         liveseq_pianoroll_get_current = true;
 
-    fullrefresh_values_liveseq_pianoroll=true;
+    liveseq_pianoroll_fullrefresh_values=true;
    liveseq_pianoroll_draw_graphics();
   }
 }
