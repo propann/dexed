@@ -41,6 +41,9 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
       },
       [ this, track ] (auto *b) { // clickedHandler
         instance->onTrackButtonPressed(track);
+      },
+      [ this, track ] (auto *b) { // longPressHandler
+        DBG_LOG(printf("LONG PRESS!\n"));
       }));
   }
 

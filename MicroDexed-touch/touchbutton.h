@@ -5,6 +5,9 @@
 #include <string>
 #include <functional>
 #include "config.h"
+#include "TeensyTimerTool.h"
+
+using namespace TeensyTimerTool;
 
 struct ColorCombo {
   uint16_t text;
@@ -15,8 +18,7 @@ class TouchButton {
 public:
   enum PressedState {
     NOT_PRESSED = 0,
-    PRESSED,
-    //LONGPRESSED,
+    PRESSED
   };
 
   enum Color {
@@ -31,7 +33,7 @@ public:
   static constexpr uint16_t BUTTON_SIZE_X = 50;
   static constexpr uint16_t BUTTON_SIZE_Y = 36;
 
-  TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){});
+  TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){}, std::function<void(TouchButton *b)> longPressed = [](TouchButton *b){});
   void processPressed();
   void drawNow();
   void draw(const std::string label, const std::string sub, Color Color);
@@ -49,7 +51,9 @@ private:
   uint16_t y;
   std::function<void(TouchButton*)> drawHandler{};
   std::function<void(TouchButton*)> clickedHandler{};
+  std::function<void(TouchButton*)> longPressedHandler{};
   PressedState pressedState;
+
 };
 
 #endif //TOUCHBUTTON_H

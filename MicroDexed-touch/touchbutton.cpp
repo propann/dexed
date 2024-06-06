@@ -14,9 +14,10 @@ static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { COLOR_SYSTEXT, COLOR_BACKGROUND } // COLOR_LABEL
 };
 
-FLASHMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
+FLASHMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked, std::function<void(TouchButton*)> longPressed) : x(x_coord), y(y_coord), 
   drawHandler{draw},
   clickedHandler{clicked},
+  longPressedHandler{longPressed},
   pressedState(NOT_PRESSED) {
 }
 
@@ -98,14 +99,28 @@ FLASHMEM void TouchButton::processPressed() {
   case NOT_PRESSED:
     if(isInArea) {
       pressedState = PRESSED;
-      clickedHandler(this);
+      if(longPressedHandler) {
+        DBG_LOG(printf("go for it\n"));
+        OneShotTimer longPressTimer(TCK);
+        longPressTimer.begin([this] {
+          DBG_LOG(printf("...1s\n"));
+          //if(pressedState == PRESSED) {
+            longPressedHandler(this);
+            pressedState = NOT_PRESSED;
+          //}
+        });
+        longPressTimer.trigger(10000);
+      }
     }
     break;
 
   case PRESSED:
     if(isInArea == false) {
+      clickedHandler(this);
       pressedState = NOT_PRESSED;
     }
+    break;
+
     break;
   }
 }
