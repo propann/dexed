@@ -69,6 +69,7 @@ private:
   };
 
   std::vector<TouchButton*> toolsPages[TOOLS_NUM];
+  std::vector<TouchButton*> trackButtons;
 
   enum GuiUpdates : uint16_t {
     drawTopButtons = (1 << 0),
@@ -86,7 +87,7 @@ private:
   static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
   static constexpr uint8_t BAR_HEIGHT = 3;
   static void openScreen(LCDML_FuncPtr_pu8 screen, uint8_t p_param = 0);
-
+  void onTrackButtonPressed(uint8_t track);
   void clearBottomArea(void);
   void selectTools(Tools tools, TouchButton *toolsButton);
   bool isModeToolActive(void);
