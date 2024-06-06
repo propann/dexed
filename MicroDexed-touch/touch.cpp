@@ -1687,3 +1687,87 @@ FLASHMEM void handle_touchscreen_liveseq_listeditor()
   }
 }
 
+extern bool get_current;
+extern void liveseq_pianoroll_draw_graphics();
+extern uint8_t generic_menu;
+extern bool fullrefresh_values_liveseq_pianoroll;
+FLASHMEM void handle_touchscreen_liveseq_pianoroll()
+{
+  if (numTouchPoints > 0)
+  {
+    if (check_button_on_grid(0, 26)) // back button
+    {
+      // LCDML.FUNC_goBackToMenu(); 
+      LCDML.BT_quit();
+    }
+
+if (check_button_on_grid(0, 21)) // track
+    {
+      if (generic_menu!=0)
+    generic_menu = 0;
+    else
+    generic_menu=99;
+    }
+
+    if (check_button_on_grid(8, 26)) // select note
+    {
+       if (generic_menu!=1)
+    generic_menu = 1;
+    else
+    generic_menu=99;
+    }
+    if (check_button_on_grid(16, 26)) // edit note
+    {
+       if (generic_menu!=2)
+    generic_menu = 2;
+    else
+    generic_menu=99;
+    }
+    if (check_button_on_grid(24,26)) //edit velocity
+    {
+       if (generic_menu!=3)
+    generic_menu = 3;
+    else
+    generic_menu=99;
+    }
+    if (check_button_on_grid(32,26)) // edit start
+    {
+       if (generic_menu!=4)
+    generic_menu = 4;
+    else
+    generic_menu=99;
+    }
+    if (check_button_on_grid(40,26)) // edit end
+    {
+       if (generic_menu!=5)
+    generic_menu = 5;
+    else
+    generic_menu=99;
+    }
+
+ if (check_button_on_grid(8,21)) // scroll up&down
+    {
+       if (generic_menu!=20)
+    generic_menu = 20;
+    else
+    generic_menu=99;
+    }
+
+    if (check_button_on_grid(48, 26)) // delete note
+    {
+
+      if (generic_menu == 1 || generic_menu == 2|| generic_menu == 3 || generic_menu == 4 || generic_menu == 5)
+    generic_menu = 21;
+    else
+    generic_menu=99;
+    }
+
+      if (generic_menu>0 && generic_menu < 6)
+         get_current = true;
+
+    fullrefresh_values_liveseq_pianoroll=true;
+   liveseq_pianoroll_draw_graphics();
+  }
+}
+
+
