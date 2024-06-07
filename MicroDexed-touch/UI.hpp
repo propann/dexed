@@ -12202,17 +12202,21 @@ FLASHMEM void print_keyboard_livesequencer(int ypos, uint8_t octave)
 extern LiveSequencer liveSeq;
 bool liveseq_pianoroll_get_current = false;
 bool liveseq_pianoroll_fullrefresh_values = false;
+int liveseq_pianoroll_x_scroll = 0;
 int liveseq_pianoroll_y_scroll = 0;
 uint8_t liveseq_pianoroll_eventcount = 0;
 
 void buttons_liveseq_pianoroll();
 
+int xscaler = 33;
+uint8_t xoff = 33;
+
 FLASHMEM  void liveseq_pianoroll_draw_graphics()
 {
   std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
-  uint8_t xoff = 33;
-  float pat_len = (DISPLAY_WIDTH - xoff) / 4;
-  float xscaler = 33;
+
+  float pat_len = (DISPLAY_WIDTH - xoff) / 4 * 33 / xscaler;
+
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 35, 0);
   if (liveseq_pianoroll_eventcount != 0)
@@ -12230,12 +12234,17 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
 
     for (uint8_t j = 0; j < 4; j++)
     {
-      display.drawLine(xoff + j * pat_len, CHAR_height, xoff + j * pat_len, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY2);
+      if (liveseq_pianoroll_x_scroll + xoff + j * pat_len >= xoff)
+        display.drawLine(liveseq_pianoroll_x_scroll + xoff + j * pat_len, CHAR_height, liveseq_pianoroll_x_scroll + xoff + j * pat_len, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY1);
 
       for (uint8_t k = 1; k < 16; k++)
-        display.drawLine(xoff + j * pat_len + pat_len / 16 * k, CHAR_height, xoff + j * pat_len + pat_len / 16 * k, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY3);
+      {
+        if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + pat_len / 16 * k >= xoff)
+          display.drawLine(liveseq_pianoroll_x_scroll + xoff + j * pat_len + pat_len / 16 * k, CHAR_height, liveseq_pianoroll_x_scroll + xoff + j * pat_len + pat_len / 16 * k, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY2);
+      }
     }
-    display.drawLine(xoff + 4 * pat_len, CHAR_height, xoff + 4 * pat_len, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY2);
+    if (liveseq_pianoroll_x_scroll + xoff + 4 * pat_len >= xoff)
+      display.drawLine(liveseq_pianoroll_x_scroll + xoff + 4 * pat_len, CHAR_height, liveseq_pianoroll_x_scroll + xoff + 4 * pat_len, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY1);
 
   }
 
@@ -12336,12 +12345,15 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
       col = COLOR_SYSTEXT;
 
     if (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note)) >= CHAR_height &&
-      DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note)) < DISPLAY_HEIGHT - 5 * CHAR_height)
+      DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note)) < DISPLAY_HEIGHT - 5 * CHAR_height &&
+      liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler >= xoff &&
+      liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler < DISPLAY_WIDTH - 5
+      )
     {
       if (notePairs[j].noteOff.note_in > 0 && notePairs[j].noteOn.note_in > 0)
       {
         display.console = true;
-        display.fillRect(notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler,
+        display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler,
           (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note))),
           (notePairs[j].noteOff.patternNumber - notePairs[j].noteOn.patternNumber) * pat_len + (notePairs[j].noteOff.patternMs / xscaler - notePairs[j].noteOn.patternMs / xscaler), 5, col);
       }
@@ -12352,7 +12364,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
         else
           col = GREEN;
         display.console = true;
-        display.fillRect(notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.note_in / xscaler,
+        display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.note_in / xscaler,
           (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note))), 5, 5, col);
       }
     }
@@ -12390,14 +12402,26 @@ FLASHMEM  void buttons_liveseq_pianoroll()
   else if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(8, 21, "SCROLL", "UP/DWN", 1);
 
+  if (generic_menu == 23) // scroll right/left
+  {
+    draw_button_on_grid(16, 21, "SCROLL", itoa(liveseq_pianoroll_x_scroll, buf, 10), 2);
+  }
+  else
+    if (liveseq_pianoroll_fullrefresh_values)
+      draw_button_on_grid(16, 21, "SCROLL", "R/L", 1);
+
+  if (generic_menu == 22) // zoom x
+  {
+    draw_button_on_grid(24, 21, "ZOOM", itoa(33 - xscaler, buf, 10), 2);
+  }
+  else
+    if (liveseq_pianoroll_fullrefresh_values)
+      draw_button_on_grid(24, 21, "ZOOM", "X", 1);
+
   if (liveseq_pianoroll_fullrefresh_values)
-    draw_button_on_grid(16, 21, "ZOOM", "X", 0);
+    draw_button_on_grid(32, 21, "LAYER", "1-4", 0);
   if (liveseq_pianoroll_fullrefresh_values)
-    draw_button_on_grid(24, 21, "LAYER", "1-4", 0);
-  if (liveseq_pianoroll_fullrefresh_values)
-    draw_button_on_grid(32, 21, "PAT", "1-4", 0);
-  if (liveseq_pianoroll_fullrefresh_values)
-    draw_button_on_grid(40, 21, "", "", 0);
+    draw_button_on_grid(40, 21, "PAT", "1-4", 0);
   if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(48, 21, "ADD", "NOTE", 0);
   if (liveseq_pianoroll_fullrefresh_values)
@@ -12485,7 +12509,7 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     temp_int = param; // select track passed by param
     generic_temp_select_menu = 0;
 
-    if (notePairs.size()!=0)
+    if (notePairs.size() != 0)
       generic_menu = 1;
     else
       generic_menu = 0;
@@ -12595,6 +12619,48 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       else if (LCDML.BT_checkUp())
       {
         liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll - 1, -99, 99);
+      }
+    }
+
+    else if (generic_menu == 22) // scale x
+    {
+      if (LCDML.BT_checkDown())
+      {
+        menuhelper_previous_val = xscaler;
+        xscaler = constrain(xscaler - 1, 10, 33);  // -1 reversed
+
+
+        if (menuhelper_previous_val != xscaler)
+        {
+
+          liveseq_pianoroll_x_scroll = liveseq_pianoroll_x_scroll * 0.6;
+          menuhelper_redraw = true;
+        }
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        menuhelper_previous_val = xscaler;
+        xscaler = constrain(xscaler + 1, 10, 33); // +1 reversed
+
+        if (menuhelper_previous_val != xscaler)
+        {
+          liveseq_pianoroll_x_scroll = liveseq_pianoroll_x_scroll / 1.2;
+          menuhelper_redraw = true;
+        }
+      }
+    }
+
+    else if (generic_menu == 23) // scroll right/left
+    {
+      if (LCDML.BT_checkDown())
+      {
+        liveseq_pianoroll_x_scroll = constrain(liveseq_pianoroll_x_scroll + 1 + 33 - xscaler, -599, 599);
+        menuhelper_redraw = true;
+      }
+      else if (LCDML.BT_checkUp())
+      {
+        liveseq_pianoroll_x_scroll = constrain(liveseq_pianoroll_x_scroll - 1 - 33 + xscaler, -599, 599);
+        menuhelper_redraw = true;
       }
     }
 
@@ -13562,14 +13628,14 @@ FLASHMEM void set_delay_sync(uint8_t sync, uint8_t instance)
       LOG.print(midi_sync_delay_time, DEC);
       LOG.println(F("ms"));
 #endif
+    }
   }
-}
   else
   {
     uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
     delay_fx[instance]->delay(0, constrain(midi_sync_delay_time * configuration.fx.delay_multiplier[instance], DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
   }
-  }
+}
 
 FLASHMEM void print_sync_timing(uint8_t sync)
 {
@@ -14017,7 +14083,7 @@ void UI_func_master_effects(uint8_t param)
     {
       sprintf(text1, "%d MB PSRAM CHIP FOUND, MAX DELAY: 2x %d MS", size, DELAY_MAX_TIME);
       display.print(text1);
-  }
+    }
     else
       display.print(F("NO VALID PSRAM CHIP FOUND"));
 #else
@@ -14037,7 +14103,7 @@ void UI_func_master_effects(uint8_t param)
 
     helptext_l(back_text);
     helptext_r("SELECT PARAM.");
-}
+  }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
 
@@ -14492,7 +14558,7 @@ void UI_func_master_effects(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-  }
+}
 
 void sysinfo_reload_prev_voice()
 {
@@ -16634,10 +16700,10 @@ FLASHMEM void flash_loadDirectory() // SPI FLASH
           {
             msz[i][j].entry_number = k + 1;
             found = true;
-          }
         }
       }
     }
+}
   }
   }
 
@@ -17291,7 +17357,7 @@ FLASHMEM void sd_card_count_files_from_directory(const char* dir_name)
     // }
     fm.sd_sum_files++;
     entry.close();
-  }
+}
 
   dir.close();
 }
@@ -17507,13 +17573,13 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
               LOG.print(ff.size());
               LOG.println(F(" bytes"));
 #endif
-              }
+            }
             // delete the copy on the Flash chip, if different
 #ifdef DEBUG
             LOG.println(F("  delete file from Flash chip"));
 #endif
             SerialFlash.remove(filename);
-            }
+          }
           // if (filename[0] != 46 && filename[1] != 95)
           if (filename[0] != 46)
           {
@@ -17544,23 +17610,23 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                 flash_loadDirectory();
                 print_flash_stats();
                 flash_printDirectory();
-              }
+            }
               else
               {
 #ifdef DEBUG
                 LOG.println(F("  error opening freshly created file!"));
 #endif
               }
-            }
+          }
             else
             {
 #ifdef DEBUG
               LOG.println(F("  unable to create file"));
 #endif
             }
-              }
-          f.close();
             }
+          f.close();
+          }
         rootdir.close();
         display.console = true;
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
@@ -17570,7 +17636,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #ifdef DEBUG
         LOG.println(F("Finished All Files"));
 #endif
-          }
+        }
       else
 #endif
         if (fm.sd_is_folder)
@@ -17652,8 +17718,8 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #ifdef DEBUG
                   LOG.println(F("  files are different"));
 #endif
-                }
               }
+            }
               else
               {
 #ifdef DEBUG
@@ -17661,13 +17727,13 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                 LOG.print(ff.size());
                 LOG.println(F(" bytes"));
 #endif
-                }
+              }
               // delete the copy on the Flash chip, if different
 #ifdef DEBUG
               LOG.println(F("  delete file from Flash chip"));
 #endif
               SerialFlash.remove(filename);
-              }
+            }
             else
             {
               // create the file on the Flash chip and copy data
@@ -17693,7 +17759,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                       display.fillRect(241, 80, count / (f.size() / 240) - 2, 8, RED);
                   }
                   ff.close();
-                }
+              }
                 else
                 {
 #ifdef DEBUG
@@ -17705,12 +17771,12 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                 flash_loadDirectory();
                 print_flash_stats();
                 flash_printDirectory();
-                }
-              }
-            }
-#endif
             }
           }
+        }
+#endif
+      }
+    }
     if (LCDML.BT_checkEnter() && fm.sd_mode == FM_PLAY_SAMPLE) // preview - compiled for flash
     {
       preview_sample();
@@ -17741,7 +17807,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     // display.setTextColor(fm.sd_is_folder ? GREY2 : GREEN);
     // display.print(F("FILE"));
     // display.setTextColor(fm.sd_is_folder ? COLOR_PITCHSMP : COLOR_SYSTEXT, COLOR_BACKGROUND);
-        }
+    }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -17749,7 +17815,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
-          }
+  }
 
 FLASHMEM void UI_func_midi_soft_thru(uint8_t param)
 {
@@ -20827,12 +20893,12 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
 
           mode = 0xff;
           break;
-      }
+        }
 
         LCDML.FUNC_goBackToMenu();
+      }
     }
   }
-}
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     if (mode < 0xff)
@@ -20843,8 +20909,8 @@ FLASHMEM void UI_func_save_voice(uint8_t param)
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
+    }
   }
-        }
 
 FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
 {
@@ -20978,9 +21044,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             setCursor_textGrid(1, 2);
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
-      }
-    }
-  }
+          }
+          }
+        }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -20992,9 +21058,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-}
-    encoderDir[ENC_R].reset();
       }
+    encoderDir[ENC_R].reset();
+    }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -21010,7 +21076,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
   }
-    }
+  }
 
 FLASHMEM void UI_func_set_performance_name(uint8_t param)
 {
@@ -21186,7 +21252,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
 #endif
       show(2, 1, 2, bank_number);
       show(2, 4, 10, tmp_bank_name);
-      }
+    }
     else if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
       if (strcmp("*ERROR*", tmp_bank_name) != 0)
@@ -21227,7 +21293,7 @@ FLASHMEM void UI_func_sysex_send_bank(uint8_t param)
           show(2, 1, 16, "Done.");
           bank_number = 0xff;
         }
-    }
+      }
       else
       {
         show(2, 1, 16, "No bank.");
@@ -21361,7 +21427,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
             {
               show(2, 12, 2, "01");
               send_sysex_voice(1, voice_data);
-            }
+          }
             else
             {
               show(2, 12, 2, configuration.dexed[selected_instance_id].midi_channel);
@@ -21372,7 +21438,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
             sysex.close();
 
             bank_number = 0xff;
-          }
+        }
       }
         else
         {
@@ -21398,7 +21464,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-  }
+}
 
 FLASHMEM void UI_func_startup_performance(uint8_t param)
 {
@@ -21774,7 +21840,7 @@ FLASHMEM uint8_t search_accepted_char(uint8_t c)
 #endif
     if (c == accepted_chars[i])
       return (i);
-}
+  }
   return (0);
 }
 
@@ -22248,10 +22314,10 @@ FLASHMEM bool check_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_i
 #endif
       return false;
     }
-}
+  }
   else
     return false;
-}
+    }
 
 FLASHMEM float eraseBytesPerSecond(const unsigned char* id)
 {
@@ -22584,7 +22650,7 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.print(F("PUSH ENC_R TO START"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 #endif
-}
+  }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
     if (LCDML.BT_checkEnter())
@@ -22595,16 +22661,16 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
       psram_test();
 #endif
-    }
-    // setCursor_textGrid(1, 2);
   }
+    // setCursor_textGrid(1, 2);
+}
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 void sub_touchscreen_test_page_init()
 {
@@ -22931,10 +22997,10 @@ FLASHMEM bool quick_check_favorites_in_bank(uint8_t p, uint8_t b, uint8_t instan
       LOG.println(F(" - It is no Favorite in current Bank."));
 #endif
     }
-}
+  }
   else
     return false;
-  }
+    }
 
 FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id)
 {
@@ -22973,7 +23039,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Added to Favorites..."));
 #endif
-      }
+    }
     else
     { // delete the file, is no longer a favorite
       SD.remove(tmp);
@@ -22986,7 +23052,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d/%d.fav"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b, i);
         if (SD.exists(tmp))
           countfavs++;
-      }
+    }
       if (countfavs == 0)
       {
         snprintf_P(tmp, sizeof(tmp), PSTR("/%s/%d/%s/%d"), DEXED_CONFIG_PATH, p, FAV_CONFIG_PATH, b);
@@ -22996,7 +23062,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
         LOG.print(countfavs);
         LOG.println(F("Removed folder since no voice in bank flagged as favorite any more"));
 #endif
-    }
+      }
 
       ////remove fav symbol
       draw_favorite_icon(p, b, v, instance_id);
@@ -23004,9 +23070,9 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
+  }
+  }
 }
-      }
-    }
 
 FLASHMEM char* basename(const char* filename)
 {
@@ -23098,7 +23164,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
   LOG.print(F(" root: "));
   LOG.println(msz[preset_number][zone_number].rootnote);
 #endif
-  }
+}
 #endif
 
 /*************************************************************************
