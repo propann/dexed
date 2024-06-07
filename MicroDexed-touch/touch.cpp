@@ -1763,6 +1763,22 @@ if (check_button_on_grid(0, 21)) // track
     else
     generic_menu=99;
     }
+    
+    if (check_button_on_grid(16,21)) // scroll right left
+    {
+       if (generic_menu!=23)
+    generic_menu = 23;
+    else
+    generic_menu=99;
+    }
+
+    if (check_button_on_grid(24,21)) // zoom x
+    {
+       if (generic_menu!=22)
+    generic_menu = 22;
+    else
+    generic_menu=99;
+    }
 
     if (check_button_on_grid(48, 26)) // delete note
     {
