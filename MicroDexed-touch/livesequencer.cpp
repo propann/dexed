@@ -1002,10 +1002,10 @@ FLASHMEM std::vector<LiveSequencer::NotePair> LiveSequencer::getNotePairsFromTra
       for(std::list<MidiEvent>::iterator itOff = it; itOff != data.eventsList.end(); itOff++) {
         const bool sameNote = itOff->note_in == it->note_in;
         const bool sameTrack = itOff->track == it->track;
-      //  const bool sameLayer = itOff->layer == it->layer;
+        //const bool sameLayer = itOff->layer == it->layer;
         const bool isNoteOff = itOff->event == midi::NoteOff;
-     //   if(sameTrack && sameLayer && sameNote && isNoteOff) {
-          if(sameTrack  && sameNote && isNoteOff) {
+          //if(sameTrack && sameLayer && sameNote && isNoteOff) {
+          if(sameTrack && sameNote && isNoteOff) {
           NotePair p = {
             .noteOn = *it,
             .noteOff = *itOff
