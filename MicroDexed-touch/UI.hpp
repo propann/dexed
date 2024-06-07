@@ -12210,7 +12210,7 @@ void buttons_liveseq_pianoroll();
 FLASHMEM  void liveseq_pianoroll_draw_graphics()
 {
   std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
-
+  liveseq_pianoroll_eventcount = 0;
   uint8_t xoff = 33;
   float pat_len = (DISPLAY_WIDTH - xoff) / 4;
   float xscaler = 33;
@@ -12220,7 +12220,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
   display.setCursor(CHAR_width_small * 52, 0);
   display.print(temp_int + 1); //track number
 
-  if ((generic_menu == 0 && menuhelper_redraw) || generic_menu == 2 || generic_menu == 4 || generic_menu == 5 || generic_menu == 20 || generic_menu == 21)
+  if (menuhelper_redraw || generic_menu == 2 || generic_menu == 4 || generic_menu == 5 || generic_menu == 20 || generic_menu == 21)
   {
     menuhelper_redraw = false;
     display.console = true;
@@ -12234,6 +12234,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
         display.drawLine(xoff + j * pat_len + pat_len / 16 * k, CHAR_height, xoff + j * pat_len + pat_len / 16 * k, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY3);
     }
     display.drawLine(xoff + 4 * pat_len, CHAR_height, xoff + 4 * pat_len, DISPLAY_HEIGHT - 5 * CHAR_height + 5, GREY2);
+
   }
 
   LiveSequencer::LiveSeqData* data = liveSeq.getData();
@@ -12258,8 +12259,6 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
   notes_display_shift = (lowest_note % 12) + liveseq_pianoroll_y_scroll + 7;
 
   buttons_liveseq_pianoroll();
-
-  i = 0;
 
   if (generic_menu == 2)
   {
@@ -12301,7 +12300,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
     notePairs[generic_temp_select_menu].noteOff.patternMs = temp_int16;
   }
 
-liveseq_pianoroll_eventcount=0;
+  i = 0;
   for (auto& e : data->eventsList)
   {
     i++;
@@ -12352,7 +12351,7 @@ liveseq_pianoroll_eventcount=0;
       }
       else //no note-off for note-on found, draw just note start
       {
-        if ((generic_menu == 1 && j == generic_temp_select_menu))
+        if (generic_menu == 1 && j == generic_temp_select_menu)
           col = RED;
         else
           col = GREEN;
@@ -12369,7 +12368,7 @@ FLASHMEM  void buttons_liveseq_pianoroll()
 {
   std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
 
- //display.setTextSize(1);
+  //display.setTextSize(1);
   char buf[5] = { 0, 0, 0, 0,0 };
 
   if (generic_menu == 0) // select track
@@ -12398,17 +12397,17 @@ FLASHMEM  void buttons_liveseq_pianoroll()
   else if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(8, 21, "SCROLL", "UP/DWN", 1);
 
-  if (liveseq_pianoroll_fullrefresh_values) 
+  if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(16, 21, "ZOOM", "X", 0);
   if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(24, 21, "LAYER", "1-4", 0);
-  if (liveseq_pianoroll_fullrefresh_values) 
+  if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(32, 21, "PAT", "1-4", 0);
-  if (liveseq_pianoroll_fullrefresh_values) 
+  if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(40, 21, "", "", 0);
-  if (liveseq_pianoroll_fullrefresh_values) 
+  if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(48, 21, "ADD", "NOTE", 0);
-  if (liveseq_pianoroll_fullrefresh_values) 
+  if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(0, 26, "GO", "BACK", 1);
 
   if (generic_menu == 1) // select note
@@ -12467,7 +12466,6 @@ FLASHMEM  void buttons_liveseq_pianoroll()
 
     liveSeq.cleanEvents();
     generic_menu = 1;
-    //liveseq_pianoroll_draw_graphics();
     draw_button_on_grid(48, 26, "DEL", "NOTE", 1);
   }
   else
@@ -12490,9 +12488,10 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     menuhelper_previous_val = 99;
     menuhelper_redraw = true;
     temp_int = param; // select track passed by param
-    menuhelper_redraw = true;
     generic_temp_select_menu = 0;
-    generic_menu = 0;
+    generic_menu = 1;  //start up with active note selection since track selection comes from livesequencer.
+    // Probably would be better when it starts with = 0, when starting from main menu.
+
     // setup function
     display.fillScreen(COLOR_BACKGROUND);
 
@@ -12525,8 +12524,8 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
         {
           menuhelper_redraw = true;
           liveseq_pianoroll_y_scroll = 0;
-          liveseq_pianoroll_eventcount=0;
-          generic_temp_select_menu=0;
+          liveseq_pianoroll_eventcount = 0;
+          generic_temp_select_menu = 0;
         }
       }
       else if (LCDML.BT_checkUp())
@@ -12537,8 +12536,8 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
         {
           menuhelper_redraw = true;
           liveseq_pianoroll_y_scroll = 0;
-          liveseq_pianoroll_eventcount=0;
-          generic_temp_select_menu=0;
+          liveseq_pianoroll_eventcount = 0;
+          generic_temp_select_menu = 0;
         }
       }
     }
@@ -12546,11 +12545,11 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
-        generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, liveseq_pianoroll_eventcount-1);
+        generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, liveseq_pianoroll_eventcount - 1);
       }
       else if (LCDML.BT_checkUp())
       {
-        generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, liveseq_pianoroll_eventcount-1);
+        generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, liveseq_pianoroll_eventcount - 1);
       }
     }
     else if (generic_menu == 2) // edit note
