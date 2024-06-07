@@ -171,8 +171,7 @@ public:
     MidiEvent &noteOn;
     MidiEvent &noteOff;
   };
-  std::vector<std::vector<NotePair>> getNotePairs(void);
-    std::vector<std::vector<NotePair>> getNotePairsFromTrack(uint8_t);
+  std::vector<NotePair> getNotePairsFromTrack(uint8_t track);
   static void printNotePairs(std::vector<std::vector<NotePair>> notePairs);
   static void printEvent(int i, MidiEvent e);
   static const std::string getEventName(midi::MidiType event);

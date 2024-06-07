@@ -994,35 +994,9 @@ FLASHMEM void LiveSequencer::cleanEvents(void) {
   }
 }
 
-FLASHMEM std::vector<std::vector<LiveSequencer::NotePair>> LiveSequencer::getNotePairs(void) {
-  std::vector<std::vector<LiveSequencer::NotePair>> result;
-  result.resize(data.numberOfBars);
-  for(std::list<MidiEvent>::iterator it = data.eventsList.begin(); it != data.eventsList.end(); it++) {
-    if(it->event == midi::NoteOn) {
-      for(std::list<MidiEvent>::iterator itOff = it; itOff != data.eventsList.end(); itOff++) {
-        const bool sameNote = itOff->note_in == it->note_in;
-        const bool sameTrack = itOff->track == it->track;
-      //  const bool sameLayer = itOff->layer == it->layer;
-        const bool isNoteOff = itOff->event == midi::NoteOff;
-     //   if(sameTrack && sameLayer && sameNote && isNoteOff) {
-          if(sameTrack  && sameNote && isNoteOff) {
-          NotePair p = {
-            .noteOn = *it,
-            .noteOff = *itOff
-          };
-          result[it->patternNumber].emplace_back(p);
-          break;
-        }
-      }
-    }
-  }
-  return result;
-}
-
-FLASHMEM std::vector<std::vector<LiveSequencer::NotePair>> LiveSequencer::getNotePairsFromTrack(uint8_t trk_filter) {
-  std::vector<std::vector<LiveSequencer::NotePair>> result;
- // result.resize(data.numberOfBars);
-  result.resize(1);
+FLASHMEM std::vector<LiveSequencer::NotePair> LiveSequencer::getNotePairsFromTrack(uint8_t trk_filter) {
+  std::vector<LiveSequencer::NotePair> result;
+  
   for(std::list<MidiEvent>::iterator it = data.eventsList.begin(); it != data.eventsList.end(); it++) {
     if(it->event == midi::NoteOn && it->track == trk_filter) {
       for(std::list<MidiEvent>::iterator itOff = it; itOff != data.eventsList.end(); itOff++) {
@@ -1036,8 +1010,7 @@ FLASHMEM std::vector<std::vector<LiveSequencer::NotePair>> LiveSequencer::getNot
             .noteOn = *it,
             .noteOff = *itOff
           };
-         // result[it->patternNumber].emplace_back(p);
-          result[0].emplace_back(p);
+          result.emplace_back(p);
           break;
         }
       }
