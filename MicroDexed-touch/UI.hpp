@@ -244,7 +244,7 @@ extern uint8_t get_chain_length_from_current_track(uint8_t tr);
 extern uint8_t get_song_length(void);
 extern void helptext_l(const char* str);
 extern void helptext_r(const char* str);
-extern void back_touchbutton();
+extern void draw_back_touchbutton();
 extern void seq_pattern_editor_update_dynamic_elements();
 extern uint8_t microsynth_selected_instance;
 extern AudioMixer<2> microsynth_mixer_reverb;
@@ -269,7 +269,6 @@ extern AudioRecordQueue record_queue_l;
 extern AudioRecordQueue record_queue_r;
 extern char filename[CONFIG_FILENAME_LEN];
 extern void psram_test();
-extern void handle_touchscreen_settings_button_test();
 extern uint8_t remote_MIDI_CC;
 extern uint8_t remote_MIDI_CC_value;
 void draw_euclidean_circle();
@@ -3604,7 +3603,7 @@ public:
 
     if (touch_button_back_page() || legacy_touch_button_back_page())
     {
-      back_touchbutton();
+      draw_back_touchbutton();
       // current_page_has_touch_back_button = true;
     }
     else
@@ -4693,7 +4692,7 @@ FLASHMEM void lcdml_menu_display(void)
        // if (ts.keyb_in_menu_activated == false)
         //  helptext_l(back_text);//xxxyyy
       }
-      back_touchbutton();
+      draw_back_touchbutton();
       display.setTextSize(2);
       seq.edit_state = false;
       generic_active_function = 0;
@@ -6342,6 +6341,7 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    registerTouchHandler(handle_touchscreen_custom_mappings);
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     generic_menu = 0;
@@ -7657,7 +7657,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     // setup function
-
+    registerTouchHandler(handle_touchscreen_sample_editor);
 #ifdef COMPILE_FOR_PROGMEM
     fm.sample_source = 0;
 #endif
@@ -12477,6 +12477,7 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    registerTouchHandler(handle_touchscreen_liveseq_pianoroll);
     std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(param);
     liveseq_pianoroll_fullrefresh_values = true;
     menuhelper_previous_val = 99;
@@ -13135,6 +13136,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     // setup function
+    registerTouchHandler(handle_touchscreen_mute_matrix);
     display.fillScreen(COLOR_BACKGROUND);
     UI_toplineInfoText(1);
     display.setTextSize(1);
@@ -14855,6 +14857,7 @@ FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    registerTouchHandler(handle_touchscreen_liveseq_listeditor);
     temp_int = 0;
     get_liveseq_listeditor_pattern_starts();
     helptext_r("");  //required
@@ -17335,6 +17338,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    registerTouchHandler(handle_touchscreen_file_manager);
     // handleStop(); //test 20/03/2023 for remote console crash when opening file manager while sequencer is playing
     fm.sd_mode = FM_BROWSE_FILES;
     fm.active_window = 0;
@@ -18207,6 +18211,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
 
   if (LCDML.FUNC_setup())
   {
+    registerTouchHandler(handle_touchscreen_settings_button_test);
     encoderDir[ENC_R].reset();
     generic_active_function = 0;
     generic_temp_select_menu = 0;
@@ -22627,6 +22632,7 @@ FLASHMEM void UI_func_test_touchscreen(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    registerTouchHandler(handle_touchscreen_test_touchscreen);
     sub_touchscreen_test_page_init();
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********

@@ -95,7 +95,16 @@ typedef struct fm_s
 static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
 typedef void (*TouchFn)();
 
-void registerTouch(TouchFn touchFn);
+void registerTouchHandler(TouchFn touchFn);
 TouchFn getCurrentTouchHandler(void);
+
+void handle_touchscreen_test_touchscreen();
+void handle_touchscreen_sample_editor();
+void handle_touchscreen_settings_button_test();
+void handle_touchscreen_liveseq_pianoroll();
+void handle_touchscreen_liveseq_listeditor();
+void handle_touchscreen_file_manager();
+void handle_touchscreen_mute_matrix();
+void handle_touchscreen_custom_mappings();
 
 #endif

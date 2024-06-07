@@ -896,21 +896,14 @@ extern void update_midi_learn_button(void);
 custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 extern void print_custom_mappings(void);
 extern void handle_touchscreen_menu(void);
-extern void handle_touchscreen_mute_matrix(void);
 extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_pattern_editor(void);
 extern void handle_touchscreen_microsynth(void);
-extern void handle_touchscreen_file_manager(void);
-extern void handle_touchscreen_custom_mappings(void);
 extern void handle_touchscreen_cc_mappings(void);
 extern void handle_touchscreen_arpeggio(void);
 extern void handle_touchscreen_braids(void);
-extern void handle_touchscreen_sample_editor(void);
-extern void handle_touchscreen_test_touchscreen(void);
 extern void handle_touchscreen_multiband();
 extern void handle_touchscreen_mixer();
-extern void handle_touchscreen_liveseq_listeditor();
-extern void handle_touchscreen_liveseq_pianoroll();
 extern void handle_page_with_touch_back_button();
 extern void updateTouchScreen();
 
@@ -1955,7 +1948,6 @@ bool current_page_has_touch_back_button = false;
 
 void loop()
 {
-
   // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0)
@@ -1981,9 +1973,13 @@ void loop()
   if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS && touch_ic_found) {
     touchReadTimer = 0;
     updateTouchScreen();
-    TouchFn handler = getCurrentTouchHandler();
-    if(handler) {
-      handler();
+    TouchFn touchHandler = getCurrentTouchHandler();
+    if(touchHandler) {
+      touchHandler();
+    }
+
+    if (current_page_has_touch_back_button) {
+      handle_page_with_touch_back_button();
     }
   }
 
@@ -1995,22 +1991,13 @@ void loop()
     }
   }
 
-  if (back_button_touch_page_check_and_init_done == false)
-  {
-    if (touch_button_back_page() || legacy_touch_button_back_page())
-    {
-      back_touchbutton();
-      current_page_has_touch_back_button = true;
-    }
-    else
-    {
-      current_page_has_touch_back_button = false;
+  if (back_button_touch_page_check_and_init_done == false) {
+    current_page_has_touch_back_button = (touch_button_back_page() || legacy_touch_button_back_page());
+    if (current_page_has_touch_back_button) {
+      draw_back_touchbutton();
     }
     back_button_touch_page_check_and_init_done = true;
   }
-
-  if (current_page_has_touch_back_button)
-    handle_page_with_touch_back_button();
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_recorder))
   {
@@ -2051,14 +2038,6 @@ void loop()
     display.console = true;
     scope.draw_scope(253, 34, 58);
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
-  {
-    handle_touchscreen_file_manager();
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
-    handle_touchscreen_mute_matrix();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
-    handle_touchscreen_custom_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
   {
     display.console = true;
@@ -2075,14 +2054,6 @@ void loop()
     display.console = true;
     scope.draw_scope(232, -2, 64);
     handle_touchscreen_arpeggio();
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_liveseq_listeditor))
-  {
-    handle_touchscreen_liveseq_listeditor();
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_liveseq_pianoroll))
-  {
-    handle_touchscreen_liveseq_pianoroll();
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
@@ -2148,15 +2119,9 @@ void loop()
     }
     else if (sysinfo_chord_state == 1 && sysinfo_millis >= 200 && seq.running == false)
     {
-
       MicroDexed[0]->keydown(MIDI_D4, 55);
       sysinfo_chord_state++;
     }
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings))
-  {
-    // handle touch button test
-    handle_touchscreen_settings_button_test();
   }
   // else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_sync))
   // {
@@ -2202,17 +2167,6 @@ void loop()
   //   display.setCursor(CHAR_width_small * 16, CHAR_height_small * 20);
   //   print_formatted_number(seq.bpm, 3);
   // }
-
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
-  {
-    handle_touchscreen_test_touchscreen();
-  }
-
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sample_editor))
-  {
-    handle_touchscreen_sample_editor();
-  }
-
   if (microsynth_control_rate > MICROSYNTH_CONTROL_RATE_MS) // update lfos, filters etc. when played live or by seq.
   {
     microsynth_control_rate = 0;

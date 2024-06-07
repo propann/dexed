@@ -114,7 +114,7 @@ extern bool wakeScreenFlag;
 
 
 TouchFn currentTouchHandler;
-FLASHMEM void registerTouch(TouchFn touchFn) {
+FLASHMEM void registerTouchHandler(TouchFn touchFn) {
   currentTouchHandler = touchFn;
 }
 
@@ -184,7 +184,7 @@ FLASHMEM void helptext_l(const char* str)
   ts.old_helptext_length[0] = l;
 }
 
-FLASHMEM void back_touchbutton()
+FLASHMEM void draw_back_touchbutton()
 {
   if (ts.keyb_in_menu_activated == false)
   {
@@ -1132,7 +1132,7 @@ FLASHMEM void handle_touchscreen_microsynth()
         generic_full_draw_required = true;
         microsynth_refresh_lower_screen_static_text();
         microsynth_refresh_lower_screen_dynamic_text();
-        back_touchbutton();
+        draw_back_touchbutton();
         generic_full_draw_required = false;
       }
       else
@@ -1423,7 +1423,7 @@ FLASHMEM void handle_touchscreen_menu()
           if (ts.keyb_in_menu_activated == false)
           {
             //helptext_l(back_text);
-            back_touchbutton();
+            draw_back_touchbutton();
           }
         }
       }

@@ -375,7 +375,7 @@ FLASHMEM void UI_LiveSequencer::onStopped(void) {
 FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
-    registerTouch(handle_touchscreen_live_sequencer);
+    registerTouchHandler(handle_touchscreen_live_sequencer);
     data.isActive = true;
     runningInBackground = false;
     display.fillScreen(COLOR_BACKGROUND);
@@ -422,7 +422,6 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
-    registerTouch(0);
     if (runningInBackground == false) {
       data.isActive = false;
     }
