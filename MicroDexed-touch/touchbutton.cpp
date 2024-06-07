@@ -108,18 +108,14 @@ FLASHMEM void TouchButton::processPressed() {
     if(longPressedHandler && numTouchPoints) {
       if(isInArea) {
         pressedMs += TOUCH_MAX_REFRESH_RATE_MS;
-        if(pressedMs >= 800) {
+        if(pressedMs >= LONGPRESS_TIME_MS) {
           longPressedHandler(this);
           pressedState = WAIT_RELEASED;
         }
       }
-    }
-    if(numTouchPoints == 0) {
-      // released
-      if(isInArea) {
-        clickedHandler(this);
-        pressedState = NOT_PRESSED;
-      }
+    } else {
+      clickedHandler(this);
+      pressedState = WAIT_RELEASED;
     }
     break;
 
