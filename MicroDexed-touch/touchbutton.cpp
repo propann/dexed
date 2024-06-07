@@ -14,9 +14,11 @@ static const ColorCombo colorMap[TouchButton::BUTTONCOLOR_NUM] = {
   { COLOR_SYSTEXT, COLOR_BACKGROUND } // COLOR_LABEL
 };
 
-FLASHMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked) : x(x_coord), y(y_coord), 
+FLASHMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton*)> clicked, std::function<void(TouchButton*)> longPressed) : x(x_coord), y(y_coord), 
   drawHandler{draw},
   clickedHandler{clicked},
+  longPressedHandler{longPressed},
+  pressedMs(0),
   pressedState(NOT_PRESSED) {
 }
 
@@ -92,18 +94,33 @@ FLASHMEM void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string 
 }
 
 FLASHMEM void TouchButton::processPressed() {
-  const bool isInArea = numTouchPoints && (ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y));
+  const bool isInArea = (ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y));
 
   switch (pressedState) {
   case NOT_PRESSED:
-    if(isInArea) {
+    if(numTouchPoints && isInArea) {
       pressedState = PRESSED;
-      clickedHandler(this);
+      pressedMs = 0;
     }
     break;
 
   case PRESSED:
-    if(isInArea == false) {
+    if(longPressedHandler && numTouchPoints) {
+      if(isInArea) {
+        pressedMs += TOUCH_MAX_REFRESH_RATE_MS;
+        if(pressedMs >= LONGPRESS_TIME_MS) {
+          longPressedHandler(this);
+          pressedState = WAIT_RELEASED;
+        }
+      }
+    } else {
+      clickedHandler(this);
+      pressedState = WAIT_RELEASED;
+    }
+    break;
+
+  case WAIT_RELEASED:
+    if(numTouchPoints == 0) {
       pressedState = NOT_PRESSED;
     }
     break;

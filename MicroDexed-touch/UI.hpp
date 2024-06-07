@@ -12209,7 +12209,7 @@ void buttons_liveseq_pianoroll();
 
 FLASHMEM  void liveseq_pianoroll_draw_graphics()
 {
-  std::vector<std::vector<LiveSequencer::NotePair>> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
+  std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
 
   uint8_t xoff = 33;
   float pat_len = (DISPLAY_WIDTH - xoff) / 4;
@@ -12266,39 +12266,39 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
     //get current value when starting editing so it does not start at zero
     if (liveseq_pianoroll_get_current)
     {
-      temp_uint = notePairs[0][generic_temp_select_menu].noteOn.note_in;
+      temp_uint = notePairs[generic_temp_select_menu].noteOn.note_in;
       liveseq_pianoroll_get_current = false;
     }
-    notePairs[0][generic_temp_select_menu].noteOn.note_in = temp_uint;
-    notePairs[0][generic_temp_select_menu].noteOff.note_in = temp_uint;
+    notePairs[generic_temp_select_menu].noteOn.note_in = temp_uint;
+    notePairs[generic_temp_select_menu].noteOff.note_in = temp_uint;
   }
   else if (generic_menu == 3) // edit velocity
   {
     if (liveseq_pianoroll_get_current)
     {
-      temp_uint = notePairs[0][generic_temp_select_menu].noteOn.note_in_velocity;
+      temp_uint = notePairs[generic_temp_select_menu].noteOn.note_in_velocity;
       liveseq_pianoroll_get_current = false;
     }
     //nothing to do visually
-    notePairs[0][generic_temp_select_menu].noteOn.note_in_velocity = temp_uint;
+    notePairs[generic_temp_select_menu].noteOn.note_in_velocity = temp_uint;
   }
   else if (generic_menu == 4) // edit start time
   {
     if (liveseq_pianoroll_get_current)
     {
-      temp_int16 = notePairs[0][generic_temp_select_menu].noteOn.patternMs;
+      temp_int16 = notePairs[generic_temp_select_menu].noteOn.patternMs;
       liveseq_pianoroll_get_current = false;
     }
-    notePairs[0][generic_temp_select_menu].noteOn.patternMs = temp_int16;
+    notePairs[generic_temp_select_menu].noteOn.patternMs = temp_int16;
   }
   else if (generic_menu == 5) // edit end time
   {
     if (liveseq_pianoroll_get_current)
     {
-      temp_int16 = notePairs[0][generic_temp_select_menu].noteOff.patternMs;
+      temp_int16 = notePairs[generic_temp_select_menu].noteOff.patternMs;
       liveseq_pianoroll_get_current = false;
     }
-    notePairs[0][generic_temp_select_menu].noteOff.patternMs = temp_int16;
+    notePairs[generic_temp_select_menu].noteOff.patternMs = temp_int16;
   }
 
 liveseq_pianoroll_eventcount=0;
@@ -12340,15 +12340,15 @@ liveseq_pianoroll_eventcount=0;
     else
       col = COLOR_SYSTEXT;
 
-    if (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[0][j].noteOn.note_in - lowest_note)) >= CHAR_height &&
-      DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[0][j].noteOn.note_in - lowest_note)) < DISPLAY_HEIGHT - 5 * CHAR_height)
+    if (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note)) >= CHAR_height &&
+      DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note)) < DISPLAY_HEIGHT - 5 * CHAR_height)
     {
-      if (notePairs[0][j].noteOff.note_in > 0 && notePairs[0][j].noteOn.note_in > 0)
+      if (notePairs[j].noteOff.note_in > 0 && notePairs[j].noteOn.note_in > 0)
       {
         display.console = true;
-        display.fillRect(notePairs[0][j].noteOn.patternNumber * pat_len + xoff + notePairs[0][j].noteOn.patternMs / xscaler,
-          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[0][j].noteOn.note_in - lowest_note))),
-          (notePairs[0][j].noteOff.patternNumber - notePairs[0][j].noteOn.patternNumber) * pat_len + (notePairs[0][j].noteOff.patternMs / xscaler - notePairs[0][j].noteOn.patternMs / xscaler), 5, col);
+        display.fillRect(notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler,
+          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note))),
+          (notePairs[j].noteOff.patternNumber - notePairs[j].noteOn.patternNumber) * pat_len + (notePairs[j].noteOff.patternMs / xscaler - notePairs[j].noteOn.patternMs / xscaler), 5, col);
       }
       else //no note-off for note-on found, draw just note start
       {
@@ -12357,8 +12357,8 @@ liveseq_pianoroll_eventcount=0;
         else
           col = GREEN;
         display.console = true;
-        display.fillRect(notePairs[0][j].noteOn.patternNumber * pat_len + xoff + notePairs[0][j].noteOn.note_in / xscaler,
-          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[0][j].noteOn.note_in - lowest_note))), 5, 5, col);
+        display.fillRect(notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.note_in / xscaler,
+          (DISPLAY_HEIGHT - 28 - (8.15 * notes_display_shift) - (8.15 * (notePairs[j].noteOn.note_in - lowest_note))), 5, 5, col);
       }
     }
   }
@@ -12367,7 +12367,7 @@ liveseq_pianoroll_eventcount=0;
 
 FLASHMEM  void buttons_liveseq_pianoroll()
 {
-  std::vector<std::vector<LiveSequencer::NotePair>> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
+  std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
 
  //display.setTextSize(1);
   char buf[5] = { 0, 0, 0, 0,0 };
@@ -12419,7 +12419,7 @@ FLASHMEM  void buttons_liveseq_pianoroll()
 
   if (generic_menu == 2) // edit note
   {
-    getNoteName(buf, notePairs[0][generic_temp_select_menu].noteOn.note_in);
+    getNoteName(buf, notePairs[generic_temp_select_menu].noteOn.note_in);
     draw_button_on_grid(16, 26, "NOTE", buf, 2);
   }
   else
@@ -12428,9 +12428,9 @@ FLASHMEM  void buttons_liveseq_pianoroll()
 
   if (generic_menu == 3) // edit vel
   {
-    if (notePairs[0][generic_temp_select_menu].noteOn.note_in_velocity > 0)
+    if (notePairs[generic_temp_select_menu].noteOn.note_in_velocity > 0)
     {
-      draw_button_on_grid(24, 26, "VEL", itoa(notePairs[0][generic_temp_select_menu].noteOn.note_in_velocity, buf, 10), 2);
+      draw_button_on_grid(24, 26, "VEL", itoa(notePairs[generic_temp_select_menu].noteOn.note_in_velocity, buf, 10), 2);
     }
     else
       draw_button_on_grid(24, 26, "VEL", "OFF", 2);
@@ -12441,7 +12441,7 @@ FLASHMEM  void buttons_liveseq_pianoroll()
 
   if (generic_menu == 4) // edit start
   {
-    draw_button_on_grid(32, 26, "START", itoa(notePairs[0][generic_temp_select_menu].noteOn.patternMs, buf, 10), 2);
+    draw_button_on_grid(32, 26, "START", itoa(notePairs[generic_temp_select_menu].noteOn.patternMs, buf, 10), 2);
   }
   else
     if (liveseq_pianoroll_fullrefresh_values)
@@ -12450,7 +12450,7 @@ FLASHMEM  void buttons_liveseq_pianoroll()
 
   if (generic_menu == 5) // edit end
   {
-    draw_button_on_grid(40, 26, "END", itoa(notePairs[0][generic_temp_select_menu].noteOff.patternMs, buf, 10), 2);
+    draw_button_on_grid(40, 26, "END", itoa(notePairs[generic_temp_select_menu].noteOff.patternMs, buf, 10), 2);
   }
   else
     if (liveseq_pianoroll_fullrefresh_values)
@@ -12459,10 +12459,10 @@ FLASHMEM  void buttons_liveseq_pianoroll()
   if (generic_menu == 21) // delete note
   {
     draw_button_on_grid(48, 26, "DEL", "NOTE", 2);
-    notePairs[0][generic_temp_select_menu].noteOn.note_in = 0;
-    notePairs[0][generic_temp_select_menu].noteOff.note_in = 0;
-    notePairs[0][generic_temp_select_menu].noteOn.event = midi::InvalidType;
-    notePairs[0][generic_temp_select_menu].noteOff.event = midi::InvalidType;
+    notePairs[generic_temp_select_menu].noteOn.note_in = 0;
+    notePairs[generic_temp_select_menu].noteOff.note_in = 0;
+    notePairs[generic_temp_select_menu].noteOn.event = midi::InvalidType;
+    notePairs[generic_temp_select_menu].noteOff.event = midi::InvalidType;
     delay(100);
 
     liveSeq.cleanEvents();
@@ -12489,7 +12489,7 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     liveseq_pianoroll_fullrefresh_values = true;
     menuhelper_previous_val = 99;
     menuhelper_redraw = true;
-    temp_int = 5;
+    temp_int = param; // select track passed by param
     menuhelper_redraw = true;
     generic_temp_select_menu = 0;
     generic_menu = 0;
