@@ -911,6 +911,7 @@ extern void handle_touchscreen_test_touchscreen(void);
 extern void handle_touchscreen_multiband();
 extern void handle_touchscreen_mixer();
 extern void handle_touchscreen_liveseq_listeditor();
+extern void handle_touchscreen_liveseq_pianoroll();
 extern void handle_page_with_touch_back_button();
 extern void updateTouchScreen();
 
@@ -2077,6 +2078,10 @@ void loop()
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_liveseq_listeditor))
   {
     handle_touchscreen_liveseq_listeditor();
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_liveseq_pianoroll))
+  {
+    handle_touchscreen_liveseq_pianoroll();
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
