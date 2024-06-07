@@ -562,11 +562,13 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
     data.isSongMode = newIsSongMode;
     redrawScreen();
   }
+
+  for(TouchButton *b : trackButtons) {
+    b->processPressed();
+  }
   
   if(isLayerViewActive) {
     for (int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {      
-      trackButtons[track]->processPressed();
-
       for (int layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
         const bool pressed = TouchButton::isPressed(GRID_X[track], GRID_Y[2 + layer]);
         if (pressed) {
