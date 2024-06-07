@@ -18,6 +18,7 @@ FLASHMEM TouchButton::TouchButton(uint16_t x_coord, uint16_t y_coord, std::funct
   drawHandler{draw},
   clickedHandler{clicked},
   longPressedHandler{longPressed},
+  pressedMs(0),
   pressedState(NOT_PRESSED) {
 }
 
@@ -93,34 +94,39 @@ FLASHMEM void TouchButton::drawButton(uint16_t x, uint16_t y, const std::string 
 }
 
 FLASHMEM void TouchButton::processPressed() {
-  const bool isInArea = numTouchPoints && (ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y));
+  const bool isInArea = (ts.p.x > x && ts.p.x < (x + BUTTON_SIZE_X) && ts.p.y > y && ts.p.y < (y + BUTTON_SIZE_Y));
 
   switch (pressedState) {
   case NOT_PRESSED:
-    if(isInArea) {
+    if(numTouchPoints && isInArea) {
       pressedState = PRESSED;
-      if(longPressedHandler) {
-        DBG_LOG(printf("go for it\n"));
-        OneShotTimer longPressTimer(TCK);
-        longPressTimer.begin([this] {
-          DBG_LOG(printf("...1s\n"));
-          //if(pressedState == PRESSED) {
-            longPressedHandler(this);
-            pressedState = NOT_PRESSED;
-          //}
-        });
-        longPressTimer.trigger(10000);
-      }
+      pressedMs = 0;
     }
     break;
 
   case PRESSED:
-    if(isInArea == false) {
-      clickedHandler(this);
-      pressedState = NOT_PRESSED;
+    if(longPressedHandler && numTouchPoints) {
+      if(isInArea) {
+        pressedMs += TOUCH_MAX_REFRESH_RATE_MS;
+        if(pressedMs >= 800) {
+          longPressedHandler(this);
+          pressedState = WAIT_RELEASED;
+        }
+      }
+    }
+    if(numTouchPoints == 0) {
+      // released
+      if(isInArea) {
+        clickedHandler(this);
+        pressedState = NOT_PRESSED;
+      }
     }
     break;
 
+  case WAIT_RELEASED:
+    if(numTouchPoints == 0) {
+      pressedState = NOT_PRESSED;
+    }
     break;
   }
 }

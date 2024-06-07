@@ -23,7 +23,6 @@ private:
   ProgressBar barPattern;
   ProgressBar barTotal;
 
-  int numPressedOld = 0;
   bool runningHere = false;
 
   uint8_t numberOfBarsTemp = 0;

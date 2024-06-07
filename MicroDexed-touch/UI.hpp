@@ -12510,13 +12510,14 @@ delay(100);
 
 FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
 {  // for Livesequencer
-
+  
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    DBG_LOG(printf("open track %i\n", param));
     fullrefresh_values_liveseq_pianoroll = true;
     menuhelper_previous_val = 99;
     menuhelper_redraw = true;
-    temp_int = 5;
+    temp_int = param; // this is the track, right?
     menuhelper_redraw = true;
     generic_temp_select_menu = 0;
     generic_menu = 0;

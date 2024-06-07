@@ -112,6 +112,16 @@ static constexpr float KEY_HEIGHT_BLACK = 34;
 
 extern bool wakeScreenFlag;
 
+
+TouchFn currentTouchHandler;
+FLASHMEM void registerTouch(TouchFn touchFn) {
+  currentTouchHandler = touchFn;
+}
+
+TouchFn getCurrentTouchHandler(void) {
+  return currentTouchHandler;
+}
+
 FLASHMEM void updateTouchScreen() {
   if (remote_touched) {
     numTouchPoints = 1;

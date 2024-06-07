@@ -89,9 +89,13 @@ typedef struct fm_s
   uint16_t flash_cap_rows;
   uint16_t flash_selected_file = 0;
   uint16_t flash_skip_files = 0;
-  uint8_t flash_mode = 4;
-  uint8_t flash_preview_slot;
   char flash_temp_name[52];
 } fm_t;
+
+static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
+typedef void (*TouchFn)();
+
+void registerTouch(TouchFn touchFn);
+TouchFn getCurrentTouchHandler(void);
 
 #endif

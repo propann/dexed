@@ -808,7 +808,6 @@ elapsedMillis long_button_pressed;
 elapsedMillis control_rate;
 elapsedMillis save_sys;
 elapsedMillis record_timer;
-static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
 elapsedMillis touchReadTimer = 0;
 
 static constexpr int SCREENSAVER_RESET_RATE_MS = 500;
@@ -1982,6 +1981,10 @@ void loop()
   if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS && touch_ic_found) {
     touchReadTimer = 0;
     updateTouchScreen();
+    TouchFn handler = getCurrentTouchHandler();
+    if(handler) {
+      handler();
+    }
   }
 
   if (screenSaverResetTimer >= SCREENSAVER_RESET_RATE_MS) {
@@ -2054,8 +2057,6 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_mute_matrix))
     handle_touchscreen_mute_matrix();
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_livesequencer))
-    handle_touchscreen_live_sequencer();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
     handle_touchscreen_custom_mappings();
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
