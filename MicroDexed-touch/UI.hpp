@@ -12210,12 +12210,13 @@ void buttons_liveseq_pianoroll();
 
 int xscaler = 33;
 uint8_t xoff = 33;
+float pat_len = 0;
 
 FLASHMEM  void liveseq_pianoroll_draw_graphics()
 {
   std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
 
-  float pat_len = (DISPLAY_WIDTH - xoff) / 4 * 33 / xscaler;
+  pat_len = (DISPLAY_WIDTH - xoff) / 4 * 33 / xscaler;
 
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 35, 0);
@@ -12422,8 +12423,22 @@ FLASHMEM  void buttons_liveseq_pianoroll()
     draw_button_on_grid(32, 21, "LAYER", "1-4", 0);
   if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(40, 21, "PAT", "1-4", 0);
+
+  if (generic_menu == 24) // add new note
+  {
+     draw_button_on_grid(48, 21, "ADD", "xxx", 2);
+      //note add: code here
+    //  copy note and position from "notePairs[generic_temp_select_menu].noteOn.note_in" as current value to be (pitch) edited with ENC_R
+    //
+    //
+    //
+
+  }
+  else
   if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(48, 21, "ADD", "NOTE", 0);
+
+    
   if (liveseq_pianoroll_fullrefresh_values)
     draw_button_on_grid(0, 26, "GO", "BACK", 1);
 

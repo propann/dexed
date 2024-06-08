@@ -132,10 +132,10 @@ FLASHMEM void updateTouchScreen() {
     if (numTouchPoints > 0) {
 
 #if defined GENERIC_DISPLAY    
-        // Scale from ~0->4000 to tft
-        ts.p = touch.getPoint();
-        ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-        ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH); 
+      // Scale from ~0->4000 to tft
+      ts.p = touch.getPoint();
+      ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+      ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -1677,8 +1677,8 @@ FLASHMEM void handle_touchscreen_liveseq_listeditor()
     }
     else  if (check_button_on_grid(24, 26)) // delete
     {
-      if (seq.edit_state==true)
-      liveseq_listeditor_delete_element();
+      if (seq.edit_state == true)
+        liveseq_listeditor_delete_element();
     }
 
     else  if (check_button_on_grid(36, 26)) // track filter
@@ -1701,9 +1701,19 @@ extern bool liveseq_pianoroll_get_current;
 extern void liveseq_pianoroll_draw_graphics();
 extern uint8_t generic_menu;
 extern bool liveseq_pianoroll_fullrefresh_values;
+extern elapsedMillis record_timer;
+
+extern int liveseq_pianoroll_x_scroll;
+extern float pat_len;
+extern  uint8_t xoff;
+
+#include "livesequencer.h"
+extern  LiveSequencer liveSeq;
+LiveSequencer::LiveSeqData* data = liveSeq.getData();
 
 FLASHMEM void handle_touchscreen_liveseq_pianoroll()
 {
+
   if (numTouchPoints > 0)
   {
     if (check_button_on_grid(0, 26)) // back button
@@ -1712,88 +1722,129 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       LCDML.BT_quit();
     }
 
-if (check_button_on_grid(0, 21)) // track
+    if (check_button_on_grid(0, 21)) // track
     {
-      if (generic_menu!=0)
-    generic_menu = 0;
-    else
-    generic_menu=99;
+      if (generic_menu != 0)
+        generic_menu = 0;
+      else
+        generic_menu = 99;
     }
 
     if (check_button_on_grid(8, 26)) // select note
     {
-       if (generic_menu!=1)
-    generic_menu = 1;
-    else
-    generic_menu=99;
+      if (generic_menu != 1)
+        generic_menu = 1;
+      else
+        generic_menu = 99;
     }
     if (check_button_on_grid(16, 26)) // edit note
     {
-       if (generic_menu!=2)
-    generic_menu = 2;
-    else
-    generic_menu=99;
+      if (generic_menu != 2)
+        generic_menu = 2;
+      else
+        generic_menu = 99;
     }
-    if (check_button_on_grid(24,26)) //edit velocity
+    if (check_button_on_grid(24, 26)) //edit velocity
     {
-       if (generic_menu!=3)
-    generic_menu = 3;
-    else
-    generic_menu=99;
+      if (generic_menu != 3)
+        generic_menu = 3;
+      else
+        generic_menu = 99;
     }
-    if (check_button_on_grid(32,26)) // edit start
+    if (check_button_on_grid(32, 26)) // edit start
     {
-       if (generic_menu!=4)
-    generic_menu = 4;
-    else
-    generic_menu=99;
+      if (generic_menu != 4)
+        generic_menu = 4;
+      else
+        generic_menu = 99;
     }
-    if (check_button_on_grid(40,26)) // edit end
+    if (check_button_on_grid(40, 26)) // edit end
     {
-       if (generic_menu!=5)
-    generic_menu = 5;
-    else
-    generic_menu=99;
-    }
-
- if (check_button_on_grid(8,21)) // scroll up&down
-    {
-       if (generic_menu!=20)
-    generic_menu = 20;
-    else
-    generic_menu=99;
-    }
-    
-    if (check_button_on_grid(16,21)) // scroll right left
-    {
-       if (generic_menu!=23)
-    generic_menu = 23;
-    else
-    generic_menu=99;
+      if (generic_menu != 5)
+        generic_menu = 5;
+      else
+        generic_menu = 99;
     }
 
-    if (check_button_on_grid(24,21)) // zoom x
+    if (check_button_on_grid(8, 21)) // scroll up&down
     {
-       if (generic_menu!=22)
-    generic_menu = 22;
-    else
-    generic_menu=99;
+      if (generic_menu != 20)
+        generic_menu = 20;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(16, 21)) // scroll right left
+    {
+      if (generic_menu != 23)
+        generic_menu = 23;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(48, 21)) // add note
+    {
+      if (generic_menu != 24)
+        generic_menu = 24;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(24, 21)) // zoom x
+    {
+      if (generic_menu != 22)
+        generic_menu = 22;
+      else
+        generic_menu = 99;
     }
 
     if (check_button_on_grid(48, 26)) // delete note
     {
 
-      if (generic_menu == 1 || generic_menu == 2|| generic_menu == 3 || generic_menu == 4 || generic_menu == 5)
-    generic_menu = 21;
-    else
-    generic_menu=99;
+      if (generic_menu == 1 || generic_menu == 2 || generic_menu == 3 || generic_menu == 4 || generic_menu == 5)
+        generic_menu = 21;
+      else
+        generic_menu = 99;
     }
 
-      if (generic_menu>0 && generic_menu < 6)
-         liveseq_pianoroll_get_current = true;
+    if (generic_menu > 0 && generic_menu < 6)
+      liveseq_pianoroll_get_current = true;
 
-    liveseq_pianoroll_fullrefresh_values=true;
-   liveseq_pianoroll_draw_graphics();
+    liveseq_pianoroll_fullrefresh_values = true;
+    liveseq_pianoroll_draw_graphics();
+  }
+
+  if (record_timer % 40 == 0 && data->isRunning)
+  {
+    bool erased_end = false;
+    for (uint8_t j = 0; j < 4; j++)
+    {
+      if (data->currentPattern == j)
+      {
+        if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) >= xoff &&
+          liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) <= 320)
+        {
+          display.console = true;
+          display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6,
+            liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len), 4, COLOR_BACKGROUND);
+
+          display.fillRect(liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len),
+            CHAR_height - 6, 4, 4, RED);
+        }
+      }
+      if (j == 3 && erased_end == true)
+      {
+        display.fillRect(316, CHAR_height - 6,
+          4, 4, COLOR_BACKGROUND);
+        erased_end = false;
+      }
+      if (j == 0 && data->patternTimer < 200 && erased_end == false)
+      {
+        display.fillRect(316, CHAR_height - 6,
+          4, 4, COLOR_BACKGROUND);
+        erased_end = true;
+      }
+    }
   }
 }
 

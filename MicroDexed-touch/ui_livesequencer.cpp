@@ -79,10 +79,10 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_RED);
     display.setTextSize(1);
     display.setTextColor(isSame ? GREY2 : RED, COLOR_BACKGROUND);
-    display.setCursor(GRID_X[3], GRID_Y[3] + 5);
-    display.printf("CHANGING PATTERN LENGTH");
-    display.setCursor(GRID_X[3], GRID_Y[3] + 20);
-    display.printf("WILL DELETE ALL DATA!");
+    display.setCursor(GRID_X[3]+2, GRID_Y[3] + 5);
+    display.print(F("CHANGING PATTERN LENGTH"));
+    display.setCursor(GRID_X[3]+2, GRID_Y[3] + 20);
+    display.print(F("WILL DELETE ALL DATA!"));
   },
   [ this ] (auto *b){ // clickedHandler
     if(data.numberOfBars != numberOfBarsTemp) {
