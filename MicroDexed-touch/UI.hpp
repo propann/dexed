@@ -12453,7 +12453,9 @@ FLASHMEM  void buttons_liveseq_pianoroll()
     //note add: code here
   //  copy note and position from "notePairs[generic_temp_select_menu].noteOn.note_in" as current value to be (pitch) edited with ENC_R
   //
-
+    LiveSequencer::MidiEvent newOn = notePairs[generic_temp_select_menu].noteOn;
+    LiveSequencer::MidiEvent newOff = notePairs[generic_temp_select_menu].noteOff;
+    liveSeq.addNotePair(newOn, newOff);
   }
   else
     if (liveseq_pianoroll_fullrefresh_values)
