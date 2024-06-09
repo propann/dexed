@@ -1696,7 +1696,7 @@ FLASHMEM void handle_touchscreen_liveseq_listeditor()
     }
   }
 }
-
+extern bool liveseq_note_copy_state;
 extern bool liveseq_pianoroll_get_current;
 extern void liveseq_pianoroll_draw_graphics();
 extern uint8_t generic_menu;
@@ -1742,7 +1742,10 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       if (generic_menu != 2)
         generic_menu = 2;
       else
-        generic_menu = 99;
+      {
+        generic_menu = 1;
+        liveseq_note_copy_state=false;
+      }
     }
     if (check_button_on_grid(24, 26)) //edit velocity
     {
@@ -1782,12 +1785,17 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
         generic_menu = 99;
     }
 
-    if (check_button_on_grid(48, 21)) // add note
+    if (check_button_on_grid(48, 21)) // add/copy note
     {
-      if (generic_menu != 24)
+      if (generic_menu != 24 && generic_menu == 1 && liveseq_note_copy_state==false)
         generic_menu = 24;
       else
-        generic_menu = 99;
+        if (liveseq_note_copy_state)
+        { 
+         generic_menu = 1;
+         liveseq_note_copy_state=false;
+        }
+         
     }
 
     if (check_button_on_grid(24, 21)) // zoom x

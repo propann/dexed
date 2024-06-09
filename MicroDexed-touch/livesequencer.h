@@ -171,6 +171,8 @@ public:
     MidiEvent &noteOn;
     MidiEvent &noteOff;
   };
+
+  void addNotePair(MidiEvent noteOn, MidiEvent noteOff);
   std::vector<NotePair> getNotePairsFromTrack(uint8_t track);
   static void printNotePairs(std::vector<std::vector<NotePair>> notePairs);
   static void printEvent(int i, MidiEvent e);
@@ -182,8 +184,6 @@ private:
   std::set<uint8_t> pressedArpKeys;
   std::vector<ArpNote> activeArps;
   std::list<MidiEvent>::iterator playIterator;
-
-
 
   void checkLoadNewArpNotes(void);
   void onSongStopped(void);

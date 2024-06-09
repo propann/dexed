@@ -994,6 +994,17 @@ FLASHMEM void LiveSequencer::cleanEvents(void) {
   }
 }
 
+FLASHMEM void LiveSequencer::addNotePair(MidiEvent noteOn, MidiEvent noteOff) {
+  DBG_LOG(printf("adding note pair:\n"));
+  printEvent(1, noteOn);
+  printEvent(2, noteOff);
+  data.pendingEvents.emplace_back(noteOn);
+  data.pendingEvents.emplace_back(noteOff);
+  if(data.isRunning == false) {
+    addPendingNotes();
+  }
+}
+
 FLASHMEM std::vector<LiveSequencer::NotePair> LiveSequencer::getNotePairsFromTrack(uint8_t track) {
   std::vector<LiveSequencer::NotePair> result;
   
