@@ -422,6 +422,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
+    unregisterTouchHandler();
     if (runningInBackground == false) {
       data.isActive = false;
     }

@@ -96,6 +96,7 @@ static constexpr int TOUCH_MAX_REFRESH_RATE_MS = 10; // 100Hz
 typedef void (*TouchFn)();
 
 void registerTouchHandler(TouchFn touchFn);
+void unregisterTouchHandler(void);
 TouchFn getCurrentTouchHandler(void);
 
 void handle_touchscreen_test_touchscreen();

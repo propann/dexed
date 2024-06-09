@@ -6540,6 +6540,7 @@ FLASHMEM void UI_func_custom_mappings(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     seq.midi_learn_active = false;
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
@@ -7848,6 +7849,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -12704,6 +12706,7 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
   }
@@ -13266,6 +13269,7 @@ void UI_func_seq_mute_matrix(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -15051,6 +15055,7 @@ FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -17811,6 +17816,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -18496,6 +18502,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {
+    unregisterTouchHandler();
     generic_active_function = 99;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
@@ -22763,6 +22770,7 @@ FLASHMEM void UI_func_clear_song(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterTouchHandler();
     encoderDir[ENC_R].reset();
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);

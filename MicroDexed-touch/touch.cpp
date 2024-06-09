@@ -118,6 +118,10 @@ FLASHMEM void registerTouchHandler(TouchFn touchFn) {
   currentTouchHandler = touchFn;
 }
 
+FLASHMEM void unregisterTouchHandler(void) {
+  currentTouchHandler = 0;
+}
+
 TouchFn getCurrentTouchHandler(void) {
   return currentTouchHandler;
 }
