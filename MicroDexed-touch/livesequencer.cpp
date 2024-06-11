@@ -28,7 +28,10 @@ extern void handleStart();
 extern void handleStop();
 
 using namespace TeensyTimerTool;
+
 PeriodicTimer tickTimer(TMR1);  // only 16bit needed
+//PeriodicTimer tickTimer;
+
 OneShotTimer arpTimer(TCK);     // one tick timer of 20
 OneShotTimer liveTimer(TCK);    // one tick timer of 20
 
@@ -101,7 +104,10 @@ FLASHMEM void LiveSequencer::onStopped(void) {
 }
 
 FLASHMEM void LiveSequencer::onStarted(void) {
-  tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.1ms);
+
+  //tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.1ms);
+  tickTimer.begin([] { TeensyTimerTool::tick(); }, 8ms);
+
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
@@ -438,11 +444,13 @@ FLASHMEM void LiveSequencer::performLayerAction(LayerMode action, MidiEvent &e, 
     e.layer--;
   }
 }
+extern int compensate_seq_delay;
 
 FLASHMEM void LiveSequencer::loadNextEvent(int timeMs) {
   if(timeMs > 0) {
     //LOG.printf("trigger in %ims\n", timeMs);
-    liveTimer.trigger(timeMs * 1000);
+    // liveTimer.trigger(timeMs * 1000);
+    liveTimer.trigger(timeMs * 1000 + compensate_seq_delay);
   } else {
     playNextEvent();
   }

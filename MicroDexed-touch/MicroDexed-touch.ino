@@ -4332,10 +4332,6 @@ void handleStart(void)
     else
       seq.current_song_step = seq.loop_start;
 
-    //delay( (seq.tempo_ms/1000)-30);  //MIDI SLAVE SYNC TEST
-
-  ///xxxyyy
-
     sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
     seq.running = true;
 
@@ -4451,7 +4447,6 @@ void handleStop(void)
   //   display.fillRect(CHAR_width_small * 2, CHAR_height_small * 6 + 1, 320 - CHAR_width_small * 2, 6, COLOR_BACKGROUND);
   //   display.fillRect(CHAR_width_small * 2, CHAR_height_small * 10 + 1, 320 - CHAR_width_small * 2, 6, COLOR_BACKGROUND);
   // }
-
 
 }
 

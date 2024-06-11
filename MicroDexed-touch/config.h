@@ -253,9 +253,6 @@
 
 // #define GREY4 0xC638 //only for UI test
 
-
-
-
 // Display
 
 const char back_text[5] = { 'B', 'A', 'C', 'K' };

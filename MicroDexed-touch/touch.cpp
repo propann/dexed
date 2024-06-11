@@ -1744,7 +1744,7 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       else
       {
         generic_menu = 1;
-        liveseq_note_copy_state=false;
+        liveseq_note_copy_state = false;
       }
     }
     if (check_button_on_grid(24, 26)) //edit velocity
@@ -1787,15 +1787,14 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
 
     if (check_button_on_grid(48, 21)) // add/copy note
     {
-      if (generic_menu != 24 && generic_menu == 1 && liveseq_note_copy_state==false)
+      if (generic_menu != 24 && generic_menu == 1 && liveseq_note_copy_state == false)
         generic_menu = 24;
       else
         if (liveseq_note_copy_state)
-        { 
-         generic_menu = 1;
-         liveseq_note_copy_state=false;
+        {
+          generic_menu = 1;
+          liveseq_note_copy_state = false;
         }
-         
     }
 
     if (check_button_on_grid(24, 21)) // zoom x
