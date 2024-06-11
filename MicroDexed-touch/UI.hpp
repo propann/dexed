@@ -12184,7 +12184,10 @@ FLASHMEM void print_keyboard_livesequencer(int ypos, uint8_t octave)
       {
         display.setCursor(17, ypos - 14 - (y * 14));
         display.print("C");
+        if (octave - 1 + oct_count <10 && octave - 1 + oct_count >=0)
         display.print(octave - 1 + oct_count);
+        else
+        display.print("?");
       }
       oct_count++;
     }
@@ -12347,6 +12350,14 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
     // print_formatted_number(DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[generic_temp_select_menu].noteOn.note_in - liveseq_pianoroll_lowest_note)), 4);
 
   }
+  else
+  {
+     display.setTextSize(1);
+  display.setCursor(60,90);
+  display.setTextColor(RED, COLOR_BACKGROUND);
+  display.print(F("LIVESEQUENCER TRACK IS CURRENTLY EMPTY"));
+  }
+
   if (notePairs.size() != 0)
   {
     // if in edit more, redraw just the current note, +-1 note
