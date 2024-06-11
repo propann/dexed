@@ -651,11 +651,19 @@ FLASHMEM void set_state_dir()
 int favsearcher = 0;
 //int compensate_seq_delay=0;
 
+#include "livesequencer.h"
+extern LiveSequencer liveSeq;
+
 void update_seq_speed() {
   seq.tempo_ms = 60000000 / seq.bpm / 4;
 
 // testing auto compensate delay for seq.
 //compensate_seq_delay = -200 * seq.bpm +40000;
+
+ //liveSeq.checkBpmChanged();
+ //liveSeq.updateTrackChannels();
+ //liveSeq.refreshSongLength();
+ //liveSeq.init();
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -12206,8 +12214,6 @@ FLASHMEM void print_keyboard_livesequencer(int ypos, uint8_t octave)
   }
 }
 
-#include "livesequencer.h"
-extern LiveSequencer liveSeq;
 bool liveseq_pianoroll_get_current = false;
 bool liveseq_pianoroll_fullrefresh_values = false;
 int liveseq_pianoroll_x_scroll = 0;
@@ -18356,8 +18362,8 @@ FLASHMEM void _render_misc_settings()
   display.print(F("SKIP BOOT ANIMATION"));
   setCursor_textGrid_small(2, 14);
   display.print(F("INVERT COLORS (EXPERIMENTAL)"));
-  setCursor_textGrid_small(2, 15);
-  display.print(F("DELAY_COMPENSATION (TESTING)"));
+  // setCursor_textGrid_small(2, 15);
+  // display.print(F("DELAY_COMPENSATION (TESTING)"));
 
   setCursor_textGrid_small(42, 8);
   display.print(configuration.sys.screen_saver_start);
