@@ -649,13 +649,13 @@ FLASHMEM void set_state_dir()
 };
 
 int favsearcher = 0;
-int compensate_seq_delay=0;
+//int compensate_seq_delay=0;
 
 void update_seq_speed() {
   seq.tempo_ms = 60000000 / seq.bpm / 4;
 
 // testing auto compensate delay for seq.
-compensate_seq_delay = -200 * seq.bpm +40000;
+//compensate_seq_delay = -200 * seq.bpm +40000;
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -18373,9 +18373,9 @@ FLASHMEM void _render_misc_settings()
   display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
   setCursor_textGrid_small(42, 14);
   display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
-      setCursor_textGrid_small(42, 15);
-     display.print(compensate_seq_delay);
- display.print(" ");
+      // setCursor_textGrid_small(42, 15);
+      // display.print(compensate_seq_delay);
+      // display.print(" ");
 }
 
 FLASHMEM void UI_func_misc_settings(uint8_t param)
@@ -18399,7 +18399,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 8);
+          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 7);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -18440,18 +18440,18 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           configuration.sys.invert_colors = !configuration.sys.invert_colors;
           settings_modified = 8;
         }
-         else if (generic_temp_select_menu == menu++)
-        {
-          compensate_seq_delay = constrain(compensate_seq_delay + 200, 0, 30000);
-          settings_modified = 9;
-        }
+        //  else if (generic_temp_select_menu == menu++)
+        // {
+        //   compensate_seq_delay = constrain(compensate_seq_delay + 200, 0, 30000);
+        //   settings_modified = 9;
+        // }
 
       }
       else if (LCDML.BT_checkUp())
       {
         uint8_t menu = 0;
         if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 8);
+          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 7);
         else if (generic_temp_select_menu == menu++)
         {
           configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
@@ -18492,11 +18492,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
           configuration.sys.invert_colors = !configuration.sys.invert_colors;
           settings_modified = 8;
         }
-         else if (generic_temp_select_menu == menu++)
-        {
-          compensate_seq_delay = constrain(compensate_seq_delay - 200, 0, 30000);
-          settings_modified = 9;
-        }
+        //  else if (generic_temp_select_menu == menu++)
+        // {
+        //   compensate_seq_delay = constrain(compensate_seq_delay - 200, 0, 30000);
+        //   settings_modified = 9;
+        // }
       }
     }
 
@@ -18572,10 +18572,10 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     setCursor_textGrid_small(42, 14);
     display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
 
-    setModeColor(8);
-    setCursor_textGrid_small(42, 15);
-    display.print(compensate_seq_delay);
-    display.print(" ");
+    // setModeColor(8);
+    // setCursor_textGrid_small(42, 15);
+    // display.print(compensate_seq_delay);
+    // display.print(" ");
 
     if (settings_modified == 8)
       display.invertDisplay(!configuration.sys.invert_colors);
