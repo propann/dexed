@@ -985,7 +985,7 @@ void setup()
 #endif
 
   //#if defined(PSRAM)
-   // delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+   //delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
    // 2024/4/14
    // However it is reported that it is not necessary with 16MB psram and even making boot problems
    // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT

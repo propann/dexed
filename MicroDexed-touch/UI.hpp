@@ -12072,8 +12072,8 @@ FLASHMEM void UI_func_song(uint8_t param)
 //   }
 // }
 
-void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
-{  //for old sequencer
+//void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
+//{  //for old sequencer
 
   // uint8_t notes[64];
   // uint8_t lowest_note = 127;
@@ -12165,11 +12165,62 @@ void print_merged_pattern_pianoroll(int xpos, int ypos, uint8_t track_number)
   //   if ((xcount + 1) % 4 == 0)
   //     barspacer = barspacer + 1;
   // }
-}
+//}
 
 uint8_t temp_uint;
 int temp_int16;
 uint16_t liveseq_edit_noteoff_step = 0;
+
+ LiveSequencer::LiveSeqData* data = liveSeq.getData();
+
+bool liveseq_pianoroll_get_current = false;
+bool liveseq_pianoroll_fullrefresh_values = false;
+int liveseq_pianoroll_x_scroll = 0;
+int liveseq_pianoroll_y_scroll = 0;
+uint8_t liveseq_pianoroll_eventcount = 0;
+int xscaler = 33;
+uint8_t xoff = 33;
+float pat_len = 0;
+uint8_t liveseq_pianoroll_lowest_note = 254;
+void buttons_liveseq_pianoroll();
+
+FLASHMEM void print_liveseq_playindicator()
+{
+
+if (record_timer % 40 == 0 && data->isRunning)
+    {
+      bool erased_end = false;
+      for (uint8_t j = 0; j < 4; j++)
+      {
+        if (data->currentPattern == j)
+        {
+          if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) >= xoff &&
+            liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) <= 320)
+          {
+            display.console = true;
+            display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6,
+              liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len), 4, COLOR_BACKGROUND);
+
+            display.fillRect(liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len),
+              CHAR_height - 6, 4, 4, RED);
+          }
+        }
+        if (j == 3 && erased_end == true)
+        {
+          display.fillRect(316, CHAR_height - 6,
+            4, 4, COLOR_BACKGROUND);
+          erased_end = false;
+        }
+        if (j == 0 && data->patternTimer < 200 && erased_end == false)
+        {
+          display.fillRect(316, CHAR_height - 6,
+            4, 4, COLOR_BACKGROUND);
+          erased_end = true;
+        }
+      }
+    }
+
+}
 
 FLASHMEM void print_keyboard_livesequencer(int ypos, uint8_t octave)
 {
@@ -12214,19 +12265,6 @@ FLASHMEM void print_keyboard_livesequencer(int ypos, uint8_t octave)
   }
 }
 
-bool liveseq_pianoroll_get_current = false;
-bool liveseq_pianoroll_fullrefresh_values = false;
-int liveseq_pianoroll_x_scroll = 0;
-int liveseq_pianoroll_y_scroll = 0;
-uint8_t liveseq_pianoroll_eventcount = 0;
-
-void buttons_liveseq_pianoroll();
-
-int xscaler = 33;
-uint8_t xoff = 33;
-float pat_len = 0;
-uint8_t liveseq_pianoroll_lowest_note = 254;
-
 FLASHMEM void liveseq_get_lowest_note()
 {
   std::vector<LiveSequencer::NotePair> notePairs = liveSeq.getNotePairsFromTrack(temp_int);
@@ -12246,8 +12284,12 @@ FLASHMEM void liveseq_get_lowest_note()
       i++;
     }
   }
-  if (liveseq_pianoroll_lowest_note > 120)
-    liveseq_pianoroll_lowest_note = 24;
+  liveseq_pianoroll_y_scroll = liveseq_pianoroll_lowest_note;
+  // if (liveseq_pianoroll_lowest_note > 120)
+  //   liveseq_pianoroll_lowest_note = 24;
+  //  else   if (liveseq_pianoroll_lowest_note < 12)
+  //   liveseq_pianoroll_lowest_note = 12;
+
 }
 
 FLASHMEM uint8_t get_octave(uint8_t in)
@@ -12255,9 +12297,8 @@ FLASHMEM uint8_t get_octave(uint8_t in)
   if (in % 12 == 0)
     return in / 12;
   else
-    return ((in % 12) + 2); //not sure why +2 works better when Modulo Remainder is not Zero
+    return ((in % 12) ); 
 }
-
 
 FLASHMEM  void liveseq_pianoroll_draw_graphics()
 {
@@ -12273,6 +12314,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
     print_formatted_number(generic_temp_select_menu, 3);//event number, empty track
   display.setCursor(CHAR_width_small * 52, 0);
   display.print(temp_int + 1); //track number
+
 
   if (menuhelper_redraw || generic_menu == 2 || generic_menu == 4 || generic_menu == 5 || generic_menu == 20 || generic_menu == 21)
   {
@@ -12296,10 +12338,9 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
 
   }
 
-  liveseq_get_lowest_note();
-
   if (notePairs.size() != 0)
   {
+     // liveseq_get_lowest_note();
     if (generic_menu == 2)
     {
       //get current value when starting editing so it does not start at zero
@@ -12340,21 +12381,10 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
       notePairs[generic_temp_select_menu].noteOff.patternMs = temp_int16;
     }
   }
+
   if (notePairs.size() != 0)
   {
     buttons_liveseq_pianoroll();
-
-    liveseq_pianoroll_eventcount = notePairs.size();
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 41, 0);
-    print_formatted_number(liveseq_pianoroll_eventcount, 3);
-
-    // display.setCursor(CHAR_width_small * 17, 0);
-    // print_formatted_number(liveseq_pianoroll_y_scroll, 4);
-
-    // display.setCursor(CHAR_width_small * 23, 0);
-    // print_formatted_number(DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[generic_temp_select_menu].noteOn.note_in - liveseq_pianoroll_lowest_note)), 4);
-
   }
   else
   {
@@ -12363,6 +12393,11 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
   display.setTextColor(RED, COLOR_BACKGROUND);
   display.print(F("LIVESEQUENCER TRACK IS CURRENTLY EMPTY"));
   }
+
+    liveseq_pianoroll_eventcount = notePairs.size();
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 41, 0);
+    print_formatted_number(liveseq_pianoroll_eventcount, 3);
 
   if (notePairs.size() != 0)
   {
@@ -12377,8 +12412,9 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
     // to =generic_temp_select_menu+1;
     //}
 
-    //for (uint8_t j = from; j < to; j++)
-    for (int j = liveseq_pianoroll_eventcount; j >= 0; j--)
+if (liveseq_pianoroll_eventcount >0)
+    //for (uint8_t j = 0; j < liveseq_pianoroll_eventcount; j++)
+    for (int j = liveseq_pianoroll_eventcount-1; j > 0; j--)
     {
       uint16_t col;
 
@@ -12400,8 +12436,8 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
       else
         col = COLOR_SYSTEXT;
 
-      if (DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[j].noteOn.note_in - liveseq_pianoroll_lowest_note)) >= CHAR_height &&
-        DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[j].noteOn.note_in - liveseq_pianoroll_lowest_note)) < DISPLAY_HEIGHT - 5 * CHAR_height &&
+      if (DISPLAY_HEIGHT  + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in ) >= CHAR_height &&
+        DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in ) < DISPLAY_HEIGHT - 5 * CHAR_height &&
         liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler >= xoff &&
         liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler < DISPLAY_WIDTH - 5
         )
@@ -12410,7 +12446,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
         {
           display.console = true;
           display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler,
-            (DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[j].noteOn.note_in - liveseq_pianoroll_lowest_note))),
+            (DISPLAY_HEIGHT  + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in )),
             (notePairs[j].noteOff.patternNumber - notePairs[j].noteOn.patternNumber) * pat_len + (notePairs[j].noteOff.patternMs / xscaler - notePairs[j].noteOn.patternMs / xscaler), 5, col);
         }
         else //no note-off for note-on found, draw just note start
@@ -12421,7 +12457,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
             col = GREEN;
           display.console = true;
           display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.note_in / xscaler,
-            (DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[j].noteOn.note_in - liveseq_pianoroll_lowest_note))), 5, 5, col);
+            (DISPLAY_HEIGHT  + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in )), 5, 5, col);
         }
       }
     }
@@ -12430,14 +12466,14 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
 
 FLASHMEM void print_pianokeys_liveseq()
 {
-  liveseq_get_lowest_note();
+  //liveseq_get_lowest_note();
 
   display.console = true;
   display.fillRect(0, CHAR_height, 30, DISPLAY_HEIGHT - 5 * CHAR_height - 5, COLOR_BACKGROUND);
 
-  print_keyboard_livesequencer(DISPLAY_HEIGHT - CHAR_height - (8.15 * liveseq_pianoroll_y_scroll) - 196, get_octave(liveseq_pianoroll_lowest_note) + 2);
-  print_keyboard_livesequencer(DISPLAY_HEIGHT - CHAR_height - (8.15 * liveseq_pianoroll_y_scroll), get_octave(liveseq_pianoroll_lowest_note));
-  print_keyboard_livesequencer(DISPLAY_HEIGHT - CHAR_height - (8.15 * liveseq_pianoroll_y_scroll) + 196, get_octave(liveseq_pianoroll_lowest_note) - 2);
+  print_keyboard_livesequencer(  (8.15 * liveseq_pianoroll_y_scroll   + (7*8.15)-2 ) - 196*2, get_octave(liveseq_pianoroll_lowest_note) + 2);
+  print_keyboard_livesequencer( (8.15 * liveseq_pianoroll_y_scroll + (7*8.15)-2)-196, get_octave(liveseq_pianoroll_lowest_note));
+  print_keyboard_livesequencer(  (8.15 * liveseq_pianoroll_y_scroll + (7*8.15)-2) , get_octave(liveseq_pianoroll_lowest_note) - 2);
 
   display.console = true;
   display.fillRect(0, CHAR_height_small, 30, CHAR_height_small + 1, COLOR_BACKGROUND);
@@ -12584,10 +12620,7 @@ FLASHMEM  void buttons_liveseq_pianoroll()
       liveseq_pianoroll_fullrefresh_values = true;
     else
       liveseq_pianoroll_fullrefresh_values = false;
-
   }
-
-
 }
 
 FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
@@ -12607,14 +12640,15 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     else
       generic_menu = 0;
 
+ if (notePairs.size() != 0)
+ {
     liveseq_get_lowest_note();
-    liveseq_pianoroll_y_scroll = get_octave(liveseq_pianoroll_lowest_note);
-
+   // liveseq_pianoroll_y_scroll = get_octave(liveseq_pianoroll_lowest_note);
+ }
     // setup function
     display.fillScreen(COLOR_BACKGROUND);
 
     encoderDir[ENC_R].reset();
-
     print_pianokeys_liveseq();
 
     display.setTextColor(COLOR_SYSTEXT, COLOR_CHORDS);
@@ -12642,7 +12676,6 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
         {
           menuhelper_redraw = true;
           liveseq_get_lowest_note();
-          liveseq_pianoroll_y_scroll = get_octave(liveseq_pianoroll_lowest_note);
           liveseq_pianoroll_eventcount = 0;
           generic_temp_select_menu = 0;
         }
@@ -12655,7 +12688,6 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
         {
           menuhelper_redraw = true;
           liveseq_get_lowest_note();
-          liveseq_pianoroll_y_scroll = get_octave(liveseq_pianoroll_lowest_note);
           liveseq_pianoroll_eventcount = 0;
           generic_temp_select_menu = 0;
         }
@@ -12679,10 +12711,9 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       if (LCDML.BT_checkDown())
       {
         temp_uint = constrain(temp_uint + 1, 1, 127);
-        liveseq_get_lowest_note();
-        if (DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[generic_temp_select_menu].noteOn.note_in - liveseq_pianoroll_lowest_note)) < 30)
+        if (  int( DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * temp_uint )) < 35) 
         {
-          // liveseq_pianoroll_y_scroll--;
+           liveseq_pianoroll_y_scroll++;
           print_pianokeys_liveseq();
         }
 
@@ -12690,10 +12721,9 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       else if (LCDML.BT_checkUp())
       {
         temp_uint = constrain(temp_uint - 1, 1, 127);
-        liveseq_get_lowest_note();
-        if (DISPLAY_HEIGHT - 28 - (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * (notePairs[generic_temp_select_menu].noteOn.note_in - liveseq_pianoroll_lowest_note)) > 30)
+        if (  int( DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * temp_uint )) > 140)
         {
-          // liveseq_pianoroll_y_scroll++;
+           liveseq_pianoroll_y_scroll--;
           print_pianokeys_liveseq();
         }
       }
@@ -12725,11 +12755,11 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
-        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll + 1, -60, 36);
+        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll + 1, -60, 36+24);
       }
       else if (LCDML.BT_checkUp())
       {
-        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll - 1, -60, 36);
+        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll - 1, -60, 36+24);
       }
     }
 
@@ -12739,7 +12769,6 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       {
         menuhelper_previous_val = xscaler;
         xscaler = constrain(xscaler - 1, 10, 33);  // -1 reversed
-
 
         if (menuhelper_previous_val != xscaler)
         {
@@ -12810,6 +12839,8 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       liveseq_pianoroll_fullrefresh_values = true;
     }
 
+
+if ( (generic_menu == 0 && menuhelper_redraw )  || generic_menu !=0 )  
     liveseq_pianoroll_draw_graphics();
 
   }
@@ -14698,7 +14729,7 @@ uint8_t liveseq_listeditor_filter = 0;
 int liveseq_listeditor_pattern_start[5];
 
 FLASHMEM void get_liveseq_listeditor_pattern_starts() {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+ // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int p = 1;
   int i = 0;
 
@@ -14714,7 +14745,7 @@ FLASHMEM void get_liveseq_listeditor_pattern_starts() {
 }
 
 FLASHMEM void print_liveseq_listeditor_update_steps() {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+ // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   if (int(data->eventsList.size()) - 1 >= 0)
     liveseq_listeditor_steps = int(data->eventsList.size()) - 1;
   display.setTextSize(1);
@@ -14886,7 +14917,7 @@ FLASHMEM void liveseq_listeditor_printEventGrid()
 
   uint8_t search_note = 0;
   uint8_t search_track = 0;
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+ // LiveSequencer::LiveSeqData* data = liveSeq.getData();
 
   if (generic_temp_select_menu == 0 || generic_temp_select_menu == 13) {
     display.console = true;
@@ -14944,7 +14975,7 @@ FLASHMEM void liveseq_listeditor_printEventGrid()
 
 FLASHMEM void liveseq_listeditor_delete_element()
 {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+ // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
   bool note_valid = false;
   for (auto& e : data->eventsList)
@@ -14976,7 +15007,7 @@ FLASHMEM void liveseq_listeditor_delete_element()
 
 FLASHMEM void liveseq_listeditor_get_current_values()
 {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+ // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
   for (auto& e : data->eventsList)
   {
@@ -14995,7 +15026,7 @@ FLASHMEM void liveseq_listeditor_get_current_values()
 
 FLASHMEM void liveseq_listeditor_save_changed_element()
 {
-  LiveSequencer::LiveSeqData* data = liveSeq.getData();
+ // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
   for (auto& e : data->eventsList)
   {

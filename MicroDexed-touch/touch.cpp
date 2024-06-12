@@ -1701,19 +1701,10 @@ extern bool liveseq_pianoroll_get_current;
 extern void liveseq_pianoroll_draw_graphics();
 extern uint8_t generic_menu;
 extern bool liveseq_pianoroll_fullrefresh_values;
-extern elapsedMillis record_timer;
-
-extern int liveseq_pianoroll_x_scroll;
-extern float pat_len;
-extern  uint8_t xoff;
-
-#include "livesequencer.h"
-extern  LiveSequencer liveSeq;
-LiveSequencer::LiveSeqData* data = liveSeq.getData();
+extern void print_liveseq_playindicator();
 
 FLASHMEM void handle_touchscreen_liveseq_pianoroll()
 {
-
   if (numTouchPoints > 0)
   {
     if (check_button_on_grid(0, 26)) // back button
@@ -1737,6 +1728,7 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       else
         generic_menu = 99;
     }
+
     if (check_button_on_grid(16, 26)) // edit note
     {
       if (generic_menu != 2)
@@ -1747,6 +1739,7 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
         liveseq_note_copy_state = false;
       }
     }
+
     if (check_button_on_grid(24, 26)) //edit velocity
     {
       if (generic_menu != 3)
@@ -1754,6 +1747,7 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       else
         generic_menu = 99;
     }
+
     if (check_button_on_grid(32, 26)) // edit start
     {
       if (generic_menu != 4)
@@ -1761,6 +1755,7 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       else
         generic_menu = 99;
     }
+
     if (check_button_on_grid(40, 26)) // edit end
     {
       if (generic_menu != 5)
@@ -1814,45 +1809,20 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
         generic_menu = 99;
     }
 
-    if (generic_menu > 0 && generic_menu < 6)
+      if ( generic_menu < 6)
+      {
+        liveseq_pianoroll_get_current = true;
+        liveseq_pianoroll_fullrefresh_values = true;
+         liveseq_pianoroll_draw_graphics();
+      }
+
+     if (generic_menu > 0 && generic_menu < 6)
       liveseq_pianoroll_get_current = true;
 
     liveseq_pianoroll_fullrefresh_values = true;
     liveseq_pianoroll_draw_graphics();
+  
   }
-
-  if (record_timer % 40 == 0 && data->isRunning)
-  {
-    bool erased_end = false;
-    for (uint8_t j = 0; j < 4; j++)
-    {
-      if (data->currentPattern == j)
-      {
-        if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) >= xoff &&
-          liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) <= 320)
-        {
-          display.console = true;
-          display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6,
-            liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len), 4, COLOR_BACKGROUND);
-
-          display.fillRect(liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len),
-            CHAR_height - 6, 4, 4, RED);
-        }
-      }
-      if (j == 3 && erased_end == true)
-      {
-        display.fillRect(316, CHAR_height - 6,
-          4, 4, COLOR_BACKGROUND);
-        erased_end = false;
-      }
-      if (j == 0 && data->patternTimer < 200 && erased_end == false)
-      {
-        display.fillRect(316, CHAR_height - 6,
-          4, 4, COLOR_BACKGROUND);
-        erased_end = true;
-      }
-    }
-  }
+  print_liveseq_playindicator();
 }
-
 
