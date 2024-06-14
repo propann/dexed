@@ -747,10 +747,8 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   if(guiFlags & drawSongLayers) {
     TouchButton::Color color = TouchButton::BUTTON_ACTIVE;
     handleLayerEditButtonColor(songLayerMode, color);
-    for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
-      if (songLayer < data.songLayerCount) {
-        drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
-      }
+    for (int songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
+      drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
     }
   }
   guiFlags = 0;

@@ -222,7 +222,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
         MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocityActive };
         if (data.isSongMode) {
-          if (data.songLayerCount < LIVESEQUENCER_NUM_TRACKS) {
+          if (data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
             // in song mode, simply add event, no rounding and checking needed
             newEvent.layer = data.songLayerCount;
             uint8_t patternCount = data.songPatternCount;
