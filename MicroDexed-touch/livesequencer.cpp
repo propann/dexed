@@ -272,8 +272,8 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
       // forward incoming midi event to correct channel
       // ignore events directly mapped to an instrument
-      const bool arpActive = data.isRunning && (data.arpSettings.enabled);
-      if (arpActive) {
+      const bool arpSamplesKeyboard = data.isRunning && (data.arpSettings.enabled) && (data.arpSettings.source == 0);
+      if (arpSamplesKeyboard) {
         switch (event) {
         case midi::NoteOn:
           pressedArpKeys.insert(note);
@@ -603,7 +603,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
     }
     else {
       ArpNote newArp; // play a new note...
-      newArp.track = data.activeTrack;
+      newArp.track = (data.arpSettings.source == 0) ? data.activeTrack : (data.arpSettings.source - 1);
 
       if (data.arpSettings.mode != ArpMode::ARP_CHORD) {
         newArp.notes.emplace_back(*data.arpSettings.arpIt);
