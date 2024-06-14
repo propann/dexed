@@ -30,7 +30,6 @@ extern void handleStop();
 using namespace TeensyTimerTool;
 
 PeriodicTimer tickTimer(TMR1);  // only 16bit needed
-
 OneShotTimer arpTimer(TCK);     // one tick timer of 20
 OneShotTimer liveTimer(TCK);    // one tick timer of 20
 
@@ -103,10 +102,7 @@ FLASHMEM void LiveSequencer::onStopped(void) {
 }
 
 FLASHMEM void LiveSequencer::onStarted(void) {
-
   tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.1ms);
-  //tickTimer.begin([] { TeensyTimerTool::tick(); }, 8ms);
-
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
@@ -923,7 +919,10 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them
+        if(data.isRunning == false) {
+          // only merge if not added to pending in fillTrackLayer above
+          trackLayerAction(i, 1, LayerMode::LAYER_MERGE);
+        }
         // reset fillNotes to user values
         data.fillNotes.number = fillNumOld;
         data.fillNotes.offset = fillOffOld;
