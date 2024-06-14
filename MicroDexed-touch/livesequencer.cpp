@@ -686,12 +686,8 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
   data.arpSettings.delayToNextArpOnMs -= std::min(delayToNextTimerCall, data.arpSettings.delayToNextArpOnMs);
   if (nextIsPatternStart == false) {
     //DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
-    if (delayToNextTimerCall == 0) {
-      playNextArpNote();
-    }
-    else {
-      arpTimer.trigger(delayToNextTimerCall * 1000);
-    }
+    // delay all arp events by 1ms to make sure when in track source mode, quantized notes are already on when sampling
+    arpTimer.trigger((delayToNextTimerCall + 1) * 1000);
   }
 }
 
