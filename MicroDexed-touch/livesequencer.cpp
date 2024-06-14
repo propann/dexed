@@ -737,16 +737,18 @@ FLASHMEM void LiveSequencer::onGuiInit(void) {
 
 FLASHMEM void LiveSequencer::checkBpmChanged(void) {
   if (seq.bpm != data.currentBpm) {
+    data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
+    DBG_LOG(printf("bpm changed from %i to %i\n", data.currentBpm, seq.bpm));
     float resampleFactor = data.currentBpm / float(seq.bpm);
     data.currentBpm = seq.bpm;
-    // resample pattern events
+    // resample pattern events - not lossless
     for (auto& e : data.eventsList) {
-      e.patternMs *= resampleFactor;
+      e.patternMs = round(resampleFactor * e.patternMs);
     }
-    // resample song events
+    // resample song events - not lossless
     for (auto& e : data.songEvents) {
       for (auto& a : e.second) {
-        a.patternMs *= resampleFactor;
+        a.patternMs = round(resampleFactor * a.patternMs);
       }
     }
   }

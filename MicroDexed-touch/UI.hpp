@@ -660,10 +660,7 @@ void update_seq_speed() {
 // testing auto compensate delay for seq.
 //compensate_seq_delay = -200 * seq.bpm +40000;
 
- //liveSeq.checkBpmChanged();
- //liveSeq.updateTrackChannels();
- //liveSeq.refreshSongLength();
- //liveSeq.init();
+  liveSeq.checkBpmChanged();
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
