@@ -1656,7 +1656,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       //serializeJsonPretty(data_json, Serial);
       json.close();
     }
-
+    
     // save pattern event chunks
     //Serial.printf("pattern chunks: %i:\n", numPatternChunks);
     std::list<LiveSequencer::MidiEvent>::iterator it = data->eventsList.begin();

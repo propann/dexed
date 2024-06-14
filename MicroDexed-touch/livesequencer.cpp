@@ -30,7 +30,6 @@ extern void handleStop();
 using namespace TeensyTimerTool;
 
 PeriodicTimer tickTimer(TMR1);  // only 16bit needed
-
 OneShotTimer arpTimer(TCK);     // one tick timer of 20
 OneShotTimer liveTimer(TCK);    // one tick timer of 20
 
@@ -103,10 +102,7 @@ FLASHMEM void LiveSequencer::onStopped(void) {
 }
 
 FLASHMEM void LiveSequencer::onStarted(void) {
-
   tickTimer.begin([] { TeensyTimerTool::tick(); }, 0.1ms);
-  //tickTimer.begin([] { TeensyTimerTool::tick(); }, 8ms);
-
   liveTimer.begin([this] { playNextEvent(); });
   arpTimer.begin([this] { playNextArpNote(); });
   data.startedFlag = true;
@@ -226,7 +222,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
         MidiEvent newEvent = { source, uint16_t(data.patternTimer), data.currentPattern, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, event, note, velocityActive };
         if (data.isSongMode) {
-          if (data.songLayerCount < LIVESEQUENCER_NUM_TRACKS) {
+          if (data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
             // in song mode, simply add event, no rounding and checking needed
             newEvent.layer = data.songLayerCount;
             uint8_t patternCount = data.songPatternCount;
@@ -276,8 +272,8 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
       // forward incoming midi event to correct channel
       // ignore events directly mapped to an instrument
-      const bool arpActive = data.isRunning && (data.arpSettings.enabled);
-      if (arpActive) {
+      const bool arpSamplesKeyboard = data.isRunning && (data.arpSettings.enabled) && (data.arpSettings.source == 0);
+      if (arpSamplesKeyboard) {
         switch (event) {
         case midi::NoteOn:
           pressedArpKeys.insert(note);
@@ -607,7 +603,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
     }
     else {
       ArpNote newArp; // play a new note...
-      newArp.track = data.activeTrack;
+      newArp.track = (data.arpSettings.source == 0) ? data.activeTrack : (data.arpSettings.source - 1);
 
       if (data.arpSettings.mode != ArpMode::ARP_CHORD) {
         newArp.notes.emplace_back(*data.arpSettings.arpIt);
@@ -690,12 +686,8 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
   data.arpSettings.delayToNextArpOnMs -= std::min(delayToNextTimerCall, data.arpSettings.delayToNextArpOnMs);
   if (nextIsPatternStart == false) {
     //DBG_LOG(printf("@%i:\ttrigger again in %ims\n", nowMs, delayToNextTimerCall));
-    if (delayToNextTimerCall == 0) {
-      playNextArpNote();
-    }
-    else {
-      arpTimer.trigger(delayToNextTimerCall * 1000);
-    }
+    // delay all arp events by 1ms to make sure when in track source mode, quantized notes are already on when sampling
+    arpTimer.trigger((delayToNextTimerCall + 1) * 1000);
   }
 }
 
@@ -741,16 +733,18 @@ FLASHMEM void LiveSequencer::onGuiInit(void) {
 
 FLASHMEM void LiveSequencer::checkBpmChanged(void) {
   if (seq.bpm != data.currentBpm) {
+    data.patternLengthMs = (4 * 1000 * 60) / seq.bpm; // for a 4/4 signature
+    DBG_LOG(printf("bpm changed from %i to %i\n", data.currentBpm, seq.bpm));
     float resampleFactor = data.currentBpm / float(seq.bpm);
     data.currentBpm = seq.bpm;
-    // resample pattern events
+    // resample pattern events - not lossless
     for (auto& e : data.eventsList) {
-      e.patternMs *= resampleFactor;
+      e.patternMs = round(resampleFactor * e.patternMs);
     }
-    // resample song events
+    // resample song events - not lossless
     for (auto& e : data.songEvents) {
       for (auto& a : e.second) {
-        a.patternMs *= resampleFactor;
+        a.patternMs = round(resampleFactor * a.patternMs);
       }
     }
   }
@@ -923,7 +917,10 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        trackLayerAction(i, 1, LayerMode::LAYER_MERGE); // merge them
+        if(data.isRunning == false) {
+          // only merge if not added to pending in fillTrackLayer above
+          trackLayerAction(i, 1, LayerMode::LAYER_MERGE);
+        }
         // reset fillNotes to user values
         data.fillNotes.number = fillNumOld;
         data.fillNotes.offset = fillOffOld;
