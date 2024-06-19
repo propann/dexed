@@ -162,7 +162,6 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char* midi
     // Internal CC ?
     if (inData1 >= 20 && inData1 <= 31)
       _internal = true;
-
     handleControlChange(inChannel, inData1, inData2);
 #ifdef DEBUG
     strcpy(text, "CC");
@@ -489,9 +488,9 @@ void handleRealtime_generic(const char* midi_device, midi::MidiType event)
   default:
     break;
   }
-#ifdef DEBUG
-  LOG.printf_P(PSTR("[%s] %s"), midi_device, text);
-#endif
+// #ifdef DEBUG
+//   LOG.printf_P(PSTR("[%s] %s"), midi_device, text);
+// #endif
 
   // MIDI THRU
   if (configuration.sys.soft_midi_thru == 1)
@@ -500,9 +499,9 @@ void handleRealtime_generic(const char* midi_device, midi::MidiType event)
     if (strcmp(MIDI_BY_USB, midi_device))
     {
       usbMIDI.sendRealTime(event);
-#ifdef DEBUG
-      LOG.print(F(" THRU->MIDI_USB"));
-#endif
+// #ifdef DEBUG
+//       LOG.print(F(" THRU->MIDI_USB"));
+// #endif
     }
 #endif
 
@@ -510,9 +509,9 @@ void handleRealtime_generic(const char* midi_device, midi::MidiType event)
     if (strcmp(MIDI_BY_DIN, midi_device))
     {
       midi_serial.sendRealTime(event);
-#ifdef DEBUG
-      LOG.print(F(" THRU->MIDI_DIN"));
-#endif
+// #ifdef DEBUG
+//       LOG.print(F(" THRU->MIDI_DIN"));
+// #endif
     }
 #endif
 
@@ -527,9 +526,9 @@ void handleRealtime_generic(const char* midi_device, midi::MidiType event)
 #endif
   }
 
-#ifdef DEBUG
-  LOG.println();
-#endif
+// #ifdef DEBUG
+//   LOG.println();
+// #endif
 }
 
 ///* void handleSystemExclusiveChunk_MIDI_DEVICE_DIN(byte *data, uint len, bool last)

@@ -99,7 +99,6 @@ LCDML_add(59, LCDML_0_15, 11, "TEST Audio Mute", UI_func_test_mute);
 LCDML_add(60, LCDML_0_15, 12, "TEST PSRAM", UI_func_test_psram);
 LCDML_add(61, LCDML_0_15, 13, "FORMAT FLASH", UI_func_format_flash);
 LCDML_add(62, LCDML_0, 16, "Info", UI_func_information);
-//LCDML_add(62, LCDML_0, 17, "MIDI SYNC", UI_func_midi_sync);
 LCDML_addAdvanced(63, LCDML_0, 17, COND_hide, "Volume", UI_func_volume, 0, _LCDML_TYPE_default);
 LCDML_addAdvanced(64, LCDML_0, 18, COND_hide, "Screensaver", mFunc_screensaver, 0, _LCDML_TYPE_default);
 LCDML_addAdvanced(65, LCDML_0, 19, COND_hide, "SD_NOT_FOUND", UI_func_sd_content_not_found, 0, _LCDML_TYPE_default);

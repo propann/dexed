@@ -534,7 +534,6 @@ void UI_func_dexed_setup(uint8_t param);
 void UI_handle_OP(uint8_t param);
 void UI_func_information(uint8_t param);
 void UI_func_liveseq_listeditor(uint8_t param);
-//void UI_func_midi_sync(uint8_t param);
 void UI_func_master_effects(uint8_t param);
 void UI_func_not_available(uint8_t param);
 void UI_func_braids(uint8_t param);
@@ -649,7 +648,6 @@ FLASHMEM void set_state_dir()
 };
 
 int favsearcher = 0;
-//int compensate_seq_delay=0;
 
 #include "livesequencer.h"
 extern LiveSequencer liveSeq;
@@ -657,10 +655,17 @@ extern LiveSequencer liveSeq;
 void update_seq_speed() {
   seq.tempo_ms = 60000000 / seq.bpm / 4;
 
-// testing auto compensate delay for seq.
-//compensate_seq_delay = -200 * seq.bpm +40000;
-
   liveSeq.checkBpmChanged();
+
+  ///////// midi sync test
+  if (seq.clock == 0) // INTERNAL TIMING
+  {
+    seq.ticks_max = 7; //(0-7 = 8)
+    if (seq.running)
+      sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+    else
+      sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+  }
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -671,10 +676,6 @@ void update_seq_speed() {
     }
   }
 
-  if (seq.running)
-    sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
-  else
-    sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
 }
 
 FLASHMEM bool menu_item_check(uint8_t in)
@@ -6778,11 +6779,12 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       generic_temp_select_menu = 0;
     generic_active_function = false;
     encoderDir[ENC_R].reset();
+    helptext_l(back_text);
     display.setTextSize(1);
     display.setTextColor(RED);
 
     setCursor_textGrid_small(1, 1);
-    display.print("ADV. SEQUENCER SETTINGS");
+    display.print("SEQUENCER SETTINGS");
 
     display.setTextColor(COLOR_SYSTEXT);
     setCursor_textGrid_small(1, 4);
@@ -6808,35 +6810,34 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT);
     setCursor_textGrid_small(1, 10);
     display.print(F("CHRD/ARP VELOCITY"));
-    display.setTextColor(GREY2);
-    setCursor_textGrid_small(1, 12);
-    display.print(F("LIVE TRANSPOSE"));
     display.setTextColor(COLOR_SYSTEXT);
-    setCursor_textGrid_small(1, 14);
+    setCursor_textGrid_small(1, 11);
     display.print(F("OCT. FOR LIVE TRANSP."));
-    setCursor_textGrid_small(27, 14);
+    setCursor_textGrid_small(27, 11);
     display.print("-");
 
     display.setTextColor(GREY2);
-    setCursor_textGrid_small(1, 16);
+    setCursor_textGrid_small(1, 13);
     display.print(F("SONG"));
 
     display.setTextColor(COLOR_SYSTEXT);
-    setCursor_textGrid_small(1, 18);
+    setCursor_textGrid_small(1, 15);
     display.print(F("SONG TEMPO"));
-    setCursor_textGrid_small(27, 18);
+    setCursor_textGrid_small(27, 15);
     display.print("BPM");
     display.setTextColor(GREY2);
-    setCursor_textGrid_small(12, 18);
+    setCursor_textGrid_small(12, 15);
     display.print("(");
-    setCursor_textGrid_small(16, 18);
+    setCursor_textGrid_small(16, 15);
     display.print("ms)");
-    setCursor_textGrid_small(1, 19);
+    setCursor_textGrid_small(1, 16);
     display.print(F("PATTERN LENGTH"));
-    setCursor_textGrid_small(1, 20);
-    display.print(F("SWING/SHUFFLE"));
-    setCursor_textGrid_small(1, 21);
+    setCursor_textGrid_small(1, 17);
     display.print(F("STEP RECORDING:"));
+    setCursor_textGrid_small(1, 18);
+    display.print(F("TIMING CLOCK:"));
+
+
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
@@ -6926,9 +6927,9 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.swing_steps = constrain(seq.swing_steps + 1, 0, 2);
+          seq.auto_advance_step = constrain(seq.auto_advance_step + 1, 0, 2);
         else if (LCDML.BT_checkUp())
-          seq.swing_steps = constrain(seq.swing_steps - 1, 0, 2);
+          seq.auto_advance_step = constrain(seq.auto_advance_step - 1, 0, 2);
       }
     }
     else if (generic_temp_select_menu == 9 && generic_active_function == 1)
@@ -6936,9 +6937,9 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.auto_advance_step = constrain(seq.auto_advance_step + 1, 0, 2);
+          seq.clock = constrain(seq.clock + 1, 0, 1);
         else if (LCDML.BT_checkUp())
-          seq.auto_advance_step = constrain(seq.auto_advance_step - 1, 0, 2);
+          seq.clock = constrain(seq.clock - 1, 0, 1);
       }
     }
     // -------------------------------------------------------------------------------------------------------------------------
@@ -6978,58 +6979,76 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     setCursor_textGrid_small(23, 10);
     print_formatted_number(seq.chord_vel, 3);
     setModeColor(5);
-    setCursor_textGrid_small(23, 14);
+    setCursor_textGrid_small(23, 11);
     if (seq.transpose != 0)
     {
       getNoteName(displayname, seq.transpose);
       display.print(displayname);
-      setCursor_textGrid_small(29, 14);
+      setCursor_textGrid_small(29, 11);
       getNoteName(displayname, seq.transpose + 12);
       display.print(displayname);
     }
     else
     {
       display.print(F("OFF"));
-      setCursor_textGrid_small(29, 14);
+      setCursor_textGrid_small(29, 11);
       display.print(F("OFF"));
     }
     display.setTextColor(GREY2, COLOR_BACKGROUND);
-    setCursor_textGrid_small(13, 18);
+    setCursor_textGrid_small(13, 15);
     snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), seq.tempo_ms / 1000);
     display.print(displayname);
     setModeColor(6);
-    setCursor_textGrid_small(23, 18);
+    setCursor_textGrid_small(23, 15);
     snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), seq.bpm);
     display.print(displayname);
 
     if (generic_temp_select_menu == 6 && generic_active_function)
       update_seq_speed();
 
+
     setModeColor(7);
-    setCursor_textGrid_small(23, 19);
+    setCursor_textGrid_small(23, 16);
     print_formatted_number(16 - seq.pattern_len_dec, 2);
 
     setModeColor(8);
-    // setCursor_textGrid_small(23, 20);
-    //print_formatted_number( seq.swing_steps, 1);
-    setCursor_textGrid_small(23, 20);
-    if (seq.swing_steps == 0)
-      display.print(F("NONE    "));
-    else if (seq.swing_steps == 1)
-      display.print(F("SHUFFLE "));
-    else if (seq.swing_steps == 2)
-      display.print(F("TRIPLETS"));
-    //  else   
-    //   display.print(F("OTHER   "));
-
-    setModeColor(9);
-    setCursor_textGrid_small(23, 21);
+    setCursor_textGrid_small(23, 17);
     if (seq.auto_advance_step == 1)
       display.print(F("AUTO ADVANCE STEP"));
     else if (seq.auto_advance_step == 2)
       display.print(F("AUTO ADVANCE+STOP"));
     else
       display.print(F("KEEP CURRENT STEP"));
+
+    setModeColor(9);
+    setCursor_textGrid_small(23, 18);
+    if (seq.clock == 0)
+      display.print(F("INTERNAL CLOCK "));
+    else if (seq.clock == 1)
+      display.print(F("MIDI CLOCK (IN)"));
+
+    if (seq.clock == 0) // INTERNAL TIMING
+      seq.ticks_max = 7; //(0-7 = 8)
+    else // MIDI IN CLOCK
+      seq.ticks_max = 5; //(0-5 = 6)
+
+    //warning message
+    if (seq.clock == 1)
+    {
+      display.setTextSize(1);
+      display.setTextColor(RED);
+      setCursor_textGrid_small(1, 20);
+      display.print(F("WARNING: CLOCK IS SET TO EXTERNAL (MIDI CLOCK)"));
+      setCursor_textGrid_small(1, 21);
+      display.print(F("SEQ. WILL DEPEND ON EXTERNAL DEVICE TO WORK"));
+    }
+    else
+    {
+      display.console = true;
+      display.fillRect(4, 12 * CHAR_height - 4, 300, 19, COLOR_BACKGROUND);
+
+    }
+
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -12168,7 +12187,7 @@ uint8_t temp_uint;
 int temp_int16;
 uint16_t liveseq_edit_noteoff_step = 0;
 
- LiveSequencer::LiveSeqData* data = liveSeq.getData();
+LiveSequencer::LiveSeqData* data = liveSeq.getData();
 
 bool liveseq_pianoroll_get_current = false;
 bool liveseq_pianoroll_fullrefresh_values = false;
@@ -12184,38 +12203,38 @@ void buttons_liveseq_pianoroll();
 FLASHMEM void print_liveseq_playindicator()
 {
 
-if (record_timer % 40 == 0 && data->isRunning)
+  if (record_timer % 40 == 0 && data->isRunning)
+  {
+    bool erased_end = false;
+    for (uint8_t j = 0; j < 4; j++)
     {
-      bool erased_end = false;
-      for (uint8_t j = 0; j < 4; j++)
+      if (data->currentPattern == j)
       {
-        if (data->currentPattern == j)
+        if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) >= xoff &&
+          liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) <= 320)
         {
-          if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) >= xoff &&
-            liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) <= 320)
-          {
-            display.console = true;
-            display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6,
-              liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len), 4, COLOR_BACKGROUND);
+          display.console = true;
+          display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6,
+            liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len), 4, COLOR_BACKGROUND);
 
-            display.fillRect(liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len),
-              CHAR_height - 6, 4, 4, RED);
-          }
-        }
-        if (j == 3 && erased_end == true)
-        {
-          display.fillRect(316, CHAR_height - 6,
-            4, 4, COLOR_BACKGROUND);
-          erased_end = false;
-        }
-        if (j == 0 && data->patternTimer < 200 && erased_end == false)
-        {
-          display.fillRect(316, CHAR_height - 6,
-            4, 4, COLOR_BACKGROUND);
-          erased_end = true;
+          display.fillRect(liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len),
+            CHAR_height - 6, 4, 4, RED);
         }
       }
+      if (j == 3 && erased_end == true)
+      {
+        display.fillRect(316, CHAR_height - 6,
+          4, 4, COLOR_BACKGROUND);
+        erased_end = false;
+      }
+      if (j == 0 && data->patternTimer < 200 && erased_end == false)
+      {
+        display.fillRect(316, CHAR_height - 6,
+          4, 4, COLOR_BACKGROUND);
+        erased_end = true;
+      }
     }
+  }
 
 }
 
@@ -12240,10 +12259,10 @@ FLASHMEM void print_keyboard_livesequencer(int ypos, uint8_t octave)
       {
         display.setCursor(17, ypos - 14 - (y * 14));
         display.print("C");
-        if (octave - 1 + oct_count <10 && octave - 1 + oct_count >=0)
-        display.print(octave - 1 + oct_count);
+        if (octave - 1 + oct_count < 10 && octave - 1 + oct_count >= 0)
+          display.print(octave - 1 + oct_count);
         else
-        display.print("?");
+          display.print("?");
       }
       oct_count++;
     }
@@ -12294,7 +12313,7 @@ FLASHMEM uint8_t get_octave(uint8_t in)
   if (in % 12 == 0)
     return in / 12;
   else
-    return ((in % 12) ); 
+    return ((in % 12));
 }
 
 FLASHMEM  void liveseq_pianoroll_draw_graphics()
@@ -12337,7 +12356,7 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
 
   if (notePairs.size() != 0)
   {
-     // liveseq_get_lowest_note();
+    // liveseq_get_lowest_note();
     if (generic_menu == 2)
     {
       //get current value when starting editing so it does not start at zero
@@ -12385,16 +12404,16 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
   }
   else
   {
-     display.setTextSize(1);
-  display.setCursor(60,90);
-  display.setTextColor(RED, COLOR_BACKGROUND);
-  display.print(F("LIVESEQUENCER TRACK IS CURRENTLY EMPTY"));
+    display.setTextSize(1);
+    display.setCursor(60, 90);
+    display.setTextColor(RED, COLOR_BACKGROUND);
+    display.print(F("LIVESEQUENCER TRACK IS CURRENTLY EMPTY"));
   }
 
-    liveseq_pianoroll_eventcount = notePairs.size();
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(CHAR_width_small * 41, 0);
-    print_formatted_number(liveseq_pianoroll_eventcount, 3);
+  liveseq_pianoroll_eventcount = notePairs.size();
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 41, 0);
+  print_formatted_number(liveseq_pianoroll_eventcount, 3);
 
   if (notePairs.size() != 0)
   {
@@ -12409,55 +12428,55 @@ FLASHMEM  void liveseq_pianoroll_draw_graphics()
     // to =generic_temp_select_menu+1;
     //}
 
-if (liveseq_pianoroll_eventcount >0)
-    //for (uint8_t j = 0; j < liveseq_pianoroll_eventcount; j++)
-    for (int j = liveseq_pianoroll_eventcount-1; j > 0; j--)
-    {
-      uint16_t col;
-
-      // if (notePairs[j].noteOn.note_in == notePairs[j+1].noteOn.note_in && notePairs[j].noteOn.patternMs == notePairs[j+1].noteOn.patternMs  )
-      // col = YELLOW;
-      // else
-      // if ( j-1>=0 && notePairs[j].noteOn.note_in == notePairs[j-1].noteOn.note_in &&  notePairs[j].noteOn.patternMs == notePairs[j+1].noteOn.patternMs  )
-      // col = PINK;
-      // else
-
-      if (generic_menu > 1 && generic_menu != 99 && j == generic_temp_select_menu)
+    if (liveseq_pianoroll_eventcount > 0)
+      //for (uint8_t j = 0; j < liveseq_pianoroll_eventcount; j++)
+      for (int j = liveseq_pianoroll_eventcount - 1; j > 0; j--)
       {
-        col = RED;
-      }
-      else if (j == generic_temp_select_menu && generic_menu > 0)
-      {
-        col = GREEN;
-      }
-      else
-        col = COLOR_SYSTEXT;
+        uint16_t col;
 
-      if (DISPLAY_HEIGHT  + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in ) >= CHAR_height &&
-        DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in ) < DISPLAY_HEIGHT - 5 * CHAR_height &&
-        liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler >= xoff &&
-        liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler < DISPLAY_WIDTH - 5
-        )
-      {
-        if (notePairs[j].noteOff.note_in > 0 && notePairs[j].noteOn.note_in > 0)
+        // if (notePairs[j].noteOn.note_in == notePairs[j+1].noteOn.note_in && notePairs[j].noteOn.patternMs == notePairs[j+1].noteOn.patternMs  )
+        // col = YELLOW;
+        // else
+        // if ( j-1>=0 && notePairs[j].noteOn.note_in == notePairs[j-1].noteOn.note_in &&  notePairs[j].noteOn.patternMs == notePairs[j+1].noteOn.patternMs  )
+        // col = PINK;
+        // else
+
+        if (generic_menu > 1 && generic_menu != 99 && j == generic_temp_select_menu)
         {
-          display.console = true;
-          display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler,
-            (DISPLAY_HEIGHT  + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in )),
-            (notePairs[j].noteOff.patternNumber - notePairs[j].noteOn.patternNumber) * pat_len + (notePairs[j].noteOff.patternMs / xscaler - notePairs[j].noteOn.patternMs / xscaler), 5, col);
+          col = RED;
         }
-        else //no note-off for note-on found, draw just note start
+        else if (j == generic_temp_select_menu && generic_menu > 0)
         {
-          if (generic_menu == 1 && j == generic_temp_select_menu)
-            col = RED;
-          else
-            col = GREEN;
-          display.console = true;
-          display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.note_in / xscaler,
-            (DISPLAY_HEIGHT  + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in )), 5, 5, col);
+          col = GREEN;
+        }
+        else
+          col = COLOR_SYSTEXT;
+
+        if (DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in) >= CHAR_height &&
+          DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in) < DISPLAY_HEIGHT - 5 * CHAR_height &&
+          liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler >= xoff &&
+          liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler < DISPLAY_WIDTH - 5
+          )
+        {
+          if (notePairs[j].noteOff.note_in > 0 && notePairs[j].noteOn.note_in > 0)
+          {
+            display.console = true;
+            display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.patternMs / xscaler,
+              (DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in)),
+              (notePairs[j].noteOff.patternNumber - notePairs[j].noteOn.patternNumber) * pat_len + (notePairs[j].noteOff.patternMs / xscaler - notePairs[j].noteOn.patternMs / xscaler), 5, col);
+          }
+          else //no note-off for note-on found, draw just note start
+          {
+            if (generic_menu == 1 && j == generic_temp_select_menu)
+              col = RED;
+            else
+              col = GREEN;
+            display.console = true;
+            display.fillRect(liveseq_pianoroll_x_scroll + notePairs[j].noteOn.patternNumber * pat_len + xoff + notePairs[j].noteOn.note_in / xscaler,
+              (DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * notePairs[j].noteOn.note_in)), 5, 5, col);
+          }
         }
       }
-    }
   }
 }
 
@@ -12468,9 +12487,9 @@ FLASHMEM void print_pianokeys_liveseq()
   display.console = true;
   display.fillRect(0, CHAR_height, 30, DISPLAY_HEIGHT - 5 * CHAR_height - 5, COLOR_BACKGROUND);
 
-  print_keyboard_livesequencer(  (8.15 * liveseq_pianoroll_y_scroll   + (7*8.15)-2 ) - 196*2, get_octave(liveseq_pianoroll_lowest_note) + 2);
-  print_keyboard_livesequencer( (8.15 * liveseq_pianoroll_y_scroll + (7*8.15)-2)-196, get_octave(liveseq_pianoroll_lowest_note));
-  print_keyboard_livesequencer(  (8.15 * liveseq_pianoroll_y_scroll + (7*8.15)-2) , get_octave(liveseq_pianoroll_lowest_note) - 2);
+  print_keyboard_livesequencer((8.15 * liveseq_pianoroll_y_scroll + (7 * 8.15) - 2) - 196 * 2, get_octave(liveseq_pianoroll_lowest_note) + 2);
+  print_keyboard_livesequencer((8.15 * liveseq_pianoroll_y_scroll + (7 * 8.15) - 2) - 196, get_octave(liveseq_pianoroll_lowest_note));
+  print_keyboard_livesequencer((8.15 * liveseq_pianoroll_y_scroll + (7 * 8.15) - 2), get_octave(liveseq_pianoroll_lowest_note) - 2);
 
   display.console = true;
   display.fillRect(0, CHAR_height_small, 30, CHAR_height_small + 1, COLOR_BACKGROUND);
@@ -12637,11 +12656,11 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     else
       generic_menu = 0;
 
- if (notePairs.size() != 0)
- {
-    liveseq_get_lowest_note();
-   // liveseq_pianoroll_y_scroll = get_octave(liveseq_pianoroll_lowest_note);
- }
+    if (notePairs.size() != 0)
+    {
+      liveseq_get_lowest_note();
+      // liveseq_pianoroll_y_scroll = get_octave(liveseq_pianoroll_lowest_note);
+    }
     // setup function
     display.fillScreen(COLOR_BACKGROUND);
 
@@ -12708,9 +12727,9 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       if (LCDML.BT_checkDown())
       {
         temp_uint = constrain(temp_uint + 1, 1, 127);
-        if (  int( DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * temp_uint )) < 35) 
+        if (int(DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * temp_uint)) < 35)
         {
-           liveseq_pianoroll_y_scroll++;
+          liveseq_pianoroll_y_scroll++;
           print_pianokeys_liveseq();
         }
 
@@ -12718,9 +12737,9 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
       else if (LCDML.BT_checkUp())
       {
         temp_uint = constrain(temp_uint - 1, 1, 127);
-        if (  int( DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * temp_uint )) > 140)
+        if (int(DISPLAY_HEIGHT + (8.15 * liveseq_pianoroll_y_scroll) - (8.15 * temp_uint)) > 140)
         {
-           liveseq_pianoroll_y_scroll--;
+          liveseq_pianoroll_y_scroll--;
           print_pianokeys_liveseq();
         }
       }
@@ -12752,11 +12771,11 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     {
       if (LCDML.BT_checkDown())
       {
-        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll + 1, -60, 36+24);
+        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll + 1, -60, 36 + 24);
       }
       else if (LCDML.BT_checkUp())
       {
-        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll - 1, -60, 36+24);
+        liveseq_pianoroll_y_scroll = constrain(liveseq_pianoroll_y_scroll - 1, -60, 36 + 24);
       }
     }
 
@@ -12837,8 +12856,8 @@ FLASHMEM void UI_func_liveseq_pianoroll(uint8_t param)
     }
 
 
-if ( (generic_menu == 0 && menuhelper_redraw )  || generic_menu !=0 )  
-    liveseq_pianoroll_draw_graphics();
+    if ((generic_menu == 0 && menuhelper_redraw) || generic_menu != 0)
+      liveseq_pianoroll_draw_graphics();
 
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
@@ -14726,7 +14745,7 @@ uint8_t liveseq_listeditor_filter = 0;
 int liveseq_listeditor_pattern_start[5];
 
 FLASHMEM void get_liveseq_listeditor_pattern_starts() {
- // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int p = 1;
   int i = 0;
 
@@ -14742,7 +14761,7 @@ FLASHMEM void get_liveseq_listeditor_pattern_starts() {
 }
 
 FLASHMEM void print_liveseq_listeditor_update_steps() {
- // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   if (int(data->eventsList.size()) - 1 >= 0)
     liveseq_listeditor_steps = int(data->eventsList.size()) - 1;
   display.setTextSize(1);
@@ -14914,7 +14933,7 @@ FLASHMEM void liveseq_listeditor_printEventGrid()
 
   uint8_t search_note = 0;
   uint8_t search_track = 0;
- // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
 
   if (generic_temp_select_menu == 0 || generic_temp_select_menu == 13) {
     display.console = true;
@@ -14972,7 +14991,7 @@ FLASHMEM void liveseq_listeditor_printEventGrid()
 
 FLASHMEM void liveseq_listeditor_delete_element()
 {
- // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
   bool note_valid = false;
   for (auto& e : data->eventsList)
@@ -15004,7 +15023,7 @@ FLASHMEM void liveseq_listeditor_delete_element()
 
 FLASHMEM void liveseq_listeditor_get_current_values()
 {
- // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
   for (auto& e : data->eventsList)
   {
@@ -15023,7 +15042,7 @@ FLASHMEM void liveseq_listeditor_get_current_values()
 
 FLASHMEM void liveseq_listeditor_save_changed_element()
 {
- // LiveSequencer::LiveSeqData* data = liveSeq.getData();
+  // LiveSequencer::LiveSeqData* data = liveSeq.getData();
   int i = 0;
   for (auto& e : data->eventsList)
   {
@@ -15378,56 +15397,6 @@ void UI_func_information(uint8_t param)
     display.fillScreen(COLOR_BACKGROUND);
   }
 }
-
-// void UI_func_midi_sync(uint8_t param)
-// {
-
-//   if (LCDML.FUNC_setup()) // ****** SETUP *********
-//   {
-
-//     encoderDir[ENC_R].reset();
-//     display.fillScreen(COLOR_BACKGROUND);
-
-//     display.setCursor(CHAR_width_small * 2, CHAR_height_small * 2);
-//     display.setTextSize(1);
-//     display.setTextColor(RED);
-//     display.print(F("MIDI SYNC"));
-//     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-
-//     display.setCursor(CHAR_width_small * 2, CHAR_height_small * 4);
-//     display.print(F("MIDI CLOCK (in 16th steps)"));
-//     display.setTextColor(GREY1, COLOR_BACKGROUND);
-
-//     for (int x = 0; x < 16; x++)
-//     {
-//       display.setCursor(CHAR_width_small * 2 + (x * 3) * CHAR_width_small, CHAR_height_small * 5);
-//       print_formatted_number(x + 1, 2);
-//     }
-
-//     display.setCursor(CHAR_width_small * 2, CHAR_height_small * 8);
-//     display.print(F("MDT SEQUENCER (in 16th steps)"));
-//     display.setTextColor(GREY1, COLOR_BACKGROUND);
-
-//     for (int x = 0; x < 16; x++)
-//     {
-//       display.setCursor(CHAR_width_small * 2 + (x * 3) * CHAR_width_small, CHAR_height_small * 9);
-//       print_formatted_number(x + 1, 2);
-//     }
-
-//   }
-//   if (LCDML.FUNC_loop()) // ****** LOOP *********
-//   {
-//     if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-//     {
-//       ;
-//     }
-//   }
-//   if (LCDML.FUNC_close()) // ****** STABLE END *********
-//   {
-//     encoderDir[ENC_R].reset();
-//     display.fillScreen(COLOR_BACKGROUND);
-//   }
-// }
 
 FLASHMEM void not_available_message()
 {
@@ -17958,6 +17927,7 @@ FLASHMEM void UI_func_midi_soft_thru(uint8_t param)
   static uint8_t old_soft_midi_thru;
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    old_soft_midi_thru = configuration.sys.soft_midi_thru;
     encoderDir[ENC_R].reset();
     setCursor_textGrid(1, 1);
     display.print(F("MIDI Soft THRU"));
@@ -18407,9 +18377,9 @@ FLASHMEM void _render_misc_settings()
   display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
   setCursor_textGrid_small(42, 14);
   display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
-      // setCursor_textGrid_small(42, 15);
-      // display.print(compensate_seq_delay);
-      // display.print(" ");
+  // setCursor_textGrid_small(42, 15);
+  // display.print(compensate_seq_delay);
+  // display.print(" ");
 }
 
 FLASHMEM void UI_func_misc_settings(uint8_t param)
@@ -18591,7 +18561,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     if (settings_modified == 5)
     {
       touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-    }
+  }
 #endif
 
     // UI reverse
@@ -18647,7 +18617,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       settings_modified = 0;
     }
 
-  }
+}
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {

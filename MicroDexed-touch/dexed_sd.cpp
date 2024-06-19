@@ -2841,7 +2841,7 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["seq_tempo_ms"] = seq.tempo_ms;
       data_json["pattern_len_dec"] = seq.pattern_len_dec;
-      data_json["swing_steps"] = seq.swing_steps;
+      data_json["clock"] = seq.clock;
       data_json["seq_bpm"] = seq.bpm;
       data_json["arp_speed"] = seq.arp_speed;
       data_json["arp_length"] = seq.arp_length;
@@ -3132,6 +3132,8 @@ FLASHMEM bool load_sd_seq_sub_patterns_json(uint8_t number)
   return (false);
 }
 
+extern void update_seq_speed();
+
 FLASHMEM bool load_sd_performance_json(uint8_t number)
 {
   bool seq_was_running = false;
@@ -3220,7 +3222,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
         seq.tempo_ms = data_json["seq_tempo_ms"];
         seq.bpm = data_json["seq_bpm"];
         seq.pattern_len_dec = data_json["pattern_len_dec"];
-        seq.swing_steps = data_json["swing_steps"];
+        seq.clock = data_json["clock"];
         seq.arp_speed = data_json["arp_speed"];
         seq.arp_length = data_json["arp_length"];
         seq.arp_volume_fade = data_json["arp_volume_fade"];
@@ -3263,7 +3265,7 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
           seq.chain_counter[d] = 0;
         }
         load_sd_livesequencer_json(number); // before handleStart()
-
+update_seq_speed();
         if (seq_was_running)
         {
           handleStart();

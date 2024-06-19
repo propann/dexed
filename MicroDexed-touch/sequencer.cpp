@@ -279,23 +279,18 @@ void arp_track(uint8_t d)
   if ((seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max && seq.euclidean_active == false) ||
     (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max && seq.euclidean_active && seq.euclidean_state[seq.step]))
   { // Arp
-    if ((seq.arp_speed == 0 && seq.ticks == 0 && seq.swing_steps == 0) ||//swing is disabled
-      (seq.arp_speed == 0 && seq.ticks == 0 && seq.step % 2 == 0) ||  //step 1, 3, 5.. etc are played without swing
-      (seq.arp_speed == 0 && seq.swing_steps > 0 && seq.swing_steps == seq.ticks && seq.step % 2 != 0) || //step is 2,4,6 etc. and swing is on and in lean-forward 
+    if ((seq.arp_speed == 0 && seq.ticks == 0 ) ||
+      (seq.arp_speed == 1 && seq.ticks == 0 && seq.arp_counter == 0) ||
+     
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 3) ||
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 3) ||
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 3) ||
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 3) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max && seq.instrument[d] == 3) ||
 
-      (seq.arp_speed == 1 && seq.ticks == 0 && seq.swing_steps == 0 && seq.arp_counter == 0) ||//swing is disabled
-      (seq.arp_speed == 1 && seq.ticks == 0 && seq.step % 2 == 0 && seq.arp_counter == 0) ||
-      (seq.arp_speed == 1 && seq.swing_steps > 0 && seq.swing_steps == seq.ticks && seq.step % 2 != 0 && seq.arp_counter == 0) ||
-
-      (seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 3) ||
-      (seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 3) ||
-      (seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 3) ||
-      (seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 3) || (seq.arp_speed == 3 && seq.ticks != 7 && seq.instrument[d] == 3) ||
-
-      (seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 4) ||
-      (seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 4) ||
-      (seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 4) ||
-      (seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 4) || (seq.arp_speed == 3 && seq.ticks != 7 && seq.instrument[d] == 4)
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 4) ||
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 4) ||
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 4) ||
+      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 4) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max && seq.instrument[d] == 4)
 
 
       )
@@ -639,7 +634,6 @@ void sequencer_part1(void)
 
     if (seq.current_pattern[d] < NUM_SEQ_PATTERN && seq.current_chain[d] != 99 && !seq.track_mute[d]) // sequence not empty or muted
     {
-      // if (seq.track_type[d] == 0 && seq.ticks == 0)
       if (seq.track_type[d] == 0)
       { // drum track (drum samples and pitched one-shot samples)
 #if NUM_DRUMS > 0
@@ -821,13 +815,13 @@ void sequencer_part2(void)
       {
         if (seq.note_data[seq.current_pattern[d]][seq.step] != 130)
         {
-          if (seq.instrument[d] < 2 && seq.ticks == 7) // dexed
+          if (seq.instrument[d] < 2 && seq.ticks == seq.ticks_max) // dexed
             handleNoteOff(configuration.dexed[seq.instrument[d]].midi_channel, seq.prev_note[d], 0, 0);
-          else if (seq.instrument[d] == 2 && seq.ticks == 7) // epiano
+          else if (seq.instrument[d] == 2 && seq.ticks == seq.ticks_max) // epiano
             handleNoteOff(configuration.epiano.midi_channel, seq.prev_note[d], 0, 0);
           else if (seq.instrument[d] > 2 && seq.instrument[d] < 5)
             handleNoteOff(microsynth[seq.instrument[d] - 3].midi_channel, seq.prev_note[d], 0, 0);
-          else if (seq.instrument[d] == 5 && seq.ticks == 7)
+          else if (seq.instrument[d] == 5 && seq.ticks == seq.ticks_max)
             handleNoteOff(braids_osc.midi_channel, seq.prev_note[d], 0, 4);
           else if (seq.instrument[d] > 5 && seq.instrument[d] < 16) // MultiSampler
             handleNoteOff(msp[seq.instrument[d] - 6].midi_channel, seq.prev_note[d], 0, 0);
@@ -838,12 +832,12 @@ void sequencer_part2(void)
           }
 #endif
 #ifdef MIDI_DEVICE_DIN
-          else if (seq.instrument[d] > 31 && seq.instrument[d] < 48 && seq.ticks == 7) // track is for external DIN MIDI
+          else if (seq.instrument[d] > 31 && seq.instrument[d] < 48 && seq.ticks == seq.ticks_max) // track is for external DIN MIDI
           {
             handleNoteOff(seq.instrument[d] - 31, seq.prev_note[d], 0, 2);
           }
 #endif
-          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64 && seq.ticks == 7) // track is for internal Micro MIDI
+          else if (seq.instrument[d] > 47 && seq.instrument[d] < 64 && seq.ticks == seq.ticks_max) // track is for internal Micro MIDI
           {
             handleNoteOff(seq.instrument[d] - 47, seq.prev_note[d], 0, 3);
           }
@@ -917,7 +911,6 @@ void sequencer_part2(void)
   }
 }
 
-
 void sequencer(void)
 { // Runs in Interrupt Timer
 
@@ -927,19 +920,15 @@ void sequencer(void)
     // if (seq.ticks < 4)
 //   seq_live_recording();
 
-    if ((seq.ticks == 0 && seq.swing_steps == 0) ||//swing is disabled
-      (seq.ticks == 0 && seq.step % 2 == 0) ||  //step 1, 3, 5.. etc are played without swing
-      (seq.swing_steps > 0 && seq.swing_steps == seq.ticks && seq.step % 2 != 0))  //step is 2,4,6 etc. and swing is on and in lean-forward 
+    if (seq.ticks == 0  )  
     {
       sequencer_part1();
+       seq.step++;
     }
 
-    if (seq.ticks == 0)
-      seq.step++;
-
     if (seq.ticks == 0 || (seq.ticks == 0 && seq.step % 2 == 0) ||
-      (seq.swing_steps > 0 && seq.swing_steps == seq.ticks && seq.step % 2 != 0) ||
-      (seq.arp_speed == 2 && seq.ticks != 7) || (seq.arp_speed == 3 && seq.ticks != 7))
+     
+      (seq.arp_speed == 2 && seq.ticks != seq.ticks_max) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max))
     {
       for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
       {
@@ -951,15 +940,30 @@ void sequencer(void)
       //   seq.arp_counter++;
     }
 
-    if (seq.ticks == 7)
+
+
+if (seq.ticks == seq.ticks_max)
       sequencer_part2();
 
     seq.ticks++;
-    if (seq.ticks > 7)
+    if (seq.ticks > seq.ticks_max)
     {
       seq.ticks = 0;
       handle_pattern_end_in_song_mode();
     }
+
+    // if (seq.ticks == 7)
+    //   sequencer_part2();
+
+    // seq.ticks++;
+    // if (seq.ticks > 7)
+    // {
+    //   seq.ticks = 0;
+    //   handle_pattern_end_in_song_mode();
+    // }
+
+
+
   }
 
 }
