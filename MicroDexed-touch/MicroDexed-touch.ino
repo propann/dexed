@@ -985,7 +985,7 @@ void setup()
 #endif
 
 #if defined GENERIC_DISPLAY
- delay(10);  // have seen some boot issues with old display without this delay 2024/06/19 
+  delay(10);  // have seen some boot issues with old display without this delay 2024/06/19 
 #endif
 
   //#if defined(PSRAM)
@@ -1432,53 +1432,53 @@ void setup()
   else {
     if (count_omni() != 0 || count_midi_channel_duplicates(false) != 0) // startup with midi channel setup page
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
-      else
-      if (seq.clock!=0)
-       LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
     else
-    {
-      if (configuration.sys.boot_anim_skip == 0)
-        boot_animation();
-      // Menu Startup
-      switch (configuration.sys.load_at_startup_page)
+      if (seq.clock != 0)
+        LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
+      else
       {
-      case 0:
-        LCDML.OTHER_jumpToFunc(UI_func_voice_select);
-        break;
-      case 1:
-        LCDML.OTHER_jumpToFunc(UI_func_song);
-        break;
-      case 2:
-        LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-        break;
-      case 3:
-        LCDML.OTHER_jumpToFunc(UI_func_microsynth);
-        break;
-      case 4:
-        LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
-        break;
-      case 5:
-        LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
-        break;
-      case 6:
-        LCDML.OTHER_jumpToFunc(UI_func_epiano);
-        break;
-      case 7:
-        LCDML.OTHER_jumpToFunc(UI_func_braids);
-        break;
-      case 8:
-        LCDML.OTHER_jumpToFunc(UI_func_mixer);
-        break;
-      case 9:
-        LCDML.OTHER_jumpToFunc(UI_func_livesequencer);
-        break;
-      case 50:
-        LCDML.OTHER_jumpToFunc(UI_func_information);
-        break;
-      default:
-        LCDML.OTHER_jumpToFunc(UI_func_voice_select); // fallback to voice select
+        if (configuration.sys.boot_anim_skip == 0)
+          boot_animation();
+        // Menu Startup
+        switch (configuration.sys.load_at_startup_page)
+        {
+        case 0:
+          LCDML.OTHER_jumpToFunc(UI_func_voice_select);
+          break;
+        case 1:
+          LCDML.OTHER_jumpToFunc(UI_func_song);
+          break;
+        case 2:
+          LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+          break;
+        case 3:
+          LCDML.OTHER_jumpToFunc(UI_func_microsynth);
+          break;
+        case 4:
+          LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
+          break;
+        case 5:
+          LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
+          break;
+        case 6:
+          LCDML.OTHER_jumpToFunc(UI_func_epiano);
+          break;
+        case 7:
+          LCDML.OTHER_jumpToFunc(UI_func_braids);
+          break;
+        case 8:
+          LCDML.OTHER_jumpToFunc(UI_func_mixer);
+          break;
+        case 9:
+          LCDML.OTHER_jumpToFunc(UI_func_livesequencer);
+          break;
+        case 50:
+          LCDML.OTHER_jumpToFunc(UI_func_information);
+          break;
+        default:
+          LCDML.OTHER_jumpToFunc(UI_func_voice_select); // fallback to voice select
+        }
       }
-    }
   }
 }
 
@@ -2105,19 +2105,12 @@ void loop()
       display.setCursor(CHAR_width_small * 48 - 2, CHAR_height_small * 25);
       print_formatted_number(tempmonGetTemp(), 2);
 
-
       //SPDIF
 
-      // display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.pllLocked(), 2);
-      //  display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.sampleRate(), 9);
-
-      //        display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.pllLocked(), 2);
-      //  display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.sampleRate(), 9);
-
+      //  display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
+      //   print_formatted_number(spdif_in.pllLocked(), 2);
+      //   display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
+      //   print_formatted_number(spdif_in.sampleRate(), 9);
 
       /////SPDIF END
     }
@@ -4128,39 +4121,40 @@ void handleTuneRequest(void)
   ;
 }
 
-
-
 void handleClock(void)
 {
 
- if (seq.clock==1) // MIDI CLOCK TIMING
+  if (seq.clock == 1) // MIDI CLOCK TIMING
     sequencer();
 
-  if (midi_bpm_counter % 24 == 0)
+  // if (midi_bpm_counter % 24 == 0)  // too slow to adapt to tempo changes for liveseq
+  if (midi_bpm_counter % 12 == 0) // go for every 1/8 instead for every 1/4 note (MIDI CLOCK 24 BEATS PER 1/4 NOTE)
   {
-    midi_bpm = (60000.0f / float(midi_bpm_timer) + 0.01f);
+    midi_bpm = (round(60000.0f / float(midi_bpm_timer * 2)));
+    // midi_bpm = ( 60000.0f / float(midi_bpm_timer)) + 0.01f);
+    // if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
 
-    if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
+    if ((_midi_bpm > midi_bpm + 2 && midi_bpm > 30 && midi_bpm < 180) ||
+      (_midi_bpm < midi_bpm - 2 && midi_bpm >30 && midi_bpm < 180))  //needs some tolerance in bpm - otherwise delay recalculation will come up every step and cause audible clicks
+      // tried muting them and fading them back but that makes it worse since constant retriggering mutes them constantly and also makes clicking
+
     {
-
-#ifdef DEBUG
-      LOG.print(F("MIDI Clock : "));
-      LOG.print(midi_bpm);
-      LOG.print(F(" bpm ("));
-      LOG.print(midi_bpm_timer, DEC);
-      LOG.println(F("ms per quarter)"));
-#endif
-
+// #ifdef DEBUG
+//       LOG.print(F("---------------------------------------MIDI Clock : "));
+//       LOG.print(midi_bpm);
+//       LOG.print(F(" bpm ("));
+//       LOG.print(midi_bpm_timer, DEC);
+//       LOG.println(F("ms per quarter)"));
+// #endif
       seq.bpm = midi_bpm;
       _midi_bpm = midi_bpm;
-     // update_seq_speed();
+      update_seq_speed();
     }
 
     midi_bpm_timer = 0;
     midi_bpm_counter = 0;
   }
   midi_bpm_counter++;
-
 }
 
 FLASHMEM void dac_mute(void)
@@ -4225,9 +4219,9 @@ void handleStart(void)
     else
       seq.current_song_step = seq.loop_start;
 
-////////// for MIDI SYNC test, use timer only when timing internal
-if (seq.clock==0)
-    sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+    ////////// for MIDI SYNC test, use timer only when timing internal
+    if (seq.clock == 0)
+      sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
 
     seq.running = true;
 
@@ -4275,8 +4269,8 @@ void handleStop(void)
       MicroDexed[1]->panic();
 #endif
 
-if (seq.clock==0)
-      sequencer_timer.stop();
+      if (seq.clock == 0)
+        sequencer_timer.stop();
 
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
       {

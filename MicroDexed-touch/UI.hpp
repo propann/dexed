@@ -657,7 +657,6 @@ void update_seq_speed() {
 
   liveSeq.checkBpmChanged();
 
-  ///////// midi sync test
   if (seq.clock == 0) // INTERNAL TIMING
   {
     seq.ticks_max = 7; //(0-7 = 8)
@@ -675,7 +674,6 @@ void update_seq_speed() {
       delay_fx[i]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
     }
   }
-
 }
 
 FLASHMEM bool menu_item_check(uint8_t in)
@@ -15330,8 +15328,6 @@ void UI_func_information(uint8_t param)
     display.setTextColor(GREY1, COLOR_BACKGROUND);
     display.print(F(" "));
     display.setTextColor(COLOR_BACKGROUND, GREY2);
-
-    /////////////
 
     /////SPDIF
     display.setTextColor(GREY1);
