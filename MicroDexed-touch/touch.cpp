@@ -297,6 +297,18 @@ FLASHMEM uint16_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val)
   //  }
 }
 
+FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
+{
+  bool result = false;
+  if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
+    if (isButtonTouched == false) {
+      isButtonTouched = true;
+      result = true;
+    }
+  }
+  return result;
+}
+
 FLASHMEM void print_current_chord()
 {
   for (uint8_t x = 0; x < 7; x++)
@@ -339,7 +351,7 @@ FLASHMEM void virtual_keyboard_print_velocity_bar()
     }
   }
 }
-//COLOR_BACKGROUND
+
 FLASHMEM void virtual_keyboard_print_current_instrument()
 {
   display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -403,6 +415,9 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
     ts.virtual_keyboard_midi_channel = drum_midi_channel;
   }
 }
+
+extern void sub_step_recording(bool touchinput, uint8_t touchparam);
+extern void play_sample_on_virtual_drumpads(uint8_t note);
 
 FLASHMEM void print_virtual_keyboard_octave()
 {
@@ -480,7 +495,6 @@ FLASHMEM void virtual_keyboard_key_off_black(uint8_t x)
 
 FLASHMEM void handleVirtualKeyboardKeys()
 {
-
   if (ts.current_virtual_keyboard_display_mode == 0)
   {
     uint8_t halftones = 0;
@@ -577,6 +591,26 @@ FLASHMEM void handleVirtualKeyboardKeys()
     }
   }
 
+  else  if (ts.current_virtual_keyboard_display_mode == 1 && numTouchPoints > 0)
+  {
+    if (ts.virtual_keyboard_instrument == 6)
+    {
+      for (uint8_t x = 0; x < 6; x++)
+      {
+        if (check_button_on_grid(x * 9 + 1, 21))
+        {
+          // sub_step_recording(true, 3,x + ts.virtual_keyboard_octave * 12);
+          play_sample_on_virtual_drumpads(x + ts.virtual_keyboard_octave * 12);
+        }
+        if (check_button_on_grid(x * 9 + 1, 26))
+        {
+          //  sub_step_recording(true, 3,x+6 + ts.virtual_keyboard_octave * 12);
+          play_sample_on_virtual_drumpads(x + 6 + ts.virtual_keyboard_octave * 12);
+        }
+      }
+    }
+  }
+
   // display.fillRect(ts.p.x-1,ts.p.y-1,3,3,YELLOW);
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -623,7 +657,11 @@ FLASHMEM void virtual_keyboard_smart_preselect_mode()
     ts.current_virtual_keyboard_display_mode = 0;
     ts.virtual_keyboard_instrument = microsynth_selected_instance + 3;
   }
-
+  // else if (LCDML.FUNC_getID() == 255)
+  // {
+  //   ts.current_virtual_keyboard_display_mode = 0;
+  //   ts.virtual_keyboard_instrument = 1;
+  // }
 }
 
 FLASHMEM void virtual_keyboard()
@@ -673,18 +711,6 @@ FLASHMEM void virtual_keyboard()
   }
   display.setTextSize(2);
   display.console = false;
-}
-
-FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
-{
-  bool result = false;
-  if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
-    if (isButtonTouched == false) {
-      isButtonTouched = true;
-      result = true;
-    }
-  }
-  return result;
 }
 
 FLASHMEM void set_virtual_keyboard_display_mode()
@@ -950,8 +976,7 @@ FLASHMEM void update_step_rec_buttons()
   }
 }
 
-extern void sub_step_recording(bool touchinput, uint8_t touchparam);
-extern void play_sample_on_virtual_drumpads(uint8_t note);
+
 
 FLASHMEM void handle_touchscreen_pattern_editor()
 {
@@ -1032,21 +1057,6 @@ FLASHMEM void handle_touchscreen_pattern_editor()
     else if (check_button_on_grid(36, 6) && seq.cycle_touch_element == 1)//latch button
     {
       sub_step_recording(true, 2);
-    }
-
-    for (uint8_t x = 0; x < 6; x++)
-    {
-      if (check_button_on_grid(x * 9 + 1, 21) && ts.virtual_keyboard_instrument == 6)
-      {
-        // sub_step_recording(true, 3,x + ts.virtual_keyboard_octave * 12);
-        play_sample_on_virtual_drumpads(x + ts.virtual_keyboard_octave * 12);
-      }
-
-      if (check_button_on_grid(x * 9 + 1, 26) && ts.virtual_keyboard_instrument == 6)
-      {
-        //  sub_step_recording(true, 3,x+6 + ts.virtual_keyboard_octave * 12);
-        play_sample_on_virtual_drumpads(x + 6 + ts.virtual_keyboard_octave * 12);
-      }
     }
 
     if (seq.cycle_touch_element != 1)
@@ -1354,6 +1364,7 @@ FLASHMEM void handle_touchscreen_braids()
     if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
+      handleVirtualKeyboardKeys();
     }
   }
   if (seq.cycle_touch_element == 1) {
@@ -1809,19 +1820,19 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
         generic_menu = 99;
     }
 
-      if ( generic_menu < 6)
-      {
-        liveseq_pianoroll_get_current = true;
-        liveseq_pianoroll_fullrefresh_values = true;
-         liveseq_pianoroll_draw_graphics();
-      }
+    if (generic_menu < 6)
+    {
+      liveseq_pianoroll_get_current = true;
+      liveseq_pianoroll_fullrefresh_values = true;
+      liveseq_pianoroll_draw_graphics();
+    }
 
-     if (generic_menu > 0 && generic_menu < 6)
+    if (generic_menu > 0 && generic_menu < 6)
       liveseq_pianoroll_get_current = true;
 
     liveseq_pianoroll_fullrefresh_values = true;
     liveseq_pianoroll_draw_graphics();
-  
+
   }
   print_liveseq_playindicator();
 }

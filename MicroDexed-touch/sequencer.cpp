@@ -279,18 +279,18 @@ void arp_track(uint8_t d)
   if ((seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max && seq.euclidean_active == false) ||
     (seq.track_type[d] == 3 && seq.arp_num_notes_count < seq.arp_num_notes_max && seq.euclidean_active && seq.euclidean_state[seq.step]))
   { // Arp
-    if ((seq.arp_speed == 0 && seq.ticks == 0 ) ||
+    if ((seq.arp_speed == 0 && seq.ticks == 0) ||
       (seq.arp_speed == 1 && seq.ticks == 0 && seq.arp_counter == 0) ||
-     
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 3) ||
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 3) ||
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 3) ||
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 3) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max && seq.instrument[d] == 3) ||
 
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 4) ||
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 4) ||
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 4) ||
-      (seq.clock==0 && seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 4) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max && seq.instrument[d] == 4)
+      (seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 3) ||
+      (seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 3) ||
+      (seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 3) ||
+      (seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 3) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max && seq.instrument[d] == 3) ||
+
+      (seq.arp_speed == 2 && seq.ticks == 0 && seq.instrument[d] == 4) ||
+      (seq.arp_speed == 2 && seq.ticks == 2 && seq.instrument[d] == 4) ||
+      (seq.arp_speed == 2 && seq.ticks == 4 && seq.instrument[d] == 4) ||
+      (seq.arp_speed == 2 && seq.ticks == 6 && seq.instrument[d] == 4) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max && seq.instrument[d] == 4)
 
 
       )
@@ -911,23 +911,29 @@ void sequencer_part2(void)
   }
 }
 
-void sequencer(void)
-{ // Runs in Interrupt Timer
+extern void send_midi_clock();
 
+void sequencer(void)
+{
   if (seq.running)
   {
-
     // if (seq.ticks < 4)
-//   seq_live_recording();
+    //   seq_live_recording();
 
-    if (seq.ticks == 0  )  
+    if (seq.clock == 2) // MDT is MIDI MASTER
+    {
+      seq.ticks_max = 5; //(0-5 = 6)
+      send_midi_clock();
+    }
+
+    if (seq.ticks == 0)
     {
       sequencer_part1();
-       seq.step++;
+      seq.step++;
     }
 
     if (seq.ticks == 0 || (seq.ticks == 0 && seq.step % 2 == 0) ||
-     
+
       (seq.arp_speed == 2 && seq.ticks != seq.ticks_max) || (seq.arp_speed == 3 && seq.ticks != seq.ticks_max))
     {
       for (uint8_t d = 0; d < NUM_SEQ_TRACKS; d++)
@@ -940,9 +946,7 @@ void sequencer(void)
       //   seq.arp_counter++;
     }
 
-
-
-if (seq.ticks == seq.ticks_max)
+    if (seq.ticks == seq.ticks_max)
       sequencer_part2();
 
     seq.ticks++;
@@ -951,21 +955,7 @@ if (seq.ticks == seq.ticks_max)
       seq.ticks = 0;
       handle_pattern_end_in_song_mode();
     }
-
-    // if (seq.ticks == 7)
-    //   sequencer_part2();
-
-    // seq.ticks++;
-    // if (seq.ticks > 7)
-    // {
-    //   seq.ticks = 0;
-    //   handle_pattern_end_in_song_mode();
-    // }
-
-
-
   }
-
 }
 
 void set_pattern_content_type_color(uint8_t pattern)

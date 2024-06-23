@@ -3271,7 +3271,7 @@ update_seq_speed();
           handleStart();
         }
         else
-          sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+          sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max+1), false);
 
         return (true);
       }

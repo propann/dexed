@@ -86,7 +86,7 @@ typedef struct sequencer_s
     uint8_t loop_end = 99;
     uint8_t ticks;
     uint8_t ticks_max;
-    uint8_t clock;
+    uint8_t clock; // 0 = internal, 1 = MIDI Slave, 2 = MIDI Master
     uint8_t pattern_len_dec;
     uint8_t cycle_touch_element = 0; // 0 = editor, 1 = touch keyboard, 5-9 = song/chain/transpose-functions
     uint8_t scrollpos;

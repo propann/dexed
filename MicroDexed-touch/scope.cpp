@@ -11,7 +11,7 @@ FLASHMEM void Realtime_Scope::FillArray()
   do
   {
     int16_t wave_data = buffer[i];
-    int8_t y = map(wave_data, 32767, -32768, 20, -20) + 32;
+    int8_t y = map(wave_data, 32767, -32768, sensitivity, -sensitivity) + 32;
     scopebuffer[i] = y;
     i = i + 1;
   } while (i < (AUDIO_BLOCK_SAMPLES));

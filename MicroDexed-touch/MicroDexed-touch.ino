@@ -404,7 +404,7 @@ AudioConnection patchCord[] = {
   {mb_mixer_r, 0, mb_after_r, 0},
 
   // Realtime Scope
-  {stereo2mono, 0, scope, 0},
+  {master_mixer_l, 0, scope, 0},
 
   // Outputs
   #if defined(TEENSY_AUDIO_BOARD)
@@ -1291,7 +1291,7 @@ void setup()
   }
 
   // Start timer (to avoid a crash when loading the performance data)
-  sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+  sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1), false);
 
   if (digitalRead(BUT_R_PIN) == false || digitalRead(BUT_L_PIN) == false) // is pushed
     bootup_performance_loading = false;
@@ -1433,7 +1433,7 @@ void setup()
     if (count_omni() != 0 || count_midi_channel_duplicates(false) != 0) // startup with midi channel setup page
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     else
-      if (seq.clock != 0)
+      if (seq.clock == 1) //MIDI Slave
         LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
       else
       {
@@ -2094,6 +2094,7 @@ void loop()
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
     display.console = true;
+    scope.sensitivity = 32;
     scope.draw_scope(203, 138, 108);
 
     if (control_rate % 170 == 0)
@@ -2366,7 +2367,7 @@ void loop()
       save_sd_sys_json();
       save_sys = 0;
       save_sys_flag = false;
-      if (LCDML.FUNC_getID() == 255)
+      if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)
       {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
@@ -4121,10 +4122,27 @@ void handleTuneRequest(void)
   ;
 }
 
+void send_midi_clock()
+{
+#ifdef MIDI_DEVICE_USB_HOST
+  midi_usb.sendRealTime(midi::Clock);
+#endif
+
+#ifdef MIDI_DEVICE_DIN
+  midi_serial.sendRealTime(midi::Clock);
+#endif
+
+#ifdef MIDI_DEVICE_USB
+  usbMIDI.sendRealTime(midi::Clock);
+#endif
+
+
+}
+
 void handleClock(void)
 {
 
-  if (seq.clock == 1) // MIDI CLOCK TIMING
+  if (seq.clock == 1) // MIDI CLOCK TIMING, MIDI SLAVE
     sequencer();
 
   // if (midi_bpm_counter % 24 == 0)  // too slow to adapt to tempo changes for liveseq
@@ -4139,13 +4157,13 @@ void handleClock(void)
       // tried muting them and fading them back but that makes it worse since constant retriggering mutes them constantly and also makes clicking
 
     {
-// #ifdef DEBUG
-//       LOG.print(F("---------------------------------------MIDI Clock : "));
-//       LOG.print(midi_bpm);
-//       LOG.print(F(" bpm ("));
-//       LOG.print(midi_bpm_timer, DEC);
-//       LOG.println(F("ms per quarter)"));
-// #endif
+      // #ifdef DEBUG
+      //       LOG.print(F("---------------------------------------MIDI Clock : "));
+      //       LOG.print(midi_bpm);
+      //       LOG.print(F(" bpm ("));
+      //       LOG.print(midi_bpm_timer, DEC);
+      //       LOG.println(F("ms per quarter)"));
+      // #endif
       seq.bpm = midi_bpm;
       _midi_bpm = midi_bpm;
       update_seq_speed();
@@ -4187,21 +4205,12 @@ LiveSequencer liveSeq;
 
 void handleStart(void)
 {
-  liveSeq.onStarted();
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
-  {
-    display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
-  }
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
-
     midi_bpm_timer = 0;
     midi_bpm_counter = 0;
-    _midi_bpm = -1;
 
     seq.step = 0;
-    liveSeq.handlePatternBegin();
-    seq.current_song_step = 0;
     seq.arp_note = 0;
     seq.arp_chord = 0;
 
@@ -4209,19 +4218,18 @@ void handleStart(void)
     mb_set_compressor();
     mb_set_master();
 
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
-    {
-      display.fillRect(174, 14, DISPLAY_WIDTH - 174 - 11, 38, COLOR_BACKGROUND);
-    }
-
     if (seq.loop_start == 99) // no loop start set, start at step 0
       seq.current_song_step = 0;
     else
       seq.current_song_step = seq.loop_start;
 
-    ////////// for MIDI SYNC test, use timer only when timing internal
-    if (seq.clock == 0)
-      sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+    // MIDI SYNC: use timer only when internal or MIDI Master
+    if (seq.clock == 0 || seq.clock == 2)
+    {
+      liveSeq.onStarted();
+      liveSeq.handlePatternBegin();
+      sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1));
+    }
 
     seq.running = true;
 
@@ -4244,6 +4252,14 @@ void handleStart(void)
     else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
       draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
   }
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+  {
+    display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
+  {
+    display.fillRect(174, 14, DISPLAY_WIDTH - 174 - 11, 38, COLOR_BACKGROUND);
+  }
 
 }
 
@@ -4264,12 +4280,17 @@ void handleStop(void)
       {
         draw_button_on_grid(36, 1, "STEP", "RECORD", 1); // print step recorder icon
       }
+      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+      {
+        display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
+      }
+
       MicroDexed[0]->panic();
 #if NUM_DEXED > 1
       MicroDexed[1]->panic();
 #endif
 
-      if (seq.clock == 0)
+      if (seq.clock == 0 || seq.clock == 2)
         sequencer_timer.stop();
 
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))

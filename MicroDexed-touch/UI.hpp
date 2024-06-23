@@ -42,6 +42,8 @@
 #include "splash_image.h"
 #include "dexed_sd.h"
 #include "screensaver.h"
+#include "scope.h"
+extern Realtime_Scope scope;
 
 extern qix_s qix;
 extern bool touch_ic_found;
@@ -658,12 +660,17 @@ void update_seq_speed() {
   liveSeq.checkBpmChanged();
 
   if (seq.clock == 0) // INTERNAL TIMING
-  {
     seq.ticks_max = 7; //(0-7 = 8)
+  else
+    if (seq.clock == 2) // MIDI MASTER
+      seq.ticks_max = 5; //(0-5 = 6)
+
+  if (seq.clock == 0 || seq.clock == 2)
+  {
     if (seq.running)
-      sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
+      sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1));
     else
-      sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+      sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1), false);
   }
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
@@ -6935,9 +6942,9 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
       {
         if (LCDML.BT_checkDown())
-          seq.clock = constrain(seq.clock + 1, 0, 1);
+          seq.clock = constrain(seq.clock + 1, 0, 2);
         else if (LCDML.BT_checkUp())
-          seq.clock = constrain(seq.clock - 1, 0, 1);
+          seq.clock = constrain(seq.clock - 1, 0, 2);
       }
     }
     // -------------------------------------------------------------------------------------------------------------------------
@@ -7021,14 +7028,23 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     setModeColor(9);
     setCursor_textGrid_small(23, 18);
     if (seq.clock == 0)
-      display.print(F("INTERNAL CLOCK "));
+      display.print(F("INTERNAL (NO MIDI SYNC)   "));
     else if (seq.clock == 1)
-      display.print(F("MIDI CLOCK (IN)"));
+      display.print(F("MIDI SLAVE (RECEIVE CLOCK)"));
+    else if (seq.clock == 2)
+      display.print(F("MIDI MASTER (SEND CLOCK)  "));
 
     if (seq.clock == 0) // INTERNAL TIMING
       seq.ticks_max = 7; //(0-7 = 8)
-    else // MIDI IN CLOCK
+    else // MIDI SLAVE or MIDI MASTER
       seq.ticks_max = 5; //(0-5 = 6)
+
+   if (seq.clock == 1 && seq.running == true ) // stop when switching to MIDI Slave
+        {
+          handleStop();
+        }
+       else
+        update_seq_speed();
 
     //warning message
     if (seq.clock == 1)
@@ -7044,7 +7060,6 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     {
       display.console = true;
       display.fillRect(4, 12 * CHAR_height - 4, 300, 19, COLOR_BACKGROUND);
-
     }
 
   }
@@ -15389,6 +15404,7 @@ void UI_func_information(uint8_t param)
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     sysinfo_reload_prev_voice();
+    scope.sensitivity=80;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
@@ -18557,7 +18573,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     if (settings_modified == 5)
     {
       touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-  }
+    }
 #endif
 
     // UI reverse
@@ -18613,7 +18629,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       settings_modified = 0;
     }
 
-}
+  }
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
   {
@@ -20042,7 +20058,7 @@ FLASHMEM void print_perfmod_buttons()
 FLASHMEM void print_drumpads()
 {
   uint8_t offset = 14;
-  if (seq.cycle_touch_element == 1) {
+  if (seq.cycle_touch_element == 1 || ts.keyb_in_menu_activated ) {
     char tmp[14];
     char tmp2[14];
     for (uint8_t x = 0; x < 6; x++)

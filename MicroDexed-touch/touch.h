@@ -38,7 +38,7 @@ typedef struct ts_s
   uint8_t virtual_keyboard_velocity = 120;
   uint8_t msp_peak[NUM_MULTISAMPLES];
   uint8_t current_virtual_keyboard_display_mode = 0;
-  uint8_t previous_virtual_keyboard_display_mode = 0;
+  uint8_t previous_virtual_keyboard_display_mode = 99;
 
   TS_Point p;
 
