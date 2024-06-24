@@ -15264,7 +15264,6 @@ FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
 void UI_func_information(uint8_t param)
 {
   static uint32_t loopMs = 0;
-  //static uint8_t sysinfo_sound_state = 0;
   static uint8_t sysinfo_logo_version = 0;
   static uint8_t sysinfo_logo_delay = 0;
   static bool sysinfo_page_at_bootup_shown_once = false;
@@ -15525,24 +15524,6 @@ void UI_func_information(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
-
-FLASHMEM void not_available_message()
-{
-  display.fillScreen(COLOR_BACKGROUND);
-  display.setTextSize(2);
-  display.setTextColor(RED);
-  setCursor_textGrid(1, 1);
-  display.print(F("NOT SELECTED TO"));
-  setCursor_textGrid(1, 2);
-  display.print(F("COMPILE INTO THE CODE"));
-  setCursor_textGrid(1, 4);
-  display.setTextColor(GREY2);
-  display.print(F("OR IS NOT YET AVAILABLE"));
-  setCursor_textGrid(1, 6);
-  display.setTextColor(COLOR_SYSTEXT);
-  display.print(F("ENC-L TO GO BACK"));
-  helptext_l(back_text);
 }
 
 FLASHMEM void print_mb_params()
