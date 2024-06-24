@@ -1968,7 +1968,7 @@ void loop()
   if (touchReadTimer >= TOUCH_MAX_REFRESH_RATE_MS && touch_ic_found) {
     touchReadTimer = 0;
     updateTouchScreen();
-    TouchFn touchHandler = getCurrentTouchHandler();
+    const TouchFn touchHandler = getCurrentTouchHandler();
     if(touchHandler) {
       touchHandler();
     } else if(LCDML.FUNC_getID() > _LCDML_DISP_cnt) {
@@ -1989,7 +1989,7 @@ void loop()
       handle_page_with_touch_back_button();
     }
 
-    ScopeSettings s = getCurrentScopeSettings();
+    const ScopeSettings s = getCurrentScopeSettings();
     if(s.enabled) {
       scope.draw_scope(s.x, s.y, s.w);
     }
