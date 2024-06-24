@@ -404,7 +404,7 @@ AudioConnection patchCord[] = {
   {mb_mixer_r, 0, mb_after_r, 0},
 
   // Realtime Scope
-  {stereo2mono, 0, scope, 0},
+  {master_mixer_l, 0, scope, 0},
 
   // Outputs
   #if defined(TEENSY_AUDIO_BOARD)
@@ -977,8 +977,12 @@ void setup()
   touch_ic_found = true;
 #endif
 
+#if defined GENERIC_DISPLAY
+  delay(10);  // have seen some boot issues with old display without this delay 2024/06/19 
+#endif
+
   //#if defined(PSRAM)
-   // delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+   //delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
    // 2024/4/14
    // However it is reported that it is not necessary with 16MB psram and even making boot problems
    // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT
@@ -1280,7 +1284,7 @@ void setup()
   }
 
   // Start timer (to avoid a crash when loading the performance data)
-  sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
+  sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1), false);
 
   if (digitalRead(BUT_R_PIN) == false || digitalRead(BUT_L_PIN) == false) // is pushed
     bootup_performance_loading = false;
@@ -1408,12 +1412,12 @@ void setup()
   calc_val[0] = sum;
   calc_val[1] = sub;
 
-//   // invert display colors
-// #ifdef CAPACITIVE_TOUCH_DISPLAY
-//   display.invertDisplay(!configuration.sys.invert_colors);
-// #endif
+  //   // invert display colors
+  // #ifdef CAPACITIVE_TOUCH_DISPLAY
+  //   display.invertDisplay(!configuration.sys.invert_colors);
+  // #endif
 
-  //SD CARD PRESET CONTENT NOT FOUND, PROVIDE POSSIBLE SOLUTIONS TO USER
+    //SD CARD PRESET CONTENT NOT FOUND, PROVIDE POSSIBLE SOLUTIONS TO USER
   if (!SD.exists("/DEXED/0/0") || !SD.exists("/DEXED/0/99") || !SD.exists("/PERFORMANCE") || !SD.exists("/DRUMS"))
   {
     LCDML.OTHER_jumpToFunc(UI_func_sd_content_not_found);
@@ -1422,49 +1426,52 @@ void setup()
     if (count_omni() != 0 || count_midi_channel_duplicates(false) != 0) // startup with midi channel setup page
       LCDML.OTHER_jumpToFunc(UI_func_midi_channels);
     else
-    {
-      if (configuration.sys.boot_anim_skip == 0)
-        boot_animation();
-      // Menu Startup
-      switch (configuration.sys.load_at_startup_page)
+      if (seq.clock == 1) //MIDI Slave
+        LCDML.OTHER_jumpToFunc(UI_func_seq_settings);
+      else
       {
-      case 0:
-        LCDML.OTHER_jumpToFunc(UI_func_voice_select);
-        break;
-      case 1:
-        LCDML.OTHER_jumpToFunc(UI_func_song);
-        break;
-      case 2:
-        LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
-        break;
-      case 3:
-        LCDML.OTHER_jumpToFunc(UI_func_microsynth);
-        break;
-      case 4:
-        LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
-        break;
-      case 5:
-        LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
-        break;
-      case 6:
-        LCDML.OTHER_jumpToFunc(UI_func_epiano);
-        break;
-      case 7:
-        LCDML.OTHER_jumpToFunc(UI_func_braids);
-        break;
-      case 8:
-        LCDML.OTHER_jumpToFunc(UI_func_mixer);
-        break;
-      case 9:
-        LCDML.OTHER_jumpToFunc(UI_func_livesequencer);
-        break;
-      case 50:
-        LCDML.OTHER_jumpToFunc(UI_func_information);
-        break;
-      default:
-        LCDML.OTHER_jumpToFunc(UI_func_voice_select); // fallback to voice select
+        if (configuration.sys.boot_anim_skip == 0)
+          boot_animation();
+        // Menu Startup
+        switch (configuration.sys.load_at_startup_page)
+        {
+        case 0:
+          LCDML.OTHER_jumpToFunc(UI_func_voice_select);
+          break;
+        case 1:
+          LCDML.OTHER_jumpToFunc(UI_func_song);
+          break;
+        case 2:
+          LCDML.OTHER_jumpToFunc(UI_func_seq_pattern_editor);
+          break;
+        case 3:
+          LCDML.OTHER_jumpToFunc(UI_func_microsynth);
+          break;
+        case 4:
+          LCDML.OTHER_jumpToFunc(UI_func_seq_tracker);
+          break;
+        case 5:
+          LCDML.OTHER_jumpToFunc(UI_func_MultiSamplePlay);
+          break;
+        case 6:
+          LCDML.OTHER_jumpToFunc(UI_func_epiano);
+          break;
+        case 7:
+          LCDML.OTHER_jumpToFunc(UI_func_braids);
+          break;
+        case 8:
+          LCDML.OTHER_jumpToFunc(UI_func_mixer);
+          break;
+        case 9:
+          LCDML.OTHER_jumpToFunc(UI_func_livesequencer);
+          break;
+        case 50:
+          LCDML.OTHER_jumpToFunc(UI_func_information);
+          break;
+        default:
+          LCDML.OTHER_jumpToFunc(UI_func_voice_select); // fallback to voice select
+        }
       }
-    }
   }
 }
 
@@ -1948,6 +1955,7 @@ bool current_page_has_touch_back_button = false;
 
 void loop()
 {
+
   // Serial read (commands from web remote)
   incomingSerialByte = 0;
   if (Serial.available() > 0)
@@ -2058,6 +2066,7 @@ void loop()
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
     display.console = true;
+    scope.sensitivity = 32;
     scope.draw_scope(203, 138, 108);
 
     if (control_rate % 170 == 0)
@@ -2069,19 +2078,12 @@ void loop()
       display.setCursor(CHAR_width_small * 48 - 2, CHAR_height_small * 25);
       print_formatted_number(tempmonGetTemp(), 2);
 
-
       //SPDIF
 
-      // display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.pllLocked(), 2);
-      //  display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.sampleRate(), 9);
-
-      //        display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.pllLocked(), 2);
-      //  display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
-      //  print_formatted_number(spdif_in.sampleRate(), 9);
-
+      //  display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
+      //   print_formatted_number(spdif_in.pllLocked(), 2);
+      //   display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
+      //   print_formatted_number(spdif_in.sampleRate(), 9);
 
       /////SPDIF END
     }
@@ -2119,54 +2121,26 @@ void loop()
     }
     else if (sysinfo_chord_state == 1 && sysinfo_millis >= 200 && seq.running == false)
     {
+
       MicroDexed[0]->keydown(MIDI_D4, 55);
       sysinfo_chord_state++;
     }
   }
-  // else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_sync))
-  // {
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings))
+  {
+    // handle touch button test
+    handle_touchscreen_settings_button_test();
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
+  {
+    handle_touchscreen_test_touchscreen();
+  }
 
-  //   display.setTextColor(RED, COLOR_BACKGROUND);
-  //   if (midi_seq_step == 0)
-  //   {
-  //     display.setCursor(CHAR_width_small * 2 + ((15) * 3) * CHAR_width_small + 2, CHAR_height_small * 6 + 1);
-  //     display.print(F(" "));
-  //   }
-  //   else
-  //     if (midi_seq_step > 0)
-  //     {
-  //       display.setCursor(CHAR_width_small * 2 + ((midi_seq_step - 1) * 3) * CHAR_width_small + 2, CHAR_height_small * 6 + 1);
-  //       display.print(F(" "));
-  //     }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sample_editor))
+  {
+    handle_touchscreen_sample_editor();
+  }
 
-  //   display.setCursor(CHAR_width_small * 2 + (midi_seq_step * 3) * CHAR_width_small + 2, CHAR_height_small * 6 + 1);
-  //   display.print(F("*"));
-
-  //   if (seq.step == 0)
-  //   {
-  //     display.setCursor(CHAR_width_small * 2 + ((15) * 3) * CHAR_width_small + 2, CHAR_height_small * 10 + 1);
-  //     display.print(F(" "));
-  //   }
-  //   else
-  //     if (seq.step > 0)
-  //     {
-  //       display.setCursor(CHAR_width_small * 2 + ((seq.step - 1) * 3) * CHAR_width_small + 2, CHAR_height_small * 10 + 1);
-  //       display.print(F(" "));
-  //     }
-
-  //   display.setCursor(CHAR_width_small * 2 + (seq.step * 3) * CHAR_width_small + 2, CHAR_height_small * 10 + 1);
-  //   display.print(F("*"));
-
-  //   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-  //   display.setCursor(CHAR_width_small * 2, CHAR_height_small * 25);
-  //   print_formatted_number(midi_song_step, 3);
-
-  //   display.setCursor(CHAR_width_small * 12, CHAR_height_small * 25);
-  //   print_formatted_number(seq.total_played_patterns, 3);
-
-  //   display.setCursor(CHAR_width_small * 16, CHAR_height_small * 20);
-  //   print_formatted_number(seq.bpm, 3);
-  // }
   if (microsynth_control_rate > MICROSYNTH_CONTROL_RATE_MS) // update lfos, filters etc. when played live or by seq.
   {
     microsynth_control_rate = 0;
@@ -2365,13 +2339,13 @@ void loop()
       save_sd_sys_json();
       save_sys = 0;
       save_sys_flag = false;
-      if (LCDML.FUNC_getID() == 255)
+      if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false)
       {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
       }
       else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) ||
-       LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen) )
+        LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
       {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
@@ -2398,8 +2372,8 @@ void loop()
       ui_save_notification_icon = false;
       display.console = false;
     }
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) || 
-    LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
+    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) ||
+      LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
     {
       display.console = true;
       display.fillRect(2 * CHAR_width_small, 25 * CHAR_height_small, 42, 32, COLOR_BACKGROUND);
@@ -3374,6 +3348,18 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
   inCtrl = constrain(inCtrl, 0, 127);
   inValue = constrain(inValue, 0, 127);
 
+  if (inCtrl == 115 && inValue == 127) // MIDI seq start/stop
+  {
+    // #ifdef DEBUG
+    // LOG.printf_P(PSTR("MIDI START/STOP , ch:%d d1:%d d2:%d"),  inChannel, inCtrl, inValue);
+    // #endif
+    if (!seq.running)
+      handleStart();
+    else
+      handleStop();
+    //handleClock();
+  }
+
   remote_MIDI_CC = 0;
 
   if (seq.midi_learn_active && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_custom_mappings))
@@ -4108,118 +4094,57 @@ void handleTuneRequest(void)
   ;
 }
 
-void handleClock(void)
+void send_midi_clock()
 {
-  // if (midi_bpm_counter % 6 == 0) //16th note
-   //  midi_seq_step++; //MIDI SLAVE SYNC TEST
-
-   // if (midi_seq_step > 15)
-   // {
-   //   midi_seq_step = 0;
-   //  // midi_song_step++; //MIDI SLAVE SYNC TEST
-   // }
-
-  if (midi_bpm_counter % 24 == 0)
-  {
-
-    midi_bpm = (60000.0f / float(midi_bpm_timer) + 0.1f);
-
-    if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
-    {
-#ifdef DEBUG
-      LOG.print(F("MIDI Clock : "));
-      LOG.print(midi_bpm);
-      LOG.print(F(" bpm ("));
-      LOG.print(midi_bpm_timer, DEC);
-      LOG.println(F("ms per quarter)"));
+#ifdef MIDI_DEVICE_USB_HOST
+  midi_usb.sendRealTime(midi::Clock);
 #endif
 
-      //int drift=0;//MIDI SLAVE SYNC TEST
+#ifdef MIDI_DEVICE_DIN
+  midi_serial.sendRealTime(midi::Clock);
+#endif
 
-      // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_sync))
-      // {
-
-      //   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      //   display.setCursor(CHAR_width_small * 2, CHAR_height_small * 12 + CHAR_height_small * (midi_seq_step / 2));
-      //   print_formatted_number(midi_bpm, 3);
-      //   display.setCursor(CHAR_width_small * 6, CHAR_height_small * 12 + CHAR_height_small * (midi_seq_step / 2));
-      //   print_formatted_number(midi_bpm_timer, 3);
+#ifdef MIDI_DEVICE_USB
+  usbMIDI.sendRealTime(midi::Clock);
+#endif
 
 
-      //   // if (midi_bpm_counter % 6 == 0 && seq.step>midi_seq_step) //MIDI SLAVE SYNC TEST
-      //   // {
+}
 
-      //   //   drift=-3;
-      //   // display.setCursor(CHAR_width_small * 26 , CHAR_height_small * 14+CHAR_height_small);
-      //   //  display.print("<");
-      //   // }
-      //   // else if (midi_bpm_counter % 6 == 0 && seq.step<midi_seq_step)
-      //   // {
+void handleClock(void)
+{
 
-      //   //   drift=3;
-      //   // display.setCursor(CHAR_width_small * 26 , CHAR_height_small * 14+CHAR_height_small);
-      //   //  display.print(">");
-      //   // }
-      //   // else if (midi_bpm_counter % 6 == 0)
-      //   // {
-      //   // drift=0;
-      //   //   display.setCursor(CHAR_width_small * 26 , CHAR_height_small * 14+CHAR_height_small);
-      //   //  display.print(" ");
+  if (seq.clock == 1) // MIDI CLOCK TIMING, MIDI SLAVE
+    sequencer();
 
-      //   // }
+  // if (midi_bpm_counter % 24 == 0)  // too slow to adapt to tempo changes for liveseq
+  if (midi_bpm_counter % 12 == 0) // go for every 1/8 instead for every 1/4 note (MIDI CLOCK 24 BEATS PER 1/4 NOTE)
+  {
+    midi_bpm = (round(60000.0f / float(midi_bpm_timer * 2)));
+    // midi_bpm = ( 60000.0f / float(midi_bpm_timer)) + 0.01f);
+    // if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
 
-      // }
-      /*
-        1   1/16  =  6 ticks / 0.0625
-        2   1/16T =  9 ticks / 0.09375
-        3   1/8   = 12 ticks / 0.125
-        4   1/8T  = 18 ticks / 0.1875
-        5   1/4   = 24 ticks / 0.25
-        6   1/4T  = 36 ticks / 0.375
-        7   1/2   = 48 ticks / 0.5
-        8   1/2T  = 72 ticks / 0.75
-        9   1/1   = 96 ticks / 1.0
-      */
+    if ((_midi_bpm > midi_bpm + 2 && midi_bpm > 30 && midi_bpm < 180) ||
+      (_midi_bpm < midi_bpm - 2 && midi_bpm >30 && midi_bpm < 180))  //needs some tolerance in bpm - otherwise delay recalculation will come up every step and cause audible clicks
+      // tried muting them and fading them back but that makes it worse since constant retriggering mutes them constantly and also makes clicking
 
-
-
-      //midi clock in (mdt is slave) enabled
-
-      //  seq.bpm=(midi_bpm+seq.bpm )/2;
-      //  seq.tempo_ms = 60000000 / seq.bpm / 4;
-
-      //  if (seq.running)
-      //          sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
-      //        else
-      //          sequencer_timer.begin(sequencer, seq.tempo_ms / 8, false);
-
-      //midi clock in enabled (mdt is slave) end
-
-      //       for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-      //       {
-      //         if (configuration.fx.delay_sync[instance_id] > 0)
-      //         {
-      //           uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[configuration.fx.delay_sync[instance_id]] / float(midi_bpm) + 0.5);
-      //           delay_fx[instance_id]->delay(0, constrain(midi_sync_delay_time, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10));
+    {
       // #ifdef DEBUG
-      //           LOG.print(F("Setting Delay - Sync of instance "));
-      //           LOG.print(instance_id);
-      //           LOG.print(F(" to "));
-      //           LOG.print(constrain(midi_sync_delay_time, DELAY_TIME_MIN * 10, DELAY_TIME_MAX * 10), DEC);
-      //           LOG.println(F(" ms"));
+      //       LOG.print(F("---------------------------------------MIDI Clock : "));
+      //       LOG.print(midi_bpm);
+      //       LOG.print(F(" bpm ("));
+      //       LOG.print(midi_bpm_timer, DEC);
+      //       LOG.println(F("ms per quarter)"));
       // #endif
-      //         }
-      //       }
-
+      seq.bpm = midi_bpm;
+      _midi_bpm = midi_bpm;
+      update_seq_speed();
     }
 
-    _midi_bpm = midi_bpm;
-    midi_bpm_counter = 0;
     midi_bpm_timer = 0;
+    midi_bpm_counter = 0;
   }
-
   midi_bpm_counter++;
-
 }
 
 FLASHMEM void dac_mute(void)
@@ -4252,23 +4177,12 @@ LiveSequencer liveSeq;
 
 void handleStart(void)
 {
-  liveSeq.onStarted();
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
-  {
-    display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
-  }
   if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
     midi_bpm_timer = 0;
     midi_bpm_counter = 0;
-    _midi_bpm = -1;
-    //midi_song_step = 0;//MIDI SLAVE SYNC TEST
-    //seq.total_played_patterns = 0;//MIDI SLAVE SYNC TEST
 
     seq.step = 0;
-    liveSeq.handlePatternBegin();
-    //seq.step=1; //MIDI SLAVE SYNC TEST
-    seq.current_song_step = 0;
     seq.arp_note = 0;
     seq.arp_chord = 0;
 
@@ -4276,21 +4190,19 @@ void handleStart(void)
     mb_set_compressor();
     mb_set_master();
 
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
-    {
-      display.fillRect(174, 14, DISPLAY_WIDTH - 174 - 11, 38, COLOR_BACKGROUND);
-    }
-
     if (seq.loop_start == 99) // no loop start set, start at step 0
       seq.current_song_step = 0;
     else
       seq.current_song_step = seq.loop_start;
 
-    //delay( (seq.tempo_ms/1000)-30);  //MIDI SLAVE SYNC TEST
+    // MIDI SYNC: use timer only when internal or MIDI Master
+    if (seq.clock == 0 || seq.clock == 2)
+    {
+      liveSeq.onStarted();
+      liveSeq.handlePatternBegin();
+      sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1));
+    }
 
-  ///xxxyyy
-
-    sequencer_timer.begin(sequencer, seq.tempo_ms / 8);
     seq.running = true;
 
 #ifdef MIDI_DEVICE_USB_HOST
@@ -4312,6 +4224,14 @@ void handleStart(void)
     else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
       draw_button_on_grid(45, 18, "SEQ.", "STOP", 2);
   }
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+  {
+    display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
+  }
+  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
+  {
+    display.fillRect(174, 14, DISPLAY_WIDTH - 174 - 11, 38, COLOR_BACKGROUND);
+  }
 
 }
 
@@ -4332,12 +4252,18 @@ void handleStop(void)
       {
         draw_button_on_grid(36, 1, "STEP", "RECORD", 1); // print step recorder icon
       }
+      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
+      {
+        display.fillRect(36 * CHAR_width_small, CHAR_height_small, button_size_x * CHAR_width_small, CHAR_height_small * button_size_y, COLOR_BACKGROUND); // clear scope
+      }
+
       MicroDexed[0]->panic();
 #if NUM_DEXED > 1
       MicroDexed[1]->panic();
 #endif
 
-      sequencer_timer.stop();
+      if (seq.clock == 0 || seq.clock == 2)
+        sequencer_timer.stop();
 
       if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums))
       {
@@ -4350,7 +4276,6 @@ void handleStop(void)
       }
     }
 
-    //midi_seq_step = 0;//MIDI SLAVE SYNC TEST
     seq.running = false;
     seq.recording = false;
     seq.note_in = 0;
@@ -4399,14 +4324,6 @@ void handleStop(void)
     else if (LCDML.FUNC_getID() == 255 && ts.keyb_in_menu_activated == false) // when in main menu
       draw_button_on_grid(45, 18, "SEQ.", "START", 1);
   }
-
-  // if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_sync))
-  // {
-  //   display.fillRect(CHAR_width_small * 2, CHAR_height_small * 6 + 1, 320 - CHAR_width_small * 2, 6, COLOR_BACKGROUND);
-  //   display.fillRect(CHAR_width_small * 2, CHAR_height_small * 10 + 1, 320 - CHAR_width_small * 2, 6, COLOR_BACKGROUND);
-  // }
-
-
 }
 
 void handleActiveSensing(void)

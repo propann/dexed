@@ -136,10 +136,10 @@ FLASHMEM void updateTouchScreen() {
     if (numTouchPoints > 0) {
 
 #if defined GENERIC_DISPLAY    
-        // Scale from ~0->4000 to tft
-        ts.p = touch.getPoint();
-        ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
-        ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH); 
+      // Scale from ~0->4000 to tft
+      ts.p = touch.getPoint();
+      ts.p.x = map(ts.p.x, 205, 3860, 0, TFT_HEIGHT);
+      ts.p.y = map(ts.p.y, 310, 3720, 0, TFT_WIDTH);
 #endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
@@ -301,6 +301,18 @@ FLASHMEM uint16_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val)
   //  }
 }
 
+FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
+{
+  bool result = false;
+  if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
+    if (isButtonTouched == false) {
+      isButtonTouched = true;
+      result = true;
+    }
+  }
+  return result;
+}
+
 FLASHMEM void print_current_chord()
 {
   for (uint8_t x = 0; x < 7; x++)
@@ -343,7 +355,7 @@ FLASHMEM void virtual_keyboard_print_velocity_bar()
     }
   }
 }
-//COLOR_BACKGROUND
+
 FLASHMEM void virtual_keyboard_print_current_instrument()
 {
   display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -407,6 +419,9 @@ FLASHMEM void virtual_keyboard_print_current_instrument()
     ts.virtual_keyboard_midi_channel = drum_midi_channel;
   }
 }
+
+extern void sub_step_recording(bool touchinput, uint8_t touchparam);
+extern void play_sample_on_virtual_drumpads(uint8_t note);
 
 FLASHMEM void print_virtual_keyboard_octave()
 {
@@ -484,7 +499,6 @@ FLASHMEM void virtual_keyboard_key_off_black(uint8_t x)
 
 FLASHMEM void handleVirtualKeyboardKeys()
 {
-
   if (ts.current_virtual_keyboard_display_mode == 0)
   {
     uint8_t halftones = 0;
@@ -581,6 +595,26 @@ FLASHMEM void handleVirtualKeyboardKeys()
     }
   }
 
+  else  if (ts.current_virtual_keyboard_display_mode == 1 && numTouchPoints > 0)
+  {
+    if (ts.virtual_keyboard_instrument == 6)
+    {
+      for (uint8_t x = 0; x < 6; x++)
+      {
+        if (check_button_on_grid(x * 9 + 1, 21))
+        {
+          // sub_step_recording(true, 3,x + ts.virtual_keyboard_octave * 12);
+          play_sample_on_virtual_drumpads(x + ts.virtual_keyboard_octave * 12);
+        }
+        if (check_button_on_grid(x * 9 + 1, 26))
+        {
+          //  sub_step_recording(true, 3,x+6 + ts.virtual_keyboard_octave * 12);
+          play_sample_on_virtual_drumpads(x + 6 + ts.virtual_keyboard_octave * 12);
+        }
+      }
+    }
+  }
+
   // display.fillRect(ts.p.x-1,ts.p.y-1,3,3,YELLOW);
   display.setTextSize(2);
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -627,7 +661,11 @@ FLASHMEM void virtual_keyboard_smart_preselect_mode()
     ts.current_virtual_keyboard_display_mode = 0;
     ts.virtual_keyboard_instrument = microsynth_selected_instance + 3;
   }
-
+  // else if (LCDML.FUNC_getID() == 255)
+  // {
+  //   ts.current_virtual_keyboard_display_mode = 0;
+  //   ts.virtual_keyboard_instrument = 1;
+  // }
 }
 
 FLASHMEM void virtual_keyboard()
@@ -677,18 +715,6 @@ FLASHMEM void virtual_keyboard()
   }
   display.setTextSize(2);
   display.console = false;
-}
-
-FLASHMEM bool check_button_on_grid(uint8_t x, uint8_t y)
-{
-  bool result = false;
-  if (ts.p.x > x * CHAR_width_small && ts.p.x < (x + button_size_x) * CHAR_width_small && ts.p.y > y * CHAR_height_small && ts.p.y < (y + button_size_y) * CHAR_height_small) {
-    if (isButtonTouched == false) {
-      isButtonTouched = true;
-      result = true;
-    }
-  }
-  return result;
 }
 
 FLASHMEM void set_virtual_keyboard_display_mode()
@@ -954,8 +980,7 @@ FLASHMEM void update_step_rec_buttons()
   }
 }
 
-extern void sub_step_recording(bool touchinput, uint8_t touchparam);
-extern void play_sample_on_virtual_drumpads(uint8_t note);
+
 
 FLASHMEM void handle_touchscreen_pattern_editor()
 {
@@ -1036,21 +1061,6 @@ FLASHMEM void handle_touchscreen_pattern_editor()
     else if (check_button_on_grid(36, 6) && seq.cycle_touch_element == 1)//latch button
     {
       sub_step_recording(true, 2);
-    }
-
-    for (uint8_t x = 0; x < 6; x++)
-    {
-      if (check_button_on_grid(x * 9 + 1, 21) && ts.virtual_keyboard_instrument == 6)
-      {
-        // sub_step_recording(true, 3,x + ts.virtual_keyboard_octave * 12);
-        play_sample_on_virtual_drumpads(x + ts.virtual_keyboard_octave * 12);
-      }
-
-      if (check_button_on_grid(x * 9 + 1, 26) && ts.virtual_keyboard_instrument == 6)
-      {
-        //  sub_step_recording(true, 3,x+6 + ts.virtual_keyboard_octave * 12);
-        play_sample_on_virtual_drumpads(x + 6 + ts.virtual_keyboard_octave * 12);
-      }
     }
 
     if (seq.cycle_touch_element != 1)
@@ -1358,6 +1368,7 @@ FLASHMEM void handle_touchscreen_braids()
     if (seq.cycle_touch_element == 1)
     {
       touch_check_all_keyboard_buttons();
+      handleVirtualKeyboardKeys();
     }
   }
   if (seq.cycle_touch_element == 1) {
@@ -1681,8 +1692,8 @@ FLASHMEM void handle_touchscreen_liveseq_listeditor()
     }
     else  if (check_button_on_grid(24, 26)) // delete
     {
-      if (seq.edit_state==true)
-      liveseq_listeditor_delete_element();
+      if (seq.edit_state == true)
+        liveseq_listeditor_delete_element();
     }
 
     else  if (check_button_on_grid(36, 26)) // track filter
@@ -1700,11 +1711,12 @@ FLASHMEM void handle_touchscreen_liveseq_listeditor()
     }
   }
 }
-
+extern bool liveseq_note_copy_state;
 extern bool liveseq_pianoroll_get_current;
 extern void liveseq_pianoroll_draw_graphics();
 extern uint8_t generic_menu;
 extern bool liveseq_pianoroll_fullrefresh_values;
+extern void print_liveseq_playindicator();
 
 FLASHMEM void handle_touchscreen_liveseq_pianoroll()
 {
@@ -1716,89 +1728,116 @@ FLASHMEM void handle_touchscreen_liveseq_pianoroll()
       LCDML.BT_quit();
     }
 
-if (check_button_on_grid(0, 21)) // track
+    if (check_button_on_grid(0, 21)) // track
     {
-      if (generic_menu!=0)
-    generic_menu = 0;
-    else
-    generic_menu=99;
+      if (generic_menu != 0)
+        generic_menu = 0;
+      else
+        generic_menu = 99;
     }
 
     if (check_button_on_grid(8, 26)) // select note
     {
-       if (generic_menu!=1)
-    generic_menu = 1;
-    else
-    generic_menu=99;
+      if (generic_menu != 1)
+        generic_menu = 1;
+      else
+        generic_menu = 99;
     }
+
     if (check_button_on_grid(16, 26)) // edit note
     {
-       if (generic_menu!=2)
-    generic_menu = 2;
-    else
-    generic_menu=99;
-    }
-    if (check_button_on_grid(24,26)) //edit velocity
-    {
-       if (generic_menu!=3)
-    generic_menu = 3;
-    else
-    generic_menu=99;
-    }
-    if (check_button_on_grid(32,26)) // edit start
-    {
-       if (generic_menu!=4)
-    generic_menu = 4;
-    else
-    generic_menu=99;
-    }
-    if (check_button_on_grid(40,26)) // edit end
-    {
-       if (generic_menu!=5)
-    generic_menu = 5;
-    else
-    generic_menu=99;
+      if (generic_menu != 2)
+        generic_menu = 2;
+      else
+      {
+        generic_menu = 1;
+        liveseq_note_copy_state = false;
+      }
     }
 
- if (check_button_on_grid(8,21)) // scroll up&down
+    if (check_button_on_grid(24, 26)) //edit velocity
     {
-       if (generic_menu!=20)
-    generic_menu = 20;
-    else
-    generic_menu=99;
-    }
-    
-    if (check_button_on_grid(16,21)) // scroll right left
-    {
-       if (generic_menu!=23)
-    generic_menu = 23;
-    else
-    generic_menu=99;
+      if (generic_menu != 3)
+        generic_menu = 3;
+      else
+        generic_menu = 99;
     }
 
-    if (check_button_on_grid(24,21)) // zoom x
+    if (check_button_on_grid(32, 26)) // edit start
     {
-       if (generic_menu!=22)
-    generic_menu = 22;
-    else
-    generic_menu=99;
+      if (generic_menu != 4)
+        generic_menu = 4;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(40, 26)) // edit end
+    {
+      if (generic_menu != 5)
+        generic_menu = 5;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(8, 21)) // scroll up&down
+    {
+      if (generic_menu != 20)
+        generic_menu = 20;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(16, 21)) // scroll right left
+    {
+      if (generic_menu != 23)
+        generic_menu = 23;
+      else
+        generic_menu = 99;
+    }
+
+    if (check_button_on_grid(48, 21)) // add/copy note
+    {
+      if (generic_menu != 24 && generic_menu == 1 && liveseq_note_copy_state == false)
+        generic_menu = 24;
+      else
+        if (liveseq_note_copy_state)
+        {
+          generic_menu = 1;
+          liveseq_note_copy_state = false;
+        }
+    }
+
+    if (check_button_on_grid(24, 21)) // zoom x
+    {
+      if (generic_menu != 22)
+        generic_menu = 22;
+      else
+        generic_menu = 99;
     }
 
     if (check_button_on_grid(48, 26)) // delete note
     {
 
-      if (generic_menu == 1 || generic_menu == 2|| generic_menu == 3 || generic_menu == 4 || generic_menu == 5)
-    generic_menu = 21;
-    else
-    generic_menu=99;
+      if (generic_menu == 1 || generic_menu == 2 || generic_menu == 3 || generic_menu == 4 || generic_menu == 5)
+        generic_menu = 21;
+      else
+        generic_menu = 99;
     }
 
-      if (generic_menu>0 && generic_menu < 6)
-         liveseq_pianoroll_get_current = true;
+    if (generic_menu < 6)
+    {
+      liveseq_pianoroll_get_current = true;
+      liveseq_pianoroll_fullrefresh_values = true;
+      liveseq_pianoroll_draw_graphics();
+    }
 
-    liveseq_pianoroll_fullrefresh_values=true;
-   liveseq_pianoroll_draw_graphics();
+    if (generic_menu > 0 && generic_menu < 6)
+      liveseq_pianoroll_get_current = true;
+
+    liveseq_pianoroll_fullrefresh_values = true;
+    liveseq_pianoroll_draw_graphics();
+
   }
+  print_liveseq_playindicator();
 }
-
 

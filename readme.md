@@ -47,6 +47,14 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 * Remote control in web-based 1:1 UI with added features (filemanager,filetransfer, screenshots etc.) Work in progress - connected to PC via Teensy MicroUSB Connector
 
+[https://www.youtube.com/watch?v=AkmqZVpW2Vg
+](https://www.youtube.com/watch?v=AkmqZVpW2Vg)
+by Floyd Steinberg
+
+[https://www.youtube.com/watch?v=v6thf0vhRxU
+](https://www.youtube.com/watch?v=v6thf0vhRxU)
+by fellpower (german language)
+
 ### YouTube playlist about the development:
 [https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl
 ](https://www.youtube.com/playlist?list=PLHTypoMU1QoGOXPli8bjR6MknPiQpubHl)

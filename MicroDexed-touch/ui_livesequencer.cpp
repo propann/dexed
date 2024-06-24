@@ -79,10 +79,10 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_RED);
     display.setTextSize(1);
     display.setTextColor(isSame ? GREY2 : RED, COLOR_BACKGROUND);
-    display.setCursor(GRID_X[3], GRID_Y[3] + 5);
-    display.printf("CHANGING PATTERN LENGTH");
-    display.setCursor(GRID_X[3], GRID_Y[3] + 20);
-    display.printf("WILL DELETE ALL DATA!");
+    display.setCursor(GRID_X[3]+2, GRID_Y[3] + 5);
+    display.print(F("CHANGING PATTERN LENGTH"));
+    display.setCursor(GRID_X[3]+2, GRID_Y[3] + 20);
+    display.print(F("WILL DELETE ALL DATA!"));
   },
   [ this ] (auto *b){ // clickedHandler
     if(data.numberOfBars != numberOfBarsTemp) {
@@ -706,28 +706,26 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       if (isLayerViewActive) {
         const bool layerEditActive = !data.isSongMode && (data.activeTrack == track) && (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE);
         // layer button
-        for (int layer = 0; layer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; layer++) {
-          if (layer < data.trackSettings[track].layerCount) {
-            const bool isMuted = data.tracks[track].layerMutes & (1 << layer);
-            TouchButton::Color color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
-            if (layerEditActive) {
-              // adapt button background if in layer edit mode
-              handleLayerEditButtonColor(trackLayerMode, color);
-            }
-            if (guiFlags & drawLayerButtons) {
-              drawLayerButton(data.isSongMode, trackLayerMode, layer, layerEditActive, color, GRID_X[track], GRID_Y[2 + layer]);
-            }
-            if (guiFlags & drawActiveNotes) {
-              // always draw notes when layers visible
-              const uint16_t barHeight = 6 * data.tracks[track].activeNotes[layer].size();
-              const uint16_t xStart = GRID_X[track] + TouchButton::BUTTON_SIZE_X - 3;
-              const uint16_t yStart = GRID_Y[2 + layer];
-              
-              const uint16_t yFill = std::min(barHeight, TouchButton::BUTTON_SIZE_Y);
-              display.console = true;
-              display.fillRect(xStart, yStart, 3, TouchButton::BUTTON_SIZE_Y - yFill, TouchButton::getColors(color).bg);
-              display.fillRect(xStart, yStart + (TouchButton::BUTTON_SIZE_Y - yFill), 3, yFill, COLOR_SYSTEXT);
-            }
+        for (int layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
+          const bool isMuted = data.tracks[track].layerMutes & (1 << layer);
+          TouchButton::Color color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
+          if (layerEditActive) {
+            // adapt button background if in layer edit mode
+            handleLayerEditButtonColor(trackLayerMode, color);
+          }
+          if (guiFlags & drawLayerButtons) {
+            drawLayerButton(data.isSongMode, trackLayerMode, layer, layerEditActive, color, GRID_X[track], GRID_Y[2 + layer]);
+          }
+          if (guiFlags & drawActiveNotes) {
+            // always draw notes when layers visible
+            const uint16_t barHeight = 6 * data.tracks[track].activeNotes[layer].size();
+            const uint16_t xStart = GRID_X[track] + TouchButton::BUTTON_SIZE_X - 3;
+            const uint16_t yStart = GRID_Y[2 + layer];
+            
+            const uint16_t yFill = std::min(barHeight, TouchButton::BUTTON_SIZE_Y);
+            display.console = true;
+            display.fillRect(xStart, yStart, 3, TouchButton::BUTTON_SIZE_Y - yFill, TouchButton::getColors(color).bg);
+            display.fillRect(xStart, yStart + (TouchButton::BUTTON_SIZE_Y - yFill), 3, yFill, COLOR_SYSTEXT);
           }
         }
       }
@@ -749,10 +747,8 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   if(guiFlags & drawSongLayers) {
     TouchButton::Color color = TouchButton::BUTTON_ACTIVE;
     handleLayerEditButtonColor(songLayerMode, color);
-    for (int songLayer = 0; songLayer < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; songLayer++) {
-      if (songLayer < data.songLayerCount) {
-        drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
-      }
+    for (int songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
+      drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
     }
   }
   guiFlags = 0;
