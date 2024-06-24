@@ -4708,7 +4708,7 @@ FLASHMEM void lcdml_menu_display(void)
        // if (ts.keyb_in_menu_activated == false)
         //  helptext_l(back_text);//xxxyyy
       }
-      back_touchbutton();
+      draw_back_touchbutton();
       display.setTextSize(2);
       seq.edit_state = false;
       generic_active_function = 0;
