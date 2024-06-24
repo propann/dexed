@@ -57,25 +57,20 @@ FLASHMEM void Realtime_Scope::clear(void)
 
 FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w)
 {
-  if (scope_delay > 84)
+  uint16_t i = 0;
+  scope_is_drawing = true;
+  display.console = false;
+  // display.console = true; //only for full remote console rendering, do not put in for normal usage
+  do
   {
-    uint16_t i = 0;
-    scope_is_drawing = true;
-    display.console = false;
-    // display.console = true; //only for full remote console rendering, do not put in for normal usage
-    do
+    if (scopebuffer_old[i] != scopebuffer[i])
     {
-      if (scopebuffer_old[i] != scopebuffer[i])
-      {
-        display.drawPixel(x + i, scopebuffer_old[i] + y, COLOR_BACKGROUND);
-        display.drawPixel(x + i, scopebuffer[i] + y, COLOR_SYSTEXT);
-      }
-      scopebuffer_old[i] = scopebuffer[i];
-      i = i + 1;
+      display.drawPixel(x + i, scopebuffer_old[i] + y, COLOR_BACKGROUND);
+      display.drawPixel(x + i, scopebuffer[i] + y, COLOR_SYSTEXT);
+    }
+    scopebuffer_old[i] = scopebuffer[i];
+    i = i + 1;
 
-    } while (i < w);
-    scope_delay = 0;
-    scope_is_drawing = false;
-  }
-  scope_delay++;
+  } while (i < w);
+  scope_is_drawing = false;
 }

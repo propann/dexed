@@ -99,6 +99,15 @@ void registerTouchHandler(TouchFn touchFn);
 void unregisterTouchHandler(void);
 TouchFn getCurrentTouchHandler(void);
 
+void handle_touchscreen_braids(void);
+void handle_touchscreen_arpeggio();
+void handle_touchscreen_midi_channel_page();
+void handle_touchscreen_mixer();
+void handle_touchscreen_microsynth();
+//void handle_touchscreen_pattern_editor();
+void handle_touchscreen_voice_select();
+void handle_touchscreen_multiband();
+void handle_touchscreen_menu();
 void handle_touchscreen_test_touchscreen();
 void handle_touchscreen_sample_editor();
 void handle_touchscreen_settings_button_test();

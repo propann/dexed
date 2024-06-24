@@ -1274,18 +1274,6 @@ FLASHMEM void handle_touchscreen_custom_mappings()
   }
 }
 
-FLASHMEM void handle_touchscreen_cc_mappings()
-{
-  if (numTouchPoints > 0)
-  {
-    if (check_button_on_grid(45, 1))
-    {
-      seq.midi_learn_active = !seq.midi_learn_active;
-      update_midi_learn_button();
-    }
-  }
-}
-
 FLASHMEM void handle_touchscreen_mute_matrix()
 {
   if (numTouchPoints > 0)
@@ -1528,8 +1516,7 @@ FLASHMEM void toggle_generic_active_function()
 
 FLASHMEM void handle_touchscreen_mixer()
 {
-  if (scope.scope_delay % 60 == 0)
-    draw_volmeters_mixer();
+  draw_volmeters_mixer();
 }
 
 FLASHMEM void handle_touchscreen_multiband()
@@ -1613,10 +1600,7 @@ FLASHMEM void handle_touchscreen_multiband()
       }
     }
   }
-  if (scope.scope_delay % 60 == 0)
-  {
-    draw_volmeters_multiband_compressor();
-  }
+  draw_volmeters_multiband_compressor();
 }
 
 extern int temp_int;

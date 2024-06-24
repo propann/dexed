@@ -7,8 +7,7 @@ class Realtime_Scope : public AudioStream
 {
 public:
   bool scope_is_drawing;
-  uint8_t sensitivity=80; //default
-  uint8_t scope_delay;
+  uint8_t sensitivity = 80; //default
   Realtime_Scope(void)
       : AudioStream(1, inputQueueArray)
   {

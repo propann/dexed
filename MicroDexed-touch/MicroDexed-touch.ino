@@ -895,15 +895,7 @@ extern void getNoteName(char* noteName, uint8_t noteNumber);
 extern void update_midi_learn_button(void);
 custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 extern void print_custom_mappings(void);
-extern void handle_touchscreen_menu(void);
-extern void handle_touchscreen_voice_select(void);
 extern void handle_touchscreen_pattern_editor(void);
-extern void handle_touchscreen_microsynth(void);
-extern void handle_touchscreen_cc_mappings(void);
-extern void handle_touchscreen_arpeggio(void);
-extern void handle_touchscreen_braids(void);
-extern void handle_touchscreen_multiband();
-extern void handle_touchscreen_mixer();
 extern void handle_page_with_touch_back_button();
 extern void updateTouchScreen();
 
@@ -1492,7 +1484,7 @@ FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
 FLASHMEM void handle_touchscreen_midi_channel_page()
 {
 
-  if (scope.scope_delay % 70 == 0 && seq.running)
+  if (seq.running)
   {
     display.setTextSize(2);
     print_midi_channel_activity(19, 3, microdexed_peak_0.read());
@@ -1984,10 +1976,19 @@ void loop()
     TouchFn touchHandler = getCurrentTouchHandler();
     if(touchHandler) {
       touchHandler();
+    } else if(LCDML.FUNC_getID() > _LCDML_DISP_cnt) {
+      // menu
+      handle_touchscreen_menu();
+      scope.draw_scope(230, 18, 87);
     }
 
     if (current_page_has_touch_back_button) {
       handle_page_with_touch_back_button();
+    }
+
+    ScopeSettings s = getCurrentScopeSettings();
+    if(s.enabled) {
+      scope.draw_scope(s.x, s.y, s.w);
     }
   }
 
@@ -2012,25 +2013,6 @@ void loop()
     if (fm.wav_recorder_mode == 1)
       continueRecording();
   }
-  else if (LCDML.FUNC_getID() > _LCDML_DISP_cnt || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
-  {
-    handle_touchscreen_menu();
-    display.console = false;
-    //display.console = true; //only for full remote console rendering, do not put in for normal usage
-    scope.draw_scope(230, 18, 87);
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_multiband_dynamics))
-  {
-    display.console = true;
-    scope.draw_scope(188, -5, 128);
-    handle_touchscreen_multiband();
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_select))
-  {
-    handle_touchscreen_voice_select();
-    display.console = true;
-    scope.draw_scope(217, 30, 102);
-  }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
     handle_touchscreen_pattern_editor();
@@ -2039,29 +2021,6 @@ void loop()
       scope.draw_scope(216, -9, button_size_x * CHAR_width_small);
     else
       sub_step_recording(false, 0);
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
-  {
-    handle_touchscreen_microsynth();
-    display.console = true;
-    scope.draw_scope(253, 34, 58);
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_mixer))
-  {
-    display.console = true;
-    handle_touchscreen_mixer();
-    scope.draw_scope(225, 0, 80);
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_midi_channels))
-  {
-    handle_touchscreen_midi_channel_page();
-    scope.draw_scope(205, -8, 108);
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_arpeggio))
-  {
-    display.console = true;
-    scope.draw_scope(232, -2, 64);
-    handle_touchscreen_arpeggio();
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
@@ -2132,7 +2091,7 @@ void loop()
     microsynth_control_rate = 0;
     update_microsynth_params();
     // Microsynth Realtime Screen Updates
-    if (scope.scope_delay % 11 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1)
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1)
     {
       display.setTextSize(1);
       setCursor_textGrid_small(15, 18);
@@ -2141,7 +2100,7 @@ void loop()
       microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
     }
 
-    if (scope.scope_delay % 12 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && seq.cycle_touch_element != 1 && microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && seq.cycle_touch_element != 1 && microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
     {
       display.setTextSize(1);
       setCursor_textGrid_small(15, 16);
@@ -2150,7 +2109,7 @@ void loop()
       microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;
     }
 
-    if (scope.scope_delay % 13 == 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) // debug
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) // debug
     {
       display.setTextSize(1);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
@@ -2161,12 +2120,6 @@ void loop()
     }
   }
 
-  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids))
-  {
-    display.console = true;
-    handle_touchscreen_braids();
-    scope.draw_scope(250, -14, 60);
-  }
   if (braids_control_rate > BRAIDS_CONTROL_RATE_MS) // update  filters when played live or by seq.
   {
     braids_control_rate = 0;
