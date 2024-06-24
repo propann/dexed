@@ -1982,6 +1982,14 @@ void loop()
       scope.draw_scope(230, 18, 87);
     }
 
+    if (back_button_touch_page_check_and_init_done == false) {
+      current_page_has_touch_back_button = (touch_button_back_page() || legacy_touch_button_back_page());
+      if (current_page_has_touch_back_button) {
+        draw_back_touchbutton();
+      }
+      back_button_touch_page_check_and_init_done = true;
+    }
+
     if (current_page_has_touch_back_button) {
       handle_page_with_touch_back_button();
     }
@@ -1998,14 +2006,6 @@ void loop()
       wakeScreenFlag = false;
       resetScreenTimer();
     }
-  }
-
-  if (back_button_touch_page_check_and_init_done == false) {
-    current_page_has_touch_back_button = (touch_button_back_page() || legacy_touch_button_back_page());
-    if (current_page_has_touch_back_button) {
-      draw_back_touchbutton();
-    }
-    back_button_touch_page_check_and_init_done = true;
   }
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_recorder))
@@ -2025,9 +2025,7 @@ void loop()
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
   {
     display.console = true;
-    scope.sensitivity = 32;
-    scope.draw_scope(203, 138, 108);
-
+    
     if (control_rate % 170 == 0)
     {
       display.setTextSize(1);
@@ -2091,26 +2089,27 @@ void loop()
     microsynth_control_rate = 0;
     update_microsynth_params();
     // Microsynth Realtime Screen Updates
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1)
-    {
-      display.setTextSize(1);
-      setCursor_textGrid_small(15, 18);
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      print_formatted_number(microsynth[microsynth_selected_instance].pwm_current / 10, 3);
-      microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
-    }
 
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) && seq.cycle_touch_element != 1 && microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
-    {
-      display.setTextSize(1);
-      setCursor_textGrid_small(15, 16);
-      display.setTextColor(GREY2, COLOR_BACKGROUND);
-      print_formatted_number(microsynth[microsynth_selected_instance].filter_osc_freq_current / 100, 3);
-      microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;
-    }
+    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) {
+      if (microsynth[microsynth_selected_instance].pwm_last_displayed != microsynth[microsynth_selected_instance].pwm_current && seq.cycle_touch_element != 1)
+      {
+        display.setTextSize(1);
+        setCursor_textGrid_small(15, 18);
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+        print_formatted_number(microsynth[microsynth_selected_instance].pwm_current / 10, 3);
+        microsynth[microsynth_selected_instance].pwm_last_displayed = microsynth[microsynth_selected_instance].pwm_current;
+      }
 
-    if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) // debug
-    {
+      if (seq.cycle_touch_element != 1 && microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed != microsynth[microsynth_selected_instance].filter_osc_freq_current)
+      {
+        display.setTextSize(1);
+        setCursor_textGrid_small(15, 16);
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+        print_formatted_number(microsynth[microsynth_selected_instance].filter_osc_freq_current / 100, 3);
+        microsynth[microsynth_selected_instance].filter_osc_freq_last_displayed = microsynth[microsynth_selected_instance].filter_osc_freq_current;
+      }
+
+      // debug
       display.setTextSize(1);
       display.setTextColor(GREY2, COLOR_BACKGROUND);
       setCursor_textGrid_small(42, 9);

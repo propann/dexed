@@ -15270,6 +15270,8 @@ void UI_func_information(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
+    scope.sensitivity = 32;
+    registerScope(203, 138, 108);
     sysinfo_chord_state = 0;
     char version_string[display_cols + 10 + 1];
     encoderDir[ENC_R].reset();
@@ -15443,8 +15445,9 @@ void UI_func_information(uint8_t param)
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
+    unregisterScope();
     sysinfo_reload_prev_voice();
-    scope.sensitivity=80;
+    scope.sensitivity = 80;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
   }
