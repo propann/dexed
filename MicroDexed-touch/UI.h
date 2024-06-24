@@ -110,3 +110,8 @@ LCDML_addAdvanced(65, LCDML_0, 19, COND_hide, "SD_NOT_FOUND", UI_func_sd_content
 #define SCREENSAVER_FADE_TIME 25    // 1s @ 25Hz rate
 #define SCREENSAVER_BRIGHTNESS_STEP (255/SCREENSAVER_FADE_TIME)
 #define SCREENSAVER_MAX_COUNTHUE 359
+
+void splash_draw_header();
+void splash_draw_D();
+void splash_draw_X(uint8_t c);
+void splash_screen2_anim(uint8_t sysinfo_sound_state);

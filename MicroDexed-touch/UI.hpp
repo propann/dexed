@@ -58,10 +58,6 @@ extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 
 extern bool remote_active;
 extern bool back_button_touch_page_check_and_init_done;
-extern elapsedMillis sysinfo_millis;
-extern uint8_t sysinfo_sound_state;
-uint8_t sysinfo_chord_state = 0;
-extern uint8_t sysinfo_logo_version;
 uint8_t sysinfo_old_pool;
 uint8_t sysinfo_old_bank;
 uint8_t sysinfo_old_voice;
@@ -14768,7 +14764,7 @@ void UI_func_master_effects(uint8_t param)
   }
 }
 
-void sysinfo_reload_prev_voice()
+void sysinfo_reload_prev_voice(uint8_t &sysinfo_sound_state)
 {
   if (sysinfo_sound_state > 0)
   {
@@ -15267,6 +15263,13 @@ FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
 
 void UI_func_information(uint8_t param)
 {
+  static uint32_t loopMs = 0;
+  //static uint8_t sysinfo_sound_state = 0;
+  static uint8_t sysinfo_logo_version = 0;
+  static uint8_t sysinfo_logo_delay = 0;
+  static bool sysinfo_page_at_bootup_shown_once = false;
+  static uint8_t sysinfo_chord_state = 0;
+  static uint8_t sysinfo_sound_state = 0;
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -15406,10 +15409,8 @@ void UI_func_information(uint8_t param)
 #endif
 
     ///////////////
-    if (sysinfo_sound_state == 0)
-    {
-      if (seq.running == false)
-      {
+    if (sysinfo_sound_state == 0) {
+      if (seq.running == false) {
         sysinfo_old_pool = configuration.dexed[0].pool;
         sysinfo_old_bank = configuration.dexed[0].bank;
         sysinfo_old_voice = configuration.dexed[0].voice;
@@ -15420,33 +15421,106 @@ void UI_func_information(uint8_t param)
         sysinfo_chord_state = 1;
       }
       randomSeed(analogRead(0));
-      if (random(2) == 0)
-      {
+      if (random(2) == 0) {
         sysinfo_logo_version = 2;
         sysinfo_sound_state = 10;
         splash_screen2();
       }
-      else
-      {
+      else {
         sysinfo_logo_version = 1;
         sysinfo_sound_state = 10;
         splash_screen1();
       }
 
-      sysinfo_millis = 0;
+      LCDML.FUNC_setLoopInterval(50); // 20Hz main loop refresh
     }
+    loopMs = 0;
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-    if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    {
-      ;
+    if(loopMs % 500 == 0) { // 2Hz
+      DBG_LOG(printf("loop timer\n"));
+      display.setTextSize(1);
+      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+      display.setCursor(CHAR_width_small * 38 - 2, CHAR_height_small * 25);
+      print_formatted_number(AudioProcessorUsage(), 3);
+      display.setCursor(CHAR_width_small * 48 - 2, CHAR_height_small * 25);
+      print_formatted_number(tempmonGetTemp(), 2);
     }
+    
+    if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    {}
+
+    if (sysinfo_logo_version == 1 && sysinfo_sound_state > 9) {
+      if (loopMs < 2000 && sysinfo_logo_delay > 1)
+      {
+        if (sysinfo_sound_state % 2 == 0)
+          splash_draw_X(0);
+        else
+          splash_draw_X(1);
+        sysinfo_logo_delay = 0;
+        sysinfo_sound_state++;
+      }
+      sysinfo_logo_delay++;
+    }
+
+    if (sysinfo_logo_version == 2 && sysinfo_sound_state > 9 ) {
+      splash_screen2_anim(sysinfo_sound_state);
+      sysinfo_sound_state++;
+    }
+
+    if (seq.running == false) {
+      switch(sysinfo_chord_state) {
+      case 1:
+        if (loopMs >= 200) {
+          MicroDexed[0]->keydown(MIDI_D4, 55);
+          sysinfo_chord_state++;
+        }
+        break;
+      case 2:
+        if (loopMs >= 400) {
+          MicroDexed[0]->keydown(MIDI_F4, 60);
+          MicroDexed[0]->keydown(MIDI_G4, 50);
+          MicroDexed[0]->keydown(MIDI_AIS5, 50);
+          MicroDexed[0]->keydown(MIDI_D5, 60);
+          sysinfo_chord_state++;
+        }
+        break;
+      case 3:
+      if (loopMs >= 1100) {
+          MicroDexed[0]->keyup(MIDI_G3);
+          MicroDexed[0]->keyup(MIDI_D4);
+          MicroDexed[0]->keyup(MIDI_F4);
+          MicroDexed[0]->keyup(MIDI_G4);
+          MicroDexed[0]->keyup(MIDI_AIS5);
+          MicroDexed[0]->keyup(MIDI_D5);
+          sysinfo_chord_state++;
+        }
+        break;
+      case 4:
+        if (loopMs >= 2800) {
+          sysinfo_reload_prev_voice(sysinfo_sound_state);
+          if (sysinfo_chord_state > 2) {
+            sysinfo_chord_state = 0;
+          }
+          if (configuration.sys.load_at_startup_page == 50 && sysinfo_page_at_bootup_shown_once == false) {
+            sysinfo_page_at_bootup_shown_once = true;
+            LCDML.MENU_goRoot();
+          }
+          else {
+            helptext_l(back_text);
+          }
+        }
+        break;
+      }
+    }
+
+    loopMs += 50;
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     unregisterScope();
-    sysinfo_reload_prev_voice();
+    sysinfo_reload_prev_voice(sysinfo_sound_state);
     scope.sensitivity = 80;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
@@ -23574,7 +23648,7 @@ FLASHMEM void splash_screen1()
   display.print(F("(c) 2024 H.WIRTZ, M.KOSLOWSKI, D.PERBAL, D.WEBER"));
 }
 
-FLASHMEM void splash_screen2_anim()
+FLASHMEM void splash_screen2_anim(uint8_t sysinfo_sound_state)
 {
   if (sysinfo_sound_state - 10 < 8)
   {

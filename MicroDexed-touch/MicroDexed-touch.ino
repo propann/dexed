@@ -98,11 +98,7 @@ using namespace TeensyTimerTool;
 
 std::vector<uint8_t> midiNoteToDrumNote;
 
-elapsedMillis sysinfo_millis;
 elapsedMillis midi_start_delay;
-uint8_t sysinfo_sound_state = 0;
-uint8_t sysinfo_logo_version = 0;
-uint8_t sysinfo_logo_delay = 0;
 
 uint8_t check_sd_cards(void);
 void check_and_create_directories(void);
@@ -120,7 +116,6 @@ int FreeMem(void);
 bool checkMidiChannelDexed(byte inChannel, uint8_t instance_id);
 bool bootup_performance_loading = true;
 bool remote_active = false;
-bool sysinfo_page_at_bootup_shown_once = false;
 
 ILI9341_t3n display = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 
@@ -2010,77 +2005,19 @@ void loop()
 
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_recorder))
   {
-    if (fm.wav_recorder_mode == 1)
+    if (fm.wav_recorder_mode == 1) {
       continueRecording();
+    }
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
     handle_touchscreen_pattern_editor();
     display.console = true;
-    if (seq.running)
+    if (seq.running) {
       scope.draw_scope(216, -9, button_size_x * CHAR_width_small);
-    else
+    }
+    else {
       sub_step_recording(false, 0);
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
-  {
-    display.console = true;
-    
-    if (control_rate % 170 == 0)
-    {
-      display.setTextSize(1);
-      display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-      display.setCursor(CHAR_width_small * 38 - 2, CHAR_height_small * 25);
-      print_formatted_number(AudioProcessorUsage(), 3);
-      display.setCursor(CHAR_width_small * 48 - 2, CHAR_height_small * 25);
-      print_formatted_number(tempmonGetTemp(), 2);
-
-      //SPDIF
-
-      //  display.setCursor(CHAR_width_small * 18 - 2, CHAR_height_small * 29);
-      //   print_formatted_number(spdif_in.pllLocked(), 2);
-      //   display.setCursor(CHAR_width_small * 27 - 2, CHAR_height_small * 29);
-      //   print_formatted_number(spdif_in.sampleRate(), 9);
-
-      /////SPDIF END
-    }
-    if (sysinfo_chord_state == 4 && sysinfo_millis >= 2800 && seq.running == false)
-    {
-      sysinfo_reload_prev_voice();
-      if (sysinfo_chord_state > 2)
-        sysinfo_chord_state = 0;
-      if (configuration.sys.load_at_startup_page == 50 && sysinfo_page_at_bootup_shown_once == false)
-      {
-        sysinfo_page_at_bootup_shown_once = true;
-        LCDML.MENU_goRoot();
-      }
-      else
-        helptext_l(back_text);
-    }
-
-    else if (sysinfo_chord_state == 3 && sysinfo_millis >= 1100 && seq.running == false)
-    {
-      MicroDexed[0]->keyup(MIDI_G3);
-      MicroDexed[0]->keyup(MIDI_D4);
-      MicroDexed[0]->keyup(MIDI_F4);
-      MicroDexed[0]->keyup(MIDI_G4);
-      MicroDexed[0]->keyup(MIDI_AIS5);
-      MicroDexed[0]->keyup(MIDI_D5);
-      sysinfo_chord_state++;
-    }
-    else if (sysinfo_chord_state == 2 && sysinfo_millis >= 400 && seq.running == false)
-    {
-      MicroDexed[0]->keydown(MIDI_F4, 60);
-      MicroDexed[0]->keydown(MIDI_G4, 50);
-      MicroDexed[0]->keydown(MIDI_AIS5, 50);
-      MicroDexed[0]->keydown(MIDI_D5, 60);
-      sysinfo_chord_state++;
-    }
-    else if (sysinfo_chord_state == 1 && sysinfo_millis >= 200 && seq.running == false)
-    {
-
-      MicroDexed[0]->keydown(MIDI_D4, 55);
-      sysinfo_chord_state++;
     }
   }
 
@@ -2155,26 +2092,6 @@ void loop()
     control_rate = 0;
     // glow();
     // display.fillRect(10,10,30,30, ColorHSV(1, 0, int(led_bright)));
-
-    if (sysinfo_logo_version == 1 && sysinfo_sound_state > 9 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
-    {
-      if (sysinfo_millis < 2000 && sysinfo_logo_delay > 1)
-      {
-        if (sysinfo_sound_state % 2 == 0)
-          splash_draw_X(0);
-        else
-          splash_draw_X(1);
-        sysinfo_logo_delay = 0;
-        sysinfo_sound_state++;
-      }
-      sysinfo_logo_delay++;
-    }
-
-    if (sysinfo_logo_version == 2 && sysinfo_sound_state > 9 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_information))
-    {
-      splash_screen2_anim();
-      sysinfo_sound_state++;
-    }
 
     if (seq.running && seq.step != seq.UI_last_seq_step)
     {
