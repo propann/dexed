@@ -2126,20 +2126,6 @@ void loop()
       sysinfo_chord_state++;
     }
   }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings))
-  {
-    // handle touch button test
-    handle_touchscreen_settings_button_test();
-  }
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
-  {
-    handle_touchscreen_test_touchscreen();
-  }
-
-  else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sample_editor))
-  {
-    handle_touchscreen_sample_editor();
-  }
 
   if (microsynth_control_rate > MICROSYNTH_CONTROL_RATE_MS) // update lfos, filters etc. when played live or by seq.
   {
