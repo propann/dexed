@@ -164,7 +164,6 @@ extern AudioAnalyzePeak mb_after_r;
 extern void InitializeCube();
 extern void cube_screensaver();
 extern void qix_screensaver();
-extern void terrain_screensaver();
 
 #define _LCDML_DISP_cols display_cols
 #define _LCDML_DISP_rows display_rows
