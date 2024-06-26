@@ -34,7 +34,9 @@
 
 void splash_draw_header();
 void splash_draw_D();
+void splash_draw_reverseD();
 void splash_draw_X(uint8_t c);
 void splash_screen2_anim(uint8_t sysinfo_sound_state);
+void draw_logo_instant(uint8_t yoffset);
 
 #endif //_UI_H_
