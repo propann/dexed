@@ -13654,6 +13654,7 @@ FLASHMEM void UI_func_load_performance(uint8_t param)
 
     mode = 0;
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
     border1_clear();
     setCursor_textGrid(1, 1);
     display.print(F("Load Performance"));
@@ -13777,6 +13778,7 @@ FLASHMEM void UI_func_save_performance(uint8_t param)
     mode = 0;
     border1_clear();
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
     setCursor_textGrid(1, 1);
     display.print(F("Save Performance"));
     setCursor_textGrid(1, 2);
@@ -19894,7 +19896,7 @@ FLASHMEM void UI_func_smart_filter(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
-
+    display.fillScreen(COLOR_BACKGROUND);
     setCursor_textGrid(1, 1);
     display.print(F("Drm Smart Filter"));
   }
@@ -21400,6 +21402,7 @@ FLASHMEM void UI_func_set_performance_name(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
     mode = 0;
     setCursor_textGrid(1, 1);
     display.print(F("Perform. Name"));
@@ -21457,6 +21460,7 @@ FLASHMEM void UI_func_set_multisample_name(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
     display.setTextSize(2);
     mode = 0;
     setCursor_textGrid(1, 1);
@@ -21794,6 +21798,7 @@ FLASHMEM void UI_func_startup_performance(uint8_t param)
     old_load_at_startup_performance = configuration.sys.load_at_startup_performance;
 
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
     show(1, 1, 16, "Load at startup");
     if (configuration.sys.load_at_startup_performance == 255)
       show(2, 1, 16, "Last Performance");
@@ -21880,6 +21885,7 @@ FLASHMEM void UI_func_startup_page(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     encoderDir[ENC_R].reset();
+    display.fillScreen(COLOR_BACKGROUND);
     helptext_r("< > SELECT PAGE");
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
