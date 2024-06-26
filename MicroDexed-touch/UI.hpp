@@ -15448,11 +15448,11 @@ void UI_func_information(uint8_t param)
     if(sysinfo_chord_state > 0) {
       if (sysinfo_logo_version == 1) {
         if (loopMs < 2000) {
-          splash_draw_X((loopMs & 0b100) == 0);
+          splash_draw_X((loopMs & 0b100) != 0);
         }
       }
       if (sysinfo_logo_version == 2) {
-        splash_screen2_anim(loopMs >> 6);
+        splash_screen2_anim(loopMs / 50);
       }
     }
 
@@ -23627,7 +23627,7 @@ FLASHMEM void splash_screen2_anim(uint8_t sysinfo_sound_state)
     if (remote_active)
       display.console = true;
 
-    for (uint8_t y = 0 + sysinfo_sound_state - 10; y < 73; y = y + 8)
+    for (uint8_t y = sysinfo_sound_state - 10; y < 73; y = y + 8)
     {
       for (uint16_t x = 0; x < DISPLAY_WIDTH; x++)
       {
