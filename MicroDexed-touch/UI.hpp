@@ -12325,22 +12325,19 @@ void buttons_liveseq_pianoroll();
 FLASHMEM void print_liveseq_playindicator()
 {
 
-  if (record_timer % 40 == 0 && data->isRunning)
+  if (data->isRunning)
   {
     bool erased_end = false;
     for (uint8_t j = 0; j < 4; j++)
     {
       if (data->currentPattern == j)
       {
-        if (liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) >= xoff &&
-          liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len) <= 320)
+        const uint16_t xOn = liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len);
+        if (xOn >= xoff && xOn <= 320)
         {
           display.console = true;
-          display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6,
-            liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len), 4, COLOR_BACKGROUND);
-
-          display.fillRect(liveseq_pianoroll_x_scroll + xoff + j * pat_len + data->patternTimer / (data->patternLengthMs / pat_len),
-            CHAR_height - 6, 4, 4, RED);
+          display.fillRect(liveseq_pianoroll_x_scroll + xoff, CHAR_height - 6, xOn, 4, COLOR_BACKGROUND);
+          display.fillRect(xOn, CHAR_height - 6, 4, 4, RED);
         }
       }
       if (j == 3 && erased_end == true)
