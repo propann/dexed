@@ -411,7 +411,6 @@ PROGMEM const char accepted_chars[] = " _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-ab
 
 int temp_int;
 bool menu_select_toggle;
-float temp_float;
 
 boolean COND_hide() // hide a menu element
 {
@@ -625,7 +624,6 @@ void draw_volmeters_mixer();
 void draw_volmeters_multiband_compressor();
 
 uint8_t x_pos_menu_header_layer[8];
-uint8_t x_pos_previous_menu_header;
 uint8_t last_menu_depth = 99;
 uint8_t prev_menu_item = 0;    // avoid screen flicker at start / end of menu items
 
@@ -23807,8 +23805,6 @@ FLASHMEM void splash_screen2()
   display.print(F("https://codeberg.org/positionhigh/"));
 }
 
-float scalex = 1;
-float scaley = 1;
 int UI_FM_offset_x = 0;
 int UI_FM_offset_y = 0;
 #define LINE_SZ 2
