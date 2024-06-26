@@ -401,10 +401,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
         currentValue.valueBase->previous();
       }
     }
-    if(LCDML.BT_checkEnter()) {
-      DBG_LOG(printf("enter!\n"));
-    }
-
+    
     guiUpdateFlags |= data.trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
     guiUpdateFlags |= data.isRunning ? (drawActiveNotes | drawTime) : 0;
 

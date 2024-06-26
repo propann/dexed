@@ -890,10 +890,7 @@ extern void getNoteName(char* noteName, uint8_t noteNumber);
 extern void update_midi_learn_button(void);
 custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 extern void print_custom_mappings(void);
-extern void handle_touchscreen_pattern_editor(void);
 extern void handle_page_with_touch_back_button();
-extern void updateTouchScreen();
-
 extern void sequencer_part2(void);
 
 bool touch_ic_found = false;
@@ -1464,7 +1461,6 @@ void setup()
 
 FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
 {
-
   uint8_t display_val = 0;
   if (audio_vol * 1024 > 253)
     display_val = 254;
@@ -1478,7 +1474,6 @@ FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
 
 FLASHMEM void handle_touchscreen_midi_channel_page()
 {
-
   if (seq.running)
   {
     display.setTextSize(2);
@@ -1990,7 +1985,8 @@ void loop()
     }
 
     const ScopeSettings s = getCurrentScopeSettings();
-    if(s.enabled) {
+    const bool inhibitDrawing = s.onlyDrawWhenRunning && !seq.running;
+    if(s.enabled && !inhibitDrawing) {
       scope.draw_scope(s.x, s.y, s.w);
     }
   }
@@ -2011,12 +2007,7 @@ void loop()
   }
   else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) || LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor))
   {
-    handle_touchscreen_pattern_editor();
-    display.console = true;
-    if (seq.running) {
-      scope.draw_scope(216, -9, button_size_x * CHAR_width_small);
-    }
-    else {
+    if (seq.running == false) {
       sub_step_recording(false, 0);
     }
   }

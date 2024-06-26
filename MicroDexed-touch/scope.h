@@ -6,7 +6,6 @@
 class Realtime_Scope : public AudioStream
 {
 public:
-  bool scope_is_drawing;
   uint8_t sensitivity = 80; //default
   Realtime_Scope(void)
       : AudioStream(1, inputQueueArray)
@@ -19,6 +18,7 @@ public:
   void clear(void);
 
 private:
+  bool scope_is_drawing;
   audio_block_t *inputQueueArray[2];
   int16_t buffer[AUDIO_BLOCK_SAMPLES];
   uint32_t count = 0;
