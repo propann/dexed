@@ -1386,8 +1386,6 @@ void setup()
 
   setup_ui();
 
-  scope.clear();
-
   gamepad_buttons_neutral = joysticks[0].getButtons();
   gamepad_0_neutral = joysticks[0].getAxis(0);
   gamepad_1_neutral = joysticks[0].getAxis(1);
