@@ -15568,6 +15568,9 @@ void UI_func_information(uint8_t param)
     }
 
     loopMs += 50;
+    if(loopMs == 20000) { // repeat animation every 20s
+      loopMs = 0;
+    }
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
