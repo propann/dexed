@@ -58,10 +58,14 @@ extern AudioSynthBraids* synthBraids[NUM_BRAIDS];
 
 extern bool remote_active;
 extern bool back_button_touch_page_check_and_init_done;
-uint8_t sysinfo_old_pool;
-uint8_t sysinfo_old_bank;
-uint8_t sysinfo_old_voice;
-uint8_t sysinfo_old_transpose;
+
+struct DxPoolSettings {
+  uint8_t pool;
+  uint8_t bank;
+  uint8_t voice;
+  uint8_t transpose;
+};
+
 int sample_editor_scale_end;
 
 // sidechains
@@ -9391,7 +9395,7 @@ void set_sample_type_color_of(uint8_t samplekey)
 //   }
 // }
 
-void virtual_keyboard_print_buttons()
+FLASHMEM void virtual_keyboard_print_buttons()
 {
   // oct +- buttons
   draw_button_on_grid(1, 16, "OCTAVE", "-", 0);
@@ -9402,7 +9406,7 @@ void virtual_keyboard_print_buttons()
   draw_button_on_grid(37, 16, "INSTR.", "+", 0);
 }
 
-void seq_pattern_editor_update_dynamic_elements()
+FLASHMEM void seq_pattern_editor_update_dynamic_elements()
 {
   if (seq.running == false)
   {
@@ -9516,7 +9520,7 @@ uint8_t find_first_chain_step_with_pattern(uint8_t pattern)
   return result;
 }
 
-void pattern_editor_menu_0()
+FLASHMEM void pattern_editor_menu_0()
 {
   display.setTextSize(2);
   if (seq.menu == 0) // sound select menu
@@ -9662,7 +9666,7 @@ FLASHMEM void play_sample_on_virtual_drumpads(uint8_t note)
   handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, drum_config[note - 14].midinote, ts.virtual_keyboard_velocity);
 }
 
-void UI_func_seq_pattern_editor(uint8_t param)
+FLASHMEM void UI_func_seq_pattern_editor(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -10354,7 +10358,7 @@ void UI_toplineInfoText(uint8_t s)
     display.console = false;
 }
 
-void update_microsynth_instance_icons()
+FLASHMEM void update_microsynth_instance_icons()
 {
   display.setTextSize(1);
   if (microsynth_selected_instance == 0)
@@ -10379,7 +10383,7 @@ void update_microsynth_instance_icons()
   display.setTextColor(GREY1);
 }
 
-void update_pwm_text()
+FLASHMEM void update_pwm_text()
 {
   if (seq.cycle_touch_element != 1)
   {
@@ -10396,7 +10400,7 @@ void update_pwm_text()
   }
 }
 
-void microsynth_refresh_lower_screen_static_text()
+FLASHMEM void microsynth_refresh_lower_screen_static_text()
 {
   helptext_r("LONG PUSH:INST.SEL.  <>SEL.PARA.");
 
@@ -10431,7 +10435,7 @@ void microsynth_refresh_lower_screen_static_text()
   display.print(F(">"));
 }
 
-void microsynth_refresh_lower_screen_dynamic_text()
+FLASHMEM void microsynth_refresh_lower_screen_dynamic_text()
 {
   if (menu_item_check(8))
   {
@@ -10514,7 +10518,7 @@ void microsynth_refresh_lower_screen_dynamic_text()
   update_pwm_text();
 }
 
-void print_epiano_static_texts()
+FLASHMEM void print_epiano_static_texts()
 {
   display.setTextSize(1);
   helptext_l(back_text);
@@ -10609,7 +10613,7 @@ void print_epiano_static_texts()
   setCursor_textGrid_small(45, 20);
   display.print(F("]"));
 }
-void update_selective_values_epiano()
+FLASHMEM void update_selective_values_epiano()
 {
   char note_name[4];
   if (menu_item_check(0))
@@ -10795,7 +10799,7 @@ void update_selective_values_epiano()
   }
 }
 
-void UI_func_epiano(uint8_t param)
+FLASHMEM void UI_func_epiano(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -10918,7 +10922,7 @@ void UI_func_epiano(uint8_t param)
   }
 }
 
-void print_static_texts_microsynth()
+FLASHMEM void print_static_texts_microsynth()
 {
   display.setTextSize(1);
   generic_active_function = 0;
@@ -10991,7 +10995,7 @@ void print_static_texts_microsynth()
   display.print(F(">"));
 }
 
-void update_selective_values_microsynth()
+FLASHMEM void update_selective_values_microsynth()
 {
   display.setTextSize(1);
   if (seq.edit_state == 1)
@@ -11139,7 +11143,7 @@ void update_selective_values_microsynth()
     print_small_intbar(38, 10, microsynth[microsynth_selected_instance].lfo_speed, 27, 0, 1);
 }
 
-void UI_func_microsynth(uint8_t param)
+FLASHMEM void UI_func_microsynth(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -11303,7 +11307,7 @@ void UI_func_microsynth(uint8_t param)
   }
 }
 
-void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
+FLASHMEM void tracker_print_pattern(int xpos, int ypos, uint8_t track_number)
 {
   uint8_t yspacer = CHAR_height_small + 3;
   uint8_t ycount = 0;
@@ -13091,7 +13095,7 @@ int findlength(unsigned int bnry)
 }
 
 //-----2--------Function to concatenate two binary numbers bitwise----------------------//
-unsigned int ConcatBin(unsigned int bina, unsigned int binb)
+FLASHMEM unsigned int ConcatBin(unsigned int bina, unsigned int binb)
 {
   int binb_len = findlength(binb);
   unsigned int sum = (bina << binb_len);
@@ -13100,7 +13104,7 @@ unsigned int ConcatBin(unsigned int bina, unsigned int binb)
 }
 
 //------3-------------------Euclidean bit sorting funciton-------------------------------//
-unsigned int euclid(int n, int k, int o)
+FLASHMEM unsigned int euclid(int n, int k, int o)
 { // inputs: n=total, k=beats, o = offset
   int pauses = n - k;
   int pulses = k;
@@ -13241,7 +13245,7 @@ unsigned int euclid(int n, int k, int o)
 }
 //------------------end euclidian math-------------------------------------//
 
-void update_euclidean()
+FLASHMEM void update_euclidean()
 {
   for (uint8_t i = 0; i < 16; i++)
   {
@@ -13252,13 +13256,13 @@ void update_euclidean()
   }
 }
 
-void show_euclidean()
+FLASHMEM void show_euclidean()
 {
   update_euclidean();
   draw_euclidean_circle();
 }
 
-void UI_func_arpeggio(uint8_t param)
+FLASHMEM void UI_func_arpeggio(uint8_t param)
 {
   char displayname[8] = { 0, 0, 0, 0, 0, 0, 0 };
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -13479,7 +13483,7 @@ void UI_func_arpeggio(uint8_t param)
   }
 }
 
-void UI_func_seq_mute_matrix(uint8_t param)
+FLASHMEM void UI_func_seq_mute_matrix(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -13638,7 +13642,7 @@ FLASHMEM bool load_performance_and_check_midi(uint8_t perf)
   return ret;
 }
 
-void UI_func_load_performance(uint8_t param)
+FLASHMEM void UI_func_load_performance(uint8_t param)
 {
   static uint8_t mode;
   if (LCDML.FUNC_setup()) // ****** SETUP *********
@@ -13762,7 +13766,7 @@ void UI_func_load_performance(uint8_t param)
   }
 }
 
-void UI_func_save_performance(uint8_t param)
+FLASHMEM void UI_func_save_performance(uint8_t param)
 {
   static bool overwrite;
   static bool yesno;
@@ -13993,7 +13997,7 @@ FLASHMEM void print_delay_sync_status(uint8_t instance)
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 }
 
-void print_static_text_master_effects()
+FLASHMEM void print_static_text_master_effects()
 {
   if (configuration.fx.delay_multiplier[0] == 0)
     configuration.fx.delay_multiplier[0] = 1;
@@ -14127,7 +14131,7 @@ void print_static_text_master_effects()
   display.print(F("BRD"));
 }
 
-void print_delay_time(uint8_t instance, uint8_t param)
+FLASHMEM void print_delay_time(uint8_t instance, uint8_t param)
 {
   setModeColor(param);
   if (instance == 0)
@@ -14159,7 +14163,7 @@ void print_delay_time(uint8_t instance, uint8_t param)
   }
 }
 
-void set_global_delay_filter(uint8_t instance)
+FLASHMEM void set_global_delay_filter(uint8_t instance)
 {
   global_delay_filter[instance].resonance(3);
   if (configuration.fx.delay_filter_mode[instance] == 0)
@@ -14190,7 +14194,7 @@ void set_global_delay_filter(uint8_t instance)
   }
 }
 
-void print_delay_filter_mode(uint8_t instance, uint8_t param)
+FLASHMEM void print_delay_filter_mode(uint8_t instance, uint8_t param)
 {
   uint8_t x = 0;
   if (instance == 0)
@@ -14211,7 +14215,7 @@ void print_delay_filter_mode(uint8_t instance, uint8_t param)
   set_global_delay_filter(instance);
 }
 
-void print_delay_filter_freq(uint8_t instance, uint8_t param)
+FLASHMEM void print_delay_filter_freq(uint8_t instance, uint8_t param)
 {
   uint8_t x = 0;
   if (instance == 0)
@@ -14223,7 +14227,7 @@ void print_delay_filter_freq(uint8_t instance, uint8_t param)
   set_global_delay_filter(instance);
 }
 
-void print_delay_multiplier(uint8_t instance, uint8_t param)
+FLASHMEM void print_delay_multiplier(uint8_t instance, uint8_t param)
 {
   setModeColor(param);
 
@@ -14237,7 +14241,7 @@ void print_delay_multiplier(uint8_t instance, uint8_t param)
   set_global_delay_filter(instance);
 }
 
-void update_selective_values_master_effects()
+FLASHMEM void update_selective_values_master_effects()
 {
   print_delay_sync_status(0);
   print_delay_sync_status(1);
@@ -14344,7 +14348,7 @@ void update_selective_values_master_effects()
 extern "C" uint8_t external_psram_size;
 // #endif
 
-void UI_func_master_effects(uint8_t param)
+FLASHMEM void UI_func_master_effects(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -14843,7 +14847,7 @@ void UI_func_master_effects(uint8_t param)
   }
 }
 
-void sysinfo_reload_prev_voice(void)
+FLASHMEM void sysinfo_reload_prev_voice(DxPoolSettings settings)
 {
   if (seq.running == false) {
     MicroDexed[0]->keyup(MIDI_E4);
@@ -14855,8 +14859,8 @@ void sysinfo_reload_prev_voice(void)
 
     // reload current(previous active) dexed0 patch
     MicroDexed[0]->setGain(midi_volume_transform(map(configuration.dexed[0].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
-    load_sd_voice(sysinfo_old_pool, sysinfo_old_bank, sysinfo_old_voice, 0);
-    configuration.dexed[0].transpose = sysinfo_old_transpose;
+    load_sd_voice(settings.pool, settings.bank, settings.voice, 0);
+    configuration.dexed[0].transpose = settings.transpose;
     MicroDexed[0]->setTranspose(configuration.dexed[0].transpose);
   }
 }
@@ -14905,8 +14909,6 @@ FLASHMEM void print_liveseq_listeditor_update_steps() {
   display.setTextColor(GREEN, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 50, 0);
   print_formatted_number(liveseq_listeditor_steps + 1, 3);
-
-
 }
 
 FLASHMEM void liveseq_listeditor_printEventGridLine(int i, LiveSequencer::MidiEvent e) {
@@ -15341,6 +15343,7 @@ void UI_func_information(uint8_t param)
   static uint8_t sysinfo_logo_version = 0;
   static bool sysinfo_page_at_bootup_shown_once = false;
   static uint8_t sysinfo_chord_state = 0;
+  static DxPoolSettings oldSettings;
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
@@ -15481,10 +15484,10 @@ void UI_func_information(uint8_t param)
 
     ///////////////
     if (seq.running == false) {
-      sysinfo_old_pool = configuration.dexed[0].pool;
-      sysinfo_old_bank = configuration.dexed[0].bank;
-      sysinfo_old_voice = configuration.dexed[0].voice;
-      sysinfo_old_transpose = configuration.dexed[0].transpose;
+      oldSettings.pool = configuration.dexed[0].pool;
+      oldSettings.bank = configuration.dexed[0].bank;
+      oldSettings.voice = configuration.dexed[0].voice;
+      oldSettings.transpose = configuration.dexed[0].transpose;
       load_sd_voice(0, 1, 21, 0);
       MicroDexed[0]->setGain(0.9);
       MicroDexed[0]->keydown(MIDI_G3, 40);
@@ -15553,7 +15556,7 @@ void UI_func_information(uint8_t param)
         break;
       case 4:
         if (loopMs >= 2800) {
-          sysinfo_reload_prev_voice();
+          sysinfo_reload_prev_voice(oldSettings);
           sysinfo_chord_state = 0;
           if (configuration.sys.load_at_startup_page == 50 && sysinfo_page_at_bootup_shown_once == false) {
             sysinfo_page_at_bootup_shown_once = true;
@@ -15575,7 +15578,7 @@ void UI_func_information(uint8_t param)
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
     unregisterScope();
-    sysinfo_reload_prev_voice();
+    sysinfo_reload_prev_voice(oldSettings);
     scope.sensitivity = 80;
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
