@@ -15337,7 +15337,7 @@ FLASHMEM void UI_func_liveseq_listeditor(uint8_t param)
 
 void UI_func_information(uint8_t param)
 {
-  static uint32_t loopMs = 0;
+  static uint16_t loopMs = 0;
   static uint8_t sysinfo_logo_version = 0;
   static bool sysinfo_page_at_bootup_shown_once = false;
   static uint8_t sysinfo_chord_state = 0;
@@ -15514,15 +15514,13 @@ void UI_func_information(uint8_t param)
       print_formatted_number(tempmonGetTemp(), 2);
     }    
 
-    if(sysinfo_chord_state > 0) {
-      if (sysinfo_logo_version == 1) {
-        if (loopMs < 2000) {
-          splash_draw_X((loopMs & 0b100) != 0);
-        }
+    if (sysinfo_logo_version == 1) {
+      if (loopMs < 2000) {
+        splash_draw_X((loopMs & 0b100) != 0);
       }
-      if (sysinfo_logo_version == 2) {
-        splash_screen2_anim(loopMs / 50);
-      }
+    }
+    if (sysinfo_logo_version == 2) {
+      splash_screen2_anim(loopMs / 50);
     }
 
     if (seq.running == false) {
