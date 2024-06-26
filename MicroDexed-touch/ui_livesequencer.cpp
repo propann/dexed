@@ -375,7 +375,7 @@ FLASHMEM void UI_LiveSequencer::onStopped(void) {
 FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 // ****** SETUP *********
   if (LCDML.FUNC_setup()) {
-    registerTouch(handle_touchscreen_live_sequencer);
+    registerTouchHandler(handle_touchscreen_live_sequencer);
     data.isActive = true;
     runningInBackground = false;
     display.fillScreen(COLOR_BACKGROUND);
@@ -401,10 +401,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
         currentValue.valueBase->previous();
       }
     }
-    if(LCDML.BT_checkEnter()) {
-      DBG_LOG(printf("enter!\n"));
-    }
-
+    
     guiUpdateFlags |= data.trackLayersChanged ? (drawLayerButtons | drawTrackButtons) : 0;
     guiUpdateFlags |= data.isRunning ? (drawActiveNotes | drawTime) : 0;
 
@@ -422,7 +419,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 
   // ****** STABLE END *********
   if (LCDML.FUNC_close()) {
-    registerTouch(0);
+    unregisterTouchHandler();
     if (runningInBackground == false) {
       data.isActive = false;
     }

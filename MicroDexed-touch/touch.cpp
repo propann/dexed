@@ -114,8 +114,12 @@ extern bool wakeScreenFlag;
 
 
 TouchFn currentTouchHandler;
-FLASHMEM void registerTouch(TouchFn touchFn) {
+FLASHMEM void registerTouchHandler(TouchFn touchFn) {
   currentTouchHandler = touchFn;
+}
+
+FLASHMEM void unregisterTouchHandler(void) {
+  currentTouchHandler = 0;
 }
 
 TouchFn getCurrentTouchHandler(void) {
@@ -184,7 +188,7 @@ FLASHMEM void helptext_l(const char* str)
   ts.old_helptext_length[0] = l;
 }
 
-FLASHMEM void back_touchbutton()
+FLASHMEM void draw_back_touchbutton()
 {
   if (ts.keyb_in_menu_activated == false)
   {
@@ -1142,7 +1146,7 @@ FLASHMEM void handle_touchscreen_microsynth()
         generic_full_draw_required = true;
         microsynth_refresh_lower_screen_static_text();
         microsynth_refresh_lower_screen_dynamic_text();
-        back_touchbutton();
+        draw_back_touchbutton();
         generic_full_draw_required = false;
       }
       else
@@ -1259,18 +1263,6 @@ FLASHMEM void update_midi_learn_button()
 }
 
 FLASHMEM void handle_touchscreen_custom_mappings()
-{
-  if (numTouchPoints > 0)
-  {
-    if (check_button_on_grid(45, 1))
-    {
-      seq.midi_learn_active = !seq.midi_learn_active;
-      update_midi_learn_button();
-    }
-  }
-}
-
-FLASHMEM void handle_touchscreen_cc_mappings()
 {
   if (numTouchPoints > 0)
   {
@@ -1434,7 +1426,7 @@ FLASHMEM void handle_touchscreen_menu()
           if (ts.keyb_in_menu_activated == false)
           {
             //helptext_l(back_text);
-            back_touchbutton();
+            draw_back_touchbutton();
           }
         }
       }
@@ -1524,8 +1516,7 @@ FLASHMEM void toggle_generic_active_function()
 
 FLASHMEM void handle_touchscreen_mixer()
 {
-  if (scope.scope_delay % 60 == 0)
-    draw_volmeters_mixer();
+  draw_volmeters_mixer();
 }
 
 FLASHMEM void handle_touchscreen_multiband()
@@ -1609,10 +1600,7 @@ FLASHMEM void handle_touchscreen_multiband()
       }
     }
   }
-  if (scope.scope_delay % 60 == 0)
-  {
-    draw_volmeters_multiband_compressor();
-  }
+  draw_volmeters_multiband_compressor();
 }
 
 extern int temp_int;
