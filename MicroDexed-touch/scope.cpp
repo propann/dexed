@@ -9,7 +9,7 @@ FLASHMEM void Realtime_Scope::update(void)
     if (scope_is_drawing == false) {
       __disable_irq();
       for(uint16_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-        scopebuffer[i] = map(block->data[i], 32767, -32768, sensitivity, -sensitivity) + 32;
+        scopebuffer[i] = map(block->data[i], 32767, -32768, 30, -30) + 32;
       }
       __enable_irq();
     }
