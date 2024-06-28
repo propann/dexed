@@ -15975,125 +15975,115 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
-    {
-      if (LCDML.BT_checkDown())
-      {
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 22);
-        else if (generic_temp_select_menu == 0)
-        {
-          multiband_active = !multiband_active;
-          mb_clear_caches();
-        }
-        else if (generic_temp_select_menu == 1)
-          mb_global_gain = constrain(mb_global_gain + 0.2, -2, 12);
-        else if (generic_temp_select_menu == 2)
-          mb_global_ratio = constrain(mb_global_ratio + ENCODER[ENC_R].speed(), 1, 60);
-        else if (generic_temp_select_menu == 3)
-          mb_solo_high = !mb_solo_high;
-        else if (generic_temp_select_menu == 4)
-          mb_cross_freq_high = constrain(mb_cross_freq_high + ENCODER[ENC_R].speed() * 10, 2000, 12000);
-        else if (generic_temp_select_menu == 5)
-          mb_q_high = constrain(mb_q_high + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 6)
-          mb_gain_high = constrain(mb_gain_high + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 7)
-          mb_threshold_high = constrain(mb_threshold_high + ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 8)
-          mb_solo_upper_mid = !mb_solo_upper_mid;
-        else if (generic_temp_select_menu == 9)
-          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid + ENCODER[ENC_R].speed() * 10, 1000, 9999);
-        else if (generic_temp_select_menu == 10)
-          mb_q_upper_mid = constrain(mb_q_upper_mid + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 11)
-          mb_gain_upper_mid = constrain(mb_gain_upper_mid + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 12)
-          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid + ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 13)
-          mb_solo_mid = !mb_solo_mid;
-        else if (generic_temp_select_menu == 14)
-          mb_cross_freq_mid = constrain(mb_cross_freq_mid + ENCODER[ENC_R].speed() * 10, 400, 7000);
-        else if (generic_temp_select_menu == 15)
-          mb_q_mid = constrain(mb_q_mid + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 16)
-          mb_gain_mid = constrain(mb_gain_mid + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 17)
-          mb_threshold_mid = constrain(mb_threshold_mid + ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 18)
-          mb_solo_low = !mb_solo_low;
-        else if (generic_temp_select_menu == 19)
-          mb_cross_freq_low = constrain(mb_cross_freq_low + ENCODER[ENC_R].speed() * 10, 10, 2000);
-        else if (generic_temp_select_menu == 20)
-          mb_q_low = constrain(mb_q_low + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 21)
-          mb_gain_low = constrain(mb_gain_low + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 22)
-          mb_threshold_low = constrain(mb_threshold_low + ENCODER[ENC_R].speed(), 0, 40);
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 22);
-        else if (generic_temp_select_menu == 0)
-        {
-          multiband_active = !multiband_active;
-          mb_clear_caches();
-        }
-        else if (generic_temp_select_menu == 1)
-          mb_global_gain = constrain(mb_global_gain - 0.2, -2, 12);
-        else if (generic_temp_select_menu == 2)
-          mb_global_ratio = constrain(mb_global_ratio - ENCODER[ENC_R].speed(), 1, 60);
-        else if (generic_temp_select_menu == 3)
-          mb_solo_high = !mb_solo_high;
-        else if (generic_temp_select_menu == 4)
-          mb_cross_freq_high = constrain(mb_cross_freq_high - ENCODER[ENC_R].speed() * 10, 2000, 12000);
-        else if (generic_temp_select_menu == 5)
-          mb_q_high = constrain(mb_q_high - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 6)
-          mb_gain_high = constrain(mb_gain_high - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 7)
-          mb_threshold_high = constrain(mb_threshold_high - ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 8)
-          mb_solo_upper_mid = !mb_solo_upper_mid;
-        else if (generic_temp_select_menu == 9)
-          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid - ENCODER[ENC_R].speed() * 10, 1000, 9999);
-        else if (generic_temp_select_menu == 10)
-          mb_q_upper_mid = constrain(mb_q_upper_mid - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 11)
-          mb_gain_upper_mid = constrain(mb_gain_upper_mid - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 12)
-          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid - ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 13)
-          mb_solo_mid = !mb_solo_mid;
-        else if (generic_temp_select_menu == 14)
-          mb_cross_freq_mid = constrain(mb_cross_freq_mid - ENCODER[ENC_R].speed() * 10, 400, 7000);
-        else if (generic_temp_select_menu == 15)
-          mb_q_mid = constrain(mb_q_mid - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 16)
-          mb_gain_mid = constrain(mb_gain_mid - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 17)
-          mb_threshold_mid = constrain(mb_threshold_mid - ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 18)
-          mb_solo_low = !mb_solo_low;
-        else if (generic_temp_select_menu == 19)
-          mb_cross_freq_low = constrain(mb_cross_freq_low - ENCODER[ENC_R].speed() * 10, 10, 2000);
-        else if (generic_temp_select_menu == 20)
-          mb_q_low = constrain(mb_q_low - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 21)
-          mb_gain_low = constrain(mb_gain_low - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 22)
-          mb_threshold_low = constrain(mb_threshold_low - ENCODER[ENC_R].speed(), 0, 40);
-      }
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
 
-      if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      {
-        if (generic_active_function == 0)
-          generic_active_function = 1;
-        else
-          generic_active_function = 0;
+      if(generic_active_function == 0) {
+        // navigate through menu
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 22);
+      } else {
+        // handle setting change
+        switch(generic_temp_select_menu) {
+        case 0:
+          multiband_active = !multiband_active;
+          mb_clear_caches();
+          break;
+
+        case 1:
+          mb_global_gain = constrain(mb_global_gain + (factorChange * 0.2), -2, 12);
+          break;
+
+        case 2:
+          mb_global_ratio = constrain(mb_global_ratio + (factorChange * ENCODER[ENC_R].speed()), 1, 60);
+          break;
+
+        case 3:
+          mb_solo_high = !mb_solo_high;
+          break;
+
+        case 4:
+          mb_cross_freq_high = constrain(mb_cross_freq_high + (factorChange * ENCODER[ENC_R].speed() * 10), 2000, 12000);
+          break;
+
+        case 5:
+          mb_q_high = constrain(mb_q_high + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 6:
+          mb_gain_high = constrain(mb_gain_high + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 7:
+          mb_threshold_high = constrain(mb_threshold_high + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;
+
+        case 8:
+          mb_solo_upper_mid = !mb_solo_upper_mid;
+          break;
+
+        case 9:
+          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid + (factorChange * ENCODER[ENC_R].speed() * 10), 1000, 9999);
+          break;
+
+        case 10:
+          mb_q_upper_mid = constrain(mb_q_upper_mid + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 11:
+          mb_gain_upper_mid = constrain(mb_gain_upper_mid + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 12:
+          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;
+
+        case 13:
+          mb_solo_mid = !mb_solo_mid;
+          break;
+
+        case 14:
+          mb_cross_freq_mid = constrain(mb_cross_freq_mid + (factorChange * ENCODER[ENC_R].speed() * 10), 400, 7000);
+          break;
+
+        case 15:
+          mb_q_mid = constrain(mb_q_mid + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 16:
+          mb_gain_mid = constrain(mb_gain_mid + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 17:
+          mb_threshold_mid = constrain(mb_threshold_mid + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;
+
+        case 18:
+          mb_solo_low = !mb_solo_low;
+          break;
+
+        case 19:
+          mb_cross_freq_low = constrain(mb_cross_freq_low + (factorChange * ENCODER[ENC_R].speed() * 10), 10, 2000);
+          break;
+
+        case 20:
+          mb_q_low = constrain(mb_q_low + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 21:
+          mb_gain_low = constrain(mb_gain_low + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 22:
+          mb_threshold_low = constrain(mb_threshold_low + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;   
+        }
       }
     }
+      
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {// handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      generic_active_function = !generic_active_function;
+    }
+  
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.setTextSize(1);
 
