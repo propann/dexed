@@ -39,6 +39,7 @@ FLASHMEM LiveSequencer::LiveSequencer() {
   ui_liveSeq = new UI_LiveSequencer(*this, data);
   updateTrackChannels(true);
   data.isActive = false;
+  playIterator = data.eventsList.end();
 }
 
 FLASHMEM void UI_func_livesequencer(uint8_t param) {
@@ -827,6 +828,13 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
       // remove all invalidated notes
       data.eventsList.remove_if([](MidiEvent& e) { return e.event == midi::InvalidType; });
 
+      // finish possibly not played events at end
+      while (playIterator != data.eventsList.end()) {
+        DBG_LOG(printf("about to finish event: "));
+        printEvent(0, *playIterator);
+        playNextEvent();
+      }
+
       // for song mode, add song events for this pattern
       if (data.isSongMode) {
         for (auto& e : data.songEvents[data.songPatternCount]) {
@@ -838,9 +846,7 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
           applySongStartLayerMutes();
         }
       }
-#ifdef DEBUG
       //printEvents();
-#endif
       playIterator = data.eventsList.begin();
       loadNextEvent(timeToMs(playIterator->patternNumber, playIterator->patternMs));
     }
@@ -853,7 +859,7 @@ FLASHMEM void LiveSequencer::handlePatternBegin(void) {
     playNextArpNote();
   }
 
-  DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
+  //DBG_LOG(printf("Sequence %i/%i @%ibpm : %ims with %i events\n", data.currentPattern + 1, data.numberOfBars, data.currentBpm, data.patternLengthMs, data.eventsList.size()));
 }
 
 FLASHMEM void selectDexed0() {

@@ -6942,125 +6942,70 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-    if (generic_temp_select_menu == 0 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.oct_shift = constrain(seq.oct_shift + 1, -2, 2);
-        else if (LCDML.BT_checkUp())
-          seq.oct_shift = constrain(seq.oct_shift - 1, -2, 2);
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
+
+      if(generic_active_function == 0) {
+        // navigate through menu
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 9);
+      } else {
+        switch (generic_temp_select_menu) {
+        case 0:
+          seq.oct_shift = constrain(seq.oct_shift + (factorChange * 1), -2, 2);
+          break;
+
+        case 1:
+          seq.element_shift = constrain(seq.element_shift + (factorChange * 1), 0, 6);
+          break;
+
+        case 2:
+          seq.chord_key_ammount = constrain(seq.chord_key_ammount + (factorChange * 1), 1, 7);
+          break;
+
+        case 3:
+          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + (factorChange * 1), 1, 64);
+          break;
+
+        case 4:
+          seq.chord_vel = constrain(seq.chord_vel + (factorChange * 1), 10, 120);
+          break;
+
+        case 5:
+          seq.transpose = constrain(seq.transpose + (factorChange * 1), 0, 60);
+          break;
+
+        case 6:
+          seq.bpm = constrain(seq.bpm + (factorChange * 1), 60, 180);
+          update_seq_speed();
+          break;
+
+        case 7:
+          seq.pattern_len_dec = constrain(seq.pattern_len_dec - (factorChange * 1), 0, 8);  // dir reversed as this is decreased from 16
+          break;
+
+        case 8:
+          seq.auto_advance_step = constrain(seq.auto_advance_step + (factorChange * 1), 0, 2);
+          break;
+
+        case 9:
+          seq.clock = constrain(seq.clock + (factorChange * 1), 0, 2);
+
+          if (seq.clock == 1 && seq.running == true) {// stop when switching to MIDI Slave
+            handleStop();
+          }
+          else {
+            update_seq_speed();
+          }
+          break;
+        }
+        // handle setting change
       }
     }
-    else if (generic_temp_select_menu == 1 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.element_shift = constrain(seq.element_shift + 1, 0, 6);
-        else if (LCDML.BT_checkUp())
-          seq.element_shift = constrain(seq.element_shift - 1, 0, 6);
-      }
-    }
-    else if (generic_temp_select_menu == 2 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.chord_key_ammount = constrain(seq.chord_key_ammount + 1, 1, 7);
-        else if (LCDML.BT_checkUp())
-          seq.chord_key_ammount = constrain(seq.chord_key_ammount - 1, 1, 7);
-      }
-    }
-    else if (generic_temp_select_menu == 3 && generic_active_function == 1) // edit max arp notes in 1/32 1/64 arps
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + 1, 1, 64);
-        else if (LCDML.BT_checkUp())
-          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max - 1, 1, 64);
-      }
-    }
-    else if (generic_temp_select_menu == 4 && generic_active_function == 1) // Chord Velocity
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.chord_vel = constrain(seq.chord_vel + 1, 10, 120);
-        else if (LCDML.BT_checkUp())
-          seq.chord_vel = constrain(seq.chord_vel - 1, 10, 120);
-      }
+    
+    if (LCDML.BT_checkEnter()) {
+      generic_active_function = !generic_active_function;
     }
 
-    else if (generic_temp_select_menu == 5 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.transpose = constrain(seq.transpose + 1, 0, 60);
-        else if (LCDML.BT_checkUp())
-          seq.transpose = constrain(seq.transpose - 1, 0, 60);
-      }
-    }
-    else if (generic_temp_select_menu == 6 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.bpm = constrain(seq.bpm + 1, 60, 180);
-        else if (LCDML.BT_checkUp())
-          seq.bpm = constrain(seq.bpm - 1, 60, 180);
-      }
-    }
-    else if (generic_temp_select_menu == 7 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.pattern_len_dec = constrain(seq.pattern_len_dec - 1, 0, 8);  // dir reversed as this is decreased from 16
-        else if (LCDML.BT_checkUp())
-          seq.pattern_len_dec = constrain(seq.pattern_len_dec + 1, 0, 8);// dir reversed as this is decreased from 16
-      }
-    }
-    else if (generic_temp_select_menu == 8 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.auto_advance_step = constrain(seq.auto_advance_step + 1, 0, 2);
-        else if (LCDML.BT_checkUp())
-          seq.auto_advance_step = constrain(seq.auto_advance_step - 1, 0, 2);
-      }
-    }
-    else if (generic_temp_select_menu == 9 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.clock = constrain(seq.clock + 1, 0, 2);
-        else if (LCDML.BT_checkUp())
-          seq.clock = constrain(seq.clock - 1, 0, 2);
-      }
-    }
-    // -------------------------------------------------------------------------------------------------------------------------
-    else if (generic_active_function == 0)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 9);
-        else if (LCDML.BT_checkUp())
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 9);
-      }
-    }
-    if (LCDML.BT_checkEnter())
-    {
-      if (generic_active_function == 0)
-        generic_active_function = 1;
-      else
-        generic_active_function = 0;
-    }
     setModeColor(0);
     setCursor_textGrid_small(23, 6);
     snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), seq.oct_shift);
@@ -7104,10 +7049,6 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), seq.bpm);
     display.print(displayname);
 
-    if (generic_temp_select_menu == 6 && generic_active_function)
-      update_seq_speed();
-
-
     setModeColor(7);
     setCursor_textGrid_small(23, 16);
     print_formatted_number(16 - seq.pattern_len_dec, 2);
@@ -7135,16 +7076,8 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     else // MIDI SLAVE or MIDI MASTER
       seq.ticks_max = 5; //(0-5 = 6)
 
-   if (seq.clock == 1 && seq.running == true ) // stop when switching to MIDI Slave
-        {
-          handleStop();
-        }
-       else
-        update_seq_speed();
-
     //warning message
-    if (seq.clock == 1)
-    {
+    if (seq.clock == 1) {
       display.setTextSize(1);
       display.setTextColor(RED);
       setCursor_textGrid_small(1, 20);
@@ -7152,12 +7085,10 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       setCursor_textGrid_small(1, 21);
       display.print(F("SEQ. WILL DEPEND ON EXTERNAL DEVICE TO WORK"));
     }
-    else
-    {
+    else {
       display.console = true;
       display.fillRect(4, 12 * CHAR_height - 4, 300, 19, COLOR_BACKGROUND);
     }
-
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -18562,8 +18493,6 @@ FLASHMEM void _render_misc_settings()
 
 FLASHMEM void UI_func_misc_settings(uint8_t param)
 {
-  uint8_t settings_modified = 0;
-
   if (LCDML.FUNC_setup())
   {
     registerTouchHandler(handle_touchscreen_settings_button_test);
@@ -18574,122 +18503,82 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
   }
   if (LCDML.FUNC_loop())
   {
-
     // handle encoders
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
-      if (LCDML.BT_checkDown())
-      {
-        uint8_t menu = 0;
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 7);
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
-          settings_modified = 1;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
-          settings_modified = 2;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_mode = constrain(configuration.sys.screen_saver_mode + 1, SCREEN_SAVER_MODE_MIN, SCREEN_SAVER_MODE_MAX);
-          settings_modified = 3;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation + 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
-          settings_modified = 4;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + 1, TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
-          settings_modified = 5;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
-          settings_modified = 6;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
-          settings_modified = 7;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.invert_colors = !configuration.sys.invert_colors;
-          settings_modified = 8;
-        }
-        //  else if (generic_temp_select_menu == menu++)
-        // {
-        //   compensate_seq_delay = constrain(compensate_seq_delay + 200, 0, 30000);
-        //   settings_modified = 9;
-        // }
+      const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
 
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        uint8_t menu = 0;
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 7);
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
-          settings_modified = 1;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start - 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
-          settings_modified = 2;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_mode = constrain(configuration.sys.screen_saver_mode - 1, SCREEN_SAVER_MODE_MIN, SCREEN_SAVER_MODE_MAX);
-          settings_modified = 3;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation - 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
-          settings_modified = 4;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation - 1, TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
-          settings_modified = 5;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
+      if (generic_active_function == 0) {
+        // navigate through settings
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 7);
+      } else {
+        // handle setting change and load save timer
+        save_sys_flag = true;
+        save_sys = SAVE_SYS_MS / 2;
+
+        switch (generic_temp_select_menu) {
+        case 0:
+          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + (factorChange * 10), GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
+          break;
+
+        case 1:
+          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + (factorChange * 1), SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
+          setup_screensaver();
+          break;
+
+        case 2:
+          configuration.sys.screen_saver_mode = constrain(configuration.sys.screen_saver_mode + (factorChange * 1), SCREEN_SAVER_MODE_MIN, SCREEN_SAVER_MODE_MAX);
+          setup_screensaver();
+          break;
+
+        case 3:
+          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation + (factorChange * 1), DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
+          display.setRotation(configuration.sys.display_rotation); // rotation 180°
+          _render_misc_settings();
+          break;
+
+        case 4:
+        configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + (factorChange * 1), TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
+#if defined GENERIC_DISPLAY
+          touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
+#endif
+          break;
+
+        case 5:
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
-          settings_modified = 6;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
+          configuration.sys.display_rotation = configuration.sys.ui_reverse ? DISPLAY_ROTATION_INVERTED : DISPLAY_ROTATION_DEFAULT;
+          configuration.sys.touch_rotation = (configuration.sys.ui_reverse) ? TOUCH_ROTATION_INVERTED : TOUCH_ROTATION_DEFAULT;
+
+          // set hardware rotations for display/touch and pins for encoders
+          _setup_rotation_and_encoders(false);
+
+          // Re render the page
+          generic_active_function = 0;
+          generic_temp_select_menu = 0;
+          _render_misc_settings();
+          break;
+
+        case 6:
           configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
-          settings_modified = 7;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
+          break;
+
+        case 7:
           configuration.sys.invert_colors = !configuration.sys.invert_colors;
-          settings_modified = 8;
+          display.invertDisplay(!configuration.sys.invert_colors);
+          break;
+
+        //case 8:
+        //  compensate_seq_delay = constrain(compensate_seq_delay + (factorChange * 200), 0, 30000);
+        //  break;
         }
-        //  else if (generic_temp_select_menu == menu++)
-        // {
-        //   compensate_seq_delay = constrain(compensate_seq_delay - 200, 0, 30000);
-        //   settings_modified = 9;
-        // }
       }
+      set_sys_params();
     }
 
     // handle button presses during menu
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
-      if (generic_active_function == 0)
-        generic_active_function = 1;
-      else
-        generic_active_function = 0;
+      generic_active_function = !generic_active_function;
     }
     else if (LCDML.BT_checkEnter())
     {
@@ -18711,14 +18600,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     print_formatted_number(configuration.sys.screen_saver_start, 2);
     setCursor_textGrid_small(45, 8);
     display.print(configuration.sys.screen_saver_start > 1 ? F("MINS") : F("MIN "));
-    if (settings_modified == 2)
-    {
-      setup_screensaver();
-    }
-    if (settings_modified == 3)
-    {
-      setup_screensaver();
-    }
+
     setModeColor(2);
     setCursor_textGrid_small(42, 9);
     print_screensaver_mode();
@@ -18726,22 +18608,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     setModeColor(3);
     setCursor_textGrid_small(42, 10);
     display.print(configuration.sys.display_rotation);
-    if (settings_modified == 4)
-    {
-      display.setRotation(configuration.sys.display_rotation); // rotation 180°
-      _render_misc_settings();
-    }
 
     // Touch rotation
     setModeColor(4);
     setCursor_textGrid_small(42, 11);
     display.print(configuration.sys.touch_rotation);
-#if defined GENERIC_DISPLAY
-    if (settings_modified == 5)
-    {
-      touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-    }
-#endif
 
     // UI reverse
     setModeColor(5);
@@ -18759,43 +18630,6 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     // setCursor_textGrid_small(42, 15);
     // display.print(compensate_seq_delay);
     // display.print(" ");
-
-    if (settings_modified == 8)
-      display.invertDisplay(!configuration.sys.invert_colors);
-
-    if (settings_modified == 6)
-    {
-      if (configuration.sys.display_rotation == DISPLAY_ROTATION_DEFAULT)
-      {
-        configuration.sys.display_rotation = DISPLAY_ROTATION_INVERTED;
-        configuration.sys.touch_rotation = TOUCH_ROTATION_INVERTED;
-      }
-      else
-      {
-        configuration.sys.display_rotation = DISPLAY_ROTATION_DEFAULT;
-        configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
-      }
-
-      // set hardware rotations for display/touch and pins for encoders
-      _setup_rotation_and_encoders(false);
-
-      // Re render the page
-      generic_active_function = 0;
-      generic_temp_select_menu = 0;
-      _render_misc_settings();
-    }
-
-    else if (settings_modified > 6)
-    {
-      set_sys_params();
-    }
-    if (settings_modified > 0)
-    {
-      save_sys_flag = true;
-      save_sys = SAVE_SYS_MS / 2;
-      settings_modified = 0;
-    }
-
   }
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
