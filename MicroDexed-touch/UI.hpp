@@ -6949,6 +6949,7 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
         // navigate through menu
         generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 9);
       } else {
+        // handle setting change
         switch (generic_temp_select_menu) {
         case 0:
           seq.oct_shift = constrain(seq.oct_shift + (factorChange * 1), -2, 2);
@@ -6998,7 +6999,6 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
           }
           break;
         }
-        // handle setting change
       }
     }
     
@@ -18509,7 +18509,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
       const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
 
       if (generic_active_function == 0) {
-        // navigate through settings
+        // navigate through menu
         generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 7);
       } else {
         // handle setting change and load save timer
@@ -18547,7 +18547,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
         case 5:
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
           configuration.sys.display_rotation = configuration.sys.ui_reverse ? DISPLAY_ROTATION_INVERTED : DISPLAY_ROTATION_DEFAULT;
-          configuration.sys.touch_rotation = (configuration.sys.ui_reverse) ? TOUCH_ROTATION_INVERTED : TOUCH_ROTATION_DEFAULT;
+          configuration.sys.touch_rotation = configuration.sys.ui_reverse ? TOUCH_ROTATION_INVERTED : TOUCH_ROTATION_DEFAULT;
 
           // set hardware rotations for display/touch and pins for encoders
           _setup_rotation_and_encoders(false);
