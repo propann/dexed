@@ -6,7 +6,6 @@
 class Realtime_Scope : public AudioStream
 {
 public:
-  uint8_t sensitivity = 80; //default
   Realtime_Scope(void)
       : AudioStream(1, inputQueueArray)
   {
