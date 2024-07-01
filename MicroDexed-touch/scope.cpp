@@ -22,7 +22,6 @@ FLASHMEM void Realtime_Scope::update(void)
 /*void Realtime_Scope::testdata() {
   DBG_LOG(printf("SCOPE TEST DATA:\n"));
   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-    
     DBG_LOG(printf("%i ", scopebuffer[i]));
   }
 }*/
