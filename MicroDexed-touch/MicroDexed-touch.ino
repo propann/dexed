@@ -1967,7 +1967,7 @@ void loop()
     } else if(LCDML.FUNC_getID() > _LCDML_DISP_cnt) {
       // menu
       handle_touchscreen_menu();
-      scope.draw_scope(230, 18, 87);
+      scope.draw_scope(230, 18, 87, 64);
     }
 
     if (back_button_touch_page_check_and_init_done == false) {
@@ -1985,7 +1985,7 @@ void loop()
     const ScopeSettings s = getCurrentScopeSettings();
     const bool inhibitDrawing = s.onlyDrawWhenRunning && !seq.running;
     if(s.enabled && !inhibitDrawing) {
-      scope.draw_scope(s.x, s.y, s.w);
+      scope.draw_scope(s.x, s.y, s.w, s.h);
     }
   }
 
