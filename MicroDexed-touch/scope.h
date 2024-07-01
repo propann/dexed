@@ -12,7 +12,6 @@ public:
   }
   virtual void update(void);
   void draw_scope(uint16_t x, int y, uint8_t w, uint8_t h);
-  //void testdata();
 
 private:
   bool scope_is_drawing = false;

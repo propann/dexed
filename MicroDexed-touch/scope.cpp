@@ -19,13 +19,6 @@ FLASHMEM void Realtime_Scope::update(void)
   }
 }
 
-/*void Realtime_Scope::testdata() {
-  DBG_LOG(printf("SCOPE TEST DATA:\n"));
-  for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-    DBG_LOG(printf("%i ", scopebuffer[i]));
-  }
-}*/
-
 FLASHMEM void Realtime_Scope::draw_scope(uint16_t x, int y, uint8_t w, uint8_t h)
 {
   scope_is_drawing = true;
