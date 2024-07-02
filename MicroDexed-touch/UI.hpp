@@ -709,15 +709,17 @@ struct ScopeSettings {
   uint16_t x;
   uint16_t y;
   uint16_t w;
+  uint16_t h;
   bool onlyDrawWhenRunning;
 } currentScopeSettings;
 
-FLASHMEM void registerScope(uint16_t x, uint16_t y, uint16_t w, bool onlyDrawWhenRunning = false) {
+FLASHMEM void registerScope(uint16_t x, uint16_t y, uint16_t w, uint16_t h = 64, bool onlyDrawWhenRunning = false) {
   currentScopeSettings = {
     .enabled = true,
     .x = x,
     .y = y,
     .w = w,
+    .h = h,
     .onlyDrawWhenRunning = onlyDrawWhenRunning
   };
 }
@@ -6942,125 +6944,70 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-    if (generic_temp_select_menu == 0 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.oct_shift = constrain(seq.oct_shift + 1, -2, 2);
-        else if (LCDML.BT_checkUp())
-          seq.oct_shift = constrain(seq.oct_shift - 1, -2, 2);
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
+
+      if(generic_active_function == 0) {
+        // navigate through menu
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 9);
+      } else {
+        // handle setting change
+        switch (generic_temp_select_menu) {
+        case 0:
+          seq.oct_shift = constrain(seq.oct_shift + (factorChange * 1), -2, 2);
+          break;
+
+        case 1:
+          seq.element_shift = constrain(seq.element_shift + (factorChange * 1), 0, 6);
+          break;
+
+        case 2:
+          seq.chord_key_ammount = constrain(seq.chord_key_ammount + (factorChange * 1), 1, 7);
+          break;
+
+        case 3:
+          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + (factorChange * 1), 1, 64);
+          break;
+
+        case 4:
+          seq.chord_vel = constrain(seq.chord_vel + (factorChange * 1), 10, 120);
+          break;
+
+        case 5:
+          seq.transpose = constrain(seq.transpose + (factorChange * 1), 0, 60);
+          break;
+
+        case 6:
+          seq.bpm = constrain(seq.bpm + (factorChange * 1), 60, 180);
+          update_seq_speed();
+          break;
+
+        case 7:
+          seq.pattern_len_dec = constrain(seq.pattern_len_dec - (factorChange * 1), 0, 8);  // dir reversed as this is decreased from 16
+          break;
+
+        case 8:
+          seq.auto_advance_step = constrain(seq.auto_advance_step + (factorChange * 1), 0, 2);
+          break;
+
+        case 9:
+          seq.clock = constrain(seq.clock + (factorChange * 1), 0, 2);
+
+          if (seq.clock == 1 && seq.running == true) {// stop when switching to MIDI Slave
+            handleStop();
+          }
+          else {
+            update_seq_speed();
+          }
+          break;
+        }
       }
     }
-    else if (generic_temp_select_menu == 1 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.element_shift = constrain(seq.element_shift + 1, 0, 6);
-        else if (LCDML.BT_checkUp())
-          seq.element_shift = constrain(seq.element_shift - 1, 0, 6);
-      }
-    }
-    else if (generic_temp_select_menu == 2 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.chord_key_ammount = constrain(seq.chord_key_ammount + 1, 1, 7);
-        else if (LCDML.BT_checkUp())
-          seq.chord_key_ammount = constrain(seq.chord_key_ammount - 1, 1, 7);
-      }
-    }
-    else if (generic_temp_select_menu == 3 && generic_active_function == 1) // edit max arp notes in 1/32 1/64 arps
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max + 1, 1, 64);
-        else if (LCDML.BT_checkUp())
-          seq.arp_num_notes_max = constrain(seq.arp_num_notes_max - 1, 1, 64);
-      }
-    }
-    else if (generic_temp_select_menu == 4 && generic_active_function == 1) // Chord Velocity
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.chord_vel = constrain(seq.chord_vel + 1, 10, 120);
-        else if (LCDML.BT_checkUp())
-          seq.chord_vel = constrain(seq.chord_vel - 1, 10, 120);
-      }
+    
+    if (LCDML.BT_checkEnter()) {
+      generic_active_function = !generic_active_function;
     }
 
-    else if (generic_temp_select_menu == 5 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.transpose = constrain(seq.transpose + 1, 0, 60);
-        else if (LCDML.BT_checkUp())
-          seq.transpose = constrain(seq.transpose - 1, 0, 60);
-      }
-    }
-    else if (generic_temp_select_menu == 6 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.bpm = constrain(seq.bpm + 1, 60, 180);
-        else if (LCDML.BT_checkUp())
-          seq.bpm = constrain(seq.bpm - 1, 60, 180);
-      }
-    }
-    else if (generic_temp_select_menu == 7 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.pattern_len_dec = constrain(seq.pattern_len_dec - 1, 0, 8);  // dir reversed as this is decreased from 16
-        else if (LCDML.BT_checkUp())
-          seq.pattern_len_dec = constrain(seq.pattern_len_dec + 1, 0, 8);// dir reversed as this is decreased from 16
-      }
-    }
-    else if (generic_temp_select_menu == 8 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.auto_advance_step = constrain(seq.auto_advance_step + 1, 0, 2);
-        else if (LCDML.BT_checkUp())
-          seq.auto_advance_step = constrain(seq.auto_advance_step - 1, 0, 2);
-      }
-    }
-    else if (generic_temp_select_menu == 9 && generic_active_function == 1)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          seq.clock = constrain(seq.clock + 1, 0, 2);
-        else if (LCDML.BT_checkUp())
-          seq.clock = constrain(seq.clock - 1, 0, 2);
-      }
-    }
-    // -------------------------------------------------------------------------------------------------------------------------
-    else if (generic_active_function == 0)
-    {
-      if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
-      {
-        if (LCDML.BT_checkDown())
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 9);
-        else if (LCDML.BT_checkUp())
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 9);
-      }
-    }
-    if (LCDML.BT_checkEnter())
-    {
-      if (generic_active_function == 0)
-        generic_active_function = 1;
-      else
-        generic_active_function = 0;
-    }
     setModeColor(0);
     setCursor_textGrid_small(23, 6);
     snprintf_P(displayname, sizeof(displayname), PSTR("%02d"), seq.oct_shift);
@@ -7104,10 +7051,6 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     snprintf_P(displayname, sizeof(displayname), PSTR("%03d"), seq.bpm);
     display.print(displayname);
 
-    if (generic_temp_select_menu == 6 && generic_active_function)
-      update_seq_speed();
-
-
     setModeColor(7);
     setCursor_textGrid_small(23, 16);
     print_formatted_number(16 - seq.pattern_len_dec, 2);
@@ -7135,16 +7078,8 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
     else // MIDI SLAVE or MIDI MASTER
       seq.ticks_max = 5; //(0-5 = 6)
 
-   if (seq.clock == 1 && seq.running == true ) // stop when switching to MIDI Slave
-        {
-          handleStop();
-        }
-       else
-        update_seq_speed();
-
     //warning message
-    if (seq.clock == 1)
-    {
+    if (seq.clock == 1) {
       display.setTextSize(1);
       display.setTextColor(RED);
       setCursor_textGrid_small(1, 20);
@@ -7152,12 +7087,10 @@ FLASHMEM void UI_func_seq_settings(uint8_t param)
       setCursor_textGrid_small(1, 21);
       display.print(F("SEQ. WILL DEPEND ON EXTERNAL DEVICE TO WORK"));
     }
-    else
-    {
+    else {
       display.console = true;
       display.fillRect(4, 12 * CHAR_height - 4, 300, 19, COLOR_BACKGROUND);
     }
-
   }
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -8180,7 +8113,7 @@ void UI_func_seq_vel_editor(uint8_t param)
   {
     // setup function
     registerTouchHandler(handle_touchscreen_pattern_editor);
-    registerScope(216, -9, button_size_x * CHAR_width_small, true); // only draw when seq running
+    registerScope(216, 0, button_size_x * CHAR_width_small, 50, true); // only draw when seq running
     if (seq.cycle_touch_element != 1)
       draw_button_on_grid(45, 16, "", "", 0); // clear button
     if (seq.menu_status != 1)
@@ -9670,7 +9603,7 @@ FLASHMEM void UI_func_seq_pattern_editor(uint8_t param)
   {
     // setup function
     registerTouchHandler(handle_touchscreen_pattern_editor);
-    registerScope(216, -9, button_size_x * CHAR_width_small, true); // only draw when seq running
+    registerScope(216, 0, button_size_x * CHAR_width_small, 50, true); // only draw when seq running
     seq.menu = 3;
 
     if (seq.cycle_touch_element != 1)
@@ -11147,7 +11080,7 @@ FLASHMEM void UI_func_microsynth(uint8_t param)
   {
     // setup function
     registerTouchHandler(handle_touchscreen_microsynth);
-    registerScope(253, 34, 58);
+    registerScope(253, 40, 58, 50);
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     virtual_keyboard_smart_preselect_mode();
@@ -13263,7 +13196,7 @@ FLASHMEM void UI_func_arpeggio(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     registerTouchHandler(handle_touchscreen_arpeggio);
-    registerScope(232, -2, 64);
+    registerScope(180, 0, 128, 50);
     encoderDir[ENC_R].reset();
     generic_temp_select_menu = 0;
     seq.temp_active_menu = 0;
@@ -15344,7 +15277,7 @@ void UI_func_information(uint8_t param)
 
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
-    registerScope(203, 138, 108);
+    registerScope(180, 150, 128, 50);
     sysinfo_chord_state = 0;
     char version_string[display_cols + 10 + 1];
     encoderDir[ENC_R].reset();
@@ -15976,7 +15909,7 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     registerTouchHandler(handle_touchscreen_multiband);
-    registerScope(188, -5, 128);
+    registerScope(188, 0, 128, 64);
     generic_active_function = 0;
     display.fillScreen(COLOR_BACKGROUND);
     display.setTextColor(COLOR_SYSTEXT);
@@ -16042,125 +15975,115 @@ FLASHMEM void UI_func_multiband_dynamics(uint8_t param)
   }
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
-    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()) || (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()))
-    {
-      if (LCDML.BT_checkDown())
-      {
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 22);
-        else if (generic_temp_select_menu == 0)
-        {
-          multiband_active = !multiband_active;
-          mb_clear_caches();
-        }
-        else if (generic_temp_select_menu == 1)
-          mb_global_gain = constrain(mb_global_gain + 0.2, -2, 12);
-        else if (generic_temp_select_menu == 2)
-          mb_global_ratio = constrain(mb_global_ratio + ENCODER[ENC_R].speed(), 1, 60);
-        else if (generic_temp_select_menu == 3)
-          mb_solo_high = !mb_solo_high;
-        else if (generic_temp_select_menu == 4)
-          mb_cross_freq_high = constrain(mb_cross_freq_high + ENCODER[ENC_R].speed() * 10, 2000, 12000);
-        else if (generic_temp_select_menu == 5)
-          mb_q_high = constrain(mb_q_high + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 6)
-          mb_gain_high = constrain(mb_gain_high + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 7)
-          mb_threshold_high = constrain(mb_threshold_high + ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 8)
-          mb_solo_upper_mid = !mb_solo_upper_mid;
-        else if (generic_temp_select_menu == 9)
-          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid + ENCODER[ENC_R].speed() * 10, 1000, 9999);
-        else if (generic_temp_select_menu == 10)
-          mb_q_upper_mid = constrain(mb_q_upper_mid + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 11)
-          mb_gain_upper_mid = constrain(mb_gain_upper_mid + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 12)
-          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid + ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 13)
-          mb_solo_mid = !mb_solo_mid;
-        else if (generic_temp_select_menu == 14)
-          mb_cross_freq_mid = constrain(mb_cross_freq_mid + ENCODER[ENC_R].speed() * 10, 400, 7000);
-        else if (generic_temp_select_menu == 15)
-          mb_q_mid = constrain(mb_q_mid + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 16)
-          mb_gain_mid = constrain(mb_gain_mid + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 17)
-          mb_threshold_mid = constrain(mb_threshold_mid + ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 18)
-          mb_solo_low = !mb_solo_low;
-        else if (generic_temp_select_menu == 19)
-          mb_cross_freq_low = constrain(mb_cross_freq_low + ENCODER[ENC_R].speed() * 10, 10, 2000);
-        else if (generic_temp_select_menu == 20)
-          mb_q_low = constrain(mb_q_low + 0.1, 0, 2);
-        else if (generic_temp_select_menu == 21)
-          mb_gain_low = constrain(mb_gain_low + 0.2, -9, 9);
-        else if (generic_temp_select_menu == 22)
-          mb_threshold_low = constrain(mb_threshold_low + ENCODER[ENC_R].speed(), 0, 40);
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 22);
-        else if (generic_temp_select_menu == 0)
-        {
-          multiband_active = !multiband_active;
-          mb_clear_caches();
-        }
-        else if (generic_temp_select_menu == 1)
-          mb_global_gain = constrain(mb_global_gain - 0.2, -2, 12);
-        else if (generic_temp_select_menu == 2)
-          mb_global_ratio = constrain(mb_global_ratio - ENCODER[ENC_R].speed(), 1, 60);
-        else if (generic_temp_select_menu == 3)
-          mb_solo_high = !mb_solo_high;
-        else if (generic_temp_select_menu == 4)
-          mb_cross_freq_high = constrain(mb_cross_freq_high - ENCODER[ENC_R].speed() * 10, 2000, 12000);
-        else if (generic_temp_select_menu == 5)
-          mb_q_high = constrain(mb_q_high - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 6)
-          mb_gain_high = constrain(mb_gain_high - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 7)
-          mb_threshold_high = constrain(mb_threshold_high - ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 8)
-          mb_solo_upper_mid = !mb_solo_upper_mid;
-        else if (generic_temp_select_menu == 9)
-          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid - ENCODER[ENC_R].speed() * 10, 1000, 9999);
-        else if (generic_temp_select_menu == 10)
-          mb_q_upper_mid = constrain(mb_q_upper_mid - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 11)
-          mb_gain_upper_mid = constrain(mb_gain_upper_mid - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 12)
-          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid - ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 13)
-          mb_solo_mid = !mb_solo_mid;
-        else if (generic_temp_select_menu == 14)
-          mb_cross_freq_mid = constrain(mb_cross_freq_mid - ENCODER[ENC_R].speed() * 10, 400, 7000);
-        else if (generic_temp_select_menu == 15)
-          mb_q_mid = constrain(mb_q_mid - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 16)
-          mb_gain_mid = constrain(mb_gain_mid - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 17)
-          mb_threshold_mid = constrain(mb_threshold_mid - ENCODER[ENC_R].speed(), 0, 40);
-        else if (generic_temp_select_menu == 18)
-          mb_solo_low = !mb_solo_low;
-        else if (generic_temp_select_menu == 19)
-          mb_cross_freq_low = constrain(mb_cross_freq_low - ENCODER[ENC_R].speed() * 10, 10, 2000);
-        else if (generic_temp_select_menu == 20)
-          mb_q_low = constrain(mb_q_low - 0.1, 0, 2);
-        else if (generic_temp_select_menu == 21)
-          mb_gain_low = constrain(mb_gain_low - 0.2, -9, 9);
-        else if (generic_temp_select_menu == 22)
-          mb_threshold_low = constrain(mb_threshold_low - ENCODER[ENC_R].speed(), 0, 40);
-      }
+    if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up())) {
+      const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
 
-      if (LCDML.BT_checkEnter()) // handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      {
-        if (generic_active_function == 0)
-          generic_active_function = 1;
-        else
-          generic_active_function = 0;
+      if(generic_active_function == 0) {
+        // navigate through menu
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 22);
+      } else {
+        // handle setting change
+        switch(generic_temp_select_menu) {
+        case 0:
+          multiband_active = !multiband_active;
+          mb_clear_caches();
+          break;
+
+        case 1:
+          mb_global_gain = constrain(mb_global_gain + (factorChange * 0.2), -2, 12);
+          break;
+
+        case 2:
+          mb_global_ratio = constrain(mb_global_ratio + (factorChange * ENCODER[ENC_R].speed()), 1, 60);
+          break;
+
+        case 3:
+          mb_solo_high = !mb_solo_high;
+          break;
+
+        case 4:
+          mb_cross_freq_high = constrain(mb_cross_freq_high + (factorChange * ENCODER[ENC_R].speed() * 10), 2000, 12000);
+          break;
+
+        case 5:
+          mb_q_high = constrain(mb_q_high + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 6:
+          mb_gain_high = constrain(mb_gain_high + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 7:
+          mb_threshold_high = constrain(mb_threshold_high + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;
+
+        case 8:
+          mb_solo_upper_mid = !mb_solo_upper_mid;
+          break;
+
+        case 9:
+          mb_cross_freq_upper_mid = constrain(mb_cross_freq_upper_mid + (factorChange * ENCODER[ENC_R].speed() * 10), 1000, 9999);
+          break;
+
+        case 10:
+          mb_q_upper_mid = constrain(mb_q_upper_mid + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 11:
+          mb_gain_upper_mid = constrain(mb_gain_upper_mid + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 12:
+          mb_threshold_upper_mid = constrain(mb_threshold_upper_mid + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;
+
+        case 13:
+          mb_solo_mid = !mb_solo_mid;
+          break;
+
+        case 14:
+          mb_cross_freq_mid = constrain(mb_cross_freq_mid + (factorChange * ENCODER[ENC_R].speed() * 10), 400, 7000);
+          break;
+
+        case 15:
+          mb_q_mid = constrain(mb_q_mid + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 16:
+          mb_gain_mid = constrain(mb_gain_mid + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 17:
+          mb_threshold_mid = constrain(mb_threshold_mid + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;
+
+        case 18:
+          mb_solo_low = !mb_solo_low;
+          break;
+
+        case 19:
+          mb_cross_freq_low = constrain(mb_cross_freq_low + (factorChange * ENCODER[ENC_R].speed() * 10), 10, 2000);
+          break;
+
+        case 20:
+          mb_q_low = constrain(mb_q_low + (factorChange * 0.1), 0, 2);
+          break;
+
+        case 21:
+          mb_gain_low = constrain(mb_gain_low + (factorChange * 0.2), -9, 9);
+          break;
+
+        case 22:
+          mb_threshold_low = constrain(mb_threshold_low + (factorChange * ENCODER[ENC_R].speed()), 0, 40);
+          break;   
+        }
       }
     }
+      
+    if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort()) {// handle button presses during menu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      generic_active_function = !generic_active_function;
+    }
+  
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.setTextSize(1);
 
@@ -16615,7 +16538,7 @@ FLASHMEM void UI_func_braids(uint8_t param)
   {
     // setup function
     registerTouchHandler(handle_touchscreen_braids);
-    registerScope(250, -14, 60);
+    registerScope(250, 0, 62, 50);
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
     virtual_keyboard_smart_preselect_mode();
@@ -18248,7 +18171,7 @@ FLASHMEM void UI_func_midi_channels(uint8_t param)
   if (LCDML.FUNC_setup())
   {
     registerTouchHandler(handle_touchscreen_midi_channel_page);
-    registerScope(205, -8, 108);
+    registerScope(180, 0, 128, 50);
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     generic_temp_select_menu = 0;
@@ -18560,8 +18483,6 @@ FLASHMEM void _render_misc_settings()
 
 FLASHMEM void UI_func_misc_settings(uint8_t param)
 {
-  uint8_t settings_modified = 0;
-
   if (LCDML.FUNC_setup())
   {
     registerTouchHandler(handle_touchscreen_settings_button_test);
@@ -18572,122 +18493,82 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
   }
   if (LCDML.FUNC_loop())
   {
-
     // handle encoders
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
     {
-      if (LCDML.BT_checkDown())
-      {
-        uint8_t menu = 0;
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu + 1, 0, 7);
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
-          settings_modified = 1;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
-          settings_modified = 2;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_mode = constrain(configuration.sys.screen_saver_mode + 1, SCREEN_SAVER_MODE_MIN, SCREEN_SAVER_MODE_MAX);
-          settings_modified = 3;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation + 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
-          settings_modified = 4;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + 1, TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
-          settings_modified = 5;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
-          settings_modified = 6;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
-          settings_modified = 7;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.invert_colors = !configuration.sys.invert_colors;
-          settings_modified = 8;
-        }
-        //  else if (generic_temp_select_menu == menu++)
-        // {
-        //   compensate_seq_delay = constrain(compensate_seq_delay + 200, 0, 30000);
-        //   settings_modified = 9;
-        // }
+      const int8_t factorChange = LCDML.BT_checkDown() ? 1 : -1;
 
-      }
-      else if (LCDML.BT_checkUp())
-      {
-        uint8_t menu = 0;
-        if (generic_active_function == 0)
-          generic_temp_select_menu = constrain(generic_temp_select_menu - 1, 0, 7);
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed - 10, GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
-          settings_modified = 1;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start - 1, SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
-          settings_modified = 2;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.screen_saver_mode = constrain(configuration.sys.screen_saver_mode - 1, SCREEN_SAVER_MODE_MIN, SCREEN_SAVER_MODE_MAX);
-          settings_modified = 3;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation - 1, DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
-          settings_modified = 4;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
-          configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation - 1, TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
-          settings_modified = 5;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
+      if (generic_active_function == 0) {
+        // navigate through menu
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 7);
+      } else {
+        // handle setting change and load save timer
+        save_sys_flag = true;
+        save_sys = SAVE_SYS_MS / 2;
+
+        switch (generic_temp_select_menu) {
+        case 0:
+          configuration.sys.gamepad_speed = constrain(configuration.sys.gamepad_speed + (factorChange * 10), GAMEPAD_SPEED_MIN, GAMEPAD_SPEED_MAX);
+          break;
+
+        case 1:
+          configuration.sys.screen_saver_start = constrain(configuration.sys.screen_saver_start + (factorChange * 1), SCREEN_SAVER_START_MIN, SCREEN_SAVER_START_MAX);
+          setup_screensaver();
+          break;
+
+        case 2:
+          configuration.sys.screen_saver_mode = constrain(configuration.sys.screen_saver_mode + (factorChange * 1), SCREEN_SAVER_MODE_MIN, SCREEN_SAVER_MODE_MAX);
+          setup_screensaver();
+          break;
+
+        case 3:
+          configuration.sys.display_rotation = constrain(configuration.sys.display_rotation + (factorChange * 1), DISPLAY_ROTATION_MIN, DISPLAY_ROTATION_MAX);
+          display.setRotation(configuration.sys.display_rotation); // rotation 180°
+          _render_misc_settings();
+          break;
+
+        case 4:
+        configuration.sys.touch_rotation = constrain(configuration.sys.touch_rotation + (factorChange * 1), TOUCH_ROTATION_MIN, TOUCH_ROTATION_MAX);
+#if defined GENERIC_DISPLAY
+          touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
+#endif
+          break;
+
+        case 5:
           configuration.sys.ui_reverse = !configuration.sys.ui_reverse;
-          settings_modified = 6;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
+          configuration.sys.display_rotation = configuration.sys.ui_reverse ? DISPLAY_ROTATION_INVERTED : DISPLAY_ROTATION_DEFAULT;
+          configuration.sys.touch_rotation = configuration.sys.ui_reverse ? TOUCH_ROTATION_INVERTED : TOUCH_ROTATION_DEFAULT;
+
+          // set hardware rotations for display/touch and pins for encoders
+          _setup_rotation_and_encoders(false);
+
+          // Re render the page
+          generic_active_function = 0;
+          generic_temp_select_menu = 0;
+          _render_misc_settings();
+          break;
+
+        case 6:
           configuration.sys.boot_anim_skip = !configuration.sys.boot_anim_skip;
-          settings_modified = 7;
-        }
-        else if (generic_temp_select_menu == menu++)
-        {
+          break;
+
+        case 7:
           configuration.sys.invert_colors = !configuration.sys.invert_colors;
-          settings_modified = 8;
+          display.invertDisplay(!configuration.sys.invert_colors);
+          break;
+
+        //case 8:
+        //  compensate_seq_delay = constrain(compensate_seq_delay + (factorChange * 200), 0, 30000);
+        //  break;
         }
-        //  else if (generic_temp_select_menu == menu++)
-        // {
-        //   compensate_seq_delay = constrain(compensate_seq_delay - 200, 0, 30000);
-        //   settings_modified = 9;
-        // }
       }
+      set_sys_params();
     }
 
     // handle button presses during menu
     if (LCDML.BT_checkEnter() && encoderDir[ENC_R].ButtonShort())
     {
-      if (generic_active_function == 0)
-        generic_active_function = 1;
-      else
-        generic_active_function = 0;
+      generic_active_function = !generic_active_function;
     }
     else if (LCDML.BT_checkEnter())
     {
@@ -18709,14 +18590,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     print_formatted_number(configuration.sys.screen_saver_start, 2);
     setCursor_textGrid_small(45, 8);
     display.print(configuration.sys.screen_saver_start > 1 ? F("MINS") : F("MIN "));
-    if (settings_modified == 2)
-    {
-      setup_screensaver();
-    }
-    if (settings_modified == 3)
-    {
-      setup_screensaver();
-    }
+
     setModeColor(2);
     setCursor_textGrid_small(42, 9);
     print_screensaver_mode();
@@ -18724,22 +18598,11 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     setModeColor(3);
     setCursor_textGrid_small(42, 10);
     display.print(configuration.sys.display_rotation);
-    if (settings_modified == 4)
-    {
-      display.setRotation(configuration.sys.display_rotation); // rotation 180°
-      _render_misc_settings();
-    }
 
     // Touch rotation
     setModeColor(4);
     setCursor_textGrid_small(42, 11);
     display.print(configuration.sys.touch_rotation);
-#if defined GENERIC_DISPLAY
-    if (settings_modified == 5)
-    {
-      touch.setRotation(configuration.sys.touch_rotation); // rotation 180°
-    }
-#endif
 
     // UI reverse
     setModeColor(5);
@@ -18757,43 +18620,6 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     // setCursor_textGrid_small(42, 15);
     // display.print(compensate_seq_delay);
     // display.print(" ");
-
-    if (settings_modified == 8)
-      display.invertDisplay(!configuration.sys.invert_colors);
-
-    if (settings_modified == 6)
-    {
-      if (configuration.sys.display_rotation == DISPLAY_ROTATION_DEFAULT)
-      {
-        configuration.sys.display_rotation = DISPLAY_ROTATION_INVERTED;
-        configuration.sys.touch_rotation = TOUCH_ROTATION_INVERTED;
-      }
-      else
-      {
-        configuration.sys.display_rotation = DISPLAY_ROTATION_DEFAULT;
-        configuration.sys.touch_rotation = TOUCH_ROTATION_DEFAULT;
-      }
-
-      // set hardware rotations for display/touch and pins for encoders
-      _setup_rotation_and_encoders(false);
-
-      // Re render the page
-      generic_active_function = 0;
-      generic_temp_select_menu = 0;
-      _render_misc_settings();
-    }
-
-    else if (settings_modified > 6)
-    {
-      set_sys_params();
-    }
-    if (settings_modified > 0)
-    {
-      save_sys_flag = true;
-      save_sys = SAVE_SYS_MS / 2;
-      settings_modified = 0;
-    }
-
   }
   // ****** STABLE END *********
   if (LCDML.FUNC_close())
@@ -19014,7 +18840,7 @@ FLASHMEM void UI_func_mixer(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     registerTouchHandler(handle_touchscreen_mixer);
-    registerScope(225, 0, 80);
+    registerScope(180, 0, 128, 50);
     encoderDir[ENC_R].reset();
     seq.temp_active_menu = 0;
     display.fillScreen(COLOR_BACKGROUND);
@@ -20482,7 +20308,7 @@ FLASHMEM void UI_func_voice_select(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     registerTouchHandler(handle_touchscreen_voice_select);
-    registerScope(217, 30, 102);
+    registerScope(217, 40, 102, 48);
     dexed_onscreen_algo = 88; // dummy value to force draw on screen init
     display.fillScreen(COLOR_BACKGROUND);
     border0();
@@ -20996,15 +20822,13 @@ FLASHMEM void UI_func_dexed_controllers(uint8_t param)
   }
 }
 
-
-
 FLASHMEM void UI_func_volume(uint8_t param)
 {
   static uint8_t old_volume;
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     registerTouchHandler(handle_touchscreen_menu);
-    registerScope(230, 18, 87);
+    registerScope(230, 18, 87, 64);
     old_volume = configuration.sys.vol;
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
