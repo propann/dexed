@@ -54,13 +54,11 @@ by Floyd Steinberg
 <p>
 Part1/2:
 <br>
-[https://www.youtube.com/watch?v=v6thf0vhRxU
-](https://www.youtube.com/watch?v=v6thf0vhRxU)
+[https://www.youtube.com/watch?v=v6thf0vhRxU](https://www.youtube.com/watch?v=v6thf0vhRxU)
 <br>
 Part2/2:
 <br>
-[https://www.youtube.com/watch?v=wfSquKaAqik
-](https://www.youtube.com/watch?v=wfSquKaAqik)
+[https://www.youtube.com/watch?v=wfSquKaAqik](https://www.youtube.com/watch?v=wfSquKaAqik)
 <br>
 by fellpower (german language)
 
