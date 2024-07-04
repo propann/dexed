@@ -50,9 +50,18 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 [https://www.youtube.com/watch?v=AkmqZVpW2Vg
 ](https://www.youtube.com/watch?v=AkmqZVpW2Vg)
 by Floyd Steinberg
-
+<br>
+<p>
+Part1/2:
+<br>
 [https://www.youtube.com/watch?v=v6thf0vhRxU
 ](https://www.youtube.com/watch?v=v6thf0vhRxU)
+<br>
+Part2/2:
+<br>
+[https://www.youtube.com/watch?v=wfSquKaAqik
+](https://www.youtube.com/watch?v=wfSquKaAqik)
+<br>
 by fellpower (german language)
 
 ### YouTube playlist about the development:
