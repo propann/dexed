@@ -131,7 +131,7 @@
 //* DISPLAY AND TOUCHSCREEN
 //*************************************************************************************************
 #ifndef CAPACITIVE_TOUCH_DISPLAY // TFT with Capacitive Touchscreen, currently for testing purposes only
-  #define GENERIC_DISPLAY // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
+#define GENERIC_DISPLAY // generic/noname ILI941 TFT + XPT2046 Touchscreen (default)
 #endif
 
 //*************************************************************************************************
@@ -220,9 +220,9 @@
 // Assign human-readable names to some common 16-bit color values:
 // Color definitions
 
- #define COLOR_BACKGROUND 0x0000
- #define COLOR_SYSTEXT 0xFFFF
- #define DX_DARKCYAN 0x030D 
+#define COLOR_BACKGROUND 0x0000
+#define COLOR_SYSTEXT 0xFFFF
+#define DX_DARKCYAN 0x030D 
 
 // uint16_t COLOR_BACKGROUND =0x0000;
 // uint16_t COLOR_SYSTEXT =0xFFFF;
@@ -660,7 +660,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 
 #define EP_CHORUS_FREQUENCY_MIN 0
 #define EP_CHORUS_FREQUENCY_MAX 100
-#define EP_CHORUS_FREQUENCY_DEFAULT 0
+#define EP_CHORUS_FREQUENCY_DEFAULT 40
 
 #define EP_CHORUS_WAVEFORM_MIN 0
 #define EP_CHORUS_WAVEFORM_MAX 1
@@ -668,7 +668,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 
 #define EP_CHORUS_DEPTH_MIN 0
 #define EP_CHORUS_DEPTH_MAX 100
-#define EP_CHORUS_DEPTH_DEFAULT 0
+#define EP_CHORUS_DEPTH_DEFAULT 30
 
 #define EP_CHORUS_LEVEL_MIN 0
 #define EP_CHORUS_LEVEL_MAX 100
