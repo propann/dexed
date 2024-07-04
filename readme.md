@@ -55,8 +55,6 @@ by Floyd Steinberg
 
 [Part1/2](https://www.youtube.com/watch?v=v6thf0vhRxU)
 
-<br>
-
 [Part2/2](https://www.youtube.com/watch?v=wfSquKaAqik)
 by fellpower (german language)
 
