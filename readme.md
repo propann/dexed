@@ -1,3 +1,6 @@
+> NOTE: Microdexed-touch is capable of generating audio with a large dynamic range, the extremes of which can cause damage to loudspeakers or other components, and also to your hearing.
+> Please be specially careful when activating the MultiBand Compressor. Depending on it's settings, this easily can increase the perceived output loudness by 10x or even more.
+
 # MicroDexed-touch
 
 <br><p>
