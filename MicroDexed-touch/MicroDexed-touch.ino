@@ -3979,37 +3979,40 @@ void send_midi_clock()
 void handleClock(void)
 {
 
-  if (seq.clock == 1) // MIDI CLOCK TIMING, MIDI SLAVE
+  if (seq.clock == 1)// MIDI CLOCK TIMING, MIDI SLAVE
+
+  {
     sequencer();
 
-  // if (midi_bpm_counter % 24 == 0)  // too slow to adapt to tempo changes for liveseq
-  if (midi_bpm_counter % 12 == 0) // go for every 1/8 instead for every 1/4 note (MIDI CLOCK 24 BEATS PER 1/4 NOTE)
-  {
-    midi_bpm = (round(60000.0f / float(midi_bpm_timer * 2)));
-    // midi_bpm = ( 60000.0f / float(midi_bpm_timer)) + 0.01f);
-    // if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
-
-    if ((_midi_bpm > midi_bpm + 2 && midi_bpm > 30 && midi_bpm < 180) ||
-      (_midi_bpm < midi_bpm - 2 && midi_bpm >30 && midi_bpm < 180))  //needs some tolerance in bpm - otherwise delay recalculation will come up every step and cause audible clicks
-      // tried muting them and fading them back but that makes it worse since constant retriggering mutes them constantly and also makes clicking
-
+    // if (midi_bpm_counter % 24 == 0)  // too slow to adapt to tempo changes for liveseq
+    if (midi_bpm_counter % 12 == 0) // go for every 1/8 instead for every 1/4 note (MIDI CLOCK 24 BEATS PER 1/4 NOTE)
     {
-      // #ifdef DEBUG
-      //       LOG.print(F("---------------------------------------MIDI Clock : "));
-      //       LOG.print(midi_bpm);
-      //       LOG.print(F(" bpm ("));
-      //       LOG.print(midi_bpm_timer, DEC);
-      //       LOG.println(F("ms per quarter)"));
-      // #endif
-      seq.bpm = midi_bpm;
-      _midi_bpm = midi_bpm;
-      update_seq_speed();
-    }
+      midi_bpm = (round(60000.0f / float(midi_bpm_timer * 2)));
+      // midi_bpm = ( 60000.0f / float(midi_bpm_timer)) + 0.01f);
+      // if (_midi_bpm > -1 && _midi_bpm != midi_bpm)
 
-    midi_bpm_timer = 0;
-    midi_bpm_counter = 0;
+      if ((_midi_bpm > midi_bpm + 2 && midi_bpm > 30 && midi_bpm < 180) ||
+        (_midi_bpm < midi_bpm - 2 && midi_bpm >30 && midi_bpm < 180))  //needs some tolerance in bpm - otherwise delay recalculation will come up every step and cause audible clicks
+        // tried muting them and fading them back but that makes it worse since constant retriggering mutes them constantly and also makes clicking
+
+      {
+        // #ifdef DEBUG
+        //       LOG.print(F("---------------------------------------MIDI Clock : "));
+        //       LOG.print(midi_bpm);
+        //       LOG.print(F(" bpm ("));
+        //       LOG.print(midi_bpm_timer, DEC);
+        //       LOG.println(F("ms per quarter)"));
+        // #endif
+        seq.bpm = midi_bpm;
+        _midi_bpm = midi_bpm;
+        update_seq_speed();
+      }
+
+      midi_bpm_timer = 0;
+      midi_bpm_counter = 0;
+    }
+    midi_bpm_counter++;
   }
-  midi_bpm_counter++;
 }
 
 FLASHMEM void dac_mute(void)
