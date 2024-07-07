@@ -103,7 +103,7 @@ uint64_t joystick_full_notify_mask = (uint64_t)-1;
 void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device);
 void handleNoteOff(byte inChannel, byte inNumber, byte inVelocity, byte device);
 void handleAfterTouch(byte inChannel, byte inPressure);
-void handlePitchBend(byte inChannel, int inPitch);
+void handlePitchBend(byte inChannel, int16_t inPitch);
 void handleControlChange(byte inChannel, byte inData1, byte inData2);
 void handleProgramChange(byte inChannel, byte inProgram);
 void handleAfterTouchPoly(byte inChannel, byte inNumber, byte inVelocity);

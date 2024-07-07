@@ -22,14 +22,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "fm_core.h"
+#include <algorithm>
 
 // State of MIDI controllers
-const int kControllerPitch = 0;
-const int kControllerPitchRange = 1;
-const int kControllerPitchStep = 2;
-const int kControllerPortamentoGlissando = 3;
-
-class FmCore;
+const uint8_t kControllerPitch = 0;
+const uint8_t kControllerPitchRange = 1;
+const uint8_t kControllerPitchStep = 2;
+const uint8_t kControllerPortamentoGlissando = 3;
 
 class FmMod {
   public:
@@ -38,7 +38,6 @@ class FmMod {
     bool amp;
     bool eg;
     uint8_t ctrl_mode;
-    uint8_t _dummy_;
 
     FmMod()
     {
@@ -61,7 +60,7 @@ class FmMod {
 
     void setTarget(uint8_t assign)
     {
-      assign = assign < 0 && assign > 7 ? 0 : assign;
+      assign = assign < 0 || assign > 7 ? 0 : assign;
       pitch = assign & 1; // PITCH
       amp = assign & 2; // AMP
       eg = assign & 4; // EG
@@ -98,13 +97,13 @@ class Controllers {
       }
 
       if (mod.amp)
-        amp_mod = max(amp_mod, total);
+        amp_mod = std::max(amp_mod, total);
 
       if (mod.pitch)
-        pitch_mod = max(pitch_mod, total);
+        pitch_mod = std::max(pitch_mod, total);
 
       if (mod.eg)
-        eg_mod = max(eg_mod, total);
+        eg_mod = std::max(eg_mod, total);
     }
 
   public:
@@ -119,9 +118,9 @@ class Controllers {
     uint8_t foot_cc;
     uint8_t modwheel_cc;
     bool portamento_enable_cc;
-    int portamento_cc;
+    int32_t portamento_cc;
     bool portamento_gliss_cc;
-    int masterTune;
+    int32_t masterTune;
 
     uint8_t opSwitch;
 
@@ -148,7 +147,7 @@ class Controllers {
         eg_mod = 127;
     }
 
-    FmCore *core;
+    class FmCore* core;
 };
 
 #endif

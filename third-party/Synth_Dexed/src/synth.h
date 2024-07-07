@@ -25,38 +25,10 @@
 #define TRANSPOSE_FIX 24
 #define VOICE_SILENCE_LEVEL 1100
 
-#define _MAX_NOTES 32
-
-// This IS not be present on MSVC.
-// See http://stackoverflow.com/questions/126279/c99-stdint-h-header-and-ms-visual-studio
-#ifdef _MSC_VER
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int16 SInt16;
-#endif
-
 #define LG_N 6
 #define _N_ (1 << LG_N)
 
-#if defined(__APPLE__)
-//#include <libkern/OSAtomic.h>
-#define SynthMemoryBarrier() OSMemoryBarrier()
-#elif defined(__GNUC__)
-#if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
-#define SynthMemoryBarrier() __sync_synchronize()
-#endif
-#endif
-
-
-// #undef SynthMemoryBarrier()
-
-#ifndef SynthMemoryBarrier
-// need to understand why this must be defined
-// #warning Memory barrier is not enabled
-#define SynthMemoryBarrier()
-#endif
-
-template<typename T>
+/*template<typename T>
 inline static T min(const T& a, const T& b) {
   return a < b ? a : b;
 }
@@ -64,7 +36,7 @@ inline static T min(const T& a, const T& b) {
 template<typename T>
 inline static T max(const T& a, const T& b) {
   return a > b ? a : b;
-}
+}*/
 
 #define QER(n,b) ( ((float)n)/(1<<b) )
 
@@ -93,7 +65,7 @@ inline static T max(const T& a, const T& b) {
   (_amt < _low) ? _low : ((_amt > _high) ? _high : _amt); \
 })
 
-static inline int32_t signed_saturate_rshift(int32_t val, int bits, int rshift)
+static inline int32_t signed_saturate_rshift(int32_t val, int32_t bits, int32_t rshift)
 {
   int32_t out, max;
 

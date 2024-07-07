@@ -37,8 +37,6 @@
 #define TRANSPOSE_FIX 24
 #define VOICE_SILENCE_LEVEL 1100
 
-#define _MAX_NOTES 32
-
 #define PB_RANGE_DEFAULT 1
 #define PB_STEP_DEFAULT 0
 #define MW_RANGE_DEFAULT 50
@@ -57,7 +55,6 @@
 #define PORTAMENTO_GLISSANDO_DEFAULT 0
 #define PORTAMENTO_TIME_DEFAULT 0
 
-//#define USE_SIMPLE_COMPRESSOR 1
 
 #if defined(TEENSYDUINO)
 class AudioSynthDexed : public AudioStream, public Dexed

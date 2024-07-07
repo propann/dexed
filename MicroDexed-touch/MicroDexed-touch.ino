@@ -2208,7 +2208,7 @@ void loop()
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
         ui_save_notification_icon = true;
       }
-      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) ||
+      else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_system_settings) ||
         LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
       {
         draw_button_on_grid(2, 25, "CONFIG", "SAVED", 1);
@@ -2236,7 +2236,7 @@ void loop()
       ui_save_notification_icon = false;
       display.console = false;
     }
-    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) ||
+    else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_system_settings) ||
       LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_test_touchscreen))
     {
       display.console = true;
@@ -3508,7 +3508,7 @@ void handleAfterTouch(byte inChannel, byte inPressure)
   }
 }
 
-void handlePitchBend(byte inChannel, int inPitch)
+void handlePitchBend(byte inChannel, int16_t inPitch)
 {
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
   {
@@ -4863,7 +4863,7 @@ FLASHMEM void set_voiceconfig_params(uint8_t instance_id)
   MicroDexed[instance_id]->setOPAll(configuration.dexed[instance_id].op_enabled);
   MicroDexed[instance_id]->doRefreshVoice();
   MicroDexed[instance_id]->setMonoMode(configuration.dexed[instance_id].monopoly);
-
+  MicroDexed[instance_id]->setEngineType(configuration.sys.dexed_engine_type);
   // Dexed output level
   MicroDexed[instance_id]->setGain(midi_volume_transform(map(configuration.dexed[instance_id].sound_intensity, SOUND_INTENSITY_MIN, SOUND_INTENSITY_MAX, 0, 127)));
 

@@ -48,11 +48,9 @@ inline static float tptlpupw(float & state , float inp , float cutoff , float sr
 //    return (param) * (max - min) + min;
 //}
 
-#ifdef USE_FX
 static float logsc(float param, const float min, const float max, const float rolloff = 19.0f) {
   return ((EXP_FUNC(param * LOG_FUNC(rolloff + 1)) - 1.0f) / (rolloff)) * (max - min) + min;
 }
-#endif
 
 PluginFx::PluginFx() {
   Cutoff = 1.0;
@@ -60,7 +58,7 @@ PluginFx::PluginFx() {
   Gain = 1.0;
 }
 
-void PluginFx::init(int sr) {
+void PluginFx::init(uint16_t sr) {
   mm = 0;
   s1 = s2 = s3 = s4 = c = d = 0;
   R24 = 0;
@@ -106,7 +104,7 @@ inline float PluginFx::NR(float sample, float g) {
   return y;
 }
 
-void PluginFx::process(float *work, int sampleSize) {
+void PluginFx::process(float *work, uint16_t sampleSize) {
   // very basic DC filter
   float t_fd = work[0];
   work[0] = work[0] - dc_id + dc_r * dc_od;
@@ -122,16 +120,15 @@ void PluginFx::process(float *work, int sampleSize) {
   // Gain
   if (Gain == 0.0)
   {
-    for (int i = 0; i < sampleSize; i++ )
+    for (uint16_t i = 0; i < sampleSize; i++ )
       work[i] = 0.0;
   }
   else if ( Gain != 1.0)
   {
-    for (int i = 0; i < sampleSize; i++ )
+    for (uint16_t i = 0; i < sampleSize; i++ )
       work[i] *= Gain;
   }
 
-#ifdef USE_FX
   // don't apply the LPF if the cutoff is to maximum
   if ( Cutoff == 1.0 )
     return;
@@ -155,7 +152,7 @@ void PluginFx::process(float *work, int sampleSize) {
   float g = rCutoff;
   float lpc = g / (1 + g);
 
-  for (int i = 0; i < sampleSize; i++ ) {
+  for (uint16_t i = 0; i < sampleSize; i++ ) {
     float s = work[i];
     s = s - 0.45 * tptlpupw(c, s, 15, sampleRateInv);
     s = tptpc(d, s, bright);
@@ -193,7 +190,6 @@ void PluginFx::process(float *work, int sampleSize) {
     //half volume comp
     work[i] = mc * (1 + R24 * 0.45);
   }
-#endif
 }
 
 /*

@@ -23,8 +23,6 @@
 
 */
 
-#define USE_DEXED_COMPRESSOR 1
-
 #ifndef DEXED_H_INCLUDED
 #define DEXED_H_INCLUDED
 
@@ -43,12 +41,14 @@
 #include "dx7note.h"
 #include "lfo.h"
 #include "PluginFx.h"
-#include "compressor.h"
+#include "EngineMsfa.h"
+#include "EngineMkI.h"
+#include "EngineOpl.h"
 
 #define NUM_VOICE_PARAMETERS 156
 
 struct ProcessorVoice {
-  int16_t midi_note;
+  uint8_t midi_note;
   uint8_t velocity;
   int16_t porta;
   bool keydown;
@@ -143,6 +143,18 @@ enum ON_OFF {
   ON
 };
 
+enum VELOCITY_SCALES {
+  MIDI_VELOCITY_SCALING_OFF,
+  MIDI_VELOCITY_SCALING_DX7,
+  MIDI_VELOCITY_SCALING_DX7II
+};
+
+enum ENGINES {
+  MSFA,
+  MKI,
+  OPL
+};
+
 // GLOBALS
 
 //==============================================================================
@@ -150,7 +162,7 @@ enum ON_OFF {
 class Dexed
 {
   public:
-    Dexed(uint8_t maxnotes, int rate);
+    Dexed(uint8_t maxnotes, uint16_t rate);
     ~Dexed();
 
     // Global methods
@@ -159,7 +171,6 @@ class Dexed
     bool getMonoMode(void);
     void setMonoMode(bool mode);
     void setNoteRefreshMode(bool mode);
-    void setMaxNotes(uint8_t n);
     uint8_t getMaxNotes(void);
     void doRefreshVoice(void);
     void setOPAll(uint8_t ops);
@@ -175,25 +186,18 @@ class Dexed
     uint16_t getRenderTimeMax(void);
     void resetRenderTimeMax(void);
     void ControllersRefresh(void);
-#ifdef USE_DEXED_COMPRESSOR
-    void setCompressor(bool comp);
-    bool getCompressor(void);
-    void setCompressorPreGain_dB(float32_t pre_gain);
-    void setCompressorAttack_sec(float32_t attack_sec);
-    void setCompressorRelease_sec(float32_t release_sec);
-    void setCompressorThresh_dBFS(float32_t thresh_dBFS);
-    void setCompressionRatio(float32_t comp_ratio);
-    float32_t getCompressorPreGain_dB(void);
-    float32_t getCompressorAttack_sec(void);
-    float32_t getCompressorRelease_sec(void);
-    float32_t getCompressorThresh_dBFS(void);
-    float32_t getCompressionRatio(void);
-#endif
+    void setVelocityScale(uint8_t offset, uint8_t max);
+    void getVelocityScale(uint8_t* offset, uint8_t* max);
+    void setVelocityScale(uint8_t setup);
+    void setMaxNotes(uint8_t n);
+    void setEngineType(uint8_t engine);
+    uint8_t getEngineType(void);
+    FmCore* getEngineAddress(void);
     int16_t checkSystemExclusive(const uint8_t* sysex, const uint16_t len);
 
     // Sound methods
-    void keyup(int16_t pitch);
-    void keydown(int16_t pitch, uint8_t velo);
+    void keyup(uint8_t pitch);
+    void keydown(uint8_t pitch, uint8_t velo);
     void setSustain(bool sustain);
     bool getSustain(void);
     void panic(void);
@@ -221,7 +225,9 @@ class Dexed
     uint8_t getFootController(void);
     void setAftertouch(uint8_t value);
     uint8_t getAftertouch(void);
+    void setPitchbend(uint8_t value1, uint8_t value2);
     void setPitchbend(int16_t value);
+    void setPitchbend(uint16_t value);
     int16_t getPitchbend(void);
     void setPitchbendRange(uint8_t range);
     uint8_t getPitchbendRange(void);
@@ -332,12 +338,13 @@ class Dexed
       03, 48,                                                                             // pitch_mod_sensitivity, transpose
       73, 78, 73, 84, 32, 86, 79, 73, 67, 69                                              // 10 * char for name ("INIT VOICE")
     };
-    float32_t samplerate;
+    float samplerate;
     uint8_t data[NUM_VOICE_PARAMETERS];
     uint8_t max_notes;
+    uint8_t used_notes;
     PluginFx fx;
     Controllers controllers;
-    int lastKeyDown;
+    int32_t lastKeyDown;
     uint32_t xrun;
     uint16_t render_time_max;
     int16_t currentNote;
@@ -349,14 +356,14 @@ class Dexed
     uint8_t engineType;
     VoiceStatus voiceStatus;
     Lfo lfo;
-    FmCore* engineMsfa;
-    void getSamples(float32_t* buffer, uint16_t n_samples);
+    EngineMsfa* engineMsfa;
+    EngineMkI* engineMkI;
+    EngineOpl* engineOpl;
+    void getSamples(float* buffer, uint16_t n_samples);
     void getSamples(int16_t* buffer, uint16_t n_samples);
-    void compress(float32_t* wav_in, float32_t* wav_out, uint16_t n, float32_t threshold, float32_t slope, uint16_t sr,  float32_t tla, float32_t twnd, float32_t tatt, float32_t trel);
-#ifdef USE_DEXED_COMPRESSOR
-    bool use_compressor;
-    Compressor* compressor;
-#endif
+    uint8_t velocity_offset;
+    uint8_t velocity_max;
+    float velocity_diff;
 };
 
 #endif

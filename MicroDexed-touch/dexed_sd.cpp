@@ -1814,6 +1814,7 @@ FLASHMEM bool load_sd_sys_json(void)
 
         configuration.sys.vol = data_json["vol"];
         configuration.sys.mono = data_json["mono"];
+        configuration.sys.dexed_engine_type = data_json["dexed_engine_type"];
         configuration.sys.soft_midi_thru = data_json["soft_midi_thru"];
         configuration.sys.performance_number = data_json["performance_number"];
         configuration.sys.favorites = data_json["favorites"];
@@ -1890,6 +1891,7 @@ FLASHMEM bool save_sd_sys_json(void)
     {
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["vol"] = configuration.sys.vol;
+      data_json["dexed_engine_type"] = configuration.sys.dexed_engine_type;
       data_json["mono"] = configuration.sys.mono;
       data_json["soft_midi_thru"] = configuration.sys.soft_midi_thru;
       data_json["performance_number"] = configuration.sys.performance_number;

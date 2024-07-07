@@ -572,7 +572,7 @@ void UI_func_save_voice(uint8_t param);
 void UI_func_midi_soft_thru(uint8_t param);
 void UI_func_midi_channels(uint8_t param);
 void UI_func_sd_content_not_found(uint8_t param);
-void UI_func_misc_settings(uint8_t param);
+void UI_func_system_settings(uint8_t param);
 void UI_func_velocity_level(uint8_t param);
 void UI_func_voice_select(uint8_t param);
 void UI_func_voice_editor(uint8_t param);
@@ -697,7 +697,7 @@ LCDML_add(52, LCDML_0_15, 4, "MIDI Mapping", UI_func_custom_mappings);
 LCDML_add(53, LCDML_0_15, 5, "Favorites", UI_func_favorites);
 LCDML_add(54, LCDML_0_15, 6, "Startup Perform.", UI_func_startup_performance);
 LCDML_add(55, LCDML_0_15, 7, "Startup Page", UI_func_startup_page);
-LCDML_add(56, LCDML_0_15, 8, "Misc. Settings", UI_func_misc_settings);
+LCDML_add(56, LCDML_0_15, 8, "System Settings", UI_func_system_settings);
 LCDML_add(57, LCDML_0_15, 9, "Map Gamepad", UI_func_map_gamepad);
 LCDML_add(58, LCDML_0_15, 10, "TEST Touchscreen", UI_func_test_touchscreen);
 LCDML_add(59, LCDML_0_15, 11, "TEST Audio Mute", UI_func_test_mute);
@@ -1624,7 +1624,7 @@ FLASHMEM bool touch_button_back_page() //modern pages with touch back button
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_voice_editor) ||
     LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_controllers) ||
     LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_drums) ||
-    LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_misc_settings) ||
+    LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_system_settings) ||
     LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth) ||
     LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_dexed_setup))
 
@@ -18437,13 +18437,40 @@ FLASHMEM void print_screensaver_mode()
     display.print(F("ERROR  "));
 }
 
+FLASHMEM void _dexed_engine_mode()
+{
+   display.setTextColor(GREY1, COLOR_BACKGROUND);
+
+    if (MicroDexed[0]->getEngineType() == 0)
+    {
+      setCursor_textGrid_small(2, 17);
+      display.print(F("MODERN: THIS IS THE ORIGINAL 24-BIT MUSIC-     "));
+      setCursor_textGrid_small(2, 18);
+      display.print(F("SYNTHESIZER-FOR-ANDROID IMPLEMENTATION         "));
+    }
+    else if (MicroDexed[0]->getEngineType() == 1)
+    {
+      setCursor_textGrid_small(2, 17);
+      display.print(F("MARK I: BASED ON THE OPL SERIES BUT AT A HIGHER"));
+        setCursor_textGrid_small(2, 18);
+      display.print(F("RESOLUTION. TARGET IS TO BE CLOSEST TO REAL DX7"));
+    }
+    else if (MicroDexed[0]->getEngineType() == 2)
+    {
+      setCursor_textGrid_small(2, 17);
+      display.print(F("OPL: THIS IS AN EXPERIMENTAL IMPLEMENTATION OF "));
+      setCursor_textGrid_small(2, 18);
+      display.print(F("THE REVERSED ENGINEERED OPL FAMILY CHIPS, 8-BIT"));
+    }
+}
+
 FLASHMEM void _render_misc_settings()
 {
   display.fillScreen(COLOR_BACKGROUND);
   display.setTextSize(2);
   setCursor_textGrid(1, 1);
   display.setTextColor(RED, COLOR_BACKGROUND);
-  display.print(F("MISC. SETTINGS"));
+  display.print(F("SYSTEM SETTINGS"));
   helptext_r("SELECT PARAMETER");
 
   draw_button_on_grid(42, 1, "TOUCH", "TEST", 0);
@@ -18470,6 +18497,8 @@ FLASHMEM void _render_misc_settings()
   display.print(F("SKIP BOOT ANIMATION"));
   setCursor_textGrid_small(2, 14);
   display.print(F("INVERT COLORS (EXPERIMENTAL)"));
+  setCursor_textGrid_small(2, 15);
+  display.print(F("DEXED ENGINE"));
   // setCursor_textGrid_small(2, 15);
   // display.print(F("DELAY_COMPENSATION (TESTING)"));
 
@@ -18487,12 +18516,15 @@ FLASHMEM void _render_misc_settings()
   display.print(configuration.sys.boot_anim_skip ? F("YES") : F("NO "));
   setCursor_textGrid_small(42, 14);
   display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
+
+  _dexed_engine_mode();
+
   // setCursor_textGrid_small(42, 15);
   // display.print(compensate_seq_delay);
   // display.print(" ");
 }
 
-FLASHMEM void UI_func_misc_settings(uint8_t param)
+FLASHMEM void UI_func_system_settings(uint8_t param)
 {
   if (LCDML.FUNC_setup())
   {
@@ -18511,7 +18543,7 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
 
       if (generic_active_function == 0) {
         // navigate through menu
-        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 7);
+        generic_temp_select_menu = constrain(generic_temp_select_menu + (factorChange * 1), 0, 8);
       }
       else {
         // handle setting change and load save timer
@@ -18567,6 +18599,13 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
         case 7:
           configuration.sys.invert_colors = !configuration.sys.invert_colors;
           display.invertDisplay(!configuration.sys.invert_colors);
+          break;
+
+        case 8:
+          configuration.sys.dexed_engine_type = constrain(configuration.sys.dexed_engine_type + (factorChange * 1), 0, 2);
+    for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+      MicroDexed[instance_id]->setEngineType(configuration.sys.dexed_engine_type);
+           _dexed_engine_mode();
           break;
 
           //case 8:
@@ -18627,6 +18666,22 @@ FLASHMEM void UI_func_misc_settings(uint8_t param)
     setModeColor(7);
     setCursor_textGrid_small(42, 14);
     display.print(configuration.sys.invert_colors ? F("YES") : F("NO "));
+
+    setModeColor(8);
+    setCursor_textGrid_small(42, 15);
+
+    if (MicroDexed[0]->getEngineType() == 0)
+    {
+      display.print(F("MSFA"));
+    }
+    else if (MicroDexed[0]->getEngineType() == 1)
+    {
+      display.print(F("MK-I"));
+    }
+    else if (MicroDexed[0]->getEngineType() == 2)
+    {
+      display.print(F("OPL "));
+    }
 
     // setModeColor(8);
     // setCursor_textGrid_small(42, 15);

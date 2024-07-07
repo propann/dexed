@@ -965,6 +965,7 @@ typedef struct sys_s
 {
   uint8_t vol;
   uint8_t mono;
+  uint8_t dexed_engine_type;
   uint8_t soft_midi_thru;
   uint8_t performance_number;
   uint8_t favorites;
