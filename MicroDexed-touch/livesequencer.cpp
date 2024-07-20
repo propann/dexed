@@ -923,7 +923,7 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
         data.fillNotes.offset = 0;
         data.lastPlayedNote = 48; // kick
         fillTrackLayer();
-        if(data.isRunning == false) {
+        if (data.isRunning == false) {
           // only merge if not added to pending in fillTrackLayer above
           trackLayerAction(i, 1, LayerMode::LAYER_MERGE);
         }
@@ -995,6 +995,32 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
         data.tracks[i].channel = braids_osc.midi_channel;
         data.tracks[i].screen = UI_func_braids;
         sprintf(data.tracks[i].name, "BRD");
+
+      default:
+
+        // various other MIDI destinations
+
+        if (seq.instrument[i] > 5 && seq.instrument[i] < 16) // multisample player 0+1
+        {
+          sprintf(data.tracks[i].name, "SMP#%i", seq.instrument[i] - 6);
+        }
+
+        else if (seq.instrument[i] > 15 && seq.instrument[i] < 32) // track is for external USB MIDI
+        {
+          // handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
+          sprintf(data.tracks[i].name, "USB#%i", seq.instrument[i] - 15);
+        }
+        else if (seq.instrument[i] > 31 && seq.instrument[i] < 48) // track is for external DIN MIDI
+        {
+          //  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
+          sprintf(data.tracks[i].name, "DIN#%i", seq.instrument[i] - 31);
+        }
+        else if (seq.instrument[i] > 47 && seq.instrument[i] < 64) // track is for internal Micro USB MIDI
+        {
+          //  handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
+          sprintf(data.tracks[i].name, "INT%i", seq.instrument[i] - 47);
+        }
+        break;
       }
       break;
     }
