@@ -4203,6 +4203,44 @@ FLASHMEM void lcdml_menu_control(void)
         }
       }
 
+      //Volume control by button interface or USB Gamepad
+
+      else if ((buttons == GAMEPAD_SELECT && key_down()) || (buttons == GAMEPAD_SELECT && key_up()))
+      {
+        if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_volume))
+        {
+          if (key_up())
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_L] = -4;
+            if (gamepad_last_dir == 1)
+              gamepad_accelerate = 1 + gamepad_accelerate * 1.4;
+            else
+              gamepad_accelerate = 0;
+            gamepad_millis = 0;
+            gamepad_last_dir = 1;
+          }
+          else if (key_down())
+          {
+            g_LCDML_CONTROL_Encoder_position[ENC_L] = 4;
+            if (gamepad_last_dir == 2)
+              gamepad_accelerate = 1 + gamepad_accelerate * 1.4;
+            else
+              gamepad_accelerate = 0;
+            gamepad_millis = 0;
+            gamepad_last_dir = 2;
+          }
+        }
+        else if (LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor) &&
+          LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_map_gamepad) &&
+          LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_seq_settings) &&
+          LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_seq_tracker) &&
+          LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) &&
+          LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_seq_vel_editor) &&
+          LCDML.FUNC_getID() != LCDML.OTHER_getIDFromFunction(UI_func_song))
+        {
+          LCDML.OTHER_jumpToFunc(UI_func_volume);
+        }
+      }
       // start gamepad cases
 
       if (buttons == gamepad_buttons_neutral)
@@ -4311,9 +4349,9 @@ FLASHMEM void lcdml_menu_control(void)
 #endif
       encoderDir[ENC_R].Down(true);
       LCDML.BT_down();
-    }
-    ENCODER[ENC_R].write(g_LCDML_CONTROL_Encoder_position[ENC_R] + 4);
   }
+    ENCODER[ENC_R].write(g_LCDML_CONTROL_Encoder_position[ENC_R] + 4);
+}
   else if (g_LCDML_CONTROL_Encoder_position[ENC_R] >= 3)
   {
     if (!button[ENC_R])
@@ -4743,7 +4781,7 @@ FLASHMEM void lcdml_menu_control(void)
     encoderDir[ENC_L].reset();
     encoderDir[ENC_R].reset();
   }
-}
+  }
 
 /***********************************************************************
    MENU DISPLAY
@@ -12097,7 +12135,7 @@ FLASHMEM void UI_func_song(uint8_t param)
         // display.print(seq.scrollpos);
         // display.print("  ");
 
-  }
+    }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -12112,7 +12150,7 @@ FLASHMEM void UI_func_song(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 // void UI_func_seq_pianoroll(uint8_t param)
 // {
@@ -13861,8 +13899,8 @@ FLASHMEM void set_delay_sync(uint8_t sync, uint8_t instance)
   {
     uint16_t midi_sync_delay_time = uint16_t(60000.0 * midi_ticks_factor[sync] / seq.bpm);
     delay_fx[instance]->delay(0, constrain(midi_sync_delay_time * configuration.fx.delay_multiplier[instance], DELAY_TIME_MIN, DELAY_TIME_MAX * 10));
+    }
   }
-}
 
 FLASHMEM void print_sync_timing(uint8_t sync)
 {
@@ -16885,7 +16923,7 @@ FLASHMEM void flash_loadDirectory() // SPI FLASH
     {
       break; // no more files
     }
-  }
+    }
 
   fm.flash_sum_files = filepos;
 #ifdef DEBUG
@@ -16915,7 +16953,7 @@ FLASHMEM void flash_loadDirectory() // SPI FLASH
       }
     }
   }
-}
+  }
 
 FLASHMEM bool compareFiles(File& file, SerialFlashFile& ffile)
 {
@@ -17570,7 +17608,7 @@ FLASHMEM void sd_card_count_files_from_directory(const char* dir_name)
   }
 
   dir.close();
-}
+  }
 
 FLASHMEM void sd_go_parent_folder()
 {
@@ -17774,8 +17812,8 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #ifdef DEBUG
                 LOG.println(F("  files are different"));
 #endif
-              }
             }
+          }
             else
             {
 #ifdef DEBUG
@@ -17789,7 +17827,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
             LOG.println(F("  delete file from Flash chip"));
 #endif
             SerialFlash.remove(filename);
-          }
+        }
           // if (filename[0] != 46 && filename[1] != 95)
           if (filename[0] != 46)
           {
@@ -17836,7 +17874,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
             }
           }
           f.close();
-        }
+      }
         rootdir.close();
         display.console = true;
         display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
@@ -17846,7 +17884,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #ifdef DEBUG
         LOG.println(F("Finished All Files"));
 #endif
-      }
+    }
       else
 #endif
         if (fm.sd_is_folder)
@@ -17986,7 +18024,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
           }
 #endif
         }
-    }
+  }
     if (LCDML.BT_checkEnter() && fm.sd_mode == FM_PLAY_SAMPLE) // preview - compiled for flash
     {
       preview_sample();
@@ -18017,7 +18055,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     // display.setTextColor(fm.sd_is_folder ? GREY2 : GREEN);
     // display.print(F("FILE"));
     // display.setTextColor(fm.sd_is_folder ? COLOR_PITCHSMP : COLOR_SYSTEXT, COLOR_BACKGROUND);
-  }
+}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -18439,29 +18477,29 @@ FLASHMEM void print_screensaver_mode()
 
 FLASHMEM void _dexed_engine_mode()
 {
-   display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
 
-    if (MicroDexed[0]->getEngineType() == 0)
-    {
-      setCursor_textGrid_small(2, 17);
-      display.print(F("MODERN: THIS IS THE ORIGINAL 24-BIT MUSIC-     "));
-      setCursor_textGrid_small(2, 18);
-      display.print(F("SYNTHESIZER-FOR-ANDROID IMPLEMENTATION         "));
-    }
-    else if (MicroDexed[0]->getEngineType() == 1)
-    {
-      setCursor_textGrid_small(2, 17);
-      display.print(F("MARK I: BASED ON THE OPL SERIES BUT AT A HIGHER"));
-        setCursor_textGrid_small(2, 18);
-      display.print(F("RESOLUTION. TARGET IS TO BE CLOSEST TO REAL DX7"));
-    }
-    else if (MicroDexed[0]->getEngineType() == 2)
-    {
-      setCursor_textGrid_small(2, 17);
-      display.print(F("OPL: THIS IS AN EXPERIMENTAL IMPLEMENTATION OF "));
-      setCursor_textGrid_small(2, 18);
-      display.print(F("THE REVERSED ENGINEERED OPL FAMILY CHIPS, 8-BIT"));
-    }
+  if (MicroDexed[0]->getEngineType() == 0)
+  {
+    setCursor_textGrid_small(2, 17);
+    display.print(F("MODERN: THIS IS THE ORIGINAL 24-BIT MUSIC-     "));
+    setCursor_textGrid_small(2, 18);
+    display.print(F("SYNTHESIZER-FOR-ANDROID IMPLEMENTATION         "));
+  }
+  else if (MicroDexed[0]->getEngineType() == 1)
+  {
+    setCursor_textGrid_small(2, 17);
+    display.print(F("MARK I: BASED ON THE OPL SERIES BUT AT A HIGHER"));
+    setCursor_textGrid_small(2, 18);
+    display.print(F("RESOLUTION. TARGET IS TO BE CLOSEST TO REAL DX7"));
+  }
+  else if (MicroDexed[0]->getEngineType() == 2)
+  {
+    setCursor_textGrid_small(2, 17);
+    display.print(F("OPL: THIS IS AN EXPERIMENTAL IMPLEMENTATION OF "));
+    setCursor_textGrid_small(2, 18);
+    display.print(F("THE REVERSED ENGINEERED OPL FAMILY CHIPS, 8-BIT"));
+  }
 }
 
 FLASHMEM void _render_misc_settings()
@@ -18603,9 +18641,9 @@ FLASHMEM void UI_func_system_settings(uint8_t param)
 
         case 8:
           configuration.sys.dexed_engine_type = constrain(configuration.sys.dexed_engine_type + (factorChange * 1), 0, 2);
-    for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
-      MicroDexed[instance_id]->setEngineType(configuration.sys.dexed_engine_type);
-           _dexed_engine_mode();
+          for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
+            MicroDexed[instance_id]->setEngineType(configuration.sys.dexed_engine_type);
+          _dexed_engine_mode();
           break;
 
           //case 8:
@@ -18719,7 +18757,7 @@ FLASHMEM void _setup_rotation_and_encoders(bool init)
       ENCODER[ENC_L] = encoder_tmp;
     }
   }
-}
+  }
 
 FLASHMEM void print_mixer_text()
 {
@@ -21303,8 +21341,8 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
             display.print(F("Waiting...      "));
             /// Storing is done in SYSEX code
           }
+          }
         }
-      }
       else if (mode >= 1 && yesno == false)
       {
         LOG.println(mode, DEC);
@@ -21316,9 +21354,9 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
       }
-    }
+      }
     encoderDir[ENC_R].reset();
-  }
+    }
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -21334,7 +21372,7 @@ FLASHMEM void UI_func_sysex_receive_bank(uint8_t param)
       delay(MESSAGE_WAIT_TIME);
     }
   }
-}
+  }
 
 FLASHMEM void UI_func_set_performance_name(uint8_t param)
 {
@@ -21671,7 +21709,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 #endif
             show(2, 1, 16, "Read error.");
             bank_number = 0xff;
-          }
+        }
           else
           {
             uint8_t voice_data[155];
@@ -21699,7 +21737,7 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
 
             bank_number = 0xff;
           }
-        }
+      }
         else
         {
           show(2, 1, 16, "No voice.");
@@ -21709,9 +21747,9 @@ FLASHMEM void UI_func_sysex_send_voice(uint8_t param)
         delay(MESSAGE_WAIT_TIME);
         LCDML.FUNC_goBackToMenu();
         break;
-      }
     }
   }
+}
 
   if (LCDML.FUNC_close()) // ****** STABLE END *********
   {
@@ -22932,7 +22970,7 @@ FLASHMEM void UI_func_test_psram(uint8_t param)
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
     display.fillScreen(COLOR_BACKGROUND);
   }
-}
+  }
 
 void sub_touchscreen_test_page_init()
 {
@@ -23302,7 +23340,7 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Added to Favorites..."));
 #endif
-    }
+      }
     else
     { // delete the file, is no longer a favorite
       SD.remove(tmp);
@@ -23333,15 +23371,15 @@ FLASHMEM void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id
 #ifdef DEBUG
       LOG.println(F("Removed from Favorites..."));
 #endif
+      }
     }
-  }
-}
+    }
 
 FLASHMEM char* basename(const char* filename)
 {
   char* p = strrchr(filename, '/');
   return p ? p + 1 : (char*)filename;
-}
+  }
 
 #ifdef COMPILE_FOR_FLASH
 FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number)
@@ -23394,7 +23432,7 @@ FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8
     case 'G':
       offset = 7;
       break;
-    }
+  }
 
     if (root_note[ms.MatchLength - 2 - 1] == '#')
     {
