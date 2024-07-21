@@ -45,6 +45,7 @@ public:
 
   struct Track {
     midi::Channel channel;
+    uint8_t device;
     char name[4];
     uint8_t layerMutes;
     LCDML_FuncPtr_pu8 screen;
@@ -168,8 +169,8 @@ public:
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
 
   struct NotePair {
-    MidiEvent &noteOn;
-    MidiEvent &noteOff;
+    MidiEvent& noteOn;
+    MidiEvent& noteOff;
   };
 
   void addNotePair(MidiEvent noteOn, MidiEvent noteOff);
@@ -179,7 +180,7 @@ public:
   static const std::string getEventName(midi::MidiType event);
   static const std::string getEventSource(EventSource source);
   void checkBpmChanged(void);
-  
+
 private:
   LiveSeqData data;
   std::set<uint8_t> pressedArpKeys;
@@ -200,12 +201,12 @@ private:
   void playNextEvent(void);
   void playNextArpNote(void);
   void playArp(const midi::MidiType type, const ArpNote arp);
-  bool timeQuantization(MidiEvent &e, uint8_t denom);
-  
-  void checkAddMetronome(void);
-  void performLayerAction(LayerMode action, MidiEvent &e, uint8_t layer);
+  bool timeQuantization(MidiEvent& e, uint8_t denom);
 
-  static bool sortMidiEvent(MidiEvent &a, MidiEvent &b) {
+  void checkAddMetronome(void);
+  void performLayerAction(LayerMode action, MidiEvent& e, uint8_t layer);
+
+  static bool sortMidiEvent(MidiEvent& a, MidiEvent& b) {
     // + a.source is a hack to sort song events before pattern events if the have same time
     return ((a.patternNumber * 5000) + a.patternMs + a.source) < ((b.patternNumber * 5000) + b.patternMs + b.source); // FIXME: patternLengthMs
   }

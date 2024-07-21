@@ -299,6 +299,8 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
         case midi::NoteOn:
           handleNoteOnInput(ch, note, velocityActive, 0);
+          //handleNoteOnInput(ch, note, velocityActive, data.tracks[data.activeTrack].device);
+
           if (data.lastPlayedNote != note) {
             data.lastPlayedNote = note;
             data.lastPlayedNoteChanged = true;
@@ -307,6 +309,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
         case midi::NoteOff:
           handleNoteOff(ch, note, velocityActive, 0);
+          //handleNoteOff(ch, note, velocityActive, data.tracks[data.activeTrack].device);
           break;
 
         default:
@@ -462,6 +465,7 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
   if (playIterator != data.eventsList.end()) {
     const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
+    const uint8_t device = data.tracks[playIterator->track].device;
 
     switch (playIterator->event) {
     case midi::ControlChange:
@@ -486,7 +490,7 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
           if (it != data.tracks[playIterator->track].activeNotes[playIterator->layer].end()) {
             data.tracks[playIterator->track].activeNotes[playIterator->layer].erase(it);
           }
-          handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, 0);
+          handleNoteOff(channel, playIterator->note_in, playIterator->note_in_velocity, device);
         }
       }
       break;
@@ -503,7 +507,7 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
           // velocity adjustment for playing from performance
           const uint8_t velocitySetting = data.trackSettings[playIterator->track].velocityLevel;
           const uint8_t velocityActive = (velocitySetting == 0) ? playIterator->note_in_velocity : velocitySetting * 1.27f; // 100% * 1.27 = 127
-          handleNoteOn(channel, playIterator->note_in, velocityActive, 0);
+          handleNoteOn(channel, playIterator->note_in, velocityActive, device);
         }
       }
       break;
@@ -961,6 +965,7 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
       case 0:
       case 1:
         data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[seq.instrument[i]].midi_channel);
+        data.tracks[i].device = 0;
         data.tracks[i].screen = UI_func_voice_select;
         if (seq.instrument[i] == 0) {
           data.tracks[i].screenSetupFn = (SetupFn)selectDexed0;
@@ -974,6 +979,7 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
 
       case 2:
         data.tracks[i].channel = static_cast<midi::Channel>(configuration.epiano.midi_channel);
+        data.tracks[i].device = 0;
         data.tracks[i].screen = UI_func_epiano;
         sprintf(data.tracks[i].name, "EP");
         break;
@@ -981,6 +987,7 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
       case 3:
       case 4:
         data.tracks[i].channel = microsynth[seq.instrument[i] - 3].midi_channel;
+        data.tracks[i].device = 0;
         data.tracks[i].screen = UI_func_microsynth;
         if (seq.instrument[i] == 3) {
           data.tracks[i].screenSetupFn = (SetupFn)selectMs0;
@@ -993,32 +1000,30 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
 
       case 5:
         data.tracks[i].channel = braids_osc.midi_channel;
+        data.tracks[i].device = 0;
         data.tracks[i].screen = UI_func_braids;
         sprintf(data.tracks[i].name, "BRD");
 
       default:
+        // various other MIDI destinations, each of them has it's own 16 MIDI channels
 
-        // various other MIDI destinations
-
-        if (seq.instrument[i] > 5 && seq.instrument[i] < 16) // multisample player 0+1
+        if (seq.instrument[i] > 15 && seq.instrument[i] < 32) // track is for external USB MIDI Port
         {
-          sprintf(data.tracks[i].name, "SMP#%i", seq.instrument[i] - 6);
-        }
-
-        else if (seq.instrument[i] > 15 && seq.instrument[i] < 32) // track is for external USB MIDI
-        {
-          // handleNoteOn(seq.instrument[d] - 15, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 1);
           sprintf(data.tracks[i].name, "USB#%i", seq.instrument[i] - 15);
+          data.tracks[i].channel = seq.instrument[i] - 15;
+          data.tracks[i].device = 1;
         }
-        else if (seq.instrument[i] > 31 && seq.instrument[i] < 48) // track is for external DIN MIDI
+        else if (seq.instrument[i] > 31 && seq.instrument[i] < 48) // track is for external DIN/TRS MIDI Port
         {
-          //  handleNoteOn(seq.instrument[d] - 31, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 2);
           sprintf(data.tracks[i].name, "DIN#%i", seq.instrument[i] - 31);
+          data.tracks[i].channel = seq.instrument[i] - 31;
+          data.tracks[i].device = 2;
         }
-        else if (seq.instrument[i] > 47 && seq.instrument[i] < 64) // track is for internal Micro USB MIDI
+        else if (seq.instrument[i] > 47 && seq.instrument[i] < 64) // track is for internal Micro USB MIDI Port
         {
-          //  handleNoteOn(seq.instrument[d] - 47, seq.arp_note + seq.arps[seq.arp_chord][seq.arp_step + seq.element_shift], check_vel_variation(seq.current_pattern[d], seq.chord_vel), 3);
           sprintf(data.tracks[i].name, "INT%i", seq.instrument[i] - 47);
+          data.tracks[i].channel = seq.instrument[i] - 47;
+          data.tracks[i].device = 3;
         }
         break;
       }
