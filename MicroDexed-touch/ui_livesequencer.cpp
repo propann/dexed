@@ -109,7 +109,7 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   
   TouchButton *applyTrackInstrument = new TouchButton(GRID_X[2], GRID_Y[4],
   [ this ] (auto *b) { // drawHandler
-    const bool isSame = data.tracks[data.activeTrack].instrument == selectedTrackInstument;
+    const bool isSame = data.trackSettings[data.activeTrack].instrument == selectedTrackInstument;
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_HIGHLIGHTED);
     display.setTextSize(1);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -119,7 +119,7 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     display.print(F("SELECTED TRACK"));
   },
   [ this ] (auto *b) { // clickedHandler
-    if(data.tracks[data.activeTrack].instrument != selectedTrackInstument) {
+    if(data.trackSettings[data.activeTrack].instrument != selectedTrackInstument) {
       liveSeq.changeTrackInstrument(data.activeTrack, selectedTrackInstument);
       b->drawNow();
       guiUpdateFlags |= drawTrackButtons;
@@ -127,7 +127,7 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   });
   toolsPages[TOOLS_SEQ].push_back(applyTrackInstrument);
 
-  currentTrackInstument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], selectedTrackInstument, 0, LiveSequencer::INSTR_MAX, 1, data.tracks[data.activeTrack].instrument, 
+  currentTrackInstument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], selectedTrackInstument, 0, LiveSequencer::INSTR_MAX, 1, data.trackSettings[data.activeTrack].instrument, 
   [ this, applyTrackInstrument ] (auto *b, auto *v) { // drawHandler
     char name[5];
     char temp_char[4];
@@ -520,7 +520,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
 
     //check if update track instrument selection
     if((isLayerViewActive == false) && (currentTools == TOOLS_SEQ)) {
-      selectedTrackInstument = data.tracks[data.activeTrack].instrument;
+      selectedTrackInstument = data.trackSettings[data.activeTrack].instrument;
       currentTrackInstument->drawNow(); // update currently selected track
     }
     

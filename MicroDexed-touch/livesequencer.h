@@ -59,7 +59,6 @@ public:
 
   struct Track {
     midi::Channel channel;
-    uint8_t instrument;
     uint8_t device;
     char name[5];
     uint8_t layerMutes;
@@ -69,6 +68,7 @@ public:
   };
 
   struct TrackSettings {
+    uint8_t instrument;
     uint8_t layerCount;
     uint8_t quantizeDenom;
     uint8_t velocityLevel; // 0: original, 1 - 10: 10-100%
@@ -184,6 +184,7 @@ public:
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
   void getInstrumentName(uint8_t instrument, char *name) const;
   void changeTrackInstrument(uint8_t track, uint8_t newInstrument);
+  void loadOldTrackInstruments(void); // load track instruments from normal sequencer
 
   struct NotePair {
     MidiEvent& noteOn;

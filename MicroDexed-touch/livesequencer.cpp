@@ -943,15 +943,58 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
 FLASHMEM void LiveSequencer::changeTrackInstrument(uint8_t track, uint8_t newInstrument) {
   DBG_LOG(printf("change track %i instrument to %i\n", track, newInstrument));
   allTrackNotesOff(track);
-  data.tracks[track].instrument = newInstrument;
+  data.trackSettings[track].instrument = newInstrument;
   updateTrackChannels();
+}
+
+FLASHMEM void LiveSequencer::loadOldTrackInstruments(void) {
+  for (uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+    switch (seq.track_type[i]) {
+    case 0:
+      data.trackSettings[i].instrument = INSTR_DRUM;
+      break;
+
+    case 1:
+      // dexed instance 0+1, 2 = epiano , 3+4 = MicroSynth, 5 = Braids
+      switch (seq.instrument[i]) {
+      case 0:
+        data.trackSettings[i].instrument = INSTR_DX1;
+        break;
+
+      case 1:
+        data.trackSettings[i].instrument = INSTR_DX2;
+        break;
+
+      case 2:
+        data.trackSettings[i].instrument = INSTR_EP;
+        break;
+
+      case 3:
+        data.trackSettings[i].instrument = INSTR_MS1;
+        break;
+
+      case 4:
+        data.trackSettings[i].instrument = INSTR_MS2;
+        break;
+
+      case 5:
+        data.trackSettings[i].instrument = INSTR_BRD;
+        break;
+
+      default:
+        // new mappings not backwards compatible
+        break;
+      }
+      break;
+    }
+  }
 }
 
 FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
   updateInstrumentChannels();
 
   for (uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
-    const uint8_t instrument = data.tracks[i].instrument;
+    const uint8_t instrument = data.trackSettings[i].instrument;
 
     data.tracks[i].screen = nullptr;
     data.tracks[i].screenSetupFn = nullptr;
@@ -970,7 +1013,6 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
       }
       break;
 
-    // 1+2 = dexed instance, 3 = epiano , 4+5 = MicroSynth, 6 = Braids
     case INSTR_DX1:
     case INSTR_DX2:
       data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[instrument - 1].midi_channel);
@@ -996,10 +1038,10 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
 
     default:
       if(instrument <= INSTR_MAX) {
+        // various other MIDI destinations, each of them has it's own 16 MIDI channels:
         //  7 - 22 USB MIDI
         // 23 - 38 DIN MIDI
         // 39 - 54 INT USB MIDI
-        // various other MIDI destinations, each of them has it's own 16 MIDI channels
         if (instrument >= INSTR_MIDI_INT_START) { // track is for internal Micro USB MIDI Port
           data.tracks[i].channel = instrument - INSTR_MIDI_INT_START;
           data.tracks[i].device = 3;
