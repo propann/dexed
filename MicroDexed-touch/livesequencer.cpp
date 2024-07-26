@@ -1082,6 +1082,7 @@ FLASHMEM void LiveSequencer::getInstrumentName(uint8_t instrument, char *name) c
 
   case INSTR_BRD:
     sprintf(name, "BRD");
+    break;
 
   default:
     if(instrument <= INSTR_MAX) {
