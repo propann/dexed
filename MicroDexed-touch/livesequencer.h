@@ -214,6 +214,7 @@ private:
   void printEvents();
   void loadNextEvent(int timeMs);
   void allTrackNotesOff(const uint8_t track);
+  void allLayerNotesOff(const uint8_t track, const uint8_t layer);
   void allNotesOff(void);
   void playNextEvent(void);
   void playNextArpNote(void);

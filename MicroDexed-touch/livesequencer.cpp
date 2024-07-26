@@ -120,11 +120,15 @@ FLASHMEM void LiveSequencer::allNotesOff(void) {
 
 FLASHMEM void LiveSequencer::allTrackNotesOff(const uint8_t track) {
   for (uint8_t layer = 0; layer < data.trackSettings[track].layerCount; layer++) {
-    for (auto note : data.tracks[track].activeNotes[layer]) {
-      handleNoteOff(data.tracks[track].channel, note, 0, 0);
-    }
-    data.tracks[track].activeNotes[layer].clear();
+    allLayerNotesOff(track, layer);
   }
+}
+
+FLASHMEM void LiveSequencer::allLayerNotesOff(const uint8_t track, const uint8_t layer) {
+  for (auto note : data.tracks[track].activeNotes[layer]) {
+    handleNoteOff(data.tracks[track].channel, note, 0, data.tracks[track].device);
+  }
+  data.tracks[track].activeNotes[layer].clear();
 }
 
 FLASHMEM void LiveSequencer::printEvent(int i, MidiEvent e) {
@@ -400,10 +404,7 @@ FLASHMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, Laye
   }
 
   // play noteOff for active layer notes
-  for (auto& note : data.tracks[track].activeNotes[layer]) {
-    handleNoteOff(data.tracks[track].channel, note, 0, 0);
-  }
-  data.tracks[track].activeNotes[layer].clear();
+  allLayerNotesOff(track, layer);
 
   for (auto& e : data.eventsList) {
     if (e.track == track) {
@@ -697,14 +698,16 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
 
 FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote arp) {
   const midi::Channel channel = data.tracks[arp.track].channel;
+  const midi::Channel device = data.tracks[arp.track].device;
+
   for (auto& n : arp.notes) {
     switch (type) {
     case midi::NoteOn:
-      handleNoteOn(channel, n, data.arpSettings.velocity, 0);
+      handleNoteOn(channel, n, data.arpSettings.velocity, device);
       break;
 
     case midi::NoteOff:
-      handleNoteOff(channel, n, 0, 0);
+      handleNoteOff(channel, n, 0, device);
       break;
 
     default:
@@ -884,10 +887,7 @@ FLASHMEM void selectMs1() {
 FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
   if (isMuted) {
     data.tracks[track].layerMutes |= (1 << layer);
-    for (auto note : data.tracks[track].activeNotes[layer]) {
-      handleNoteOff(data.tracks[track].channel, note, 0, 0);
-    }
-    data.tracks[track].activeNotes[layer].clear();
+    allLayerNotesOff(track, layer);
   }
   else {
     data.tracks[track].layerMutes &= ~(1 << layer);
