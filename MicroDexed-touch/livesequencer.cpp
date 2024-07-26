@@ -941,94 +941,126 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
   }
 }
 
+FLASHMEM void LiveSequencer::changeTrackInstrument(uint8_t track, uint8_t newInstrument) {
+  DBG_LOG(printf("change track %i instrument to %i\n", track, newInstrument));
+  allTrackNotesOff(track);
+  data.tracks[track].instrument = newInstrument;
+  updateTrackChannels();
+}
+
 FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
   updateInstrumentChannels();
 
   for (uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+    const uint8_t instrument = data.tracks[i].instrument;
+
+    data.tracks[i].screen = nullptr;
     data.tracks[i].screenSetupFn = nullptr;
+    data.tracks[i].device = 0; // default to internal
+    getInstrumentName(instrument, data.tracks[i].name);
+
     if (initial) {
       data.trackSettings[i].quantizeDenom = 1; // default: no quantization
     }
-    switch (seq.track_type[i]) {
-    case 0:
+    switch (instrument) {
+    case INSTR_DRUM:
       data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
       data.tracks[i].screen = UI_func_drums;
       if (initial) {
         data.trackSettings[i].quantizeDenom = 16; // default: drum quantize to 1/16
       }
-      sprintf(data.tracks[i].name, "DRM");
       break;
 
-    case 1:
-      // dexed instance 0+1, 2 = epiano , 3+4 = MicroSynth, 5 = Braids
-      switch (seq.instrument[i]) {
-      case 0:
-      case 1:
-        data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[seq.instrument[i]].midi_channel);
-        data.tracks[i].device = 0;
-        data.tracks[i].screen = UI_func_voice_select;
-        if (seq.instrument[i] == 0) {
-          data.tracks[i].screenSetupFn = (SetupFn)selectDexed0;
-        }
-        else {
-          data.tracks[i].screenSetupFn = (SetupFn)selectDexed1;
-        }
+    // 1+2 = dexed instance, 3 = epiano , 4+5 = MicroSynth, 6 = Braids
+    case INSTR_DX1:
+    case INSTR_DX2:
+      data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[instrument - 1].midi_channel);
+      data.tracks[i].screen = UI_func_voice_select;
+      data.tracks[i].screenSetupFn = (instrument == 1) ? (SetupFn)selectDexed0 : (SetupFn)selectDexed1;
+      break;
 
-        sprintf(data.tracks[i].name, "DX%i", seq.instrument[i] + 1);
-        break;
+    case INSTR_EP:
+      data.tracks[i].channel = static_cast<midi::Channel>(configuration.epiano.midi_channel);
+      data.tracks[i].screen = UI_func_epiano;
+      break;
 
-      case 2:
-        data.tracks[i].channel = static_cast<midi::Channel>(configuration.epiano.midi_channel);
-        data.tracks[i].device = 0;
-        data.tracks[i].screen = UI_func_epiano;
-        sprintf(data.tracks[i].name, "EP");
-        break;
+    case INSTR_MS1:
+    case INSTR_MS2:
+      data.tracks[i].channel = microsynth[instrument - 4].midi_channel;
+      data.tracks[i].screen = UI_func_microsynth;
+      data.tracks[i].screenSetupFn = (instrument == 4) ? (SetupFn)selectMs0 : (SetupFn)selectMs1;
+      break;
 
-      case 3:
-      case 4:
-        data.tracks[i].channel = microsynth[seq.instrument[i] - 3].midi_channel;
-        data.tracks[i].device = 0;
-        data.tracks[i].screen = UI_func_microsynth;
-        if (seq.instrument[i] == 3) {
-          data.tracks[i].screenSetupFn = (SetupFn)selectMs0;
-        }
-        else {
-          data.tracks[i].screenSetupFn = (SetupFn)selectMs1;
-        }
-        sprintf(data.tracks[i].name, "MS%i", seq.instrument[i] - 2);
-        break;
+    case INSTR_BRD:
+      data.tracks[i].channel = braids_osc.midi_channel;
+      data.tracks[i].screen = UI_func_braids;
 
-      case 5:
-        data.tracks[i].channel = braids_osc.midi_channel;
-        data.tracks[i].device = 0;
-        data.tracks[i].screen = UI_func_braids;
-        sprintf(data.tracks[i].name, "BRD");
-
-      default:
+    default:
+      if(instrument <= INSTR_MAX) {
+        //  7 - 22 USB MIDI
+        // 23 - 38 DIN MIDI
+        // 39 - 54 INT USB MIDI
         // various other MIDI destinations, each of them has it's own 16 MIDI channels
-
-        if (seq.instrument[i] > 15 && seq.instrument[i] < 32) // track is for external USB MIDI Port
-        {
-          sprintf(data.tracks[i].name, "USB#%i", seq.instrument[i] - 15);
-          data.tracks[i].channel = seq.instrument[i] - 15;
-          data.tracks[i].device = 1;
-        }
-        else if (seq.instrument[i] > 31 && seq.instrument[i] < 48) // track is for external DIN/TRS MIDI Port
-        {
-          sprintf(data.tracks[i].name, "DIN#%i", seq.instrument[i] - 31);
-          data.tracks[i].channel = seq.instrument[i] - 31;
-          data.tracks[i].device = 2;
-        }
-        else if (seq.instrument[i] > 47 && seq.instrument[i] < 64) // track is for internal Micro USB MIDI Port
-        {
-          sprintf(data.tracks[i].name, "INT%i", seq.instrument[i] - 47);
-          data.tracks[i].channel = seq.instrument[i] - 47;
+        if (instrument >= INSTR_MIDI_INT_START) { // track is for internal Micro USB MIDI Port
+          data.tracks[i].channel = instrument - INSTR_MIDI_INT_START;
           data.tracks[i].device = 3;
         }
-        break;
+        else if (instrument >= INSTR_MIDI_DIN_START) { // track is for external DIN/TRS MIDI Port
+          data.tracks[i].channel = instrument - INSTR_MIDI_DIN_START;
+          data.tracks[i].device = 2;
+        }
+        else if(instrument >= INSTR_MIDI_USB_START) { // track is for external USB MIDI Port
+          data.tracks[i].channel = instrument - INSTR_MIDI_USB_START;
+          data.tracks[i].device = 1;
+        }
       }
       break;
     }
+  }
+}
+
+FLASHMEM void LiveSequencer::getInstrumentName(uint8_t instrument, char *name) const {
+  switch (instrument) {
+  case INSTR_DRUM:
+    sprintf(name, "DRM");
+    break;
+
+  case INSTR_DX1:
+  case INSTR_DX2:
+    sprintf(name, "DX%i", instrument);
+    break;
+
+  case INSTR_EP:
+    sprintf(name, "EP");
+    break;
+
+  case INSTR_MS1:
+  case INSTR_MS2:
+    sprintf(name, "MS%i", instrument - 3);
+    break;
+
+  case INSTR_BRD:
+    sprintf(name, "BRD");
+
+  default:
+    if(instrument <= INSTR_MAX) {
+      //  7 - 22 USB MIDI
+      // 23 - 38 DIN MIDI
+      // 39 - 54 INT USB MIDI
+      // various other MIDI destinations, each of them has it's own 16 MIDI channels
+      if (instrument >= INSTR_MIDI_INT_START) { // track is for internal Micro USB MIDI Port
+        sprintf(name, "INT%i", instrument - INSTR_MIDI_INT_START);
+      }
+      else if (instrument >= INSTR_MIDI_DIN_START) { // track is for external DIN/TRS MIDI Port
+        sprintf(name, "DIN%i", instrument - INSTR_MIDI_DIN_START);
+      }
+      else if(instrument >= INSTR_MIDI_USB_START) { // track is for external USB MIDI Port
+        sprintf(name, "USB%i", instrument - INSTR_MIDI_USB_START);
+      }
+    } else {
+      sprintf(name, "NONE");
+    }
+    break;
   }
 }
 

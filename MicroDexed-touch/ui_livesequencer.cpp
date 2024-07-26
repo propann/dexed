@@ -102,6 +102,34 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     applyPatternLength->drawNow();
   }));
 
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
+  [ ] (auto *b) { // drawHandler
+    b->draw("TRACK", "INSTR", TouchButton::BUTTON_LABEL);
+  }));
+  
+  TouchButton *applyTrackInstrument = new TouchButton(GRID_X[2], GRID_Y[4],
+  [ this ] (auto *b) { // drawHandler
+    b->draw("APPLY", "CHANGE", (data.tracks[data.activeTrack].instrument == selectedTrackInstument) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_RED);
+  },
+  [ this ] (auto *b) { // clickedHandler
+    liveSeq.changeTrackInstrument(data.activeTrack, selectedTrackInstument);
+    b->drawNow();
+    guiUpdateFlags |= drawTrackButtons;
+  });
+  toolsPages[TOOLS_SEQ].push_back(applyTrackInstrument);
+
+  currentTrackInstument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], selectedTrackInstument, 0, LiveSequencer::INSTR_MAX, 1, data.tracks[data.activeTrack].instrument, 
+  [ this, applyTrackInstrument ] (auto *b, auto *v) { // drawHandler
+    char name[5] = {' '};
+    char temp_char[4];
+    itoa(data.activeTrack + 1, temp_char, 10);
+    liveSeq.getInstrumentName(v->getValue(), name);
+    b->draw(name, temp_char, TouchButton::BUTTON_ACTIVE);
+    applyTrackInstrument->drawNow();
+  });
+  toolsPages[TOOLS_SEQ].push_back(currentTrackInstument);
+  /******************** */
+
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("ACTIONS", "", TouchButton::BUTTON_LABEL);
@@ -482,6 +510,12 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
     data.activeTrack = track;
     trackButtons[activeOld]->drawNow();
     trackButtons[track]->drawNow();
+
+    //check if update track instrument selection
+    if((isLayerViewActive == false) && (currentTools == TOOLS_SEQ)) {
+      selectedTrackInstument = data.tracks[data.activeTrack].instrument;
+      currentTrackInstument->drawNow(); // update currently selected track
+    }
     
     trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
     if (currentPage == PAGE_PATTERN) {

@@ -38,6 +38,8 @@ private:
   std::vector<TouchButton*> buttonsToolSelect;
 
   TouchButton *lastNoteLabel;
+  ValueButtonRange<uint8_t> *currentTrackInstument;
+  uint8_t selectedTrackInstument;
 
   UI_LiveSequencer* instance;
   LiveSequencer& liveSeq;

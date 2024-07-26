@@ -32,6 +32,20 @@ public:
     LAYER_MODE_NUM
   };
 
+  enum Instrument {
+    INSTR_DRUM = 0,
+    INSTR_DX1 = 1,
+    INSTR_DX2 = 2,
+    INSTR_EP = 3,
+    INSTR_MS1 = 4,
+    INSTR_MS2 = 5,
+    INSTR_BRD = 6,
+    INSTR_MIDI_USB_START = 7,  //  7 - 22 USB MIDI
+    INSTR_MIDI_DIN_START = 23, // 23 - 38 DIN MIDI
+    INSTR_MIDI_INT_START = 39, // 39 - 54 INT USB MIDI
+    INSTR_MAX = 54
+  };
+
   struct MidiEvent {
     EventSource source;
     uint16_t patternMs;
@@ -45,8 +59,9 @@ public:
 
   struct Track {
     midi::Channel channel;
+    uint8_t instrument;
     uint8_t device;
-    char name[4];
+    char name[5];
     uint8_t layerMutes;
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
@@ -167,6 +182,8 @@ public:
   void setArpEnabled(bool enabled);
   void cleanEvents(void);
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
+  void getInstrumentName(uint8_t instrument, char *name) const;
+  void changeTrackInstrument(uint8_t track, uint8_t newInstrument);
 
   struct NotePair {
     MidiEvent& noteOn;
