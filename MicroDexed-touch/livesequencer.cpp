@@ -292,14 +292,14 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
       }
       else {
         const midi::Channel ch = data.tracks[data.activeTrack].channel;
+        const uint8_t device = data.tracks[data.activeTrack].device;
         switch (event) {
         case midi::AfterTouchChannel:
           handleAfterTouch(ch, note);
           break;
 
         case midi::NoteOn:
-          handleNoteOnInput(ch, note, velocityActive, 0);
-          //handleNoteOnInput(ch, note, velocityActive, data.tracks[data.activeTrack].device);
+          handleNoteOnInput(ch, note, velocityActive, device);
 
           if (data.lastPlayedNote != note) {
             data.lastPlayedNote = note;
@@ -308,8 +308,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
           break;
 
         case midi::NoteOff:
-          handleNoteOff(ch, note, velocityActive, 0);
-          //handleNoteOff(ch, note, velocityActive, data.tracks[data.activeTrack].device);
+          handleNoteOff(ch, note, velocityActive, device);
           break;
 
         default:

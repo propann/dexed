@@ -76,12 +76,12 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   TouchButton *applyPatternLength = new TouchButton(GRID_X[2], GRID_Y[3],
   [ this ] (auto *b) { // drawHandler
     const bool isSame = (data.numberOfBars == numberOfBarsTemp);
-    b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_ACTIVE : TouchButton::BUTTON_RED);
+    b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_RED);
     display.setTextSize(1);
-    display.setTextColor(isSame ? GREY2 : RED, COLOR_BACKGROUND);
-    display.setCursor(GRID_X[3]+2, GRID_Y[3] + 5);
+    display.setTextColor(isSame ? COLOR_SYSTEXT : RED, COLOR_BACKGROUND);
+    display.setCursor(GRID_X[3] + 2, GRID_Y[3] + 5);
     display.print(F("CHANGING PATTERN LENGTH"));
-    display.setCursor(GRID_X[3]+2, GRID_Y[3] + 20);
+    display.setCursor(GRID_X[3] + 2, GRID_Y[3] + 20);
     display.print(F("WILL DELETE ALL DATA!"));
   },
   [ this ] (auto *b){ // clickedHandler
@@ -109,18 +109,27 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   
   TouchButton *applyTrackInstrument = new TouchButton(GRID_X[2], GRID_Y[4],
   [ this ] (auto *b) { // drawHandler
-    b->draw("APPLY", "CHANGE", (data.tracks[data.activeTrack].instrument == selectedTrackInstument) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_RED);
+    const bool isSame = data.tracks[data.activeTrack].instrument == selectedTrackInstument;
+    b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_HIGHLIGHTED);
+    display.setTextSize(1);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.setCursor(GRID_X[3] + 2, GRID_Y[4] + 5);
+    display.print(F("CHANGE INSTRUMENT OF"));
+    display.setCursor(GRID_X[3] + 2, GRID_Y[4] + 20);
+    display.print(F("SELECTED TRACK"));
   },
   [ this ] (auto *b) { // clickedHandler
-    liveSeq.changeTrackInstrument(data.activeTrack, selectedTrackInstument);
-    b->drawNow();
-    guiUpdateFlags |= drawTrackButtons;
+    if(data.tracks[data.activeTrack].instrument != selectedTrackInstument) {
+      liveSeq.changeTrackInstrument(data.activeTrack, selectedTrackInstument);
+      b->drawNow();
+      guiUpdateFlags |= drawTrackButtons;
+    }
   });
   toolsPages[TOOLS_SEQ].push_back(applyTrackInstrument);
 
   currentTrackInstument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], selectedTrackInstument, 0, LiveSequencer::INSTR_MAX, 1, data.tracks[data.activeTrack].instrument, 
   [ this, applyTrackInstrument ] (auto *b, auto *v) { // drawHandler
-    char name[5] = {' '};
+    char name[5];
     char temp_char[4];
     itoa(data.activeTrack + 1, temp_char, 10);
     liveSeq.getInstrumentName(v->getValue(), name);
@@ -128,8 +137,6 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     applyTrackInstrument->drawNow();
   });
   toolsPages[TOOLS_SEQ].push_back(currentTrackInstument);
-  /******************** */
-
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("ACTIONS", "", TouchButton::BUTTON_LABEL);
