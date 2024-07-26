@@ -1633,6 +1633,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       data_json["num_tracks"] = LiveSequencer::LIVESEQUENCER_NUM_TRACKS;
       data_json["hasTrackInstruments"] = true; // has individual track instrument mapping
       for (int i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
+        data_json["device"][i] = data->trackSettings[i].device;
         data_json["instrument"][i] = data->trackSettings[i].instrument;
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantizeDenom;
@@ -1723,6 +1724,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
 
           for (int i = 0; i < num_tracks; i++) {
             if(hasTrackInstruments) {
+              data->trackSettings[i].device = doc["device"][i];
               data->trackSettings[i].instrument = doc["instrument"][i];
             }
             data->trackSettings[i].layerCount = doc["layer_count"][i];

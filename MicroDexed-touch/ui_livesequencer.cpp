@@ -32,8 +32,10 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   }
 
   runningInBackground = false;
+}
 
-  // TRACK BUTTONS
+FLASHMEM void UI_LiveSequencer::init(void) {
+    // TRACK BUTTONS
   for(int track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
     trackButtons.push_back(new TouchButton(GRID_X[track], GRID_Y[1],
       [ this, track ] (auto *b) { // drawHandler
@@ -104,39 +106,47 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
 
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
-    b->draw("TRACK", "INSTR", TouchButton::BUTTON_LABEL);
+    b->draw("TRACK", "SETUP", TouchButton::BUTTON_LABEL);
   }));
   
-  TouchButton *applyTrackInstrument = new TouchButton(GRID_X[2], GRID_Y[4],
+  TouchButton *applyTrackInstrument = new TouchButton(GRID_X[3], GRID_Y[4],
   [ this ] (auto *b) { // drawHandler
-    const bool isSame = data.trackSettings[data.activeTrack].instrument == selectedTrackInstument;
+    const LiveSequencer::TrackSettings &trackSettings = data.trackSettings[data.activeTrack];
+    const bool isSame = (trackSettings.device == selectedTrackDevice) && (trackSettings.instrument == selectedTrackInstrument);
     b->draw("APPLY", "NOW", isSame ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_HIGHLIGHTED);
-    display.setTextSize(1);
-    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    display.setCursor(GRID_X[3] + 2, GRID_Y[4] + 5);
-    display.print(F("CHANGE INSTRUMENT OF"));
-    display.setCursor(GRID_X[3] + 2, GRID_Y[4] + 20);
-    display.print(F("SELECTED TRACK"));
   },
   [ this ] (auto *b) { // clickedHandler
-    if(data.trackSettings[data.activeTrack].instrument != selectedTrackInstument) {
-      liveSeq.changeTrackInstrument(data.activeTrack, selectedTrackInstument);
+    const LiveSequencer::TrackSettings &trackSettings = data.trackSettings[data.activeTrack];
+    const bool isSame = (trackSettings.device == selectedTrackDevice) && (trackSettings.instrument == selectedTrackInstrument);
+    if(isSame == false) {
+      liveSeq.changeTrackInstrument(data.activeTrack, selectedTrackDevice, selectedTrackInstrument);
       b->drawNow();
       guiUpdateFlags |= drawTrackButtons;
     }
   });
   toolsPages[TOOLS_SEQ].push_back(applyTrackInstrument);
 
-  currentTrackInstument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], selectedTrackInstument, 0, LiveSequencer::INSTR_MAX, 1, data.trackSettings[data.activeTrack].instrument, 
+  currentTrackDevice = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], selectedTrackDevice, LiveSequencer::DEVICE_INTERNAL, LiveSequencer::DEVICE_MIDI_INT, 1, data.trackSettings[data.activeTrack].device, 
   [ this, applyTrackInstrument ] (auto *b, auto *v) { // drawHandler
-    char name[5];
-    char temp_char[4];
-    itoa(data.activeTrack + 1, temp_char, 10);
-    liveSeq.getInstrumentName(v->getValue(), name);
-    b->draw(name, temp_char, TouchButton::BUTTON_ACTIVE);
+    char name[10];
+    char sub[10];
+    liveSeq.getDeviceName(v->getValue(), name, sub);
+    b->draw(name, sub, TouchButton::BUTTON_ACTIVE);
+    currentTrackInstrument->drawNow();
     applyTrackInstrument->drawNow();
   });
-  toolsPages[TOOLS_SEQ].push_back(currentTrackInstument);
+  toolsPages[TOOLS_SEQ].push_back(currentTrackDevice);
+
+  currentTrackInstrument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], selectedTrackInstrument, 0, 15, 1, data.trackSettings[data.activeTrack].instrument, 
+  [ this, applyTrackInstrument ] (auto *b, auto *v) { // drawHandler
+    char name[10];
+    char sub[10];
+    liveSeq.getInstrumentName(selectedTrackDevice, v->getValue(), name, sub);
+    b->draw(name, sub, TouchButton::BUTTON_ACTIVE);
+    applyTrackInstrument->drawNow();
+  });
+
+  toolsPages[TOOLS_SEQ].push_back(currentTrackInstrument);
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("ACTIONS", "", TouchButton::BUTTON_LABEL);
@@ -520,8 +530,11 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
 
     //check if update track instrument selection
     if((isLayerViewActive == false) && (currentTools == TOOLS_SEQ)) {
-      selectedTrackInstument = data.trackSettings[data.activeTrack].instrument;
-      currentTrackInstument->drawNow(); // update currently selected track
+      selectedTrackDevice = data.trackSettings[data.activeTrack].device;
+      selectedTrackInstrument = data.trackSettings[data.activeTrack].instrument;
+      // update currently selected track
+      currentTrackDevice->drawNow();
+      currentTrackInstrument->drawNow();
     }
     
     trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;

@@ -10,6 +10,7 @@
 class UI_LiveSequencer {
 public:
   UI_LiveSequencer(LiveSequencer &sequencer, LiveSequencer::LiveSeqData &d);
+  void init(void);
   void showDirectMappingWarning(uint8_t inChannel);
   void processLCDM(void);
   void handleTouchscreen(void);
@@ -38,8 +39,10 @@ private:
   std::vector<TouchButton*> buttonsToolSelect;
 
   TouchButton *lastNoteLabel;
-  ValueButtonRange<uint8_t> *currentTrackInstument;
-  uint8_t selectedTrackInstument;
+  ValueButtonRange<uint8_t> *currentTrackDevice;
+  ValueButtonRange<uint8_t> *currentTrackInstrument;
+  uint8_t selectedTrackDevice = 0;
+  uint8_t selectedTrackInstrument = 0;
 
   UI_LiveSequencer* instance;
   LiveSequencer& liveSeq;

@@ -1186,6 +1186,8 @@ void setup()
 
   braids_update_all_settings();
 
+  liveSeq.initOnce();
+
   // Setup effects
 
   /// dexed chorus

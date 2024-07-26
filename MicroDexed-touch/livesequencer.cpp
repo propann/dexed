@@ -126,7 +126,7 @@ FLASHMEM void LiveSequencer::allTrackNotesOff(const uint8_t track) {
 
 FLASHMEM void LiveSequencer::allLayerNotesOff(const uint8_t track, const uint8_t layer) {
   for (auto note : data.tracks[track].activeNotes[layer]) {
-    handleNoteOff(data.tracks[track].channel, note, 0, data.tracks[track].device);
+    handleNoteOff(data.tracks[track].channel, note, 0, data.trackSettings[track].device);
   }
   data.tracks[track].activeNotes[layer].clear();
 }
@@ -296,7 +296,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
       }
       else {
         const midi::Channel ch = data.tracks[data.activeTrack].channel;
-        const uint8_t device = data.tracks[data.activeTrack].device;
+        const uint8_t device = data.trackSettings[data.activeTrack].device;
         switch (event) {
         case midi::AfterTouchChannel:
           handleAfterTouch(ch, note);
@@ -465,7 +465,7 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
   if (playIterator != data.eventsList.end()) {
     const bool isMuted = (playIterator->source == EventSource::EVENT_PATTERN) && (data.tracks[playIterator->track].layerMutes & (1 << playIterator->layer));
     const midi::Channel channel = data.tracks[playIterator->track].channel;
-    const uint8_t device = data.tracks[playIterator->track].device;
+    const uint8_t device = data.trackSettings[playIterator->track].device;
 
     switch (playIterator->event) {
     case midi::ControlChange:
@@ -698,7 +698,7 @@ FLASHMEM void LiveSequencer::playNextArpNote(void) {
 
 FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote arp) {
   const midi::Channel channel = data.tracks[arp.track].channel;
-  const midi::Channel device = data.tracks[arp.track].device;
+  const midi::Channel device = data.trackSettings[arp.track].device;
 
   for (auto& n : arp.notes) {
     switch (type) {
@@ -721,6 +721,10 @@ FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote ar
       data.pendingEvents.emplace_back(newEvent);
     }*/
   }
+}
+
+FLASHMEM void LiveSequencer::initOnce(void) {
+  ui_liveSeq->init();
 }
 
 FLASHMEM void LiveSequencer::init(void) {
@@ -940,15 +944,18 @@ FLASHMEM void LiveSequencer::checkAddMetronome(void) {
   }
 }
 
-FLASHMEM void LiveSequencer::changeTrackInstrument(uint8_t track, uint8_t newInstrument) {
-  DBG_LOG(printf("change track %i instrument to %i\n", track, newInstrument));
+FLASHMEM void LiveSequencer::changeTrackInstrument(uint8_t track, uint8_t newDevice, uint8_t newInstrument) {
+  DBG_LOG(printf("change track %i to device %i and instrument %i\n", track, newDevice, newInstrument));
   allTrackNotesOff(track);
+  data.trackSettings[track].device = newDevice;
   data.trackSettings[track].instrument = newInstrument;
   updateTrackChannels();
 }
 
 FLASHMEM void LiveSequencer::loadOldTrackInstruments(void) {
   for (uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+    data.trackSettings[i].device = DEVICE_INTERNAL;
+    
     switch (seq.track_type[i]) {
     case 0:
       data.trackSettings[i].instrument = INSTR_DRUM;
@@ -992,116 +999,151 @@ FLASHMEM void LiveSequencer::loadOldTrackInstruments(void) {
 
 FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
   updateInstrumentChannels();
+  char temp_char[10];
 
   for (uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+    const uint8_t device = data.trackSettings[i].device;
     const uint8_t instrument = data.trackSettings[i].instrument;
 
     data.tracks[i].screen = nullptr;
     data.tracks[i].screenSetupFn = nullptr;
-    data.tracks[i].device = 0; // default to internal
-    getInstrumentName(instrument, data.tracks[i].name);
+
+    getInstrumentName(device, instrument, temp_char, data.tracks[i].name);
 
     if (initial) {
       data.trackSettings[i].quantizeDenom = 1; // default: no quantization
     }
-    switch (instrument) {
-    case INSTR_DRUM:
-      data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
-      data.tracks[i].screen = UI_func_drums;
-      if (initial) {
-        data.trackSettings[i].quantizeDenom = 16; // default: drum quantize to 1/16
+    switch (device) {
+    case DEVICE_INTERNAL:
+      switch (instrument) {
+      case INSTR_DRUM:
+        data.tracks[i].channel = static_cast<midi::Channel>(drum_midi_channel);
+        data.tracks[i].screen = UI_func_drums;
+        if (initial) {
+          data.trackSettings[i].quantizeDenom = 16; // default: drum quantize to 1/16
+        }
+        break;
+
+      case INSTR_DX1:
+      case INSTR_DX2:
+        data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[instrument - 1].midi_channel);
+        data.tracks[i].screen = UI_func_voice_select;
+        data.tracks[i].screenSetupFn = (instrument == 1) ? (SetupFn)selectDexed0 : (SetupFn)selectDexed1;
+        break;
+
+      case INSTR_EP:
+        data.tracks[i].channel = static_cast<midi::Channel>(configuration.epiano.midi_channel);
+        data.tracks[i].screen = UI_func_epiano;
+        break;
+
+      case INSTR_MS1:
+      case INSTR_MS2:
+        data.tracks[i].channel = microsynth[instrument - 4].midi_channel;
+        data.tracks[i].screen = UI_func_microsynth;
+        data.tracks[i].screenSetupFn = (instrument == 4) ? (SetupFn)selectMs0 : (SetupFn)selectMs1;
+        break;
+
+      case INSTR_BRD:
+        data.tracks[i].channel = braids_osc.midi_channel;
+        data.tracks[i].screen = UI_func_braids;
+        break;
+
+      default:
+        data.tracks[i].channel = 99; // probably unused
+        break;
       }
       break;
 
-    case INSTR_DX1:
-    case INSTR_DX2:
-      data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[instrument - 1].midi_channel);
-      data.tracks[i].screen = UI_func_voice_select;
-      data.tracks[i].screenSetupFn = (instrument == 1) ? (SetupFn)selectDexed0 : (SetupFn)selectDexed1;
-      break;
-
-    case INSTR_EP:
-      data.tracks[i].channel = static_cast<midi::Channel>(configuration.epiano.midi_channel);
-      data.tracks[i].screen = UI_func_epiano;
-      break;
-
-    case INSTR_MS1:
-    case INSTR_MS2:
-      data.tracks[i].channel = microsynth[instrument - 4].midi_channel;
-      data.tracks[i].screen = UI_func_microsynth;
-      data.tracks[i].screenSetupFn = (instrument == 4) ? (SetupFn)selectMs0 : (SetupFn)selectMs1;
-      break;
-
-    case INSTR_BRD:
-      data.tracks[i].channel = braids_osc.midi_channel;
-      data.tracks[i].screen = UI_func_braids;
-
-    default:
-      if(instrument <= INSTR_MAX) {
-        // various other MIDI destinations, each of them has it's own 16 MIDI channels:
-        //  7 - 22 USB MIDI
-        // 23 - 38 DIN MIDI
-        // 39 - 54 INT USB MIDI
-        if (instrument >= INSTR_MIDI_INT_START) { // track is for internal Micro USB MIDI Port
-          data.tracks[i].channel = instrument - INSTR_MIDI_INT_START;
-          data.tracks[i].device = 3;
-        }
-        else if (instrument >= INSTR_MIDI_DIN_START) { // track is for external DIN/TRS MIDI Port
-          data.tracks[i].channel = instrument - INSTR_MIDI_DIN_START;
-          data.tracks[i].device = 2;
-        }
-        else if(instrument >= INSTR_MIDI_USB_START) { // track is for external USB MIDI Port
-          data.tracks[i].channel = instrument - INSTR_MIDI_USB_START;
-          data.tracks[i].device = 1;
-        }
-      }
+    case DEVICE_MIDI_USB:
+    case DEVICE_MIDI_DIN:
+    case DEVICE_MIDI_INT:
+      data.tracks[i].channel = instrument; // 0 - 15
       break;
     }
   }
 }
 
-FLASHMEM void LiveSequencer::getInstrumentName(uint8_t instrument, char *name) const {
-  switch (instrument) {
-  case INSTR_DRUM:
-    sprintf(name, "DRM");
+FLASHMEM void LiveSequencer::getDeviceName(uint8_t device, char *name, char *sub) const {
+  switch (device) {
+  case DEVICE_INTERNAL:
+    sprintf(name, "DEVICE");
+    sprintf(sub, "MDT");
     break;
 
-  case INSTR_DX1:
-  case INSTR_DX2:
-    sprintf(name, "DX%i", instrument);
+  case DEVICE_MIDI_USB:
+    sprintf(name, "MIDI");
+    sprintf(sub, "USB");
     break;
 
-  case INSTR_EP:
-    sprintf(name, "EP");
+  case DEVICE_MIDI_DIN:
+    sprintf(name, "MIDI");
+    sprintf(sub, "DIN");
     break;
 
-  case INSTR_MS1:
-  case INSTR_MS2:
-    sprintf(name, "MS%i", instrument - 3);
-    break;
-
-  case INSTR_BRD:
-    sprintf(name, "BRD");
+  case DEVICE_MIDI_INT:
+    sprintf(name, "MIDI");
+    sprintf(sub, "INT");
     break;
 
   default:
-    if(instrument <= INSTR_MAX) {
-      //  7 - 22 USB MIDI
-      // 23 - 38 DIN MIDI
-      // 39 - 54 INT USB MIDI
-      // various other MIDI destinations, each of them has it's own 16 MIDI channels
-      if (instrument >= INSTR_MIDI_INT_START) { // track is for internal Micro USB MIDI Port
-        sprintf(name, "INT%i", instrument - INSTR_MIDI_INT_START);
-      }
-      else if (instrument >= INSTR_MIDI_DIN_START) { // track is for external DIN/TRS MIDI Port
-        sprintf(name, "DIN%i", instrument - INSTR_MIDI_DIN_START);
-      }
-      else if(instrument >= INSTR_MIDI_USB_START) { // track is for external USB MIDI Port
-        sprintf(name, "USB%i", instrument - INSTR_MIDI_USB_START);
-      }
-    } else {
-      sprintf(name, "NONE");
+    sprintf(name, "NONE");
+    sprintf(sub, " ");
+    break;
+  }
+}
+
+FLASHMEM void LiveSequencer::getInstrumentName(uint8_t device, uint8_t instrument, char *name, char *sub) const {
+  switch (device) {
+  case DEVICE_INTERNAL:
+    sprintf(name, "INSTR");
+
+    switch (instrument) {
+    case INSTR_DRUM:
+      sprintf(sub, "DRM");
+      break;
+
+    case INSTR_DX1:
+    case INSTR_DX2:
+      sprintf(sub, "DX%i", instrument);
+      break;
+
+    case INSTR_EP:
+      sprintf(sub, "EP");
+      break;
+
+    case INSTR_MS1:
+    case INSTR_MS2:
+      sprintf(sub, "MS%i", instrument - 3);
+      break;
+
+    case INSTR_BRD:
+      sprintf(sub, "BRD");
+      break;
+
+    default:
+      sprintf(sub, "-");
+      break;
     }
+    break;
+  
+  case DEVICE_MIDI_USB:
+    sprintf(name, "CHANNEL");
+    sprintf(sub, "USB %02i", instrument);
+    break;
+
+  case DEVICE_MIDI_DIN:
+    sprintf(name, "CHANNEL");
+    sprintf(sub, "DIN %02i", instrument);
+    break;
+
+  case DEVICE_MIDI_INT:
+    sprintf(name, "CHANNEL");
+    sprintf(sub, "INT %02i", instrument);
+    break;
+
+  default:
+    sprintf(name, "NONE");
+    sprintf(sub, " ");
     break;
   }
 }
