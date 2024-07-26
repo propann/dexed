@@ -32,6 +32,23 @@ public:
     LAYER_MODE_NUM
   };
 
+  enum Device {
+    DEVICE_INTERNAL = 0,
+    DEVICE_MIDI_USB = 1,
+    DEVICE_MIDI_DIN = 2,
+    DEVICE_MIDI_INT = 3
+  };
+
+  enum InternalInstrument {
+    INSTR_DRUM = 0,
+    INSTR_DX1 = 1,
+    INSTR_DX2 = 2,
+    INSTR_EP = 3,
+    INSTR_MS1 = 4,
+    INSTR_MS2 = 5,
+    INSTR_BRD = 6
+  };
+
   struct MidiEvent {
     EventSource source;
     uint16_t patternMs;
@@ -45,8 +62,7 @@ public:
 
   struct Track {
     midi::Channel channel;
-    uint8_t device;
-    char name[4];
+    char name[10];
     uint8_t layerMutes;
     LCDML_FuncPtr_pu8 screen;
     SetupFn screenSetupFn;
@@ -54,6 +70,8 @@ public:
   };
 
   struct TrackSettings {
+    uint8_t device;
+    uint8_t instrument;
     uint8_t layerCount;
     uint8_t quantizeDenom;
     uint8_t velocityLevel; // 0: original, 1 - 10: 10-100%
@@ -147,6 +165,7 @@ public:
   };
 
   LiveSequencer();
+  void initOnce(void);
   LiveSequencer::LiveSeqData* getData(void);
   void songLayerAction(uint8_t layer, LayerMode action);
   void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
@@ -167,6 +186,11 @@ public:
   void setArpEnabled(bool enabled);
   void cleanEvents(void);
   uint32_t timeToMs(uint8_t patternNumber, uint16_t patternMs) const;
+
+  void getDeviceName(uint8_t device, char *name, char *sub) const;
+  void getInstrumentName(uint8_t device, uint8_t instrument, char *name, char *sub) const;
+  void changeTrackInstrument(uint8_t track, uint8_t newDevice, uint8_t newInstrument);
+  void loadOldTrackInstruments(void); // load track instruments from normal sequencer
 
   struct NotePair {
     MidiEvent& noteOn;
@@ -197,6 +221,7 @@ private:
   void printEvents();
   void loadNextEvent(int timeMs);
   void allTrackNotesOff(const uint8_t track);
+  void allLayerNotesOff(const uint8_t track, const uint8_t layer);
   void allNotesOff(void);
   void playNextEvent(void);
   void playNextArpNote(void);

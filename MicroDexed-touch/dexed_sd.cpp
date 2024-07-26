@@ -1631,7 +1631,10 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
       data_json["num_bars"] = data->numberOfBars;
       data_json["num_tracks"] = LiveSequencer::LIVESEQUENCER_NUM_TRACKS;
+      data_json["hasTrackInstruments"] = true; // has individual track instrument mapping
       for (int i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
+        data_json["device"][i] = data->trackSettings[i].device;
+        data_json["instrument"][i] = data->trackSettings[i].instrument;
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantizeDenom;
         // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
@@ -1713,9 +1716,17 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           deserializeJson(doc, json);
           json.close();
           data->numberOfBars = doc["num_bars"];
-          uint8_t num_tracks = doc["num_tracks"];
+          const uint8_t num_tracks = doc["num_tracks"];
+          const bool hasTrackInstruments = doc["hasTrackInstruments"];
+          if(hasTrackInstruments == false) {
+            liveSeq.loadOldTrackInstruments();
+          }
 
           for (int i = 0; i < num_tracks; i++) {
+            if(hasTrackInstruments) {
+              data->trackSettings[i].device = doc["device"][i];
+              data->trackSettings[i].instrument = doc["instrument"][i];
+            }
             data->trackSettings[i].layerCount = doc["layer_count"][i];
             data->trackSettings[i].quantizeDenom = doc["quant_denom"][i];
             data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
@@ -1741,7 +1752,6 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             readChunk(filename, data->eventsList);
           }
         }
-
 
         for (uint8_t songPattern = 0; songPattern <= lastSongPattern; songPattern++) {
           // read numSongPatternEvents per song pattern
