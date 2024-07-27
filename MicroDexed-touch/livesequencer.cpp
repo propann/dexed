@@ -303,6 +303,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
           break;
 
         case midi::NoteOn:
+          //DBG_LOG(printf("play on ch%i of device %i\n", ch, device));
           handleNoteOnInput(ch, note, velocityActive, device);
 
           if (data.lastPlayedNote != note) {
@@ -1057,7 +1058,7 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
     case DEVICE_MIDI_USB:
     case DEVICE_MIDI_DIN:
     case DEVICE_MIDI_INT:
-      data.tracks[i].channel = instrument; // 0 - 15
+      data.tracks[i].channel = (instrument + 1); // 1 - 16
       break;
     }
   }
@@ -1128,17 +1129,17 @@ FLASHMEM void LiveSequencer::getInstrumentName(uint8_t device, uint8_t instrumen
   
   case DEVICE_MIDI_USB:
     sprintf(name, "CHANNEL");
-    sprintf(sub, "USB %02i", instrument);
+    sprintf(sub, "USB %02i", (instrument + 1));
     break;
 
   case DEVICE_MIDI_DIN:
     sprintf(name, "CHANNEL");
-    sprintf(sub, "DIN %02i", instrument);
+    sprintf(sub, "DIN %02i", (instrument + 1));
     break;
 
   case DEVICE_MIDI_INT:
     sprintf(name, "CHANNEL");
-    sprintf(sub, "INT %02i", instrument);
+    sprintf(sub, "INT %02i", (instrument + 1));
     break;
 
   default:
