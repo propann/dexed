@@ -218,11 +218,11 @@ FLASHMEM void UI_LiveSequencer::init(void) {
   [ ] (auto *b) { // drawHandler
     b->draw("SAVE", "PERF", TouchButton::BUTTON_ACTIVE);
   },
-  [ ] (auto *b) { // clickedHandler
+  [ this ] (auto *b) { // clickedHandler
     // save
     display.setTextSize(2);
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-    openScreen(UI_func_save_performance); // FIXME: should have current id selected
+    openScreen(UI_func_save_performance, data.performanceID);
   }));
 
   // PATTERN TOOLS
