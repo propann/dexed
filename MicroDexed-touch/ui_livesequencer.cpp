@@ -327,9 +327,9 @@ FLASHMEM void UI_LiveSequencer::init(void) {
   [ this ] (auto *v) { // changedHandler
     liveSeq.onArpSourceChanged();
   }));
-  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.velocity, 0, 127, 1, 127,
+  toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[1], GRID_Y[4], data.arpSettings.velocityLevel, 0, 100, 5, 100,
   [ ] (auto *b, auto *v) { // drawHandler
-    b->draw("VELOCTY", v->toString(), TouchButton::BUTTON_ACTIVE);
+    b->draw("VELOCTY", v->toString() + std::string("%"), TouchButton::BUTTON_ACTIVE);
   }));
   toolsPages[TOOLS_ARP].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.arpSettings.latch, 0, 1, 1, 1,
   [ ] (auto *b, auto *v) { // drawHandler
