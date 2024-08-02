@@ -1637,12 +1637,27 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
         data_json["instrument"][i] = data->trackSettings[i].instrument;
         data_json["layer_count"][i] = data->trackSettings[i].layerCount;
         data_json["quant_denom"][i] = data->trackSettings[i].quantizeDenom;
+        data_json["velocity"][i] = data->trackSettings[i].velocityLevel;
         // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
         if (data->songLayerCount == 0) {
           data->trackSettings[i].songStartLayerMutes = data->tracks[i].layerMutes;
         }
         data_json["layer_mutes"][i] = data->trackSettings[i].songStartLayerMutes;
       }
+
+      data_json["hasArpSettings"] = true; // has arp settings
+      data_json["arpAmount"] = data->arpSettings.amount;
+      data_json["arpEnabled"] = data->arpSettings.enabled;
+      data_json["arpFreerun"] = data->arpSettings.freerun;
+      data_json["arpLatch"] = data->arpSettings.latch;
+      data_json["arpLength"] = data->arpSettings.length;
+      data_json["arpLoadPerBar"] = data->arpSettings.loadPerBar;
+      data_json["arpMode"] = data->arpSettings.mode;
+      data_json["arpNoteRepeat"] = data->arpSettings.noteRepeat;
+      data_json["arpOctaves"] = data->arpSettings.octaves;
+      data_json["arpSource"] = data->arpSettings.source;
+      data_json["arpSwing"] = data->arpSettings.swing;
+      data_json["arpVelocity"] = data->arpSettings.velocityLevel;
 
       data_json["num_pattern_events"] = numPatternEvents;
       lastSongPattern = data->lastSongEventPattern;
@@ -1722,6 +1737,22 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             liveSeq.loadOldTrackInstruments();
           }
 
+          const bool hasArpSettings = doc["hasArpSettings"];
+          if(hasArpSettings) {
+            data->arpSettings.amount = doc["arpAmount"];
+            data->arpSettings.enabled = doc["arpEnabled"];
+            data->arpSettings.freerun = doc["arpFreerun"];
+            data->arpSettings.latch = doc["arpLatch"];
+            data->arpSettings.length = doc["arpLength"];
+            data->arpSettings.loadPerBar = doc["arpLoadPerBar"];
+            data->arpSettings.mode = doc["arpMode"];
+            data->arpSettings.noteRepeat = doc["arpNoteRepeat"];
+            data->arpSettings.octaves = doc["arpOctaves"];
+            data->arpSettings.source = doc["arpSource"];
+            data->arpSettings.swing = doc["arpSwing"];
+            data->arpSettings.velocityLevel = doc["arpVelocity"];
+          }
+
           for (int i = 0; i < num_tracks; i++) {
             if(hasTrackInstruments) {
               data->trackSettings[i].device = doc["device"][i];
@@ -1729,6 +1760,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             }
             data->trackSettings[i].layerCount = doc["layer_count"][i];
             data->trackSettings[i].quantizeDenom = doc["quant_denom"][i];
+            data->trackSettings[i].velocityLevel = doc["velocity"][i];
             data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
             data->tracks[i].layerMutes = data->trackSettings[i].songStartLayerMutes;
           }
