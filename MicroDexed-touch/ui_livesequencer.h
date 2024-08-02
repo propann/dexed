@@ -41,6 +41,7 @@ private:
   TouchButton *lastNoteLabel;
   ValueButtonRange<uint8_t> *currentTrackDevice;
   ValueButtonRange<uint8_t> *currentTrackInstrument;
+  TouchButton *selectedTrackLabel;
   uint8_t selectedTrackDevice = 0;
   uint8_t selectedTrackInstrument = 0;
 
@@ -93,7 +94,7 @@ private:
   static void openScreen(LCDML_FuncPtr_pu8 screen, uint8_t p_param = 0);
   void onTrackButtonPressed(uint8_t track);
   void clearBottomArea(void);
-  void selectTools(Tools tools, TouchButton *toolsButton);
+  void selectTools(Tools tools);
   bool isModeToolActive(void);
   void redrawScreen(void);
   void drawGUI(uint16_t &guiFlags);
@@ -103,6 +104,7 @@ private:
   void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color);
   void resetProgressBars(void);
   void drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
+  void updateTrackChannelSetupButtons(void);
 };
 
 #endif //UI_LIVESEQUENCER_H
