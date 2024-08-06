@@ -95,6 +95,7 @@ private:
   void onTrackButtonPressed(uint8_t track);
   void clearBottomArea(void);
   void selectTools(Tools tools);
+  void refreshToolsElements(Tools tools);
   bool isModeToolActive(void);
   void redrawScreen(void);
   void drawGUI(uint16_t &guiFlags);

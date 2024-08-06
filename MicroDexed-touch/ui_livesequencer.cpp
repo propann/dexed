@@ -367,20 +367,6 @@ FLASHMEM void UI_LiveSequencer::selectTools(Tools tools) {
 
     clearBottomArea();    
     guiUpdateFlags |= drawTools;
-
-    // refresh elements
-    switch (tools) {
-    case TOOLS_PATTERN:
-      lastNoteLabel->drawNow();
-      break;
-
-    case TOOLS_SEQ:
-      updateTrackChannelSetupButtons();
-      break;
-      
-    default:
-      break;
-    }
   }
 }
 
@@ -822,6 +808,8 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     display.console = true;
     display.fillRect(0, GRID_Y[2] + TouchButton::BUTTON_SIZE_Y, DISPLAY_WIDTH, 4, MIDDLEGREEN);
 
+    refreshToolsElements(static_cast<Tools>(currentTools));
+
     for(TouchButton *b : toolsPages[currentTools]) {
       b->drawNow();
     }
@@ -834,6 +822,22 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     }
   }
   guiFlags = 0;
+}
+
+FLASHMEM void UI_LiveSequencer::refreshToolsElements(Tools tools) {
+  // refresh contents of current tools elements
+  switch (tools) {
+  case TOOLS_PATTERN:
+    lastNoteLabel->drawNow();
+    break;
+
+  case TOOLS_SEQ:
+    updateTrackChannelSetupButtons();
+    break;
+    
+  default:
+    break;
+  }
 }
 
 FLASHMEM std::string UI_LiveSequencer::getArpModeName(uint8_t mode) {
