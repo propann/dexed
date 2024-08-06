@@ -35,6 +35,7 @@ public:
   EditableValueRange(T &value, T min, T max, T increment, T defaultValue, std::function<void(EditableValue<T> *v)> changed) :
   EditableValue<T>(value, defaultValue, changed), rangeMin(min), rangeMax(max), rangeIncrement(increment) {
   }
+  void changeRange(T min, T max);
   EditableValueBase* cycle(void) override;
   bool next(void) override;
   bool previous(void) override;

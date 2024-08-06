@@ -13624,12 +13624,10 @@ FLASHMEM void UI_func_load_performance(uint8_t param)
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
     char tmp[10];
-    if (seq.state_last_loadsave != 200)
-    {
+    if (seq.state_last_loadsave != 200) {
       temp_int = seq.state_last_loadsave;
     }
-    else
-    {
+    else {
       temp_int = param;
     }
 
@@ -13752,10 +13750,12 @@ FLASHMEM void UI_func_save_performance(uint8_t param)
   {
     char tmp[FILENAME_LEN];
     yesno = false;
-    if (seq.state_last_loadsave != 200)
+    if (seq.state_last_loadsave != 200) {
       temp_int = seq.state_last_loadsave;
-    else
-      temp_int = 0;
+    }
+    else {
+      temp_int = param;
+    }
     mode = 0;
     border1_clear();
     encoderDir[ENC_R].reset();

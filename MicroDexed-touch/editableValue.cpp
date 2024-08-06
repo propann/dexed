@@ -53,6 +53,20 @@ bool EditableValueRange<T>::next(void) {
 }
 
 template <class T>
+void EditableValueRange<T>::changeRange(T min, T max) {
+  T result = this->value;
+  this->rangeMax = max;
+  this->rangeMin = min;
+  if(this->value > max) {
+    result = max;
+  }
+  if(this->value < min) {
+    result = min;
+  }
+  this->checkChanged(result);
+}
+
+template <class T>
 EditableValueBase* EditableValueRange<T>::cycle(void) {
   if(next() == false) {
     this->checkChanged(rangeMin);

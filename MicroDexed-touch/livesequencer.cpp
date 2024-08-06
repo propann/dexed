@@ -704,7 +704,7 @@ FLASHMEM void LiveSequencer::playArp(const midi::MidiType type, const ArpNote ar
   for (auto& n : arp.notes) {
     switch (type) {
     case midi::NoteOn:
-      handleNoteOn(channel, n, data.arpSettings.velocity, device);
+      handleNoteOn(channel, n, data.arpSettings.velocityLevel * 1.27f, device);
       break;
 
     case midi::NoteOff:
