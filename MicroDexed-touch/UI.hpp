@@ -17674,7 +17674,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     border0();
     display.setCursor(CHAR_width_small * 1, 1 * CHAR_height_small);
     display.print(F("SD CARD"));
-    display.setTextColor(GREY2);
+    display.setTextColor(GREY1);
     display.setCursor(CHAR_width_small * 17, 1 * CHAR_height_small);
     display.print("FILES:");
     display.setCursor(CHAR_width_small * 1, 2 * CHAR_height_small);
@@ -17684,7 +17684,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     display.setCursor(CHAR_width_small * 12, 2 * CHAR_height_small);
     volumesize = volume.blocksPerCluster(); // clusters are collections of blocks
     volumesize *= volume.clusterCount();    // we'll have a lot of clusters
-    display.setTextColor(GREY2);
+    display.setTextColor(GREY1);
     display.print("TOTAL: ");
     display.setTextColor(COLOR_PITCHSMP);
     volumesize /= 1024;
@@ -17709,6 +17709,48 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     print_flash_stats();
     flash_printDirectory();
 #endif
+
+#ifdef COMPILE_FOR_PSRAM
+
+    char text1[24];
+    uint32_t total_data_size = 0;
+    uint8_t psram_size = external_psram_size;
+
+
+    display.setTextColor(COLOR_SYSTEXT);
+    display.setCursor(CHAR_width_small * 29, 1 * CHAR_height_small);
+    display.print(F("PSRAM"));
+    display.setCursor(CHAR_width_small * 47, 1 * CHAR_height_small);
+    if (psram_size != 0)
+    {
+      sprintf(text1, "%02d MB", psram_size);
+      display.print(text1);
+    }
+    for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
+      total_data_size = total_data_size + drum_config[i].len;
+    }
+    display.setTextColor(GREY1);
+    display.setCursor(CHAR_width_small * 29, 3 * CHAR_height_small);
+    display.print(F("AUDIO SAMPLES:"));
+    display.setTextColor(COLOR_SYSTEXT);
+    display.setCursor(CHAR_width_small * 29, 5 * CHAR_height_small);
+    sprintf(text1, "%02d KB / %02d KB  USED", (int)total_data_size / 1024, psram_size * 1024);
+    display.print(text1);
+    display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
+    sprintf(text1, "%02d KB  FREE", (int)psram_size * 1024 - total_data_size / 1024);
+    display.print(text1);
+    display.setTextColor(COLOR_SYSTEXT);
+    display.setCursor(CHAR_width_small * 29, 16 * CHAR_height_small);
+    display.print(F("NOTICE"));
+    display.setTextColor(GREY1);
+    display.setCursor(CHAR_width_small * 29, 18 * CHAR_height_small);
+    display.print(F("PS RAM IS ALSO USED FOR"));
+    display.setCursor(CHAR_width_small * 29, 19 * CHAR_height_small);
+    display.print(F("THE AUDIO DELAY EFFECTS"));
+
+
+#endif
+
     print_file_manager_buttons();
     print_file_manager_active_border();
   }
