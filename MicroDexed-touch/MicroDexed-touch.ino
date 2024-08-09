@@ -1307,13 +1307,13 @@ void setup()
     newdigate::audiosample *sample = loader.loadSample(temp_name);
     if(sample != nullptr) {
       // NOTE: removing wav header by incrementing 44 bytes
-      // removing twice the header from length makes playback nice..!?
-      // except for drum note 33: Kick808 and maybe others (clicks at end)
-      static constexpr uint8_t wavHeaderLength16 = 44/2; // bytes
-      sample->sampledata += wavHeaderLength16;
-      sample->samplesize -= 2*wavHeaderLength16; // why?
-      drum_config[i].drum_data = (int8_t*)sample->sampledata;
-      drum_config[i].len = sample->samplesize / 2;
+      // sample playback is nice except for
+      // - drum note 33: Kick808 and maybe others (clicks at end)
+      static constexpr uint8_t wavHeaderLength = 44;// bytes
+      sample->sampledata += wavHeaderLength / 2;    // 16bit words
+      sample->samplesize -= wavHeaderLength;        // bytes
+      drum_config[i].drum_data = sample->sampledata;
+      drum_config[i].len = sample->samplesize / 2;  // 16bit words
     }
   }
 #endif
@@ -2924,7 +2924,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
               sidechain_trigger_b = true;
 
 #if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
-            Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+            Drum[slot]->playRaw(drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 
 #if defined(COMPILE_FOR_FLASH)
