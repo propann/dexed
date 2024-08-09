@@ -7781,7 +7781,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
   {
     // setup function
     registerTouchHandler(handle_touchscreen_sample_editor);
-#ifdef COMPILE_FOR_PROGMEM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
     fm.sample_source = 0;
 #endif
 
@@ -7862,7 +7862,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
       else if (seq.edit_state == 1 && generic_temp_select_menu == 2)
       {
         stop_all_drum_slots();
-#ifdef COMPILE_FOR_PROGMEM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
         fm.sample_source = 0;
 #endif
 
@@ -7957,7 +7957,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
       display.print(F("NO LOOP "));
     }
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_PROGMEM)
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
     if (menuhelper_redraw)
     {
       if (fm.sample_source > 1 && fm.sample_source < 4) // MSP
@@ -15346,6 +15346,9 @@ void UI_func_information(uint8_t param)
     display.setTextColor(RED);
 #ifdef COMPILE_FOR_PROGMEM
     display.print(F("PROGMEM"));
+#endif
+#ifdef COMPILE_FOR_PSRAM
+    display.print(F("PSRAM ;-)"));
 #endif
 #ifdef COMPILE_FOR_FLASH
     display.print(F("FLASH CHIP"));
