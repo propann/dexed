@@ -1312,7 +1312,7 @@ void setup()
       static constexpr uint8_t wavHeaderLength = 44;// bytes
       sample->sampledata += wavHeaderLength / 2;    // 16bit words
       sample->samplesize -= wavHeaderLength;        // bytes
-      drum_config[i].drum_data = sample->sampledata;
+      drum_config[i].drum_data = (uint8_t*)sample->sampledata;
       drum_config[i].len = sample->samplesize / 2;  // 16bit words
     }
   }
@@ -2924,7 +2924,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
               sidechain_trigger_b = true;
 
 #if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
-            Drum[slot]->playRaw(drum_config[d].drum_data, drum_config[d].len, 1);
+            Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 
 #if defined(COMPILE_FOR_FLASH)
