@@ -17737,7 +17737,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     sprintf(text1, "%02d KB / %02d KB  USED", (int)total_data_size / 1024, psram_size * 1024);
     display.print(text1);
     display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
-    sprintf(text1, "%02d KB  FREE", (int)psram_size * 1024 - total_data_size / 1024);
+    sprintf(text1, "%02d KB  FREE", (int)(psram_size * 1024 - total_data_size / 1024));
     display.print(text1);
     display.setTextColor(COLOR_SYSTEXT);
     display.setCursor(CHAR_width_small * 29, 16 * CHAR_height_small);

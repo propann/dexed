@@ -1296,28 +1296,6 @@ void setup()
   AudioProcessorUsageMaxReset();
   AudioMemoryUsageMaxReset();
 
-#ifdef COMPILE_FOR_PSRAM
-  newdigate::flashloader loader;
-  for(int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
-    char temp_name[26];
-    strcpy(temp_name, "/DRUMS/");
-    strcat(temp_name, drum_config[i].name);
-    strcat(temp_name, ".wav");
-    DBG_LOG(printf("load sample %s\n", temp_name));
-    newdigate::audiosample *sample = loader.loadSample(temp_name);
-    if(sample != nullptr) {
-      // NOTE: removing wav header by incrementing 44 bytes
-      // sample playback is nice except for
-      // - drum note 33: Kick808 and maybe others (clicks at end)
-      static constexpr uint8_t wavHeaderLength = 44;// bytes
-      sample->sampledata += wavHeaderLength / 2;    // 16bit words
-      sample->samplesize -= wavHeaderLength;        // bytes
-      drum_config[i].drum_data = (uint8_t*)sample->sampledata;
-      drum_config[i].len = sample->samplesize / 2;  // 16bit words
-    }
-  }
-#endif
-
   // Load voices
 #ifdef DEBUG
   for (uint8_t instance_id = 0; instance_id < NUM_DEXED; instance_id++)
@@ -1438,10 +1416,37 @@ void setup()
   calc_val[0] = sum;
   calc_val[1] = sub;
 
-  //   // invert display colors
-  // #ifdef CAPACITIVE_TOUCH_DISPLAY
-  //   display.invertDisplay(!configuration.sys.invert_colors);
-  // #endif
+#ifdef COMPILE_FOR_PSRAM
+  display.setTextSize(2);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor(1 * CHAR_width, CHAR_height * 1);
+  display.print(F("LOADING SAMPLES:"));
+  display.setCursor(21 * CHAR_width, CHAR_height * 1);
+  display.print(F("/"));
+  display.setCursor(23 * CHAR_width, CHAR_height * 1);
+  display.print(NUM_DRUMSET_CONFIG);
+  newdigate::flashloader loader;
+  for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
+    char temp_name[26];
+    strcpy(temp_name, "/DRUMS/");
+    strcat(temp_name, drum_config[i].name);
+    strcat(temp_name, ".wav");
+    DBG_LOG(printf("load sample %s\n", temp_name));
+    newdigate::audiosample* sample = loader.loadSample(temp_name);
+    if (sample != nullptr) {
+      // NOTE: removing wav header by incrementing 44 bytes
+      static constexpr uint8_t wavHeaderLength = 44;// bytes
+      sample->sampledata += wavHeaderLength / 2;    // 16bit words
+      sample->samplesize -= wavHeaderLength;        // bytes
+      drum_config[i].drum_data = (uint8_t*)sample->sampledata;
+      drum_config[i].len = sample->samplesize / 2;  // 16bit words
+      display.setCursor(18 * CHAR_width, CHAR_height * 1);
+      display.print(i);
+    }
+  }
+  display.setCursor(1 * CHAR_width, CHAR_height * 1);
+  display.print(F("                        "));
+#endif
 
     //SD CARD PRESET CONTENT NOT FOUND, PROVIDE POSSIBLE SOLUTIONS TO USER
   if (!SD.exists("/DEXED/0/0") || !SD.exists("/DEXED/0/99") || !SD.exists("/PERFORMANCE") || !SD.exists("/DRUMS"))
@@ -2164,13 +2169,13 @@ void loop()
           midi_decay_dexed[instance_id]--;
           display.fillRect(187 + (instance_id * 12), 19 + 7, 5, 1, COLOR_BACKGROUND);
         }
-      }
+  }
       if (midi_decay_timer_dexed > MIDI_DECAY_LEVEL_TIME)
       {
         midi_decay_timer_dexed = 0;
       }
       display.console = false;
-    }
+}
     else if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth)) // draw MIDI in activity bars on microsynth page
     {
       for (uint8_t instance_id = 0; instance_id < NUM_MICROSYNTH; instance_id++)
@@ -2210,8 +2215,8 @@ void loop()
       {
         instance_is_playing = true;
         break;
-      }
     }
+  }
     if (instance_is_playing == false)
     {
       for (uint8_t instance_id = 0; instance_id < NUM_DRUMS; instance_id++)
@@ -2352,8 +2357,8 @@ void playWAVFile(const char* filename)
     }
     delay(15);
     display.fillRect(6, 222, DISPLAY_WIDTH - 7, 5, COLOR_BACKGROUND);
+    }
   }
-}
 
 uint8_t msp_playmode_sample_slot[NUM_DRUMS]; // needs to be moved in COMPILE_FOR_FLASH
 
@@ -2999,8 +3004,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
         }
       }
     }
-  }
-}
+      }
+    }
 
 void stop_all_drum_slots()
 {
@@ -3511,14 +3516,14 @@ void handleControlChange(byte inChannel, byte inCtrl, byte inValue)
           MicroDexed[0]->panic();
           MicroDexed[1]->panic();
           break;
-        }
       }
     }
   }
+}
 
   if (configuration.epiano.midi_channel == MIDI_CHANNEL_OMNI || configuration.epiano.midi_channel == inChannel)
     ep.processMidiController(inCtrl, inValue);
-}
+      }
 
 void handleAfterTouch(byte inChannel, byte inPressure)
 {
@@ -3608,7 +3613,7 @@ void handleSystemExclusive(byte* sysex, unsigned len)
       LOG.println(F("E: SysEx end status byte not detected."));
 #endif
       return;
-    }
+  }
 
     if (sysex[1] != 0x43) // check for Yamaha sysex
     {
@@ -3616,7 +3621,7 @@ void handleSystemExclusive(byte* sysex, unsigned len)
       LOG.println(F("E: SysEx vendor not Yamaha."));
 #endif
       return;
-    }
+}
 
 #ifdef DEBUG
     LOG.print(F("Substatus: ["));
@@ -3780,16 +3785,16 @@ void handleSystemExclusive(byte* sysex, unsigned len)
         default:
           MicroDexed[instance_id]->setVoiceDataElement(sysex[4], sysex[5]); // set function parameter
           break;
-        }
-        MicroDexed[instance_id]->ControllersRefresh();
       }
+        MicroDexed[instance_id]->ControllersRefresh();
+    }
 #ifdef DEBUG
       else
       {
         LOG.println(F("E: Unknown SysEx voice or function."));
       }
 #endif
-    }
+  }
     else if (len == 163)
     {
       int32_t bulk_checksum_calc = 0;
@@ -3814,7 +3819,7 @@ void handleSystemExclusive(byte* sysex, unsigned len)
         LOG.println(F("E: Wrong length for SysEx voice bulk upload (not 155)."));
 #endif
         return;
-      }
+}
 
       // checksum calculation
       for (uint8_t i = 0; i < 155; i++)
@@ -3857,7 +3862,7 @@ void handleSystemExclusive(byte* sysex, unsigned len)
         LCDML.OTHER_updateFunc();
         LCDML.loop_menu();
       }
-    }
+      }
     else if (len == 4104)
     {
       if (strlen(receive_bank_filename) > 0 && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sysex_receive_bank))
@@ -3950,23 +3955,23 @@ void handleSystemExclusive(byte* sysex, unsigned len)
           LCDML.FUNC_goBackToMenu();
         }
         memset(receive_bank_filename, 0, FILENAME_LEN);
-      }
+        }
 #ifdef DEBUG
       else
         LOG.println(F("E : Not in MIDI receive bank mode."));
 #endif
-    }
+        }
 #ifdef DEBUG
     else
       LOG.println(F("E : SysEx parameter length wrong."));
 #endif
-  }
-}
+      }
+    }
 
 void handleTimeCodeQuarterFrame(byte data)
 {
   ;
-}
+  }
 
 void handleAfterTouchPoly(byte inChannel, byte inNumber, byte inVelocity)
 {
@@ -4390,21 +4395,21 @@ FLASHMEM void initial_values(bool init)
       LOG.println(configuration.sys.load_at_startup_performance, DEC);
 #endif
       perfNumber = configuration.sys.load_at_startup_performance;
-    }
+  }
     else
     {
 #ifdef DEBUG
       LOG.print(F("Loading initial system data from default performance "));
       LOG.println(STARTUP_NUM_DEFAULT, DEC);
 #endif
-    }
+}
 
     load_performance_and_check_midi(perfNumber);
 
 #ifdef DEBUG
     LOG.println(F("OK, loaded!"));
 #endif
-  }
+}
   else
   { // boot without performance - set some defaults
     configuration.dexed[0].midi_channel = DEFAULT_DEXED_MIDI_CHANNEL_INST0;
@@ -5006,7 +5011,7 @@ FLASHMEM uint8_t check_sd_cards(void)
     LOG.println("SD card is present.");
 #endif
     ret = 1; // card found
-  }
+}
 
   if (ret > 0)
   {
@@ -5039,7 +5044,7 @@ FLASHMEM uint8_t check_sd_cards(void)
 #endif
       ret = 0;
     }
-  }
+}
 
   if (ret > 0)
   {
@@ -5065,7 +5070,7 @@ FLASHMEM uint8_t check_sd_cards(void)
 #endif
 
   return ret;
-}
+  }
 
 FLASHMEM void check_and_create_directories(void)
 {
@@ -5083,7 +5088,7 @@ FLASHMEM void check_and_create_directories(void)
     if (SD.exists(tmp))
     {
       SD.remove(tmp);
-    }
+  }
     else
     {
 #ifdef DEBUG
@@ -5104,7 +5109,7 @@ FLASHMEM void check_and_create_directories(void)
 #endif
           SD.mkdir(tmp);
         }
-      }
+    }
     }
 
     // 2022/11/19 update SD: move banks into /DEXED
@@ -5262,7 +5267,7 @@ FLASHMEM void check_and_create_directories(void)
 
     //   SD.rmdir("/FAVCFG");
     // }
-  }
+}
 #ifdef DEBUG
   LOG.println(F("SD card check end"));
 #endif
