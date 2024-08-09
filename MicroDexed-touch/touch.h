@@ -66,6 +66,10 @@ typedef struct fm_s
   uint8_t sample_source = 0; // 0 = SD, 1 = FLASH
 #endif
 
+#ifdef COMPILE_FOR_PSRAM
+  uint8_t sample_source = 0; // 0 = SD, 1 = FLASH
+#endif
+
 #ifdef COMPILE_FOR_FLASH
   uint8_t sample_source = 1; // 0 = SD, 1 = FLASH
 #endif

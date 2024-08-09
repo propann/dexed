@@ -30,6 +30,7 @@
 #include <MIDI.h>
 #include <SD.h>
 #include <SPI.h>
+#include <flashloader.h>
 
 #include "ILI9341_t3n.h"
 
@@ -44,6 +45,10 @@
 //#include <TeensyVariablePlayback.h>  //new unified library
 
 #ifdef COMPILE_FOR_PROGMEM
+#include <TeensyVariablePlayback.h>
+#endif
+
+#ifdef COMPILE_FOR_PSRAM
 #include <TeensyVariablePlayback.h>
 #endif
 
@@ -89,7 +94,7 @@ using namespace TeensyTimerTool;
 #include "template_mixer.hpp"
 #include "UI.hpp"
 #include "drums.h"
-#include "drumset.h"
+//#include "drumset.h"
 #include "synth_mda_epiano.h"
 #include "effect_stereo_panorama.h"
 
@@ -273,6 +278,11 @@ AudioPlaySdResmp* Drum[NUM_DRUMS];
 
 #ifdef COMPILE_FOR_PROGMEM
 AudioPlayArrayResmp* Drum[NUM_DRUMS];
+#endif
+
+#ifdef COMPILE_FOR_PSRAM
+AudioPlayArrayResmp* Drum[NUM_DRUMS];
+newdigate::flashloader loader;
 #endif
 
 AudioFilterBiquad* Drum_filter[NUM_DRUMS];
@@ -754,6 +764,10 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id)
 #endif
 
 #ifdef COMPILE_FOR_PROGMEM
+  Drum[instance_id] = new AudioPlayArrayResmp();
+#endif
+
+#ifdef COMPILE_FOR_PSRAM
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
 
@@ -1294,6 +1308,24 @@ void setup()
   // Initialize processor and memory measurements
   AudioProcessorUsageMaxReset();
   AudioMemoryUsageMaxReset();
+
+#ifdef COMPILE_FOR_PSRAM
+  for(int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
+    char temp_name[26];
+    strcpy(temp_name, "/DRUMS/");
+    strcat(temp_name, drum_config[i].name);
+    strcat(temp_name, ".wav");
+    DBG_LOG(printf("load sample %s\n", temp_name));
+    newdigate::audiosample *sample = loader.loadSample(temp_name);
+    if(sample != nullptr) {
+      static constexpr uint8_t wavHeaderLength16 = 44/2; // bytes
+      sample->sampledata += wavHeaderLength16;
+      sample->samplesize -= 2*wavHeaderLength16;
+      drum_config[i].drum_data = (int8_t*)sample->sampledata;
+      drum_config[i].len = sample->samplesize / 2;
+    }
+  }     
+#endif
 
   // Load voices
 #ifdef DEBUG
@@ -2881,7 +2913,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           if (sidechain_b_active && d == sidechain_b_sample_number)
             sidechain_trigger_b = true;
 
-#ifdef COMPILE_FOR_PROGMEM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
           if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
           {
 #endif
@@ -2900,8 +2932,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
             if (sidechain_b_active && d == sidechain_b_sample_number)
               sidechain_trigger_b = true;
 
-#ifdef COMPILE_FOR_PROGMEM
-
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
             Drum[slot]->playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
 #endif
 
@@ -2933,7 +2964,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
             //         LOG.println(note_name);
             // #endif
 
-#ifdef COMPILE_FOR_PROGMEM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
           }
 #endif
           // #ifdef DEBUG

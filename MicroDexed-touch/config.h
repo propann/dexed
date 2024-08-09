@@ -123,7 +123,7 @@
 // #define COMPILE_FOR_FLASH  // this is the intended configuration, with SPI FLASH chip
 // #define COMPILE_FOR_SDCARD  // experimental, for testing purposes only
 
-#if !defined(COMPILE_FOR_PROGMEM) && !defined(COMPILE_FOR_FLASH) && !defined(COMPILE_FOR_SDCARD)
+#if !defined(COMPILE_FOR_PROGMEM) && !defined(COMPILE_FOR_FLASH) && !defined(COMPILE_FOR_SDCARD) && !defined(COMPILE_FOR_PSRAM)
 #define COMPILE_FOR_PROGMEM // default
 #endif
 
