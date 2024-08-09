@@ -282,7 +282,6 @@ AudioPlayArrayResmp* Drum[NUM_DRUMS];
 
 #ifdef COMPILE_FOR_PSRAM
 AudioPlayArrayResmp* Drum[NUM_DRUMS];
-newdigate::flashloader loader;
 #endif
 
 AudioFilterBiquad* Drum_filter[NUM_DRUMS];
@@ -1310,6 +1309,7 @@ void setup()
   AudioMemoryUsageMaxReset();
 
 #ifdef COMPILE_FOR_PSRAM
+  newdigate::flashloader loader;
   for(int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
     char temp_name[26];
     strcpy(temp_name, "/DRUMS/");
@@ -1318,13 +1318,16 @@ void setup()
     DBG_LOG(printf("load sample %s\n", temp_name));
     newdigate::audiosample *sample = loader.loadSample(temp_name);
     if(sample != nullptr) {
+      // NOTE: removing wav header by incrementing 44 bytes
+      // removing twice the header from length makes playback nice..!?
+      // except for drum note 33: Kick808 and maybe others (clicks at end)
       static constexpr uint8_t wavHeaderLength16 = 44/2; // bytes
       sample->sampledata += wavHeaderLength16;
-      sample->samplesize -= 2*wavHeaderLength16;
+      sample->samplesize -= 2*wavHeaderLength16; // why?
       drum_config[i].drum_data = (int8_t*)sample->sampledata;
       drum_config[i].len = sample->samplesize / 2;
     }
-  }     
+  }
 #endif
 
   // Load voices
