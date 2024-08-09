@@ -7781,11 +7781,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
   {
     // setup function
     registerTouchHandler(handle_touchscreen_sample_editor);
-#ifdef COMPILE_FOR_PROGMEM
-    fm.sample_source = 0;
-#endif
-
-#ifdef COMPILE_FOR_PSRAM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
     fm.sample_source = 0;
 #endif
 
@@ -7866,10 +7862,7 @@ FLASHMEM void UI_func_sample_editor(uint8_t param)
       else if (seq.edit_state == 1 && generic_temp_select_menu == 2)
       {
         stop_all_drum_slots();
-#ifdef COMPILE_FOR_PROGMEM
-        fm.sample_source = 0;
-#endif
-#ifdef COMPILE_FOR_PSRAM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
         fm.sample_source = 0;
 #endif
 

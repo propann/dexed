@@ -44,11 +44,7 @@
 
 //#include <TeensyVariablePlayback.h>  //new unified library
 
-#ifdef COMPILE_FOR_PROGMEM
-#include <TeensyVariablePlayback.h>
-#endif
-
-#ifdef COMPILE_FOR_PSRAM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
 #include <TeensyVariablePlayback.h>
 #endif
 
@@ -276,11 +272,7 @@ AudioPlayFlashResmp* Drum[NUM_DRUMS];
 AudioPlaySdResmp* Drum[NUM_DRUMS];
 #endif
 
-#ifdef COMPILE_FOR_PROGMEM
-AudioPlayArrayResmp* Drum[NUM_DRUMS];
-#endif
-
-#ifdef COMPILE_FOR_PSRAM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
 AudioPlayArrayResmp* Drum[NUM_DRUMS];
 #endif
 
@@ -762,11 +754,7 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id)
   Drum[instance_id] = new AudioPlaySdResmp();
 #endif
 
-#ifdef COMPILE_FOR_PROGMEM
-  Drum[instance_id] = new AudioPlayArrayResmp();
-#endif
-
-#ifdef COMPILE_FOR_PSRAM
+#if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
   Drum[instance_id] = new AudioPlayArrayResmp();
 #endif
 
