@@ -1743,7 +1743,7 @@ FLASHMEM const char* seq_find_shortname(uint8_t sstep)
   {
     for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++)
     {
-      if (seq.note_data[seq.active_pattern][sstep] == drum_config[d].midinote)
+      if (seq.note_data[seq.active_pattern][sstep] == drum_config[d].midinote && drum_config[d].midinote!=0 )
       {
         shortname = drum_config[d].shortname;
         found = true;
@@ -2368,7 +2368,7 @@ FLASHMEM const char* find_long_drum_name_from_note(uint8_t note)
   const char* name;
   for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++)
   {
-    if (note == drum_config[d].midinote)
+    if (note == drum_config[d].midinote && note!=0 )
     {
       name = basename(drum_config[d].name);
       found = true;

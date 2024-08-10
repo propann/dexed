@@ -150,7 +150,13 @@
 #define NUM_CUSTOM_MIDI_MAPPINGS 18 // Number of Custom Key, CC and Button Mappings
 
 // NUMBER OF SAMPLES IN DRUMSET
-#define NUM_DRUMSET_CONFIG 71
+#define NUM_DRUMSET_CONFIG 87
+
+// #if defined(COMPILE_FOR_PSRAM)
+// #define NUM_DRUMSET_CONFIG 71+16
+// #else
+// #define NUM_DRUMSET_CONFIG 71
+// #endif
 
 // SEQUENCER
 #define NUM_SEQ_PATTERN 32
