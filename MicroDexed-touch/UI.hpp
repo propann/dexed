@@ -615,7 +615,7 @@ void splash_screen1();
 void splash_screen2();
 void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y);
 void displayOp(char id, int x, int y, char link, char fb);
-void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number);
+void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number, const uint8_t psram_entry);
 void _setup_rotation_and_encoders(bool init);
 void sd_go_parent_folder();
 void sd_update_display();
@@ -17202,7 +17202,7 @@ FLASHMEM void print_multisampler_tunebar(uint8_t x, uint8_t y, uint8_t input_val
   display.console = false;
 }
 
-#if defined COMPILE_FOR_FLASH
+#if defined COMPILE_FOR_FLASH || defined COMPILE_FOR_PSRAM
 
 FLASHMEM void print_msp_zone(uint8_t zone, bool fullrefresh_values)
 {
@@ -17341,9 +17341,11 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param)
     display.print(F("Volume"));
     setCursor_textGrid_small(22, 4);
     display.print(F("MIDI Channel"));
-
+#if defined COMPILE_FOR_FLASH
     flash_loadDirectory();
     print_flash_stats();
+#endif
+
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
     display.setCursor(2 * CHAR_width_small, (6) * (CHAR_height_small + 2) - 2);
@@ -17402,12 +17404,21 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param)
 
       if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 8) // file name selection
       {
-        zoneEdited->entry_number = calc_val[state_dir](zoneEdited->entry_number, ENCODER[ENC_R].speed(), 0, fm.flash_sum_files - 1);
-
+#if defined COMPILE_FOR_FLASH 
+        zoneEdited->entry_number = calc_val[state_dir](zoneEdited->entry_number, 1, 0, fm.flash_sum_files - 1);
+#endif
+#if  defined COMPILE_FOR_PSRAM
+        zoneEdited->entry_number = calc_val[state_dir](zoneEdited->entry_number, 1, 0, NUM_DRUMSET_CONFIG - 1);
+#endif
         if (seq.running == true)
           stop_all_drum_slots();
-
-        fill_msz(flash_infos.files[zoneEdited->entry_number - 1].name, seq.active_multisample, generic_temp_select_menu - 3);
+#if defined COMPILE_FOR_FLASH 
+        fill_msz(flash_infos.files[zoneEdited->entry_number - 1].name, seq.active_multisample, generic_temp_select_menu - 3, 0);
+#endif
+#if defined  COMPILE_FOR_PSRAM
+        if ((zoneEdited->entry_number) - 1 >= 0)
+          fill_msz(drum_config[zoneEdited->entry_number - 1].filename, seq.active_multisample, generic_temp_select_menu - 3, zoneEdited->entry_number - 1);
+#endif
       }
       else if (seq.edit_state && generic_temp_select_menu > 2 && seq.selected_track == 7) // tune/pitch
       {
@@ -17471,6 +17482,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param)
         msz[seq.active_multisample][generic_temp_select_menu - 3].low = 0;
         msz[seq.active_multisample][generic_temp_select_menu - 3].vol = 100;
         msz[seq.active_multisample][generic_temp_select_menu - 3].tune = 100;
+        msz[seq.active_multisample][generic_temp_select_menu - 3].psram_entry_number = 0;
       }
       if (seq.edit_state == false)
         seq.edit_state = true;
@@ -17572,9 +17584,7 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param)
     setCursor_textGrid(1, 1);
     display.setTextSize(1);
     display.setTextColor(RED, COLOR_BACKGROUND);
-    display.print(F("ONLY WORKING WITH SERIAL FLASH CHIP"));
-    setCursor_textGrid(1, 2);
-    display.print(F("AND COMPILED FOR FLASH CONFIG"));
+    display.print(F("NOT AVAILABLE IN THIS VERSION"));
     display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   }
 
@@ -23429,11 +23439,16 @@ FLASHMEM char* basename(const char* filename)
   return p ? p + 1 : (char*)filename;
 }
 
-#ifdef COMPILE_FOR_FLASH
-FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number)
+#if defined COMPILE_FOR_FLASH || defined COMPILE_FOR_PSRAM
+FLASHMEM void fill_msz(char filename[], const uint8_t preset_number, const uint8_t zone_number, const uint8_t psram_entry)
 {
-  // fill the multisample zone informations
+  // fill the multisample zone information
   strcpy(msz[preset_number][zone_number].filename, filename);
+
+#if defined COMPILE_FOR_PSRAM
+  if (psram_entry >= 0)
+    msz[preset_number][zone_number].psram_entry_number = psram_entry;
+#endif
 
   // Search root note from filename
   char root_note[4];

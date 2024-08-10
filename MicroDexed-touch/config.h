@@ -958,6 +958,7 @@ typedef struct multisample_zone_s
   uint8_t loop_type;
   uint32_t loop_start;
   uint32_t loop_end;
+  uint8_t psram_entry_number;
   unsigned long filelength; // runtime value, do not store
 } multisample_zone_t;
 
