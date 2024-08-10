@@ -109,7 +109,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_POLY,
     215,
-    "SlapB M1",
+    "SlapBass M1",
     "I_SlapB-M1",
     CHECK_PROGMEM_SAMPLE(DRUM_SlapB_M1),
     "S",
@@ -628,7 +628,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_BASS,
     MIDI_C5,
-    "Phat Kick 1",
+    "phKick 1",
     "phKick1",
     CHECK_PROGMEM_SAMPLE(DRUM_phkick1),
     "B",
@@ -646,7 +646,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_PERCUSSION,
     MIDI_CIS5,
-    "Rims 808",
+    "RimShot 808",
     "Rim808",
     CHECK_PROGMEM_SAMPLE(DRUM_rims1),
     "R",
@@ -733,7 +733,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_HIHAT,
     MIDI_FIS5,
-    "Highhat Closed 808",
+    "HH Closed 808",
     "HhCL1-808",
     CHECK_PROGMEM_SAMPLE(DRUM_hhcl808),
     "H",
@@ -841,7 +841,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_PERCUSSION,
     MIDI_C6,
-    "Cr78 tmb1",
+    "Cr78 Tamb1",
     "CR78Tmb1",
     CHECK_PROGMEM_SAMPLE(DRUM_Cr78tmb1),
     "T",
@@ -859,7 +859,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_PERCUSSION,
     MIDI_CIS6,
-    "Cr78 tmb2",
+    "Cr78 Tamb2",
     "CR78Tmb2",
     CHECK_PROGMEM_SAMPLE(DRUM_Cr78tmb2),
     "T",
