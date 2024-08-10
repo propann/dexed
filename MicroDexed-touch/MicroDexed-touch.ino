@@ -1429,7 +1429,7 @@ void setup()
   for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
     char temp_name[26];
     strcpy(temp_name, "/DRUMS/");
-    strcat(temp_name, drum_config[i].name);
+    strcat(temp_name, drum_config[i].filename);
     strcat(temp_name, ".wav");
     DBG_LOG(printf("load sample %s\n", temp_name));
     newdigate::audiosample* sample = loader.loadSample(temp_name);
@@ -2933,7 +2933,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 #endif
 
 #if defined(COMPILE_FOR_FLASH)
-            snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].name);
+            snprintf_P(temp_name, sizeof(temp_name), PSTR("%s.wav"), drum_config[d].filename);
             Drum[slot]->playWav(temp_name);
             // Drum[slot]->playWav("DMpop.wav");  //Test
             if (sidechain_a_active && d == sidechain_a_sample_number)
