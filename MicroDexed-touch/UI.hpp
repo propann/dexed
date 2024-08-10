@@ -6814,9 +6814,7 @@ void UI_func_drums(uint8_t param)
         display.setTextSize(2);
         setModeColor(editor->select_id);
         show(editor->y, editor->x, 10, number);
-        show(editor->y, editor->x + 3, 10, basename(drum_config[activesample].name));
-
-
+        show(editor->y, editor->x + 3, 20, basename(drum_config[activesample].name));
       });
 
     ui.setCursor(2, 4);
