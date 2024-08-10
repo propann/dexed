@@ -1046,7 +1046,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   {
     DRUM_HIGHTOM,
     MIDI_C7,
-    "Xr Hign Tom",
+    "Xr High Tom",
     "XRHiTom",
     CHECK_PROGMEM_SAMPLE(DRUM_Xrhitom),
     "T",
