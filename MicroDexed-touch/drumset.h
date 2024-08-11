@@ -16,6 +16,7 @@
 
 drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
 {
+
   {
     DRUM_POLY,
     210,
@@ -1264,11 +1265,11 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
 
 {
     DRUM_POLY,
-    12,
+    108,
     "Custom01",
     "Custom01",
     CHECK_PROGMEM_SAMPLE(DRUM_custom01),
-    "C",
+    "P",
     SAMPLE_SIZE(DRUM_custom01),
     0.0,
     0.0,
@@ -1283,11 +1284,11 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
 
 {
     DRUM_POLY,
-    13,
+    109,
     "Custom02",
     "Custom02",
     CHECK_PROGMEM_SAMPLE(DRUM_custom02),
-    "C",
+    "P",
     SAMPLE_SIZE(DRUM_custom02),
     0.0,
     0.0,
@@ -1302,7 +1303,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
 
 {
     DRUM_POLY,
-    14,
+    110,
     "Custom03",
     "Custom03",
     CHECK_PROGMEM_SAMPLE(DRUM_custom03),
@@ -1320,7 +1321,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    15,
+    111,
     "Custom04",
     "Custom04",
     CHECK_PROGMEM_SAMPLE(DRUM_custom04),
@@ -1338,7 +1339,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    16,
+    112,
     "Custom05",
     "Custom05",
     CHECK_PROGMEM_SAMPLE(DRUM_custom05),
@@ -1356,7 +1357,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    17,
+    113,
     "Custom06",
     "Custom06",
     CHECK_PROGMEM_SAMPLE(DRUM_custom06),
@@ -1374,7 +1375,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    18,
+    114,
     "Custom07",
     "Custom07",
     CHECK_PROGMEM_SAMPLE(DRUM_custom07),
@@ -1392,7 +1393,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    19,
+    115,
     "Custom08",
     "Custom08",
     CHECK_PROGMEM_SAMPLE(DRUM_custom08),
@@ -1410,7 +1411,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    20,
+    116,
     "Custom09",
     "Custom09",
     CHECK_PROGMEM_SAMPLE(DRUM_custom09),
@@ -1428,7 +1429,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    21,
+    117,
     "Custom10",
     "Custom10",
     CHECK_PROGMEM_SAMPLE(DRUM_custom10),
@@ -1446,7 +1447,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    22,
+    118,
     "Custom11",
     "Custom11",
     CHECK_PROGMEM_SAMPLE(DRUM_custom11),
@@ -1464,7 +1465,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    23,
+    119,
     "Custom12",
     "Custom12",
     CHECK_PROGMEM_SAMPLE(DRUM_custom12),
@@ -1482,7 +1483,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    24,
+    120,
     "Custom13",
     "Custom13",
     CHECK_PROGMEM_SAMPLE(DRUM_custom13),
@@ -1500,7 +1501,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    25,
+    121,
     "Custom14",
     "Custom14",
     CHECK_PROGMEM_SAMPLE(DRUM_custom14),
@@ -1518,7 +1519,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    26,
+    122,
     "Custom15",
     "Custom15",
     CHECK_PROGMEM_SAMPLE(DRUM_custom15),
@@ -1536,7 +1537,7 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
   },
 {
     DRUM_POLY,
-    27,
+    123,
     "Custom16",
     "Custom16",
     CHECK_PROGMEM_SAMPLE(DRUM_custom16),
@@ -1552,7 +1553,6 @@ drum_config_t drum_config[NUM_DRUMSET_CONFIG] =
     20000,
     0.2
   },
-
 
 {
     DRUM_NONE,

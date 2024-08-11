@@ -762,7 +762,7 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
           set_sample_pitch(i, data_json["pitch"][i]);
           set_sample_p_offset(i, data_json["p_offset"][i]);
           set_sample_pan(i, data_json["pan"][i]);
-          if (data_json["vol_max"][i] != 0.00f)
+          if (data_json["vol_max"][i] > 0.01f)
             set_sample_vol_max(i, data_json["vol_max"][i]);
           else set_sample_vol_max(i, 1.00f);
           set_sample_vol_min(i, data_json["vol_min"][i]);

@@ -1425,13 +1425,54 @@ void setup()
   display.print(F("/"));
   display.setCursor(23 * CHAR_width, CHAR_height * 1);
   display.print(NUM_DRUMSET_CONFIG);
+
+  File customdir = SD.open("/CUSTOM/");
+
+  int i = NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES - 1;
+  while (i < NUM_DRUMSET_CONFIG)
+  {
+    noInterrupts();
+    File f = customdir.openNextFile();
+    if (!f)
+      break;
+    const char* filename = f.name();
+
+    // filter out the ._ mac files
+    if (strstr(filename, "._") != NULL)
+      continue;
+
+    if (filename[0] != 46)
+    {
+      strcpy(drum_config[i].name, filename);
+      strcpy(drum_config[i].filename, filename);
+    }
+    i++;
+  }
+  customdir.close();
+  interrupts();
+
   newdigate::flashloader loader;
-  for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
-    char temp_name[26];
-    strcpy(temp_name, "/DRUMS/");
-    strcat(temp_name, drum_config[i].filename);
-    strcat(temp_name, ".wav");
-    DBG_LOG(printf("load sample %s\n", temp_name));
+  uint8_t midinote = 108;
+  for (int i = 0; i < NUM_DRUMSET_CONFIG - 1; i++) {
+    char temp_name[36];
+
+    if (i < NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES)  // load default samples
+    {
+      strcpy(temp_name, "/DRUMS/");
+      strcat(temp_name, drum_config[i].filename);
+      strcat(temp_name, ".wav");
+      DBG_LOG(printf("load sample %s\n", temp_name));
+    }
+    else  // load custom/user samples from folder CUSTOM
+    {
+      //drum_config[i].midinote = midinote;
+      //midinote++;
+      //set_sample_note(i, midinote);
+      strcpy(temp_name, "/CUSTOM/");
+      strcat(temp_name, drum_config[i].filename);
+      //strcat(temp_name, ".wav"); //file extension is already in array 
+    }
+
     newdigate::audiosample* sample = loader.loadSample(temp_name);
     if (sample != nullptr) {
       // NOTE: removing wav header by incrementing 44 bytes
@@ -1442,6 +1483,10 @@ void setup()
       drum_config[i].len = sample->samplesize / 2;  // 16bit words
       display.setCursor(18 * CHAR_width, CHAR_height * 1);
       display.print(i);
+      display.setCursor(0 * CHAR_width, CHAR_height * 3);
+      display.print(temp_name);
+      display.print("   ");
+      delay(100);
     }
   }
   display.setCursor(1 * CHAR_width, CHAR_height * 1);
@@ -2594,7 +2639,7 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber)
 }
 
 void handleNoteOnInput(byte inChannel, byte inNumber, byte inVelocity, byte device) {
-  // drum played from input selects current drum note if drum screen open
+  //drum played from input selects current drum note if drum screen open
   if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI) {
     const uint8_t drumNote = midiNoteToDrumNote[inNumber];
     drumChanged(drumNote);
@@ -2608,42 +2653,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 {
   wakeScreenFlag = true;
 
-  // clash with virtual keyboard - comment out for now:
-
-  //   if ((seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_seq_pattern_editor)) ||
-  //   (seq.running == false && LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_velocity_level))) {
-  //     // is in pattern editor and sequencer is not running, play the actual sound that will be used for the pattern
-  //     // dexed instance 0+1,  2 = epiano , 3+4 = MicroSynth, 5 = Braids, 6-15 MultiSample 16-31 = MIDI OUT USB, 32-47 MIDI OUT DIN
-
-  //     if (seq.current_track_type_of_active_pattern == 0)  // drums
-  //       inChannel = drum_midi_channel;
-  //     else {
-  //       uint8_t trk = 0;
-  //       trk = seq.instrument[find_track_in_song_where_pattern_is_used(seq.active_pattern)];
-  //       if (trk == 0)
-  //         inChannel = configuration.dexed[0].midi_channel;
-  //       else if (trk == 1)
-  //         inChannel = configuration.dexed[1].midi_channel;
-  //       else if (trk == 2)
-  //         inChannel = configuration.epiano.midi_channel;
-  // #ifdef USE_MICROSYNTH
-  //       else if (trk == 3)
-  //         inChannel = microsynth[0].midi_channel;
-  //       else if (trk == 4)
-  //         inChannel = microsynth[1].midi_channel;
-  // #endif
-  // #ifdef USE_BRAIDS
-  //       else if (trk == 5)
-  //         inChannel = braids_osc.midi_channel;
-  // #endif
-  //       else if (trk == 6)
-  //         inChannel = msp[0].midi_channel;
-  //       else if (trk == 7)
-  //         inChannel = msp[1].midi_channel;
-  //     }
-  //   }
-
-  // if ( LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_braids) && device == 4)
   if ((device == 4 || braids_osc.midi_channel == MIDI_CHANNEL_OMNI || braids_osc.midi_channel == inChannel) && inNumber < 119)
   {
     braids_slot++;
@@ -2712,7 +2721,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 
 #if defined(COMPILE_FOR_FLASH) || defined COMPILE_FOR_PSRAM
     // Multisamples
-    //  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_MultiSamplePlay) && seq.running == false) {
     for (uint8_t instance_id = 0; instance_id < NUM_MULTISAMPLES; instance_id++)
     {
       if (msp[instance_id].midi_channel == MIDI_CHANNEL_OMNI || msp[instance_id].midi_channel == inChannel)
@@ -2852,7 +2860,6 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_microsynth))
           {
             midi_decay_timer_microsynth = 0;
-            // midi_decay_microsynth[instance_id] = min(inVelocity / 5, 7);
             midi_decay_microsynth[instance_id] = min(inVelocity / 5, 8);
           }
         }
@@ -4782,8 +4789,6 @@ FLASHMEM void set_fx_params(void)
     }
     chorus_modulator[instance_id]->phase(0);
 
-    // xxxxxxxxxxxxx  03/03/2024
-
     chorus_modulator[instance_id]->frequency(configuration.fx.chorus_frequency[instance_id] / 10.0);
     chorus_modulator[instance_id]->amplitude(mapfloat(configuration.fx.chorus_depth[instance_id], CHORUS_DEPTH_MIN, CHORUS_DEPTH_MAX, 0.0, 1.0));
 
@@ -4938,7 +4943,7 @@ FLASHMEM void set_sys_params(void)
 }
 
 /******************************************************************************
-  HELPERS
+HELPERS
 ******************************************************************************/
 
 FLASHMEM float midi_volume_transform(uint8_t midi_amp)

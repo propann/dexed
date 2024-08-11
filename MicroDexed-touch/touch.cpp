@@ -737,9 +737,9 @@ FLASHMEM void touch_button_oct_up()
 {
   ts.virtual_keyboard_octave++;
 
-  if (ts.virtual_keyboard_instrument == 6 && ts.virtual_keyboard_octave > 6)
+  if (ts.virtual_keyboard_instrument == 6 && ts.virtual_keyboard_octave > 8)
   {
-    ts.virtual_keyboard_octave = 6;
+    ts.virtual_keyboard_octave = 8;
   }
 
   else
@@ -755,10 +755,8 @@ FLASHMEM void touch_button_oct_up()
 }
 FLASHMEM void touch_button_oct_down()
 {
+  if (ts.virtual_keyboard_octave > 0)
   ts.virtual_keyboard_octave--;
-  if (ts.virtual_keyboard_octave < 1) {
-    ts.virtual_keyboard_octave = 1;
-  }
   if (ts.virtual_keyboard_instrument == 6)
     virtual_keyboard();
   print_virtual_keyboard_octave();

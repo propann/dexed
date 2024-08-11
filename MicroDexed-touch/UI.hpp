@@ -20248,7 +20248,7 @@ FLASHMEM void print_perfmod_buttons()
 
 FLASHMEM void print_drumpads()
 {
-  uint8_t offset = 14;
+  uint8_t offset = 14;  
   if (seq.cycle_touch_element == 1 || ts.keyb_in_menu_activated) {
     char tmp[14];
     char tmp2[14];
@@ -20263,7 +20263,7 @@ FLASHMEM void print_drumpads()
 
       snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name);
       snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name[6]);
-      if (x + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+      if (x + 6+ ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
         draw_button_on_grid(x * 9 + 1, 26, tmp, tmp2, 1);
       else
         draw_button_on_grid(x * 9 + 1, 26, "", "", 1);

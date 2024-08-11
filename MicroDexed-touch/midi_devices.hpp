@@ -147,7 +147,6 @@ void handle_generic(byte inChannel, byte inData1, byte inData2, const char* midi
     seq.note_in_velocity = inData2;
     handleNoteOnInput(inChannel, inData1, inData2, 0);
 #ifdef DEBUG
-    strcpy(text, "NoteOn");
 #endif
     break;
   case midi::NoteOff:
