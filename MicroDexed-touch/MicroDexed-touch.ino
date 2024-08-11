@@ -1431,10 +1431,14 @@ void setup()
   int i = NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES - 1;
   while (i < NUM_DRUMSET_CONFIG)
   {
-    noInterrupts();
+    AudioNoInterrupts();
     File f = customdir.openNextFile();
     if (!f)
       break;
+
+      if (f.isDirectory())
+break;
+
     const char* filename = f.name();
 
     // filter out the ._ mac files
@@ -1443,17 +1447,20 @@ void setup()
 
     if (filename[0] != 46)
     {
-      strcpy(drum_config[i].name, filename);
+
       strcpy(drum_config[i].filename, filename);
+        strcpy(drum_config[i].name, filename);
+       // strip_extension(filename, drum_config[i].name, 8);
     }
     i++;
+    f.close();
+
   }
   customdir.close();
-  interrupts();
 
   newdigate::flashloader loader;
   uint8_t midinote = 108;
-  for (int i = 0; i < NUM_DRUMSET_CONFIG - 1; i++) {
+  for (int i = 0; i < NUM_DRUMSET_CONFIG ; i++) {
     char temp_name[36];
 
     if (i < NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES)  // load default samples
@@ -1489,6 +1496,7 @@ void setup()
       delay(100);
     }
   }
+  AudioInterrupts();
   display.setCursor(1 * CHAR_width, CHAR_height * 1);
   display.print(F("                        "));
 #endif

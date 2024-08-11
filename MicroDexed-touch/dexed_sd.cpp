@@ -3735,6 +3735,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
           }
           data_json[i]["zones"]["filename"][j] = zone_filename;
           data_json[i]["zones"]["root"][j] = msz[i][j].rootnote;
+          data_json[i]["zones"]["psram_no"][j] = msz[i][j].psram_entry_number;
           data_json[i]["zones"]["low"][j] = msz[i][j].low;
           data_json[i]["zones"]["high"][j] = msz[i][j].high;
           data_json[i]["zones"]["playmode"][j] = msz[i][j].playmode;
@@ -3745,6 +3746,8 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
           data_json[i]["zones"]["loop_type"][j] = msz[i][j].loop_type;
           data_json[i]["zones"]["loop_start"][j] = msz[i][j].loop_start;
           data_json[i]["zones"]["loop_end"][j] = msz[i][j].loop_end;
+          
+
         }
       }
 
@@ -3819,6 +3822,7 @@ FLASHMEM bool load_sd_multisample_presets_json(uint8_t number)
             if (strlen(msz[i][j].filename) > 0)
               strcat(msz[i][j].filename, ".wav");
             msz[i][j].rootnote = data_json[i]["zones"]["root"][j];
+            msz[i][j].psram_entry_number = data_json[i]["zones"]["psram_no"][j];
             msz[i][j].low = data_json[i]["zones"]["low"][j];
             msz[i][j].high = data_json[i]["zones"]["high"][j];
             msz[i][j].playmode = data_json[i]["zones"]["playmode"][j];
