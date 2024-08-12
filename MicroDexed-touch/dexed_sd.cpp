@@ -754,23 +754,57 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
         serializeJsonPretty(data_json, Serial);
         LOG.println();
 #endif
+
+        // LOG.println(F("length data:"));
+        // LOG.println(   data_json["note"].size() );
+        // LOG.println(F("--------------"));
+
+      // auto convert non-custom performances to new format. Should not hurt for new version data
+        uint8_t offset1 = 0;
+        uint8_t offset2 = 0;
+        boolean oldformat = false;
+
+        if (data_json["note"].size() == 70)  // old size without custom samples
+        {
+          offset1 = NUM_CUSTOM_SAMPLES;
+          oldformat = true;
+        }
+
         seq.drums_volume = data_json["drums_volume"];
         set_drums_volume(seq.drums_volume);
-        for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1; i++)
+        for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1 - offset1; i++)
         {
-          set_sample_note(i, data_json["note"][i]);
-          set_sample_pitch(i, data_json["pitch"][i]);
-          set_sample_p_offset(i, data_json["p_offset"][i]);
-          set_sample_pan(i, data_json["pan"][i]);
+
+          if (i < 6 && oldformat)           //auto format conversion
+          {
+            offset2 = 0;
+          }
+          else if (oldformat)
+          {
+            offset2 = NUM_CUSTOM_SAMPLES;
+          }                                 // conversion end
+
+          set_sample_note(i + offset2, data_json["note"][i]);
+          set_sample_pitch(i + offset2, data_json["pitch"][i]);
+          set_sample_p_offset(i + offset2, data_json["p_offset"][i]);
+          set_sample_pan(i + offset2, data_json["pan"][i]);
           if (data_json["vol_max"][i] > 0.01f)
-            set_sample_vol_max(i, data_json["vol_max"][i]);
-          else set_sample_vol_max(i, 1.00f);
-          set_sample_vol_min(i, data_json["vol_min"][i]);
-          set_sample_reverb_send(i, data_json["reverb_send"][i]);
-          set_sample_filter_mode(i, data_json["f_mode"][i]);
-          set_sample_filter_freq(i, data_json["f_freq"][i]);
-          set_sample_filter_q(i, data_json["f_q"][i]);
+            set_sample_vol_max(i + offset2, data_json["vol_max"][i]);
+          else set_sample_vol_max(i + offset2, 1.00f);
+          set_sample_vol_min(i + offset2, data_json["vol_min"][i]);
+          set_sample_reverb_send(i + offset2, data_json["reverb_send"][i]);
+          set_sample_filter_mode(i + offset2, data_json["f_mode"][i]);
+          set_sample_filter_freq(i + offset2, data_json["f_freq"][i]);
+          set_sample_filter_q(i + offset2, data_json["f_q"][i]);
         }
+
+        if (oldformat) {
+          for (uint8_t i = 6; i < NUM_CUSTOM_SAMPLES + 6; i++)
+          {
+            set_sample_filter_freq(i, 0);
+          }
+        }
+
         return (true);
       }
 #ifdef DEBUG
@@ -1674,7 +1708,7 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       //serializeJsonPretty(data_json, Serial);
       json.close();
     }
-    
+
     // save pattern event chunks
     //Serial.printf("pattern chunks: %i:\n", numPatternChunks);
     std::list<LiveSequencer::MidiEvent>::iterator it = data->eventsList.begin();
@@ -1733,12 +1767,12 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           data->numberOfBars = doc["num_bars"];
           const uint8_t num_tracks = doc["num_tracks"];
           const bool hasTrackInstruments = doc["hasTrackInstruments"];
-          if(hasTrackInstruments == false) {
+          if (hasTrackInstruments == false) {
             liveSeq.loadOldTrackInstruments();
           }
 
           const bool hasArpSettings = doc["hasArpSettings"];
-          if(hasArpSettings) {
+          if (hasArpSettings) {
             data->arpSettings.amount = doc["arpAmount"];
             data->arpSettings.enabled = doc["arpEnabled"];
             data->arpSettings.freerun = doc["arpFreerun"];
@@ -1754,7 +1788,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           }
 
           for (int i = 0; i < num_tracks; i++) {
-            if(hasTrackInstruments) {
+            if (hasTrackInstruments) {
               data->trackSettings[i].device = doc["device"][i];
               data->trackSettings[i].instrument = doc["instrument"][i];
             }
@@ -1889,7 +1923,7 @@ FLASHMEM bool load_sd_sys_json(void)
           GAMEPAD_BUTTON_A = data_json["gp_a"];
           GAMEPAD_BUTTON_B = data_json["gp_b"];
         }
-       
+
         check_configuration_sys();
         set_sys_params();
 
@@ -3309,13 +3343,13 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
           seq.chain_counter[d] = 0;
         }
         load_sd_livesequencer_json(number); // before handleStart()
-update_seq_speed();
+        update_seq_speed();
         if (seq_was_running)
         {
           handleStart();
         }
         else
-          sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max+1), false);
+          sequencer_timer.begin(sequencer, seq.tempo_ms / (seq.ticks_max + 1), false);
 
         return (true);
       }
@@ -3746,7 +3780,7 @@ FLASHMEM bool save_sd_multisample_presets_json(uint8_t number)
           data_json[i]["zones"]["loop_type"][j] = msz[i][j].loop_type;
           data_json[i]["zones"]["loop_start"][j] = msz[i][j].loop_start;
           data_json[i]["zones"]["loop_end"][j] = msz[i][j].loop_end;
-          
+
 
         }
       }

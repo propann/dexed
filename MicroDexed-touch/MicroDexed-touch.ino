@@ -1426,76 +1426,50 @@ void setup()
   display.setCursor(23 * CHAR_width, CHAR_height * 1);
   display.print(NUM_DRUMSET_CONFIG);
 
-  File customdir = SD.open("/CUSTOM/");
-
-  int i = NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES - 1;
-  while (i < NUM_DRUMSET_CONFIG)
-  {
-    AudioNoInterrupts();
-    File f = customdir.openNextFile();
-    if (!f)
-      break;
-
-      if (f.isDirectory())
-break;
-
-    const char* filename = f.name();
-
-    // filter out the ._ mac files
-    if (strstr(filename, "._") != NULL)
-      continue;
-
-    if (filename[0] != 46)
-    {
-
-      strcpy(drum_config[i].filename, filename);
-        strcpy(drum_config[i].name, filename);
-       // strip_extension(filename, drum_config[i].name, 8);
-    }
-    i++;
-    f.close();
-
-  }
-  customdir.close();
-
   newdigate::flashloader loader;
-  uint8_t midinote = 108;
-  for (int i = 0; i < NUM_DRUMSET_CONFIG ; i++) {
+  
+  void loadSample(newdigate::flashloader &loader, uint8_t i, char *path);
+
+for(int i = 0 ; i < 6; i++) {  // load pitched samples
     char temp_name[36];
-
-    if (i < NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES)  // load default samples
-    {
-      strcpy(temp_name, "/DRUMS/");
-      strcat(temp_name, drum_config[i].filename);
-      strcat(temp_name, ".wav");
-      DBG_LOG(printf("load sample %s\n", temp_name));
-    }
-    else  // load custom/user samples from folder CUSTOM
-    {
-      //drum_config[i].midinote = midinote;
-      //midinote++;
-      //set_sample_note(i, midinote);
-      strcpy(temp_name, "/CUSTOM/");
-      strcat(temp_name, drum_config[i].filename);
-      //strcat(temp_name, ".wav"); //file extension is already in array 
-    }
-
-    newdigate::audiosample* sample = loader.loadSample(temp_name);
-    if (sample != nullptr) {
-      // NOTE: removing wav header by incrementing 44 bytes
-      static constexpr uint8_t wavHeaderLength = 44;// bytes
-      sample->sampledata += wavHeaderLength / 2;    // 16bit words
-      sample->samplesize -= wavHeaderLength;        // bytes
-      drum_config[i].drum_data = (uint8_t*)sample->sampledata;
-      drum_config[i].len = sample->samplesize / 2;  // 16bit words
-      display.setCursor(18 * CHAR_width, CHAR_height * 1);
-      display.print(i);
-      display.setCursor(0 * CHAR_width, CHAR_height * 3);
-      display.print(temp_name);
-      display.print("   ");
-      delay(100);
-    }
+    strcpy(temp_name, "/DRUMS/");
+    strcat(temp_name, drum_config[i].filename);
+    strcat(temp_name, ".wav");
+    loadSample(loader, i, temp_name);
+    printLoadedSample(i, temp_name);
   }
+
+  // load CUSTOM samples
+  File customdir = SD.open("/CUSTOM/");
+  int i=6;
+  int count=0;
+  do {
+      File f = customdir.openNextFile();
+      if(f && !f.isDirectory()) {
+        const char *name = f.name();
+         if (name[0] != 46) {
+          strcpy(drum_config[i].name, name);
+           strcpy(drum_config[i].filename, name);
+        loadSample(loader, i, name);
+        printLoadedSample(i, name);
+        i++;
+      }
+  }
+   count++;
+  } while (i < NUM_CUSTOM_SAMPLES+6 && count<33 );
+ customdir.close();
+//uint8_t midinote = 108;
+
+  // load drums
+  for(int i = 6+NUM_CUSTOM_SAMPLES ; i < (NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES); i++) {
+    char temp_name[36];
+    strcpy(temp_name, "/DRUMS/");
+    strcat(temp_name, drum_config[i].filename);
+    strcat(temp_name, ".wav");
+    loadSample(loader, i, temp_name);
+    printLoadedSample(i, temp_name);
+  }
+
   AudioInterrupts();
   display.setCursor(1 * CHAR_width, CHAR_height * 1);
   display.print(F("                        "));
@@ -2467,6 +2441,15 @@ void Multi_Sample_Player(byte inNumber, byte inVelocity, byte instance_id)
         // test with envelopes for samples
         //sample_envelope[slot]->noteOn();
 
+// uint8_t p=0;
+//   //pitched sample
+// if (inNumber>209)
+// {
+//   d=inNumber-210;
+// }
+// else
+//  d=inNumber-18;
+
 #if defined(COMPILE_FOR_FLASH)
         Drum[slot]->playWav(msz[presetslot][y].filename);
 #endif
@@ -2889,7 +2872,19 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           }
         }
 
-        const uint8_t d = midiNoteToDrumNote[inNumber];
+      // const uint8_t d = midiNoteToDrumNote[inNumber];
+     // uint8_t d=inNumber-38;  //without changes to array
+
+ uint8_t d = 0;
+
+     //pitched sample
+if (inNumber>209)
+{
+  d=inNumber-210;
+}
+else
+ d=inNumber-18;
+
 
 #ifdef COMPILE_FOR_FLASH
         char temp_name[26];
@@ -3024,6 +3019,27 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
         }
       }
     }
+  }
+}
+
+void printLoadedSample(const uint8_t i, char *name) {
+    display.setCursor(18 * CHAR_width, CHAR_height * 1);
+    display.print(i);
+    display.setCursor(0 * CHAR_width, CHAR_height * 3);
+    display.print(name);
+    display.print("   ");
+    delay(100);
+}
+
+void loadSample(newdigate::flashloader &loader, uint8_t i, char *path) {
+  newdigate::audiosample* sample = loader.loadSample(path);
+  if (sample != nullptr) {
+    // NOTE: removing wav header by incrementing 44 bytes
+    static constexpr uint8_t wavHeaderLength = 44;// bytes
+    sample->sampledata += wavHeaderLength / 2;    // 16bit words
+    sample->samplesize -= wavHeaderLength;        // bytes
+    drum_config[i].drum_data = (uint8_t*)sample->sampledata;
+    drum_config[i].len = sample->samplesize / 2;  // 16bit words
   }
 }
 
