@@ -115,7 +115,6 @@ extern uint8_t mb_global_ratio;
 extern uint8_t drum_midi_channel;
 
 extern float midi_volume_transform(uint8_t midi_amp);
-extern void set_sample_note(uint8_t sample, uint8_t note);
 extern void set_sample_pitch(uint8_t sample, float playbackspeed);
 extern void set_sample_p_offset(uint8_t sample, float s_offset);
 extern void set_sample_pan(uint8_t sample, float s_pan);
@@ -759,7 +758,7 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
         // LOG.println(   data_json["note"].size() );
         // LOG.println(F("--------------"));
 
-      // auto convert non-custom performances to new format. Should not hurt for new version data
+        // auto convert non-custom performances to new format. Should not hurt for new version data
         uint8_t offset1 = 0;
         uint8_t offset2 = 0;
         boolean oldformat = false;
@@ -772,30 +771,27 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
 
         seq.drums_volume = data_json["drums_volume"];
         set_drums_volume(seq.drums_volume);
-        for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1 - offset1; i++)
-        {
-
-          if (i < 6 && oldformat)           //auto format conversion
-          {
-            offset2 = 0;
+        for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1 - offset1; i++) {
+          if (oldformat) {
+            offset2 = (i > 6) ? NUM_CUSTOM_SAMPLES : 0;
           }
-          else if (oldformat)
-          {
-            offset2 = NUM_CUSTOM_SAMPLES;
-          }                                 // conversion end
+          const uint8_t index = i + offset2;
+          // conversion end
 
-          set_sample_note(i + offset2, data_json["note"][i]);
-          set_sample_pitch(i + offset2, data_json["pitch"][i]);
-          set_sample_p_offset(i + offset2, data_json["p_offset"][i]);
-          set_sample_pan(i + offset2, data_json["pan"][i]);
-          if (data_json["vol_max"][i] > 0.01f)
-            set_sample_vol_max(i + offset2, data_json["vol_max"][i]);
-          else set_sample_vol_max(i + offset2, 1.00f);
-          set_sample_vol_min(i + offset2, data_json["vol_min"][i]);
-          set_sample_reverb_send(i + offset2, data_json["reverb_send"][i]);
-          set_sample_filter_mode(i + offset2, data_json["f_mode"][i]);
-          set_sample_filter_freq(i + offset2, data_json["f_freq"][i]);
-          set_sample_filter_q(i + offset2, data_json["f_q"][i]);
+          set_sample_pitch(index, data_json["pitch"][i]);
+          set_sample_p_offset(index, data_json["p_offset"][i]);
+          set_sample_pan(index, data_json["pan"][i]);
+          if (data_json["vol_max"][i] > 0.01f) {
+            set_sample_vol_max(index, data_json["vol_max"][i]);
+          }
+          else {
+            set_sample_vol_max(index, 1.00f);
+          }
+          set_sample_vol_min(index, data_json["vol_min"][i]);
+          set_sample_reverb_send(index, data_json["reverb_send"][i]);
+          set_sample_filter_mode(index, data_json["f_mode"][i]);
+          set_sample_filter_freq(index, data_json["f_freq"][i]);
+          set_sample_filter_q(index, data_json["f_q"][i]);
         }
 
         if (oldformat) {
