@@ -1175,6 +1175,12 @@ FLASHMEM void print_file_manager_buttons()
   draw_button_on_grid(19, 25, "COPY", "PRESET", fm.sd_mode == FM_COPY_PRESETS ? 1 : 0);
   draw_button_on_grid(28, 25, "COPY >", "FLASH", fm.sd_mode == FM_COPY_TO_FLASH ? 1 : 0);
 #endif
+
+#ifdef COMPILE_FOR_PSRAM
+  draw_button_on_grid(19+9, 25, "COPY >", "PSRAM", fm.sd_mode == FM_COPY_TO_PSRAM ? 1 : 0);
+  draw_button_on_grid(28+9, 25, "DELETE", "PSRAM", fm.sd_mode == FM_DELETE_FROM_PSRAM ? 1 : 0);
+#endif
+
   draw_button_on_grid(46, 25, "PLAY", "SAMPLE", fm.sd_mode == FM_PLAY_SAMPLE ? 1 : 0);
 }
 

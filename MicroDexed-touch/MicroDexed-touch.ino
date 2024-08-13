@@ -3025,7 +3025,7 @@ void printLoadedSample(const uint8_t i, const char *name) {
   display.setCursor(1 * CHAR_width, CHAR_height * 3);
   display.print(name);
   display.print("      ");
-  delay(100); // sure to slow down loading just for the texts?
+  //delay(100); // sure to slow down loading just for the texts?
 }
 
 void loadSample(newdigate::flashloader &loader, uint8_t i, const char *path) {

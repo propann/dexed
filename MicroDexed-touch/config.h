@@ -1057,7 +1057,9 @@ enum fm_modes
   FM_DELETE_FILE,
   FM_COPY_PRESETS,
   FM_COPY_TO_FLASH,
-  FM_PLAY_SAMPLE
+  FM_PLAY_SAMPLE,
+  FM_COPY_TO_PSRAM,
+  FM_DELETE_FROM_PSRAM
 };
 
 enum fav_search_direction

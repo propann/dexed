@@ -1743,7 +1743,7 @@ FLASHMEM const char* seq_find_shortname(uint8_t sstep)
   {
     for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++)
     {
-      if (seq.note_data[seq.active_pattern][sstep] == drum_config[d].midinote && drum_config[d].midinote!=0 )
+      if (seq.note_data[seq.active_pattern][sstep] == drum_config[d].midinote && drum_config[d].midinote != 0)
       {
         shortname = drum_config[d].shortname;
         found = true;
@@ -2368,7 +2368,7 @@ FLASHMEM const char* find_long_drum_name_from_note(uint8_t note)
   const char* name;
   for (uint8_t d = 0; d < NUM_DRUMSET_CONFIG - 1; d++)
   {
-    if (note == drum_config[d].midinote && note!=0 )
+    if (note == drum_config[d].midinote && note != 0)
     {
       name = basename(drum_config[d].name);
       found = true;
@@ -17017,6 +17017,77 @@ FLASHMEM void print_flash_stats()
 }
 #endif
 
+#ifdef COMPILE_FOR_PSRAM
+FLASHMEM void psram_printCustomSamplesList()
+{
+  // if (seq.running == false)
+  // {
+  char tmp[6];
+  //fm.flash_cap_rows = 9;
+
+  for (uint8_t i = 6; i < 16; i++)
+  {
+
+    // if (f >= fm.flash_sum_files) {
+    //   fm.flash_cap_rows = f - 1;
+    //   display.console = true;
+    //   display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
+    //   break;
+    // }
+
+    //storage_file_t flash_entry = flash_infos.files[fm.flash_skip_files + f];
+    // if (f == fm.flash_selected_file && fm.active_window == 1)
+      // display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+    // else
+    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+
+    display.setCursor(CHAR_width_small * 29, i * 11);
+    snprintf_P(tmp, sizeof(tmp), PSTR("%02d"), i - 5);
+    display.print(tmp);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    show_smallfont_noGrid(i * 11, CHAR_width_small * 32, 12, drum_config[i].filename);
+
+    display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
+    display.setCursor(CHAR_width_small * 45, i * 11);
+
+    if (drum_config[i].len / 1024 / 1024 > 0)
+    {
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i].len / 1024 / 1024));
+      display.print(tmp);
+      display.print(" MB");
+    }
+    else if (int(drum_config[i].len / 1024) > 0)
+    {
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i].len / 1024));
+      display.print(tmp);
+      display.print(" KB");
+    }
+    else
+    {
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i].len));
+      display.print(tmp);
+      display.print(" B ");
+    }
+
+    // if (f == fm.flash_selected_file)
+    //   strcpy(fm.flash_temp_name, flash_entry.name);
+  }
+
+  // else
+  // {
+  //   display.setTextColor(RED, COLOR_BACKGROUND);
+  //   display.setCursor(CHAR_width_small * 31, 6 * 11);
+  //   display.print(F("NOT AVAILABLE"));
+  //   display.setCursor(CHAR_width_small * 31, 7 * 11);
+  //   display.print(F("WHILE SEQUENCER"));
+  //   display.setCursor(CHAR_width_small * 31, 8 * 11);
+  //   display.print(F("IS PLAYING"));
+  // }
+
+}
+
+#endif
+
 FLASHMEM void print_sampler_keyboard(int x, int y)
 {
   uint8_t offset[5] = { 1, 2, 2, 4, 6 }; //+ is the offset to left
@@ -17747,14 +17818,15 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
     sprintf(text1, "%02d KB  FREE", (int)(psram_size * 1024 - total_data_size / 1024));
     display.print(text1);
-    display.setTextColor(COLOR_SYSTEXT);
-    display.setCursor(CHAR_width_small * 29, 16 * CHAR_height_small);
-    display.print(F("NOTICE"));
-    display.setTextColor(GREY1);
-    display.setCursor(CHAR_width_small * 29, 18 * CHAR_height_small);
-    display.print(F("PS RAM IS ALSO USED FOR"));
-    display.setCursor(CHAR_width_small * 29, 19 * CHAR_height_small);
-    display.print(F("THE AUDIO DELAY EFFECTS"));
+    psram_printCustomSamplesList();
+    // display.setTextColor(COLOR_SYSTEXT);
+    // display.setCursor(CHAR_width_small * 29, 16 * CHAR_height_small);
+    // display.print(F("NOTICE"));
+    // display.setTextColor(GREY1);
+    // display.setCursor(CHAR_width_small * 29, 18 * CHAR_height_small);
+    // display.print(F("PS RAM IS ALSO USED FOR"));
+    // display.setCursor(CHAR_width_small * 29, 19 * CHAR_height_small);
+    // display.print(F("THE AUDIO DELAY EFFECTS"));
 
 
 #endif
@@ -20248,7 +20320,7 @@ FLASHMEM void print_perfmod_buttons()
 
 FLASHMEM void print_drumpads()
 {
-  uint8_t offset = 14;  
+  uint8_t offset = 14;
   if (seq.cycle_touch_element == 1 || ts.keyb_in_menu_activated) {
     char tmp[14];
     char tmp2[14];
@@ -20263,7 +20335,7 @@ FLASHMEM void print_drumpads()
 
       snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name);
       snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name[6]);
-      if (x + 6+ ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+      if (x + 6 + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
         draw_button_on_grid(x * 9 + 1, 26, tmp, tmp2, 1);
       else
         draw_button_on_grid(x * 9 + 1, 26, "", "", 1);
