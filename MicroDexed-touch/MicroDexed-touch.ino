@@ -1449,13 +1449,16 @@ void setup()
       if (name[0] != 46) {
         strcpy(drum_config[i].name, name);
         strcpy(drum_config[i].filename, name);
-        loadSample(loader, i, name);
-        printLoadedSample(i, name);
+        char temp_name[36];
+        strcpy(temp_name, "/CUSTOM/");
+        strcat(temp_name, name);
+        loadSample(loader, i, temp_name);
+        printLoadedSample(i, temp_name);
         i++;
       }
     }
     count++;
-  } while (i < NUM_CUSTOM_SAMPLES+6 && count<33 );
+  } while (i < NUM_CUSTOM_SAMPLES + 6 && count < 33 ); // TODO: eliminate magic numbers
 
   customdir.close();
   //uint8_t midinote = 108;
