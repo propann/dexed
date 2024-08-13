@@ -97,14 +97,15 @@ using namespace TeensyTimerTool;
 #include "livesequencer.h"
 #include <vector>
 
-std::vector<uint8_t> midiNoteToDrumNote;
-
 elapsedMillis midi_start_delay;
 
 uint8_t check_sd_cards(void);
 void check_and_create_directories(void);
 void show_cpu_and_mem_usage(void);
 void initial_values(bool init);
+
+void loadSample(newdigate::flashloader &loader, uint8_t i, const char *path);
+void printLoadedSample(const uint8_t i, const char *name);
 
 #ifdef DEBUG
 void show_configuration(void);
@@ -1428,9 +1429,7 @@ void setup()
 
   newdigate::flashloader loader;
   
-  void loadSample(newdigate::flashloader &loader, uint8_t i, char *path);
-
-for(int i = 0 ; i < 6; i++) {  // load pitched samples
+  for(int i = 0 ; i < 6; i++) {  // load pitched samples
     char temp_name[36];
     strcpy(temp_name, "/DRUMS/");
     strcat(temp_name, drum_config[i].filename);
@@ -1441,27 +1440,28 @@ for(int i = 0 ; i < 6; i++) {  // load pitched samples
 
   // load CUSTOM samples
   File customdir = SD.open("/CUSTOM/");
-  int i=6;
-  int count=0;
+  int i = 6;
+  int count = 0;
   do {
-      File f = customdir.openNextFile();
-      if(f && !f.isDirectory()) {
-        const char *name = f.name();
-         if (name[0] != 46) {
-          strcpy(drum_config[i].name, name);
-           strcpy(drum_config[i].filename, name);
+    File f = customdir.openNextFile();
+    if(f && !f.isDirectory()) {
+      const char *name = f.name();
+      if (name[0] != 46) {
+        strcpy(drum_config[i].name, name);
+        strcpy(drum_config[i].filename, name);
         loadSample(loader, i, name);
         printLoadedSample(i, name);
         i++;
       }
-  }
-   count++;
+    }
+    count++;
   } while (i < NUM_CUSTOM_SAMPLES+6 && count<33 );
- customdir.close();
-//uint8_t midinote = 108;
+
+  customdir.close();
+  //uint8_t midinote = 108;
 
   // load drums
-  for(int i = 6+NUM_CUSTOM_SAMPLES ; i < (NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES); i++) {
+  for(int i = 6 + NUM_CUSTOM_SAMPLES ; i < (NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES); i++) {
     char temp_name[36];
     strcpy(temp_name, "/DRUMS/");
     strcat(temp_name, drum_config[i].filename);
@@ -2629,10 +2629,16 @@ FLASHMEM void learn_cc(byte inChannel, byte inNumber)
   print_custom_mappings();
 }
 
+uint8_t midiNoteToDrumNote(uint8_t note) {
+  // TODO: eliminate magic numbers
+  const uint8_t offset = (note > 209) ? 210 : 18;
+  return note - offset;
+}
+
 void handleNoteOnInput(byte inChannel, byte inNumber, byte inVelocity, byte device) {
   //drum played from input selects current drum note if drum screen open
   if (inChannel == drum_midi_channel || drum_midi_channel == MIDI_CHANNEL_OMNI) {
-    const uint8_t drumNote = midiNoteToDrumNote[inNumber];
+    const uint8_t drumNote = midiNoteToDrumNote(inNumber);
     drumChanged(drumNote);
   }
   // play note
@@ -2872,19 +2878,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           }
         }
 
-      // const uint8_t d = midiNoteToDrumNote[inNumber];
-     // uint8_t d=inNumber-38;  //without changes to array
-
- uint8_t d = 0;
-
-     //pitched sample
-if (inNumber>209)
-{
-  d=inNumber-210;
-}
-else
- d=inNumber-18;
-
+      const uint8_t d = midiNoteToDrumNote(inNumber);
 
 #ifdef COMPILE_FOR_FLASH
         char temp_name[26];
@@ -3022,16 +3016,16 @@ else
   }
 }
 
-void printLoadedSample(const uint8_t i, char *name) {
-    display.setCursor(18 * CHAR_width, CHAR_height * 1);
-    display.print(i);
-    display.setCursor(0 * CHAR_width, CHAR_height * 3);
-    display.print(name);
-    display.print("   ");
-    delay(100);
+void printLoadedSample(const uint8_t i, const char *name) {
+  display.setCursor(18 * CHAR_width, CHAR_height * 1);
+  display.print(i);
+  display.setCursor(1 * CHAR_width, CHAR_height * 3);
+  display.print(name);
+  display.print("      ");
+  delay(100); // sure to slow down loading just for the texts?
 }
 
-void loadSample(newdigate::flashloader &loader, uint8_t i, char *path) {
+void loadSample(newdigate::flashloader &loader, uint8_t i, const char *path) {
   newdigate::audiosample* sample = loader.loadSample(path);
   if (sample != nullptr) {
     // NOTE: removing wav header by incrementing 44 bytes
@@ -4697,17 +4691,6 @@ FLASHMEM void init_configuration(void)
 /******************************************************************************
   PARAMETER-HELPERS
 ******************************************************************************/
-
-void set_sample_note(uint8_t sample, uint8_t note)
-{
-  drum_config[sample].midinote = note;
-
-  // create look up table to find drum notes from midi notes efficiently
-  if (midiNoteToDrumNote.size() < size_t(note + 1)) {
-    midiNoteToDrumNote.resize(note + 1);
-  }
-  midiNoteToDrumNote[note] = sample;
-}
 
 void set_sample_pitch(uint8_t sample, float playbackspeed)
 {
