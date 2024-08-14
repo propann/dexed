@@ -42,8 +42,6 @@
 #include "Adafruit_FT6206.h"
 #endif
 
-//#include <TeensyVariablePlayback.h>  //new unified library
-
 #if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
 #include <TeensyVariablePlayback.h>
 #endif
@@ -1909,9 +1907,9 @@ void preview_sample()
       strcat(fm.sd_full_name, fm.sd_temp_name);
       playWAVFile(fm.sd_full_name);
     }
-    else if (fm.active_window == 1 && strstr(fm.flash_temp_name, ".wav") != NULL)
+    else if (fm.active_window == 1 && strstr(fm.flash_or_psram_temp_name, ".wav") != NULL)
     { // preview flash file
-      playWAVFile(fm.flash_temp_name);
+      playWAVFile(fm.flash_or_psram_temp_name);
     }
     draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 1);
   }

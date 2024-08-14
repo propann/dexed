@@ -204,7 +204,14 @@
 //* AUDIO SOFTWARE SETTINGS
 //*************************************************************************************************
 #define SAMPLE_RATE 44100
-#define AUDIO_MEM 200 //SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 + 14
+//#define AUDIO_MEM 200 //SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 + 14  //not working for me with most compile variants, boot loop, revert to old for now
+
+#ifdef PSRAM
+#define AUDIO_MEM SAMPLE_RATE *NUM_DEXED * 200 / 128000 + 36 + 14 // needs rework when the delay memory is external
+#else
+#define AUDIO_MEM SAMPLE_RATE *NUM_DEXED *DELAY_MAX_TIME / 128000 + 36 + 14
+#endif
+
 
 #ifdef TEENSY_AUDIO_BOARD
 #define SGTL5000_LINEOUT_LEVEL 29
