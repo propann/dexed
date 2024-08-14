@@ -14335,17 +14335,14 @@ FLASHMEM void UI_func_master_effects(uint8_t param)
     encoderDir[ENC_R].reset();
     display.fillScreen(COLOR_BACKGROUND);
 
-#ifdef PSRAM
-    char text1[30];
-    uint8_t size = external_psram_size;
-#endif
-
     setCursor_textGrid_small(1, 22);
     display.setTextColor(GREY2);
     display.setTextSize(1);
 
 
 #ifdef PSRAM
+    char text1[30];
+    uint8_t size = external_psram_size;
     if (size != 0)
     {
       sprintf(text1, "%d MB PSRAM CHIP FOUND, MAX DELAY: 2x %d MS", size, DELAY_MAX_TIME);
@@ -17793,7 +17790,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 
     char text1[24];
     uint32_t total_data_size = 0;
-    uint8_t psram_size = external_psram_size;
+    uint32_t psram_size = external_psram_size * 1048576;
 
 
     display.setTextColor(COLOR_SYSTEXT);
@@ -17808,15 +17805,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
       total_data_size = total_data_size + drum_config[i].len;
     }
+    total_data_size = psram_size - psram_free_bytes;
     display.setTextColor(GREY1);
     display.setCursor(CHAR_width_small * 29, 3 * CHAR_height_small);
     display.print(F("AUDIO SAMPLES:"));
     display.setTextColor(COLOR_SYSTEXT);
     display.setCursor(CHAR_width_small * 29, 5 * CHAR_height_small);
-    sprintf(text1, "%02d KB / %02d KB  USED", (int)total_data_size / 1024, psram_size * 1024);
+    sprintf(text1, "%02d KB / %02d KB  USED", (int)total_data_size / 1024, psram_size / 1024);
     display.print(text1);
     display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
-    sprintf(text1, "%02d KB  FREE", (int)(psram_size * 1024 - total_data_size / 1024));
+    sprintf(text1, "%02d KB  FREE", (int)(psram_size / 1024 - total_data_size / 1024));
     display.print(text1);
     psram_printCustomSamplesList();
     // display.setTextColor(COLOR_SYSTEXT);
