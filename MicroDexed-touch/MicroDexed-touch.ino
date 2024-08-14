@@ -60,6 +60,9 @@
 // SerialFlashChip         myfs;
 // #endif
 
+extern "C" uint8_t external_psram_size;
+uint32_t psram_free_bytes = 0;
+
 #ifdef PSRAM
 #include "effect_delay_ext8.h"
 #endif
@@ -613,7 +616,9 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id)
   delay_fb_mixer[instance_id] = new AudioMixer<2>();
 
 #ifdef PSRAM
-  delay_fx[instance_id] = new AudioEffectDelayExternal8(AUDIO_MEMORY8_EXTMEM, 20000);
+  delay_fx[instance_id] = new AudioEffectDelayExternal8(AUDIO_MEMORY8_EXTMEM, DELAY_MAX_TIME);
+  const uint32_t delay_memory_size = (sizeof(((audio_block_t*) 0)->data[0])) * (DELAY_MAX_TIME*(AUDIO_SAMPLE_RATE_EXACT/1000.0f))+0.5f;
+  psram_free_bytes -= delay_memory_size;
 #else
   delay_fx[instance_id] = new AudioEffectDelay();
 #endif
@@ -1003,6 +1008,10 @@ void setup()
 #endif
     touch_ic_found = true;
   }
+#endif
+
+#ifdef COMPILE_FOR_PSRAM
+  psram_free_bytes = external_psram_size * 1048576;
 #endif
 
   // Setup MIDI devices
@@ -3031,6 +3040,7 @@ void printLoadedSample(const uint8_t i, const char *name) {
 void loadSample(newdigate::flashloader &loader, uint8_t i, const char *path) {
   newdigate::audiosample* sample = loader.loadSample(path);
   if (sample != nullptr) {
+    psram_free_bytes -= sample->samplesize;
     // NOTE: removing wav header by incrementing 44 bytes
     static constexpr uint8_t wavHeaderLength = 44;// bytes
     sample->sampledata += wavHeaderLength / 2;    // 16bit words

@@ -195,21 +195,16 @@
 
 // DELAYTIME
 #ifdef PSRAM
-#define DELAY_MAX_TIME 9999
+#define DELAY_MAX_TIME 10000 // 10s
 #else
-#define DELAY_MAX_TIME 500
+#define DELAY_MAX_TIME 500  // 0.5s
 #endif
 
 //*************************************************************************************************
 //* AUDIO SOFTWARE SETTINGS
 //*************************************************************************************************
 #define SAMPLE_RATE 44100
-
-#ifdef PSRAM
-#define AUDIO_MEM SAMPLE_RATE *NUM_DEXED * 200 / 128000 + 36 + 14 // needs rework when the delay memory is external..
-#else
-#define AUDIO_MEM SAMPLE_RATE *NUM_DEXED *DELAY_MAX_TIME / 128000 + 36 + 14
-#endif
+#define AUDIO_MEM 200 //SAMPLE_RATE * NUM_DEXED * DELAY_MAX_TIME / 128000 + 36 + 14
 
 #ifdef TEENSY_AUDIO_BOARD
 #define SGTL5000_LINEOUT_LEVEL 29
