@@ -48,6 +48,11 @@ extern Realtime_Scope scope;
 extern qix_s qix;
 extern bool touch_ic_found;
 
+#ifdef COMPILE_FOR_PSRAM
+//#include <flashloader.h>
+extern void loadSample(newdigate::flashloader& loader, uint8_t i, const char* path); // not sure if this is ideal
+#endif
+
 #include "synth_mda_epiano.h"
 extern AudioSynthEPiano ep;
 #include "effect_stereo_panorama.h"
@@ -17015,6 +17020,7 @@ FLASHMEM void print_flash_stats()
 #endif
 
 #ifdef COMPILE_FOR_PSRAM
+extern bool psram_slot_state[NUM_CUSTOM_SAMPLES];
 FLASHMEM void psram_printCustomSamplesList()
 {
   // if (seq.running == false)
@@ -17022,50 +17028,45 @@ FLASHMEM void psram_printCustomSamplesList()
   char tmp[6];
   fm.flash_or_psram_cap_rows = 9;
 
-  for (uint8_t i = 6  ; i < 16 ; i++)
+  for (uint8_t i = 6; i < 16; i++)
   {
-
-    // if (f >= fm.flash_or_psram_sum_files) {
-    //   fm.flash_or_psram_cap_rows = f - 1;
-    //   display.console = true;
-    //   display.fillRect(CHAR_width_small, f * 11 + 6 * 11 - 1, CHAR_width_small * 27 - 1, (10 - f) * 11, COLOR_BACKGROUND);
-    //   break;
-    // }
-
-     if (i == fm.flash_or_psram_selected_file+6 && fm.active_window == 1)
-       display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
-     else
-    display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+    if (i == fm.flash_or_psram_selected_file + 6 && fm.active_window == 1)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_PITCHSMP);
+    else
+      display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
 
     display.setCursor(CHAR_width_small * 29, i * 11);
-    snprintf_P(tmp, sizeof(tmp), PSTR("%02d"), i - 5  + fm.flash_or_psram_skip_files);
+    snprintf_P(tmp, sizeof(tmp), PSTR("%02d"), i - 5 + fm.flash_or_psram_skip_files);
     display.print(tmp);
 
-    if (i == fm.flash_or_psram_selected_file+6 && fm.active_window == 1)
-       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
-     else
-       display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    if (i == fm.flash_or_psram_selected_file + 6 && fm.active_window == 1)
+      display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
+    else
+      if (psram_slot_state[i + fm.flash_or_psram_skip_files] == false)
+        display.setTextColor(GREY2, COLOR_BACKGROUND);
+      else
+        display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
 
-    show_smallfont_noGrid(i * 11, CHAR_width_small * 32, 12, drum_config[i+fm.flash_or_psram_skip_files].filename);
+    show_smallfont_noGrid(i * 11, CHAR_width_small * 32, 12, drum_config[i + fm.flash_or_psram_skip_files].filename);
 
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
     display.setCursor(CHAR_width_small * 45, i * 11);
 
-    if (drum_config[i+fm.flash_or_psram_skip_files].len / 1024 / 1024 > 0)
+    if (drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024 > 0)
     {
-      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i+fm.flash_or_psram_skip_files].len / 1024 / 1024));
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024));
       display.print(tmp);
       display.print(" MB");
     }
-    else if (int(drum_config[i+fm.flash_or_psram_skip_files].len / 1024) > 0)
+    else if (int(drum_config[i + fm.flash_or_psram_skip_files].len / 1024) > 0)
     {
-      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i+fm.flash_or_psram_skip_files].len / 1024));
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i + fm.flash_or_psram_skip_files].len / 1024));
       display.print(tmp);
       display.print(" KB");
     }
     else
     {
-      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i+fm.flash_or_psram_skip_files].len));
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i + fm.flash_or_psram_skip_files].len));
       display.print(tmp);
       display.print(" B ");
     }
@@ -17730,6 +17731,41 @@ FLASHMEM void sd_update_display()
 
 }
 
+#ifdef COMPILE_FOR_PSRAM
+FLASHMEM void print_psram_stats_filemanager()
+{
+  char text1[24];
+  uint32_t total_data_size = 0;
+  uint32_t psram_size = external_psram_size * 1048576;
+  display.setTextSize(1);
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 29, 1 * CHAR_height_small);
+  display.print(F("PSRAM"));
+  display.setCursor(CHAR_width_small * 47, 1 * CHAR_height_small);
+  if (psram_size != 0)
+  {
+    sprintf(text1, "%02d MB", (int)psram_size);
+    display.print(text1);
+  }
+  for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
+    total_data_size = total_data_size + drum_config[i].len;
+  }
+  total_data_size = psram_size - psram_free_bytes;
+  display.setTextColor(GREY1, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 29, 3 * CHAR_height_small);
+  display.print(F("MEMORY USED/FREE:"));
+  display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+  display.setCursor(CHAR_width_small * 29, 5 * CHAR_height_small);
+  sprintf(text1, "%04d KB / %04d KB  USED", (int)total_data_size / 1024, (int)(psram_size / 1024));
+  display.print(text1);
+  display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
+  sprintf(text1, "%04d KB  FREE", (int)(psram_size / 1024 - total_data_size / 1024));
+  display.print(text1);
+  fm.flash_or_psram_sum_files = NUM_CUSTOM_SAMPLES;
+  strcpy(fm.sd_new_name, "/CUSTOM");
+}
+#endif
+
 FLASHMEM void UI_func_file_manager(uint8_t param)
 {
   uint32_t volumesize;
@@ -17788,45 +17824,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #endif
 
 #ifdef COMPILE_FOR_PSRAM
-    char text1[24];
-    uint32_t total_data_size = 0;
-    uint32_t psram_size = external_psram_size * 1048576;
-
-
-    display.setTextColor(COLOR_SYSTEXT);
-    display.setCursor(CHAR_width_small * 29, 1 * CHAR_height_small);
-    display.print(F("PSRAM"));
-    display.setCursor(CHAR_width_small * 47, 1 * CHAR_height_small);
-    if (psram_size != 0)
-    {
-      sprintf(text1, "%02d MB", (int)psram_size);
-      display.print(text1);
-    }
-    for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
-      total_data_size = total_data_size + drum_config[i].len;
-    }
-    total_data_size = psram_size - psram_free_bytes;
-    display.setTextColor(GREY1);
-    display.setCursor(CHAR_width_small * 29, 3 * CHAR_height_small);
-    display.print(F("MEMORY USED/FREE:"));
-    display.setTextColor(COLOR_SYSTEXT);
-    display.setCursor(CHAR_width_small * 29, 5 * CHAR_height_small);
-    sprintf(text1, "%04d KB / %04d KB  USED", (int)total_data_size / 1024, (int)(psram_size / 1024));
-    display.print(text1);
-    display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
-    sprintf(text1, "%04d KB  FREE", (int)(psram_size / 1024 - total_data_size / 1024));
-    display.print(text1);
-    fm.flash_or_psram_sum_files=NUM_CUSTOM_SAMPLES;
-    strcpy(fm.sd_new_name, "/CUSTOM");
-    fm.active_window=1;
+    print_psram_stats_filemanager();
+    fm.active_window = 1;
     psram_printCustomSamplesList();
-    fm.active_window=0;
-
+    fm.active_window = 0;
 #endif
 
     print_file_manager_buttons();
     print_file_manager_active_border();
   }
+
   if (LCDML.FUNC_loop()) // ****** LOOP *********
   {
     if ((LCDML.BT_checkDown() && encoderDir[ENC_R].Down()) || (LCDML.BT_checkUp() && encoderDir[ENC_R].Up()))
@@ -17890,196 +17897,49 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #endif
 
     }
+
+#ifdef COMPILE_FOR_FLASH
     if (LCDML.BT_checkEnter() && fm.active_window == 0) // left window, SDCARD
-    {
-#ifdef COMPILE_FOR_FLASH
-      if (fm.sd_mode == FM_COPY_PRESETS) // copy presets dir from SD to flash
+#endif
+
+#ifdef COMPILE_FOR_PSRAM
+      if (LCDML.BT_checkEnter()) // left or right window, PSRAM
+#endif
+
       {
-        display.console = true;
-        display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
-        encoderDir[ENC_R].reset();
-        uint8_t screenline = 0;
-
-        File rootdir = SD.open("/DRUMS");
-        while (1)
-        {
-          // open a file from the SD card
-          File f = rootdir.openNextFile();
-          if (!f)
-            break;
-          const char* filename = f.name();
-
-          // filter out the ._ mac files
-          if (strstr(filename, "._") != NULL)
-            continue;
-
-          if (screenline > 10)
-            screenline = 0;
-          setCursor_textGrid_small(1, 6 + screenline);
-
-          display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
-          // if (filename[0] != 46 && filename[1] != 95)
-          if (filename[0] != 46)
-          {
-            display.print(filename);
-            fill_up_with_spaces_left_window_filemanager();
-            screenline++;
-          }
-          unsigned long length = f.size();
-          // check if this file is already on the Flash chip
-          if (SerialFlash.exists(filename))
-          {
-#ifdef DEBUG
-            LOG.println(F("  already exists on the Flash chip"));
-#endif
-            SerialFlashFile ff = SerialFlash.open(filename);
-            if (ff && ff.size() == f.size())
-            {
-#ifdef DEBUG
-              LOG.println(F("  size is the same, comparing data..."));
-#endif
-              if (compareFiles(f, ff) == true)
-              {
-#ifdef DEBUG
-                LOG.println(F("  files are identical :)"));
-#endif
-                f.close();
-                ff.close();
-                continue; // advance to next file
-              }
-              else
-              {
-#ifdef DEBUG
-                LOG.println(F("  files are different"));
-#endif
-              }
-            }
-            else
-            {
-#ifdef DEBUG
-              LOG.print(F("  size is different, "));
-              LOG.print(ff.size());
-              LOG.println(F(" bytes"));
-#endif
-            }
-            // delete the copy on the Flash chip, if different
-#ifdef DEBUG
-            LOG.println(F("  delete file from Flash chip"));
-#endif
-            SerialFlash.remove(filename);
-          }
-          // if (filename[0] != 46 && filename[1] != 95)
-          if (filename[0] != 46)
-          {
-            // create the file on the Flash chip and copy data
-            if (SerialFlash.create(filename, length))
-            {
-              SerialFlashFile ff = SerialFlash.open(filename);
-              if (ff)
-              {
-#ifdef DEBUG
-                LOG.print(F("  copying"));
-#endif
-                // copy data loop
-                unsigned long count = 0;
-                display.console = true;
-                while (count < length)
-                {
-                  char buf[256];
-                  unsigned int n;
-                  n = f.read(buf, 256);
-                  ff.write(buf, n);
-                  count = count + n;
-                  if (count % 5120 == 0)
-                    display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, count / (f.size() / (14 * CHAR_width_small)), 8, RED);
-                }
-                ff.close();
-                display.fillRect(CHAR_width_small * 38 - 2, CHAR_height_small * 7, (14 * CHAR_width_small) + 4, 8, COLOR_BACKGROUND);
-                flash_loadDirectory();
-                print_flash_stats();
-                flash_printDirectory();
-              }
-              else
-              {
-#ifdef DEBUG
-                LOG.println(F("  error opening freshly created file!"));
-#endif
-              }
-            }
-            else
-            {
-#ifdef DEBUG
-              LOG.println(F("  unable to create file"));
-#endif
-            }
-          }
-          f.close();
-        }
-        rootdir.close();
-        display.console = true;
-        display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
-        flash_loadDirectory();
-        print_flash_stats();
-        flash_printDirectory();
-#ifdef DEBUG
-        LOG.println(F("Finished All Files"));
-#endif
-      }
-      else
-#endif
-        if (fm.sd_is_folder)
-        {
-          if (fm.sd_temp_name[0] == 0x2E && fm.sd_temp_name[1] == 0x2E) // return to parent folder
-          {
-            if (fm.sd_folder_depth < 2)
-            {
-              fm.sd_folder_depth = 0;
-              fm.sd_skip_files = 0;
-              strcpy(fm.sd_new_name, "/");
-            }
-            else
-            {
-              // path has at least one parent folder
-              for (uint8_t count = strlen(fm.sd_new_name); count > 0; count--)
-              {
-                if (fm.sd_new_name[count] == 0x2f)
-                {
-                  fm.sd_new_name[count] = '\0';
-                  break;
-                }
-              }
-              fm.sd_folder_depth--;
-            }
-          }
-          else
-          {
-            fm.sd_skip_files = 0;
-            if (fm.sd_folder_depth > 0)
-              strcat(fm.sd_new_name, "/");
-            strcat(fm.sd_new_name, fm.sd_temp_name);
-            fm.sd_folder_depth++;
-          }
-          fm.sd_selected_file = 0;
-        }
-        else
-          // is a file
-        {
-          if (fm.sd_mode == FM_DELETE_FILE)
-          {
-            strcpy(fm.sd_full_name, fm.sd_new_name);
-            strcat(fm.sd_full_name, "/");
-            strcat(fm.sd_full_name, fm.sd_temp_name);
-            SD.remove(fm.sd_full_name);
-            load_sd_directory();
-          }
 #ifdef COMPILE_FOR_FLASH
-          else if (fm.sd_mode == FM_COPY_TO_FLASH)
+        if (fm.sd_mode == FM_COPY_PRESETS) // copy presets dir from SD to flash
+        {
+          display.console = true;
+          display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+          encoderDir[ENC_R].reset();
+          uint8_t screenline = 0;
+
+          File rootdir = SD.open("/DRUMS");
+          while (1)
           {
-            strcpy(fm.sd_full_name, fm.sd_new_name);
-            strcat(fm.sd_full_name, "/");
-            strcat(fm.sd_full_name, fm.flash_or_psram_temp_name);
-            File f = SD.open(fm.sd_full_name);
+            // open a file from the SD card
+            File f = rootdir.openNextFile();
+            if (!f)
+              break;
             const char* filename = f.name();
+
+            // filter out the ._ mac files
+            if (strstr(filename, "._") != NULL)
+              continue;
+
+            if (screenline > 10)
+              screenline = 0;
+            setCursor_textGrid_small(1, 6 + screenline);
+
+            display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+            // if (filename[0] != 46 && filename[1] != 95)
+            if (filename[0] != 46)
+            {
+              display.print(filename);
+              fill_up_with_spaces_left_window_filemanager();
+              screenline++;
+            }
             unsigned long length = f.size();
             // check if this file is already on the Flash chip
             if (SerialFlash.exists(filename))
@@ -18100,6 +17960,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #endif
                   f.close();
                   ff.close();
+                  continue; // advance to next file
                 }
                 else
                 {
@@ -18122,7 +17983,8 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #endif
               SerialFlash.remove(filename);
             }
-            else
+            // if (filename[0] != 46 && filename[1] != 95)
+            if (filename[0] != 46)
             {
               // create the file on the Flash chip and copy data
               if (SerialFlash.create(filename, length))
@@ -18144,9 +18006,13 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                     ff.write(buf, n);
                     count = count + n;
                     if (count % 5120 == 0)
-                      display.fillRect(241, 80, count / (f.size() / 240) - 2, 8, RED);
+                      display.fillRect(CHAR_width_small * 38, CHAR_height_small * 7, count / (f.size() / (14 * CHAR_width_small)), 8, RED);
                   }
                   ff.close();
+                  display.fillRect(CHAR_width_small * 38 - 2, CHAR_height_small * 7, (14 * CHAR_width_small) + 4, 8, COLOR_BACKGROUND);
+                  flash_loadDirectory();
+                  print_flash_stats();
+                  flash_printDirectory();
                 }
                 else
                 {
@@ -18154,17 +18020,201 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                   LOG.println(F("  error opening freshly created file!"));
 #endif
                 }
-                f.close();
-                // display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);
-                flash_loadDirectory();
-                print_flash_stats();
-                flash_printDirectory();
+              }
+              else
+              {
+#ifdef DEBUG
+                LOG.println(F("  unable to create file"));
+#endif
               }
             }
+            f.close();
           }
+          rootdir.close();
+          display.console = true;
+          display.fillRect(CHAR_width_small * 1, CHAR_height_small * 6, DISPLAY_WIDTH / 2 - CHAR_width_small, CHAR_height_small * 16, COLOR_BACKGROUND);
+          flash_loadDirectory();
+          print_flash_stats();
+          flash_printDirectory();
+#ifdef DEBUG
+          LOG.println(F("Finished All Files"));
 #endif
         }
-    }
+        else
+#endif
+          if (fm.sd_is_folder)
+          {
+            if (fm.sd_temp_name[0] == 0x2E && fm.sd_temp_name[1] == 0x2E) // return to parent folder
+            {
+              if (fm.sd_folder_depth < 2)
+              {
+                fm.sd_folder_depth = 0;
+                fm.sd_skip_files = 0;
+                strcpy(fm.sd_new_name, "/");
+              }
+              else
+              {
+                // path has at least one parent folder
+                for (uint8_t count = strlen(fm.sd_new_name); count > 0; count--)
+                {
+                  if (fm.sd_new_name[count] == 0x2f)
+                  {
+                    fm.sd_new_name[count] = '\0';
+                    break;
+                  }
+                }
+                fm.sd_folder_depth--;
+              }
+            }
+            else
+            {
+              fm.sd_skip_files = 0;
+              if (fm.sd_folder_depth > 0)
+                strcat(fm.sd_new_name, "/");
+              strcat(fm.sd_new_name, fm.sd_temp_name);
+              fm.sd_folder_depth++;
+            }
+            fm.sd_selected_file = 0;
+          }
+          else
+            // is a file
+          {
+            if (fm.sd_mode == FM_DELETE_FILE)
+            {
+              strcpy(fm.sd_full_name, fm.sd_new_name);
+              strcat(fm.sd_full_name, "/");
+              strcat(fm.sd_full_name, fm.sd_temp_name);
+              SD.remove(fm.sd_full_name);
+              load_sd_directory();
+            }
+#ifdef COMPILE_FOR_FLASH
+            else if (fm.sd_mode == FM_COPY_TO_FLASH)
+            {
+              strcpy(fm.sd_full_name, fm.sd_new_name);
+              strcat(fm.sd_full_name, "/");
+              strcat(fm.sd_full_name, fm.flash_or_psram_temp_name);
+              File f = SD.open(fm.sd_full_name);
+              const char* filename = f.name();
+              unsigned long length = f.size();
+              // check if this file is already on the Flash chip
+              if (SerialFlash.exists(filename))
+              {
+#ifdef DEBUG
+                LOG.println(F("  already exists on the Flash chip"));
+#endif
+                SerialFlashFile ff = SerialFlash.open(filename);
+                if (ff && ff.size() == f.size())
+                {
+#ifdef DEBUG
+                  LOG.println(F("  size is the same, comparing data..."));
+#endif
+                  if (compareFiles(f, ff) == true)
+                  {
+#ifdef DEBUG
+                    LOG.println(F("  files are identical :)"));
+#endif
+                    f.close();
+                    ff.close();
+                  }
+                  else
+                  {
+#ifdef DEBUG
+                    LOG.println(F("  files are different"));
+#endif
+                  }
+                }
+                else
+                {
+#ifdef DEBUG
+                  LOG.print(F("  size is different, "));
+                  LOG.print(ff.size());
+                  LOG.println(F(" bytes"));
+#endif
+                }
+                // delete the copy on the Flash chip, if different
+#ifdef DEBUG
+                LOG.println(F("  delete file from Flash chip"));
+#endif
+                SerialFlash.remove(filename);
+              }
+              else
+              {
+                // create the file on the Flash chip and copy data
+                if (SerialFlash.create(filename, length))
+                {
+                  SerialFlashFile ff = SerialFlash.open(filename);
+                  if (ff)
+                  {
+#ifdef DEBUG
+                    LOG.print(F("  copying"));
+#endif
+                    // copy data loop
+                    unsigned long count = 0;
+                    display.console = true;
+                    while (count < length)
+                    {
+                      char buf[256];
+                      unsigned int n;
+                      n = f.read(buf, 256);
+                      ff.write(buf, n);
+                      count = count + n;
+                      if (count % 5120 == 0)
+                        display.fillRect(241, 80, count / (f.size() / 240) - 2, 8, RED);
+                    }
+                    ff.close();
+                  }
+                  else
+                  {
+#ifdef DEBUG
+                    LOG.println(F("  error opening freshly created file!"));
+#endif
+                  }
+                  f.close();
+                  // display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);
+                  flash_loadDirectory();
+                  print_flash_stats();
+                  flash_printDirectory();
+                }
+              }
+            }
+#endif
+
+#ifdef COMPILE_FOR_PSRAM
+            else if (fm.sd_mode == FM_COPY_TO_PSRAM) //copy from SD CUSTOM folder to PSRAM
+            {
+
+              // #ifdef DEBUG
+              //               LOG.print(F("COPY TO PSRAM  "));
+              //               LOG.println(F("----------------"));
+              // #endif
+
+              if (!fm.sd_is_folder && strstr(fm.sd_temp_name, ".wav") != NULL)
+              {
+                strcpy(fm.sd_full_name, fm.sd_new_name);
+                strcat(fm.sd_full_name, "/");
+                strcat(fm.sd_full_name, fm.sd_temp_name);
+                newdigate::flashloader loader;
+                psram_slot_state[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files] = true;
+                // #ifdef DEBUG
+                //                 LOG.println(F("FILE PATH FULL SD: "));
+                //                 LOG.println(fm.sd_full_name);
+                //                 LOG.println(F("FILE SD:"));
+                //                 LOG.println(fm.sd_temp_name);
+                //                 LOG.println(F("Selected file on PSRAM:"));
+                //                 LOG.println(fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files);
+                // #endif
+                loadSample(loader, fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files, fm.sd_full_name);
+                strcpy(drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].name, fm.sd_temp_name);
+                strcpy(drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].filename, fm.sd_temp_name);
+                print_psram_stats_filemanager();
+                psram_printCustomSamplesList();
+              }
+              //  f.close();
+              // display.fillRect(241, 80, 238, 8, COLOR_BACKGROUND);            
+            }
+#endif
+          }
+      }
     if (LCDML.BT_checkEnter() && fm.sd_mode == FM_PLAY_SAMPLE) // preview - compiled for flash
     {
       preview_sample();
@@ -18182,6 +18232,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
       show_smallfont_noGrid(3 * CHAR_height_small, CHAR_width_small * 7, 20, fm.sd_new_name);
       // show_smallfont_noGrid(5 * CHAR_height_small, CHAR_width_small * 1, 20, fm.sd_temp_name);
     }
+
 #ifdef COMPILE_FOR_FLASH
     else if (fm.active_window == 1)
     {

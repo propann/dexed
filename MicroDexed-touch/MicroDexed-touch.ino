@@ -276,6 +276,8 @@ AudioPlaySdResmp* Drum[NUM_DRUMS];
 
 #if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
 AudioPlayArrayResmp* Drum[NUM_DRUMS];
+#include "effect_delay_ext8.h"
+bool psram_slot_state[NUM_CUSTOM_SAMPLES];
 #endif
 
 AudioFilterBiquad* Drum_filter[NUM_DRUMS];
@@ -1446,28 +1448,29 @@ void setup()
   }
 
   // load CUSTOM samples
-  File customdir = SD.open("/CUSTOM/");
-  int i = 6;
-  int count = 0;
-  do {
-    File f = customdir.openNextFile();
-    if(f && !f.isDirectory()) {
-      const char *name = f.name();
-      if (name[0] != 46) {
-        strcpy(drum_config[i].name, name);
-        strcpy(drum_config[i].filename, name);
-        char temp_name[36];
-        strcpy(temp_name, "/CUSTOM/");
-        strcat(temp_name, name);
-        loadSample(loader, i, temp_name);
-        printLoadedSample(i, temp_name);
-        i++;
-      }
-    }
-    count++;
-  } while (i < NUM_CUSTOM_SAMPLES + 6 && count < 33 ); // TODO: eliminate magic numbers
 
-  customdir.close();
+  // File customdir = SD.open("/CUSTOM/");
+  // int i = 6;
+  // int count = 0;
+  // do {
+  //   File f = customdir.openNextFile();
+  //   if(f && !f.isDirectory()) {
+  //     const char *name = f.name();
+  //     if (name[0] != 46) {
+  //       strcpy(drum_config[i].name, name);
+  //       strcpy(drum_config[i].filename, name);
+  //       char temp_name[36];
+  //       strcpy(temp_name, "/CUSTOM/");
+  //       strcat(temp_name, name);
+  //       loadSample(loader, i, temp_name);
+  //       printLoadedSample(i, temp_name);
+  //       i++;
+  //     }
+  //   }
+  //   count++;
+  // } while (i < NUM_CUSTOM_SAMPLES + 6 && count < 33 ); // TODO: eliminate magic numbers
+
+  //customdir.close();
   //uint8_t midinote = 108;
 
   // load drums
@@ -2340,11 +2343,11 @@ void playWAVFile(const char* filename)
       WAV_preview_SD.play(filename);
       while (WAV_preview_SD.isPlaying())
       {
-        display.fillRect(6, 190, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_SD.lengthMillis()) * WAV_preview_SD.positionMillis() + 1, 5, RED);
+        display.fillRect(6, 189, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_SD.lengthMillis()) * WAV_preview_SD.positionMillis() + 1, 7, RED);
         delay(25);
       }
       delay(15);
-      display.fillRect(6, 190, DISPLAY_WIDTH - 7, 5, COLOR_BACKGROUND);
+      display.fillRect(6, 189, DISPLAY_WIDTH - 7, 7, COLOR_BACKGROUND);
     }
 #ifdef COMPILE_FOR_FLASH
     if (fm.active_window == 1)
@@ -2354,11 +2357,11 @@ void playWAVFile(const char* filename)
       WAV_preview_FLASH.play(filename);
       while (WAV_preview_FLASH.isPlaying())
       {
-        display.fillRect(6, 190, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_FLASH.lengthMillis()) * WAV_preview_FLASH.positionMillis() + 1, 5, RED);
+        display.fillRect(6, 189, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_FLASH.lengthMillis()) * WAV_preview_FLASH.positionMillis() + 1, 7, RED);
         delay(25);
       }
       delay(15);
-      display.fillRect(6, 190, DISPLAY_WIDTH - 7, 5, COLOR_BACKGROUND);
+      display.fillRect(6, 189, DISPLAY_WIDTH - 7, 7, COLOR_BACKGROUND);
     }
 #endif
   }

@@ -756,7 +756,7 @@ FLASHMEM void touch_button_oct_up()
 FLASHMEM void touch_button_oct_down()
 {
   if (ts.virtual_keyboard_octave > 0)
-  ts.virtual_keyboard_octave--;
+    ts.virtual_keyboard_octave--;
   if (ts.virtual_keyboard_instrument == 6)
     virtual_keyboard();
   print_virtual_keyboard_octave();
@@ -1177,11 +1177,20 @@ FLASHMEM void print_file_manager_buttons()
 #endif
 
 #ifdef COMPILE_FOR_PSRAM
-  draw_button_on_grid(19+9, 25, "COPY >", "PSRAM", fm.sd_mode == FM_COPY_TO_PSRAM ? 1 : 0);
-  draw_button_on_grid(28+9, 25, "DELETE", "PSRAM", fm.sd_mode == FM_DELETE_FROM_PSRAM ? 1 : 0);
+  draw_button_on_grid(19 + 9, 25, "COPY >", "PSRAM", fm.sd_mode == FM_COPY_TO_PSRAM ? 1 : 0);
+  draw_button_on_grid(28 + 9, 25, "DELETE", "PSRAM", fm.sd_mode == FM_DELETE_FROM_PSRAM ? 1 : 0);
 #endif
 
   draw_button_on_grid(46, 25, "PLAY", "SAMPLE", fm.sd_mode == FM_PLAY_SAMPLE ? 1 : 0);
+
+  if (fm.sd_mode != FM_BROWSE_FILES && fm.sd_mode != FM_PLAY_SAMPLE)
+  {
+    display.setTextSize(1);
+
+    display.setCursor(CHAR_width_small, (CHAR_height_small * 23) + 5);
+    display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
+    display.print(F("SELECT, THEN CONFIRM OPERATION > PUSH ENCODER[R]"));
+  }
 }
 
 FLASHMEM void print_file_manager_active_border()
@@ -1220,6 +1229,8 @@ FLASHMEM void handle_touchscreen_file_manager()
         fm.sd_mode = FM_DELETE_FILE;
         print_file_manager_buttons();
       }
+
+#if defined COMPILE_FOR_FLASH
       else if (check_button_on_grid(19, 25))
       {
         fm.sd_mode = FM_COPY_PRESETS;
@@ -1230,13 +1241,28 @@ FLASHMEM void handle_touchscreen_file_manager()
         fm.sd_mode = FM_COPY_TO_FLASH;
         print_file_manager_buttons();
       }
+#endif
+
+#if defined COMPILE_FOR_FLASH || defined COMPILE_FOR_PSRAM
+      else if (check_button_on_grid(19 + 9, 25))
+      {
+        fm.sd_mode = FM_COPY_TO_PSRAM;
+        print_file_manager_buttons();
+      }
+      else if (check_button_on_grid(28 + 9, 25))
+      {
+        fm.sd_mode = FM_DELETE_FROM_PSRAM;
+        print_file_manager_buttons();
+      }
+#endif
+
       else if (check_button_on_grid(46, 25))
       {
         fm.sd_mode = FM_PLAY_SAMPLE;
         preview_sample();
         print_file_manager_buttons();
       }
-    }
+      }
     // active_window   0 = left window (SDCARD) , 1 = FLASH OR PSRAM
     else if (ts.p.x > 1 && ts.p.x < CHAR_width_small * 29)
     {
@@ -1251,8 +1277,8 @@ FLASHMEM void handle_touchscreen_file_manager()
 
       print_file_manager_active_border();
     }
+    }
   }
-}
 
 FLASHMEM void update_midi_learn_button()
 {
