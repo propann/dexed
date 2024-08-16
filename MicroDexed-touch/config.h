@@ -150,6 +150,7 @@
 #define NUM_CUSTOM_MIDI_MAPPINGS 18 // Number of Custom Key, CC and Button Mappings
 
 #define NUM_CUSTOM_SAMPLES 20
+#define NUM_STATIC_PITCHED_SAMPLES 6
 
 // NUMBER OF SAMPLES IN DRUMSET
 #define NUM_DRUMSET_CONFIG 71 + NUM_CUSTOM_SAMPLES
@@ -351,7 +352,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define MULTIBAND_CONFIG_NAME "multiband"
 #define SIDECHAIN_CONFIG_NAME "sc"
 #define LIVESEQUENCER_CONFIG_NAME "liveseq"
-
+#define SAMPLES_CONFIG_NAME "samples"
 #define MAX_PERF_MOD 30
 
 // SerialFlash & SD CARD

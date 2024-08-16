@@ -105,8 +105,8 @@ void check_and_create_directories(void);
 void show_cpu_and_mem_usage(void);
 void initial_values(bool init);
 
-void loadSample(newdigate::flashloader &loader, uint8_t i, const char *path);
-void printLoadedSample(const uint8_t i, const char *name);
+void loadSample(newdigate::flashloader& loader, uint8_t i, const char* path);
+void printLoadedSample(const uint8_t i, const char* name);
 
 #ifdef DEBUG
 void show_configuration(void);
@@ -277,7 +277,6 @@ AudioPlaySdResmp* Drum[NUM_DRUMS];
 #if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
 AudioPlayArrayResmp* Drum[NUM_DRUMS];
 #include "effect_delay_ext8.h"
-bool psram_slot_state[NUM_CUSTOM_SAMPLES];
 #endif
 
 AudioFilterBiquad* Drum_filter[NUM_DRUMS];
@@ -617,7 +616,7 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id)
 
 #ifdef PSRAM
   delay_fx[instance_id] = new AudioEffectDelayExternal8(AUDIO_MEMORY8_EXTMEM, DELAY_MAX_TIME);
-  const uint32_t delay_memory_size = (sizeof(((audio_block_t*) 0)->data[0])) * (DELAY_MAX_TIME*(AUDIO_SAMPLE_RATE_EXACT/1000.0f))+0.5f;
+  const uint32_t delay_memory_size = (sizeof(((audio_block_t*)0)->data[0])) * (DELAY_MAX_TIME * (AUDIO_SAMPLE_RATE_EXACT / 1000.0f)) + 0.5f;
   psram_free_bytes -= delay_memory_size;
 #else
   delay_fx[instance_id] = new AudioEffectDelay();
@@ -926,6 +925,7 @@ bool touch_ic_found = false;
 
 void setup()
 {
+
 #ifdef DEBUG
   LOG.println(CrashReport);
   // setup_debug_message();
@@ -982,13 +982,14 @@ void setup()
   delay(10);  // have seen some boot issues with old display without this delay 2024/06/19 
 #endif
 
-  //#if defined(PSRAM)
-   //delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
-   // 2024/4/14
-   // However it is reported that it is not necessary with 16MB psram and even making boot problems
-   // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT
-   // will disable delay, until any non-working combination is reported
-  //#endif
+#if defined(PSRAM)
+  delay(10); // FIXME: this somehow workarounds capacitive build with PSRAM not booting reliably
+  // 2024/4/14
+  // However it is reported that it is not necessary with 16MB psram and even making boot problems
+  // after testing with my only mdt with 8MB psram and capacitive touch, the delay makes boot problems after COLD BOOT
+  // will disable delay, until any non-working combination is reported
+  // 2024/8/16 after being stuck in bootloops for hours, i put back in the delay and it just booted up with psram
+#endif
 
 #ifdef CAPACITIVE_TOUCH_DISPLAY
   if (!touch.begin(40))
@@ -1437,8 +1438,8 @@ void setup()
   display.print(NUM_DRUMSET_CONFIG);
 
   newdigate::flashloader loader;
-  
-  for(int i = 0 ; i < 6; i++) {  // load pitched samples
+
+  for (int i = 0; i < 6; i++) {  // load pitched samples
     char temp_name[36];
     strcpy(temp_name, "/DRUMS/");
     strcat(temp_name, drum_config[i].filename);
@@ -1447,34 +1448,8 @@ void setup()
     printLoadedSample(i, temp_name);
   }
 
-  // load CUSTOM samples
-
-  // File customdir = SD.open("/CUSTOM/");
-  // int i = 6;
-  // int count = 0;
-  // do {
-  //   File f = customdir.openNextFile();
-  //   if(f && !f.isDirectory()) {
-  //     const char *name = f.name();
-  //     if (name[0] != 46) {
-  //       strcpy(drum_config[i].name, name);
-  //       strcpy(drum_config[i].filename, name);
-  //       char temp_name[36];
-  //       strcpy(temp_name, "/CUSTOM/");
-  //       strcat(temp_name, name);
-  //       loadSample(loader, i, temp_name);
-  //       printLoadedSample(i, temp_name);
-  //       i++;
-  //     }
-  //   }
-  //   count++;
-  // } while (i < NUM_CUSTOM_SAMPLES + 6 && count < 33 ); // TODO: eliminate magic numbers
-
-  //customdir.close();
-  //uint8_t midinote = 108;
-
   // load drums
-  for(int i = 6 + NUM_CUSTOM_SAMPLES ; i < (NUM_DRUMSET_CONFIG - NUM_CUSTOM_SAMPLES); i++) {
+  for (int i = 6 + NUM_CUSTOM_SAMPLES; i < NUM_DRUMSET_CONFIG; i++) {
     char temp_name[36];
     strcpy(temp_name, "/DRUMS/");
     strcat(temp_name, drum_config[i].filename);
@@ -1545,6 +1520,29 @@ void setup()
       }
   }
 }
+
+#ifdef COMPILE_FOR_PSRAM
+FLASHMEM void load_custom_samples_to_psram()
+{
+  // load CUSTOM samples
+  newdigate::flashloader loader;
+  int i = NUM_STATIC_PITCHED_SAMPLES;
+  do {
+    char temp_name[36];
+    strcpy(temp_name, "/CUSTOM/");
+    strcat(temp_name, drum_config[i].filename);
+    loadSample(loader, i, temp_name);
+    if (drum_config[i].len == 0 || drum_config[i].len > 10000000)
+    {
+      memset(drum_config[i].filename, 0, sizeof(drum_config[i].filename));
+      strcpy(drum_config[i].filename, "----FREE----");
+      memset(drum_config[i].name, 0, sizeof(drum_config[i].name));
+      strcpy(drum_config[i].name, "----FREE----");
+    }
+    i++;
+  } while (i < NUM_CUSTOM_SAMPLES + NUM_STATIC_PITCHED_SAMPLES);
+}
+#endif
 
 FLASHMEM void print_midi_channel_activity(uint8_t x, uint8_t y, float audio_vol)
 {
@@ -2891,7 +2889,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           }
         }
 
-      const uint8_t d = midiNoteToDrumNote(inNumber);
+        const uint8_t d = midiNoteToDrumNote(inNumber);
 
 #ifdef COMPILE_FOR_FLASH
         char temp_name[26];
@@ -3029,7 +3027,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
   }
 }
 
-void printLoadedSample(const uint8_t i, const char *name) {
+void printLoadedSample(const uint8_t i, const char* name) {
   display.setCursor(18 * CHAR_width, CHAR_height * 1);
   display.print(i);
   display.setCursor(1 * CHAR_width, CHAR_height * 3);
@@ -3038,7 +3036,7 @@ void printLoadedSample(const uint8_t i, const char *name) {
   //delay(100); // sure to slow down loading just for the texts?
 }
 
-void loadSample(newdigate::flashloader &loader, uint8_t i, const char *path) {
+void loadSample(newdigate::flashloader& loader, uint8_t i, const char* path) {
   newdigate::audiosample* sample = loader.loadSample(path);
   if (sample != nullptr) {
     psram_free_bytes -= sample->samplesize;

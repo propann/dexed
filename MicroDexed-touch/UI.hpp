@@ -49,7 +49,6 @@ extern qix_s qix;
 extern bool touch_ic_found;
 
 #ifdef COMPILE_FOR_PSRAM
-//#include <flashloader.h>
 extern void loadSample(newdigate::flashloader& loader, uint8_t i, const char* path); // not sure if this is ideal
 #endif
 
@@ -16743,9 +16742,16 @@ FLASHMEM void UI_func_braids(uint8_t param)
 
 FLASHMEM void sd_printDirectory(bool forceReload)
 {
-
   if (forceReload || strcmp(fm.sd_new_name, fm.sd_prev_dir))
   {
+#ifdef COMPILE_FOR_PSRAM
+       if (fm.sd_mode == FM_COPY_TO_PSRAM)
+       {
+  strcpy(fm.sd_prev_dir, "/CUSTOM/");
+   strcpy(fm.sd_new_name, "/CUSTOM/");
+       }
+       #endif
+
     load_sd_directory();
   }
 
@@ -17020,7 +17026,6 @@ FLASHMEM void print_flash_stats()
 #endif
 
 #ifdef COMPILE_FOR_PSRAM
-extern bool psram_slot_state[NUM_CUSTOM_SAMPLES];
 FLASHMEM void psram_printCustomSamplesList()
 {
   // if (seq.running == false)
@@ -17042,7 +17047,7 @@ FLASHMEM void psram_printCustomSamplesList()
     if (i == fm.flash_or_psram_selected_file + 6 && fm.active_window == 1)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     else
-      if (psram_slot_state[i + fm.flash_or_psram_skip_files] == false)
+      if (drum_config[i + fm.flash_or_psram_skip_files].len ==0 || drum_config[i + fm.flash_or_psram_skip_files].len >10000000 )
         display.setTextColor(GREY2, COLOR_BACKGROUND);
       else
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -17052,7 +17057,13 @@ FLASHMEM void psram_printCustomSamplesList()
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
     display.setCursor(CHAR_width_small * 45, i * 11);
 
-    if (drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024 > 0)
+if (drum_config[i + fm.flash_or_psram_skip_files].len >10000000)
+{
+    snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), 0);
+      display.print(tmp);
+      display.print(" B ");
+}
+else  if (drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024 > 0)
     {
       snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024));
       display.print(tmp);
@@ -17762,7 +17773,8 @@ FLASHMEM void print_psram_stats_filemanager()
   sprintf(text1, "%04d KB  FREE", (int)(psram_size / 1024 - total_data_size / 1024));
   display.print(text1);
   fm.flash_or_psram_sum_files = NUM_CUSTOM_SAMPLES;
-  strcpy(fm.sd_new_name, "/CUSTOM");
+  strcpy(fm.sd_new_name, "/");
+  // strcpy(fm.sd_new_name, "/CUSTOM");
 }
 #endif
 
@@ -17778,7 +17790,9 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     fm.active_window = 0;
     // fm.sd_skip_files = 0;
     // fm.sd_selected_file = 0;
+    
     strcpy(fm.sd_prev_dir, "");
+  
     // strcpy(fm.sd_new_name, "/");
 
     display.fillScreen(COLOR_BACKGROUND);
@@ -18042,7 +18056,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
         }
         else
 #endif
-          if (fm.sd_is_folder)
+          if (fm.sd_is_folder && fm.sd_mode != FM_COPY_TO_PSRAM)
           {
             if (fm.sd_temp_name[0] == 0x2E && fm.sd_temp_name[1] == 0x2E) // return to parent folder
             {
@@ -18066,7 +18080,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                 fm.sd_folder_depth--;
               }
             }
-            else
+            else if (fm.sd_mode != FM_COPY_TO_PSRAM)
             {
               fm.sd_skip_files = 0;
               if (fm.sd_folder_depth > 0)
@@ -18079,7 +18093,7 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
           else
             // is a file
           {
-            if (fm.sd_mode == FM_DELETE_FILE)
+            if (fm.sd_mode == FM_DELETE_FILE && fm.sd_mode != FM_COPY_TO_PSRAM)
             {
               strcpy(fm.sd_full_name, fm.sd_new_name);
               strcat(fm.sd_full_name, "/");
@@ -18194,7 +18208,6 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                 strcat(fm.sd_full_name, "/");
                 strcat(fm.sd_full_name, fm.sd_temp_name);
                 newdigate::flashloader loader;
-                psram_slot_state[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files] = true;
                 // #ifdef DEBUG
                 //                 LOG.println(F("FILE PATH FULL SD: "));
                 //                 LOG.println(fm.sd_full_name);
@@ -18220,10 +18233,12 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
       preview_sample();
     }
     // show files
-    if (fm.active_window == 0)
+    if (fm.active_window == 0 )
     {
-      if (fm.sd_new_name[0] != 0x2f)
+
+      if (fm.sd_new_name[0] != 0x2f )
         fm.sd_new_name[0] = 0x2f;
+
       sd_printDirectory(false);
 
       display.setCursor(CHAR_width_small * 24, 1 * CHAR_height_small);

@@ -44,6 +44,10 @@ extern drum_config_t drum_config[];
 extern custom_midi_map_t custom_midi_map[NUM_CUSTOM_MIDI_MAPPINGS];
 #endif
 
+#ifdef COMPILE_FOR_PSRAM
+extern void load_custom_samples_to_psram();
+#endif
+
 extern sdcard_t sdcard_infos;
 extern fm_t fm;
 
@@ -2317,6 +2321,124 @@ FLASHMEM bool save_sd_multiband_json(uint8_t number)
   return (false);
 }
 
+
+/******************************************************************************
+   SD CUSTOM SAMPLES
+ ******************************************************************************/
+
+#ifdef COMPILE_FOR_PSRAM
+FLASHMEM bool load_sd_samples_json(uint8_t number)
+{
+  if (number < 0)
+    return (false);
+
+  if (sd_card > 0)
+  {
+    number = constrain(number, PERFORMANCE_NUM_MIN, PERFORMANCE_NUM_MAX);
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SAMPLES_CONFIG_NAME);
+
+    // first check if file exists...
+    AudioNoInterrupts();
+    if (SD.exists(filename))
+    {
+      // ... and if: load
+#ifdef DEBUG
+      LOG.print(F("Found custom samples configuration"));
+#endif
+      json = SD.open(filename);
+      if (json)
+      {
+        StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+        deserializeJson(data_json, json);
+        json.close();
+        AudioInterrupts();
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+        LOG.println(F("Read JSON data:"));
+        // serializeJsonPretty(data_json, Serial);
+        LOG.println();
+#endif
+
+        for (int i = 0; i < NUM_CUSTOM_SAMPLES; i++) {
+
+          strcpy(drum_config[i + NUM_STATIC_PITCHED_SAMPLES].filename, data_json[i]["filename"]);
+        }
+        load_custom_samples_to_psram();
+
+        return (true);
+      }
+#ifdef DEBUG
+      else
+      {
+        LOG.print(F("E : Cannot open "));
+        LOG.print(filename);
+        LOG.println(F(" on SD."));
+      }
+    }
+    else
+    {
+      LOG.print(F("No "));
+      LOG.print(filename);
+      LOG.println(F(" available."));
+#endif
+    }
+  }
+
+  AudioInterrupts();
+  return (false);
+}
+
+FLASHMEM bool save_sd_samples_json(uint8_t number)
+{
+  if (sd_card > 0)
+  {
+    snprintf_P(filename, sizeof(filename), PSTR("/%s/%d/%s.json"), PERFORMANCE_CONFIG_PATH, number, SAMPLES_CONFIG_NAME);
+#ifdef DEBUG
+    LOG.print(F("Saving custom samples"));
+    LOG.print(number);
+    LOG.print(F(" to "));
+    LOG.println(filename);
+#endif
+
+    AudioNoInterrupts();
+    SD.remove(filename);
+    json = SD.open(filename, FILE_WRITE);
+    if (json)
+    {
+      StaticJsonDocument<JSON_BUFFER_SIZE> data_json;
+
+      for (int i = 0; i < NUM_CUSTOM_SAMPLES; i++) {
+        // if (drum_config[i].len != 0)
+        data_json[i]["name"] = drum_config[i + NUM_STATIC_PITCHED_SAMPLES].name;
+        data_json[i]["filename"] = drum_config[i + NUM_STATIC_PITCHED_SAMPLES].filename;
+      }
+
+#if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
+      LOG.println(F("Write JSON data:"));
+      serializeJsonPretty(data_json, Serial);
+      LOG.println();
+#endif
+      serializeJsonPretty(data_json, json);
+      json.close();
+      AudioInterrupts();
+      return (true);
+    }
+    json.close();
+  }
+  else
+  {
+#ifdef DEBUG
+    LOG.print(F("E : Cannot open "));
+    LOG.print(filename);
+    LOG.println(F(" on SD."));
+#endif
+  }
+  AudioInterrupts();
+  return (false);
+}
+
+#endif
+
 /******************************************************************************
    SD SIDECHAIN
  ******************************************************************************/
@@ -2886,6 +3008,9 @@ FLASHMEM bool save_sd_performance_json(uint8_t number)
   save_sd_multiband_json(number);
   save_sd_sidechain_json(number);
   save_sd_livesequencer_json(number);
+#ifdef COMPILE_FOR_PSRAM
+  save_sd_samples_json(number);
+#endif
 
   for (uint8_t i = 0; i < MAX_DEXED; i++)
   {
@@ -3230,6 +3355,10 @@ FLASHMEM bool load_sd_performance_json(uint8_t number)
   load_sd_braids_json(number);
   load_sd_multiband_json(number);
   load_sd_sidechain_json(number);
+#ifdef COMPILE_FOR_PSRAM
+  load_sd_samples_json(number);
+#endif
+
   configuration.sys.performance_number = number;
 
   if (sd_card > 0)
@@ -3481,7 +3610,7 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
     LOG.print(F(" [0x"));
     LOG.print(bulk_checksum, HEX);
     LOG.println(F("]"));
-  }
+}
 #endif
 
   sysex.seek(3); // start of bulk data
@@ -3533,7 +3662,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
   {
     LOG.print(F("Write SYSEX data:     0x"));
     LOG.println(data[i], HEX);
-  }
+}
 #endif
   // write checksum
   sysex.write(calc_checksum(data, len));
@@ -3914,7 +4043,9 @@ FLASHMEM void load_sd_directory()
 {
   strcpy(fm.sd_prev_dir, fm.sd_new_name);
   File sd_root = SD.open(fm.sd_new_name);
+
   fm.sd_sum_files = 0;
+
   while (true)
   {
     File sd_entry = sd_root.openNextFile();
@@ -3936,7 +4067,6 @@ FLASHMEM void load_sd_directory()
       LOG.print(F(" bytes"));
       LOG.println();
 #endif
-
       fm.sd_sum_files++;
     }
     sd_entry.close();

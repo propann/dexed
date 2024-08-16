@@ -1212,6 +1212,10 @@ FLASHMEM void print_file_manager_active_border()
   }
 }
 
+#ifdef COMPILE_FOR_PSRAM
+extern void  show_smallfont_noGrid(int pos_y, int pos_x, uint8_t field_size, const char* str);
+#endif
+
 FLASHMEM void handle_touchscreen_file_manager()
 {
   if (numTouchPoints > 0)
@@ -1243,11 +1247,15 @@ FLASHMEM void handle_touchscreen_file_manager()
       }
 #endif
 
-#if defined COMPILE_FOR_FLASH || defined COMPILE_FOR_PSRAM
+#if defined COMPILE_FOR_PSRAM
       else if (check_button_on_grid(19 + 9, 25))
       {
         fm.sd_mode = FM_COPY_TO_PSRAM;
         print_file_manager_buttons();
+        strcpy(fm.sd_new_name, "/CUSTOM/");
+        display.setTextColor(COLOR_PITCHSMP, COLOR_BACKGROUND);
+        show_smallfont_noGrid(3 * CHAR_height_small, CHAR_width_small * 7, 20, "/CUSTOM/");
+        sd_printDirectory(false);
       }
       else if (check_button_on_grid(28 + 9, 25))
       {
@@ -1255,7 +1263,6 @@ FLASHMEM void handle_touchscreen_file_manager()
         print_file_manager_buttons();
       }
 #endif
-
       else if (check_button_on_grid(46, 25))
       {
         fm.sd_mode = FM_PLAY_SAMPLE;
