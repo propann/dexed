@@ -46,7 +46,9 @@ public:
     INSTR_EP = 3,
     INSTR_MS1 = 4,
     INSTR_MS2 = 5,
-    INSTR_BRD = 6
+    INSTR_BRD = 6,
+    INSTR_MSP1 = 7,
+    INSTR_MSP2 = 8
   };
 
   struct MidiEvent {

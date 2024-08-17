@@ -24,6 +24,7 @@ extern void UI_func_voice_select(uint8_t param);
 extern void UI_func_microsynth(uint8_t param);
 extern void UI_func_epiano(uint8_t param);
 extern void UI_func_braids(uint8_t param);
+extern void UI_func_MultiSamplePlay(uint8_t param);
 extern void handleStart();
 extern void handleStop();
 
@@ -889,6 +890,14 @@ FLASHMEM void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
+FLASHMEM void selectMsp0() {
+  seq.active_multisample = 0;
+}
+
+FLASHMEM void selectMsp1() {
+  seq.active_multisample = 1;
+}
+
 FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
   if (isMuted) {
     data.tracks[track].layerMutes |= (1 << layer);
@@ -1029,7 +1038,7 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
       case INSTR_DX2:
         data.tracks[i].channel = static_cast<midi::Channel>(configuration.dexed[instrument - 1].midi_channel);
         data.tracks[i].screen = UI_func_voice_select;
-        data.tracks[i].screenSetupFn = (instrument == 1) ? (SetupFn)selectDexed0 : (SetupFn)selectDexed1;
+        data.tracks[i].screenSetupFn = (instrument == INSTR_DX1) ? (SetupFn)selectDexed0 : (SetupFn)selectDexed1;
         break;
 
       case INSTR_EP:
@@ -1039,14 +1048,21 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
 
       case INSTR_MS1:
       case INSTR_MS2:
-        data.tracks[i].channel = microsynth[instrument - 4].midi_channel;
+        data.tracks[i].channel = microsynth[instrument - INSTR_MS1].midi_channel;
         data.tracks[i].screen = UI_func_microsynth;
-        data.tracks[i].screenSetupFn = (instrument == 4) ? (SetupFn)selectMs0 : (SetupFn)selectMs1;
+        data.tracks[i].screenSetupFn = (instrument == INSTR_MS1) ? (SetupFn)selectMs0 : (SetupFn)selectMs1;
         break;
 
       case INSTR_BRD:
         data.tracks[i].channel = braids_osc.midi_channel;
         data.tracks[i].screen = UI_func_braids;
+        break;
+
+      case INSTR_MSP1:
+      case INSTR_MSP2:
+        data.tracks[i].channel = msp[instrument - INSTR_MSP1].midi_channel;
+        data.tracks[i].screen = UI_func_MultiSamplePlay;
+        data.tracks[i].screenSetupFn = (instrument == INSTR_MSP1) ? (SetupFn)selectMsp0 : (SetupFn)selectMsp1;
         break;
 
       default:
@@ -1114,11 +1130,16 @@ FLASHMEM void LiveSequencer::getInstrumentName(uint8_t device, uint8_t instrumen
 
     case INSTR_MS1:
     case INSTR_MS2:
-      sprintf(sub, "MS%i", instrument - 3);
+      sprintf(sub, "MS%i", instrument - INSTR_MS1 + 1);
       break;
 
     case INSTR_BRD:
       sprintf(sub, "BRD");
+      break;
+
+    case INSTR_MSP1:
+    case INSTR_MSP2:
+      sprintf(sub, "SP%i", instrument - INSTR_MSP1 + 1);
       break;
 
     default:
