@@ -17400,7 +17400,6 @@ FLASHMEM void UI_func_MultiSamplePlay(uint8_t param)
 {
   if (LCDML.FUNC_setup()) // ****** SETUP *********
   {
-    seq.active_multisample = 0;
     seq.edit_state = false;
     generic_temp_select_menu = 0;
     // calc_low_high(seq.active_multisample);

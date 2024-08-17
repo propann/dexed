@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 #include "flashloader.h"
+#include <Audio.h>
 
 namespace newdigate {
 
@@ -28,7 +29,7 @@ namespace newdigate {
         File f = SD.open(filename, O_READ);
         if (f) {
             if (f.size() < _bytesavailable) {
-                noInterrupts();
+                AudioNoInterrupts();
                 uint32_t total_read = 0;
                 auto *data = (int8_t*)extmem_malloc(f.size() );
                 int8_t *index = data;
@@ -39,7 +40,7 @@ namespace newdigate {
                     total_read += bytesRead;
                     index += bytesRead;
                 }
-                interrupts();
+                AudioInterrupts();
                 _bytesavailable -= total_read;
 
                 audiosample *sample = new audiosample();
