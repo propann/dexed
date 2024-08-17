@@ -45,7 +45,7 @@ Compared to the first generation, MicroDexed-touch offers a lot of new features/
 
 * Multiband Master Compressor with 4 bands
 
-* Sample Management from SD-CARD and SPI FLASH, samples can be loaded/modified from SD-CARD to FLASH during runtime.
+* Sample Management from SD-CARD and SPI FLASH/PSRAM, samples can be loaded from SD-CARD to PSRAM during runtime.
 
 * Touch Mute Matrix for live / realtime performance
 
