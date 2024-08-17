@@ -150,7 +150,7 @@ FLASHMEM void UI_LiveSequencer::init(void) {
     char name[10];
     char sub[10];
     // MDT has instruments 0-6 / MIDI has instuments 0-15
-    const uint8_t maxInstrument = (selectedTrackDevice == LiveSequencer::DEVICE_INTERNAL) ? 8 : 15;
+    const uint8_t maxInstrument = (selectedTrackDevice == LiveSequencer::DEVICE_INTERNAL) ? LiveSequencer::INSTR_MSP2 : 15;
     static_cast<EditableValueRange<uint8_t>*>(v)->changeRange(0, maxInstrument); 
     
     liveSeq.getInstrumentName(selectedTrackDevice, v->getValue(), name, sub);

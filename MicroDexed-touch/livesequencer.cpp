@@ -1121,7 +1121,7 @@ FLASHMEM void LiveSequencer::getInstrumentName(uint8_t device, uint8_t instrumen
 
     case INSTR_MS1:
     case INSTR_MS2:
-      sprintf(sub, "MS%i", instrument - 3);
+      sprintf(sub, "MS%i", instrument - INSTR_MS1 + 1);
       break;
 
     case INSTR_BRD:
@@ -1130,7 +1130,7 @@ FLASHMEM void LiveSequencer::getInstrumentName(uint8_t device, uint8_t instrumen
 
     case INSTR_MSP1:
     case INSTR_MSP2:
-      sprintf(sub, "SP%i", instrument - 6);
+      sprintf(sub, "SP%i", instrument - INSTR_MSP1 + 1);
       break;
 
     default:
