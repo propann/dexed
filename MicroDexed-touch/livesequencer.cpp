@@ -890,6 +890,14 @@ FLASHMEM void selectMs1() {
   microsynth_selected_instance = 1;
 }
 
+FLASHMEM void selectMsp0() {
+  seq.active_multisample = 0;
+}
+
+FLASHMEM void selectMsp1() {
+  seq.active_multisample = 1;
+}
+
 FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool isMuted, bool recordToSong) {
   if (isMuted) {
     data.tracks[track].layerMutes |= (1 << layer);
@@ -1054,6 +1062,7 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
       case INSTR_MSP2:
         data.tracks[i].channel = msp[instrument - INSTR_MSP1].midi_channel;
         data.tracks[i].screen = UI_func_MultiSamplePlay;
+        data.tracks[i].screenSetupFn = (instrument == INSTR_MSP1) ? (SetupFn)selectMsp0 : (SetupFn)selectMsp1;
         break;
 
       default:
