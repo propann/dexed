@@ -1438,7 +1438,7 @@ void setup()
   display.print(NUM_DRUMSET_CONFIG);
 
   newdigate::flashloader loader;
-
+  display.setTextSize(1);
   for (int i = 0; i < 6; i++) {  // load pitched samples
     char temp_name[36];
     strcpy(temp_name, "/DRUMS/");
@@ -1457,10 +1457,11 @@ void setup()
     loadSample(loader, i, temp_name);
     printLoadedSample(i, temp_name);
   }
-
+  display.setTextSize(2);
   AudioInterrupts();
-  display.setCursor(1 * CHAR_width, CHAR_height * 1);
-  display.print(F("                        "));
+  display.console = true;
+  display.fillRect(0, CHAR_height, DISPLAY_WIDTH, CHAR_height * 4, COLOR_BACKGROUND);
+  display.console = false;
 #endif
 
   //SD CARD PRESET CONTENT NOT FOUND, PROVIDE POSSIBLE SOLUTIONS TO USER
@@ -1534,10 +1535,9 @@ FLASHMEM void load_custom_samples_to_psram()
     loadSample(loader, i, temp_name);
     if (drum_config[i].len == 0 || drum_config[i].len > 10000000)
     {
-      memset(drum_config[i].filename, 0, sizeof(drum_config[i].filename));
-      strcpy(drum_config[i].filename, "----FREE----");
-      memset(drum_config[i].name, 0, sizeof(drum_config[i].name));
-      strcpy(drum_config[i].name, "----FREE----");
+      snprintf_P(temp_name, 12, PSTR("CUSTOM%02d"), i-NUM_STATIC_PITCHED_SAMPLES+1);
+      strcpy(drum_config[i].filename, temp_name);
+      strcpy(drum_config[i].name, temp_name);
     }
     i++;
   } while (i < NUM_CUSTOM_SAMPLES + NUM_STATIC_PITCHED_SAMPLES);
@@ -2930,7 +2930,7 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
             sidechain_trigger_b = true;
 
 #if defined(COMPILE_FOR_PROGMEM) || defined(COMPILE_FOR_PSRAM)
-          if (drum_config[d].drum_data != NULL && drum_config[d].len > 0)
+          if (drum_config[d].drum_data != NULL && drum_config[d].len > 0 && drum_config[d].len < 10000000)
           {
 #endif
 
@@ -3028,12 +3028,13 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
 }
 
 void printLoadedSample(const uint8_t i, const char* name) {
+  display.setTextSize(2);
   display.setCursor(18 * CHAR_width, CHAR_height * 1);
   display.print(i);
+  display.setTextSize(1);
   display.setCursor(1 * CHAR_width, CHAR_height * 3);
   display.print(name);
-  display.print("      ");
-  //delay(100); // sure to slow down loading just for the texts?
+  display.print(F("       "));
 }
 
 void loadSample(newdigate::flashloader& loader, uint8_t i, const char* path) {

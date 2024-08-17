@@ -9297,7 +9297,7 @@ void print_current_sample_and_pitch_buffer()
     display.setCursor(36 * CHAR_width_small, 5 * (CHAR_height_small + 2) + 10);
     if (activesample < NUM_DRUMSET_CONFIG - 1 && seq.vel[seq.active_pattern][seq.menu - 3] < 210) // normal sample
     {
-      display.print(basename(drum_config[activesample].name));
+      display.print(basename(drum_config[activesample].name));  //phtodo
       fill_up_with_spaces_right_window();
     }
     else if (activesample < NUM_DRUMSET_CONFIG - 1 && seq.vel[seq.active_pattern][seq.menu - 3] > 209) // pitched sample
