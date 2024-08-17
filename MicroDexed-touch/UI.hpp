@@ -18195,29 +18195,16 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #ifdef COMPILE_FOR_PSRAM
             else if (fm.sd_mode == FM_COPY_TO_PSRAM) //copy from SD CUSTOM folder to PSRAM
             {
-
-              // #ifdef DEBUG
-              //               LOG.print(F("COPY TO PSRAM  "));
-              //               LOG.println(F("----------------"));
-              // #endif
-
               if (!fm.sd_is_folder && strstr(fm.sd_temp_name, ".wav") != NULL)
               {
                 strcpy(fm.sd_full_name, fm.sd_new_name);
                 strcat(fm.sd_full_name, "/");
                 strcat(fm.sd_full_name, fm.sd_temp_name);
                 newdigate::flashloader loader;
-                // #ifdef DEBUG
-                //                 LOG.println(F("FILE PATH FULL SD: "));
-                //                 LOG.println(fm.sd_full_name);
-                //                 LOG.println(F("FILE SD:"));
-                //                 LOG.println(fm.sd_temp_name);
-                //                 LOG.println(F("Selected file on PSRAM:"));
-                //                 LOG.println(fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files);
-                // #endif
                 loadSample(loader, fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files, fm.sd_full_name);
-                strcpy(drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].name, fm.sd_temp_name);
                 strcpy(drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].filename, fm.sd_temp_name);
+                strip_extension(fm.sd_temp_name,drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].name, 14);
+               
                 print_psram_stats_filemanager();
                 psram_printCustomSamplesList();
               }

@@ -2361,7 +2361,7 @@ FLASHMEM bool load_sd_samples_json(uint8_t number)
 
         for (int i = 0; i < NUM_CUSTOM_SAMPLES; i++) {
           strcpy(drum_config[i + NUM_STATIC_PITCHED_SAMPLES].filename, data_json[i]["filename"]);
-          strip_extension( data_json[i]["name"],drum_config[i + NUM_STATIC_PITCHED_SAMPLES].name, 14);
+          strcpy(drum_config[i + NUM_STATIC_PITCHED_SAMPLES].name, data_json[i]["name"]);
         }
         load_custom_samples_to_psram();
 
