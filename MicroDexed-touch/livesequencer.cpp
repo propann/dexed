@@ -24,6 +24,7 @@ extern void UI_func_voice_select(uint8_t param);
 extern void UI_func_microsynth(uint8_t param);
 extern void UI_func_epiano(uint8_t param);
 extern void UI_func_braids(uint8_t param);
+extern void UI_func_MultiSamplePlay(uint8_t param);
 extern void handleStart();
 extern void handleStop();
 
@@ -1049,6 +1050,12 @@ FLASHMEM void LiveSequencer::updateTrackChannels(bool initial) {
         data.tracks[i].screen = UI_func_braids;
         break;
 
+      case INSTR_MSP1:
+      case INSTR_MSP2:
+        data.tracks[i].channel = msp[instrument - 7].midi_channel;
+        data.tracks[i].screen = UI_func_MultiSamplePlay;
+        break;
+
       default:
         data.tracks[i].channel = 99; // probably unused
         break;
@@ -1119,6 +1126,11 @@ FLASHMEM void LiveSequencer::getInstrumentName(uint8_t device, uint8_t instrumen
 
     case INSTR_BRD:
       sprintf(sub, "BRD");
+      break;
+
+    case INSTR_MSP1:
+    case INSTR_MSP2:
+      sprintf(sub, "SP%i", instrument - 6);
       break;
 
     default:
