@@ -9648,7 +9648,7 @@ FLASHMEM void pattern_editor_menu_0()
 
 FLASHMEM void play_sample_on_virtual_drumpads(uint8_t note)
 {
-  handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, drum_config[note - 14].midinote, ts.virtual_keyboard_velocity);
+  handleNoteOn_MIDI_DEVICE_DIN(ts.virtual_keyboard_midi_channel, drum_config[note - 18].midinote, ts.virtual_keyboard_velocity);
 }
 
 FLASHMEM void UI_func_seq_pattern_editor(uint8_t param)
@@ -20391,7 +20391,7 @@ FLASHMEM void print_perfmod_buttons()
 
 FLASHMEM void print_drumpads()
 {
-  uint8_t offset = 14;
+  uint8_t offset = 18;
   if (seq.cycle_touch_element == 1 || ts.keyb_in_menu_activated) {
     char tmp[14];
     char tmp2[14];
@@ -20406,7 +20406,7 @@ FLASHMEM void print_drumpads()
 
       snprintf_P(tmp, sizeof(tmp), PSTR("%.6s"), drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name);
       snprintf_P(tmp2, sizeof(tmp2), PSTR("%.6s"), &drum_config[x + 6 + ts.virtual_keyboard_octave * 12 - offset].name[6]);
-      if (x + 6 + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= 0)
+      if (x + 6 + ts.virtual_keyboard_octave * 12 - offset < NUM_DRUMSET_CONFIG && x + ts.virtual_keyboard_octave * 12 - offset >= -6)
         draw_button_on_grid(x * 9 + 1, 26, tmp, tmp2, 1);
       else
         draw_button_on_grid(x * 9 + 1, 26, "", "", 1);

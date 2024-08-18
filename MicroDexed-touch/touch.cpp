@@ -713,6 +713,8 @@ FLASHMEM void virtual_keyboard()
     print_drumpads();
     print_virtual_keyboard_octave();
   }
+  ts.previous_virtual_keyboard_display_mode = ts.current_virtual_keyboard_display_mode;
+
   display.setTextSize(2);
   display.console = false;
 }
@@ -755,7 +757,7 @@ FLASHMEM void touch_button_oct_up()
 }
 FLASHMEM void touch_button_oct_down()
 {
-  if (ts.virtual_keyboard_octave > 0)
+  if (ts.virtual_keyboard_octave > 1)
     ts.virtual_keyboard_octave--;
   if (ts.virtual_keyboard_instrument == 6)
     virtual_keyboard();
@@ -1269,7 +1271,7 @@ FLASHMEM void handle_touchscreen_file_manager()
         preview_sample();
         print_file_manager_buttons();
       }
-      }
+    }
     // active_window   0 = left window (SDCARD) , 1 = FLASH OR PSRAM
     else if (ts.p.x > 1 && ts.p.x < CHAR_width_small * 29)
     {
@@ -1284,8 +1286,8 @@ FLASHMEM void handle_touchscreen_file_manager()
 
       print_file_manager_active_border();
     }
-    }
   }
+}
 
 FLASHMEM void update_midi_learn_button()
 {
