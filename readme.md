@@ -126,6 +126,8 @@ In Menus that need 2 Encoders, Encoder Right controls Y movement and Encoder Lef
 
 This project lives from the contributions of C++ developers, testers, reviewers. Please check https://codeberg.org/positionhigh/MicroDexed-touch/issues to help in open topics or add your own Issue or Feature Request.
 
-## SURVEY / POLL: Let us know what you want to see
+## SURVEY / POLL: Let us know what you want to see (manufacturing/building MDT)
 [https://www.supersurvey.com/poll4335406x48364DD1-136](https://www.supersurvey.com/poll4335406x48364DD1-136)
 
+## SURVEY / POLL 08/2024 feature requests:
+[https://qvgopz6on.supersurvey.com/](https://qvgopz6on.supersurvey.com/)
