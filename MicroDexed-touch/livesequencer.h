@@ -17,7 +17,8 @@ class UI_LiveSequencer;
 class LiveSequencer {
 
 public:
-  static constexpr int LIVESEQUENCER_NUM_TRACKS = 6;
+  static constexpr int LIVESEQUENCER_TRACKS_PER_SCREEN = 6;
+  static constexpr int LIVESEQUENCER_NUM_TRACKS = 12;
   static constexpr int LIVESEQUENCER_NUM_LAYERS = 4;
 
   enum EventSource : uint8_t {
@@ -139,6 +140,7 @@ public:
 
     // volatile
     bool isActive;
+    std::string performanceName;
     std::unordered_set<uint8_t> instrumentChannels;
     Track tracks[LIVESEQUENCER_NUM_TRACKS];
     ArpSettings arpSettings;

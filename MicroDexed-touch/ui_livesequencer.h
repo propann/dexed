@@ -17,6 +17,7 @@ public:
   void onStopped(void);
 
 private:
+  uint8_t trackOffset = 0;
   struct ProgressBar {
     bool currentPhase;
     uint8_t drawnLength;  
@@ -86,8 +87,8 @@ private:
     drawSongLayers = (1 << 7)
   };
 
-  uint16_t GRID_X[6];
-  uint16_t GRID_Y[6];
+  uint16_t GRID_X[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN];
+  uint16_t GRID_Y[LiveSequencer::LIVESEQUENCER_NUM_LAYERS + 2];
 
   static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
   static constexpr uint8_t BAR_HEIGHT = 3;

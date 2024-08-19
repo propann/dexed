@@ -736,6 +736,7 @@ FLASHMEM void LiveSequencer::init(void) {
   DBG_LOG(printf("init has %i events\n", data.eventsList.size()));
   //printEvents();
   data.pendingEvents.reserve(200);
+  data.performanceName = seq.name;
   refreshSongLength();
 }
 
@@ -963,7 +964,7 @@ FLASHMEM void LiveSequencer::changeTrackInstrument(uint8_t track, uint8_t newDev
 }
 
 FLASHMEM void LiveSequencer::loadOldTrackInstruments(void) {
-  for (uint8_t i = 0; i < LIVESEQUENCER_NUM_TRACKS; i++) {
+  for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++) {
     data.trackSettings[i].device = DEVICE_INTERNAL;
     
     switch (seq.track_type[i]) {
