@@ -227,13 +227,13 @@ FLASHMEM void UI_LiveSequencer::init(void) {
 
   // PATTERN TOOLS
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; track++) {
-    toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[track], GRID_Y[3], data.trackSettings[track].quantizeDenom, { 1, 2, 4, 8, 16, 32 }, 4,
+    toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[track], GRID_Y[3], data.trackSettings[trackOffset + track].quantizeDenom, { 1, 2, 4, 8, 16, 32 }, 4,
     [ ] (auto *b, auto *v) { // drawHandler
       b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
     }));
   }
   for (int track = 0; track < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; track++) {
-    toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[track], GRID_Y[4], data.trackSettings[track].velocityLevel, 0, 100, 5, 0,
+    toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[track], GRID_Y[4], data.trackSettings[trackOffset + track].velocityLevel, 0, 100, 5, 0,
     [ ] (auto *b, auto *v) { // drawHandler
       b->draw("VELOCTY", (v->getValue() == 0) ? "KEY" : v->toString() + std::string("%"), (v->getValue() == 0) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
     }));
@@ -798,7 +798,7 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
           }
           if (guiFlags & drawActiveNotes) {
             // always draw notes when layers visible
-            const uint16_t barHeight = 6 * data.tracks[track].activeNotes[layer].size();
+            const uint16_t barHeight = 6 * data.tracks[trackOffset + track].activeNotes[layer].size();
             const uint16_t xStart = GRID_X[track] + TouchButton::BUTTON_SIZE_X - 3;
             const uint16_t yStart = GRID_Y[2 + layer];
             
