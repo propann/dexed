@@ -462,7 +462,11 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
         currentValue.valueBase->next();
       } else if(trackOffset == 0) {
         trackOffset = LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN;
-        guiUpdateFlags |= (drawTrackButtons | drawLayerButtons);
+        guiUpdateFlags |= drawTrackButtons;
+        if(isLayerViewActive) {
+          clearBottomArea();
+          guiUpdateFlags |= drawLayerButtons;
+        }
       } 
     }
     if(LCDML.BT_checkUp()) {
@@ -470,7 +474,11 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
         currentValue.valueBase->previous();
       } else if(trackOffset == LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN) {
         trackOffset = 0;
-        guiUpdateFlags |= (drawTrackButtons | drawLayerButtons);
+        guiUpdateFlags |= drawTrackButtons;
+        if(isLayerViewActive) {
+          clearBottomArea();
+          guiUpdateFlags |= drawLayerButtons;
+        }
       }
     }
 
