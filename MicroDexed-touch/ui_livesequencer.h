@@ -40,11 +40,14 @@ private:
   std::vector<TouchButton*> buttonsToolSelect;
 
   TouchButton *lastNoteLabel;
-  ValueButtonRange<uint8_t> *currentTrackDevice;
-  ValueButtonRange<uint8_t> *currentTrackInstrument;
-  TouchButton *selectedTrackLabel;
-  uint8_t selectedTrackDevice = 0;
-  uint8_t selectedTrackInstrument = 0;
+
+  struct SelectedTrackSetup {
+    TouchButton *label;
+    uint8_t device;
+    uint8_t instrument;
+    uint8_t quantizeDenom;
+    uint8_t velocity;
+  } selectedTrackSetup;
 
   UI_LiveSequencer* instance;
   LiveSequencer& liveSeq;
@@ -89,7 +92,7 @@ private:
 
   uint16_t GRID_X[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN];
   uint16_t GRID_Y[LiveSequencer::LIVESEQUENCER_NUM_LAYERS + 2];
-
+ 
   static constexpr uint8_t BAR_WIDTH = 104; // 2 * BUTTON_WIDTH + spacing
   static constexpr uint8_t BAR_HEIGHT = 3;
   static void openScreen(LCDML_FuncPtr_pu8 screen, uint8_t p_param = 0);
@@ -107,6 +110,8 @@ private:
   void resetProgressBars(void);
   void drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
   void updateTrackChannelSetupButtons(void);
+
+  FLASHMEM void checkApplyTrackInstrument(void);
 };
 
 #endif //UI_LIVESEQUENCER_H
