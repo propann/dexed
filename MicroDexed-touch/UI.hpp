@@ -16745,12 +16745,12 @@ FLASHMEM void sd_printDirectory(bool forceReload)
   if (forceReload || strcmp(fm.sd_new_name, fm.sd_prev_dir))
   {
 #ifdef COMPILE_FOR_PSRAM
-       if (fm.sd_mode == FM_COPY_TO_PSRAM)
-       {
-  strcpy(fm.sd_prev_dir, "/CUSTOM/");
-   strcpy(fm.sd_new_name, "/CUSTOM/");
-       }
-       #endif
+    if (fm.sd_mode == FM_COPY_TO_PSRAM)
+    {
+      strcpy(fm.sd_prev_dir, "/CUSTOM/");
+      strcpy(fm.sd_new_name, "/CUSTOM/");
+    }
+#endif
 
     load_sd_directory();
   }
@@ -17047,7 +17047,7 @@ FLASHMEM void psram_printCustomSamplesList()
     if (i == fm.flash_or_psram_selected_file + 6 && fm.active_window == 1)
       display.setTextColor(COLOR_BACKGROUND, COLOR_SYSTEXT);
     else
-      if (drum_config[i + fm.flash_or_psram_skip_files].len ==0 || drum_config[i + fm.flash_or_psram_skip_files].len >10000000 )
+      if (drum_config[i + fm.flash_or_psram_skip_files].len == 0 || drum_config[i + fm.flash_or_psram_skip_files].len > 10000000)
         display.setTextColor(GREY2, COLOR_BACKGROUND);
       else
         display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
@@ -17057,13 +17057,13 @@ FLASHMEM void psram_printCustomSamplesList()
     display.setTextColor(COLOR_DRUMS, COLOR_BACKGROUND);
     display.setCursor(CHAR_width_small * 45, i * 11);
 
-if (drum_config[i + fm.flash_or_psram_skip_files].len >10000000)
-{
-    snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), 0);
+    if (drum_config[i + fm.flash_or_psram_skip_files].len > 10000000)
+    {
+      snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), 0);
       display.print(tmp);
       display.print(" B ");
-}
-else  if (drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024 > 0)
+    }
+    else  if (drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024 > 0)
     {
       snprintf_P(tmp, sizeof(tmp), PSTR("%4d"), int(drum_config[i + fm.flash_or_psram_skip_files].len / 1024 / 1024));
       display.print(tmp);
@@ -17751,10 +17751,10 @@ FLASHMEM void print_psram_stats_filemanager()
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 29, 1 * CHAR_height_small);
   display.print(F("PSRAM"));
-  display.setCursor(CHAR_width_small * 47, 1 * CHAR_height_small);
+  display.setCursor(CHAR_width_small * 44, 1 * CHAR_height_small);
   if (psram_size != 0)
   {
-    sprintf(text1, "%02d MB", (int)psram_size);
+    sprintf(text1, "%05d MB", (int)psram_size / 1024);
     display.print(text1);
   }
   for (int i = 0; i < NUM_DRUMSET_CONFIG; i++) {
@@ -17766,14 +17766,13 @@ FLASHMEM void print_psram_stats_filemanager()
   display.print(F("MEMORY USED/FREE:"));
   display.setTextColor(COLOR_SYSTEXT, COLOR_BACKGROUND);
   display.setCursor(CHAR_width_small * 29, 5 * CHAR_height_small);
-  sprintf(text1, "%04d KB / %04d KB  USED", (int)total_data_size / 1024, (int)(psram_size / 1024));
+  sprintf(text1, "%05d KB/%05d KB  USED", (int)total_data_size / 1024, (int)(psram_size / 1024));
   display.print(text1);
-  display.setCursor(CHAR_width_small * 39, 6 * CHAR_height_small);
-  sprintf(text1, "%04d KB  FREE", (int)(psram_size / 1024 - total_data_size / 1024));
+  display.setCursor(CHAR_width_small * 38, 6 * CHAR_height_small);
+  sprintf(text1, "%05d KB  FREE", (int)(psram_size / 1024 - total_data_size / 1024));
   display.print(text1);
   fm.flash_or_psram_sum_files = NUM_CUSTOM_SAMPLES;
   strcpy(fm.sd_new_name, "/");
-  // strcpy(fm.sd_new_name, "/CUSTOM");
 }
 #endif
 
@@ -17789,11 +17788,8 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
     fm.active_window = 0;
     // fm.sd_skip_files = 0;
     // fm.sd_selected_file = 0;
-    
     strcpy(fm.sd_prev_dir, "");
-  
     // strcpy(fm.sd_new_name, "/");
-
     display.fillScreen(COLOR_BACKGROUND);
     encoderDir[ENC_R].reset();
     display.setTextSize(1);
@@ -18203,8 +18199,8 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
                 newdigate::flashloader loader;
                 loadSample(loader, fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files, fm.sd_full_name);
                 strcpy(drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].filename, fm.sd_temp_name);
-                strip_extension(fm.sd_temp_name,drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].name, 14);
-               
+                strip_extension(fm.sd_temp_name, drum_config[fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files].name, 14);
+
                 print_psram_stats_filemanager();
                 psram_printCustomSamplesList();
               }
@@ -18214,15 +18210,15 @@ FLASHMEM void UI_func_file_manager(uint8_t param)
 #endif
           }
       }
-    if (LCDML.BT_checkEnter() && fm.sd_mode == FM_PLAY_SAMPLE) // preview - compiled for flash
+    if (LCDML.BT_checkEnter() && fm.sd_mode == FM_PLAY_SAMPLE) // preview
     {
       preview_sample();
     }
     // show files
-    if (fm.active_window == 0 )
+    if (fm.active_window == 0)
     {
 
-      if (fm.sd_new_name[0] != 0x2f )
+      if (fm.sd_new_name[0] != 0x2f)
         fm.sd_new_name[0] = 0x2f;
 
       sd_printDirectory(false);

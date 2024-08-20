@@ -262,6 +262,10 @@ AudioPlaySdWav WAV_preview_SD;
 AudioPlaySerialflashRaw WAV_preview_FLASH;
 #endif
 
+#ifdef COMPILE_FOR_PSRAM
+AudioPlayArrayResmp WAV_preview_PSRAM;
+#endif
+
 // Drumset
 #if NUM_DRUMS > 0
 
@@ -802,9 +806,15 @@ FLASHMEM void create_audio_wav_preview_chain()
   dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_SD, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_SD);
   dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_SD, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW_SD);
 #ifdef COMPILE_FOR_FLASH
-  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_FLASH, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_FLASH);
-  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_FLASH, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW_FLASH);
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_FLASH, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_FLASH_OR_PSRAM);
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_FLASH, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW_FLASH_OR_PSRAM);
 #endif
+
+#ifdef COMPILE_FOR_PSRAM
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_PSRAM, 0, master_mixer_r, MASTER_MIX_CH_WAV_PREVIEW_FLASH_OR_PSRAM);
+  dynamicConnections[nDynamic++] = new AudioConnection(WAV_preview_PSRAM, 0, master_mixer_l, MASTER_MIX_CH_WAV_PREVIEW_FLASH_OR_PSRAM);
+#endif
+
 }
 
 uint8_t sd_card = 0;
@@ -923,7 +933,7 @@ bool touch_ic_found = false;
    SETUP
  ***********************************************************************/
 
-void setup()
+FLASHMEM void setup()
 {
 
 #ifdef DEBUG
@@ -1242,9 +1252,10 @@ void setup()
   create_audio_wav_preview_chain();
   master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_SD, 0.4);
   master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW_SD, 0.4);
-#ifdef COMPILE_FOR_FLASH
-  master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH, 0.4);
-  master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH, 0.4);
+
+#if defined(COMPILE_FOR_FLASH) || defined(COMPILE_FOR_PSRAM)
+  master_mixer_r.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH_OR_PSRAM, 0.4);
+  master_mixer_l.gain(MASTER_MIX_CH_WAV_PREVIEW_FLASH_OR_PSRAM, 0.4);
 #endif
 
   //  Serial Flash Init
@@ -1535,7 +1546,7 @@ FLASHMEM void load_custom_samples_to_psram()
     loadSample(loader, i, temp_name);
     if (drum_config[i].len == 0 || drum_config[i].len > 10000000)
     {
-      snprintf_P(temp_name, 12, PSTR("CUSTOM%02d"), i-NUM_STATIC_PITCHED_SAMPLES+1);
+      snprintf_P(temp_name, 12, PSTR("CUSTOM%02d"), i - NUM_STATIC_PITCHED_SAMPLES + 1);
       strcpy(drum_config[i].filename, temp_name);
       strcpy(drum_config[i].name, temp_name);
     }
@@ -1908,9 +1919,15 @@ void preview_sample()
       strcat(fm.sd_full_name, fm.sd_temp_name);
       playWAVFile(fm.sd_full_name);
     }
-    else if (fm.active_window == 1 && strstr(fm.flash_or_psram_temp_name, ".wav") != NULL)
+    else if (fm.active_window == 1)
     { // preview flash file
-      playWAVFile(fm.flash_or_psram_temp_name);
+#if defined(COMPILE_FOR_FLASH)
+      if (strstr(fm.flash_or_psram_temp_name, ".wav") != NULL)
+        playWAVFile(fm.flash_or_psram_temp_name);
+#endif
+#if defined(COMPILE_FOR_PSRAM)
+      playWAVFilePSRAM(fm.flash_or_psram_selected_file + 6 + fm.flash_or_psram_skip_files);
+#endif
     }
     draw_button_on_grid(46, 25, "PLAY", "SAMPLE", 1);
   }
@@ -2330,7 +2347,28 @@ void loop()
   MIDI MESSAGE HANDLER
 ******************************************************************************/
 
-void playWAVFile(const char* filename)
+#if  defined(COMPILE_FOR_PSRAM)
+FLASHMEM void playWAVFilePSRAM(uint8_t d)
+{
+  if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager) && fm.active_window == 1)
+  {
+    if (drum_config[d].drum_data != NULL && drum_config[d].len > 0 && drum_config[d].len < 10000000) {
+      if (WAV_preview_PSRAM.isPlaying())
+        WAV_preview_PSRAM.stop();
+      WAV_preview_PSRAM.playRaw((int16_t*)drum_config[d].drum_data, drum_config[d].len, 1);
+      while (WAV_preview_PSRAM.isPlaying())
+      {
+        display.fillRect(6, 189, (float)(DISPLAY_WIDTH - 8) / (WAV_preview_PSRAM.lengthMillis()) * WAV_preview_PSRAM.positionMillis() + 1, 7, RED);
+        delay(25);
+      }
+      delay(15);
+      display.fillRect(6, 189, DISPLAY_WIDTH - 7, 7, COLOR_BACKGROUND);
+    }
+  }
+}
+#endif
+
+FLASHMEM void playWAVFile(const char* filename)
 {
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_file_manager))
   {
@@ -2363,6 +2401,7 @@ void playWAVFile(const char* filename)
     }
 #endif
   }
+
 #ifdef COMPILE_FOR_FLASH
   if (LCDML.FUNC_getID() == LCDML.OTHER_getIDFromFunction(UI_func_sample_editor) && fm.sample_source > 0 && fm.sample_source < 4)
   {
