@@ -29,7 +29,7 @@ public:
   };
 
   static constexpr uint16_t BUTTON_SIZE_X = 50;
-  static constexpr uint16_t BUTTON_SIZE_Y = 36;
+  static constexpr uint16_t BUTTON_SIZE_Y = 35;
 
   TouchButton(uint16_t x_coord, uint16_t y_coord, std::function<void(TouchButton*)> draw, std::function<void(TouchButton *b)> clicked = [](TouchButton *b){}, std::function<void(TouchButton *b)> longPressed = 0);
   void processPressed();

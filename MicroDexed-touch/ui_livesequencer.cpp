@@ -26,7 +26,7 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
   const uint8_t BUTTON_SPACING = 4;  // center in screen
 
   for(int i = 0; i < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; i++) {
-    const uint8_t OFFSET_Y = (i > 1) ? 4 : 0; // separate areas a bit
+    const uint8_t OFFSET_Y = (i > 1) ? 10 : 0; // separate areas a bit
     GRID_X[i] = i * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
     GRID_Y[i] = i * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING) + OFFSET_Y;
   }
@@ -51,10 +51,15 @@ FLASHMEM void UI_LiveSequencer::init(void) {
         const TouchButton::Color color = ((trackOffset + track) == data.activeTrack) ? (data.isRecording ? TouchButton::BUTTON_RED : TouchButton::BUTTON_HIGHLIGHTED) : TouchButton::BUTTON_ACTIVE;
         char temp_char[4];
         b->draw(data.tracks[(trackOffset + track)].name, itoa((trackOffset + track) + 1, temp_char, 10), color);
-        /*display.setCursor(GRID_X[track] + TouchButton::BUTTON_SIZE_X - 20, GRID_Y[1] + 5);
+
+        display.fillRect(GRID_X[track], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y, TouchButton::BUTTON_SIZE_X, 6, TouchButton::getColors(color).bg);
         display.setTextSize(1);
-        display.setTextColor(COLOR_SYSTEXT);
-        display.printf("Q%02i", data.trackSettings[(trackOffset + track)].quantizeDenom);*/
+        display.setTextColor(GREY1);
+        display.setCursor(GRID_X[track] + 2, GRID_Y[1] + TouchButton::BUTTON_SIZE_Y - 3);
+        display.printf("/%i", data.trackSettings[(trackOffset + track)].quantizeDenom);
+        sprintf(temp_char, "%i%%", data.trackSettings[(trackOffset + track)].velocityLevel);
+        display.setCursor(GRID_X[track] + TouchButton::BUTTON_SIZE_Y - strlen(temp_char) * 1, GRID_Y[1] + TouchButton::BUTTON_SIZE_Y - 3);
+        display.print(temp_char);
       },
       [ this, track ] (auto *b) { // clickedHandler
         instance->onTrackButtonPressed(trackOffset + track);
@@ -229,6 +234,7 @@ FLASHMEM void UI_LiveSequencer::init(void) {
     b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
     if(data.trackSettings[data.activeTrack].quantizeDenom != selectedTrackSetup.quantizeDenom) {
       data.trackSettings[data.activeTrack].quantizeDenom = selectedTrackSetup.quantizeDenom;
+      guiUpdateFlags |= drawTrackButtons;
     }
   }));
 
@@ -238,6 +244,7 @@ FLASHMEM void UI_LiveSequencer::init(void) {
     b->draw("VELOCTY", (v->getValue() == 0) ? "KEY" : v->toString() + std::string("%"), (v->getValue() == 0) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
     if(data.trackSettings[data.activeTrack].velocityLevel != selectedTrackSetup.velocity) {
       data.trackSettings[data.activeTrack].velocityLevel = selectedTrackSetup.velocity;
+      guiUpdateFlags |= drawTrackButtons;
     }
   }));
 
