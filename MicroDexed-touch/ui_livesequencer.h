@@ -15,6 +15,7 @@ public:
   void processLCDM(void);
   void handleTouchscreen(void);
   void onStopped(void);
+  void drawSingleLayer(uint8_t track, uint8_t layer); // used for layer mute GUI updates
 
   enum GuiUpdates : uint16_t {
     drawTopButtons = (1 << 0),
@@ -29,6 +30,15 @@ public:
   };
 
 private:
+  struct Flags {
+    uint16_t track : 16;
+    uint16_t layer : 16;
+  };
+  union LayerUpdates {
+    uint32_t value;
+    Flags flags;
+  } layerUpdates;
+
   uint8_t trackOffset = 0;
   struct ProgressBar {
     bool currentPhase;
