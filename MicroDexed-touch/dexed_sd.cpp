@@ -1765,7 +1765,8 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           deserializeJson(doc, json);
           json.close();
           data->numberOfBars = doc["num_bars"];
-          const uint8_t num_tracks = doc["num_tracks"];
+          int num_tracks = doc["num_tracks"];
+          num_tracks = std::min(num_tracks, LiveSequencer::LIVESEQUENCER_NUM_TRACKS); // clamp for compatibility
           const bool hasTrackInstruments = doc["hasTrackInstruments"];
           if (hasTrackInstruments == false) {
             liveSeq.loadOldTrackInstruments();
