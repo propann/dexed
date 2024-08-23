@@ -89,6 +89,7 @@ public:
   struct FillNotes {
     uint8_t number;
     uint8_t offset;
+    uint8_t velocityLevel;
   };
 
   enum ArpMode : uint8_t {

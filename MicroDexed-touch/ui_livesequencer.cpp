@@ -47,7 +47,7 @@ FLASHMEM void UI_LiveSequencer::drawTrackSubtext(uint8_t track, uint8_t trackOff
   display.fillRect(GRID_X[track], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3, TouchButton::BUTTON_SIZE_X, CHAR_height_small, COLOR_BACKGROUND);
         display.setTextSize(1);
         display.setTextColor(isActiveTrack ? GREY1 : GREY2);
-        display.setCursor(GRID_X[track] + 2, GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3);
+        display.setCursor(GRID_X[track], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3);
 
         const uint8_t denom = data.trackSettings[(trackOffset + track)].quantizeDenom;
         
@@ -288,6 +288,10 @@ FLASHMEM void UI_LiveSequencer::init(void) {
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("OFFSET", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[4], GRID_Y[5], data.fillNotes.velocityLevel, 0, 100, 5, 100, 
+  [ ] (auto *b, auto *v) { // drawHandler
+    b->draw("VELOCTY", v->toString() + std::string("%"), TouchButton::BUTTON_ACTIVE);
+  }));
   toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOW", TouchButton::BUTTON_RED);
@@ -315,7 +319,6 @@ FLASHMEM void UI_LiveSequencer::init(void) {
     std::string t2 = (data.songLayerCount == 0) ? "LAYERS" : "ACTION";
     b->draw(t1, t2, (data.songLayerCount == 0) ? TouchButton::BUTTON_LABEL : TouchButton::BUTTON_ACTIVE);
     data.guiUpdateFlags |= drawSongLayers;
-    
   }, [ this ] (auto *b) { // clickedHandler
     if(data.songLayerCount > 0) {
       if(++songLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
@@ -541,7 +544,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
 
 FLASHMEM void UI_LiveSequencer::clearBottomArea(void) {
   display.console = true;
-  display.fillRect(0, 80, DISPLAY_WIDTH, DISPLAY_HEIGHT - 80, COLOR_BACKGROUND);
+  display.fillRect(0, GRID_Y[2], DISPLAY_WIDTH, DISPLAY_HEIGHT - GRID_Y[2], COLOR_BACKGROUND);
 }
 
 FLASHMEM void UI_LiveSequencer::redrawScreen(void) {

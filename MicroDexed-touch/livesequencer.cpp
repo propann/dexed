@@ -337,11 +337,12 @@ FLASHMEM void LiveSequencer::fillTrackLayer(void) {
     const float msIncrement = data.patternLengthMs / float(data.fillNotes.number);
     const uint8_t msOffset = round(data.fillNotes.offset * msIncrement / 8.0f);
     const uint16_t noteLength = round(msIncrement / 2.0f); // ...
+    const uint8_t velocity = uint8_t(data.fillNotes.velocityLevel * 1.27F);
     for (uint8_t bar = 0; bar < data.numberOfBars; bar++) {
       for (uint16_t note = 0; note < data.fillNotes.number; note++) {
         const uint16_t noteOnTime = round(note * msIncrement) + msOffset;
         const uint16_t noteOffTime = noteOnTime + noteLength;
-        data.pendingEvents.emplace_back(MidiEvent{ EVENT_PATTERN, noteOnTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, 127 });
+        data.pendingEvents.emplace_back(MidiEvent{ EVENT_PATTERN, noteOnTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOn, data.lastPlayedNote, velocity });
         data.pendingEvents.emplace_back(MidiEvent{ EVENT_PATTERN, noteOffTime, bar, data.activeTrack, data.trackSettings[data.activeTrack].layerCount, midi::NoteOff, data.lastPlayedNote, 0 });
       }
     }
