@@ -395,6 +395,8 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define NUM_DRUMS 0
 #endif
 
+#define ALL_STATIC_DELAY_INSTR_OUT 8  // static delay sends 
+
 // MAX_NOTES SETTINGS
 // Teensy-4.x settings
 #ifdef TEENSY4

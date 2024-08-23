@@ -205,7 +205,7 @@ AudioSynthWaveform* chorus_modulator[NUM_DEXED];
 
 AudioEffectModulatedDelay* dexed_chorus[NUM_DEXED];
 
-AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
+AudioMixer<8 + NUM_DRUMS>* global_delay_in_mixer[NUM_DEXED];
 AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 
 AudioFilterStateVariable global_delay_filter[NUM_DEXED];
@@ -615,7 +615,7 @@ FLASHMEM void create_audio_dexed_chain(uint8_t instance_id)
   chorus_modulator[instance_id] = new AudioSynthWaveform();
 
   dexed_chorus[instance_id] = new AudioEffectModulatedDelay();
-  global_delay_in_mixer[instance_id] = new AudioMixer<8>();
+  global_delay_in_mixer[instance_id] = new AudioMixer<8 + NUM_DRUMS>();
   delay_fb_mixer[instance_id] = new AudioMixer<2>();
 
 #ifdef PSRAM
@@ -783,6 +783,10 @@ FLASHMEM void create_audio_drum_chain(uint8_t instance_id)
 
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, drum_reverb_send_mixer_r, instance_id);
   dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, drum_reverb_send_mixer_l, instance_id);
+
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, *global_delay_in_mixer[0], 8 + instance_id);
+  dynamicConnections[nDynamic++] = new AudioConnection(*Drum_filter[instance_id], 0, *global_delay_in_mixer[1], 8 + instance_id);
+  ////photodo
 
   Drum_filter[instance_id]->setLowpass(0, 20000, 0.2); //phtodo
 
@@ -1147,14 +1151,17 @@ FLASHMEM void setup()
     drum_reverb_send_mixer_r.gain(instance_id, 0.0);
     drum_reverb_send_mixer_l.gain(instance_id, 0.0);
 
-    // test with envelopes for samples
-    // sample_envelope[instance_id]->attack(0);
-    // sample_envelope[instance_id]->delay(0);
-    // sample_envelope[instance_id]->hold(50);
-    // sample_envelope[instance_id]->decay(50);
-    // sample_envelope[instance_id]->sustain(1.0);
-    // sample_envelope[instance_id]->release(1425);
-    // sample_envelope[instance_id]->releaseNoteOn(5);//xxxyyy
+    //global_delay_in_mixer[0]->gain(instance_id+ALL_STATIC_DELAY_INSTR_OUT,0.5);  //phtodo
+    //global_delay_in_mixer[1]->gain(instance_id+ALL_STATIC_DELAY_INSTR_OUT,0.5); 
+
+        // test with envelopes for samples
+        // sample_envelope[instance_id]->attack(0);
+        // sample_envelope[instance_id]->delay(0);
+        // sample_envelope[instance_id]->hold(50);
+        // sample_envelope[instance_id]->decay(50);
+        // sample_envelope[instance_id]->sustain(1.0);
+        // sample_envelope[instance_id]->release(1425);
+        // sample_envelope[instance_id]->releaseNoteOn(5);//xxxyyy
   }
 
   // Setup EPiano
@@ -2951,8 +2958,8 @@ void handleNoteOn(byte inChannel, byte inNumber, byte inVelocity, byte device)
           // else if (drum_config[d].filter_mode == 3)
           //   Drum_filter[slot]->setHighpass(0, drum_config[d].filter_freq * 1000, 0.5);
 
-
-          //photodo
+          global_delay_in_mixer[0]->gain(slot + 8, drum_config[d].delay1 / 5);
+          global_delay_in_mixer[1]->gain(slot + 8, drum_config[d].delay2 / 5);
 
           float pan = mapfloat(drum_config[d].pan, -1.0, 1.0, 0.0, 1.0);
 
@@ -4781,12 +4788,23 @@ void set_sample_filter_mode(uint8_t sample, uint8_t s_filter_mode)
 
 void set_sample_filter_freq(uint8_t sample, float s_freq)
 {
+  if (s_freq>2.195)
+  s_freq=2.195;
   drum_config[sample].filter_freq = s_freq;
 }
 
 void set_sample_filter_q(uint8_t sample, float s_q)
 {
   drum_config[sample].filter_q = s_q;
+}
+
+void set_sample_delay1(uint8_t sample, float s_d1)
+{
+  drum_config[sample].delay1 = s_d1;
+}
+void set_sample_delay2(uint8_t sample, float s_d2)
+{
+  drum_config[sample].delay2 = s_d2;
 }
 
 uint8_t get_sample_note(uint8_t sample)
@@ -4829,6 +4847,15 @@ float get_sample_filter_q(uint8_t sample)
 {
   return (drum_config[sample].filter_q);
 }
+float get_sample_delay1(uint8_t sample)
+{
+  return (drum_config[sample].delay1);
+}
+float get_sample_delay2(uint8_t sample)
+{
+  return (drum_config[sample].delay2);
+}
+
 
 FLASHMEM void set_fx_params(void)
 {
