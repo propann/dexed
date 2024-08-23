@@ -15,6 +15,9 @@ extern void UI_func_save_performance(uint8_t param);
 extern void UI_func_midi_channels(uint8_t param);
 extern void UI_func_seq_settings(uint8_t param);
 extern void UI_func_liveseq_pianoroll(uint8_t param);
+extern void UI_func_file_manager(uint8_t param);
+extern void UI_func_master_effects(uint8_t param);
+extern void UI_func_multiband_dynamics(uint8_t param);
 
 extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
@@ -112,6 +115,92 @@ FLASHMEM void UI_LiveSequencer::init(void) {
   }));
 
   // SEQUENCER TOOLS
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[3],
+  [ ] (auto *b) { // drawHandler
+    b->draw("TRACK", "SETUP", TouchButton::BUTTON_LABEL);
+  }));
+  
+  selectedTrackSetup.label = new TouchButton(GRID_X[1], GRID_Y[3],
+  [ this ] (auto *b) { // drawHandler
+    char temp_char[2];
+    itoa(data.activeTrack + 1, temp_char, 10);
+    b->draw("TRACK", temp_char, TouchButton::BUTTON_LABEL);
+  });
+  toolsPages[TOOLS_SEQ].push_back(selectedTrackSetup.label);
+
+  // track instrument
+  ValueButtonRange<uint8_t> *currentTrackInstrument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[3], selectedTrackSetup.instrument, 0, 15, 1, data.trackSettings[data.activeTrack].instrument, 
+  [ this ] (auto *b, auto *v) { // drawHandler
+    char name[10];
+    char sub[10];
+    // MDT has instruments 0-8 / MIDI has instuments 0-15
+    const uint8_t maxInstrument = (selectedTrackSetup.device == LiveSequencer::DEVICE_INTERNAL) ? LiveSequencer::INSTR_MSP2 : 15;
+    static_cast<EditableValueRange<uint8_t>*>(v)->changeRange(0, maxInstrument); 
+    
+    liveSeq.getInstrumentName(selectedTrackSetup.device, v->getValue(), name, sub);
+    b->draw(name, sub, TouchButton::BUTTON_ACTIVE);
+    instance->checkApplyTrackInstrument();
+  });
+  toolsPages[TOOLS_SEQ].push_back(currentTrackInstrument);
+
+  // track device
+  toolsPages[TOOLS_SEQ].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[3], selectedTrackSetup.device, LiveSequencer::DEVICE_INTERNAL, LiveSequencer::DEVICE_MIDI_INT, 1, data.trackSettings[data.activeTrack].device, 
+  [ this, currentTrackInstrument ] (auto *b, auto *v) { // drawHandler
+    char name[10];
+    char sub[10];
+    liveSeq.getDeviceName(v->getValue(), name, sub);
+    b->draw(name, sub, TouchButton::BUTTON_ACTIVE);
+    currentTrackInstrument->drawNow();
+    instance->checkApplyTrackInstrument();
+  }));
+
+  // track quantize
+  toolsPages[TOOLS_SEQ].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[4], GRID_Y[3], selectedTrackSetup.quantizeDenom, { 1, 2, 4, 8, 16, 32 }, data.trackSettings[data.activeTrack].quantizeDenom,
+  [ this ] (auto *b, auto *v) { // drawHandler
+    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
+    if (data.trackSettings[data.activeTrack].quantizeDenom != selectedTrackSetup.quantizeDenom) {
+      data.trackSettings[data.activeTrack].quantizeDenom = selectedTrackSetup.quantizeDenom;
+      data.guiUpdateFlags |= drawActiveTrackSubLabel;
+    }
+  }));
+
+  // track velocity
+  toolsPages[TOOLS_SEQ].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[5], GRID_Y[3], selectedTrackSetup.velocity, 0, 100, 5, data.trackSettings[data.activeTrack].velocityLevel,
+  [ this ] (auto *b, auto *v) { // drawHandler
+    b->draw("VELOCTY", (v->getValue() == 0) ? "KEY" : v->toString() + std::string("%"), (v->getValue() == 0) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
+    if (data.trackSettings[data.activeTrack].velocityLevel != selectedTrackSetup.velocity) {
+      data.trackSettings[data.activeTrack].velocityLevel = selectedTrackSetup.velocity;
+      data.guiUpdateFlags |= drawActiveTrackSubLabel;
+    }
+  }));
+
+  // jump to other pages
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
+  [ ] (auto *b) { // drawHandler
+    b->draw("JUMP", "PAGE", TouchButton::BUTTON_LABEL);
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[1], GRID_Y[4],
+  [ ] (auto *b) { // drawHandler
+    b->draw("FILE", "MANAGER", TouchButton::BUTTON_ACTIVE);
+  },
+  [ this ] (auto *b) { // clickedHandler
+    openScreen(UI_func_file_manager, data.performanceID);
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[2], GRID_Y[4],
+  [ ] (auto *b) { // drawHandler
+    b->draw("MASTER", "EFFECTS", TouchButton::BUTTON_ACTIVE);
+  },
+  [ this ] (auto *b) { // clickedHandler
+    openScreen(UI_func_master_effects, data.performanceID);
+  }));
+  toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[3], GRID_Y[4],
+  [ ] (auto *b) { // drawHandler
+    b->draw("MULTI", "BAND", TouchButton::BUTTON_ACTIVE);
+  },
+  [ this ] (auto *b) { // clickedHandler
+    openScreen(UI_func_multiband_dynamics, data.performanceID);
+  }));
+
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
   [ ] (auto *b) { // drawHandler
     b->draw("ACTIONS", "", TouchButton::BUTTON_LABEL);
@@ -208,90 +297,31 @@ FLASHMEM void UI_LiveSequencer::init(void) {
     applyPatternLength->drawNow();
   }));
 
-  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
-  [ ] (auto *b) { // drawHandler
-    b->draw("TRACK", "SETUP", TouchButton::BUTTON_LABEL);
-  }));
-  
-  selectedTrackSetup.label = new TouchButton(GRID_X[1], GRID_Y[4],
-  [ this ] (auto *b) { // drawHandler
-    char temp_char[2];
-    itoa(data.activeTrack + 1, temp_char, 10);
-    b->draw("TRACK", temp_char, TouchButton::BUTTON_LABEL);
-  });
-  toolsPages[TOOLS_PATTERN].push_back(selectedTrackSetup.label);
-
-  // track instrument
-  ValueButtonRange<uint8_t> *currentTrackInstrument = new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], selectedTrackSetup.instrument, 0, 15, 1, data.trackSettings[data.activeTrack].instrument, 
-  [ this ] (auto *b, auto *v) { // drawHandler
-    char name[10];
-    char sub[10];
-    // MDT has instruments 0-8 / MIDI has instuments 0-15
-    const uint8_t maxInstrument = (selectedTrackSetup.device == LiveSequencer::DEVICE_INTERNAL) ? LiveSequencer::INSTR_MSP2 : 15;
-    static_cast<EditableValueRange<uint8_t>*>(v)->changeRange(0, maxInstrument); 
-    
-    liveSeq.getInstrumentName(selectedTrackSetup.device, v->getValue(), name, sub);
-    b->draw(name, sub, TouchButton::BUTTON_ACTIVE);
-    instance->checkApplyTrackInstrument();
-  });
-  toolsPages[TOOLS_PATTERN].push_back(currentTrackInstrument);
-
-  // track device
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], selectedTrackSetup.device, LiveSequencer::DEVICE_INTERNAL, LiveSequencer::DEVICE_MIDI_INT, 1, data.trackSettings[data.activeTrack].device, 
-  [ this, currentTrackInstrument ] (auto *b, auto *v) { // drawHandler
-    char name[10];
-    char sub[10];
-    liveSeq.getDeviceName(v->getValue(), name, sub);
-    b->draw(name, sub, TouchButton::BUTTON_ACTIVE);
-    currentTrackInstrument->drawNow();
-    instance->checkApplyTrackInstrument();
-  }));
-
-  // track quantize
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[4], GRID_Y[4], selectedTrackSetup.quantizeDenom, { 1, 2, 4, 8, 16, 32 }, data.trackSettings[data.activeTrack].quantizeDenom,
-  [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("QUANT", (v->getValue() == 1) ? "NONE" : v->toString(), (v->getValue() == 1) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
-    if (data.trackSettings[data.activeTrack].quantizeDenom != selectedTrackSetup.quantizeDenom) {
-      data.trackSettings[data.activeTrack].quantizeDenom = selectedTrackSetup.quantizeDenom;
-      data.guiUpdateFlags |= drawActiveTrackSubLabel;
-    }
-  }));
-
-  // track velocity
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[5], GRID_Y[4], selectedTrackSetup.velocity, 0, 100, 5, data.trackSettings[data.activeTrack].velocityLevel,
-  [ this ] (auto *b, auto *v) { // drawHandler
-    b->draw("VELOCTY", (v->getValue() == 0) ? "KEY" : v->toString() + std::string("%"), (v->getValue() == 0) ? TouchButton::BUTTON_NORMAL : TouchButton::BUTTON_ACTIVE);
-    if (data.trackSettings[data.activeTrack].velocityLevel != selectedTrackSetup.velocity) {
-      data.trackSettings[data.activeTrack].velocityLevel = selectedTrackSetup.velocity;
-      data.guiUpdateFlags |= drawActiveTrackSubLabel;
-    }
-  }));
-
   // fill notes
-  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
+  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[0], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOTES", TouchButton::BUTTON_LABEL);
   }));
-  lastNoteLabel = new TouchButton(GRID_X[1], GRID_Y[5],
+  lastNoteLabel = new TouchButton(GRID_X[1], GRID_Y[4],
   [ this ] (auto *b) { // drawHandler
     char temp_char[4];
     b->draw("NOTE", itoa(data.lastPlayedNote, temp_char, 10), TouchButton::BUTTON_LABEL);
   });
   toolsPages[TOOLS_PATTERN].push_back(lastNoteLabel);
 
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[5], data.fillNotes.number, { 4, 6, 8, 12, 16, 24, 32 }, 16, 
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonVector<uint8_t>(&currentValue, GRID_X[2], GRID_Y[4], data.fillNotes.number, { 4, 6, 8, 12, 16, 24, 32 }, 16, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("NUMBER", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[5], data.fillNotes.offset, 0, 7, 1, 0, 
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[3], GRID_Y[4], data.fillNotes.offset, 0, 7, 1, 0, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("OFFSET", v->toString(), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[4], GRID_Y[5], data.fillNotes.velocityLevel, 0, 100, 5, 100, 
+  toolsPages[TOOLS_PATTERN].push_back(new ValueButtonRange<uint8_t>(&currentValue, GRID_X[4], GRID_Y[4], data.fillNotes.velocityLevel, 0, 100, 5, 100, 
   [ ] (auto *b, auto *v) { // drawHandler
     b->draw("VELOCTY", v->toString() + std::string("%"), TouchButton::BUTTON_ACTIVE);
   }));
-  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[5],
+  toolsPages[TOOLS_PATTERN].push_back(new TouchButton(GRID_X[5], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
     b->draw("FILL", "NOW", TouchButton::BUTTON_RED);
   },
@@ -520,7 +550,7 @@ FLASHMEM void UI_LiveSequencer::processLCDM(void) {
     
     data.guiUpdateFlags |= data.isRunning ? (drawActiveNotes | drawTime) : 0;
 
-    if ((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN) && (data.guiUpdateFlags & drawLastPlayedNote)) {
+    if ((isLayerViewActive == false) && (currentTools == TOOLS_SEQ) && (data.guiUpdateFlags & drawLastPlayedNote)) {
       lastNoteLabel->drawNow();
     }
 
@@ -596,7 +626,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
     trackButtons[track % LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN]->drawNow();
 
     //check if update track instrument selection
-    if ((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN)) {
+    if ((isLayerViewActive == false) && (currentTools == TOOLS_SEQ)) {
       updateTrackChannelSetupButtons();
     }
     trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
@@ -882,7 +912,7 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 }
 
 FLASHMEM void UI_LiveSequencer::drawSingleLayer(uint8_t track, uint8_t layer) {
-  layerUpdates[track] |= (1 << layer);
+  layerUpdates[track % LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN] |= (1 << layer);
 }
 
 FLASHMEM void UI_LiveSequencer::refreshToolsElements(Tools tools) {
