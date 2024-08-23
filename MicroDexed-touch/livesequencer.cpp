@@ -478,8 +478,6 @@ FLASHMEM void LiveSequencer::playNextEvent(void) {
         const uint8_t muteLayer = playIterator->note_in;
         //DBG_LOG(printf("mute %s\n", playIterator->note_in_velocity ? "MUTE" : "UNMUTE"));
         setLayerMuted(playIterator->track, muteLayer, playIterator->note_in_velocity == AutomationType::TYPE_MUTE_ON);
-        //data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLayerButtons;
-        ui_liveSeq->drawSingleLayer(playIterator->track, muteLayer);
         break;
       }
       break;
@@ -910,6 +908,8 @@ FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool is
   else {
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
+  ui_liveSeq->drawSingleLayer(playIterator->track, layer);
+
   if (recordToSong) {
     if (data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {
       data.recordedToSong = true;
