@@ -49,6 +49,8 @@ typedef struct drum_config_s
   int16_t filter_mode;   // multimode filter mode
   float32_t filter_freq; // multimode filter frequency
   float32_t filter_q; // multimode filter Q
+  float32_t delay1; // delay1 send 
+  float32_t delay2; // selay2 send
 
 } drum_config_t;
 

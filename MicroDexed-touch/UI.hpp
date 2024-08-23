@@ -306,7 +306,7 @@ bool generic_full_draw_required = false;
 
 // FX
 extern AudioSynthWaveform* chorus_modulator[NUM_DEXED];
-extern AudioMixer<8>* global_delay_in_mixer[NUM_DEXED];
+extern AudioMixer<ALL_STATIC_DELAY_INSTR_OUT+NUM_DRUMS>* global_delay_in_mixer[NUM_DEXED];
 extern AudioMixer<2>* delay_fb_mixer[NUM_DEXED];
 
 #ifdef PSRAM
@@ -6827,6 +6827,8 @@ void UI_func_drums(uint8_t param)
     addDrumParameterEditor((const char*)F("VOLUME"), 0, 100, &drum_config[0].vol_max);
     addDrumParameterEditor((const char*)F("PAN"), -99, 99, &drum_config[0].pan);
     addDrumParameterEditor((const char*)F("REVERB"), 0, 100, &drum_config[0].reverb_send);
+    addDrumParameterEditor((const char*)F("DELAY1"), 0, 100, &drum_config[0].delay1);
+    addDrumParameterEditor((const char*)F("DELAY2"), 0, 100, &drum_config[0].delay2);
     addDrumParameterEditor((const char*)F("PITCH"), 0, 200, &drum_config[0].pitch);
     addDrumParameterEditor((const char*)F("TUNE"), 0, 200, &drum_config[0].p_offset);
     addDrumParameterEditor_int16_t((const char*)F("FILTER"), 0, 3, &drum_config[0].filter_mode);

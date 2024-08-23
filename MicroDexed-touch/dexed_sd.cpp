@@ -130,6 +130,9 @@ extern void set_sample_filter_mode(uint8_t sample, uint8_t s_filter_mode);
 extern void set_sample_filter_freq(uint8_t sample, float s_filter_freq);
 extern void set_sample_filter_q(uint8_t sample, float s_filter_q);
 
+extern void set_sample_delay1(uint8_t sample, float s_delay1);
+extern void set_sample_delay2(uint8_t sample, float s_delay2);
+
 extern void handleStop(void);
 extern void handleStart(void);
 extern void dac_mute(void);
@@ -145,6 +148,9 @@ extern float get_sample_reverb_send(uint8_t sample);
 extern uint8_t get_sample_filter_mode(uint8_t sample);
 extern float get_sample_filter_freq(uint8_t sample);
 extern float get_sample_filter_q(uint8_t sample);
+
+extern float get_sample_delay1(uint8_t sample);
+extern float get_sample_delay2(uint8_t sample);
 
 extern multisample_t msp[NUM_MULTISAMPLES];
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
@@ -796,6 +802,8 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
           set_sample_filter_mode(index, data_json["f_mode"][i]);
           set_sample_filter_freq(index, data_json["f_freq"][i]);
           set_sample_filter_q(index, data_json["f_q"][i]);
+          set_sample_delay1(index, data_json["d1"][i]);
+          set_sample_delay2(index, data_json["d2"][i]);
         }
 
         if (oldformat) {
@@ -868,6 +876,8 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
           data_json["f_mode"][i] = get_sample_filter_mode(i);
           data_json["f_freq"][i] = get_sample_filter_freq(i);
           data_json["f_q"][i] = get_sample_filter_q(i);
+          data_json["d1"][i] = get_sample_delay1(i);
+          data_json["d2"][i] = get_sample_delay2(i);
 
         }
 #if defined(DEBUG) && defined(DEBUG_SHOW_JSON)
