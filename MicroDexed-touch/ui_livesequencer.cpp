@@ -707,7 +707,7 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
             const bool recordMuteToSong = data.isSongMode && data.isRecording && data.isRunning;
             liveSeq.setLayerMuted(trackOffset + track, layer, !isMutedOld, recordMuteToSong);
           }
-          data.guiUpdateFlags |= (drawLayerButtons);
+          drawSingleLayer(track, layer);
         }
       }
     }
@@ -841,7 +841,7 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
         TouchButton::Color color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
         if (layerEditActive) {
           // adapt button background if in layer edit mode
-          color = getLayerEditButtonColor(trackLayerMode);
+          handleLayerEditButtonColor(trackLayerMode, color);
         }
         if (drawAllLayers || drawThisLayer) {
           drawLayerButton(data.isSongMode, trackLayerMode, layer, layerEditActive, color, GRID_X[track], GRID_Y[2 + layer]);
@@ -876,7 +876,8 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     }
   }
   if (guiFlags & drawSongLayers) {
-    TouchButton::Color color = getLayerEditButtonColor(songLayerMode);
+    TouchButton::Color color = TouchButton::BUTTON_ACTIVE;
+    handleLayerEditButtonColor(songLayerMode, color);
     for (int songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
       drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
     }
@@ -948,16 +949,15 @@ FLASHMEM void UI_LiveSequencer::drawLayerButton(const bool horizontal, uint8_t l
   TouchButton::drawButton(x, y, label.c_str(), labelSub.c_str(), color);
 }
 
-FLASHMEM TouchButton::Color UI_LiveSequencer::getLayerEditButtonColor(uint8_t layerMode) {
+FLASHMEM void UI_LiveSequencer::handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color) {
   switch (layerMode) {
   case LiveSequencer::LayerMode::LAYER_MERGE:
-    return TouchButton::BUTTON_HIGHLIGHTED;
+    color = TouchButton::BUTTON_HIGHLIGHTED;
+    break;
 
   case LiveSequencer::LayerMode::LAYER_DELETE:
-    return TouchButton::BUTTON_RED;
-
-  default:
-    return TouchButton::BUTTON_ACTIVE;
+    color = TouchButton::BUTTON_RED;
+    break;
   }
 }
 
