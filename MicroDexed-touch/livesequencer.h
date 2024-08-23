@@ -155,12 +155,12 @@ public:
     uint8_t songPatternCount = 0;
     uint8_t songLayerCount = 0;
     uint8_t lastPlayedNote = 0;
-    bool trackLayersChanged = false;
-    bool songLayersChanged = false;
+    uint16_t guiUpdateFlags = 0;
+
     bool startedFlag = false;
     bool isRunning = false;
     bool isRecording = false;
-    bool lastPlayedNoteChanged = false;
+
     bool isSongMode = false;
     bool recordedToSong = false;
     int currentBpm = 90;

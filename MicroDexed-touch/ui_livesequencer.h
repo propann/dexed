@@ -16,6 +16,18 @@ public:
   void handleTouchscreen(void);
   void onStopped(void);
 
+  enum GuiUpdates : uint16_t {
+    drawTopButtons = (1 << 0),
+    drawTrackButtons = (1 << 1),
+    drawLayerButtons = (1 << 2),
+    drawTools = (1 << 3),
+    drawActiveNotes = (1 << 5),
+    drawTime = (1 << 6),
+    drawSongLayers = (1 << 7),
+    drawLastPlayedNote = (1 << 8),
+    drawActiveTrackSubLabel = (1 << 9)
+  };
+
 private:
   uint8_t trackOffset = 0;
   struct ProgressBar {
@@ -32,7 +44,6 @@ private:
   bool showingHowTo = false;
 
   bool isLayerViewActive = false;
-  uint16_t guiUpdateFlags = 0;
 
   ActiveValue currentValue = { nullptr, nullptr };
   TouchButton *applyPatternLength;
@@ -80,16 +91,6 @@ private:
   std::vector<TouchButton*> toolsPages[TOOLS_NUM];
   std::vector<TouchButton*> trackButtons;
 
-  enum GuiUpdates : uint16_t {
-    drawTopButtons = (1 << 0),
-    drawTrackButtons = (1 << 1),
-    drawLayerButtons = (1 << 2),
-    drawTools = (1 << 3),
-    drawActiveNotes = (1 << 5),
-    drawTime = (1 << 6),
-    drawSongLayers = (1 << 7)
-  };
-
   uint16_t GRID_X[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN];
   uint16_t GRID_Y[LiveSequencer::LIVESEQUENCER_NUM_LAYERS + 2];
  
@@ -110,8 +111,8 @@ private:
   void resetProgressBars(void);
   void drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
   void updateTrackChannelSetupButtons(void);
-
-  FLASHMEM void checkApplyTrackInstrument(void);
+  void drawTrackSubtext(uint8_t track, uint8_t trackOffset, bool isActiveTrack);
+  void checkApplyTrackInstrument(void);
 };
 
 #endif //UI_LIVESEQUENCER_H
