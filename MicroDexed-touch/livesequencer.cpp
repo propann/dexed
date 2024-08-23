@@ -908,7 +908,7 @@ FLASHMEM void LiveSequencer::setLayerMuted(uint8_t track, uint8_t layer, bool is
   else {
     data.tracks[track].layerMutes &= ~(1 << layer);
   }
-  ui_liveSeq->drawSingleLayer(playIterator->track, layer);
+  ui_liveSeq->drawSingleLayer(track, layer);
 
   if (recordToSong) {
     if (data.songLayerCount < LIVESEQUENCER_NUM_LAYERS) {

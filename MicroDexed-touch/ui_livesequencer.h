@@ -30,14 +30,7 @@ public:
   };
 
 private:
-  struct Flags {
-    uint16_t track : 16;
-    uint16_t layer : 16;
-  };
-  union LayerUpdates {
-    uint32_t value;
-    Flags flags;
-  } layerUpdates;
+  uint16_t layerUpdates[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN] = { 0 };
 
   uint8_t trackOffset = 0;
   struct ProgressBar {

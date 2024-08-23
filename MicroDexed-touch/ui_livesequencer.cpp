@@ -30,7 +30,6 @@ FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequen
     GRID_X[i] = i * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
     GRID_Y[i] = i * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING) + OFFSET_Y;
   }
-
   runningInBackground = false;
 }
 
@@ -707,7 +706,6 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
             const bool recordMuteToSong = data.isSongMode && data.isRecording && data.isRunning;
             liveSeq.setLayerMuted(trackOffset + track, layer, !isMutedOld, recordMuteToSong);
           }
-          drawSingleLayer(track, layer);
         }
       }
     }
@@ -834,10 +832,11 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
     for (int track = 0; track < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; track++) {
       const bool layerEditActive = !data.isSongMode && (data.activeTrack == (trackOffset + track)) && (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE);
+
       // layer button
       for (int layer = 0; layer < data.trackSettings[(trackOffset + track)].layerCount; layer++) {
         const bool isMuted = data.tracks[(trackOffset + track)].layerMutes & (1 << layer);
-        const bool drawThisLayer = layerUpdates.flags.track & (1 << track) && layerUpdates.flags.layer & (1 << layer); // only used for song automation mute toggles
+        const bool drawThisLayer = (layerUpdates[track] & (1 << layer)); // only used for song automation mute toggles
         TouchButton::Color color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));
         if (layerEditActive) {
           // adapt button background if in layer edit mode
@@ -858,6 +857,7 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
           display.fillRect(xStart, yStart + (TouchButton::BUTTON_SIZE_Y - yFill), 3, yFill, COLOR_SYSTEXT);
         }
       }
+      layerUpdates[track] = 0;
     }
   }
 
@@ -882,14 +882,11 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
     }
   }
-  layerUpdates.value = 0;
   guiFlags = 0;
 }
 
 FLASHMEM void UI_LiveSequencer::drawSingleLayer(uint8_t track, uint8_t layer) {
-  layerUpdates.flags.track |= (1 << track);
-  layerUpdates.flags.layer |= (1 << layer);
-  DBG_LOG(printf("draw track %i layer %i\n", track, layer));
+  layerUpdates[track] |= (1 << layer);
 }
 
 FLASHMEM void UI_LiveSequencer::refreshToolsElements(Tools tools) {
