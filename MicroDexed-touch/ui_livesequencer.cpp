@@ -576,7 +576,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
           if (++trackLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
             trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
           }
-          data.guiUpdateFlags |= drawLayerButtons;
+          layerUpdates[data.activeTrack] = 0xFF;
         }
       }
     }
@@ -599,11 +599,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
     if ((isLayerViewActive == false) && (currentTools == TOOLS_PATTERN)) {
       updateTrackChannelSetupButtons();
     }
-    
     trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
-    if (currentPage == PAGE_PATTERN) {
-      data.guiUpdateFlags |= drawLayerButtons;
-    }
     DBG_LOG(printf("active track now is %i\n", track + 1));
   }
 }
@@ -643,7 +639,7 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
     data.guiUpdateFlags |= drawTopButtons;
     if (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) {
       trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
-      data.guiUpdateFlags |= drawLayerButtons;
+      layerUpdates[data.activeTrack] = 0xFF;
     }
   }
 
@@ -830,11 +826,11 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
     const bool isSongRec = (data.isSongMode && data.isRecording);
     const bool drawAllLayers = guiFlags & drawLayerButtons;
 
-    for (int track = 0; track < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; track++) {
+    for (uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; track++) {
       const bool layerEditActive = !data.isSongMode && (data.activeTrack == (trackOffset + track)) && (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE);
 
       // layer button
-      for (int layer = 0; layer < data.trackSettings[(trackOffset + track)].layerCount; layer++) {
+      for (uint8_t layer = 0; layer < data.trackSettings[(trackOffset + track)].layerCount; layer++) {
         const bool isMuted = data.tracks[(trackOffset + track)].layerMutes & (1 << layer);
         const bool drawThisLayer = (layerUpdates[track] & (1 << layer)); // only used for song automation mute toggles
         TouchButton::Color color = (isMuted ? TouchButton::BUTTON_NORMAL : (isSongRec ? TouchButton::BUTTON_RED : TouchButton::BUTTON_ACTIVE));

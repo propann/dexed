@@ -30,7 +30,7 @@ public:
   };
 
 private:
-  uint16_t layerUpdates[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN] = { 0 };
+  uint8_t layerUpdates[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN] = { 0 };
 
   uint8_t trackOffset = 0;
   struct ProgressBar {
