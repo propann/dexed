@@ -1676,17 +1676,17 @@ FLASHMEM bool save_sd_livesequencer_json(uint8_t number)
       data_json["num_bars"] = data->numberOfBars;
       data_json["num_tracks"] = LiveSequencer::LIVESEQUENCER_NUM_TRACKS;
       data_json["hasTrackInstruments"] = true; // has individual track instrument mapping
-      for (int i = 0; i < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; i++) {
-        data_json["device"][i] = data->trackSettings[i].device;
-        data_json["instrument"][i] = data->trackSettings[i].instrument;
-        data_json["layer_count"][i] = data->trackSettings[i].layerCount;
-        data_json["quant_denom"][i] = data->trackSettings[i].quantizeDenom;
-        data_json["velocity"][i] = data->trackSettings[i].velocityLevel;
+      for (uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_NUM_TRACKS; track++) {
+        data_json["device"][track] = data->trackSettings[track].device;
+        data_json["instrument"][track] = data->trackSettings[track].instrument;
+        data_json["layer_count"][track] = data->trackSettings[track].layerCount;
+        data_json["quant_denom"][track] = data->trackSettings[track].quantizeDenom;
+        data_json["velocity"][track] = data->trackSettings[track].velocityLevel;
         // if we already have recorded a song start, save its start mute states. otherwise save pattern mutes
         if (data->songLayerCount == 0) {
-          data->trackSettings[i].songStartLayerMutes = data->tracks[i].layerMutes;
+          data->trackSettings[track].songStartLayerMutes = data->tracks[track].layerMutes;
         }
-        data_json["layer_mutes"][i] = data->trackSettings[i].songStartLayerMutes;
+        data_json["layer_mutes"][track] = data->trackSettings[track].songStartLayerMutes;
       }
 
       data_json["hasArpSettings"] = true; // has arp settings
@@ -1775,8 +1775,8 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
           deserializeJson(doc, json);
           json.close();
           data->numberOfBars = doc["num_bars"];
-          int num_tracks = doc["num_tracks"];
-          num_tracks = std::min(num_tracks, LiveSequencer::LIVESEQUENCER_NUM_TRACKS); // clamp for compatibility
+          const uint8_t numTracksLoaded = doc["num_tracks"];
+          const uint8_t numTracks = std::min(numTracksLoaded, LiveSequencer::LIVESEQUENCER_NUM_TRACKS); // clamp for compatibility
           const bool hasTrackInstruments = doc["hasTrackInstruments"];
           if (hasTrackInstruments == false) {
             liveSeq.loadOldTrackInstruments();
@@ -1798,16 +1798,17 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
             data->arpSettings.velocityLevel = doc["arpVelocity"];
           }
 
-          for (int i = 0; i < num_tracks; i++) {
+          for (uint8_t track = 0; track < numTracks; track++) {
             if (hasTrackInstruments) {
-              data->trackSettings[i].device = doc["device"][i];
-              data->trackSettings[i].instrument = doc["instrument"][i];
+              data->trackSettings[track].device = doc["device"][track];
+              data->trackSettings[track].instrument = doc["instrument"][track];
             }
-            data->trackSettings[i].layerCount = doc["layer_count"][i];
-            data->trackSettings[i].quantizeDenom = doc["quant_denom"][i];
-            data->trackSettings[i].velocityLevel = doc["velocity"][i];
-            data->trackSettings[i].songStartLayerMutes = doc["layer_mutes"][i];
-            data->tracks[i].layerMutes = data->trackSettings[i].songStartLayerMutes;
+            const uint8_t numLayersLoaded = doc["layer_count"][track];
+            data->trackSettings[track].layerCount = std::min(numLayersLoaded, LiveSequencer::LIVESEQUENCER_NUM_LAYERS); // clamp for compatibilitracky;
+            data->trackSettings[track].quantizeDenom = doc["quant_denom"][track];
+            data->trackSettings[track].velocityLevel = doc["velocity"][track];
+            data->trackSettings[track].songStartLayerMutes = doc["layer_mutes"][track];
+            data->tracks[track].layerMutes = data->trackSettings[track].songStartLayerMutes;
           }
 
           numPatternEvents = doc["num_pattern_events"];

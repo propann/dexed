@@ -114,7 +114,7 @@ FLASHMEM void LiveSequencer::onStarted(void) {
 }
 
 FLASHMEM void LiveSequencer::allNotesOff(void) {
-  for (int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+  for (uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     allTrackNotesOff(track);
   }
 }
@@ -209,7 +209,7 @@ FLASHMEM void LiveSequencer::onSongStopped(void) {
 
 FLASHMEM void LiveSequencer::applySongStartLayerMutes(void) {
   if (data.songLayerCount > 0) {
-    for (int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+    for (uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerMutes = data.trackSettings[track].songStartLayerMutes;
     }
     data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLayerButtons;
@@ -363,7 +363,7 @@ FLASHMEM void LiveSequencer::deleteLiveSequencerData(void) {
   data.pendingEvents.clear();
   data.eventsList.clear();
   deleteAllSongEvents();
-  for (int track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
+  for (uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     data.trackSettings[track].layerCount = 0;
     data.tracks[track].layerMutes = 0;
   }
@@ -967,7 +967,8 @@ FLASHMEM void LiveSequencer::changeTrackInstrument(uint8_t track, uint8_t newDev
 }
 
 FLASHMEM void LiveSequencer::loadOldTrackInstruments(void) {
-  for (uint8_t i = 0; i < NUM_SEQ_TRACKS; i++) {
+  const uint8_t loadTrackNumber = std::min(uint8_t(NUM_SEQ_TRACKS), LIVESEQUENCER_NUM_TRACKS);
+  for (uint8_t i = 0; i < loadTrackNumber; i++) {
     data.trackSettings[i].device = DEVICE_INTERNAL;
     
     switch (seq.track_type[i]) {

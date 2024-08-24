@@ -17,9 +17,9 @@ class UI_LiveSequencer;
 class LiveSequencer {
 
 public:
-  static constexpr int LIVESEQUENCER_TRACKS_PER_SCREEN = 6;
-  static constexpr int LIVESEQUENCER_NUM_TRACKS = 12;
-  static constexpr int LIVESEQUENCER_NUM_LAYERS = 4;
+  static constexpr uint8_t LIVESEQUENCER_TRACKS_PER_SCREEN = 6;
+  static constexpr uint8_t LIVESEQUENCER_NUM_TRACKS = 2 * LIVESEQUENCER_TRACKS_PER_SCREEN;
+  static constexpr uint8_t LIVESEQUENCER_NUM_LAYERS = 4;
 
   enum EventSource : uint8_t {
     EVENT_SONG = 0,
