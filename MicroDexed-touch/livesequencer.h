@@ -173,7 +173,7 @@ public:
   void initOnce(void);
   LiveSequencer::LiveSeqData* getData(void);
   void songLayerAction(uint8_t layer, LayerMode action);
-  void trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
+  bool trackLayerAction(uint8_t track, uint8_t layer, LayerMode action);
   void handleMidiEvent(uint8_t inChannel, midi::MidiType event, uint8_t note, uint8_t velocity);
   void handlePatternBegin(void);
   void start(void);

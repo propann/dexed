@@ -401,9 +401,9 @@ FLASHMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
   data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawSongLayers;
 }
 
-FLASHMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
+FLASHMEM bool LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
   if ((layer == 0) && (action == LayerMode::LAYER_MERGE)) {
-    return; // avoid merge up top layer
+    return false; // avoid merge up top layer
   }
 
   // play noteOff for active layer notes
@@ -423,7 +423,9 @@ FLASHMEM void LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, Laye
   const uint8_t layerMutesHi = (data.tracks[track].layerMutes >> 1) & ~bitmask; // 0001 0110 & ~0000 0011 = 0001 0100
   data.tracks[track].layerMutes = (layerMutesLo | layerMutesHi);                // 0000 0001 |  0001 0100 = 0001 0101
   data.trackSettings[track].layerCount--;
+  //ui_liveSeq->drawSingleLayer(track, data.trackSettings[track].layerCount + 1);
   data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLayerButtons;
+  return true;
 }
 
 FLASHMEM void LiveSequencer::performLayerAction(LayerMode action, MidiEvent& e, uint8_t layer) {

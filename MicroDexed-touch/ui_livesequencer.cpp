@@ -723,11 +723,15 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
       for (uint8_t layer = 0; layer < data.trackSettings[(trackOffset + track)].layerCount; layer++) {
         const bool pressed = TouchButton::isPressed(GRID_X[track], GRID_Y[2 + layer]);
         if (pressed) {
-          if (data.isRecording && (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) && (trackOffset + track == data.activeTrack)) {
-            liveSeq.trackLayerAction(trackOffset + track, layer, LiveSequencer::LayerMode(trackLayerMode));
-            // one less layer now, clear last layer button
-            TouchButton::clearButton(GRID_X[SCREEN_TRACK_INDEX(track)], GRID_Y[2 + data.trackSettings[trackOffset + track].layerCount], COLOR_BACKGROUND);
-            trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
+          if (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) {
+            if (data.isRecording && (trackOffset + track == data.activeTrack)) {
+              const bool success = liveSeq.trackLayerAction(trackOffset + track, layer, LiveSequencer::LayerMode(trackLayerMode));
+              if(success) {
+                // one less layer now, clear last layer button
+                TouchButton::clearButton(GRID_X[SCREEN_TRACK_INDEX(track)], GRID_Y[2 + data.trackSettings[trackOffset + track].layerCount], COLOR_BACKGROUND);
+                trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
+              }
+            }
           }
           else {
             const bool isMutedOld = data.tracks[trackOffset + track].layerMutes & (1 << layer);
