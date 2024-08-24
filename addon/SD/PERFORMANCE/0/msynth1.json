@@ -1,13 +1,13 @@
 {
-  "sound_intensity": 28,
+  "sound_intensity": 69,
   "wave": 4,
   "coarse": -12,
   "detune": 0,
   "trigger_noise_with_osc": true,
   "env_attack": 0,
-  "env_decay": 11,
-  "env_sustain": 4,
-  "env_release": 8,
+  "env_decay": 12,
+  "env_sustain": 2,
+  "env_release": 0,
   "filter_osc_mode": 0,
   "filter_osc_freq_from": 4080,
   "filter_osc_freq_to": 0,
@@ -27,7 +27,7 @@
   "delay_send_1": 0,
   "delay_send_2": 0,
   "midi_channel": 2,
-  "pan": 21,
+  "pan": 20,
   "vel_mod_filter_osc": 0,
   "vel_mod_filter_noise": 0
 }

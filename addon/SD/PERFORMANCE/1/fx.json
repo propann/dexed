@@ -40,16 +40,16 @@
     77
   ],
   "delay_level_global": [
-    0,
-    0
+    84,
+    84
   ],
   "delay_sync": [
-    4,
+    3,
     4
   ],
   "delay_pan": [
     0,
-    0
+    40
   ],
   "reverb_send": [
     92,

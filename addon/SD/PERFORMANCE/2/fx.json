@@ -36,23 +36,23 @@
     68
   ],
   "delay_level": [
-    81,
-    36
+    85,
+    52
   ],
   "delay_level_global": [
-    100,
-    4
+    94,
+    100
   ],
   "delay_sync": [
     2,
     1
   ],
   "delay_pan": [
-    30,
-    21
+    5,
+    40
   ],
   "reverb_send": [
-    36,
+    20,
     100
   ],
   "delay_to_reverb": [
@@ -67,8 +67,8 @@
     1700,
     300
   ],
-  "delay1_to_delay2": 0,
-  "delay2_to_delay1": 0,
+  "delay1_to_delay2": 46,
+  "delay2_to_delay1": 35,
   "reverb_roomsize": 99,
   "reverb_damping": 0,
   "reverb_lowpass": 100,

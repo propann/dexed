@@ -761,7 +761,7 @@ const int FlashChipSelect = 6; // digital pin for flash chip CS pin
 #define STARTUP_NUM_DEFAULT 0
 
 // Buffer-size define for load/save configuration as JSON
-#define JSON_BUFFER_SIZE 12000
+#define JSON_BUFFER_SIZE 19000
 
 // Internal configuration structure
 typedef struct dexed_s

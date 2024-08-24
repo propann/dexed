@@ -1,5 +1,5 @@
 {
-  "sound_intensity": 79,
+  "sound_intensity": 100,
   "wave": 7,
   "coarse": 0,
   "detune": 0,
@@ -22,7 +22,7 @@
   "pwm_from": 555,
   "pwm_to": 85,
   "pwm_speed": 4,
-  "rev_send": 0,
+  "rev_send": 54,
   "chorus_send": 0,
   "delay_send_1": 0,
   "delay_send_2": 0,

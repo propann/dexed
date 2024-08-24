@@ -1,6 +1,23 @@
 {
   "num_bars": 4,
   "num_tracks": 6,
+  "hasTrackInstruments": true,
+  "device": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "instrument": [
+    0,
+    0,
+    7,
+    2,
+    0,
+    0
+  ],
   "layer_count": [
     0,
     0,
@@ -17,6 +34,14 @@
     16,
     16
   ],
+  "velocity": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
   "layer_mutes": [
     0,
     0,
@@ -25,6 +50,19 @@
     0,
     0
   ],
+  "hasArpSettings": true,
+  "arpAmount": 8,
+  "arpEnabled": 0,
+  "arpFreerun": 0,
+  "arpLatch": 1,
+  "arpLength": 150,
+  "arpLoadPerBar": 2,
+  "arpMode": 0,
+  "arpNoteRepeat": 0,
+  "arpOctaves": 1,
+  "arpSource": 0,
+  "arpSwing": 0,
+  "arpVelocity": 100,
   "num_pattern_events": 0,
   "last_song_pattern": 0,
   "song_layer_count": 0,
