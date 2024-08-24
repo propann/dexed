@@ -606,7 +606,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
           if (++trackLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
             trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
           }
-          layerUpdates[data.activeTrack] = 0xFF;
+          layerUpdates[data.activeTrack % LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN] = 0xFF;
         }
       }
     }
@@ -724,7 +724,7 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
           if (data.isRecording && (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) && (trackOffset + track == data.activeTrack)) {
             liveSeq.trackLayerAction(trackOffset + track, layer, LiveSequencer::LayerMode(trackLayerMode));
             // one less layer now, clear last layer button
-            TouchButton::clearButton(GRID_X[track], GRID_Y[2 + data.trackSettings[trackOffset + track].layerCount], COLOR_BACKGROUND);
+            TouchButton::clearButton(GRID_X[track % LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN], GRID_Y[2 + data.trackSettings[trackOffset + track].layerCount], COLOR_BACKGROUND);
             trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
           }
           else {
