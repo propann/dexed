@@ -423,8 +423,7 @@ FLASHMEM bool LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, Laye
   const uint8_t layerMutesHi = (data.tracks[track].layerMutes >> 1) & ~bitmask; // 0001 0110 & ~0000 0011 = 0001 0100
   data.tracks[track].layerMutes = (layerMutesLo | layerMutesHi);                // 0000 0001 |  0001 0100 = 0001 0101
   data.trackSettings[track].layerCount--;
-  //ui_liveSeq->drawSingleLayer(track, data.trackSettings[track].layerCount + 1);
-  data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLayerButtons;
+  ui_liveSeq->drawTrackLayers(track);
   return true;
 }
 

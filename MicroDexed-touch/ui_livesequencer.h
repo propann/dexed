@@ -16,6 +16,7 @@ public:
   void handleTouchscreen(void);
   void onStopped(void);
   void drawSingleLayer(uint8_t track, uint8_t layer); // used for layer mute GUI updates
+  void drawTrackLayers(uint8_t track);
 
   enum GuiUpdates : uint16_t {
     drawTopButtons = (1 << 0),

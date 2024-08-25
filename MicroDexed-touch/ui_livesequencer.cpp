@@ -610,7 +610,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
           if (++trackLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
             trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
           }
-          layerUpdates[SCREEN_TRACK_INDEX(track)] = 0xFF;
+          drawTrackLayers(track);
         }
       }
     }
@@ -672,7 +672,7 @@ FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
     data.guiUpdateFlags |= drawTopButtons;
     if (trackLayerMode != LiveSequencer::LayerMode::LAYER_MUTE) {
       trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
-      layerUpdates[data.activeTrack] = 0xFF;
+      drawTrackLayers(data.activeTrack);
     }
   }
 
@@ -923,6 +923,10 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
 
 FLASHMEM void UI_LiveSequencer::drawSingleLayer(uint8_t track, uint8_t layer) {
   layerUpdates[SCREEN_TRACK_INDEX(track)] |= (1 << layer);
+}
+
+FLASHMEM void UI_LiveSequencer::drawTrackLayers(uint8_t track) {
+  layerUpdates[SCREEN_TRACK_INDEX(track)] = 0xFF;
 }
 
 FLASHMEM void UI_LiveSequencer::refreshToolsElements(Tools tools) {
