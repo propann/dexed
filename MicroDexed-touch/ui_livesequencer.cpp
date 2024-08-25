@@ -78,20 +78,20 @@ FLASHMEM void UI_LiveSequencer::drawTrackSubtext(uint8_t trackIndex, uint8_t tra
 FLASHMEM void UI_LiveSequencer::init(void) {
     // TRACK BUTTONS
   for (uint8_t trackIndex = 0; trackIndex < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; trackIndex++) {
-    const uint8_t track = trackOffset + trackIndex;
+    // TODO: track = trackOffset + trackIndex not working as wrongly captured by lambda
     trackButtons.push_back(new TouchButton(GRID_X[trackIndex], GRID_Y[1],
-      [ this, trackIndex, track ] (auto *b) { // drawHandler
-        const bool isActiveTrack = (track == data.activeTrack);
+      [ this, trackIndex ] (auto *b) { // drawHandler
+        const bool isActiveTrack = ((trackOffset + trackIndex) == data.activeTrack);
         const TouchButton::Color color = isActiveTrack ? (data.isRecording ? TouchButton::BUTTON_RED : TouchButton::BUTTON_HIGHLIGHTED) : TouchButton::BUTTON_ACTIVE;
         char temp_char[4];
-        b->draw(data.tracks[track].name, itoa(track + 1, temp_char, 10), color);
+        b->draw(data.tracks[(trackOffset + trackIndex)].name, itoa((trackOffset + trackIndex) + 1, temp_char, 10), color);
         instance->drawTrackSubtext(trackIndex, trackOffset, isActiveTrack);
       },
-      [ this, track ] (auto *b) { // clickedHandler
-        instance->onTrackButtonPressed(track);
+      [ this, trackIndex ] (auto *b) { // clickedHandler
+        instance->onTrackButtonPressed((trackOffset + trackIndex));
       },
-      [ this, track ] (auto *b) { // longPressHandler
-        openScreen(UI_func_liveseq_pianoroll, track);
+      [ this, trackIndex ] (auto *b) { // longPressHandler
+        openScreen(UI_func_liveseq_pianoroll, (trackOffset + trackIndex));
       }));
   }
 
