@@ -1,7 +1,7 @@
 {
   "seq_tempo_ms": 154639,
   "pattern_len_dec": 0,
-  "swing_steps": 0,
+  "clock": 0,
   "seq_bpm": 97,
   "arp_speed": 0,
   "arp_length": 7,

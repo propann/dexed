@@ -1,38 +1,29 @@
->There is a new version of MicroDexed-touch in early development featuring a capacitive touch display. Progress about this update is located here:
-https://codeberg.org/positionhigh/MicroDexed-touch/wiki/MicroDexed-Capacitive-Touch
-    
-<p> 
-25/10/2023:
-- [x] This build guide page will be unified for new and old version since the differences are not that big. Some components have changed the location on the PCB and an audio amplifier is added (optional). Further there are 2 optional buttons for soft power and and a program button.
+02/07/2024:
 
-<p> 
+- [x] There is a new option to use a 3.2" display instead of the 2.8" display. The matching enclosure lid(s) are currently in testing. Firmware between both of the screens is identical, the only difference is the size.
+
 17/09/2023:
 
-- [x] Working on an Hardware update with better display but at a similar price. This display offers capacitive touch and is MUCH more responsive as the current default display.
-However, so far only one source of this display type is available and the order amount seems to be limited to one screen only per order.
-https://www.aliexpress.com/item/1005005926026997.html?spm=a2g0o.cart.0.0.4c6e4ae4FvwMuX&mp=1
-Note: It is possible to modifiy the current mdt pcb to fit this display. However this requires cutting 2 traces that are below the display connector on the mdt pcb. I do not suggest to make this modification if you have not somewhat advanced skill in desoldering and soldering components with multiple pins.
+- [x] Updated to capacitive touch display. This is MUCH more responsive.
+Note: It is possible to modifiy the current mdt pcb to fit this display. However this requires cutting 2 traces that are below the display connector on the mdt pcb. I do not suggest to make this modification if you don't have advanced skill in desoldering and soldering components with multiple pins.
 
-- [x] It will take some time to figure out software and hardware changes and the waiting for the arrival of a new pcb test version. I estimate this can take severals weeks or even months, so progress on this topic is estimated about end of 2023.
 <br>
-    <p> 
+<p> 
+
+> NOTE: Microdexed-touch is capable of generating audio with a large dynamic range, the extremes of which can cause damage to loudspeakers or other components, and also to your hearing.
+> Please be specially careful when activating the MultiBand Compressor. Depending on it's settings, this easily can increase the perceived output loudness by 10x or even more.
+
+<br>
+<p> 
+
 ### Build instructions
-    
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front.png" >
-<br>
-PCB Front (Resistive touch)
-<br>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/back.png" >
-<br>
-PCB Back (Resistive touch)
-<p>
 <br>
 
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/front-c.png" >
 <br>
 PCB Front (Capacitive touch)
+<p> 
 <br>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/back-c.png" >
 <br>
@@ -52,26 +43,24 @@ If you register and pay as a new user at PCBWAY with this Invite link, you shoul
     
 [https://www.pcbway.com/setinvite.aspx?inviteid=565384](https://www.pcbway.com/setinvite.aspx?inviteid=565384)
 
-<a href="https://www.pcbway.com/project/shareproject/MicroDexed_Touch_current_version_with_PCM5102_d643a695.html"><img src="https://www.pcbway.com/project/img/images/frompcbway-1220.png" alt="PCB from PCBWay" /></a>
+<a href="https://www.pcbway.com/project/shareproject/MicroDexed_Capacitive_Touch_64970fee.html"><img src="https://www.pcbway.com/project/img/images/frompcbway-1220.png" alt="PCB from PCBWay" /></a>
 
-    
-<br><p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcb_populated.jpg" > 
-<br>
-(Resistive touch)
-<br>
+<br>    
 <p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/resistors.png" >
-<br>
- (Resistive touch)
+
+> 25/07/2024:
+If you do not want to solder the Teensy pins by yourself, or the (optional) PSRAM chip, you now can order it from https://protosupplies.com/product/teensy-41-microdexed/ fully soldered and tested, specially for MDT. (with or without PSRAM)
+<a href="protosupples.com"><img src="https://protosupplies.com/wp-content/uploads/2024/07/Teensy-4.1-for-MicroDexed.jpg"  /></a>
+
+<br>    
+<p>
+
+### DIY Instructions without presoldered parts/pcb
+
 <br>    
 <p>
 Let's begin with the resistors. You need 4, the values are printed on the board and are also listed in the BOM. 2x 47 Ohm, 1x 220 Ohm, 1x470 Ohm. For resistors, it does not matter, in which direction you put them in. At the botton, put in the 1N4148 diode. Make sure the cathode is pointing to the left side.
     
-<p>
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/6n138.png" >
-<br>
- (Resistive touch)
 <br>
 <p>
 This is the 6n138 optocoupler for MIDI. Make sure pin 1 is on the top left. Your chip will either have a notch at the top side or a circle mark at the first pin. You can use an old-school IC socket, solder it in directly or use a socket with (round) precision pins. All of these 3 methods should work fine.
@@ -86,6 +75,7 @@ The location of the resistors and the diode is slightly different on the newer c
 <br>
 <p>
 <br>
+
 ### MAIN PIN HEADER / SOCKETS
     
 <br><p>
@@ -109,17 +99,22 @@ This is tedious. Take your time and take breaks when necessary.
 Please take care to not hurt yourself or others while you snip the pins. These pins are sharp when cut and will fly off unpredictably if you are not careful. 
 <br>Place yourself so that the cut pins will not fly in your direct direction and use eye protection so nothing can happen in this process.
 
-    
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/all_low_sockets.png" > 
 <p>
 After the 2 long rows are cut like in the pictures above, we will do the same procedure to a much smaller row for the flash board, 2 for the PCM5102 and the USB Host Connector.
 <br>Note that we are not connecting the SCK pin for the PCM5102 so no pin/header is required there.
 <p>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/jumpers.png" >
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/
+nnector.png" >
+
 <br>
-    The Display uses a different kind of connector, do not solder in a low row socket there.
+<p>
+    The Display uses a "normal height" connector, DO NOT solder in a low row socket there.
     <br>
-    The remaining headers/jumpers are regular pin headers, you do not have to cut them.
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/normal_jumpers.png" >
+   <br>
+    The remaining headers/jumpers are regular pin headers, you do not have to cut anything or do anything unusual here.
     
  
 <p>
@@ -136,28 +131,30 @@ This way they will use the free space "above" the encoder's PCBs and won't colli
 <br><p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/encoder.jpg" >
     <br>
-    Use standard dupont connectors for the encoders. 1 pin is ground, then the 2 encoder pins, then the the pin for the button.
+    Use standard dupont connectors for the encoders. 1 pin is ground, then the 2 encoder pins, then the last pin for the button.
 > If you are using encoders that come on a small pcb with resistors located at the bottom side and you experience unwanted "button push" events or other wrong encoder behaviour, try to remove any resistors from the pcbs. In fact it would be even better to remove the whole PCB and just use the encoders alone. This will prevent the collision with the SD Card in the Teensy, located very closely when you do not remove the small PCB. The resistors aren't neccessary as debouncing is done in software and if you keep them, they are known to make make more problems, than they help. When your encoder does not have a common ground (gnd) pin for encoder + button function but has seperate gnd pins for them, you can bridge both gns pins directly at the encoder.
 >
 <p>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/usbsocket.png" >
 <br>
-
+<p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/usbsocket-c.png" >
 <br>
-The capactive touch pcb is identical, however there is an option to add buttons for soft-power and a program-button. The program-button really is only required when something during firmware flashing goes wrong. In this case it is more convinient that the button is reachable without opening the enclosure. The soft-power is mainly useful when using mdt from an optional battery.
-
+(Capacitive touch)
+<br>
+<p>
 The small 4 pin row between the 2 large Teensy pin rows is for USB MIDI HOST. Do not forget to put in the socked and also the counterpart pin headers on the Teensy.
 <br>
- 
+<p>
 Put in the sockets on the PCB and test fit with the Teensy if everything lines up before you solder the sockets and pin rows.
 <br>
-
+<p>
 It is a suggestion to solder only the first and last pin, then every 4-5 pin of every row, test if it fits and then solder all remaining pins.
- 
 <br>
-
+<p>
+The capactive touch pcb is identical, however there is an option to add buttons for soft-power and a program-button. The program-button really is only required when something during firmware flashing goes wrong. In this case it is more convinient that the button is reachable without opening the enclosure. The soft-power is mainly useful when using mdt from an optional battery.
+<br>
+<p>
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/teensywithheader.png" >
 <br>
 Teensy with pin headers
@@ -178,7 +175,7 @@ Do the same kind of connector for the PCM5102 Board. Snip of the short side of t
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm3.png" > 
 <p>
     
-If any of the solder bridge pads on the backside come closed by factory, remove all of them with desoldering wick or your prefered  desoldering tool/method. 
+If any of the solder bridge pads on the backside come closed by factory, remove all of them with desoldering wick or your preferred  desoldering tool/method. 
 <b>
     
 > If you get distorted/garbled audio, try to solder the bridges 1,2,4 to LOW , middle pad + right side and leave pin 3 without connection to LOW or HIGH. Pin 3 will be controlled by the Teensy for muting control.
@@ -189,7 +186,7 @@ If any of the solder bridge pads on the backside come closed by factory, remove 
 <p>
     
 <br>   
-Front viel with pin headers attached
+Front view with pin headers attached
 <br>  
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcm4.png" >  
 <p> Top view with pin headers attached
@@ -236,7 +233,7 @@ Flash board with pin headers soldered, frontside
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector.png" >
 <br>
 
-The display connector now uses a standard part, not the stacked half height connector as in the last version.
+The display connector uses a standard part (normal height) , not the half height connector as in the previous version.
 <br>
     However we do use them now as sockets for the Teensy + Audio Board instead. (Without any stacking)<br>
 
@@ -245,7 +242,7 @@ The display connector now uses a standard part, not the stacked half height conn
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector2.png" >
 <br>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/displayconnector3.png" >
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/display_connector2.png" >
 <br>
 
 The connector should match up with the pin header that the display comes with by default.<br> 
@@ -257,14 +254,59 @@ It does not matter if there is a small gap between the lid/display and the pin s
 There are various versions/kinds of this display on the market.
 If your display is working but your touch screen input is reversed/mirrored on one or both directions, you can change it in system - misc settings.
  
-<p>
-Take off the metal lid from the SD card reader on the TFT backside. These larger type of SD card are outdated and we already have a MICRO SD Card reader available on the Teensy. 
-<br>You can solder it off more carefully if you really think you need it back on sometime in the future. If you are sure you do not need it, you can quickly snip it off at it's 4 holding/soldering pads with a small cutting tool.
+<br><p>
+Regardless of which display is used (2.8", 3.2", capacitive or resistive):
+
+**Take off the metal lid from the SD card reader on the TFT backside. These larger type of SD card are outdated and we already have a MICRO SD Card reader available on the Teensy. 
+<br>If you are sure you do not need it in the future, you can quickly snip it off at it's 4 holding/soldering pads with a small cutting tool.**
 <br>
 
-> To avoid any unwanted electrical contact on the bottom side of the TFT to the teensy pin headers, you should put a non conductive layer between them. Electrical tape, 1-2 layers, should be sufficient.
+> **To avoid any unwanted electrical contact on the bottom side of the TFT to the teensy pin headers, you should put a non conductive layer between them. Electrical tape, 1-2 layers, should be sufficient.**
 >    
 
+> **Before complete assembly, visually check that none of the components on the MDT board are touching the bottom of the display board. There should be sufficient clearance from all components when the SD reader is removed from the bottom of the display.**
+>  
+
+### MIDI and AUDIO AMP Jumpers (MDT Capacitive Touch)
+
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/jumper_amp_on.png" >
+<br>
+If you have added the optional Headphone Amplifier, set the 3 AMP Jumpers to the ON position.
+<br>
+
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/jumper_amp_off.png" >
+<br>
+If you have not added the optional Headphone Amplifier, or want to bypass it, set the 3 AMP Jumpers to the OFF position.
+<br>
+
+<p>
+
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/jumper_midi_a.png" >
+<br>
+If you want to use TRS JACK TYPE A MIDI devices on Input and Output, place jumpers to the A position. 
+<br>
+
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/jumper_midi_b.png" >
+<br>
+If you want to use TRS JACK TYPE B MIDI devices on Input and Output, place jumpers to the B position. 
+<p>
+<p>
+
+<p>
+<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV3_Capacitive_Touch/optional_pins.png" >
+<br>
+
+### OPTIONAL PINS / Jumpers / Connectors on the right side of MDT PCB
+
+Usualy you do not have to place any jumpers here and do not have to make any connections.
+Concider this jumper block as optional when you want to add any customized code, external rechargeable battery board etc.
+If you do have any S/PDIF outbord equipment, you might want to use the digital output S/PDIF pins to connect to your digital mixer or other digital input device to get a perfect, digital clear 16bit, 44Khz stereo output from MDT master output.
+
+<p>
+<p>
 
 ### FIRST TEST
 <p>
@@ -294,14 +336,40 @@ Also you can order a printed SLA case from pcbway:<p>
 <br>
 <img src="https://pcbwayfile.s3.us-west-2.amazonaws.com/web/22/10/26/0406237772058.png" >
 <br>
-    
-[https://www.pcbway.com/project/shareproject/MicroDexed_Touch_MDT_SLA_printed_enclosure_LID_BOTTOM_CASE_317c88e1.html](https://www.pcbway.com/project/shareproject/MicroDexed_Touch_MDT_SLA_printed_enclosure_LID_BOTTOM_CASE_317c88e1.html)
-    
-<p>Print quality is much higher, then you can expect from a home made PLA or SLA DIY print.<br>
+    <p>
+You can get SLA printed parts from pcbway with excellent quality. The shopping and download links are at the bottom of this main page at pcbway:
+<br>
+
+[https://www.pcbway.com/project/shareproject/MicroDexed_Capacitive_Touch_64970fee.html](https://www.pcbway.com/project/shareproject/MicroDexed_Capacitive_Touch_64970fee.html)
+
+<p>
+Print quality is much higher, of what you can expect from a home made PLA or SLA DIY print.<br>
  Since SLA Prints can not be melted by a hot iron, this version has some special modification that will perfectly fit M3 threaded inserts to be superglued in, with 1-2 drops.
 <p> The SLA version also has some extra details, that are not possible to print by a PLA printer, like the MDT Logo.   
 <p>
-    
+<br>
+If you do not want to use a printed enclosure, there is an alternative solution available from pcbway that consists of 2 bare pcbs as a top and bottom part that is screwed together with M2 + M3 screws, externders and some lock nuts. 
+<br>
+    <p>The following video demonstrates how this is intended to work. 
+<br>
+ Similar as for the printed case, this option is also available for the 3.2" display. In both cases, only the top plate/ top lid needs a different part to fit the display. The bottom part is identical for the 2.8" and the 3.2" screen, no matter if it is printed or the pcb based alternative.
+
+[https://www.youtube.com/watch?v=sjoiCc8XJiM](https://www.youtube.com/watch?v=sjoiCc8XJiM)
+<br>
+<p>
+Here are the links for the pcb-based enclosure:
+<br>
+Front:
+<br>
+https://www.pcbway.com/project/shareproject/W424985ASE20_pcb_enclosure_front_plane_c17b035e.html
+<br>
+Back:
+<br>
+https://www.pcbway.com/project/shareproject/mdt_pcb_enclosure_bottom_plane_39654ff7.html
+
+<br>
+<p>
+
 ### 3D PRINTING TIPS - Valid for both case versions
     
 <p>
@@ -334,7 +402,7 @@ Also you can order a printed SLA case from pcbway:<p>
 The first case option described here is the improved version, featuring threaded inserts for M3 screws. This makes the overall stability and handling much better since you can open/close the device as many times as you like, without having to rely only on the printed snap-in clips to hold it together.
 <p>
 Since it is easier to build the previous version with the snap-in clips only, that is still available as an option further down this page.
-It is however recommened to build the threaded version, even it needs some more parts and also more effort to put together but it is well worth it.
+It is however recommended to build the threaded version, even it needs some more parts and also more effort to put together but it is well worth it.
 <p>
 To make the instructions less confusing, photos on this page showing a black case are for the snap-case, the photos with the white case are for the improved, threaded inserts version.
     
@@ -456,7 +524,7 @@ On our youtube playlist you find a video covering this topic at:
 <br>
 https://www.youtube.com/watch?v=yFXT1o5kOMk
 <p>
-There is a about of 1-2mm tolerance about the bottom position of the card slot entry. This is by design since we do not know exactly about the total heigth your teensy is in the low profile socket. That really depends on your soldering style.
+There is a about of 1-2mm tolerance about the bottom position of the card slot entry. This is by design since we do not know exactly about the total height your teensy is in the low profile socket. That really depends on your soldering style.
 <p>
 If you find the bottom position to be too high or low in general, you can edit the .stl file for example with blender to fit your unit. Or let us know in discord chat what you need and we will provide some additional version with maybe 1 or 2 mm height adjustments.
 
@@ -512,23 +580,13 @@ If you find the bottom position to be too high or low in general, you can edit t
 <p>
 <br>
 
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/pcb_populated.jpg" >
-<br>
-PCB with all on board components ready
 <p>
         
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-assembled3.png" >
 <br>
 PCB with all on board components ready
 <p>
-        
-<img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/board-assembled4.png" >
 <br>
-PCB with all on board components ready, view from rear connector side
-<p>
-
-
------
 
           
 <img src="https://codeberg.org/positionhigh/MicroDexed-touch/raw/branch/main/doc/Build_InstructionsV2/final1.png" >

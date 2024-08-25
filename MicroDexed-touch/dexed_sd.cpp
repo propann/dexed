@@ -765,8 +765,8 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
 #endif
 
         // LOG.println(F("length data:"));
-        // LOG.println(   data_json["note"].size() );
-        // LOG.println(F("--------------"));
+        // LOG.println(data_json["note"].size());
+        // LOG.println(F("--------------------------------------------------------------------------------------------"));
 
         // auto convert non-custom performances to new format. Should not hurt for new version data
         uint8_t offset1 = 0;
@@ -779,6 +779,11 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
           oldformat = true;
         }
 
+        // LOG.println(F("--------------------------------------------------------------------------------------------"));
+        // LOG.print("Old Format: ");
+        // LOG.print(oldformat);
+        // LOG.println(F("--------------------------------------------------------------------------------------------"));
+
         seq.drums_volume = data_json["drums_volume"];
         set_drums_volume(seq.drums_volume);
         for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1 - offset1; i++) {
@@ -787,6 +792,16 @@ FLASHMEM bool load_sd_drumsettings_json(uint8_t number)
           }
           const uint8_t index = i + offset2;
           // conversion end
+
+          // LOG.println(F("--------------------------------------------------------------------------------------------"));
+          // LOG.print("Drum Number: ");
+          // LOG.print(i);
+          // LOG.print("Index: ");
+          // LOG.print(index);
+          // LOG.print("  Delay2: ");
+          // if (data_json["d2"][i] > 0.01f)
+          //   LOG.print("FOUND");
+          // LOG.println();
 
           set_sample_pitch(index, data_json["pitch"][i]);
           set_sample_p_offset(index, data_json["p_offset"][i]);
@@ -866,6 +881,16 @@ FLASHMEM bool save_sd_drumsettings_json(uint8_t number)
         data_json["drums_volume"] = seq.drums_volume;
         for (uint8_t i = 0; i < NUM_DRUMSET_CONFIG - 1; i++)
         {
+
+          // LOG.println(F("--------------------------------------------------------------------------------------------"));
+          // LOG.print("NUM_DRUMSET_CONFIG: ");
+          // LOG.print(NUM_DRUMSET_CONFIG - 1);
+          // LOG.print("Drum Number: ");
+          // LOG.print(i);
+          // LOG.print(" Delay2: ");
+          // LOG.print(get_sample_delay2(i));
+          // LOG.println();
+
           data_json["note"][i] = get_sample_note(i);
           data_json["pitch"][i] = get_sample_pitch(i);
           data_json["p_offset"][i] = get_sample_p_offset(i);
@@ -3622,7 +3647,7 @@ FLASHMEM bool get_sd_data(File sysex, uint8_t format, uint8_t* conf)
     LOG.print(F(" [0x"));
     LOG.print(bulk_checksum, HEX);
     LOG.println(F("]"));
-}
+  }
 #endif
 
   sysex.seek(3); // start of bulk data
@@ -3674,7 +3699,7 @@ FLASHMEM bool write_sd_data(File sysex, uint8_t format, uint8_t* data, uint16_t 
   {
     LOG.print(F("Write SYSEX data:     0x"));
     LOG.println(data[i], HEX);
-}
+  }
 #endif
   // write checksum
   sysex.write(calc_checksum(data, len));
