@@ -30,10 +30,10 @@ bool runningInBackground; // LiveSequencer stays active in instrument settings o
 FLASHMEM UI_LiveSequencer::UI_LiveSequencer(LiveSequencer& sequencer, LiveSequencer::LiveSeqData &d) : instance(this), liveSeq(sequencer), data(d) {
   const uint8_t BUTTON_SPACING = 4;  // center in screen
 
-  for (uint8_t track = 0; track < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; track++) {
-    const uint8_t OFFSET_Y = (track > 1) ? 10 : 0; // separate areas a bit
-    GRID_X[track] = track * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
-    GRID_Y[track] = track * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING) + OFFSET_Y;
+  for (uint8_t trackIndex = 0; trackIndex < LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN; trackIndex++) {
+    const uint8_t OFFSET_Y = (trackIndex > 1) ? 10 : 0; // separate areas a bit
+    GRID_X[trackIndex] = trackIndex * (TouchButton::BUTTON_SIZE_X + BUTTON_SPACING);
+    GRID_Y[trackIndex] = trackIndex * (TouchButton::BUTTON_SIZE_Y + BUTTON_SPACING) + OFFSET_Y;
   }
   runningInBackground = false;
 }
@@ -610,7 +610,7 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
           if (++trackLayerMode == LiveSequencer::LayerMode::LAYER_MODE_NUM) {
             trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
           }
-          layerUpdates[SCREEN_TRACK_INDEX(data.activeTrack)] = 0xFF;
+          layerUpdates[SCREEN_TRACK_INDEX(track)] = 0xFF;
         }
       }
     }
@@ -629,22 +629,21 @@ FLASHMEM void UI_LiveSequencer::onTrackButtonPressed(uint8_t track) {
     trackButtons[SCREEN_TRACK_INDEX(activeOld)]->drawNow();
     trackButtons[SCREEN_TRACK_INDEX(track)]->drawNow();
 
-    //check if update track instrument selection
-    if ((isLayerViewActive == false) && (currentTools == TOOLS_SEQ)) {
-      updateTrackChannelSetupButtons();
-    }
+    updateTrackChannelSetupButtons(track);
     trackLayerMode = LiveSequencer::LayerMode::LAYER_MUTE;
     DBG_LOG(printf("active track now is %i\n", track + 1));
   }
 }
 
-FLASHMEM void UI_LiveSequencer::updateTrackChannelSetupButtons(void) {
-  selectedTrackSetup.device = data.trackSettings[data.activeTrack].device;
-  selectedTrackSetup.instrument = data.trackSettings[data.activeTrack].instrument;
-  selectedTrackSetup.quantizeDenom = data.trackSettings[data.activeTrack].quantizeDenom;
-  selectedTrackSetup.velocity = data.trackSettings[data.activeTrack].velocityLevel;
+FLASHMEM void UI_LiveSequencer::updateTrackChannelSetupButtons(uint8_t track) {
+  selectedTrackSetup.device = data.trackSettings[track].device;
+  selectedTrackSetup.instrument = data.trackSettings[track].instrument;
+  selectedTrackSetup.quantizeDenom = data.trackSettings[track].quantizeDenom;
+  selectedTrackSetup.velocity = data.trackSettings[track].velocityLevel;
   // update currently selected track
-  data.guiUpdateFlags |= drawTools;
+  if ((isLayerViewActive == false) && (currentTools == TOOLS_SEQ)) {
+    data.guiUpdateFlags |= drawTools;
+  }
 }
 
 FLASHMEM void UI_LiveSequencer::handleTouchscreen(void) {
@@ -896,26 +895,27 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
       layerUpdates[trackIndex] = 0;
     }
   }
+  else {
+    if (guiFlags & drawTools) {
+      for (auto *b : buttonsToolSelect) {
+        b->drawNow();
+      }
+      
+      display.console = true;
+      display.fillRect(0, GRID_Y[2] + TouchButton::BUTTON_SIZE_Y, DISPLAY_WIDTH, 4, MIDDLEGREEN);
 
-  if (guiFlags & drawTools) {
-    for (auto *b : buttonsToolSelect) {
-      b->drawNow();
+      refreshToolsElements(static_cast<Tools>(currentTools));
+
+      for (TouchButton *b : toolsPages[currentTools]) {
+        b->drawNow();
+      }
     }
-    
-    display.console = true;
-    display.fillRect(0, GRID_Y[2] + TouchButton::BUTTON_SIZE_Y, DISPLAY_WIDTH, 4, MIDDLEGREEN);
-
-    refreshToolsElements(static_cast<Tools>(currentTools));
-
-    for (TouchButton *b : toolsPages[currentTools]) {
-      b->drawNow();
-    }
-  }
-  if (guiFlags & drawSongLayers) {
-    TouchButton::Color color = TouchButton::BUTTON_ACTIVE;
-    handleLayerEditButtonColor(songLayerMode, color);
-    for (int songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
-      drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
+    if (guiFlags & drawSongLayers) {
+      TouchButton::Color color = TouchButton::BUTTON_ACTIVE;
+      handleLayerEditButtonColor(songLayerMode, color);
+      for (int songLayer = 0; songLayer < data.songLayerCount; songLayer++) {
+        drawLayerButton(data.isSongMode, songLayerMode, songLayer, true, color, GRID_X[2 + songLayer], GRID_Y[4]);
+      }
     }
   }
   guiFlags = 0;
@@ -930,7 +930,6 @@ FLASHMEM void UI_LiveSequencer::refreshToolsElements(Tools tools) {
   switch (tools) {
   case TOOLS_PATTERN:
     lastNoteLabel->drawNow();
-    updateTrackChannelSetupButtons();
     break;
     
   default:

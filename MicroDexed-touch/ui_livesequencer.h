@@ -113,7 +113,7 @@ private:
   void handleLayerEditButtonColor(uint8_t layerMode, TouchButton::Color &color);
   void resetProgressBars(void);
   void drawBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
-  void updateTrackChannelSetupButtons(void);
+  void updateTrackChannelSetupButtons(uint8_t track);
   void drawTrackSubtext(uint8_t track, uint8_t trackOffset, bool isActiveTrack);
   void checkApplyTrackInstrument(void);
 };
