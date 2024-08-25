@@ -2052,7 +2052,6 @@ void loop()
   if (Serial.available() > 0)
   {
     incomingSerialByte = Serial.read();
-
     if (incomingSerialByte == '%')
     {
       // SD file management from remote console
