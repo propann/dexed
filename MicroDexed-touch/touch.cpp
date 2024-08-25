@@ -6,6 +6,7 @@
 #include "scope.h"
 #include <Audio.h>
 #include "template_mixer.hpp"
+#include "UI.h"
 
 extern ILI9341_t3n display;
 extern config_t configuration;
@@ -20,7 +21,6 @@ extern void print_perf_modifier_buttons();
 extern void reset_live_modifiers();
 extern LCDMenuLib2 LCDML;
 extern void pattern_editor_menu_0();
-extern void UI_func_test_touchscreen(uint8_t param);
 extern void sub_touchscreen_test_page_init();
 extern bool remote_touched;
 extern sequencer_t seq;
@@ -48,16 +48,6 @@ extern void print_empty_spaces(uint8_t spaces);
 extern void print_voice_select_default_help();
 extern void handleStop(void);
 extern void handleStart(void);
-extern void UI_func_load_performance(uint8_t param);
-extern void UI_func_save_performance(uint8_t param);
-extern void UI_func_seq_pattern_editor(uint8_t param);
-extern void UI_func_seq_vel_editor(uint8_t param);
-extern void UI_func_braids(uint8_t param);
-extern void UI_func_microsynth(uint8_t param);
-extern void UI_func_mixer(uint8_t param);
-extern void UI_func_song(uint8_t param);
-extern void UI_func_voice_select(uint8_t param);
-extern void UI_func_voice_editor(uint8_t param);
 extern void save_favorite(uint8_t p, uint8_t b, uint8_t v, uint8_t instance_id);
 extern void preview_sample(void);
 extern void draw_volmeters_mixer();

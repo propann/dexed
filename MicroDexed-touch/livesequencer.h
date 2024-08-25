@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
+#include "UI.h"
 
 typedef void (*SetupFn)(void*);
 

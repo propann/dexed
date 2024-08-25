@@ -10,15 +10,6 @@ extern ILI9341_t3n display;
 extern bool remote_active;
 extern int numTouchPoints;
 
-extern void UI_func_load_performance(uint8_t param);
-extern void UI_func_save_performance(uint8_t param);
-extern void UI_func_midi_channels(uint8_t param);
-extern void UI_func_seq_settings(uint8_t param);
-extern void UI_func_liveseq_pianoroll(uint8_t param);
-extern void UI_func_file_manager(uint8_t param);
-extern void UI_func_master_effects(uint8_t param);
-extern void UI_func_multiband_dynamics(uint8_t param);
-
 extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 extern void helptext_l(const char* str);

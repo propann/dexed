@@ -19,12 +19,6 @@ extern void handleNoteOnInput(byte, byte, byte, byte);
 extern void handleNoteOn(byte, byte, byte, byte);
 extern void handleNoteOff(byte, byte, byte, byte);
 extern void handleAfterTouch(byte, byte);
-extern void UI_func_drums(uint8_t param);
-extern void UI_func_voice_select(uint8_t param);
-extern void UI_func_microsynth(uint8_t param);
-extern void UI_func_epiano(uint8_t param);
-extern void UI_func_braids(uint8_t param);
-extern void UI_func_MultiSamplePlay(uint8_t param);
 extern void handleStart();
 extern void handleStop();
 
