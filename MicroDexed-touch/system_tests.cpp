@@ -1,7 +1,8 @@
 #include "system_tests.h"
 #include "ILI9341_t3n.h"
+#include "UI.h"
+
 extern ILI9341_t3n display;
-extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
 uint8_t psram_test_dline = 7;
 
 FLASHMEM void fill_up_with_spaces_psram()

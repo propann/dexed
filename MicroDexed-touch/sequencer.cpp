@@ -66,9 +66,6 @@ extern uint16_t braids_filter_state[NUM_BRAIDS];
 extern boolean braids_lfo_direction[NUM_BRAIDS];
 extern AudioEffectEnvelope* braids_envelope[NUM_BRAIDS];
 extern AudioFilterBiquad* braids_filter[NUM_BRAIDS];
-
-extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
-
 extern multisample_zone_t msz[NUM_MULTISAMPLES][NUM_MULTISAMPLE_ZONES];
 extern multisample_s msp[NUM_MULTISAMPLES];
 

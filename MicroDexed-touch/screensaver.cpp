@@ -468,7 +468,6 @@ public:
   }
 };
 
-extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
 Terrain  terrain;
 int yTerrainOffset = 0;
 FLASHMEM void terrain_init()

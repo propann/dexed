@@ -1829,7 +1829,7 @@ FLASHMEM bool load_sd_livesequencer_json(uint8_t number)
               data->trackSettings[track].instrument = doc["instrument"][track];
             }
             const uint8_t numLayersLoaded = doc["layer_count"][track];
-            data->trackSettings[track].layerCount = std::min(numLayersLoaded, LiveSequencer::LIVESEQUENCER_NUM_LAYERS); // clamp for compatibilitracky;
+            data->trackSettings[track].layerCount = std::min(numLayersLoaded, LiveSequencer::LIVESEQUENCER_NUM_LAYERS); // clamp for compatibility;
             data->trackSettings[track].quantizeDenom = doc["quant_denom"][track];
             data->trackSettings[track].velocityLevel = doc["velocity"][track];
             data->trackSettings[track].songStartLayerMutes = doc["layer_mutes"][track];

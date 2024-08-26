@@ -10,8 +10,7 @@ extern ILI9341_t3n display;
 extern bool remote_active;
 extern int numTouchPoints;
 
-extern void setCursor_textGrid(uint8_t pos_x, uint8_t pos_y);
-extern void setCursor_textGrid_small(uint8_t pos_x, uint8_t pos_y);
+
 extern void helptext_l(const char* str);
 
 #define SCREEN_TRACK_INDEX(t) (t % LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN)
@@ -38,12 +37,11 @@ FLASHMEM void UI_LiveSequencer::checkApplyTrackInstrument(void) {
   }
 }
 
-FLASHMEM void UI_LiveSequencer::drawTrackSubtext(uint8_t trackIndex, uint8_t trackOffset, bool isActiveTrack) {
-  const uint8_t track = trackOffset + trackIndex;
-  display.fillRect(GRID_X[trackIndex], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3, TouchButton::BUTTON_SIZE_X, CHAR_height_small, COLOR_BACKGROUND);
+FLASHMEM void UI_LiveSequencer::drawTrackSubtext(uint8_t track) {
+  display.fillRect(GRID_X[SCREEN_TRACK_INDEX(track)], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3, TouchButton::BUTTON_SIZE_X, CHAR_height_small, COLOR_BACKGROUND);
   display.setTextSize(1);
-  display.setTextColor(isActiveTrack ? GREY1 : GREY2);
-  display.setCursor(GRID_X[trackIndex], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3);
+  display.setTextColor((track == data.activeTrack) ? GREY1 : GREY2);
+  display.setCursor(GRID_X[SCREEN_TRACK_INDEX(track)], GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3);
 
   const uint8_t denom = data.trackSettings[track].quantizeDenom;
   
@@ -56,7 +54,7 @@ FLASHMEM void UI_LiveSequencer::drawTrackSubtext(uint8_t trackIndex, uint8_t tra
 
   const uint8_t velocity = data.trackSettings[track].velocityLevel;
   const uint8_t digits = (velocity == 0) ? 3 : floor(log10(velocity)) + 2;
-  display.setCursor(GRID_X[trackIndex] + TouchButton::BUTTON_SIZE_X - CHAR_width_small * digits, GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3);
+  display.setCursor(GRID_X[SCREEN_TRACK_INDEX(track)] + TouchButton::BUTTON_SIZE_X - CHAR_width_small * digits, GRID_Y[1] + TouchButton::BUTTON_SIZE_Y + 3);
   
   if (velocity == 0) {
     display.print("KEY");
@@ -76,10 +74,10 @@ FLASHMEM void UI_LiveSequencer::init(void) {
         const TouchButton::Color color = isActiveTrack ? (data.isRecording ? TouchButton::BUTTON_RED : TouchButton::BUTTON_HIGHLIGHTED) : TouchButton::BUTTON_ACTIVE;
         char temp_char[4];
         b->draw(data.tracks[(trackOffset + trackIndex)].name, itoa((trackOffset + trackIndex) + 1, temp_char, 10), color);
-        instance->drawTrackSubtext(trackIndex, trackOffset, isActiveTrack);
+        instance->drawTrackSubtext(trackOffset + trackIndex);
       },
       [ this, trackIndex ] (auto *b) { // clickedHandler
-        instance->onTrackButtonPressed((trackOffset + trackIndex));
+        instance->onTrackButtonPressed(trackOffset + trackIndex);
       },
       [ this, trackIndex ] (auto *b) { // longPressHandler
         openScreen(UI_func_liveseq_pianoroll, (trackOffset + trackIndex));
@@ -795,7 +793,7 @@ FLASHMEM void UI_LiveSequencer::drawGUI(uint16_t& guiFlags) {
   }
 
   if (guiFlags & drawActiveTrackSubLabel) {
-    drawTrackSubtext(data.activeTrack, trackOffset, true);
+    drawTrackSubtext(data.activeTrack);
   }
 
   // print time
