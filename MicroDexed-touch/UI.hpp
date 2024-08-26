@@ -24328,6 +24328,7 @@ FLASHMEM void UI_draw_FM_algorithm(uint8_t algo, uint8_t x, uint8_t y)
 FLASHMEM void _draw_volmeter(int x, int y, uint8_t meter, float height)
 {
   // draw bar
+  display.console = true;
   if (height > ts.displayed_peak[meter])
   {
     // draw a rainbow gradient rectangle, but only up to the old displayed_peak
