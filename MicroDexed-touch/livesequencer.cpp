@@ -193,7 +193,7 @@ FLASHMEM void LiveSequencer::refreshSongLength(void) {
 FLASHMEM void LiveSequencer::onSongStopped(void) {
   if (data.recordedToSong) {
     data.songLayerCount++;
-    data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawSongLayers;
+    ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawSongLayers);
     data.recordedToSong = false;
   }
 
@@ -206,7 +206,7 @@ FLASHMEM void LiveSequencer::applySongStartLayerMutes(void) {
     for (uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
       data.tracks[track].layerMutes = data.trackSettings[track].songStartLayerMutes;
     }
-    data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLayerButtons;
+    ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawLayerButtons);
   }
 }
 
@@ -303,7 +303,7 @@ FLASHMEM void LiveSequencer::handleMidiEvent(uint8_t inChannel, midi::MidiType e
 
           if (data.lastPlayedNote != note) {
             data.lastPlayedNote = note;
-            data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLastPlayedNote;
+            ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawLastPlayedNote);
           }
           break;
 
@@ -361,7 +361,7 @@ FLASHMEM void LiveSequencer::deleteLiveSequencerData(void) {
     data.trackSettings[track].layerCount = 0;
     data.tracks[track].layerMutes = 0;
   }
-  data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawLayerButtons;
+  ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawLayerButtons);
   init();
 }
 
@@ -378,7 +378,7 @@ FLASHMEM void LiveSequencer::deleteAllSongEvents(void) {
   for (uint8_t track = 0; track < LIVESEQUENCER_NUM_TRACKS; track++) {
     data.trackSettings[track].songStartLayerMutes = 0;
   }
-  data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawSongLayers;
+  ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawSongLayers);
 }
 
 FLASHMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
@@ -392,7 +392,7 @@ FLASHMEM void LiveSequencer::songLayerAction(uint8_t layer, LayerMode action) {
   }
   refreshSongLength();
   data.songLayerCount--;
-  data.guiUpdateFlags |= UI_LiveSequencer::GuiUpdates::drawSongLayers;
+  ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawSongLayers);
 }
 
 FLASHMEM bool LiveSequencer::trackLayerAction(uint8_t track, uint8_t layer, LayerMode action) {
@@ -785,7 +785,7 @@ FLASHMEM void LiveSequencer::addPendingNotes(void) {
     data.eventsList.sort(sortMidiEvent);
     setLayerMuted(data.activeTrack, data.trackSettings[data.activeTrack].layerCount, false); // new layer is unmuted
     data.trackSettings[data.activeTrack].layerCount++;
-    data.guiUpdateFlags |= (UI_LiveSequencer::GuiUpdates::drawLayerButtons | UI_LiveSequencer::GuiUpdates::drawTrackButtons);
+    ui_liveSeq->drawUpdates(UI_LiveSequencer::GuiUpdates::drawLayerButtons | UI_LiveSequencer::GuiUpdates::drawTrackButtons);
   }
 }
 

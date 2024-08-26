@@ -157,7 +157,6 @@ public:
     uint8_t songPatternCount = 0;
     uint8_t songLayerCount = 0;
     uint8_t lastPlayedNote = 0;
-    uint16_t guiUpdateFlags = 0;
 
     bool startedFlag = false;
     bool isRunning = false;

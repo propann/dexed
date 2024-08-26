@@ -9,6 +9,18 @@
 
 class UI_LiveSequencer {
 public:
+  enum GuiUpdates : uint16_t {
+    drawTopButtons = (1 << 0),
+    drawTrackButtons = (1 << 1),
+    drawLayerButtons = (1 << 2),
+    drawTools = (1 << 3),
+    drawActiveNotes = (1 << 4),
+    drawTime = (1 << 5),
+    drawSongLayers = (1 << 6),
+    drawLastPlayedNote = (1 << 7),
+    drawActiveTrackSubLabel = (1 << 8)
+  };
+
   UI_LiveSequencer(LiveSequencer &sequencer, LiveSequencer::LiveSeqData &d);
   void init(void);
   void showDirectMappingWarning(uint8_t inChannel);
@@ -17,20 +29,10 @@ public:
   void onStopped(void);
   void drawSingleLayer(uint8_t track, uint8_t layer); // used for layer mute GUI updates
   void drawTrackLayers(uint8_t track);
-
-  enum GuiUpdates : uint16_t {
-    drawTopButtons = (1 << 0),
-    drawTrackButtons = (1 << 1),
-    drawLayerButtons = (1 << 2),
-    drawTools = (1 << 3),
-    drawActiveNotes = (1 << 5),
-    drawTime = (1 << 6),
-    drawSongLayers = (1 << 7),
-    drawLastPlayedNote = (1 << 8),
-    drawActiveTrackSubLabel = (1 << 9)
-  };
+  void drawUpdates(uint16_t flags);
 
 private:
+  uint16_t guiUpdateFlags = 0;
   uint8_t layerUpdates[LiveSequencer::LIVESEQUENCER_TRACKS_PER_SCREEN] = { 0 };
 
   uint8_t trackOffset = 0;
