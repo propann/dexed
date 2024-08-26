@@ -177,21 +177,21 @@ FLASHMEM void UI_LiveSequencer::init(void) {
     b->draw("FILE", "MANAGER", TouchButton::BUTTON_ACTIVE);
   },
   [ this ] (auto *b) { // clickedHandler
-    openScreen(UI_func_file_manager, data.performanceID);
+    openScreen(UI_func_file_manager);
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[2], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
     b->draw("MASTER", "EFFECTS", TouchButton::BUTTON_ACTIVE);
   },
   [ this ] (auto *b) { // clickedHandler
-    openScreen(UI_func_master_effects, data.performanceID);
+    openScreen(UI_func_master_effects);
   }));
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[3], GRID_Y[4],
   [ ] (auto *b) { // drawHandler
     b->draw("MULTI", "BAND", TouchButton::BUTTON_ACTIVE);
   },
   [ this ] (auto *b) { // clickedHandler
-    openScreen(UI_func_multiband_dynamics, data.performanceID);
+    openScreen(UI_func_multiband_dynamics);
   }));
 
   toolsPages[TOOLS_SEQ].push_back(new TouchButton(GRID_X[0], GRID_Y[5],
